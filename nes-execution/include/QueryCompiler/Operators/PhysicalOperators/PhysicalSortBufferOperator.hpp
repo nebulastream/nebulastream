@@ -18,7 +18,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-// #include <Execution/Operators/SortBuffer/SortBufferOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -37,7 +36,6 @@ public:
     PhysicalSortBufferOperator(
         OperatorId id,
         const SchemaPtr& inputSchema,
-        // const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
         const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
         const Runtime::Execution::Operators::SortOrder sortOrder);
 
@@ -50,7 +48,6 @@ public:
     static PhysicalOperatorPtr create(
         OperatorId id,
         const SchemaPtr& inputSchema,
-        //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
         const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
         const Runtime::Execution::Operators::SortOrder sortOrder);
 
@@ -62,11 +59,8 @@ public:
      */
     static PhysicalOperatorPtr create(
         SchemaPtr inputSchema,
-        //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
         const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
         const Runtime::Execution::Operators::SortOrder sortOrder);
-
-    // const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& getSortBufferOperatorHandler() const;
 
     Nautilus::Record::RecordFieldIdentifier getSortFieldIdentifier() const;
 
@@ -77,7 +71,6 @@ public:
     OperatorPtr copy() override;
 
 protected:
-    // Runtime::Execution::Operators::SortBufferOperatorHandlerPtr sortBufferOpHandler;
     Nautilus::Record::RecordFieldIdentifier sortFieldIdentifier;
     Runtime::Execution::Operators::SortOrder sortOrder;
 };

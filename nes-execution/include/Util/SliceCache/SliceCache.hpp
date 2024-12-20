@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -64,6 +65,20 @@ public:
      * @param slicesToDelete
      */
     virtual void deleteSlicesFromCache(std::vector<Timestamp> slicesToDelete) = 0;
+
+    [[nodiscard]] uint64_t getNumberOfCacheHits() const { return hitCounter; }
+
+    [[nodiscard]] uint64_t getNumberOfCacheMisses() const { return missCounter; }
+
+    void resetCounters()
+    {
+        hitCounter = 0;
+        missCounter = 0;
+    }
+
+protected:
+    uint64_t hitCounter = 0;
+    uint64_t missCounter = 0;
 };
 
 } // namespace NES::Runtime::Execution::Operators

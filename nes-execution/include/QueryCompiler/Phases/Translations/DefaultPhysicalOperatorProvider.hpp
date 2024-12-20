@@ -38,7 +38,7 @@ struct WindowOperatorProperties
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
         , windowOutputSchema(std::move(windowOutputSchema))
-        , windowDefinition(std::move(windowDefinition)) {};
+        , windowDefinition(std::move(windowDefinition)){};
 
     WindowOperatorPtr windowOperator;
     SchemaPtr windowInputSchema;
@@ -128,6 +128,8 @@ protected:
     void lowerSortBufferOperator(const LogicalOperatorPtr& operatorNode);
 
     void lowerDelayBufferOperator(const LogicalOperatorPtr& operatorNode);
+
+    void lowerDelayTuplesOperator(const LogicalOperatorPtr& operatorNode);
 
     OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 

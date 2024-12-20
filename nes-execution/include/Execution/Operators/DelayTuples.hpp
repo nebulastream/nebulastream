@@ -14,45 +14,54 @@
 
 #pragma once
 
-#include "ExecutableOperator.hpp"
-#include "Identifiers/Identifiers.hpp"
-
-
+#include <cstdint>
 #include <random>
 #include <Execution/Operators/Operator.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class DelayBufferOperatorHandler : public OperatorHandler
+class DelayTuplesOperatorHandler : public OperatorHandler
 {
 public:
-    DelayBufferOperatorHandler(float unorderedness, uint64_t minDelay = 1, uint64_t maxDelay = 10);
+    DelayTuplesOperatorHandler(float unorderedness, uint64_t minDelay, uint64_t maxDelay);
 
+    void setup(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    void sleepOrNot(SequenceNumber sequenceNumber);
+    void createEmitIndicesForInputBuffer(WorkerThreadId workerThreadId, uint64_t numberOfTuples);
+    std::vector<uint64_t> getEmitIndicesForWorker(WorkerThreadId workerThreadId);
 
 private:
     const float unorderedness;
     std::uniform_real_distribution<> unorderednessDistrib;
     std::uniform_int_distribution<> delayDistrib;
+    uint64_t numberOfWorkerThreads;
+    std::vector<std::vector<uint64_t>> emitIndicesForWorker;
 };
 
-class DelayBuffer : public ExecutableOperator
+class DelayTuples : public Operator
 {
 public:
-    DelayBuffer(const uint64_t operatorHandlerIndex);
+    DelayTuples(
+        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        const uint64_t operatorHandlerIndex);
 
     void setup(ExecutionContext& executionCtx) const override;
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
+    void emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const;
+
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     uint64_t operatorHandlerIndex;
+    std::vector<Record::RecordFieldIdentifier> projections;
 };
 } // namespace NES::Runtime::Execution::Operators

@@ -279,7 +279,7 @@ uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
     return numberOfTuples;
 }
 
-void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples)
+void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
 {
     this->numberOfTuples = numberOfTuples;
 }
@@ -289,7 +289,7 @@ Runtime::Timestamp BufferControlBlock::getWatermark() const noexcept
     return watermark;
 }
 
-void BufferControlBlock::setWatermark(Runtime::Timestamp watermark)
+void BufferControlBlock::setWatermark(const Runtime::Timestamp watermark)
 {
     this->watermark = watermark;
 }
@@ -299,7 +299,7 @@ SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
     return sequenceNumber;
 }
 
-void BufferControlBlock::setSequenceNumber(SequenceNumber sequenceNumber)
+void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
 {
     this->sequenceNumber = sequenceNumber;
 }
@@ -309,7 +309,7 @@ ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
     return chunkNumber;
 }
 
-void BufferControlBlock::setChunkNumber(ChunkNumber chunkNumber)
+void BufferControlBlock::setChunkNumber(const ChunkNumber chunkNumber)
 {
     this->chunkNumber = chunkNumber;
 }
@@ -319,12 +319,12 @@ bool BufferControlBlock::isLastChunk() const noexcept
     return lastChunk;
 }
 
-void BufferControlBlock::setLastChunk(bool lastChunk)
+void BufferControlBlock::setLastChunk(const bool lastChunk)
 {
     this->lastChunk = lastChunk;
 }
 
-void BufferControlBlock::setCreationTimestamp(Runtime::Timestamp timestamp)
+void BufferControlBlock::setCreationTimestamp(const Runtime::Timestamp timestamp)
 {
     this->creationTimestamp = timestamp;
 }
@@ -339,7 +339,7 @@ OriginId BufferControlBlock::getOriginId() const noexcept
     return originId;
 }
 
-void BufferControlBlock::setOriginId(OriginId originId)
+void BufferControlBlock::setOriginId(const OriginId originId)
 {
     this->originId = originId;
 }

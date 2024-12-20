@@ -66,7 +66,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
     /// Set the sequence number of this buffer.
     /// A data source generates a monotonic increasing sequence number
     buffer.setSequenceNumber(sequenceNumber);
-    buffer.setChunkNumber(ChunkNumber(1));
+    buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
     buffer.setLastChunk(true);
     NES_TRACE(
         "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",

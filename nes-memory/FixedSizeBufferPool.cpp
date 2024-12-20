@@ -75,7 +75,7 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const
     return qSize > 0 ? qSize : 0;
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
@@ -99,6 +99,18 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer();
+    // detail::MemorySegment* memSegment;
+    // auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
+    // if (buffer.has_value())
+    // {
+    //     return buffer.value();
+    // }
+    // else
+    // {
+    //     auto exp = CannotAllocateBuffer();
+    //     exp.what() += "FixedSizeBufferPool could not allocate buffer before timeout";
+    //     throw exp;
+    // }
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)

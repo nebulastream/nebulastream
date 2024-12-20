@@ -45,6 +45,8 @@ std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCac
     auto it = cache.find(sliceId);
     if (it != cache.end())
     {
+        hitCounter++;
+
         // If found, bring slice to front of cache and return
         auto& currentTuple = it->second;
         const auto oldListPosition = std::get<listPosition>(currentTuple);
@@ -56,6 +58,9 @@ std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCac
 
         return std::get<SliceCache::SlicePtr>(currentTuple);
     }
+
+    missCounter++;
+
     // If not found, return nullopt
     return {};
 }

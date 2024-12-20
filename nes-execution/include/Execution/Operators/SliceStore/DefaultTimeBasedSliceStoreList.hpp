@@ -30,8 +30,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
-#include <Util/SliceCache/DefaultSliceCache.hpp>
-#include <Util/SliceCache/SliceCache.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -39,8 +37,7 @@ namespace NES::Runtime::Execution
 class DefaultTimeBasedSliceStoreList final : public WindowSlicesStoreInterface
 {
 public:
-    DefaultTimeBasedSliceStoreList(
-        Operators::SliceAssigner sliceAssigner, uint8_t numberOfInputOrigins, Operators::SliceCachePtr sliceCache);
+    DefaultTimeBasedSliceStoreList(Operators::SliceAssigner sliceAssigner, uint8_t numberOfInputOrigins);
     DefaultTimeBasedSliceStoreList(const DefaultTimeBasedSliceStoreList& other);
     DefaultTimeBasedSliceStoreList(DefaultTimeBasedSliceStoreList&& other) noexcept;
     DefaultTimeBasedSliceStoreList& operator=(const DefaultTimeBasedSliceStoreList& other);
@@ -75,8 +72,6 @@ private:
     /// Depending, if we have one or two input origins, we have to treat the slices differently
     /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
     uint8_t numberOfInputOrigins;
-
-    Operators::SliceCachePtr sliceCache;
 };
 
 }

@@ -340,6 +340,12 @@ Query& Query::delayBuffer() {
     return *this;
 }
 
+Query& Query::delayTuples() {
+    NES_DEBUG("Query: add delay tuples operator to query");
+    this->queryPlan = QueryPlanBuilder::addDelayTuples(this->queryPlan);
+    return *this;
+}
+
 Query& Query::limit(const uint64_t limit)
 {
     NES_DEBUG("Query: add limit operator to query");

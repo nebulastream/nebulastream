@@ -161,10 +161,15 @@ message SerializableOperator {
     string sortOrder = 2;
   }
 
-   /**
+  /**
   DelayBuffer details contain the properties for the delay buffer operator.
    */
   message DelayBufferDetails {}
+
+  /**
+  DelayTuples details contain the properties for the delay tuples operator.
+   */
+  message DelayTuplesDetails {}
 
   /**
   Rename details contain the new name of the source.

@@ -45,17 +45,15 @@ tcp_server_path = os.path.join(
     args.project_dir, "window-patterns", "tcp-server-tuples.py"
 )
 # tcp_server_path = os.path.join(args.project_dir, "window-patterns", "tcp_server.cpp")
-# path to yaml config
-yaml_config_path = os.path.join(
-    args.project_dir, "window-patterns", "config", "joinTumblingConfig.yaml"
-)
+cache_path = "cache/"
 # output directory path
 output_dir = "results/"
+statistics_dir = os.path.join(output_dir, "statistics")
 # path to the log file
 log_path = os.path.join(output_dir, "log.txt")
 # number of runs each
 number_of_runs = 1
-measure_interval_in_seconds = 30
+measure_interval_in_seconds = 15
 # build and compile configurations
 releaseOrDebug = "Release"
 NES_LOG_LEVEL = "LEVEL_NONE"
@@ -66,37 +64,68 @@ PRELOG = "numactl -N 0 -m 0"
 
 
 ############## config params ##############
-QUERIES = []
+QUERIES = [
+    os.path.join(
+        args.project_dir, "window-patterns", "config", "joinTumbling50Config.yaml"
+    ),
+    os.path.join(
+        args.project_dir, "window-patterns", "config", "joinTumbling100Config.yaml"
+    ),
+    # os.path.join(
+    #     args.project_dir, "window-patterns", "config", "joinSlidingConfig.yaml"
+    # ),
+]
 
 BUFFER_SIZE_PARAMS = [100000, 48000, 16000]
 
 WORKER_THREADS_PARAMS = [8, 4, 2, 1]
 
 UNORDEREDNESS_PARAMS = [
-    {"unorderedness": 0.25, "min_delay": 100, "max_delay": 500},
-    {"unorderedness": 0.5, "min_delay": 100, "max_delay": 500},
-    {"unorderedness": 0.75, "min_delay": 100, "max_delay": 500},
-    {"unorderedness": 1, "min_delay": 100, "max_delay": 500},
-    {"unorderedness": 0, "min_delay": 0, "max_delay": 0},
+    {"delay_strategy": "BUFFER", "unorderedness": 0.0, "min_delay": 0, "max_delay": 0},
+    {"delay_strategy": "TUPLES", "unorderedness": 1.0, "min_delay": 0, "max_delay": 0},
+    # {
+    #     "delay_strategy": "BUFFER",
+    #     "unorderedness": 0.1,
+    #     "min_delay": 1,
+    #     "max_delay": 5,
+    # },
+    # {
+    #     "delay_strategy": "BUFFER",
+    #     "unorderedness": 0.25,
+    #     "min_delay": 1,
+    #     "max_delay": 1,
+    # },
+    # {
+    #     "delay_strategy": "BUFFER",
+    #     "unorderedness": 0.5,
+    #     "min_delay": 1,
+    #     "max_delay": 1,
+    # },
+    # {
+    #     "delay_strategy": "BUFFER",
+    #     "unorderedness": 0.75,
+    #     "min_delay": 100,
+    #     "max_delay": 500,
+    # },
 ]
 
 SLICE_STORE_PARAMS = ["MAP", "LIST"]
 
 SLICE_CACHE_PARAMS = [
-    {"slice_cache_type": "DEFAULT"},
-    {"slice_cache_type": "FIFO", "slice_cache_size": 4, "lock_slice_cache": "false"},
-    {"slice_cache_type": "FIFO", "slice_cache_size": 8, "lock_slice_cache": "false"},
-    {"slice_cache_type": "FIFO", "slice_cache_size": 15, "lock_slice_cache": "false"},
-    {"slice_cache_type": "LRU", "slice_cache_size": 4, "lock_slice_cache": "false"},
-    {"slice_cache_type": "LRU", "slice_cache_size": 8, "lock_slice_cache": "false"},
-    {"slice_cache_type": "LRU", "slice_cache_size": 15, "lock_slice_cache": "false"},
-    {"slice_cache_type": "FIFO", "slice_cache_size": 8, "lock_slice_cache": "true"},
-    {"slice_cache_type": "LRU", "slice_cache_size": 8, "lock_slice_cache": "true"},
+    {"slice_cache_type": "DEFAULT", "lock_slice_cache": "false"},
+    {"slice_cache_type": "FIFO", "slice_cache_size": 5, "lock_slice_cache": "false"},
+    {"slice_cache_type": "FIFO", "slice_cache_size": 10, "lock_slice_cache": "false"},
+    {"slice_cache_type": "FIFO", "slice_cache_size": 20, "lock_slice_cache": "false"},
+    {"slice_cache_type": "LRU", "slice_cache_size": 5, "lock_slice_cache": "false"},
+    {"slice_cache_type": "LRU", "slice_cache_size": 10, "lock_slice_cache": "false"},
+    {"slice_cache_type": "LRU", "slice_cache_size": 20, "lock_slice_cache": "false"},
+    {"slice_cache_type": "FIFO", "slice_cache_size": 10, "lock_slice_cache": "true"},
+    {"slice_cache_type": "LRU", "slice_cache_size": 10, "lock_slice_cache": "true"},
 ]
 
 SORTING_PARAMS = [
-    {"sort_buffer_by_field": ""},
-    # {"sort_buffer_by_field": "timestamp"},
+    # {"sort_buffer_by_field": ""},
+    {"sort_buffer_by_field": "timestamp"},
     # {"sort_buffer_by_field": "value"},
 ]
 
@@ -109,16 +138,6 @@ static_params = {
     "log_level": log_level,  # LOG_DEBUG / LOG_NONE
     "nautilus_backend": "COMPILER",
     "number_of_sources": 1,
-    "interval": 0.00001,  # 0.001
-    "count_limit": 30000000,  # 100000
-    "total_processed_tuples": 0,
-    "total_latency": 0,
-    "total_processed_tasks": 0,
-    "tuples_for_200_tasks": 0,
-    "latency_for_200_tasks": 0,
-    "tuples_for_ten_sec": 0,
-    "exact_latency_for_ten_sec": 0,
-    "tasks_for_ten_sec": 0,
 }
 
 
@@ -129,21 +148,29 @@ statistics_csv = os.path.join(output_dir, "statistics.csv")
 csv_fieldnames = [
     "experimentID",
     "benchmarkName",
-    "sourceName",
+    "unorderedness",
     "bufferSizeInBytes",
-    "numberOfWorkerOfThreads",
-    "totalProcessedTuples",
-    "totalProcessedTasks",
-    "totalProcessedBuffers",
-    "totalLatencyInMs",
+    "numberOfWorkerThreads",
+    "processedTuples",
+    "processedTasks",
+    "processedBuffers",
+    "totaltimeInSeconds",
     "tuplesPerSecond",
     "tasksPerSecond",
     "buffersPerSecond",
     "mebiBPerSecond",
+    "latencySumInMs",
+    "avgLatencyPerTask",
+    "avgThroughputPerTask",
     "avgThroughput200Tasks",
-    "latency200Tasks",
-    "avgThroughput10Sec",
-    "tasksPer10Sec",
+    "avgThroughput10Seconds",
+    "cacheHits",
+    "cacheMisses",
+    "delayTasks",
+    "totalDelayLatency",
+    "sortBufferTasks",
+    "totalSortBufferLatency",
+    "totalLatencyAllPipelines",
     "measureIntervalInSeconds",
     "numberOfDeployedQueries",
     "numberOfSources",
@@ -251,86 +278,112 @@ def run_benchmark(number_of_runs=1):
     experiment_id = 0
     # TODO: use number_of_runs
 
-    # start tcp servers
-    count_limit = static_params["count_limit"]
-    tcp_server_process = start_tcp_server(5010, count_limit)
-    processes = [tcp_server_process]
-    tcp_server_2_process = start_tcp_server(5011, count_limit)
-    processes.append(tcp_server_2_process)
-
     single_node_params = list(
         itertools.product(BUFFER_SIZE_PARAMS, WORKER_THREADS_PARAMS)
     )
-    for single_node_config in single_node_params:
+    for query in QUERIES:
         current_params = dict(static_params)
-        current_params["query"] = "Join"
-        arguments = {
-            "buffer_size": single_node_config[0],
-            "worker_threads": single_node_config[1],
-        }
-        current_params.update(arguments)
-        for slice_store_type in SLICE_STORE_PARAMS:
-            current_params["slice_store_type"] = slice_store_type
-            # start single node for each worker thread and buffer size combination
-            for slice_cache_config in SLICE_CACHE_PARAMS:
-                current_params.update(**slice_cache_config)
-                # generate slice cache name for benchmark name
-                slice_cache_name = slice_cache_config["slice_cache_type"]
-                if "slice_cache_size" in slice_cache_config:
-                    slice_cache_name += str(slice_cache_config["slice_cache_size"])
-                    if slice_cache_config["lock_slice_cache"] == "true":
-                        slice_cache_name += "Locked"
-                current_params["sort_buffer_by_field"] = ""  # TODO: sort buffer
+        current_params["query"] = os.path.basename(query).replace("Config.yaml", "")
+        for single_node_config in single_node_params:
+            arguments = {
+                "buffer_size": single_node_config[0],
+                "worker_threads": single_node_config[1],
+            }
+            current_params.update(arguments)
+            for slice_store_type in SLICE_STORE_PARAMS:
+                current_params["slice_store_type"] = slice_store_type
                 for unorderedness_config in UNORDEREDNESS_PARAMS:
                     if (
                         current_params["worker_threads"] == 1
-                        and unorderedness_config["unorderedness"] != 0
+                        and unorderedness_config["delay_strategy"] == "BUFFER"
+                        and unorderedness_config["unorderedness"] != 0.0
                     ):
                         continue
                     current_params.update(**unorderedness_config)
                     # generate source name and benchmark name
-                    source_name = "TimeStep1"
-                    if unorderedness_config["unorderedness"] != 0:
-                        source_name = "OutOfOrder" + str(
-                            int(unorderedness_config["unorderedness"] * 100)
-                        )
-                    current_params["experiment_id"] = experiment_id
-                    current_params["source_name"] = source_name
-                    current_params["benchmark_name"] = (
-                        slice_store_type + slice_cache_name
+                    current_params["unorderedness"] = (
+                        unorderedness_config["unorderedness"] * 100
                     )
+                    for slice_cache_config in SLICE_CACHE_PARAMS:
+                        if (
+                            current_params["worker_threads"] == 1
+                            and slice_cache_config["lock_slice_cache"] == "true"
+                        ):
+                            continue
+                        current_params["experiment_id"] = experiment_id
+                        current_params.update(**slice_cache_config)
+                        # generate slice cache name for benchmark name
+                        slice_cache_name = slice_cache_config["slice_cache_type"]
+                        if "slice_cache_size" in slice_cache_config:
+                            slice_cache_name += str(
+                                slice_cache_config["slice_cache_size"]
+                            )
+                        if slice_cache_config["lock_slice_cache"] == "true":
+                            slice_cache_name = "Global" + slice_cache_name
+                        current_params["benchmark_name"] = (
+                            slice_store_type + slice_cache_name
+                        )
+                        # make sure sorting isn't used
+                        current_params.pop("sort_buffer_by_field", None)
 
-                    print(f"Starting experiment with ID {experiment_id}!")
-                    print("\n")
+                        # start experiment
+                        start_experiment(current_params, query, experiment_id)
+                        experiment_id += 1
+                    for sort_buffer_config in SORTING_PARAMS:
+                        if (
+                            sort_buffer_config["sort_buffer_by_field"] != ""
+                            and unorderedness_config["delay_strategy"] == "BUFFER"
+                            and unorderedness_config["unorderedness"] != 0.0
+                        ):
+                            continue
+                        current_params["experiment_id"] = experiment_id
+                        current_params.update(**sort_buffer_config)
+                        current_params["benchmark_name"] = slice_store_type + "Sorted"
+                        # make sure slice cache isn't used
+                        current_params.pop("slice_cache_type", None)
+                        # start experiment
+                        start_experiment(current_params, query, experiment_id)
+                        experiment_id += 1
 
-                    # start single node
-                    single_node_process = start_single_node(current_params)
 
-                    # run queries
-                    query_id = launch_query(experiment_id)
-                    # confirm_execution_and_sleep(single_node_process)
-                    if query_id is not None:
-                        stop_query(query_id)
+def start_experiment(current_params, query, experiment_id):
+    experiment_dir = os.path.join(statistics_dir, f"experiment_{experiment_id}")
+    if not os.path.exists(experiment_dir):
+        os.makedirs(experiment_dir)
 
-                    # wait for input before processing data
-                    if args.no_execution:
-                        print("Now waiting for input.")
-                        input()
+    print(f"Starting experiment with ID {experiment_id}!\n")
 
-                    # terminate processes
-                    terminate_processes([single_node_process])
+    # start tcp servers
+    tcp_server_process = start_tcp_server(5010)
+    server_processes = [tcp_server_process]
+    tcp_server_2_process = start_tcp_server(5011)
+    server_processes.append(tcp_server_2_process)
 
-                    # create csv from statistics
-                    read_statistics(original_statistics_path, current_params)
-                    calculate_and_write_to_csv(current_params)
+    # start single node
+    single_node_process = start_single_node(current_params)
 
-                    log_params(current_params)
-                    reset_statistic_params(current_params)
+    # run queries
+    query_id = launch_query(query, experiment_id)
+    # confirm_execution_and_sleep(single_node_process)
+    if query_id is not None:
+        stop_query(query_id)
 
-                    print(f"Experiment with ID {experiment_id} finished!\n")
-                    experiment_id += 1
+    # wait for input before processing data
+    if args.no_execution:
+        print("Now waiting for input.")
+        input()
 
-    terminate_processes(processes)
+    # terminate processes
+    terminate_processes(server_processes + [single_node_process])
+
+    # create csv from statistics
+    reset_statistic_params(current_params)
+    read_statistics(original_statistics_path, current_params, experiment_id)
+    calculate_and_write_to_csv(current_params)
+
+    log_params(current_params)
+
+    print(f"Experiment with ID {experiment_id} finished!\n")
 
 
 def start_single_node(current_params):
@@ -343,22 +396,29 @@ def start_single_node(current_params):
         f"--worker.numberOfBuffersInSourceLocalBufferPool={current_params['buffers_in_source_local_buffer_pool']}",
         f"--worker.logLevel={current_params['log_level']}",
         f"--worker.queryCompiler.nautilusBackend={current_params['nautilus_backend']}",
+        f"--worker.queryCompiler.delayStrategy={current_params['delay_strategy']}",
         f"--worker.queryCompiler.unorderedness={current_params['unorderedness']}",
         f"--worker.queryCompiler.minDelay={current_params['min_delay']}",
         f"--worker.queryCompiler.maxDelay={current_params['max_delay']}",
         f"--worker.queryCompiler.sliceStoreType={current_params['slice_store_type']}",
-        f"--worker.queryCompiler.sliceCacheType={current_params['slice_cache_type']}",
     ]
 
-    if "slice_cache_size" in current_params:
+    if "slice_cache_type" in current_params:
         arguments.append(
-            f"--worker.queryCompiler.sliceCacheSize={current_params['slice_cache_size']}"
+            f"--worker.queryCompiler.sliceCacheType={current_params['slice_cache_type']}",
         )
-        arguments.append(
-            f"--worker.queryCompiler.lockSliceCache={current_params['lock_slice_cache']}",
-        )
+        if "slice_cache_size" in current_params:
+            arguments.append(
+                f"--worker.queryCompiler.sliceCacheSize={current_params['slice_cache_size']}"
+            )
+            arguments.append(
+                f"--worker.queryCompiler.lockSliceCache={current_params['lock_slice_cache']}",
+            )
 
-    if current_params["sort_buffer_by_field"] != "":
+    if (
+        "sort_buffer_by_field" in current_params
+        and current_params["sort_buffer_by_field"] != ""
+    ):
         arguments.append(
             f"--worker.queryCompiler.sortBufferByField={current_params['sort_buffer_by_field']}"
         )
@@ -379,12 +439,11 @@ def start_single_node(current_params):
     return process
 
 
-def start_tcp_server(port, count_limit):
+def start_tcp_server(port):
     env = os.environ.copy()
 
     arguments = [
         f"-p {port}",
-        f"-n {count_limit}",
     ]
 
     cmd = [sys.executable, tcp_server_path] + arguments
@@ -417,12 +476,12 @@ def confirm_execution_and_sleep(process, success_message=None, sleep_time=0):
             print(f"Error in process: {stderr}")
 
 
-def launch_query(experiment_id):
+def launch_query(query, experiment_id):
     print(f"Launching query")
     cmd = [
         # "sh",
         # "-c",
-        f"cat {yaml_config_path} | sed 's#GENERATE#{output_dir}sink/query_{experiment_id}.csv#' | {nebuli_path} register -x -s localhost:8080",
+        f"cat {query} | sed 's#GENERATE#{output_dir}experiment_{experiment_id}/query_sink.csv#' | {nebuli_path} register -x -s localhost:8080",
     ]
     print(f"Executing command: {' '.join(cmd)}")
 
@@ -499,172 +558,312 @@ def terminate_processes(processes):
         print("Successfully terminated all processes!\n")
 
 
-def read_statistics(statistics_file, current_params):
+def read_statistics(statistics_file, current_params, experiment_id):
     print("Now reading the statistics... ")
 
-    experiment_id = current_params["experiment_id"]
+    # process cache stats
+    for i in range(0, int(current_params["worker_threads"])):
+        cache_file = os.path.join(cache_path, f"cache_{i}.txt")
+        if os.path.exists(cache_file):
+            with open(cache_file, "r") as file:
+                for line in file:
+                    current_params["processed_buffers"] += 1
+                    parts = line.split(" ")
+                    if len(parts) > 1:
+                        current_params["cache_hits"] += int(parts[1].strip())
+                        current_params["cache_misses"] += int(parts[3].strip())
+            # move file to output directory
+            shutil.move(
+                cache_file,
+                os.path.join(
+                    statistics_dir,
+                    f"experiment_{experiment_id}",
+                    os.path.basename(cache_file),
+                ),
+            )
 
     # extract relevant pipeline ids
-    current_params["pipeline_ids"] = []
+    pipeline_ids = []
+    delay_pipeline_ids = []
+    sort_buffer_pipeline_ids = []
     if os.path.exists(pipelines_file):
         with open(pipelines_file, "r") as file:
             for line in file:
-                if "StreamJoinBuild" in line:
-                    parts = line.split("pipelineId: ")
+                parts = line.split("pipelineId: ")
                 if len(parts) > 1:
-                    pipeline_id = parts[1].strip()
-                    current_params["pipeline_ids"].append(pipeline_id)
+                    p_id = int(parts[1].strip())
+                    if "StreamJoinBuild" in line:
+                        pipeline_ids.append(p_id)
+                    elif "Delay" in line:
+                        delay_pipeline_ids.append(p_id)
+                    elif "SortBuffer" in line:
+                        sort_buffer_pipeline_ids.append(p_id)
         # move file to output directory
         shutil.move(
             pipelines_file,
             os.path.join(
-                output_dir,
-                "statistics",
+                statistics_dir,
+                f"experiment_{experiment_id}",
                 os.path.basename(pipelines_file).replace(
                     ".txt", f"_{experiment_id}.txt"
                 ),
             ),
         )
+    current_params["pipeline_ids"] = pipeline_ids
 
     if os.path.exists(statistics_file):
         with open(statistics_file, "r") as file:
-            processed_tuples = {}
-            time_sum = 0
-            completed_tasks = set()
             start_times = {}
             end_times = {}
-            # For individual statistics
+            processed_tuples = {}
+            completed_tasks = {}  # dict of sets
             latencies = {}
-            pipelines = {}
-            first_match = True
+            task_throughputs = {}
+            # For individual statistics
+            first_match = False
             start_ts = datetime.now()
-            end_ts = start_ts + timedelta(seconds=10)
+            measure_interval_end_ts = start_ts + timedelta(
+                seconds=measure_interval_in_seconds
+            )
+            ten_secs_ts = start_ts + timedelta(seconds=10)
+            ten_secs_reached = False
+            task_count = 0
             task_count_reached = False
-            ten_sec_reached = False
-            processed_tuples_with_warmup = 0
-            time_sum_with_warmup = 0
-            completed_tasks_with_warmup = 0
 
             # parse each line of the statistics file
             for line in file:
                 start_match = start_pattern.match(line)
                 end_match = end_pattern.match(line)
-
-                if (
-                    start_match
-                    and start_match.group("pipeline_id")
-                    in current_params["pipeline_ids"]
-                ):
+                if start_match:
                     start_timestamp = datetime.strptime(
                         start_match.group("timestamp"),
                         "%Y-%m-%d %H:%M:%S.%f",
                     )
-                    if first_match:
-                        start_ts = start_timestamp + timedelta(seconds=1)
-                        end_ts = start_ts + timedelta(seconds=10)
-                        first_match = False
-                    id = int(start_match.group("task_id"))
-                    start_times[id] = start_timestamp
-                    pipelines[id] = start_match.group("pipeline_id")
-                    number_of_tuples = int(start_match.group("tuples"))
-                    processed_tuples[id] = number_of_tuples
-                    if first_match is False and start_timestamp >= start_ts:
-                        processed_tuples_with_warmup += number_of_tuples
-                elif (
-                    end_match
-                    and end_match.group("pipeline_id") in current_params["pipeline_ids"]
-                ):
+                    if not first_match:
+                        start_ts = start_timestamp  # + timedelta(seconds=1)
+                        measure_interval_end_ts = start_ts + timedelta(
+                            seconds=measure_interval_in_seconds
+                        )
+                        ten_secs_ts = start_ts + timedelta(seconds=10)
+                        first_match = True
+                    p_id = int(start_match.group("pipeline_id"))
+                    t_id = int(start_match.group("task_id"))
+                    if p_id not in start_times:
+                        start_times[p_id] = dict()
+                    if p_id not in processed_tuples:
+                        processed_tuples[p_id] = dict()
+                    start_times[p_id][t_id] = start_timestamp
+                    processed_tuples[p_id][t_id] = int(start_match.group("tuples"))
+                elif end_match:
                     end_timestamp = datetime.strptime(
                         end_match.group("timestamp"), "%Y-%m-%d %H:%M:%S.%f"
                     )
-                    # if end_timestamp < start_ts:
-                    #     continue
-                    id = int(end_match.group("task_id"))
-                    if id in start_times.keys():
-                        completed_tasks.add(id)
-                        end_times[id] = end_timestamp
-                        difference = (end_timestamp - start_times[id]).total_seconds()
-                        latencies[id] = difference
-                        time_sum += difference
+                    measure_interval_end_ts = end_timestamp
+                    p_id = int(end_match.group("pipeline_id"))
+                    t_id = int(end_match.group("task_id"))
+                    if p_id in start_times and t_id in start_times[p_id]:
+                        if p_id not in completed_tasks:
+                            completed_tasks[p_id] = set()
+                        completed_tasks[p_id].add(t_id)
+                        if p_id not in end_times:
+                            end_times[p_id] = dict()
+                        end_times[p_id][t_id] = end_timestamp
+                        difference = (
+                            end_timestamp - start_times[p_id][t_id]
+                        ).total_seconds()
+                        if p_id not in latencies:
+                            latencies[p_id] = dict()
+                        latencies[p_id][t_id] = difference
+                        if p_id not in task_throughputs:
+                            task_throughputs[p_id] = dict()
+                        task_throughputs[p_id][t_id] = 0
+                        if difference != 0:
+                            task_throughputs[p_id][t_id] = (
+                                processed_tuples[p_id][t_id] / difference
+                            )
 
-                        if end_timestamp >= start_ts:
-                            time_sum_with_warmup += difference
-                            completed_tasks_with_warmup += 1
+                        if task_count_reached is False and p_id in pipeline_ids:
+                            task_count += 1
 
-                        if (
-                            completed_tasks_with_warmup >= 200
-                            and task_count_reached is False
-                        ):
-                            current_params["tuples_for_200_tasks"] = (
-                                processed_tuples_with_warmup
-                            )
-                            current_params["latency_for_200_tasks"] = (
-                                time_sum_with_warmup
-                            )
-                            task_count_reached = True
+                            if task_count >= 200:
+                                current_params["avg_throughput_200"] = sum(
+                                    t_id
+                                    for p_id in pipeline_ids
+                                    if p_id in task_throughputs
+                                    for t_id in task_throughputs[p_id].values()
+                                ) / sum(
+                                    len(completed_tasks[p_id])
+                                    for p_id in pipeline_ids
+                                    if p_id in completed_tasks
+                                )
+                                task_count_reached = True
+                        if ten_secs_reached is False and p_id in pipeline_ids:
+                            if end_timestamp >= ten_secs_ts:
+                                current_params["avg_throughput_10_secs"] = (
+                                    sum(
+                                        t_id
+                                        for p_id in pipeline_ids
+                                        if p_id in processed_tuples
+                                        for t_id in processed_tuples[p_id].values()
+                                    )
+                                    / (ten_secs_ts - start_ts).total_seconds()
+                                )
+                                ten_secs_reached = True
 
-                        if end_timestamp >= end_ts and ten_sec_reached is False:
-                            current_params["tuples_for_ten_sec"] = (
-                                processed_tuples_with_warmup
-                            )
-                            current_params["exact_latency_for_ten_sec"] = (
-                                time_sum_with_warmup
-                            )
-                            current_params["tasks_for_ten_sec"] = (
-                                completed_tasks_with_warmup
-                            )
-                            ten_sec_reached = True
-
-            current_params["total_processed_tuples"] = sum(processed_tuples.values())
-            current_params["total_latency"] = time_sum
-            current_params["total_processed_tasks"] = len(completed_tasks)
-            if task_count_reached is False:
-                current_params["tuples_for_200_tasks"] = processed_tuples_with_warmup
-                current_params["latency_for_200_tasks"] = time_sum_with_warmup
-            if ten_sec_reached is False:
-                current_params["tuples_for_ten_sec"] = processed_tuples_with_warmup
-                current_params["exact_latency_for_ten_sec"] = time_sum_with_warmup
-                current_params["tasks_for_ten_sec"] = completed_tasks_with_warmup
+            current_params["processed_tuples"] = sum(
+                t_id
+                for p_id in pipeline_ids
+                if p_id in processed_tuples
+                for t_id in processed_tuples[p_id].values()
+            )
+            current_params["processed_tasks"] = sum(
+                len(completed_tasks[p_id])
+                for p_id in pipeline_ids
+                if p_id in completed_tasks
+            )
+            current_params["time_in_seconds"] = (
+                measure_interval_end_ts - start_ts
+            ).total_seconds()
+            current_params["latency_in_secs"] = sum(
+                t_id
+                for p_id in pipeline_ids
+                if p_id in latencies
+                for t_id in latencies[p_id].values()
+            )
+            current_params["total_latency_in_secs"] = sum(
+                t_id for p_dict in latencies.values() for t_id in p_dict.values()
+            )
+            current_params["delay_latency_in_secs"] = sum(
+                t_id
+                for p_id in delay_pipeline_ids
+                if p_id in latencies
+                for t_id in latencies[p_id].values()
+            )
+            current_params["delay_tasks"] = sum(
+                len(completed_tasks[p_id])
+                for p_id in delay_pipeline_ids
+                if p_id in completed_tasks
+            )
+            current_params["sort_buffer_latency_in_secs"] = sum(
+                t_id
+                for p_id in sort_buffer_pipeline_ids
+                if p_id in latencies
+                for t_id in latencies[p_id].values()
+            )
+            current_params["sort_buffer_tasks"] = sum(
+                len(completed_tasks[p_id])
+                for p_id in sort_buffer_pipeline_ids
+                if p_id in completed_tasks
+            )
+            if current_params["processed_tasks"] != 0:
+                current_params["avg_latency_per_task"] = (
+                    current_params["latency_in_secs"] * 1000
+                ) / current_params["processed_tasks"]
+                current_params["avg_throughput_per_task"] = (
+                    sum(
+                        t_id
+                        for p_id in pipeline_ids
+                        if p_id in task_throughputs
+                        for t_id in task_throughputs[p_id].values()
+                    )
+                    / current_params["processed_tasks"]
+                )
 
             # save individual task statistics
             task_statistics_path = os.path.join(
-                output_dir, "statistics", f"statistics_{experiment_id}.csv"
+                statistics_dir,
+                f"experiment_{experiment_id}",
+                f"statistics_{experiment_id}.csv",
             )
-            with open(task_statistics_path, "w", newline="") as csv_file:
-                writer = csv.DictWriter(csv_file, fieldnames=task_statistics_fieldnames)
-                writer.writeheader()
-
-                sorted_tasks = sorted(completed_tasks)
-                for id in sorted_tasks:
-                    # calculate latency and throughput
-                    tuples = processed_tuples[id]
-                    latency = float(latencies[id] * 1000)  # latency in ms
-                    throughput = 0
-                    if tuples != 0 and latency != 0:
-                        throughput = tuples / (latency / 1000)  # throughput in tuples/s
-                    writer.writerow(
-                        {
-                            "taskId": id,
-                            "pipelineId": pipelines[id],
-                            "startTime": start_times[id],
-                            "endTime": end_times[id],
-                            "processedTuples": tuples,
-                            "latencyInMs": latency,
-                            "tuplesPerSecond": throughput,
-                        }
-                    )
+            write_individual_task_statistics(
+                task_statistics_path,
+                pipeline_ids,
+                completed_tasks,
+                start_times,
+                end_times,
+                processed_tuples,
+                latencies,
+                task_throughputs,
+            )
+            delay_task_statistics_path = os.path.join(
+                statistics_dir,
+                f"experiment_{experiment_id}",
+                f"delay_statistics_{experiment_id}.csv",
+            )
+            write_individual_task_statistics(
+                delay_task_statistics_path,
+                delay_pipeline_ids,
+                completed_tasks,
+                start_times,
+                end_times,
+                processed_tuples,
+                latencies,
+                task_throughputs,
+            )
+            if "sort_buffer_by_field" in current_params:
+                sort_buffer_task_statistics_path = os.path.join(
+                    statistics_dir,
+                    f"experiment_{experiment_id}",
+                    f"sort_buffer_statistics_{experiment_id}.csv",
+                )
+                write_individual_task_statistics(
+                    sort_buffer_task_statistics_path,
+                    delay_pipeline_ids,
+                    completed_tasks,
+                    start_times,
+                    end_times,
+                    processed_tuples,
+                    latencies,
+                    task_throughputs,
+                )
 
         # move file to output directory
         shutil.move(
             statistics_file,
             os.path.join(
-                output_dir,
-                "statistics",
+                statistics_dir,
+                f"experiment_{experiment_id}",
                 os.path.basename(statistics_file).replace(
                     ".txt", f"_{experiment_id}.txt"
                 ),
             ),
         )
+
+
+def write_individual_task_statistics(
+    task_statistics_path,
+    pipeline_ids,
+    completed_tasks,
+    start_times,
+    end_times,
+    processed_tuples,
+    latencies,
+    task_throughputs,
+):
+    with open(task_statistics_path, "w", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=task_statistics_fieldnames)
+        writer.writeheader()
+
+        # filter relavant tasks and sort by task id
+        relevant_tasks = [
+            (p_id, t_id)
+            for p_id in pipeline_ids
+            if p_id in completed_tasks
+            for t_id in completed_tasks[p_id]
+        ]
+        sorted_tasks = sorted(relevant_tasks, key=lambda x: x[1])
+        for p_id, t_id in sorted_tasks:
+            writer.writerow(
+                {
+                    "taskId": t_id,
+                    "pipelineId": p_id,
+                    "startTime": start_times[p_id][t_id],
+                    "endTime": end_times[p_id][t_id],
+                    "processedTuples": processed_tuples[p_id][t_id],
+                    "latencyInMs": latencies[p_id][t_id] * 1000,
+                    "tuplesPerSecond": task_throughputs[p_id][t_id],
+                }
+            )
 
 
 def calculate_and_write_to_csv(current_params):
@@ -673,59 +872,55 @@ def calculate_and_write_to_csv(current_params):
         writer = csv.DictWriter(csv_file, fieldnames=csv_fieldnames)
 
         # calculate latency and throughput
-        tuples = current_params["total_processed_tuples"]
-        latency = current_params["total_latency"]  # latency in ms
+        tuples = current_params["processed_tuples"]
+        total_time = current_params["time_in_seconds"]
         throughput = 0
-        if tuples != 0 and latency != 0:
-            throughput = tuples / latency  # throughput in tuples/s
+        if tuples != 0 and total_time != 0:
+            throughput = tuples / total_time  # throughput in tuples/s
 
         # calculate tasks and buffers per second
-        tasks = current_params["total_processed_tasks"]
+        tasks = current_params["processed_tasks"]
         tasks_per_second = 0
-        if tasks != 0 and latency != 0:
-            tasks_per_second = tasks / latency
+        if tasks != 0 and total_time != 0:
+            tasks_per_second = tasks / total_time
 
-        buffer_size_in_tuples = (
-            current_params["buffer_size"] / current_params["schema_size"]
-        )
-        buffers = tuples / buffer_size_in_tuples
+        # buffer_size_in_tuples = current_params["buffer_size"] / current_params["schema_size"]
+        buffers = current_params["processed_buffers"]  # tuples / buffer_size_in_tuples
         buffers_per_second = 0
-        if buffers != 0 and latency != 0:
-            buffers_per_second = buffers / (latency / 1000)
+        if buffers != 0 and total_time != 0:
+            buffers_per_second = buffers / total_time
 
         mebi_per_second = (throughput * 32) / (1024 * 1024)
-
-        tuples_200 = current_params["tuples_for_200_tasks"]
-        latency_200 = current_params["latency_for_200_tasks"]
-        throughput_200 = 0
-        if tuples_200 != 0 and latency_200 != 0:
-            throughput_200 = tuples_200 / latency_200
-
-        tuples_ten_sec = current_params["tuples_for_ten_sec"]
-        latency_ten_sec = current_params["exact_latency_for_ten_sec"]
-        throughput_ten_sec = 0
-        if tuples_ten_sec != 0 and latency_ten_sec != 0:
-            throughput_ten_sec = tuples_ten_sec / latency_ten_sec
 
         writer.writerow(
             {
                 "experimentID": current_params["experiment_id"],
                 "benchmarkName": current_params["benchmark_name"],
-                "sourceName": current_params["source_name"],
+                "unorderedness": current_params["unorderedness"],
                 "bufferSizeInBytes": current_params["buffer_size"],
-                "numberOfWorkerOfThreads": current_params["worker_threads"],
-                "totalProcessedTuples": tuples,
-                "totalProcessedTasks": tasks,
-                "totalProcessedBuffers": buffers,
-                "totalLatencyInMs": latency * 1000,
+                "numberOfWorkerThreads": current_params["worker_threads"],
+                "processedTuples": tuples,
+                "processedTasks": tasks,
+                "processedBuffers": buffers,
+                "totaltimeInSeconds": total_time,
                 "tuplesPerSecond": throughput,
                 "tasksPerSecond": tasks_per_second,
                 "buffersPerSecond": buffers_per_second,
                 "mebiBPerSecond": mebi_per_second,
-                "avgThroughput200Tasks": throughput_200,
-                "latency200Tasks": latency_200 * 1000,
-                "avgThroughput10Sec": throughput_ten_sec,
-                "tasksPer10Sec": current_params["tasks_for_ten_sec"],
+                "latencySumInMs": current_params["latency_in_secs"] * 1000,
+                "avgLatencyPerTask": current_params["avg_latency_per_task"],
+                "avgThroughputPerTask": current_params["avg_throughput_per_task"],
+                "avgThroughput200Tasks": current_params["avg_throughput_200"],
+                "avgThroughput10Seconds": current_params["avg_throughput_10_secs"],
+                "cacheHits": current_params["cache_hits"],
+                "cacheMisses": current_params["cache_misses"],
+                "delayTasks": current_params["delay_tasks"],
+                "totalDelayLatency": current_params["delay_latency_in_secs"] * 1000,
+                "sortBufferTasks": current_params["sort_buffer_tasks"],
+                "totalSortBufferLatency": current_params["sort_buffer_latency_in_secs"]
+                * 1000,
+                "totalLatencyAllPipelines": current_params["total_latency_in_secs"]
+                * 1000,
                 "measureIntervalInSeconds": measure_interval_in_seconds,
                 "numberOfDeployedQueries": 1,
                 "numberOfSources": current_params["number_of_sources"],
@@ -744,14 +939,23 @@ def log_params(current_params):
 
 
 def reset_statistic_params(current_params):
-    current_params["total_processed_tuples"] = 0
-    current_params["total_latency"] = 0
-    current_params["total_processed_tasks"] = 0
-    current_params["tuples_for_200_tasks"] = 0
-    current_params["latency_for_200_tasks"] = 0
-    current_params["tuples_for_ten_sec"] = 0
-    current_params["exact_latency_for_ten_sec"] = 0
-    current_params["tasks_for_ten_sec"] = 0
+    current_params["processed_tuples"] = 0
+    current_params["processed_tasks"] = 0
+    current_params["processed_buffers"] = 0
+    current_params["latency_in_secs"] = 0
+    current_params["total_latency_in_secs"] = 0
+    current_params["avg_latency_per_task"] = 0
+    current_params["avg_throughput_per_task"] = 0
+    current_params["avg_throughput_200"] = 0
+    current_params["avg_throughput_10_secs"] = 0
+    current_params["cache_hits"] = 0
+    current_params["cache_misses"] = 0
+    current_params["delay_tasks"] = 0
+    current_params["delay_latency_in_secs"] = 0
+    current_params["sort_buffer_tasks"] = 0
+    current_params["sort_buffer_latency_in_secs"] = 0
+    current_params["time_in_seconds"] = measure_interval_in_seconds
+    current_params["pipeline_ids"] = []
 
 
 def main():
@@ -766,8 +970,7 @@ def main():
 
     # create output directory
     if not os.path.exists(output_dir):
-        os.makedirs(os.path.join(output_dir, "sink"))
-        os.makedirs(os.path.join(output_dir, "statistics"))
+        os.makedirs(statistics_dir)
 
     # create statistics csv
     with open(statistics_csv, "w", newline="") as csv_file:

@@ -14,28 +14,30 @@
 
 #pragma once
 
-#include <Execution/Operators/DelayBuffer.hpp>
+#include <Execution/Operators/DelayTuples.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 /**
- * @brief Physical DelayBuffer operator.
+ * @brief Physical DelayTuples operator.
  */
-class PhysicalDelayBufferOperator : public PhysicalUnaryOperator
+class PhysicalDelayTuplesOperator : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
 {
 public:
     /**
-     * @brief Constructor for the physical DelayBuffer operator
+     * @brief Constructor for the physical DelayTuples operator
      * @param id operator id
-     * @param inputSchema input schema for the DelayBuffer operator
+     * @param inputSchema input schema for the DelayTuples operator
      */
-    PhysicalDelayBufferOperator(
+    PhysicalDelayTuplesOperator(
         OperatorId id, const SchemaPtr& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay);
 
     /**
-     * @brief Creates a physical DelayBuffer operator
+     * @brief Creates a physical DelayTuples operator
      * @param id operator id
      * @param inputSchema
      * @return PhysicalOperatorPtr
@@ -44,7 +46,7 @@ public:
     create(OperatorId id, const SchemaPtr& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay);
 
     /**
-     * @brief Creates a physical DelayBuffer operator
+     * @brief Creates a physical DelayTuples operator
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */

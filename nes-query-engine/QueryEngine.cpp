@@ -347,10 +347,11 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
-        pool.statistic->onEvent(TaskExecutionStart{
-            threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId, std::chrono::system_clock::now()});
+        auto startTime = std::chrono::system_clock::now();
         pipeline->stage->execute(task.buf, pec);
-        pool.statistic->onEvent(TaskExecutionComplete{threadId, taskId, pipeline->id, task.queryId, std::chrono::system_clock::now()});
+        auto endTime = std::chrono::system_clock::now();
+        pool.statistic->onEvent(TaskExecutionStart{threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId, startTime});
+        pool.statistic->onEvent(TaskExecutionComplete{threadId, taskId, pipeline->id, task.queryId, endTime});
         return true;
     }
 

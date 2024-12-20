@@ -40,24 +40,32 @@ std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCacheWithLock::getSlic
     // Get slice end as a unique sliceId
     auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
 
-    // Search for corresponding slice
+    // Get write lock for cache and slices
     auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
+
+    // Search for corresponding slice
     auto it = cacheLocked->find(sliceId);
-    if (it != cacheLocked->end())
+
+    if (it == cacheLocked->end())
     {
-        // If found, bring slice to front of cache and return
-        auto& currentTuple = it->second;
-        const auto oldListPosition = std::get<listPosition>(currentTuple);
+        missCounter++;
 
-        lruSlicesLocked->erase(oldListPosition);
-
-        lruSlicesLocked->push_front(sliceId);
-        std::get<listPosition>(currentTuple) = lruSlicesLocked->begin();
-
-        return std::get<SliceCache::SlicePtr>(currentTuple);
+        // If slice is not found, return nullopt
+        return {};
     }
-    // If not found, return nullopt
-    return {};
+
+    hitCounter++;
+
+    // If found, bring slice to front of cache and return
+    auto& currentTuple = it->second;
+    const auto oldListPosition = std::get<listPosition>(currentTuple);
+
+    lruSlicesLocked->erase(oldListPosition);
+
+    lruSlicesLocked->push_front(sliceId);
+    std::get<listPosition>(currentTuple) = lruSlicesLocked->begin();
+
+    return std::get<SliceCache::SlicePtr>(currentTuple);
 }
 
 bool LeastRecentlyUsedSliceCacheWithLock::passSliceToCache(Timestamp sliceId, SliceCache::SlicePtr newSlice)
@@ -65,22 +73,27 @@ bool LeastRecentlyUsedSliceCacheWithLock::passSliceToCache(Timestamp sliceId, Sl
     // Get the value of sliceId
     auto sliceIdValue = sliceId.getRawValue();
 
-    // Check if slice already in cache
+    // Get write lock for cache and slices
     auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
+
+    // Check if slice is already in cache
     if (cacheLocked->contains(sliceIdValue))
     {
         return false;
     }
-    // Check if cache full
+
+    // Check if cache is full
     if (cacheLocked->size() == cacheSize)
     {
         // If full, remove least recently used slice
         cacheLocked->erase(lruSlicesLocked->back());
         lruSlicesLocked->pop_back();
     }
+
     // Add new slice to cache
     lruSlicesLocked->push_front(sliceIdValue);
     cacheLocked->emplace(sliceIdValue, std::make_tuple(lruSlicesLocked->begin(), newSlice));
+
     return true;
 }
 

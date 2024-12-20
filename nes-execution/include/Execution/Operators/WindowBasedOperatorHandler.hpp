@@ -43,7 +43,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        SliceCachePtr sliceCache);
+        SliceCachePtr sliceCache,
+        bool globalSliceCache);
 
     ~WindowBasedOperatorHandler() override = default;
 
@@ -66,9 +67,12 @@ public:
 
     virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
 
+    OriginId getOutputOriginId() { return outputOriginId; }
+
 protected:
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::vector<SliceCachePtr> sliceCaches;
+    bool globalSliceCache;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;

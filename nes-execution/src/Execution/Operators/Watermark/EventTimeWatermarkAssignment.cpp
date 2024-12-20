@@ -31,7 +31,7 @@ struct WatermarkState final : OperatorState
     nautilus::val<Timestamp> currentWatermark = Timestamp(Runtime::Timestamp::INITIAL_VALUE);
 };
 
-EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
+EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)){};
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
@@ -58,6 +58,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(this)),
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
+    recordBuffer.setWatermarkTs(state->currentWatermark);
     executionCtx.watermarkTs = state->currentWatermark;
     Operator::close(executionCtx, recordBuffer);
 }

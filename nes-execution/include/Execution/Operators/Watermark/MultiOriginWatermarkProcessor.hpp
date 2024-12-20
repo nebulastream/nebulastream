@@ -46,13 +46,13 @@ public:
      * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
-    Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin);
+    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
 
     /**
      * @brief Returns the current watermark across all origins
      * @return uint64_t
      */
-    [[nodiscard]] Timestamp getCurrentWatermark();
+    [[nodiscard]] Timestamp getCurrentWatermark() const;
 
     std::string getCurrentStatus();
 

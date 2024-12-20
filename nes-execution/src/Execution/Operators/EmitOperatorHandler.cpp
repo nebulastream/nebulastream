@@ -25,8 +25,10 @@ namespace NES::Runtime::Execution::Operators
 uint64_t EmitOperatorHandler::getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId)
 {
     auto lockedMap = seqNumberOriginIdToOutputChunkNumber.wlock();
+    const auto newChunkNumber = (*lockedMap)[seqNumberOriginId];
+    /// Increment the chunk number for the next chunk
     (*lockedMap)[seqNumberOriginId] += 1;
-    return (*lockedMap)[seqNumberOriginId];
+    return newChunkNumber;
 }
 
 void EmitOperatorHandler::removeSequenceState(const SeqNumberOriginId seqNumberOriginId)
@@ -57,7 +59,7 @@ bool EmitOperatorHandler::isLastChunk(const SeqNumberOriginId seqNumberOriginId,
         isLastChunk,
         chunkState.seenChunks,
         chunkState.lastChunkNumber)
-    return chunkState.seenChunks == chunkState.lastChunkNumber;
+    return chunkState.seenChunks == (chunkState.lastChunkNumber + 1);
 }
 
 }

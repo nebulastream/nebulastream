@@ -388,10 +388,16 @@ public:
     Query& sortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder);
 
     /**
-     * @brief: Sort each buffer by the given field.
+     * @brief: Apply a random delay on a buffer.
      * @return the query
      */
     Query& delayBuffer();
+
+    /**
+     * @brief: Delay tuples within a buffer.
+     * @return the query
+     */
+    Query& delayTuples();
 
     /**
      * @brief: Limit the number of records according to the limit count.

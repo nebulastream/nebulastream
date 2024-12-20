@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -34,28 +35,33 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     SliceCachePtr sliceCache,
+    bool globalSliceCache,
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(sliceCache))
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(sliceCache), globalSliceCache)
     , leftMemoryProvider(leftMemoryProvider)
     , rightMemoryProvider(rightMemoryProvider)
 {
 }
 
-void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+Timestamp StreamJoinOperatorHandler::setWatermark(const BufferMetaData& bufferMetaData)
 {
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
 
+    return newGlobalWatermark;
+}
+
+void StreamJoinOperatorHandler::checkAndTriggerWindows(Timestamp globalWatermark)
+{
     /// Getting all slices that can be triggered and triggering them
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
+    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(globalWatermark);
+    sliceAndWindowStore->garbageCollectSlicesAndWindows(globalWatermark);
 }
 
 void StreamJoinOperatorHandler::triggerSlices(
-    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-    PipelineExecutionContext* pipelineCtx)
+    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo, PipelineExecutionContext*)
 {
     /// For every window, we have to trigger all combination of slices. This is necessary, as we have to give the probe operator all
     /// combinations of slices for a given window to ensure that it has seen all tuples of the window.
@@ -67,7 +73,7 @@ void StreamJoinOperatorHandler::triggerSlices(
             for (const auto& sliceRight : allSlices)
             {
                 const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size() - 1);
-                emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, ChunkNumber(chunkNumber), isLastChunk, pipelineCtx);
+                // emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, ChunkNumber(chunkNumber), isLastChunk, pipelineCtx);
                 ++chunkNumber;
             }
         }

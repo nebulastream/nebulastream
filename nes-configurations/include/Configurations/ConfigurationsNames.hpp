@@ -73,6 +73,7 @@ const std::string SORT_BUFFER_BY_FIELD = "sortBufferByField";
 const std::string SORT_BUFFER_ORDER = "sortBufferOrder";
 
 //Configuration for delay
+const std::string DELAY_STRATEGY = "delayStrategy";
 const std::string UNORDEREDNESS = "unorderedness";
 const std::string MIN_DELAY = "minDelay";
 const std::string MAX_DELAY = "maxDelay";

@@ -33,7 +33,7 @@ namespace NES::Runtime::Execution::Operators
 {
 
 /// Updates the sliceState of all slices and emits buffers, if the slices can be emitted
-void checkWindowsTriggerProxy(
+void passMetadataProxy(
     OperatorHandler* ptrOpHandler,
     PipelineExecutionContext* pipelineCtx,
     const Timestamp watermarkTs,
@@ -47,7 +47,19 @@ void checkWindowsTriggerProxy(
 
     auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
-    opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
+    const auto globalWatermark = opHandler->setWatermark(bufferMetaData);
+
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+    tupleBuffer.setNumberOfTuples(1);
+
+    /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
+    tupleBuffer.setOriginId(opHandler->getOutputOriginId());
+    tupleBuffer.setSequenceNumber(sequenceNumber);
+    tupleBuffer.setChunkNumber(chunkNumber);
+    tupleBuffer.setLastChunk(lastChunk);
+    tupleBuffer.setWatermark(globalWatermark);
+
+    pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
 }
 
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
@@ -72,16 +84,18 @@ StreamJoinBuild::StreamJoinBuild(
 
 void StreamJoinBuild::setup(ExecutionContext& executionCtx) const
 {
-    nautilus::invoke(+[](const PipelineExecutionContext* pipelineExecutionContext)
-    {
-        std::ofstream pipelinesFile;
-        pipelinesFile.open("pipelines.txt", std::ios_base::app);
-        if (pipelinesFile.is_open())
+    nautilus::invoke(
+        +[](const PipelineExecutionContext* pipelineExecutionContext)
         {
-            pipelinesFile << "StreamJoinBuild pipelineId: " << pipelineExecutionContext->getPipelineId() << std::endl;
-            pipelinesFile.flush();
-        }
-    }, executionCtx.pipelineContext);
+            std::ofstream pipelinesFile;
+            pipelinesFile.open("pipelines.txt", std::ios_base::app);
+            if (pipelinesFile.is_open())
+            {
+                pipelinesFile << "StreamJoinBuild pipelineId: " << pipelineExecutionContext->getPipelineId() << std::endl;
+                pipelinesFile.flush();
+            }
+        },
+        executionCtx.pipelineContext);
     ExecutableOperator::setup(executionCtx);
 }
 
@@ -90,7 +104,7 @@ void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
     /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     invoke(
-        checkWindowsTriggerProxy,
+        passMetadataProxy,
         operatorHandlerMemRef,
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,

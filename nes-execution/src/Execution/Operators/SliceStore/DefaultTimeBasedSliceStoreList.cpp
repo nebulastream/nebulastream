@@ -30,12 +30,8 @@
 
 namespace NES::Runtime::Execution
 {
-DefaultTimeBasedSliceStoreList::DefaultTimeBasedSliceStoreList(
-    Operators::SliceAssigner sliceAssigner, const uint8_t numberOfInputOrigins, Operators::SliceCachePtr sliceCache)
-    : sliceAssigner(sliceAssigner)
-    , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfInputOrigins(numberOfInputOrigins)
-    , sliceCache(sliceCache)
+DefaultTimeBasedSliceStoreList::DefaultTimeBasedSliceStoreList(Operators::SliceAssigner sliceAssigner, const uint8_t numberOfInputOrigins)
+    : sliceAssigner(sliceAssigner), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
 {
 }
 
@@ -76,7 +72,7 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStoreList::getAllWindowInfosForSlic
     const auto windowSize = sliceAssigner.getWindowSize();
     const auto windowSlide = sliceAssigner.getWindowSlide();
 
-    const auto firstWindowEnd = sliceEnd;
+    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
     const auto lastWindowEnd = sliceStart + windowSize;
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
@@ -95,29 +91,44 @@ DefaultTimeBasedSliceStoreList::~DefaultTimeBasedSliceStoreList()
 std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStoreList::getSlicesOrCreate(
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
 
-    // Check for slice in slice cache
-    auto sliceFromCache = sliceCache->getSliceFromCache(sliceEnd);
-    if (sliceFromCache.has_value())
+    // Find the correct slice by doing reverse iteration over all slices,
+    // as it is expected that timestamp is in a more recent slice.
+    auto sliceIter = slicesWriteLocked->rbegin();
+
+    while (sliceIter != slicesWriteLocked->rend() && sliceEnd < (*sliceIter)->getSliceEnd())
     {
-        return {sliceFromCache.value()};
+        sliceIter++;
     }
 
-    auto slice = getSliceBySliceEnd(sliceEnd);
-    if (slice.has_value())
+    if (sliceIter != slicesWriteLocked->rend() && (*sliceIter)->getSliceEnd() == sliceEnd)
     {
-        sliceCache->passSliceToCache(sliceEnd, slice.value());
-        return {slice.value()};
+        // We found a slice which covers the current ts.
+        // Thus, we return a reference to the slice.
+        return {*sliceIter};
     }
-
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     /// We assume that only one slice is created per timestamp
     auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
-    slicesWriteLocked->emplace_front(newSlice); /// TODO: place at correct position?
-    sliceCache->passSliceToCache(sliceEnd, newSlice);
+
+    if (sliceIter == slicesWriteLocked->rend())
+    {
+        // In this case we have to pre-pend a new slice.
+        slicesWriteLocked->emplace_front(newSlice);
+    }
+    else if (sliceEnd > (*sliceIter)->getSliceEnd())
+    {
+        // In this case we have to insert a new slice after the current sliceIter.
+        slicesWriteLocked->emplace(sliceIter.base(), newSlice);
+    }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("Error during slice lookup: We looked for timestamp: " << timestamp);
+    }
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
@@ -163,7 +174,8 @@ DefaultTimeBasedSliceStoreList::getTriggerableWindowSlices(Timestamp globalWater
 
 std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStoreList::getSliceBySliceEnd(SliceEnd sliceEnd)
 {
-    for (const auto& slice : *slices.rlock())
+    const auto slicesReadLocked = *slices.rlock();
+    for (const auto& slice : slicesReadLocked)
     {
         if (slice->getSliceEnd() == sliceEnd)
         {
@@ -207,13 +219,13 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 
 std::vector<SliceEnd> DefaultTimeBasedSliceStoreList::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
-    auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
-    if (not lockedSlicesAndWindows)
-    {
-        /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
-        return {};
-    }
-    auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
+    // auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
+    // if (not lockedSlicesAndWindows)
+    // {
+    //     /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
+    //     return {};
+    // }
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
@@ -248,8 +260,8 @@ std::vector<SliceEnd> DefaultTimeBasedSliceStoreList::garbageCollectSlicesAndWin
         }
         else
         {
-            /// As the slices are sorted (due to std::map), we can break here as we will not find any slices with a smaller slice end
-            // break;
+            /// As the slices are sorted, we can break here as we will not find any slices with a smaller slice end
+            break;
         }
     }
     return slicesToDelete;

@@ -114,6 +114,12 @@ public:
 
     StringOption sortBufferOrder = {SORT_BUFFER_ORDER, "Ascending", "Sort order for the sort buffer operator."};
 
+    EnumOption<QueryCompilation::DelayStrategy> delayStrategy
+        = {DELAY_STRATEGY,
+           QueryCompilation::DelayStrategy::TUPLES,
+           "Strategy for introducing delays"
+           "[BUFFER|TUPLES]. "};
+
     FloatOption unorderedness = {UNORDEREDNESS, "0.0", "Percentage of unorderedness", {std::make_shared<FloatValidation>()}};
 
     UIntOption minDelay = {MIN_DELAY, "1", "Minimum delay", {std::make_shared<NumberValidation>()}};
@@ -138,6 +144,7 @@ private:
             &lockSliceCache,
             &sortBufferByField,
             &sortBufferOrder,
+            &delayStrategy,
             &unorderedness,
             &minDelay,
             &maxDelay};

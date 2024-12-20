@@ -20,14 +20,15 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayTuplesOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
-#include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -90,6 +91,12 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         NES_TRACE("OperatorSerializationUtil:: serialize to LogicalDelayBufferOperator");
         auto delayBufferDetails = SerializableOperator_DelayBufferDetails();
         serializedOperator.mutable_details()->PackFrom(delayBufferDetails);
+    }
+    else if (NES::Util::instanceOf<LogicalDelayTuplesOperator>(operatorNode))
+    {
+        NES_TRACE("OperatorSerializationUtil:: serialize to LogicalDelayTuplesOperator");
+        auto delayTuplesDetails = SerializableOperator_DelayTuplesDetails();
+        serializedOperator.mutable_details()->PackFrom(delayTuplesDetails);
     }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
@@ -567,6 +574,14 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedDelayBufferOperator);
         operatorNode = std::make_shared<LogicalDelayBufferOperator>(getNextOperatorId());
     }
+    else if (details.Is<SerializableOperator_DelayTuplesDetails>())
+    {
+        /// de-serialize delay tuples operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to DelayTuplesLogicalOperator");
+        auto serializedDelayTuplesOperator = SerializableOperator_DelayTuplesDetails();
+        details.UnpackTo(&serializedDelayTuplesOperator);
+        operatorNode = std::make_shared<LogicalDelayTuplesOperator>(getNextOperatorId());
+    }
     else if (details.Is<SerializableOperator_ProjectionDetails>())
     {
         /// de-serialize projection operator
@@ -763,9 +778,11 @@ void OperatorSerializationUtil::serializeSortBufferOperator(
     serializedOperator.mutable_details()->PackFrom(sortBufferDetails);
 }
 
-LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSortBufferOperator(const SerializableOperator_SortBufferDetails& sortBufferDetails)
+LogicalUnaryOperatorPtr
+OperatorSerializationUtil::deserializeSortBufferOperator(const SerializableOperator_SortBufferDetails& sortBufferDetails)
 {
-    return std::make_shared<LogicalSortBufferOperator>(sortBufferDetails.sortfieldidentifier(), sortBufferDetails.sortorder(), getNextOperatorId());
+    return std::make_shared<LogicalSortBufferOperator>(
+        sortBufferDetails.sortfieldidentifier(), sortBufferDetails.sortorder(), getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeProjectionOperator(

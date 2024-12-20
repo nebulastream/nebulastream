@@ -36,11 +36,15 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         SliceCachePtr sliceCache,
+        bool globalSliceCache,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
-    /// Checks and triggers windows that are ready. This method updates the watermarkProcessor and is thread-safe
-    void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    /// This method updates the watermarkProcessor
+    Timestamp setWatermark(const BufferMetaData& bufferMetaData);
+
+    /// Checks and triggers windows that are ready. This method is thread-safe
+    void checkAndTriggerWindows(Timestamp globalWatermark);
 
     /// Triggers all windows that have not been already emitted to the probe
     void triggerAllWindows(PipelineExecutionContext* pipelineCtx);

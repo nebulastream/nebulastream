@@ -20,6 +20,7 @@ add_source_files(nes-execution
         Scan.cpp
         SortBuffer.cpp
         DelayBuffer.cpp
+        DelayTuples.cpp
         ExecutionContext.cpp)
 
 add_subdirectory(Watermark)

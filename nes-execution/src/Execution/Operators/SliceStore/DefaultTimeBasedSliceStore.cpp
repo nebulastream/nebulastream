@@ -72,7 +72,7 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(co
     const auto windowSize = sliceAssigner.getWindowSize();
     const auto windowSlide = sliceAssigner.getWindowSlide();
 
-    const auto firstWindowEnd = sliceEnd;
+    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
     const auto lastWindowEnd = sliceStart + windowSize;
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
@@ -98,8 +98,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 
     if (slicesWriteLocked->contains(sliceEnd))
     {
-        auto slice = slicesWriteLocked->find(sliceEnd)->second;
-        return {slice};
+        return {slicesWriteLocked->find(sliceEnd)->second};
     }
 
     /// We assume that only one slice is created per timestamp
@@ -191,13 +190,13 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 
 std::vector<SliceEnd> DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
-    auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
-    if (not lockedSlicesAndWindows)
-    {
-        /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
-        return {};
-    }
-    auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
+    // auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
+    // if (not lockedSlicesAndWindows)
+    // {
+    //     /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
+    //     return {};
+    // }
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.

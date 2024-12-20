@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 DelayBufferOperatorHandler::DelayBufferOperatorHandler(float unorderedness, uint64_t minDelay, uint64_t maxDelay)
-    : unorderedness(unorderedness), gen(std::mt19937(std::random_device()())), unorderednessDistrib(0, 1), delayDistrib(minDelay, maxDelay)
+    : unorderedness(unorderedness), unorderednessDistrib(0, 1), delayDistrib(minDelay, maxDelay)
 {
 }
 
@@ -33,14 +33,37 @@ void DelayBufferOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExe
 
 void DelayBufferOperatorHandler::sleepOrNot(SequenceNumber sequenceNumber)
 {
-    if (sequenceNumber.getRawValue()%100 <= unorderedness*100)
+    if (sequenceNumber.getRawValue() % 100 < unorderedness * 100)
     {
         std::this_thread::sleep_for((std::chrono::seconds(1)));
     }
+    // auto gen = std::mt19937(std::random_device()());
+    // if (unorderednessDistrib(gen) < unorderedness)
+    // {
+    //     uint64_t delay = delayDistrib(gen);
+    //     std::this_thread::sleep_for((std::chrono::seconds(delay)));
+    // }
 }
 
 DelayBuffer::DelayBuffer(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex)
 {
+}
+
+void DelayBuffer::setup(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(
+        +[](const PipelineExecutionContext* pipelineExecutionContext)
+        {
+            std::ofstream pipelinesFile;
+            pipelinesFile.open("pipelines.txt", std::ios_base::app);
+            if (pipelinesFile.is_open())
+            {
+                pipelinesFile << "DelayBuffer pipelineId: " << pipelineExecutionContext->getPipelineId() << std::endl;
+                pipelinesFile.flush();
+            }
+        },
+        executionCtx.pipelineContext);
+    ExecutableOperator::setup(executionCtx);
 }
 
 void DelayBuffer::execute(ExecutionContext& ctx, Record& record) const
@@ -53,7 +76,9 @@ void DelayBuffer::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     Operator::open(ctx, recordBuffer);
 
     nautilus::invoke(
-        +[](OperatorHandler* handler, SequenceNumber sequenceNumber) { dynamic_cast<DelayBufferOperatorHandler*>(handler)->sleepOrNot(sequenceNumber); },
-        ctx.getGlobalOperatorHandler(operatorHandlerIndex), recordBuffer.getSequenceNumber());
+        +[](OperatorHandler* handler, SequenceNumber sequenceNumber)
+        { dynamic_cast<DelayBufferOperatorHandler*>(handler)->sleepOrNot(sequenceNumber); },
+        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+        recordBuffer.getSequenceNumber());
 }
 } // namespace NES::Runtime::Execution::Operators

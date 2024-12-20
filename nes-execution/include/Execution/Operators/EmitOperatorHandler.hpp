@@ -46,7 +46,7 @@ struct SeqNumberOriginId
  */
 struct SequenceState
 {
-    uint64_t lastChunkNumber = 0;
+    uint64_t lastChunkNumber = INVALID_CHUNK_NUMBER.getRawValue();
     uint64_t seenChunks = 0;
 };
 

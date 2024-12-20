@@ -14,7 +14,7 @@
 #pragma once
 
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Util/SliceCache/SliceCache.hpp>
 #include <folly/Synchronized.h>
@@ -79,7 +79,7 @@ private:
     uint64_t cacheSize;
     SliceAssigner sliceAssigner;
     folly::Synchronized<std::list<Timestamp::Underlying>> slices;
-    folly::Synchronized<std::map<Timestamp::Underlying, SlicePtr>> cache;
+    folly::Synchronized<std::unordered_map<Timestamp::Underlying, SlicePtr>> cache;
 };
 
 } // namespace NES::Runtime::Execution::Operators

@@ -14,7 +14,7 @@
 #pragma once
 
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Util/SliceCache/SliceCache.hpp>
 
@@ -78,7 +78,7 @@ private:
     uint64_t cacheSize;
     SliceAssigner sliceAssigner;
     std::list<Timestamp::Underlying> slices;
-    std::map<Timestamp::Underlying, SlicePtr> cache;
+    std::unordered_map<Timestamp::Underlying, SlicePtr> cache;
 };
 
 } // namespace NES::Runtime::Execution::Operators

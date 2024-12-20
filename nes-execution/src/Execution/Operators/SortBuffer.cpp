@@ -14,43 +14,64 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/SortBuffer.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-// #include <Execution/Operators/SortBuffer/SortBufferOperatorHandler.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-SortBuffer::SortBuffer( //const uint64_t operatorHandlerIndex,
+SortBuffer::SortBuffer(
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     const Record::RecordFieldIdentifier& sortFieldIdentifier,
     const SortOrder sortOrder)
-    : //operatorHandlerIndex(operatorHandlerIndex),
-    memoryProvider(std::move(memoryProvider))
+    : memoryProvider(std::move(memoryProvider))
     , sortFieldIdentifier(sortFieldIdentifier)
     , sortOrder(sortOrder)
+    , projections(this->memoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames())
 {
-    NES_ASSERT(this->memoryProvider->getMemoryLayoutPtr()->getFieldIndexFromName(sortFieldIdentifier).has_value(), "Sort field identifier not found.");
+}
+
+void SortBuffer::setup(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(
+        +[](const PipelineExecutionContext* pipelineExecutionContext)
+        {
+            std::ofstream pipelinesFile;
+            pipelinesFile.open("pipelines.txt", std::ios_base::app);
+            if (pipelinesFile.is_open())
+            {
+                pipelinesFile << "SortBuffer pipelineId: " << pipelineExecutionContext->getPipelineId() << std::endl;
+                pipelinesFile.flush();
+            }
+        },
+        executionCtx.pipelineContext);
 }
 
 void SortBuffer::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+    executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.currentTs = recordBuffer.getCreatingTs();
+
     // Create new result buffer and initialize local state
     auto resultBuffer = RecordBuffer(executionCtx.allocateBuffer());
+
     // Sort recordBuffer by sortFieldIdentifier with modified out-of-place counting sort
     auto numberOfRecords = recordBuffer.getNumRecords();
-    // auto bufferAddress = recordBuffer.getBuffer();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         nautilus::val<uint64_t> outputIndex = 0_u64;
-        auto curRecord = memoryProvider->readRecord({}, recordBuffer, i);
+        auto curRecord = memoryProvider->readRecord(projections, recordBuffer, i);
         const auto& curValue = curRecord.read(sortFieldIdentifier);
         for (nautilus::val<uint64_t> j = 0_u64; j < numberOfRecords; j = j + 1_u64)
         {
-            auto lesserOrGreaterRecord = memoryProvider->readRecord({}, recordBuffer, j);
+            auto lesserOrGreaterRecord = memoryProvider->readRecord(projections, recordBuffer, j);
             const auto& lesserOrGreaterValue = lesserOrGreaterRecord.read(sortFieldIdentifier);
             if (sortOrder == SortOrder::Ascending && (curValue > lesserOrGreaterValue || (curValue == lesserOrGreaterValue && i > j)))
             {
@@ -64,8 +85,12 @@ void SortBuffer::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer
         memoryProvider->writeRecord(outputIndex, resultBuffer, curRecord);
     }
 
-    // Emit sorted buffer
+    // Set the metadata and emit sorted buffer
     emitRecordBuffer(executionCtx, recordBuffer, resultBuffer);
+}
+
+void SortBuffer::close(ExecutionContext&, RecordBuffer&) const
+{
 }
 
 void SortBuffer::emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const

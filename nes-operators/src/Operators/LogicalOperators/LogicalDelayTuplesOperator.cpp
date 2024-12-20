@@ -12,51 +12,40 @@
     limitations under the License.
 */
 
-#include <utility>
-#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
+#include <string>
+#include <Operators/LogicalOperators/LogicalDelayTuplesOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
 
-LogicalSortBufferOperator::LogicalSortBufferOperator(std::string const& sortFieldIdentifier, std::string const& sortOrder, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), sortFieldIdentifier(sortFieldIdentifier), sortOrder(sortOrder)
+LogicalDelayTuplesOperator::LogicalDelayTuplesOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id)
 {
 }
 
-std::string LogicalSortBufferOperator::getSortFieldIdentifier() const
+bool LogicalDelayTuplesOperator::isIdentical(NodePtr const& rhs) const
 {
-    return sortFieldIdentifier;
+    return equal(rhs) && NES::Util::as<LogicalDelayTuplesOperator>(rhs)->getId() == id;
 }
 
-std::string LogicalSortBufferOperator::getSortOrder() const
+bool LogicalDelayTuplesOperator::equal(NodePtr const& rhs) const
 {
-    return sortOrder;
-}
-
-bool LogicalSortBufferOperator::isIdentical(NodePtr const& rhs) const
-{
-    return equal(rhs) && NES::Util::as<LogicalSortBufferOperator>(rhs)->getId() == id;
-}
-
-bool LogicalSortBufferOperator::equal(NodePtr const& rhs) const
-{
-    if (NES::Util::instanceOf<LogicalSortBufferOperator>(rhs))
+    if (NES::Util::instanceOf<LogicalDelayTuplesOperator>(rhs))
     {
-        auto sortBufferOperator = NES::Util::as<LogicalSortBufferOperator>(rhs);
-        return sortFieldIdentifier == sortBufferOperator->sortFieldIdentifier && sortOrder == sortBufferOperator->sortOrder;
+        auto DelayTuplesOperator = NES::Util::as<LogicalDelayTuplesOperator>(rhs);
+        return true;
     }
     return false;
 };
 
-std::string LogicalSortBufferOperator::toString() const
+std::string LogicalDelayTuplesOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SORTBUFFER(opId: " << id << ", sortFieldIdentifier: " << sortFieldIdentifier << ", sortOrder: " << sortOrder << ")";
+    ss << "DelayTuples(opId: " << id << ")";
     return ss.str();
 }
 
-bool LogicalSortBufferOperator::inferSchema()
+bool LogicalDelayTuplesOperator::inferSchema()
 {
     if (!LogicalUnaryOperator::inferSchema())
     {
@@ -65,9 +54,9 @@ bool LogicalSortBufferOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalSortBufferOperator::copy()
+OperatorPtr LogicalDelayTuplesOperator::copy()
 {
-    auto copy = std::make_shared<LogicalSortBufferOperator>(sortFieldIdentifier, sortOrder, id);
+    auto copy = std::make_shared<LogicalDelayTuplesOperator>(id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -81,11 +70,11 @@ OperatorPtr LogicalSortBufferOperator::copy()
     return copy;
 }
 
-void LogicalSortBufferOperator::inferStringSignature()
+void LogicalDelayTuplesOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalSortBufferOperator: Inferring String signature for {}", *operatorNode);
-    NES_ASSERT(!children.empty(), "LogicalSortBufferOperator: SortBuffer should have children");
+    NES_TRACE("LogicalDelayTuplesOperator: Inferring String signature for {}", *operatorNode);
+    NES_ASSERT(!children.empty(), "LogicalDelayTuplesOperator: DelayTuples should have children");
 
     //Infer query signatures for child operators
     for (const auto& child : children)
@@ -96,7 +85,7 @@ void LogicalSortBufferOperator::inferStringSignature()
 
     std::stringstream signatureStream;
     auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "SORTBUFFER(" + sortFieldIdentifier + ", " + sortOrder + ")." << *childSignature.begin()->second.begin();
+    signatureStream << "DelayTuples()." << *childSignature.begin()->second.begin();
 
     //Update the signature
     auto hashCode = hashGenerator(signatureStream.str());

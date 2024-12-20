@@ -169,7 +169,7 @@ public:
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    std::string toString(const SchemaPtr& schema);
+    [[nodiscard]] std::string toString(const SchemaPtr& schema) const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different

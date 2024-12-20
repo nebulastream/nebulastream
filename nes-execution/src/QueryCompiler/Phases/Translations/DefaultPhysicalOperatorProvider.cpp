@@ -26,6 +26,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayTuplesOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -42,6 +43,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayTuplesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
@@ -177,6 +179,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
     else if (NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode))
     {
         lowerDelayBufferOperator(operatorNode);
+    }
+    else if (NES::Util::instanceOf<LogicalDelayTuplesOperator>(operatorNode))
+    {
+        lowerDelayTuplesOperator(operatorNode);
     }
     else
     {
@@ -371,48 +377,6 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
 
     Operators::SliceAssigner sliceAssigner(streamJoinConfig.windowSize, streamJoinConfig.windowSlide);
 
-    Runtime::Execution::Operators::SliceCachePtr localSliceCache;
-    Runtime::Execution::Operators::SliceCachePtr globalSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
-
-    if (options->sliceCacheType == SliceCacheType::DEFAULT)
-    {
-        localSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
-        NES_INFO("Slice Cache Type: DEFAULT");
-    }
-    else if (options->sliceCacheType == SliceCacheType::FIFO)
-    {
-        if (options->lockSliceCache)
-        {
-            localSliceCache
-                = std::make_shared<Runtime::Execution::Operators::FIFOSliceCacheWithLock>(options->sliceCacheSize, sliceAssigner);
-            globalSliceCache
-                = std::make_shared<Runtime::Execution::Operators::FIFOSliceCacheWithLock>(options->sliceCacheSize, sliceAssigner);
-            NES_INFO("Slice Cache Type: FIFO with lock");
-        }
-        else
-        {
-            localSliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize, sliceAssigner);
-            NES_INFO("Slice Cache Type: FIFO");
-        }
-    }
-    else if (options->sliceCacheType == SliceCacheType::LRU)
-    {
-        if (options->lockSliceCache)
-        {
-            localSliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCacheWithLock>(
-                options->sliceCacheSize, sliceAssigner);
-            globalSliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCacheWithLock>(
-                options->sliceCacheSize, sliceAssigner);
-            NES_INFO("Slice Cache Type: LRU with lock");
-        }
-        else
-        {
-            localSliceCache
-                = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize, sliceAssigner);
-            NES_INFO("Slice Cache Type: LRU");
-        }
-    }
-
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     if (options->sliceStoreType == SliceStoreType::MAP)
     {
@@ -421,14 +385,47 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     }
     else if (options->sliceStoreType == SliceStoreType::LIST)
     {
-        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStoreList>(sliceAssigner, 2, globalSliceCache);
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStoreList>(sliceAssigner, 2);
         NES_INFO("Slice Store Type: List");
-        // Disable local slice caches if global slice cache is activated
-        std::shared_ptr<Runtime::Execution::Operators::DefaultSliceCache> globalSliceCachePtr
-            = std::dynamic_pointer_cast<Runtime::Execution::Operators::DefaultSliceCache>(globalSliceCache);
-        if (globalSliceCachePtr == nullptr)
+    }
+
+    Runtime::Execution::Operators::SliceCachePtr sliceCache;
+    bool globalSliceCache = false;
+
+    if (options->sliceCacheType == SliceCacheType::DEFAULT)
+    {
+        sliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+        globalSliceCache = true;
+        NES_INFO("Slice Cache Type: DEFAULT");
+    }
+    else if (options->sliceCacheType == SliceCacheType::FIFO)
+    {
+        if (options->lockSliceCache)
         {
-            localSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+            sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCacheWithLock>(options->sliceCacheSize, sliceAssigner);
+            globalSliceCache = true;
+            NES_INFO("Slice Cache Type: FIFO with lock");
+        }
+        else
+        {
+            sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: FIFO");
+        }
+    }
+    else if (options->sliceCacheType == SliceCacheType::LRU)
+    {
+        if (options->lockSliceCache)
+        {
+            sliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCacheWithLock>(
+                options->sliceCacheSize, sliceAssigner);
+            globalSliceCache = true;
+            NES_INFO("Slice Cache Type: LRU with lock");
+        }
+        else
+        {
+            sliceCache
+                = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: LRU");
         }
     }
 
@@ -436,7 +433,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],
         std::move(sliceAndWindowStore),
-        localSliceCache,
+        sliceCache,
+        globalSliceCache,
         leftMemoryProvider,
         rightMemoryProvider);
 }
@@ -573,14 +571,33 @@ void DefaultPhysicalOperatorProvider::lowerSortBufferOperator(const LogicalOpera
     auto sortBufferOperator = NES::Util::as<LogicalSortBufferOperator>(operatorNode);
     PRECONDITION(NES::Util::instanceOf<LogicalSortBufferOperator>(operatorNode), "The operator should be a sort buffer operator.");
 
-    auto sortFieldIdentifier
-        = options->sortBufferByField.empty() ? sortBufferOperator->getSortFieldIdentifier() : options->sortBufferByField;
+    if (options->sortBufferByField.empty())
+    {
+        operatorNode->removeAndJoinParentAndChildren();
+        return;
+    }
+
+    SchemaPtr schema = NES::Util::as<Operator>(operatorNode)->getOutputSchema();
+
+    auto sortFieldIdentifier = options->sortBufferByField;
     auto sortOrder = magic_enum::enum_cast<Runtime::Execution::Operators::SortOrder>(options->sortBufferOrder)
                          .value_or(Runtime::Execution::Operators::SortOrder::Ascending);
 
+    // Set the identifier to the exact field name
+    auto fieldFound = false;
+    for (const auto& field : schema->getFieldNames())
+    {
+        if (std::equal(sortFieldIdentifier.rbegin(), sortFieldIdentifier.rend(), field.rbegin()))
+        {
+            sortFieldIdentifier = field;
+            fieldFound = true;
+            break;
+        }
+    }
+    PRECONDITION(fieldFound, "Sort field identifier not found in schema.");
+
     NES_INFO("Lower SortBuffer with sortFieldIdentifier: {}", sortFieldIdentifier);
-    auto physicalSortBufferOperator
-        = PhysicalOperators::PhysicalSortBufferOperator::create(sortBufferOperator->getInputSchema(), sortFieldIdentifier, sortOrder);
+    auto physicalSortBufferOperator = PhysicalOperators::PhysicalSortBufferOperator::create(schema, sortFieldIdentifier, sortOrder);
     physicalSortBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 
     operatorNode->replace(physicalSortBufferOperator);
@@ -588,19 +605,68 @@ void DefaultPhysicalOperatorProvider::lowerSortBufferOperator(const LogicalOpera
 
 void DefaultPhysicalOperatorProvider::lowerDelayBufferOperator(const LogicalOperatorPtr& operatorNode)
 {
-    auto delayBufferOperator = NES::Util::as<LogicalDelayBufferOperator>(operatorNode);
-    PRECONDITION(NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode), "The operator should be a delay buffer operator.");
+    PRECONDITION(
+        NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode) || NES::Util::instanceOf<LogicalDelayTuplesOperator>(operatorNode),
+        "The operator should be a delay operator.");
 
-    auto unorderedness = options->unorderedness;
-    auto minDelay = options->minDelay;
-    auto maxDelay = options->maxDelay;
+    if (options->unorderedness == 0.0)
+    {
+        operatorNode->removeAndJoinParentAndChildren();
+        return;
+    }
 
-    NES_INFO("Lower DelayBuffer with unorderedness: {}, minDelay: {}, maxDelay: {}", unorderedness, minDelay, maxDelay);
-    auto physicalDelayBufferOperator
-        = PhysicalOperators::PhysicalDelayBufferOperator::create(delayBufferOperator->getInputSchema(), unorderedness, minDelay, maxDelay);
-    physicalDelayBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+    if (options->delayStrategy == DelayStrategy::BUFFER)
+    {
+        SchemaPtr schema = NES::Util::as<Operator>(operatorNode)->getOutputSchema();
 
-    operatorNode->replace(physicalDelayBufferOperator);
+        auto unorderedness = options->unorderedness;
+        auto minDelay = options->minDelay;
+        auto maxDelay = options->maxDelay;
+
+        NES_INFO("Lower DelayBuffer with unorderedness: {}, minDelay: {}, maxDelay: {}", unorderedness, minDelay, maxDelay);
+        auto physicalDelayBufferOperator
+            = PhysicalOperators::PhysicalDelayBufferOperator::create(schema, unorderedness, minDelay, maxDelay);
+        physicalDelayBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
+        operatorNode->replace(physicalDelayBufferOperator);
+    }
+    else if (options->delayStrategy == DelayStrategy::TUPLES)
+    {
+        lowerDelayTuplesOperator(operatorNode);
+    }
+}
+
+void DefaultPhysicalOperatorProvider::lowerDelayTuplesOperator(const LogicalOperatorPtr& operatorNode)
+{
+    PRECONDITION(
+        NES::Util::instanceOf<LogicalDelayTuplesOperator>(operatorNode) || NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode),
+        "The operator should be a delay operator.");
+
+    if (options->unorderedness == 0.0)
+    {
+        operatorNode->removeAndJoinParentAndChildren();
+        return;
+    }
+
+    if (options->delayStrategy == DelayStrategy::TUPLES)
+    {
+        SchemaPtr schema = NES::Util::as<Operator>(operatorNode)->getOutputSchema();
+
+        auto unorderedness = options->unorderedness;
+        auto minDelay = options->minDelay;
+        auto maxDelay = options->maxDelay;
+
+        NES_INFO("Lower DelayTuples with unorderedness: {}, minDelay: {}, maxDelay: {}", unorderedness, minDelay, maxDelay);
+        auto physicalDelayTuplesOperator
+            = PhysicalOperators::PhysicalDelayTuplesOperator::create(schema, unorderedness, minDelay, maxDelay);
+        physicalDelayTuplesOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
+        operatorNode->replace(physicalDelayTuplesOperator);
+    }
+    else if (options->delayStrategy == DelayStrategy::BUFFER)
+    {
+        lowerDelayBufferOperator(operatorNode);
+    }
 }
 
 }

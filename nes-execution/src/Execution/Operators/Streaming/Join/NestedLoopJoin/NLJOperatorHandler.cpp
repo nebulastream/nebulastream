@@ -39,10 +39,17 @@ NLJOperatorHandler::NLJOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     SliceCachePtr sliceCache,
+    bool globalSliceCache,
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
     : StreamJoinOperatorHandler(
-          inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(sliceCache), leftMemoryProvider, rightMemoryProvider)
+          inputOrigins,
+          outputOriginId,
+          std::move(sliceAndWindowStore),
+          std::move(sliceCache),
+          globalSliceCache,
+          leftMemoryProvider,
+          rightMemoryProvider)
 {
     averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayoutPtr()->getCapacity());
     averageNumberOfTuplesLeft.wlock()->second = 0;

@@ -47,4 +47,10 @@ enum class SliceCacheType : uint8_t
     FIFO,
     LRU
 };
+
+enum class DelayStrategy : uint8_t
+{
+    BUFFER,
+    TUPLES
+};
 }

@@ -57,7 +57,7 @@ public:
             , sliceReference(sliceReference)
             , sliceStart(sliceStart)
             , sliceEnd(sliceEnd)
-            , nljPagedVectorMemRef(nljPagedVectorMemRef) {};
+            , nljPagedVectorMemRef(nljPagedVectorMemRef){};
 
         nautilus::val<NLJOperatorHandler*> joinOperatorHandler;
         nautilus::val<NLJSlice*> sliceReference;
@@ -72,8 +72,10 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
+    void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 
 private:

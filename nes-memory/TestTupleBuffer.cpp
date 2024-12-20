@@ -33,7 +33,7 @@ DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType)
 {
 }
 
-DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const
+DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
@@ -110,7 +110,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const SchemaPtr& schema)
+std::string DynamicTuple::toString(const SchemaPtr& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
@@ -213,7 +213,7 @@ uint64_t TestTupleBuffer::getNumberOfTuples() const
     return buffer.getNumberOfTuples();
 }
 
-void TestTupleBuffer::setNumberOfTuples(uint64_t value)
+void TestTupleBuffer::setNumberOfTuples(const uint64_t value)
 {
     buffer.setNumberOfTuples(value);
 }
@@ -254,7 +254,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
+std::string TestTupleBuffer::toString(const SchemaPtr& schema, const bool showHeader)
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;

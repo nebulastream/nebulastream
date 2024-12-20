@@ -41,19 +41,23 @@ public:
      * @param fieldIdentifiers
      * @param sortFieldIdentifier
      */
-    SortBuffer( //const uint64_t operatorHandlerIndex,
+    SortBuffer(
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         const Record::RecordFieldIdentifier& sortFieldIdentifier,
         const SortOrder sortOrder = SortOrder::Ascending);
 
+    void setup(ExecutionContext& executionCtx) const override;
+
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    // const uint64_t operatorHandlerIndex;
+    void emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const;
+
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     const Record::RecordFieldIdentifier sortFieldIdentifier;
     const SortOrder sortOrder;
+    std::vector<Record::RecordFieldIdentifier> projections;
 };
 
 } // namespace NES::Runtime::Execution::Operators

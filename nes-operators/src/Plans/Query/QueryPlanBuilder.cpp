@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayTuplesOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -106,6 +107,14 @@ QueryPlanPtr QueryPlanBuilder::addDelayBuffer(QueryPlanPtr queryPlan)
 {
     NES_DEBUG("QueryPlanBuilder: add delay buffer operator to query plan");
     OperatorPtr const op = std::make_shared<NES::LogicalDelayBufferOperator>(getNextOperatorId());
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+QueryPlanPtr QueryPlanBuilder::addDelayTuples(QueryPlanPtr queryPlan)
+{
+    NES_DEBUG("QueryPlanBuilder: add delay tuples operator to query plan");
+    OperatorPtr const op = std::make_shared<NES::LogicalDelayTuplesOperator>(getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -188,13 +197,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     const std::shared_ptr<Windowing::WindowType>& windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
-    leftQueryPlan = addDelayBuffer(leftQueryPlan);
-    rightQueryPlan = addDelayBuffer(rightQueryPlan);
-
-    // Add sort buffer operator
-    leftQueryPlan = addSortBuffer("", "Ascending", leftQueryPlan);
-    rightQueryPlan = addSortBuffer("", "Ascending", rightQueryPlan);
-
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
@@ -235,6 +237,13 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
     rightQueryPlan = checkAndAddWatermarkAssignment(rightQueryPlan, windowType);
+
+    leftQueryPlan = addDelayTuples(leftQueryPlan);
+    rightQueryPlan = addDelayTuples(rightQueryPlan);
+
+    // Add sort buffer operator
+    leftQueryPlan = addSortBuffer("", "Ascending", leftQueryPlan);
+    rightQueryPlan = addSortBuffer("", "Ascending", rightQueryPlan);
 
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     ///TODO(Ventura?>Steffen) can we know this at this query submission time?

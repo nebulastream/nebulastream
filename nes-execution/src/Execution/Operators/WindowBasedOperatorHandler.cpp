@@ -34,8 +34,10 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    SliceCachePtr sliceCache)
+    SliceCachePtr sliceCache,
+    bool globalSliceCache)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
+    , globalSliceCache(globalSliceCache)
     , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector(1, outputOriginId)))
     , numberOfWorkerThreads(1)
@@ -50,7 +52,16 @@ void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerT
     // Create slice cache for each worker thread
     for (uint64_t i = 0; i < numberOfWorkerThreads - 1; ++i)
     {
-        sliceCaches.push_back(sliceCaches[0]->clone());
+        if (globalSliceCache)
+        {
+            // use the same shared_ptr for a global slice cache
+            sliceCaches.push_back(sliceCaches[0]);
+        }
+        else
+        {
+            // clone the slice cache for local slice caches
+            sliceCaches.push_back(sliceCaches[0]->clone());
+        }
     }
 }
 

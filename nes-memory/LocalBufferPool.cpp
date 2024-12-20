@@ -147,7 +147,7 @@ std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
 }
-std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
@@ -163,7 +163,7 @@ std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::mi
     return std::nullopt;
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(const size_t size)
 {
     return bufferManager->getUnpooledBuffer(size);
 }

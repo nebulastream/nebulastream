@@ -43,9 +43,13 @@ std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(Timestamp 
 
     if (it == cache.end())
     {
+        missCounter++;
+
         // If slice is not found, return nullopt
         return {};
     }
+
+    hitCounter++;
 
     // Return pointer to the slice
     return it->second;

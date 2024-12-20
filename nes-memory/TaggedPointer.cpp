@@ -20,7 +20,7 @@ namespace NES
 {
 
 template <typename T>
-TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag)
+TaggedPointer<T>::TaggedPointer(T* ptr, const uint16_t tag)
 {
     reset(ptr, tag);
 }

@@ -17,6 +17,7 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/Operators/DelayBuffer.hpp>
+#include <Execution/Operators/DelayTuples.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -41,6 +42,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayTuplesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -135,13 +137,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode))
     {
-        // Add sort buffer operator handler
-        // auto sortBufferHandler = operatorNode->as<PhysicalOperators::PhysicalSortBufferOperator>()->getSortBufferOperatorHandler();
-        // NES_DEBUG("Added sortBufferOpHandler to operatorHandlers!");
-        // operatorHandlers.push_back(sortBufferHandler);
-        // auto handlerIndex = operatorHandlers.size() - 1;
-
-        auto sortBufferOperator = lowerSortBufferOperator(operatorNode, /*handlerIndex,*/ bufferSize);
+        auto sortBufferOperator = lowerSortBufferOperator(operatorNode, bufferSize);
         pipeline.setRootOperator(sortBufferOperator);
         return sortBufferOperator;
     }
@@ -150,6 +146,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto delayBufferOperator = lowerDelayBufferOperator(operatorNode, operatorHandlers);
         parentOperator->setChild(delayBufferOperator);
         return delayBufferOperator;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalDelayTuplesOperator>(operatorNode))
+    {
+        auto delayTuplesOperator = lowerDelayTuplesOperator(operatorNode, bufferSize, operatorHandlers);
+        pipeline.setRootOperator(delayTuplesOperator);
+        return delayTuplesOperator;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(operatorNode))
     {
@@ -275,10 +277,8 @@ LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalO
     return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerSortBufferOperator(
-    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-    //   uint64_t operatorHandlerIndex,
-    size_t bufferSize)
+std::shared_ptr<Runtime::Execution::Operators::Operator>
+LowerPhysicalToNautilusOperators::lowerSortBufferOperator(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -290,9 +290,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
     auto sortBufferOperator = NES::Util::as<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode);
     return std::make_shared<Runtime::Execution::Operators::SortBuffer>(
-        /*operatorHandlerIndex,*/ std::move(memoryProvider),
-        sortBufferOperator->getSortFieldIdentifier(),
-        sortBufferOperator->getSortOrder());
+        std::move(memoryProvider), sortBufferOperator->getSortFieldIdentifier(), sortBufferOperator->getSortOrder());
     ;
 }
 
@@ -304,6 +302,26 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::DelayBufferOperatorHandler>(
         delayBufferOperator->getUnorderedness(), delayBufferOperator->getMinDelay(), delayBufferOperator->getMaxDelay()));
     return std::make_shared<Runtime::Execution::Operators::DelayBuffer>(operatorHandlers.size() - 1);
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerDelayTuplesOperator(
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+{
+    auto schema = operatorNode->getOutputSchema();
+    NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+
+    /// pass buffer size here
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+        = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+
+    auto delayTuplesOperator = NES::Util::as<PhysicalOperators::PhysicalDelayTuplesOperator>(operatorNode);
+
+    operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::DelayTuplesOperatorHandler>(
+        delayTuplesOperator->getUnorderedness(), delayTuplesOperator->getMinDelay(), delayTuplesOperator->getMaxDelay()));
+    return std::make_shared<Runtime::Execution::Operators::DelayTuples>(std::move(memoryProvider), operatorHandlers.size() - 1);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

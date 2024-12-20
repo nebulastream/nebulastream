@@ -48,9 +48,13 @@ std::optional<SliceCache::SlicePtr> FIFOSliceCacheWithLock::getSliceFromCache(Ti
 
     if (it == cacheLocked->end())
     {
+        missCounter++;
+
         // If slice is not found, return nullopt
         return {};
     }
+
+    hitCounter++;
 
     // Return pointer to the slice
     return it->second;
@@ -61,30 +65,25 @@ bool FIFOSliceCacheWithLock::passSliceToCache(Timestamp sliceId, SliceCache::Sli
     // Get the value of sliceId
     auto sliceIdValue = sliceId.getRawValue();
 
-    {
-        // Get read lock for cache
-        auto cacheLocked = cache.rlock();
+    // Get write lock for cache and slices
+    auto [cacheLocked, slicesLocked] = folly::acquireLocked(cache, slices);
 
-        // Check if slice is already in cache
-        if (cacheLocked->contains(sliceIdValue))
-        {
-            return false;
-        }
+    // Check if slice is already in cache
+    if (cacheLocked->contains(sliceIdValue))
+    {
+        return false;
     }
 
-    // Get write lock for cache and slices
-    auto [cacheWLocked, slicesLocked] = folly::acquireLocked(cache, slices);
-
     // Check if cache is full
-    if (cacheWLocked->size() == cacheSize)
+    if (cacheLocked->size() == cacheSize)
     {
         // If full, remove last slice in queue
-        cacheWLocked->erase(slicesLocked->back());
+        cacheLocked->erase(slicesLocked->back());
         slicesLocked->pop_back();
     }
     // Add new slice to cache
     slicesLocked->push_front(sliceIdValue);
-    cacheWLocked->emplace(sliceIdValue, newSlice);
+    cacheLocked->emplace(sliceIdValue, newSlice);
 
     return true;
 }

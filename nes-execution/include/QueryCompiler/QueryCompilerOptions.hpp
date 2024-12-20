@@ -55,6 +55,7 @@ struct QueryCompilerOptions
     bool lockSliceCache = false;
     std::string sortBufferByField;
     std::string sortBufferOrder = "Ascending";
+    DelayStrategy delayStrategy = DelayStrategy::TUPLES;
     float unorderedness = 0.0;
     uint64_t minDelay = 1;
     uint64_t maxDelay = 10;
@@ -89,6 +90,7 @@ queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfigurati
     options->sortBufferByField = queryCompilerConfiguration.sortBufferByField.getValue();
     options->sortBufferOrder = queryCompilerConfiguration.sortBufferOrder.getValue();
 
+    options->delayStrategy = queryCompilerConfiguration.delayStrategy;
     options->unorderedness = queryCompilerConfiguration.unorderedness.getValue();
     options->minDelay = queryCompilerConfiguration.minDelay.getValue();
     options->maxDelay = queryCompilerConfiguration.maxDelay.getValue();

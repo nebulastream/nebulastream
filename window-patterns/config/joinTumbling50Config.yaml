@@ -1,7 +1,7 @@
 query: |
   SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2)
   ON value = value2
-  WINDOW SLIDING (timestamp, size 100 ms, advance by 10 ms)
+  WINDOW TUMBLING (timestamp, size 50 ms)
   INTO csv_sink;
 sink:
   name: csv_sink

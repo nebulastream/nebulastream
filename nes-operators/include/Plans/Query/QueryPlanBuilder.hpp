@@ -81,6 +81,14 @@ public:
     static QueryPlanPtr addDelayBuffer(QueryPlanPtr queryPlan);
 
     /**
+     * @brief: this call add the delay tuples operator to the queryPlan, the operator delays some tuples within a buffer according
+     * to the given unorderedness.
+     * @param queryPlanPtr the queryPlan the sort tuples node is added to
+     * @return the updated queryPlan
+     */
+    static QueryPlanPtr addDelayTuples(QueryPlanPtr queryPlan);
+
+    /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
      * @param filterFunction as function node containing the predicate
      * @param queryPlanPtr the queryPlan the filter node is added to

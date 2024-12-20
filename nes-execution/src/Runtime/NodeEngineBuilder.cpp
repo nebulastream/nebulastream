@@ -46,7 +46,13 @@ const char* functionName()
 
 struct PrintingStatisticListener final : QueryEngineStatisticListener
 {
-    void onEvent(Event event) override { events.writeIfNotFull(event); }
+    void onEvent(Event event) override
+    {
+        if (std::holds_alternative<TaskExecutionStart>(event) || std::holds_alternative<TaskExecutionComplete>(event))
+        {
+            events.blockingWrite(event);
+        }
+    }
 
     explicit PrintingStatisticListener(const std::filesystem::path& path)
         : file(path, std::ios::out | std::ios::app)
@@ -93,7 +99,7 @@ private:
     }
 
     std::ofstream file;
-    folly::MPMCQueue<Event> events{100};
+    folly::MPMCQueue<Event> events{1000};
     std::jthread printThread;
 };
 
