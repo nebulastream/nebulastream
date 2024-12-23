@@ -76,6 +76,12 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void recreateOperatorHandlerFromFile();
 
     /**
+     * @brief Retrieves state, window info and watermarks information from max(last watermark, migrated tmstmp)
+     * @return vector of tuple buffers
+     */
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration();
+
+    /**
      * @brief Retrieve the state as a vector of tuple buffers
      * Format of buffers looks like:
      * start buffers contain metadata in format:
@@ -124,6 +130,24 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param buffers with the state
      */
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
+
+    /**
+     * @brief read numberOfBuffers amount of buffers from file
+     * @param numberOfBuffers number of buffers to read
+     * @return read buffers
+     */
+    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+
+    /**
+     * @brief Retrieve watermarks and sequence numbers as a vector of tuple buffers
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build origins (n) | number of probe origins (m)
+     * | watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     */
+    std::vector<TupleBuffer> getWatermarksToMigrate();
 
     /**
      * @brief Retrieves buffers from the file and restores the state
@@ -304,10 +328,15 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
   private:
     /**
-     * read numberOfBuffers amount of buffers from file
-     * @param numberOfBuffers number of buffers to read
+     * @brief Restores watermarks and sequence numbers in build and probe watermark processors
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build buffers (n) | number of probe buffers (m)
+     * watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
      */
-    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+    void restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers);
 
     /**
      * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
