@@ -34,6 +34,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Mediums/RawBufferSink.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <iostream>
 #include <random>
 
@@ -263,26 +264,32 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 
     /**
      * @brief add metadata info to buffer and return it
+     * @param numberOfWatermarkBuffers size of watermark buffers
      * @param numberOfStateBuffers size of state buffers
      * @param numberOfWindowInfoBuffers size of window info buffers
      * @return new buffer with metadata info
      */
-    Runtime::TupleBuffer addStateAndWindowInfoMetadata(size_t numberOfStateBuffers, size_t numberOfWindowInfoBuffers) {
+    Runtime::TupleBuffer addWatermarksStateAndWindowInfoMetadata(size_t numberOfWatermarkBuffers,
+                                                                 size_t numberOfStateBuffers,
+                                                                 size_t numberOfWindowInfoBuffers) {
         auto metadata = bm->getBufferBlocking();
         auto metadataPtr = metadata.getBuffer<uint64_t>();
 
-        metadataPtr[0] = numberOfStateBuffers;
-        metadataPtr[1] = numberOfWindowInfoBuffers;
+        metadataPtr[0] = numberOfWatermarkBuffers;
+        metadataPtr[1] = numberOfStateBuffers;
+        metadataPtr[2] = numberOfWindowInfoBuffers;
 
         return metadata;
     }
 
     /**
      * @brief use raw buffer sink to write tuples to the file
+     * @param watermarks vector of watermark tuple buffers to sink
      * @param state vector of state tuple buffers to sink
      * @param windowInfo vector of window info buffers to sink
      */
-    void sinkToTheRawBufferSink(std::vector<Runtime::TupleBuffer> state,
+    void sinkToTheRawBufferSink(std::vector<Runtime::TupleBuffer> watermarks,
+                                std::vector<Runtime::TupleBuffer> state,
                                 std::vector<Runtime::TupleBuffer> windowInfo,
                                 std::string fileName) {
 
@@ -297,17 +304,21 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
             RawBufferSink(nodeEngine, 1, fileName, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
         rawBufferSink.setup();
 
-        auto metadata = addStateAndWindowInfoMetadata(state.size(), windowInfo.size());
+        auto metadata = addWatermarksStateAndWindowInfoMetadata(watermarks.size(), state.size(), windowInfo.size());
 
         // mocked context
         auto context = WorkerContext(INITIAL<WorkerThreadId>, bm, 100);
-        // 1. write state and window info metadata
+        // 1.write watermarks, state and window info metadata
         rawBufferSink.writeData(metadata, context);
-        // 2. write state buffers
+        // 2. write watermarks buffers
+        for (auto buffer : watermarks) {
+            rawBufferSink.writeData(buffer, context);
+        }
+        // 3. write state buffers
         for (auto buffer : state) {
             rawBufferSink.writeData(buffer, context);
         }
-        // 3. write window info buffers
+        // 4. write window info buffers
         for (auto buffer : windowInfo) {
             rawBufferSink.writeData(buffer, context);
         }
@@ -576,6 +587,91 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
     }
 
     /**
+     * @brief Compares state of watermark processors inside recreatedOperatorHandler and expected nljOperatorHandler
+     */
+    void compareExpectedOperatorHandlerAndRecreatedWatermarks() {
+        // get recreated and expected window info to compare
+        auto expectedWatermarks = nljOperatorHandler->getWatermarksToMigrate();
+        auto recreatedWatermarks = recreatedOperatorHandler->getWatermarksToMigrate();
+
+        // check that size of watermark buffers is equal
+        EXPECT_EQ(expectedWatermarks.size(), recreatedWatermarks.size());
+
+        auto expectedDataPtr = expectedWatermarks[0].getBuffer<uint64_t>();
+        auto recreatedDataPtr = recreatedWatermarks[0].getBuffer<uint64_t>();
+
+        auto expectedBuildBuffersSize = expectedDataPtr[0];
+        auto recreatedBuildBuffersSize = recreatedDataPtr[0];
+        ASSERT_EQ(expectedBuildBuffersSize, recreatedBuildBuffersSize);
+
+        compareExpectedOperatorHandlerAndRecreatedWatermarkBuffers(
+            std::span<const Runtime::TupleBuffer>(expectedWatermarks.data() + 1, expectedBuildBuffersSize),
+            std::span<const Runtime::TupleBuffer>(recreatedWatermarks.data() + 1, recreatedBuildBuffersSize));
+
+        auto expectedProbeBuffersSize = expectedDataPtr[0];
+        auto recreatedProbeBuffersSize = recreatedDataPtr[0];
+        ASSERT_EQ(expectedProbeBuffersSize, recreatedProbeBuffersSize);
+
+        compareExpectedOperatorHandlerAndRecreatedWatermarkBuffers(
+            std::span<const Runtime::TupleBuffer>(expectedWatermarks.data() + expectedBuildBuffersSize + 1,
+                                                  expectedProbeBuffersSize),
+            std::span<const Runtime::TupleBuffer>(recreatedWatermarks.data() + recreatedBuildBuffersSize + 1,
+                                                  recreatedProbeBuffersSize));
+    }
+
+    /**
+     * @brief Compares buffers with watermarks states
+     */
+    void compareExpectedOperatorHandlerAndRecreatedWatermarkBuffers(std::span<const Runtime::TupleBuffer> expectedBuffers,
+                                                                    std::span<const Runtime::TupleBuffer> recreatedBuffers) {
+        auto expectedBuffersIdx = 0;
+        auto expectedDataPtr = expectedBuffers[expectedBuffersIdx].getBuffer<uint64_t>();
+        auto expectedIdx = 0;
+
+        auto recreatedBuffersIdx = 0;
+        auto recreatedDataPtr = recreatedBuffers[recreatedBuffersIdx].getBuffer<uint64_t>();
+        auto recreatedIdx = 0;
+
+        auto expectedNumberOfOrigins = deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers);
+        auto recreatedNumberOfOrigins =
+            deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers);
+        ASSERT_EQ(expectedNumberOfOrigins, recreatedNumberOfOrigins);
+
+        for (size_t originIndex = 0; originIndex < expectedNumberOfOrigins; ++originIndex) {
+            auto expectedNumberOfStates = deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers);
+            auto recreatedNumberOfStates =
+                deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers);
+            ASSERT_EQ(expectedNumberOfStates, recreatedNumberOfStates);
+
+            for (uint64_t stateId = 0; stateId < expectedNumberOfStates; stateId++) {
+                ASSERT_EQ(deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers),
+                          deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers));
+                ASSERT_EQ(deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers),
+                          deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers));
+                ASSERT_EQ(deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers),
+                          deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers));
+                ASSERT_EQ(deserializeNextValue(expectedDataPtr, expectedIdx, expectedBuffersIdx, expectedBuffers),
+                          deserializeNextValue(recreatedDataPtr, recreatedIdx, recreatedBuffersIdx, expectedBuffers));
+            }
+        }
+    }
+
+    /**
+     * @brief deserialize next value from buffer
+     */
+    uint64_t deserializeNextValue(const uint64_t* dataPtr,
+                                  int dataIdx,
+                                  int dataBuffersIdx,
+                                  std::span<const Runtime::TupleBuffer> buffers) {
+        if (!buffers[dataBuffersIdx].hasSpaceLeft(dataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+            // update metadata pointer and index
+            dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
+            dataIdx = 0;
+        }
+        return dataPtr[dataIdx++];
+    }
+
+    /**
      * @brief Compares state inside expected and recreated paged vector
      * @param expectedPagedVectorRef - expected content of paged vector
      * @param recreatedPagedVectorRef - recreated content
@@ -600,6 +696,55 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                 EXPECT_EQ(record.read(field->getName()), expectedRecord.read(field->getName()));
             }
         }
+    }
+
+    /**
+     * @brief add more sequence number to build watermarks processor
+     */
+    void triggerWindows(PipelineExecutionContext* pipelineCtx) {
+        auto updates = 500_u64;
+        for (auto i = 1_u64; i <= updates; i++) {
+            auto newWatermark = BufferMetaData(WatermarkTs(i), {i, 1, true}, OriginId(0));
+            nljOperatorHandler->checkAndTriggerWindows(newWatermark, pipelineCtx);
+        }
+
+        int originMin;
+        auto nextSeqNumber = createRandomInt(51, 500);
+        originMin = nextSeqNumber + 1;
+        for (auto seqNumber = updates + 1; seqNumber <= nextSeqNumber; seqNumber++) {
+            uint64_t randomChunks = createRandomInt(2, 50);
+            for (uint64_t chunk = 1; chunk < randomChunks; chunk++) {
+                auto newWatermark = BufferMetaData(WatermarkTs(seqNumber), {seqNumber, chunk, false}, OriginId(0));
+                nljOperatorHandler->checkAndTriggerWindows(newWatermark, pipelineCtx);
+            }
+            auto newWatermark = BufferMetaData(WatermarkTs(seqNumber), {seqNumber, randomChunks, true}, OriginId(0));
+            nljOperatorHandler->checkAndTriggerWindows(newWatermark, pipelineCtx);
+        }
+
+        auto seenSeqNumbers = std::map<SequenceNumber, bool>();
+        for (uint64_t i = 0; i < createRandomInt(50, 1000); i++) {
+            auto nextSeqNumber = createRandomInt(1000, 100000);
+            if (!seenSeqNumbers.contains(nextSeqNumber + 1)) {
+                if (!seenSeqNumbers.contains(nextSeqNumber)) {
+                    uint64_t randomChunks = createRandomInt(2, 50);
+                    for (uint64_t chunk = 1; chunk < randomChunks; chunk++) {
+                        auto newWatermark =
+                            BufferMetaData(WatermarkTs(nextSeqNumber), {nextSeqNumber, chunk, false}, OriginId(0));
+                        nljOperatorHandler->checkAndTriggerWindows(newWatermark, pipelineCtx);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief generates random integer from minValue to maxValue
+     */
+    uint64_t createRandomInt(uint64_t minValue = 1, uint64_t maxValue = 1000) {
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<uint64_t> dist(minValue, maxValue);
+        return dist(mt);
     }
 };
 
@@ -691,23 +836,25 @@ TEST_F(NLJSliceSerializationTest, nljWindowsSerialization) {
 /**
  * Test operator handler recreation from the file
  */
-TEST_F(NLJSliceSerializationTest, nljFileRecreation) {
+TEST_F(NLJSliceSerializationTest, nljSeparateSerializationFunctionsTests) {
     const auto numberOfRecordsLeft = 10000;
     const auto numberOfRecordsRight = 10000;
 
     // 1. Generate and insert records to the operator handler
     auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
 
-    // 2. Get state and windows info from old operator handler
+    // 2. Get watermarks, state and windows info from old operator handler
+    auto watermarksToMigrate = nljOperatorHandler->getWatermarksToMigrate();
     auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, maxTs);
     auto windowsToMigrate = nljOperatorHandler->getWindowInfoToMigrate();
 
     // 3. Write buffers to the file using rawBufferSink in other thread
     std::thread thread([this,
+                        watermarksToMigrate = watermarksToMigrate,
                         dataToMigrate = dataToMigrate,
                         windowsToMigrate = windowsToMigrate,
                         recreationFilePath = recreationFilePath]() mutable {
-        sinkToTheRawBufferSink(dataToMigrate, windowsToMigrate, recreationFilePath);
+        sinkToTheRawBufferSink(watermarksToMigrate, dataToMigrate, windowsToMigrate, recreationFilePath);
     });
     thread.detach();
 
@@ -718,5 +865,67 @@ TEST_F(NLJSliceSerializationTest, nljFileRecreation) {
     // 5. Compare state and window info of old and recreated operator handler
     compareExpectedOperatorHandlerAndRecreatedState(maxTs);
     compareExpectedOperatorHandlerAndRecreatedWindowsInfo();
+    compareExpectedOperatorHandlerAndRecreatedWatermarks();
+}
+
+/**
+ * Test pack operator handler for migration
+ */
+TEST_F(NLJSliceSerializationTest, nljSerializeOperatorHandlerForMigrationFunctionTest) {
+    const auto numberOfRecordsLeft = 10000;
+    const auto numberOfRecordsRight = 10000;
+
+    // 1. Generate and insert records to the operator handler
+    auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
+
+    // 2. Get watermarks, state and windows info from old operator handler
+    auto buffers = nljOperatorHandler->serializeOperatorHandlerForMigration();
+
+    // 3. Write buffers to the file using rawBufferSink in other thread
+    std::thread thread([this, buffers = buffers, recreationFilePath = recreationFilePath]() mutable {
+        sinkToTheRawBufferSink(buffers, recreationFilePath);
+    });
+    thread.detach();
+
+    // 4. Start recreation earlier to check waiting on the new operator handler
+    recreatedOperatorHandler->setRecreationFileName(transformFileName(recreationFilePath));
+    recreatedOperatorHandler->recreateOperatorHandlerFromFile();
+
+    // 5. Compare state and window info of old and recreated operator handler
+    compareExpectedOperatorHandlerAndRecreatedState(maxTs);
+    compareExpectedOperatorHandlerAndRecreatedWindowsInfo();
+    compareExpectedOperatorHandlerAndRecreatedWatermarks();
+}
+
+/**
+ * Test pack operator handler for migration
+ */
+TEST_F(NLJSliceSerializationTest, nljTriggeredSerializeOperatorHandlerForMigrationFunctionTest) {
+    const auto numberOfRecordsLeft = 10000;
+    const auto numberOfRecordsRight = 10000;
+
+    auto pipelineCtx = MockedPipelineExecutionContext({nljOperatorHandler});
+    triggerWindows(&pipelineCtx);
+
+    // 1. Generate and insert records to the operator handler
+    auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
+
+    // 2. Get watermarks, state and windows info from old operator handler
+    auto buffers = nljOperatorHandler->serializeOperatorHandlerForMigration();
+
+    // 3. Write buffers to the file using rawBufferSink in other thread
+    std::thread thread([this, buffers = buffers, recreationFilePath = recreationFilePath]() mutable {
+        sinkToTheRawBufferSink(buffers, recreationFilePath);
+    });
+    thread.detach();
+
+    // 4. Start recreation earlier to check waiting on the new operator handler
+    recreatedOperatorHandler->setRecreationFileName(transformFileName(recreationFilePath));
+    recreatedOperatorHandler->recreateOperatorHandlerFromFile();
+
+    // 5. Compare state and window info of old and recreated operator handler
+    compareExpectedOperatorHandlerAndRecreatedState(maxTs);
+    compareExpectedOperatorHandlerAndRecreatedWindowsInfo();
+    compareExpectedOperatorHandlerAndRecreatedWatermarks();
 }
 }// namespace NES::Runtime::Execution
