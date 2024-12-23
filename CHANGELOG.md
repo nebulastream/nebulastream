@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.203](https://github.com/nebulastream/nebulastream/tree/v0.6.203) (2024-12-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.202...v0.6.203)
+
+**Implemented enhancements:**
+
+- \[TASK\] Approach two to adjust work with invalid slices \(after deployment of second shared query\) [\#5115](https://github.com/nebulastream/nebulastream/issues/5115)
+
 ## [v0.6.202](https://github.com/nebulastream/nebulastream/tree/v0.6.202) (2024-12-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.201...v0.6.202)
