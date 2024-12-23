@@ -106,6 +106,22 @@ class PagedVectorVarSized {
     void appendAllPages(PagedVectorVarSized& other);
 
     /**
+     * Removes the specified amount of pages from the vector of tupleBuffers that stores the fixed sized data of records.
+     * The pages should only be removed if they were previously filled with records, that were now deleted, so new records can be
+     * written to the last page that still contains records.
+     * @param numberOfEmptyTrailingPages
+     */
+    void removeEmptyTrailingPages(uint64_t numberOfEmptyTrailingPages);
+
+    /**
+     * Removes the specified amount of pages from the vector of tupleBuffers that stores the var sized data for text of records.
+     * The pages should only be removed if they were previously filled with text, that is now deleted, so new text can be
+     * written to the last page that still contains text.
+     * @param firstInvalidVarSizedPtr the pointer to the first written var sized Entry that is now invalid. (delete everything after)
+     */
+    void removeEmptyTrailingVarSizedPages(uint64_t firstInvalidVarSizedPtr);
+
+    /**
      * @brief Getter for the pages object.
      * @return std::vector<Runtime::TupleBuffer>&
      */

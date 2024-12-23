@@ -123,6 +123,9 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
 
+        auto readTsFieldLeftSetup = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
+        auto readTsFieldRightSetup = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
+
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             {INVALID_ORIGIN_ID},
             OriginId(1),
@@ -132,6 +135,10 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             rightSchema,
             leftPageSize,
             rightPageSize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeftSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRightSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
         bm = std::make_shared<BufferManager>(8196, 5000);
         nljOperatorHandler->setBufferManager(bm);
@@ -695,6 +702,10 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 200;
     auto numberOfRecordsRight = 200;
     windowSize = 10;
+
+    auto readTsFieldLeftTest = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
+    auto readTsFieldRightTest = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
+
     nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
         {INVALID_ORIGIN_ID},
         OriginId(1),
@@ -704,6 +715,11 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
         rightSchema,
         leftPageSize,
         rightPageSize,
+
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeftTest,
+                                                                           Windowing::TimeUnit::Milliseconds()),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRightTest,
+                                                                           Windowing::TimeUnit::Milliseconds()),
         std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);

@@ -33,8 +33,15 @@ class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInter
     StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
     StreamSlice* getCurrentSliceOrCreate() override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
+    std::vector<WindowInfo> getAllWindowsOfDeploymentTimeForSlice(StreamSlice& slice, uint64_t deploymentTime) override;
 
-    void addQueryToSharedJoinApproachOneProbing(QueryId queryId, uint64_t deploymentTime) override;
+    // This is used instead of getSliceByTimestampOrCreateIt(uint64_t timestamp), because new slices might need to be created while we are checking something about slices so they are already locked.
+    StreamSlicePtr
+    getSliceByTimestampOrCreateItLocked(uint64_t timestamp, WLockedSlices& wLockedSlices, WLockedWindows& wLockedWindows);
+
+    void addQueryToSharedJoinApproachProbing(QueryId queryId, uint64_t deploymentTime) override;
+
+    void addQueryToSharedJoinApproachDeleting(QueryId queryId, uint64_t deploymentTime) override = 0;
 
     void removeQueryFromSharedJoin(QueryId queryId) override;
 };

@@ -121,25 +121,12 @@ uint64_t HJOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 uint64_t HJOperatorHandler::getTotalSizeForDataStructures() const { return totalSizeForDataStructures; }
 
-HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                                     const OriginId outputOriginId,
-                                     const uint64_t windowSize,
-                                     const uint64_t windowSlide,
-                                     const SchemaPtr& leftSchema,
-                                     const SchemaPtr& rightSchema,
-                                     const QueryCompilation::StreamJoinStrategy joinStrategy,
+HJOperatorHandler::HJOperatorHandler(const QueryCompilation::StreamJoinStrategy joinStrategy,
                                      uint64_t totalSizeForDataStructures,
                                      uint64_t preAllocPageSizeCnt,
                                      uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins,
-                                outputOriginId,
-                                windowSize,
-                                windowSlide,
-                                leftSchema,
-                                rightSchema,
-                                std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
-      joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
+    : joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
       preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
 
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {

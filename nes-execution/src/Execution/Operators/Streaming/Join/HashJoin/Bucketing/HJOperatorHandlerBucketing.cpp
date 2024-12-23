@@ -26,25 +26,19 @@ HJOperatorHandlerBucketing::HJOperatorHandlerBucketing(const std::vector<OriginI
                                                        uint64_t totalSizeForDataStructures,
                                                        uint64_t preAllocPageSizeCnt,
                                                        uint64_t pageSize,
-                                                       uint64_t numPartitions)
+                                                       uint64_t numPartitions,
+                                                       TimeFunctionPtr leftTimeFunctionPtr,
+                                                       TimeFunctionPtr rightTimeFunctionPtr)
     : StreamJoinOperatorHandler(inputOrigins,
                                 outputOriginId,
                                 windowSize,
                                 windowSlide,
                                 leftSchema,
                                 rightSchema,
+                                std::move(leftTimeFunctionPtr),
+                                std::move(rightTimeFunctionPtr),
                                 std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
-      HJOperatorHandler(inputOrigins,
-                        outputOriginId,
-                        windowSize,
-                        windowSlide,
-                        leftSchema,
-                        rightSchema,
-                        joinStrategy,
-                        totalSizeForDataStructures,
-                        preAllocPageSizeCnt,
-                        pageSize,
-                        numPartitions) {}
+      HJOperatorHandler(joinStrategy, totalSizeForDataStructures, preAllocPageSizeCnt, pageSize, numPartitions) {}
 
 HJOperatorHandlerPtr HJOperatorHandlerBucketing::create(const std::vector<OriginId>& inputOrigins,
                                                         const OriginId outputOriginId,
@@ -56,7 +50,9 @@ HJOperatorHandlerPtr HJOperatorHandlerBucketing::create(const std::vector<Origin
                                                         uint64_t totalSizeForDataStructures,
                                                         uint64_t preAllocPageSizeCnt,
                                                         uint64_t pageSize,
-                                                        uint64_t numPartitions) {
+                                                        uint64_t numPartitions,
+                                                        TimeFunctionPtr leftTimeFunctionPtr,
+                                                        TimeFunctionPtr rightTimeFunctionPtr) {
     return std::make_shared<HJOperatorHandlerBucketing>(inputOrigins,
                                                         outputOriginId,
                                                         windowSize,
@@ -67,7 +63,9 @@ HJOperatorHandlerPtr HJOperatorHandlerBucketing::create(const std::vector<Origin
                                                         totalSizeForDataStructures,
                                                         preAllocPageSizeCnt,
                                                         pageSize,
-                                                        numPartitions);
+                                                        numPartitions,
+                                                        std::move(leftTimeFunctionPtr),
+                                                        std::move(rightTimeFunctionPtr));
 }
 
 }// namespace NES::Runtime::Execution::Operators

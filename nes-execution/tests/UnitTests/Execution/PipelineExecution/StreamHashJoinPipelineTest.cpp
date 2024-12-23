@@ -186,18 +186,22 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         // Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(2);
-        auto hashJoinOpHandler =
-            Operators::HJOperatorHandlerSlicing::create(originIds,
-                                                        outputOriginId,
-                                                        windowSize,
-                                                        windowSlide,
-                                                        leftSchema,
-                                                        rightSchema,
-                                                        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                        NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                        NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
+        auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(
+            originIds,
+            outputOriginId,
+            windowSize,
+            windowSlide,
+            leftSchema,
+            rightSchema,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+            NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+            NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
+            NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()));
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

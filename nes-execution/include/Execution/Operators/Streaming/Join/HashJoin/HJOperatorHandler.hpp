@@ -41,13 +41,7 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      * @param pageSize
      * @param numPartitions
      */
-    HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                      const OriginId outputOriginId,
-                      const uint64_t windowSize,
-                      const uint64_t windowSlide,
-                      const SchemaPtr& leftSchema,
-                      const SchemaPtr& rightSchema,
-                      const QueryCompilation::StreamJoinStrategy joinStrategy,
+    HJOperatorHandler(const QueryCompilation::StreamJoinStrategy joinStrategy,
                       uint64_t totalSizeForDataStructures,
                       uint64_t preAllocPageSizeCnt,
                       uint64_t pageSize,

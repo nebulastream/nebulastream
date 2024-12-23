@@ -38,6 +38,7 @@ class Record {
     bool hasField(RecordFieldIdentifier fieldName);
     std::vector<RecordFieldIdentifier> getAllFields();
     std::string toString();
+    std::string toStringShort();
     bool operator==(const Record& rhs) const;
     bool operator!=(const Record& rhs) const;
 

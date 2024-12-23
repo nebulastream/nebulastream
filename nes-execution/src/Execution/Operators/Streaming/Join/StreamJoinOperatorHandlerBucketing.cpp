@@ -57,4 +57,9 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlic
     // During bucketing one slice represents one window
     return {WindowInfo(slice.getSliceStart(), slice.getSliceEnd())};
 }
+std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsOfDeploymentTimeForSlice(StreamSlice& slice,
+                                                                                                  uint64_t deploymentTime) {
+    NES_INFO("avoid unused compile error {} {}", slice.toString(), deploymentTime)
+    NES_THROW_RUNTIME_ERROR("not implemented for bucketing");
+}
 }// namespace NES::Runtime::Execution::Operators

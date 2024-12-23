@@ -26,25 +26,19 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                                                    const uint64_t totalSizeForDataStructures,
                                                    const uint64_t preAllocPageSizeCnt,
                                                    const uint64_t pageSize,
-                                                   const uint64_t numPartitions)
+                                                   const uint64_t numPartitions,
+                                                   TimeFunctionPtr leftTimeFunctionPtr,
+                                                   TimeFunctionPtr rightTimeFunctionPtr)
     : StreamJoinOperatorHandler(inputOrigins,
                                 outputOriginId,
                                 windowSize,
                                 windowSlide,
                                 leftSchema,
                                 rightSchema,
+                                std::move(leftTimeFunctionPtr),
+                                std::move(rightTimeFunctionPtr),
                                 std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
-      HJOperatorHandler(inputOrigins,
-                        outputOriginId,
-                        windowSize,
-                        windowSlide,
-                        leftSchema,
-                        rightSchema,
-                        joinStrategy,
-                        totalSizeForDataStructures,
-                        preAllocPageSizeCnt,
-                        pageSize,
-                        numPartitions) {}
+      HJOperatorHandler(joinStrategy, totalSizeForDataStructures, preAllocPageSizeCnt, pageSize, numPartitions) {}
 
 HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
                                                       const OriginId outputOriginId,
@@ -56,7 +50,9 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId
                                                       const uint64_t totalSizeForDataStructures,
                                                       const uint64_t preAllocPageSizeCnt,
                                                       const uint64_t pageSize,
-                                                      const uint64_t numPartitions) {
+                                                      const uint64_t numPartitions,
+                                                      TimeFunctionPtr leftTimeFunctionPtr,
+                                                      TimeFunctionPtr rightTimeFunctionPtr) {
     return std::make_shared<HJOperatorHandlerSlicing>(inputOrigins,
                                                       outputOriginId,
                                                       windowSize,
@@ -67,7 +63,12 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId
                                                       totalSizeForDataStructures,
                                                       preAllocPageSizeCnt,
                                                       pageSize,
-                                                      numPartitions);
+                                                      numPartitions,
+                                                      std::move(leftTimeFunctionPtr),
+                                                      std::move(rightTimeFunctionPtr));
+}
+void HJOperatorHandlerSlicing::addQueryToSharedJoinApproachDeleting(QueryId queryId, uint64_t deploymentTime) {
+    NES_INFO("not implemented yet {} {}", queryId, deploymentTime)
 }
 
 }// namespace NES::Runtime::Execution::Operators

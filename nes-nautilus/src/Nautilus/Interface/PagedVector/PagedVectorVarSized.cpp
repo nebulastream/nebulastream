@@ -192,6 +192,51 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
     other.varSizedDataEntryMapCounter = 0;
 }
 
+void PagedVectorVarSized::removeEmptyTrailingVarSizedPages(uint64_t firstInvalidVarSizedPtr) {
+    if (varSizedDataEntryMap.find(firstInvalidVarSizedPtr) == varSizedDataEntryMap.end()) {
+        NES_ERROR("Key not found {}", firstInvalidVarSizedPtr)
+        NES_THROW_RUNTIME_ERROR("Specified key for text does not exist in this PagedVectorVarSized");
+    }
+
+    auto lastBufIdx = varSizedDataEntryMap[firstInvalidVarSizedPtr].entryBufIdx;
+    auto lastEntry = varSizedDataEntryMap[firstInvalidVarSizedPtr].entryPtr;
+
+    NES_DEBUG("Removing {} of {} total var sized pages (={}), because the last valid string ended on page {} (0-indexed)."
+              "Furthermore, there were {} entries on all pages before",
+              varSizedDataPages.size() - (lastBufIdx + 1),
+              varSizedDataPages.size(),
+              lastBufIdx + 1,
+              lastBufIdx,
+              varSizedDataEntryMap.size())
+
+    // Removing all varSized pages starting from the one after the one where the last entry ends
+    varSizedDataPages.erase(varSizedDataPages.begin() + lastBufIdx + 1, varSizedDataPages.end());
+
+    // Delete all invalid entries. std::map is appended in order, so we can simply delete all pointers starting from the first invalid
+    varSizedDataEntryMap.erase(varSizedDataEntryMap.find(firstInvalidVarSizedPtr), varSizedDataEntryMap.end());
+
+    NES_DEBUG("New number of var sized data pages is {} and the new amount of entries is {}",
+              varSizedDataPages.size(),
+              varSizedDataEntryMap.size())
+
+    varSizedDataEntryMapCounter = varSizedDataEntryMap.size();
+    currVarSizedDataEntry = lastEntry;
+}
+
+void PagedVectorVarSized::removeEmptyTrailingPages(uint64_t numberOfEmptyTrailingPages) {
+    NES_DEBUG("Removing {} pages from the pagedVectorVarSized. Number of pages before {}",
+              numberOfEmptyTrailingPages,
+              pages.size())
+
+    pages.erase(pages.end() - numberOfEmptyTrailingPages, pages.end());
+
+    NES_DEBUG("Number of pages after {}. (If the number of pages equals 0 a new empty page will be added immediately)",
+              pages.size())
+    if (pages.size() == 0) {
+        appendPage();
+    }
+}
+
 std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages() { return pages; }
 
 uint64_t PagedVectorVarSized::getNumberOfPages() { return pages.size(); }

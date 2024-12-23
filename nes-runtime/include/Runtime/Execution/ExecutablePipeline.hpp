@@ -16,6 +16,8 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/OperatorHandlerSlices.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -170,8 +172,9 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @note only works if this ExecutablePipeline contains one StreamJoinOperatorHandler
      * @param queryId the identifier to remove this from the then shared StreamJoinOperatorHandler
      * @param deploymentTime the time this query was deployed (should be deduced by the system in a later point)
+     * @param sharedJoinApproach will determine which method to call to handle sharing the join
      */
-    void addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime);
+    void addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime, SharedJoinApproach sharedJoinApproach);
 
     /**
      * @brief Get query plan id.

@@ -50,12 +50,14 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
         // The tupleBuffer is emitted to the Query manager, where a new task is created for it
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} (end {}) rightSliceId {} (end {}) with watermarkTs {} sequenceNumber {} originId {} for "
+        NES_INFO("Emitted leftSliceId {} [{}, {}] rightSliceId {} [{}, {}] with watermarkTs {} sequenceNumber {} originId {} for "
                  "no. left tuples "
                  "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
+                 sliceLeft.getSliceStart(),
                  sliceLeft.getSliceEnd(),
                  bufferMemory->rightSliceIdentifier,
+                 sliceRight.getSliceStart(),
                  sliceRight.getSliceEnd(),
                  tupleBuffer.getWatermark(),
                  tupleBuffer.getSequenceNumber(),
@@ -77,17 +79,8 @@ StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t 
                                       pageSizeRight);
 }
 
-NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                                       const OriginId outputOriginId,
-                                       const uint64_t windowSize,
-                                       const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
-                                       const uint64_t pageSizeLeft,
-                                       const uint64_t pageSizeRight,
-                                       std::map<QueryId, uint64_t> deploymentTimes)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema, deploymentTimes),
-      pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
+NLJOperatorHandler::NLJOperatorHandler(const uint64_t pageSizeLeft, const uint64_t pageSizeRight)
+    : pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");

@@ -100,18 +100,25 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     OriginId outputOriginId = OriginId(1);
     auto workerContext =
         std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
-        Operators::HJOperatorHandlerSlicing::create(std::vector({OriginId(1)}),
-                                                    outputOriginId,
-                                                    buildHelper.windowSize,
-                                                    buildHelper.windowSize,
-                                                    buildHelper.schema,
-                                                    buildHelper.schema,
-                                                    QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                    buildHelper.joinSizeInByte,
-                                                    buildHelper.preAllocPageCnt,
-                                                    buildHelper.pageSize,
-                                                    buildHelper.numPartitions));
+
+    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(buildHelper.timeStampField);
+
+    auto hashJoinOpHandler =
+        std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(Operators::HJOperatorHandlerSlicing::create(
+            std::vector({OriginId(1)}),
+            outputOriginId,
+            buildHelper.windowSize,
+            buildHelper.windowSize,
+            buildHelper.schema,
+            buildHelper.schema,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            buildHelper.joinSizeInByte,
+            buildHelper.preAllocPageCnt,
+            buildHelper.pageSize,
+            buildHelper.numPartitions,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField,
+                                                                               Windowing::TimeUnit::Milliseconds())));
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -229,17 +236,25 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
     auto inputOriginIds = std::vector({OriginId(1), OriginId(2)});
     OriginId outputOriginId = OriginId(3);
-    auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
-                                                                         outputOriginId,
-                                                                         hashJoinProbeHelper.windowSize,
-                                                                         hashJoinProbeHelper.windowSize,
-                                                                         hashJoinProbeHelper.leftSchema,
-                                                                         hashJoinProbeHelper.rightSchema,
-                                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                                         hashJoinProbeHelper.joinSizeInByte,
-                                                                         hashJoinProbeHelper.preAllocPageCnt,
-                                                                         hashJoinProbeHelper.pageSize,
-                                                                         hashJoinProbeHelper.numPartitions);
+
+    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldRight);
+
+    auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(
+        inputOriginIds,
+        outputOriginId,
+        hashJoinProbeHelper.windowSize,
+        hashJoinProbeHelper.windowSize,
+        hashJoinProbeHelper.leftSchema,
+        hashJoinProbeHelper.rightSchema,
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+        hashJoinProbeHelper.joinSizeInByte,
+        hashJoinProbeHelper.preAllocPageCnt,
+        hashJoinProbeHelper.pageSize,
+        hashJoinProbeHelper.numPartitions,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                           Windowing::TimeUnit::Milliseconds()));
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -259,8 +274,6 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
     auto handlerIndex = 0_u64;
-    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldLeft);
-    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldRight);
 
     auto hashJoinBuildLeft = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,

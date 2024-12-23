@@ -364,6 +364,7 @@ StreamJoinOperatorHandler::getSliceByStartEnd(const WLockedSlices& slicesLocked,
 
 void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipelineCtx) {
     {
+        NES_INFO("triggering all slices")
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
             switch (slicesAndStateForWindow.windowState) {
@@ -439,7 +440,7 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
     for (auto it = slicesLocked->begin(); it != slicesLocked->end(); ++it) {
         auto& curSlice = *it;
 
-        if ((approach != SharedJoinApproach::APPROACH_ONE_PROBING
+        if ((approach != SharedJoinApproach::APPROACH_PROBING
              && curSlice->getSliceStart() + windowSize
                  < newGlobalWaterMarkProbe)//In approach one #5114 a window can contain a slice that is not completely contained so we are only allowed to remove slices once there is no overlap
             || (curSlice->getSliceEnd() + windowSize < newGlobalWaterMarkProbe)) {
@@ -533,12 +534,15 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      const uint64_t windowSlide,
                                                      const SchemaPtr& leftSchema,
                                                      const SchemaPtr& rightSchema,
+                                                     TimeFunctionPtr leftTimeFunctionPtr,
+                                                     TimeFunctionPtr rightTimeFunctionPtr,
                                                      std::map<QueryId, uint64_t> deploymentTimes)
     : numberOfWorkerThreads(1), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
       outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
       sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema),
+      leftTimeFunctionPtr(std::move(leftTimeFunctionPtr)), rightTimeFunctionPtr(std::move(rightTimeFunctionPtr)),
       deploymentTimes(deploymentTimes),
       //sliceAssigner looks ugly. However, I would like to have a vector in slice assigner as it needs to make calculations for every tuple and it will be faster to iterate over a vector instead of a map. And I would like to keep deploymentTime connected to the queryId in the handler. It could be done with two vectors and updating them simultaneously, but a map is more explicit. Maybe some other data structure would work well here, or in sliceAssigner.
       sliceAssigner(windowSize, windowSlide, [&deploymentTimes]() {

@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -34,13 +35,7 @@ using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
 using WLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::WLockedPtr;
 using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr;
 
-/**
- * This class (and others) will temporarily contain code that handles sharing with different approaches to test for a
- * master thesis. Task #5113 describes different approaches. While under testing I will try to keep the code clean by naming methods
- * according to their approach and storing the helper enum class to know which approach is being tested. However some parts will
- * need to be commented out and adjusted to test each approach individually
- */
-enum class SharedJoinApproach : uint8_t { UNSHARED, APPROACH_ONE_PROBING, APPROACH_TWO_DELETING, APPROACH_THREE_TOMBSTONE };
+using WLockedWindows = folly::Synchronized<std::map<WindowInfo, SlicesAndState>>::WLockedPtr;
 
 /**
  * @brief This operator is the general join operator handler and implements the JoinOperatorHandlerInterface. It is expected that
@@ -66,6 +61,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               const uint64_t windowSlide,
                               const SchemaPtr& leftSchema,
                               const SchemaPtr& rightSchema,
+                              TimeFunctionPtr leftTimeFunctionPtr,
+                              TimeFunctionPtr rightTimeFunctionPtr,
                               std::map<QueryId, uint64_t> deploymentTimes);
 
     ~StreamJoinOperatorHandler() override = default;
@@ -178,6 +175,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @return Vector<WindowInfo>
      */
     virtual std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) = 0;
+
+    virtual std::vector<WindowInfo> getAllWindowsOfDeploymentTimeForSlice(StreamSlice& slice, uint64_t deploymentTime) = 0;
 
     /**
      * @brief Get the number of current active slices/windows
@@ -317,6 +316,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
     BufferManagerPtr bufferManager;
+    TimeFunctionPtr leftTimeFunctionPtr;
+    TimeFunctionPtr rightTimeFunctionPtr;
+
     std::map<QueryId, uint64_t>
         deploymentTimes;//just one entry with "queryId and time" == 0  iff this streamJoinOperatorHandler is not shared among multiple queries. Otherwise, we store the time each query is deployed, so their windows will start from the time they are deployed.
     SliceAssigner sliceAssigner;

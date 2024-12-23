@@ -221,8 +221,21 @@ void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowS
     this->windowEndFieldName = windowEndFieldName;
 }
 void LogicalJoinOperator::setDeployAgainAtTime(QueryId queryId, uint64_t deploymentTime) {
-    if (getDeploymentTimes().contains(queryId)) {
-        NES_ERROR("This query was already deployed at a different time");
+    auto oss = std::stringstream();
+    for (auto [key, time] : deploymentTimes) {
+        oss << "query: " << key.getRawValue() << ", time: " << time << "\n";
+    }
+    NES_INFO("LJO contains these deployment times {} \n The new query {} with time {} will be added",
+             oss.str(),
+             queryId.getRawValue(),
+             deploymentTime)
+    if (deploymentTimes.contains(queryId)) {
+        NES_ERROR("This query was already deployed before, therefore the new deployment will not be added. QueryId {}, old "
+                  "deployment time {}, new deployment time {}",
+                  queryId,
+                  deploymentTimes[queryId],
+                  deploymentTime);
+        return;
     }
     deploymentTimes[queryId] = deploymentTime;
 }

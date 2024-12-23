@@ -188,6 +188,10 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             rightSchema,
             leftPageSize,
             rightPageSize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
 
         // Building the pipeline

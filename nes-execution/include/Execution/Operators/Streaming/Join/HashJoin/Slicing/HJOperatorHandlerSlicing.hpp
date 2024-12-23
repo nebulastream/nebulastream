@@ -50,7 +50,9 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
                              const uint64_t totalSizeForDataStructures,
                              const uint64_t preAllocPageSizeCnt,
                              const uint64_t pageSize,
-                             const uint64_t numPartitions);
+                             const uint64_t numPartitions,
+                             TimeFunctionPtr leftTimeFunctionPtr,
+                             TimeFunctionPtr rightTimeFunctionPtr);
 
     /**
      * @brief Creates a HJOperatorHandler
@@ -77,7 +79,11 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
                                        const uint64_t totalSizeForDataStructures,
                                        const uint64_t preAllocPageSizeCnt,
                                        const uint64_t pageSize,
-                                       const uint64_t numPartitions);
+                                       const uint64_t numPartitions,
+                                       TimeFunctionPtr leftTimeFunctionPtr,
+                                       TimeFunctionPtr rightTimeFunctionPtr);
+
+    void addQueryToSharedJoinApproachDeleting(QueryId queryId, uint64_t deploymentTime) override;
 };
 }// namespace NES::Runtime::Execution::Operators
 

@@ -26,6 +26,7 @@ class StreamJoinOperatorHandlerBucketing : public virtual JoinOperatorHandlerInt
   public:
     std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
+    std::vector<WindowInfo> getAllWindowsOfDeploymentTimeForSlice(StreamSlice& slice, uint64_t deploymentTime) override;
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) override;
 
   private:

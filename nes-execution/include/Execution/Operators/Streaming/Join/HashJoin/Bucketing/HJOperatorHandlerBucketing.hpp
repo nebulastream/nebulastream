@@ -50,7 +50,9 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
                                uint64_t totalSizeForDataStructures,
                                uint64_t preAllocPageSizeCnt,
                                uint64_t pageSize,
-                               uint64_t numPartitions);
+                               uint64_t numPartitions,
+                               TimeFunctionPtr leftTimeFunctionPtr,
+                               TimeFunctionPtr rightTimeFunctionPtr);
 
     /**
      * @brief Creates a HJOperatorHandlerBucketing
@@ -77,7 +79,9 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
                                        uint64_t totalSizeForDataStructures,
                                        uint64_t preAllocPageSizeCnt,
                                        uint64_t pageSize,
-                                       uint64_t numPartitions);
+                                       uint64_t numPartitions,
+                                       TimeFunctionPtr leftTimeFunctionPtr,
+                                       TimeFunctionPtr rightTimeFunctionPtr);
 };
 }// namespace NES::Runtime::Execution::Operators
 

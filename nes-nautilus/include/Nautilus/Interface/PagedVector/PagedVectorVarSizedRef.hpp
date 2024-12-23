@@ -44,6 +44,19 @@ class PagedVectorVarSizedRef {
     Record readRecord(const Value<UInt64>& pos);
 
     /**
+     * Remove records at specified position from the pagedVector. The records get removed and all remaining records stay in the
+     * same order without any invalid space between them (look at note for extra info on strings).
+     * @note Internally text is stored in different tupleBuffers than the records themselves and accessed via a map. If keepStrings is
+     * true we leave these tupleBuffers untouched and the position adjusted records will still access the correct strings as they
+     * will keep the same entry key of the map. If keepStrings is false we will delete all strings starting from the first removed
+     * text. This requires rewriting the strings of position adjusted records, but frees up memory space.
+     * @param positionsToRemove the positions we want to remove
+     * @param keepStrings changes handling of text data in records
+     * @note the last idx in positionsToRemove needs to be the record that was first written to this vector
+     */
+    void removeRecordsAndAdjustPositions(const std::vector<Value<UInt64>> positionsToRemove, bool keepStrings);
+
+    /**
      * @brief Returns the total number of entries in the PagedVectorVarSizedRef
      * @return UInt64
      */
@@ -99,6 +112,29 @@ class PagedVectorVarSizedRef {
      * @param val
      */
     void setNumberOfEntriesOnCurrPage(const Value<>& val);
+
+    /**
+     * Reads a record from the PagedVectorVarSizedRef. Instead of actually reading the whole record it will only store the pointer for text part.
+     * @note this returns the same record as readRecord() if the schema does not contain any text fields
+     * @param pos position of the record
+     * @return Record with Value<UInt64> pointer instead of Value<Text> for text fields.
+     */
+    Record readRecordNoText(const Value<UInt64>& pos);
+
+    /**
+     * Writes a record whose position had to be adjusted back to this pagedVector. This means that its text doesn't need to be
+     * written again, but that the record still contains pointers to its text values and this method only stores these pointer again.
+     * @note Should only be done with records that were retrieved with readRecordNoText()
+     * @param record the record to rewrite. Instead of Value<Text>> it should have a pointer with Value<UInt64> stored for each text field
+     */
+    void writeRecordThatAlreadyHasTextPartStored(Record record);
+
+    /**
+     * Reads the pointers for each text field of a record
+     * @param pos of the record
+     * @return pointers for each text field of the record stored in a vector
+     */
+    std::vector<Value<UInt64>> readTextPointers(const Value<UInt64>& pos);
 
     Value<MemRef> pagedVectorVarSizedRef;
     const SchemaPtr schema;

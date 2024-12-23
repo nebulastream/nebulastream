@@ -32,11 +32,10 @@
  */
 namespace NES::Runtime::Execution {
 
-// At the moment only NLJ with APPROACH_ONE_PROBING is tested, but this is useful to create an easily extensible class
 #define ALL_JOIN_SHARING_APPROACHES                                                                                              \
-    ::testing::Values(Operators::SharedJoinApproach::APPROACH_ONE_PROBING,                                                       \
-                      Operators::SharedJoinApproach::APPROACH_TWO_DELETING,                                                      \
-                      Operators::SharedJoinApproach::APPROACH_THREE_TOMBSTONE)
+    ::testing::Values(SharedJoinApproach::APPROACH_PROBING,                                                                      \
+                      SharedJoinApproach::APPROACH_DELETING,                                                                     \
+                      SharedJoinApproach::APPROACH_TOMBSTONE)
 #define JOIN_SHARING_CONFIGURATIONS ::testing::Combine(ALL_JOIN_STRATEGIES, ALL_JOIN_SHARING_APPROACHES)
 
 using namespace std::chrono_literals;
@@ -44,13 +43,13 @@ constexpr auto queryCompilerDumpMode = QueryCompilation::DumpMode::NONE;
 
 class StreamJoinQuerySharedExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy, Operators::SharedJoinApproach>> {
+      public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy, SharedJoinApproach>> {
   public:
     static constexpr DecomposedQueryId defaultDecomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
     static constexpr QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     QueryCompilation::StreamJoinStrategy joinStrategy;
-    Operators::SharedJoinApproach sharedJoinApproach;
+    SharedJoinApproach sharedJoinApproach;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     std::shared_ptr<NodeEngine> nodeEngine;
 
@@ -180,7 +179,7 @@ class StreamJoinQuerySharedExecutionTest
             const auto queryId = std::get<0>(queryTimeDeployOrStop);
             const auto deployTime = std::get<1>(queryTimeDeployOrStop);
             // !Add query to configuration! (pipeline 0 should be the build pipeline in this case.)
-            executableQueryPlan->getPipelines()[0]->addQueryToSharedJoin(queryId, deployTime);
+            executableQueryPlan->getPipelines()[0]->addQueryToSharedJoin(queryId, deployTime, sharedJoinApproach);
         } else {
             const auto queryId = std::get<0>(queryTimeDeployOrStop);
             // !Add query to configuration! (pipeline 0 should be the build pipeline in this case.)
@@ -348,7 +347,8 @@ class StreamJoinQuerySharedExecutionTest
 
 TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQueryDifferentDeploymentTime) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -373,7 +373,8 @@ TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQuer
 
 TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQueryDifferentDeploymentTimeSlidingWindow) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -398,7 +399,8 @@ TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQuer
 
 TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQueryThreeDifferentDeploymentTimes) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -425,7 +427,8 @@ TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQuer
 TEST_P(StreamJoinQuerySharedExecutionTest,
        streamJoinSharedExecutionTestSameQueryDifferentDeploymentTimeAfterFirstWindowTriggered) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -450,7 +453,8 @@ TEST_P(StreamJoinQuerySharedExecutionTest,
 
 TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQueryDifferentDeploymentTimeAndUndeploySecondQuery) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -476,7 +480,8 @@ TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQuer
 
 TEST_P(StreamJoinQuerySharedExecutionTest, streamJoinSharedExecutionTestSameQueryDifferentDeploymentTimeLargeSlidingWindow) {
     if (joinStrategy != QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN
-        || sharedJoinApproach != Operators::SharedJoinApproach::APPROACH_ONE_PROBING) {
+        || (sharedJoinApproach != SharedJoinApproach::APPROACH_PROBING
+            && sharedJoinApproach != SharedJoinApproach::APPROACH_DELETING)) {
         // Other configurations are not implemented yet. Approaches are described in #5113
         GTEST_SKIP();
     }
@@ -845,4 +850,5 @@ INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                             return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_"
                                 + std::string(magic_enum::enum_name(std::get<1>(info.param)));
                         });
+
 }// namespace NES::Runtime::Execution

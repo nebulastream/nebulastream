@@ -24,6 +24,14 @@
 namespace NES::Runtime::Execution {
 
 /**
+ * StreamJoinOperatorHandler (and others) will temporarily contain code that handles sharing with different approaches to test for a
+ * master thesis. Task #5113 describes different approaches. While under testing I will try to keep the code clean by naming methods
+ * according to their approach and storing the helper enum class to know which approach is being tested. However some parts will
+ * need to be commented out and adjusted to test each approach individually
+ */
+enum class SharedJoinApproach : uint8_t { UNSHARED, APPROACH_PROBING, APPROACH_DELETING, APPROACH_TOMBSTONE };
+
+/**
  * @brief Interface to handle specific operator state.
  */
 class OperatorHandler : public virtual Reconfigurable, public virtual MigratableStateInterface {

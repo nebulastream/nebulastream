@@ -34,15 +34,7 @@ using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 
 class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
   public:
-    NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                       const OriginId outputOriginId,
-                       const uint64_t windowSize,
-                       const uint64_t windowSlide,
-                       const SchemaPtr& leftSchema,
-                       const SchemaPtr& rightSchema,
-                       const uint64_t pageSizeLeft,
-                       const uint64_t pageSizeRight,
-                       std::map<QueryId, uint64_t> deploymentTimes);
+    NLJOperatorHandler(const uint64_t pageSizeLeft, const uint64_t pageSizeRight);
 
     ~NLJOperatorHandler() override = default;
 

@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLERSLICES_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLERSLICES_HPP_
 
-#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -37,7 +37,19 @@ class OperatorHandlerSlices {
      * @param queryId
      * @param deploymentTime the time at which this query is deployed
      */
-    virtual void addQueryToSharedJoinApproachOneProbing(QueryId queryId, uint64_t deploymentTime) = 0;
+    virtual void addQueryToSharedJoinApproachProbing(QueryId queryId, uint64_t deploymentTime) = 0;
+
+    /**
+     * Adds a query with a given id at a given time to a (then) shared join. This means all slices after this deployment would have had
+     * different start and stop times with which the tuples inside this slice might also be invalid.
+     * This approach (Task #5115) addresses this by changing the start and stop time of every slice that could be different after
+     * the addition of the new query. For each changed slice the windows that it belongs to need to be updated and the records inside
+     * the slice need to be handled. For this purpose records that don't fit in the new slice definition get deleted from the slice's
+     * PagedVectorVarSized and get written to the actual slice that it now belongs to (new slices will be created if necessary)
+     * @param queryId
+     * @param deploymentTime the time at which this query is deployed
+     */
+    virtual void addQueryToSharedJoinApproachDeleting(QueryId queryId, uint64_t deploymentTime) = 0;
 
     /**
      * Removes a query from a shared join. As this query is stopping all tuples for this query need to be emitted. For this purpose

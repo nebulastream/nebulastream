@@ -92,13 +92,17 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                         const SchemaPtr& leftSchema,
                                         const SchemaPtr& rightSchema,
                                         const uint64_t pageSizeLeft,
-                                        const uint64_t pageSizeRight)
+                                        const uint64_t pageSizeRight,
+                                        Operators::TimeFunctionPtr leftTimeFunctionPtr,
+                                        Operators::TimeFunctionPtr rightTimeFunctionPtr)
         : StreamJoinOperatorHandler(inputOrigins,
                                     outputOriginId,
                                     windowSize,
                                     windowSlide,
                                     leftSchema,
                                     rightSchema,
+                                    std::move(leftTimeFunctionPtr),
+                                    std::move(rightTimeFunctionPtr),
                                     std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
           NLJOperatorHandlerSlicing(inputOrigins,
                                     outputOriginId,
@@ -108,6 +112,8 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                     rightSchema,
                                     pageSizeLeft,
                                     pageSizeRight,
+                                    std::move(leftTimeFunctionPtr),
+                                    std::move(rightTimeFunctionPtr),
                                     std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}){
 
           };
@@ -119,7 +125,9 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                                          const SchemaPtr& leftSchema,
                                                          const SchemaPtr& rightSchema,
                                                          const uint64_t pageSizeLeft,
-                                                         const uint64_t pageSizeRight) {
+                                                         const uint64_t pageSizeRight,
+                                                         Operators::TimeFunctionPtr leftTimeFunctionPtr,
+                                                         Operators::TimeFunctionPtr rightTimeFunctionPtr) {
         return std::make_shared<ComparableNLJOperatorHandlerSlicing>(inputOrigins,
                                                                      outputOriginId,
                                                                      windowSize,
@@ -127,7 +135,9 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                                                      leftSchema,
                                                                      rightSchema,
                                                                      pageSizeLeft,
-                                                                     pageSizeRight);
+                                                                     pageSizeRight,
+                                                                     std::move(leftTimeFunctionPtr),
+                                                                     std::move(rightTimeFunctionPtr));
     }
 
     /**
@@ -177,22 +187,35 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         windowInfoFilePath = "test-serialization-windowInfo.bin";
 
         bm = std::make_shared<BufferManager>(1024, 5000);
-        nljOperatorHandler = ComparableNLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
-                                                                         OriginId(1),
-                                                                         windowSize,
-                                                                         windowSize,
-                                                                         leftSchema,
-                                                                         rightSchema,
-                                                                         leftPageSize,
-                                                                         rightPageSize);
-        recreatedOperatorHandler = ComparableNLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
-                                                                               OriginId(1),
-                                                                               windowSize,
-                                                                               windowSize,
-                                                                               leftSchema,
-                                                                               rightSchema,
-                                                                               leftPageSize,
-                                                                               rightPageSize);
+
+        auto readTsFieldLeftSetup = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
+        auto readTsFieldRightSetup = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
+        nljOperatorHandler = ComparableNLJOperatorHandlerSlicing::create(
+            {INVALID_ORIGIN_ID},
+            OriginId(1),
+            windowSize,
+            windowSize,
+            leftSchema,
+            rightSchema,
+            leftPageSize,
+            rightPageSize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeftSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRightSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()));
+        recreatedOperatorHandler = ComparableNLJOperatorHandlerSlicing::create(
+            {INVALID_ORIGIN_ID},
+            OriginId(1),
+            windowSize,
+            windowSize,
+            leftSchema,
+            rightSchema,
+            leftPageSize,
+            rightPageSize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeftSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRightSetup,
+                                                                               Windowing::TimeUnit::Milliseconds()));
         nljOperatorHandler->setBufferManager(bm);
         recreatedOperatorHandler->setBufferManager(bm);
     }

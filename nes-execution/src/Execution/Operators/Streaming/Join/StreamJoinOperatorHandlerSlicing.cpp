@@ -21,36 +21,7 @@ namespace NES::Runtime::Execution::Operators {
 StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(uint64_t timestamp) {
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
-    // Checking, if we maybe already have this slice
-    auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
-    auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
-    auto slice = getSliceByStartEnd(slicesWriteLocked, sliceStart, sliceEnd);
-    if (slice.has_value()) {
-        NES_DEBUG("Slice had value for: slice start {}, slice end {}, slice {}", sliceStart, sliceEnd, slice.value()->toString())
-        return slice.value();
-    }
-
-    // No slice was found for the timestamp
-    NES_DEBUG("Creating slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
-    auto newSlice = createNewSlice(sliceStart, sliceEnd, getNextSliceId());
-    slicesWriteLocked->emplace_back(newSlice);
-
-    // For all possible slices in their respective windows, reset the state
-    for (auto windowInfo : getAllWindowsForSlice(*newSlice)) {
-        NES_DEBUG("reset the state for window {}", windowInfo.toString());
-
-        auto& window = (*windowToSlicesLocked)[windowInfo];
-        // If the window existed its state is probably already BOTH_SIDES_FILLING. There is only one scenario (I am aware of)
-        // where a window with a different state could exist as there should be no tuples ingested for windows that are already
-        // emitted. However, if the standard slice for ts=0 gets created (like in the build setup) this did reset the state and a
-        // test failed
-        if (windowToSlicesLocked->find(windowInfo) == windowToSlicesLocked->end()) {
-            window.windowState = WindowInfoState::BOTH_SIDES_FILLING;
-        }
-        window.slices.emplace_back(newSlice);
-        NES_DEBUG("Added slice {} to window {} #slices {}", newSlice->toString(), windowInfo.toString(), window.slices.size());
-    }
-    return newSlice;
+    return getSliceByTimestampOrCreateItLocked(timestamp, slicesWriteLocked, windowToSlicesLocked);
 }
 
 StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate() {
@@ -108,15 +79,59 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
     return allWindows;
 }
 
-void StreamJoinOperatorHandlerSlicing::addQueryToSharedJoinApproachOneProbing(QueryId queryId, uint64_t deploymentTime) {
-    if (getApproach() == SharedJoinApproach::UNSHARED) {
-        setApproach(SharedJoinApproach::APPROACH_ONE_PROBING);
-    }//set approach here to help in some functions
+std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsOfDeploymentTimeForSlice(StreamSlice& slice,
+                                                                                                uint64_t deploymentTime) {
+    std::vector<WindowInfo> allWindows;
+
+    const auto sliceStart = slice.getSliceStart();
+    const auto sliceEnd = slice.getSliceEnd();
+
+    NES_INFO("calculating windows for slice: sliceStart {}, sliceEnd {}", sliceStart, sliceEnd)
+
+    /**
+     * To get all windows, we start with the window (firstWindow) that the current slice is the last slice in it.
+     * Or in other words: The sliceEnd is equal to the windowEnd.
+     * We then add all windows with a slide until we reach the window (lastWindow) that that current slice is the first slice.
+     * Or in other words: The sliceStart is equal to the windowStart;
+     */
+
+    // The end of the first window will be calculated in the same way as in sliceAssigner (explanation is there). There we calculate the
+    // nextWindowEndAfterTs which is essentially the first window that contains this slice.
+    auto firstWindowEnd = sliceStart - ((sliceStart - windowSize - deploymentTime) % windowSlide) + windowSlide;
+    if (sliceStart < deploymentTime + windowSize) {
+        firstWindowEnd = deploymentTime + windowSize;
+    }
+
+    // The end of the last window will be calculated in a similar way as in sliceAssigner. There we calculate the
+    // lastWindowStartBeforeTs which is the last window that will contain this slice and to calculate its end we add windowSize.
+    auto lastWindowEnd = sliceStart - ((sliceStart - deploymentTime) % windowSlide) + windowSize;
+
+    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide) {
+        // For now, we expect the windowEnd to be the windowId
+        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
+    }
+
+    NES_INFO("Adding calculated windows for deployment time {}, fWEnd {}, lWEnd {}, total number of calculated windows {}",
+             deploymentTime,
+             firstWindowEnd,
+             lastWindowEnd,
+             allWindows.size());
+
+    return allWindows;
+}
+
+void StreamJoinOperatorHandlerSlicing::addQueryToSharedJoinApproachProbing(QueryId queryId, uint64_t deploymentTime) {
+    if (getApproach() == SharedJoinApproach::UNSHARED || getApproach() == SharedJoinApproach::APPROACH_PROBING) {
+        setApproach(SharedJoinApproach::APPROACH_PROBING);
+    } else {
+        NES_ERROR("approach to adding a query to a shared join should not be changed during a test")
+    }
 
     deploymentTimes.emplace(queryId, deploymentTime);
     sliceAssigner.addWindowDeploymentTime(deploymentTime);
 
-    NES_INFO("Add new query that uses same joinOperatorHandler. QueryId {}, deployment time {}, number of queries handler is "
+    NES_INFO("Add new query that uses same joinOperatorHandler with approach ?????. QueryId {}, deployment time {}, number "
+             "of queries handler is "
              "handling now {}",
              queryId,
              deploymentTime,
@@ -206,6 +221,40 @@ void StreamJoinOperatorHandlerSlicing::removeQueryFromSharedJoin(QueryId queryId
                      slice->toString())
         }
     }
+}
+StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateItLocked(uint64_t timestamp,
+                                                                                     WLockedSlices& slicesWriteLocked,
+                                                                                     WLockedWindows& windowToSlicesLocked) {
+    // Checking, if we maybe already have this slice
+    auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
+    auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
+    auto slice = getSliceByStartEnd(slicesWriteLocked, sliceStart, sliceEnd);
+    if (slice.has_value()) {
+        NES_DEBUG("Slice had value for: slice start {}, slice end {}, slice {}", sliceStart, sliceEnd, slice.value()->toString())
+        return slice.value();
+    }
+
+    // No slice was found for the timestamp
+    NES_DEBUG("Creating slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
+    auto newSlice = createNewSlice(sliceStart, sliceEnd, getNextSliceId());
+    slicesWriteLocked->emplace_back(newSlice);
+
+    // For all possible slices in their respective windows, reset the state
+    for (auto windowInfo : getAllWindowsForSlice(*newSlice)) {
+        NES_DEBUG("reset the state for window {}", windowInfo.toString());
+
+        auto& window = (*windowToSlicesLocked)[windowInfo];
+        // If the window existed its state is probably already BOTH_SIDES_FILLING. There is only one scenario (I am aware of)
+        // where a window with a different state could exist as there should be no tuples ingested for windows that are already
+        // emitted. However, if the standard slice for ts=0 gets created (like in the build setup) this did reset the state and a
+        // test failed
+        if (windowToSlicesLocked->find(windowInfo) == windowToSlicesLocked->end()) {
+            window.windowState = WindowInfoState::BOTH_SIDES_FILLING;
+        }
+        window.slices.emplace_back(newSlice);
+        NES_DEBUG("Added slice {} to window {} #slices {}", newSlice->toString(), windowInfo.toString(), window.slices.size());
+    }
+    return newSlice;
 }
 
 }// namespace NES::Runtime::Execution::Operators

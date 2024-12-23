@@ -55,7 +55,33 @@ std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
 std::string Record::toString() {
     std::ostringstream stringStream;
     for (auto& [fieldIdentifier, value] : fields) {
+        /*//works in interpretation mode
+        if (value->isType<Text>()) {
+            auto textValue = value.as<Text>()->getReference();
+            stringStream << fieldIdentifier << ": " << textValue.get()->c_str() << ", ";
+        } else {
+            stringStream << fieldIdentifier << ": " << value << ", ";
+        }*/
         stringStream << fieldIdentifier << ": " << value << ", ";
+    }
+    auto tmpStr = stringStream.str();
+    tmpStr.pop_back();
+    tmpStr.pop_back();
+
+    return tmpStr;
+}
+
+std::string Record::toStringShort() {
+    std::ostringstream stringStream;
+    for (auto& [_, value] : fields) {
+        /* //works in interpretation mode
+        if (value->isType<Text>()) {
+            auto textValue = value.as<Text>()->getReference();
+            stringStream << "" << textValue.get()->c_str() << ", ";
+        } else {
+            stringStream << "" << value << ", ";
+        }*/
+        stringStream << "" << value << ", ";
     }
     auto tmpStr = stringStream.str();
     tmpStr.pop_back();

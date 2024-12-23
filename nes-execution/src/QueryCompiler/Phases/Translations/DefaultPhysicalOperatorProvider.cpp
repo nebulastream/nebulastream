@@ -466,7 +466,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                 for (auto queryAndTime : streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getDeploymentTimes()) {
                     if (!queriesAndDeploymentTimes.contains(queryAndTime.first)) {
                         dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())
-                            ->addQueryToSharedJoinApproachOneProbing(queryAndTime.first, queryAndTime.second);
+                            ->addQueryToSharedJoinApproachProbing(queryAndTime.first, queryAndTime.second);
                     }
                 }
                 joinOperatorHandler->setThisForReuse(
@@ -541,6 +541,8 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
                                                             joinOperator->getRightInputSchema(),
                                                             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
                                                             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                            streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
+                                                            streamJoinConfig.timeStampFieldRight.toTimeFunction(),
                                                             joinOperator->getDeploymentTimes());
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
@@ -550,7 +552,9 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
                                                               joinOperator->getLeftInputSchema(),
                                                               joinOperator->getRightInputSchema(),
                                                               Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
-                                                              Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
+                                                              Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                              streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
+                                                              streamJoinConfig.timeStampFieldRight.toTimeFunction());
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -573,7 +577,9 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                            options->getHashJoinOptions()->getPreAllocPageCnt(),
                                                            options->getHashJoinOptions()->getPageSize(),
-                                                           options->getHashJoinOptions()->getNumberOfPartitions());
+                                                           options->getHashJoinOptions()->getNumberOfPartitions(),
+                                                           streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
+                                                           streamJoinConfig.timeStampFieldRight.toTimeFunction());
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::HJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                              joinOperator->getOutputOriginIds()[0],
@@ -585,7 +591,9 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                              options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                              options->getHashJoinOptions()->getPreAllocPageCnt(),
                                                              options->getHashJoinOptions()->getPageSize(),
-                                                             options->getHashJoinOptions()->getNumberOfPartitions());
+                                                             options->getHashJoinOptions()->getNumberOfPartitions(),
+                                                             streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
+                                                             streamJoinConfig.timeStampFieldRight.toTimeFunction());
     } else {
         NES_NOT_IMPLEMENTED();
     }
