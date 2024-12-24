@@ -38,6 +38,7 @@
 struct InputValue {
     uint64_t timestamp;
     uint64_t id;
+    double vbat;
     double PCFA_mbar;
     double PCFF_mbar;
     double PCF1_mbar;
@@ -46,8 +47,10 @@ struct InputValue {
     double T2_mbar;
     uint64_t Code1;
     uint64_t Code2;
+    double speed;
+    double latitude;
+    double longitude;
 };
-
 
 
 namespace NES {
@@ -68,8 +71,6 @@ class ReadSNCB : public Testing::BaseIntegrationTest,
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
-
-
     }
 };
 
@@ -81,13 +82,12 @@ TEST_F(ReadSNCB, testReadCSV) {
     try {
         // Initialize MEOS instance
         MEOS::Meos* meos = new MEOS::Meos("UTC");
-        auto workerConfiguration1 = WorkerConfiguration::create();
-        auto workerConfiguration2 = WorkerConfiguration::create();
-        auto workerConfiguration3 = WorkerConfiguration::create();
 
-        auto pressSchema = Schema::create()
+
+        auto gpsSchema = Schema::create()
                         ->addField("timestamp", BasicType::UINT64)
                         ->addField("id", BasicType::UINT64)
+                        ->addField("Vbat", BasicType::FLOAT64)
                         ->addField("PCFA_mbar", BasicType::FLOAT64)
                         ->addField("PCFF_mbar", BasicType::FLOAT64)
                         ->addField("PCF1_mbar", BasicType::FLOAT64)
@@ -95,68 +95,49 @@ TEST_F(ReadSNCB, testReadCSV) {
                         ->addField("T1_mbar", BasicType::FLOAT64)
                         ->addField("T2_mbar", BasicType::FLOAT64)
                         ->addField("Code1", BasicType::UINT64)
-                        ->addField("Code2", BasicType::UINT64);
-                            
+                        ->addField("Code2", BasicType::UINT64)
+                        ->addField("speed", BasicType::FLOAT64)
+                        ->addField("latitude", BasicType::FLOAT64)
+                        ->addField("longitude", BasicType::FLOAT64);
+                              
 
-        auto csvSourceType = CSVSourceType::create("press", "dfpress_time");
-        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfpress_time.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(10); // Read 10 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(20);        // Produce 20 buffers
-        csvSourceType->setSkipHeader(true);                    // Skip the header
+        ASSERT_EQ(sizeof(InputValue), gpsSchema->getSchemaSizeInBytes());
 
-
-        auto batterySchema = Schema::create()
-                ->addField("timestamp", BasicType::UINT64)
-                ->addField("id", BasicType::UINT64)
-                ->addField("Vbat", BasicType::FLOAT64);
-
-
-        auto csvSourceType2 = CSVSourceType::create("battery", "battery_time");
-        csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfbats_vbat_time.csv");
-        csvSourceType2->setNumberOfTuplesToProducePerBuffer(10); // Read 10 tuples per buffer
-        csvSourceType2->setNumberOfBuffersToProduce(20);        // Produce 20 buffers
-        csvSourceType2->setSkipHeader(true);                    // Skip the header
-
-        auto gpsSchema = Schema::create()
-                ->addField("timestamp", BasicType::UINT64)
-                ->addField("id", BasicType::UINT64)
-                ->addField("speed", BasicType::FLOAT64)
-                ->addField("latitude", BasicType::FLOAT64)
-                ->addField("longitude", BasicType::FLOAT64);
-
-        auto csvSourceType3 = CSVSourceType::create("gps", "gps_time");
-        csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfgps_time.csv");
-        csvSourceType3->setNumberOfTuplesToProducePerBuffer(100);// Read 2 tuples per buffer
-        csvSourceType3->setNumberOfBuffersToProduce(100);       // Produce 10 buffers
-        csvSourceType3->setSkipHeader(true);                   // Skip the header
+        auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);// Read 2 tuples per buffer
+        csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
+        csvSourceType->setSkipHeader(true);                   // Skip the header
 
 
-        // auto subQueryB = Query::from("press2").filter(lessExpression); // B in query
-
-        auto subQueryB = Query::from("gps").filter(meosT(Attribute("longitude", BasicType::FLOAT64),
-                                                        Attribute("latitude", BasicType::FLOAT64),
-                                                        Attribute("timestamp", BasicType::UINT64)) > 0
-                                                        && Attribute("speed") > 0); // B in query
-
-        // Define query
         auto query =
-            Query::from("press")
-                .andWith(subQueryB)
-                .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10), Seconds(10)));
+            Query::from("sncb")
+                .filter(
+                    // Check if train is in a specific geographic area
+                    meosT(Attribute("longitude", BasicType::FLOAT64),
+                        Attribute("latitude", BasicType::FLOAT64),
+                        Attribute("timestamp", BasicType::UINT64)) == 1
+                    && 
+                    // Only process records with valid speed and pressure
+                    Attribute("speed") > 0 && Attribute("PCFA_mbar") > 0
+                    &&
+                    //Show records with the highest noise level
+                    Attribute("speed") * 0.5 + Attribute("PCFA_mbar") * 0.5 > 2
+                )
+                .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), 
+                                        Seconds(30), Seconds(30)))
+                .apply(Max(Attribute("PCFA_mbar")));
 
-        // Create the test harness and attach the CSV sources
+        // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                            .addLogicalSource("press", pressSchema)
-                            .addLogicalSource("battery", batterySchema) // Added battery logical source
-                            .addLogicalSource("gps", gpsSchema) // Added gps logical source
-                            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration1)
-                            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType2, workerConfiguration2)
-                            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType3, workerConfiguration3); // Attached battery source
+                               .addLogicalSource("sncb", gpsSchema)
+                               .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration);
 
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "";
+        const auto expectedOutput =  "1722510000, 1722540000, 5.388\n";
+                            
                             
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
@@ -169,7 +150,7 @@ TEST_F(ReadSNCB, testReadCSV) {
                 NES_INFO("The result is : {}, {}, {}",
                     tuple[0].read<uint64_t>(), // window_start
                     tuple[1].read<uint64_t>(), // window_end
-                    tuple[2].read<double>()); // PCF1_mbar            
+                    tuple[2].read<double>()); // speed            
             }
         }
 
@@ -179,7 +160,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
 
 
-        EXPECT_FALSE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+        EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 
 
     } catch (const std::exception& e) {
