@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.205](https://github.com/nebulastream/nebulastream/tree/v0.6.205) (2024-12-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.204...v0.6.205)
+
+**Implemented enhancements:**
+
+- Start of migration flow  [\#5161](https://github.com/nebulastream/nebulastream/issues/5161)
+
+## [v0.6.204](https://github.com/nebulastream/nebulastream/tree/v0.6.204) (2024-12-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.203...v0.6.204)
+
 ## [v0.6.203](https://github.com/nebulastream/nebulastream/tree/v0.6.203) (2024-12-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.202...v0.6.203)
