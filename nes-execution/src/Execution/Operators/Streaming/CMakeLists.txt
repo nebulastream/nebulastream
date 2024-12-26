@@ -20,4 +20,5 @@ add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
         IngestionTimeWatermarkAssignment.cpp
         TimeFunction.cpp
+        StateSerializationUtil.cpp
         )

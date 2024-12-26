@@ -329,7 +329,7 @@ class TupleBuffer {
     }
 
     /**
-     * @brief returns true if there is enought space to write
+     * @brief returns true if there is enough space to write
      * @param used space
      * @param needed space
      * @return TupleBuffer
