@@ -39,38 +39,43 @@ class ReconfigurationMessage {
     /**
      * @brief create a reconfiguration task that will be used to kickstart the reconfiguration process
      * @param parentPlanId the owning plan id
+     * @param parentPlanVersion the owning plan version
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
     explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
                                     const DecomposedQueryId parentPlanId,
+                                    const DecomposedQueryPlanVersion parentPlanVersion,
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,
                                     std::any&& userdata = nullptr)
         : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
-          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
+          parentPlanId(parentPlanId), parentPlanVersion(parentPlanVersion), userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
 
     /**
      * @brief create a reconfiguration task that will be passed to every running thread
-     * @param other the task we want to issue (created using the other ctor)
-     * @param numThreads number of running threads
+     * @param sharedQueryId query id
+     * @param parentPlanId the owning plan id
+     * @param parentPlanVersion the owning plan version
+     * @param type reconfiguration type
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
                                     const DecomposedQueryId parentPlanId,
+                                    const DecomposedQueryPlanVersion parentPlanVersion,
                                     ReconfigurationType type,
                                     uint64_t numThreads,
                                     ReconfigurablePtr instance,
                                     std::any&& userdata = nullptr,
                                     bool blocking = false)
         : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
-          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
+          parentPlanId(parentPlanId), parentPlanVersion(parentPlanVersion), userdata(std::move(userdata)) {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
@@ -102,7 +107,8 @@ class ReconfigurationMessage {
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
         : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
-          sharedQueryId(that.sharedQueryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
+          sharedQueryId(that.sharedQueryId), parentPlanId(that.parentPlanId), parentPlanVersion(that.parentPlanVersion),
+          userdata(that.userdata) {
         // nop
     }
 
@@ -128,6 +134,8 @@ class ReconfigurationMessage {
      * @return the plan id
      */
     [[nodiscard]] DecomposedQueryId getParentPlanId() const { return parentPlanId; }
+
+    [[nodiscard]] DecomposedQueryPlanVersion getParentPlanVersion() const { return parentPlanVersion; }
 
     /**
      * @brief get the target instance to reconfigura
@@ -182,11 +190,14 @@ class ReconfigurationMessage {
     /// ref counter
     std::atomic<uint32_t> refCnt{};
 
-    /// owning plan id
+    /// owning plan shared query id
     const SharedQueryId sharedQueryId;
 
     /// owning plan id
     const DecomposedQueryId parentPlanId;
+
+    /// owning plan version
+    const DecomposedQueryPlanVersion parentPlanVersion;
 
     /// custom data
     std::any userdata;

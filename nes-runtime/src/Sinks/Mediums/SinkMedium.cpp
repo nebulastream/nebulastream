@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -26,17 +27,20 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
-                       DecomposedQueryId decomposedQueryId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, 1) {}
+                       DecomposedQueryId decomposedQueryId,
+                       DecomposedQueryPlanVersion decomposedQueryVersion)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryId decomposedQueryId,
+                       DecomposedQueryPlanVersion decomposedQueryVersion,
                        uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
-      sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), numberOfOrigins(numberOfOrigins) {
+      sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
+      numberOfOrigins(numberOfOrigins) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
@@ -59,6 +63,8 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
 DecomposedQueryId SinkMedium::getParentPlanId() const { return decomposedQueryId; }
+
+DecomposedQueryPlanVersion SinkMedium::getParentPlanVersion() const { return decomposedQueryVersion; }
 
 SharedQueryId SinkMedium::getSharedQueryId() const { return sharedQueryId; }
 
@@ -84,10 +90,11 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
         case Runtime::ReconfigurationType::ReconfigurationMarker: {
             auto marker = message.getUserData<ReconfigurationMarkerPtr>();
-            auto event = marker->getReconfigurationEvent(decomposedQueryId);
+            auto event = marker->getReconfigurationEvent(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
             NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
 
-            if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+            if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()
+                && !event.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
                 NES_WARNING("Non drain reconfigurations not yes supported");
                 NES_NOT_IMPLEMENTED();
             }
@@ -105,6 +112,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryId,
+                                                                decomposedQueryVersion,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);

@@ -304,13 +304,20 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 auto setupQEP(const NodeEnginePtr& engine, SharedQueryId sharedQueryId, const std::string& outPath) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
-    DataSinkPtr sink =
-        createCSVFileSink(sch, sharedQueryId, DecomposedQueryId(sharedQueryId.getRawValue()), engine, 1, outPath, false);
+    DataSinkPtr sink = createCSVFileSink(sch,
+                                         sharedQueryId,
+                                         DecomposedQueryId(sharedQueryId.getRawValue()),
+                                         DecomposedQueryPlanVersion(0),
+                                         engine,
+                                         1,
+                                         outPath,
+                                         false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(INVALID_PIPELINE_ID,
                                                INVALID_SHARED_QUERY_ID,
                                                DecomposedQueryId(sharedQueryId.getRawValue()),
+                                               DecomposedQueryPlanVersion(0),
                                                engine->getQueryManager(),
                                                context,
                                                executable,
@@ -326,6 +333,7 @@ auto setupQEP(const NodeEnginePtr& engine, SharedQueryId sharedQueryId, const st
                                                                {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(sharedQueryId.getRawValue()),
                                                      DecomposedQueryId(sharedQueryId.getRawValue()),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source},
                                                      {sink},
                                                      {pipeline},
@@ -431,13 +439,20 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 =
-        createCSVFileSink(sch1, SharedQueryId(1), DecomposedQueryId(1), engine, 1, getTestResourceFolder() / "qep1.csv", false);
+    auto sink1 = createCSVFileSink(sch1,
+                                   SharedQueryId(1),
+                                   DecomposedQueryId(1),
+                                   DecomposedQueryPlanVersion(0),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep1.csv",
+                                   false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
                                                 SharedQueryId(1),
                                                 DecomposedQueryId(1),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context1,
                                                 executable1,
@@ -453,6 +468,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
                                                      DecomposedQueryId(1),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source1},
                                                      {sink1},
                                                      {pipeline1},
@@ -460,13 +476,20 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                      engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink2 =
-        createCSVFileSink(sch2, SharedQueryId(2), DecomposedQueryId(2), engine, 1, getTestResourceFolder() / "qep2.csv", false);
+    auto sink2 = createCSVFileSink(sch2,
+                                   SharedQueryId(2),
+                                   DecomposedQueryId(2),
+                                   DecomposedQueryPlanVersion(0),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep2.csv",
+                                   false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(PipelineId(0),
                                                 SharedQueryId(2),
                                                 DecomposedQueryId(2),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context2,
                                                 executable2,
@@ -482,6 +505,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 {pipeline2});
     auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
                                                       DecomposedQueryId(2),
+                                                      DecomposedQueryPlanVersion(0),
                                                       {source2},
                                                       {sink2},
                                                       {pipeline2},
@@ -530,13 +554,20 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 =
-        createCSVFileSink(sch1, SharedQueryId(1), DecomposedQueryId(1), engine, 1, getTestResourceFolder() / "qep1.txt", true);
+    auto sink1 = createCSVFileSink(sch1,
+                                   SharedQueryId(1),
+                                   DecomposedQueryId(1),
+                                   DecomposedQueryPlanVersion(0),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep1.txt",
+                                   true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
                                                 SharedQueryId(1),
                                                 DecomposedQueryId(1),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context1,
                                                 executable1,
@@ -552,6 +583,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                 {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
                                                      DecomposedQueryId(1),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source1},
                                                      {sink1},
                                                      {pipeline1},
@@ -559,14 +591,21 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                      engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 =
-        createCSVFileSink(sch2, SharedQueryId(2), DecomposedQueryId(2), engine, 1, getTestResourceFolder() / "qep2.txt", true);
+    DataSinkPtr sink2 = createCSVFileSink(sch2,
+                                          SharedQueryId(2),
+                                          DecomposedQueryId(2),
+                                          DecomposedQueryPlanVersion(0),
+                                          engine,
+                                          1,
+                                          getTestResourceFolder() / "qep2.txt",
+                                          true);
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(PipelineId(1),
                                                 SharedQueryId(2),
                                                 DecomposedQueryId(2),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context2,
                                                 executable2,
@@ -582,6 +621,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                          {pipeline2});
     auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
                                                       DecomposedQueryId(2),
+                                                      DecomposedQueryPlanVersion(0),
                                                       {source2},
                                                       {sink2},
                                                       {pipeline2},
@@ -627,6 +667,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     auto sharedSink = createCSVFileSink(sch1,
                                         SharedQueryId(0),
                                         INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                        INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                         engine,
                                         1,
                                         getTestResourceFolder() / "qep12.txt",
@@ -636,6 +677,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     auto pipeline1 = ExecutablePipeline::create(PipelineId(1),
                                                 SharedQueryId(1),
                                                 DecomposedQueryId(1),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context1,
                                                 executable1,
@@ -651,6 +693,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                 {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
                                                      DecomposedQueryId(1),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source1},
                                                      {sharedSink},
                                                      {pipeline1},
@@ -662,6 +705,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     auto pipeline2 = ExecutablePipeline::create(PipelineId(2),
                                                 SharedQueryId(2),
                                                 DecomposedQueryId(2),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context2,
                                                 executable2,
@@ -679,6 +723,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
 
     auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
                                                       DecomposedQueryId(2),
+                                                      DecomposedQueryPlanVersion(0),
                                                       {source2},
                                                       {sharedSink},
                                                       {pipeline2},
@@ -716,6 +761,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     auto sink1 = createCSVFileSink(sch1,
                                    SharedQueryId(0),
                                    INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                   INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                    engine,
                                    1,
                                    getTestResourceFolder() / "qep3.txt",
@@ -725,6 +771,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
                                                 SharedQueryId(1),
                                                 DecomposedQueryId(1),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context1,
                                                 executable1,
@@ -736,6 +783,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     auto pipeline2 = ExecutablePipeline::create(PipelineId(1),
                                                 SharedQueryId(2),
                                                 DecomposedQueryId(2),
+                                                DecomposedQueryPlanVersion(0),
                                                 engine->getQueryManager(),
                                                 context2,
                                                 executable2,
@@ -751,6 +799,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                                                                 {pipeline1, pipeline2});
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
                                                      DecomposedQueryId(1),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source1},
                                                      {sink1},
                                                      {pipeline1},
@@ -759,6 +808,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 
     auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
                                                       DecomposedQueryId(2),
+                                                      DecomposedQueryPlanVersion(0),
                                                       {source1},
                                                       {sink1},
                                                       {pipeline2},
@@ -852,7 +902,8 @@ TEST_F(NodeEngineTest, testBufferData) {
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                       .build();
-    EXPECT_FALSE(engine->bufferData(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_OPERATOR_ID));
+    EXPECT_FALSE(
+        engine->bufferData(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_DECOMPOSED_QUERY_PLAN_VERSION, INVALID_OPERATOR_ID));
 }
 
 TEST_F(NodeEngineTest, testReconfigureSink) {
@@ -864,8 +915,12 @@ TEST_F(NodeEngineTest, testReconfigureSink) {
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                       .build();
-    EXPECT_FALSE(
-        engine->updateNetworkSink(INVALID_WORKER_NODE_ID, "test", 0, INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_OPERATOR_ID));
+    EXPECT_FALSE(engine->updateNetworkSink(INVALID_WORKER_NODE_ID,
+                                           "test",
+                                           0,
+                                           INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                           INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                           INVALID_OPERATOR_ID));
 }
 
 namespace detail {
@@ -973,6 +1028,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     DataSinkPtr sink = createCSVFileSink(sch,
                                          INVALID_SHARED_QUERY_ID,
                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                          engine,
                                          1,
                                          getTestResourceFolder() / "test.out",
@@ -1050,6 +1106,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     DataSinkPtr sink = createCSVFileSink(sch,
                                          INVALID_SHARED_QUERY_ID,
                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                          engine,
                                          1,
                                          getTestResourceFolder() / "test.out",

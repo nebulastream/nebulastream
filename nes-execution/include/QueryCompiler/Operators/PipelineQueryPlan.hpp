@@ -35,7 +35,8 @@ class PipelineQueryPlan {
      * @return PipelineQueryPlanPtr
      */
     static PipelineQueryPlanPtr create(SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-                                       DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID);
+                                       DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                       DecomposedQueryPlanVersion decomposedQueryVersion = INVALID_DECOMPOSED_QUERY_PLAN_VERSION);
 
     /**
      * @brief Add a pipeline to the query plan
@@ -80,15 +81,24 @@ class PipelineQueryPlan {
     [[nodiscard]] DecomposedQueryId getQuerySubPlanId() const;
 
     /**
+     * @brief Gets the query sub plan version
+     * @return QuerySubPlanVersion
+     */
+    [[nodiscard]] DecomposedQueryPlanVersion getQuerySubPlanVersion() const;
+
+    /**
      * @brief Creates a string representation of this PipelineQuery
      * @return std::string
      */
     std::string toString() const;
 
   private:
-    PipelineQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
+    PipelineQueryPlan(SharedQueryId sharedQueryId,
+                      DecomposedQueryId decomposedQueryId,
+                      DecomposedQueryPlanVersion decomposedQueryVersion);
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
+    const DecomposedQueryPlanVersion decomposedQueryVersion;
     std::vector<OperatorPipelinePtr> pipelines;
 };
 }// namespace NES::QueryCompilation

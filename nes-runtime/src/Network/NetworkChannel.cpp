@@ -183,11 +183,13 @@ NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying 
 void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
                            uint16_t numSendingThreads,
                            uint64_t currentMessageSequenceNumber,
+                           bool shouldPropagateMarker,
                            const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
     inherited::close(canSendEvent && !canSendData,
                      terminationType,
                      numSendingThreads,
                      currentMessageSequenceNumber,
+                     shouldPropagateMarker,
                      reconfigurationMarker);
 }
 

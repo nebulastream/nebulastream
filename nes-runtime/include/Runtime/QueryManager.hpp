@@ -163,17 +163,17 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief retrieve the execution status of a given local query sub plan id.
-     * @param id : the query sub plan id
+     * @param decomposedQueryId : the query sub plan id with version
      * @return status of the query sub plan
      */
-    Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryId id);
+    Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion);
 
     /**
      * @brief Provides the QEP object for an id
      * @param id the plan to lookup
      * @return the QEP or null, if not found
      */
-    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(DecomposedQueryId id) const;
+    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const;
 
     [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
 
@@ -212,12 +212,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local sub QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                            DecomposedQueryId queryExecutionPlanId,
+                                           DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                            const ReconfigurationMessage& reconfigurationMessage,
                                            bool blocking = false) = 0;
 
@@ -234,12 +236,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local szb QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                            DecomposedQueryId queryExecutionPlanId,
+                                           DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                            TupleBuffer&& buffer,
                                            bool blocking = false) = 0;
 
@@ -273,10 +277,10 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
-     * @param decomposedQueryId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id with version
      * @return shared query id
      */
-    SharedQueryId getSharedQueryId(DecomposedQueryId decomposedQueryId) const;
+    SharedQueryId getSharedQueryId(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const;
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
@@ -287,11 +291,20 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
-     * @brief propagetes a reconfiguration marker to all downstream operators of a source operator
+     * @brief propagates a reconfiguration marker to all downstream operators of a source operator
      * @param source the source operator
      * @return true if it went through
      */
     bool propagateReconfigurationMarker(const ReconfigurationMarkerPtr& marker, DataSourcePtr source);
+
+    /**
+     * @brief starts new executable plan and propagates reconfiguration marker to it's source
+     * @param marker reconfiguration marker
+     * @param decomposedQueryId id and version of current plan
+     * @return true if plan was started
+     */
+    bool startNewExecutableQueryPlanAndPropagateMarker(const ReconfigurationMarkerPtr marker,
+                                                       DecomposedQueryIdWithVersion decomposedQueryIdWithVersion);
 
     /**
      * @return true if thread pool is running
@@ -335,16 +348,20 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief Notifies that a sink operator is done with its execution
-     * @param decomposedQueryId the plan the sink belongs to
+     * @param decomposedQueryId the id of the plan the sink belongs to
+     * @param decomposedQueryVersion the version of the plan the sink belongs to
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySinkCompletion(DecomposedQueryId decomposedQueryId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void notifySinkCompletion(DecomposedQueryId decomposedQueryId,
+                              DecomposedQueryPlanVersion decomposedQueryVersion,
+                              DataSinkPtr sink,
+                              QueryTerminationType terminationType);
 
     std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(Network::NetworkSourcePtr networkSource,
                                                                          SharedQueryId sharedQueryId,
                                                                          const ReconfigurationMarker& marker) const;
-    std::vector<DecomposedQueryId> getExecutablePlanIdsForSource(DataSourcePtr source) const;
+    std::unordered_set<DecomposedQueryIdWithVersion> getExecutablePlanIdsForSource(DataSourcePtr source) const;
 
     // Map containing persistent source properties
     folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<BasePersistentSourceProperties>>>
@@ -432,7 +449,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /// worker thread for async maintenance task, e.g., fail queryIdAndCatalogEntryMapping
     AsyncTaskExecutorPtr asyncTaskExecutor;
 
-    std::unordered_map<DecomposedQueryId, Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<DecomposedQueryIdWithVersion, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
@@ -449,7 +466,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
-    std::unordered_map<DecomposedQueryId, std::vector<OperatorId>> decomposeQueryToSourceIdMapping;
+    std::unordered_map<DecomposedQueryIdWithVersion, std::vector<OperatorId>> decomposeQueryToSourceIdMapping;
 
     std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
@@ -525,12 +542,14 @@ class DynamicQueryManager : public AbstractQueryManager {
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param decomposedQueryId: the local szb QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryId decomposedQueryId,
+                                   DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
 
@@ -540,12 +559,14 @@ class DynamicQueryManager : public AbstractQueryManager {
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local sub QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryId queryExecutionPlanId,
+                                   DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;
 
@@ -635,12 +656,14 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local szb QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryId queryExecutionPlanId,
+                                   DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
 
@@ -650,12 +673,14 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local sub QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP id to reconfigure
+     * @param queryExecutionPlanVersion: the local sub QEP version to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryId queryExecutionPlanId,
+                                   DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;
 

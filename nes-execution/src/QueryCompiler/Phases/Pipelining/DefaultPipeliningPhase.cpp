@@ -41,8 +41,9 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryId());
     std::map<OperatorPtr, OperatorPipelinePtr> pipelineOperatorMap;
-    auto pipelinePlan =
-        PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryId());
+    auto pipelinePlan = PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(),
+                                                  decomposedQueryPlan->getDecomposedQueryId(),
+                                                  decomposedQueryPlan->getVersion());
     for (const auto& sinkOperators : decomposedQueryPlan->getRootOperators()) {
         // create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();

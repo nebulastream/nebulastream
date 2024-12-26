@@ -180,7 +180,7 @@ ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
 void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                                  Execution::SuccessorExecutablePipeline executable,
                                                  uint32_t queueId) {
-    NES_TRACE("Add Work for executable for queue={}", queueId);
+    NES_TRACE("Add Work for blockingReadexecutable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
@@ -365,6 +365,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
 
 bool MultiQueueQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                                                        DecomposedQueryId queryExecutionPlanId,
+                                                       DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                                        const ReconfigurationMessage& message,
                                                        bool blocking) {
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
@@ -376,15 +377,17 @@ bool MultiQueueQueryManager::addReconfigurationMessage(SharedQueryId sharedQuery
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     new (buffer.getBuffer()) ReconfigurationMessage(message, numberOfThreadsPerQueue, blocking);
-    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
+    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, queryExecutionPlanVersion, std::move(buffer), blocking);
 }
 
 bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                                                     DecomposedQueryId queryExecutionPlanId,
+                                                    DecomposedQueryPlanVersion decomposedQueryVersion,
                                                     const ReconfigurationMessage& message,
                                                     bool blocking) {
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
+    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {}.{} blocking={} type {}",
               queryExecutionPlanId,
+              decomposedQueryVersion,
               blocking,
               magic_enum::enum_name(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
@@ -392,18 +395,20 @@ bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
+    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, decomposedQueryVersion, std::move(buffer), blocking);
 }
 
 bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                                                     DecomposedQueryId decomposedQueryId,
+                                                    DecomposedQueryPlanVersion decomposedQueryVersion,
                                                     TupleBuffer&& buffer,
                                                     bool blocking) {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
         std::unique_lock reconfLock(reconfigurationMutex);
-        NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
+        NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {}.{} blocking={} type {}",
                   decomposedQueryId,
+                  decomposedQueryVersion,
                   blocking,
                   magic_enum::enum_name(task->getType()));
         NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
@@ -413,6 +418,7 @@ bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
         auto pipeline = Execution::ExecutablePipeline::create(INVALID_PIPELINE_ID,
                                                               sharedQueryId,
                                                               decomposedQueryId,
+                                                              decomposedQueryVersion,
                                                               inherited0::shared_from_this(),
                                                               pipelineContext,
                                                               reconfigurationExecutable,
@@ -433,6 +439,7 @@ bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
 
 bool MultiQueueQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                                                        DecomposedQueryId queryExecutionPlanId,
+                                                       DecomposedQueryPlanVersion queryExecutionPlanVersion,
                                                        TupleBuffer&& buffer,
                                                        bool blocking) {
     std::unique_lock reconfLock(reconfigurationMutex);
@@ -449,6 +456,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(SharedQueryId sharedQuery
     auto pipeline = Execution::ExecutablePipeline::create(INVALID_PIPELINE_ID,
                                                           sharedQueryId,
                                                           queryExecutionPlanId,
+                                                          queryExecutionPlanVersion,
                                                           inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           reconfigurationExecutable,
@@ -494,8 +502,9 @@ void DynamicQueryManager::poisonWorkers() {
     auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                                              inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(INVALID_PIPELINE_ID,
-                                                          INVALID_SHARED_QUERY_ID,         // any query plan
-                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,// any sub query plan
+                                                          INVALID_SHARED_QUERY_ID,              // any query plan
+                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,     // any sub query plan
+                                                          INVALID_DECOMPOSED_QUERY_PLAN_VERSION,// any query plan
                                                           inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
@@ -518,6 +527,7 @@ void MultiQueueQueryManager::poisonWorkers() {
     auto pipeline = Execution::ExecutablePipeline::create(INVALID_PIPELINE_ID,    // any query plan
                                                           INVALID_SHARED_QUERY_ID,// any sub query plan
                                                           INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                          INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                           inherited0::shared_from_this(),
                                                           pipelineContext,
                                                           std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),

@@ -167,6 +167,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
 
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(queryId),
                                                      DecomposedQueryId(queryId),
+                                                     DecomposedQueryPlanVersion(0),
                                                      {source},
                                                      {sink},
                                                      {},

@@ -158,6 +158,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
     } catch (Exceptions::QueryPlacementAmendmentException& ex) {
         failRequest.push_back(FailQueryRequest::create(UNSURE_CONVERSION_TODO_4761(ex.getQueryId(), SharedQueryId),
                                                        INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                       INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                        ex.what(),
                                                        MAX_RETRIES_FOR_FAILURE,
                                                        placementAmendmentHandler));
@@ -169,6 +170,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         //3. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
         failRequest.push_back(FailQueryRequest::create(UNSURE_CONVERSION_TODO_4761(ex.getQueryId(), SharedQueryId),
                                                        INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                       INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                        ex.what(),
                                                        MAX_RETRIES_FOR_FAILURE,
                                                        placementAmendmentHandler));
@@ -177,6 +179,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
         failRequest.push_back(FailQueryRequest::create(UNSURE_CONVERSION_TODO_4761(ex.getQueryId(), SharedQueryId),
                                                        INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                       INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                        ex.what(),
                                                        MAX_RETRIES_FOR_FAILURE,
                                                        placementAmendmentHandler));

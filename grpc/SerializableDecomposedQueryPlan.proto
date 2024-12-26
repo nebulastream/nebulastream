@@ -26,8 +26,9 @@ message SerializableDecomposedQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
   repeated uint64 rootOperatorIds = 2;
   optional uint64 decomposedQueryId = 3;
-  optional uint64 sharedQueryPlanId = 4;
-  optional SerializableQueryState state = 5;
+  optional uint32 decomposedQueryVersion = 4;
+  optional uint64 sharedQueryPlanId = 5;
+  optional SerializableQueryState state = 6;
 }
 
 enum SerializableQueryState {

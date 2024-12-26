@@ -48,7 +48,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
                         SharedQueryId sharedQueryId,
-                        DecomposedQueryId decomposedQueryId);
+                        DecomposedQueryId decomposedQueryId,
+                        DecomposedQueryPlanVersion decomposedQueryVersion);
 
     /**
      * @brief public constructor for data sink
@@ -58,6 +59,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         SharedQueryId sharedQueryId,
                         DecomposedQueryId decomposedQueryId,
+                        DecomposedQueryPlanVersion decomposedQueryVersion,
                         uint64_t numberOfOrigins);
 
     /**
@@ -86,10 +88,16 @@ class SinkMedium : public Runtime::Reconfigurable {
     SharedQueryId getSharedQueryId() const;
 
     /**
-     * @brief get the suzbplan id of the owning plan
+     * @brief get the subplan id of the owning plan
      * @return QuerySubPlanId
      */
     DecomposedQueryId getParentPlanId() const;
+
+    /**
+     * @brief get the subplan version of the owning plan
+     * @return QuerySubPlanVersion
+     */
+    DecomposedQueryPlanVersion getParentPlanVersion() const;
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -155,6 +163,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic<uint32_t> activeProducers;
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;
+    DecomposedQueryPlanVersion decomposedQueryVersion;
     uint64_t numberOfOrigins;
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};

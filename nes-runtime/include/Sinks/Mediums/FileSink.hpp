@@ -45,6 +45,7 @@ class FileSink : public SinkMedium {
                       bool append,
                       SharedQueryId sharedQueryId,
                       DecomposedQueryId decomposedQueryId,
+                      DecomposedQueryPlanVersion decomposedQueryVersion,
                       uint64_t numberOfOrigins = 1);
 
     /**

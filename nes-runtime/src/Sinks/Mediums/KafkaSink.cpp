@@ -31,9 +31,16 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      const std::string& topic,
                      SharedQueryId sharedQueryId,
                      DecomposedQueryId decomposedQueryId,
+                     DecomposedQueryPlanVersion decomposedQueryVersion,
                      const uint64_t kafkaProducerTimeout,
                      uint64_t numberOfOrigins)
-    : SinkMedium(format, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins),
+    : SinkMedium(format,
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryId,
+                 decomposedQueryVersion,
+                 numberOfOrigins),
       brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 
     config = std::make_unique<cppkafka::Configuration>();

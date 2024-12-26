@@ -112,13 +112,22 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if succeeded, else false
      */
     [[nodiscard]] bool undeployDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
-
     /**
+     * @caution !This method should be called from separate thread that can be blocked!
+     * !!Calling this method from task queue will result in deadlock!!
      * @brief registers a decomposed query plan
      * @param decomposedQueryPlan: the decomposed query plan to be registered
      * @return true if succeeded, else false
      */
     [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+
+    /**
+     * @brief checks and returns decomposed query plan, delayed to register
+     * @param id: the decomposed query plan id
+     * @param version: the decomposed query plan version
+     * @return executable plan
+     */
+    Execution::ExecutableQueryPlanPtr checkDecomposableQueryPlanToStart(DecomposedQueryId id, DecomposedQueryPlanVersion version);
 
     /**
      * @brief unregisters a decomposed query
@@ -127,7 +136,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if succeeded, else false
      */
     [[nodiscard]] bool unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
-
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
@@ -151,11 +159,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
-     * @param decomposedQueryId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryId: the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryVersion: the version of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink on which to buffer data
      * @return bool indicating success
      */
-    bool bufferData(DecomposedQueryId decomposedQueryId, OperatorId uniqueNetworkSinkDescriptorId);
+    bool bufferData(DecomposedQueryId decomposedQueryId,
+                    DecomposedQueryPlanVersion decomposedQueryVersion,
+                    OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
@@ -163,6 +174,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param newHostname : the hostname of the new node
      * @param newPort : the port of the new node
      * @param decomposedQueryId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param DecomposedQueryPlanVersion : the version of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
@@ -170,6 +182,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                            const std::string& newHostname,
                            uint32_t newPort,
                            DecomposedQueryId decomposedQueryId,
+                           DecomposedQueryPlanVersion decomposedQueryVersion,
                            OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
@@ -273,16 +286,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief finds executable query plan for a given sub query id
      * @param decomposedQueryId query sub plan id
+     * @param decomposedQueryVersion query sub plan version
      * @return executable query plan
      */
-    std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(DecomposedQueryId decomposedQueryId) const;
+    std::shared_ptr<const Execution::ExecutableQueryPlan>
+    getExecutableQueryPlan(DecomposedQueryId decomposedQueryId, DecomposedQueryPlanVersion decomposedQueryVersion) const;
 
     /**
      * @brief finds sub query ids for a given query id
      * @param sharedQueryId query id
-     * @return vector of subQueryIds
+     * @return vector of subQuery id and version pair
      */
-    std::vector<DecomposedQueryId> getDecomposedQueryIds(SharedQueryId sharedQueryId);
+    std::vector<DecomposedQueryIdWithVersion> getDecomposedQueryIds(SharedQueryId sharedQueryId);
 
     /**
      * Getter for the metric store
@@ -361,10 +376,24 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         bool sourceSharing);
 
   private:
+    /**
+     * @brief method to start a already deployed query
+     * @note if query is not deploy, false is returned
+     * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
+     * @param decomposedQueryId: id of the decomposed query plan to be started
+     * @param decomposedQueryVersion: version of the decomposed query plan to be started
+     * @return bool indicating success
+     */
+    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                                                DecomposedQueryId decomposedQueryId,
+                                                DecomposedQueryPlanVersion decomposedQueryVersion);
+
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    std::map<SharedQueryId, std::vector<DecomposedQueryId>> sharedQueryIdToDecomposedQueryPlanIds;
-    std::map<DecomposedQueryId, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
+    std::map<SharedQueryId, std::vector<DecomposedQueryIdWithVersion>> sharedQueryIdToDecomposedQueryPlanIds;
+    std::map<DecomposedQueryIdWithVersion, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
+    std::mutex registerPlanMutex;
+    std::map<DecomposedQueryIdWithVersion, Execution::ExecutableQueryPlanPtr> executableQueryPlansToRegister;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;

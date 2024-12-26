@@ -38,13 +38,15 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::create(DecomposedQueryId decomposedQ
 }
 
 DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId)
-    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), workerId(workerId) {}
+    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
+      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId) {}
 
 DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
                                          std::vector<OperatorPtr> rootOperators)
-    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), workerId(workerId),
+    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
+      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId),
       rootOperators(std::move(rootOperators)) {}
 
 void DecomposedQueryPlan::addRootOperator(OperatorPtr newRootOperator) { rootOperators.emplace_back(newRootOperator); }

@@ -489,7 +489,7 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
 }
 
 bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
-                                              DecomposedQueryId subQueryId,
+                                              DecomposedQueryId decomposedQueryId,
                                               WorkerId pWorkerId,
                                               OperatorId operatorId,
                                               std::string errorMsg) {
@@ -497,7 +497,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
     // create & fill the protobuf
     QueryFailureNotification request;
     request.set_queryid(sharedQueryId.getRawValue());
-    request.set_subqueryid(subQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_workerid(pWorkerId.getRawValue());
     request.set_operatorid(operatorId.getRawValue());
     request.set_errormsg(errorMsg);
@@ -612,7 +612,7 @@ bool CoordinatorRPCClient::checkAndMarkForSoftStop(SharedQueryId sharedQueryId,
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;
     requestSoftStopMessage.set_queryid(sharedQueryId.getRawValue());
-    requestSoftStopMessage.set_subqueryid(decomposedQueryId.getRawValue());
+    requestSoftStopMessage.set_decomposedqueryid(decomposedQueryId.getRawValue());
     requestSoftStopMessage.set_sourceid(sourceId.getRawValue());
 
     //Build response
@@ -638,7 +638,7 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(SharedQueryId sharedQueryId
     //Build request
     SoftStopTriggeredMessage softStopTriggeredMessage;
     softStopTriggeredMessage.set_queryid(sharedQueryId.getRawValue());
-    softStopTriggeredMessage.set_querysubplanid(decomposedQueryId.getRawValue());
+    softStopTriggeredMessage.set_decomposedqueryid(decomposedQueryId.getRawValue());
     softStopTriggeredMessage.set_sourceid(sourceId.getRawValue());
 
     //Build response
@@ -655,7 +655,7 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, 
     //Build request
     SoftStopCompletionMessage softStopCompletionMessage;
     softStopCompletionMessage.set_queryid(sharedQueryId.getRawValue());
-    softStopCompletionMessage.set_querysubplanid(decomposedQueryId.getRawValue());
+    softStopCompletionMessage.set_decomposedqueryid(decomposedQueryId.getRawValue());
 
     //Build response
     SoftStopCompletionReply softStopCompletionReply;

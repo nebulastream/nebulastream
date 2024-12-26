@@ -110,16 +110,32 @@ class KafkaSinkTest : public Testing::BaseIntegrationTest {
 * Tests basic set up of Kafka sink
 */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
-    auto kafkaSink =
-        createCsvKafkaSink(testSchema, SharedQueryId(QUERYID), DecomposedQueryId(QUERYID), nodeEngine, 1, brokers, topic, 1, 1);
+    auto kafkaSink = createCsvKafkaSink(testSchema,
+                                        SharedQueryId(QUERYID),
+                                        DecomposedQueryId(QUERYID),
+                                        DecomposedQueryPlanVersion(0),
+                                        nodeEngine,
+                                        1,
+                                        brokers,
+                                        topic,
+                                        1,
+                                        1);
 }
 
 /**
 * Test if schema, Kafka server address, clientId, user, and topic are the same
 */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
-    auto kafkaSink =
-        createCsvKafkaSink(testSchema, SharedQueryId(QUERYID), DecomposedQueryId(QUERYID), nodeEngine, 1, brokers, topic, 1, 1);
+    auto kafkaSink = createCsvKafkaSink(testSchema,
+                                        SharedQueryId(QUERYID),
+                                        DecomposedQueryId(QUERYID),
+                                        DecomposedQueryPlanVersion(0),
+                                        nodeEngine,
+                                        1,
+                                        brokers,
+                                        topic,
+                                        1,
+                                        1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 

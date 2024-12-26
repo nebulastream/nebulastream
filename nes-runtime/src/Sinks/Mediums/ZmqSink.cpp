@@ -35,8 +35,15 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  bool internal,
                  SharedQueryId sharedQueryId,
                  DecomposedQueryId decomposedQueryId,
+                 DecomposedQueryPlanVersion decomposedQueryVersion,
                  uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins),
+    : SinkMedium(std::move(format),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryId,
+                 decomposedQueryVersion,
+                 numberOfOrigins),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink: Init ZMQ Sink to {}:{}", host, port);

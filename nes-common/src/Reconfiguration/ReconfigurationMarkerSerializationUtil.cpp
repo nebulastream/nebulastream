@@ -28,7 +28,7 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
     NES_DEBUG("Serialize reconfiguration marker.");
     auto& mutableReconfigurationMarkerEvents = *serializableReconfigurationMarker.mutable_reconfigurationmarkerevents();
 
-    for (const auto& [key, value] : reconfigurationMarker->getAllReconfigurationMarkerEvents()) {
+    for (const auto& [decomposedQueryIdWithVersion, value] : reconfigurationMarker->getAllReconfigurationMarkerEvents()) {
 
         auto reconfigurationMetadataType = value->reconfigurationMetadata->reconfigurationMetadataType;
         auto queryState = value->queryState;
@@ -41,7 +41,9 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableDrainQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[packDecomposedPlanAsString(decomposedQueryIdWithVersion.id.getRawValue(),
+                                                                              decomposedQueryIdWithVersion.version)] =
+                    serializableReconfigurationMetadata;
                 break;
             }
             case ReconfigurationMetadataType::UpdateQuery: {
@@ -55,7 +57,9 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableUpdateQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[packDecomposedPlanAsString(decomposedQueryIdWithVersion.id.getRawValue(),
+                                                                              decomposedQueryIdWithVersion.version)] =
+                    serializableReconfigurationMetadata;
                 break;
             }
             case ReconfigurationMetadataType::UpdateAndDrainQuery: {
@@ -74,7 +78,9 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableUpdateAndDrainQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[packDecomposedPlanAsString(decomposedQueryIdWithVersion.id.getRawValue(),
+                                                                              decomposedQueryIdWithVersion.version)] =
+                    serializableReconfigurationMetadata;
                 break;
             }
         }
@@ -96,7 +102,8 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
             reconfigurationMetaData.details().UnpackTo(&serializedDrainQueryMetadata);
             auto reConfMetaData = std::make_shared<DrainQueryMetadata>(serializedDrainQueryMetadata.numberofsources());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
+            auto planWithVersion = unpackDecomposedPlanFromString(key);
+            reconfigurationMarker->addReconfigurationEvent(planWithVersion.id, planWithVersion.version, markerEvent);
         } else if (reconfigurationMetaData.details()
                        .Is<SerializableReconfigurationMetadata_SerializableUpdateAndDrainMetadata>()) {
             auto serializedUpdateAndDrainQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateAndDrainMetadata();
@@ -108,7 +115,8 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
                 serializedUpdateAndDrainQueryMetadata.decomposedqueryplanversion(),
                 serializedUpdateAndDrainQueryMetadata.numberofsources());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
+            auto planWithVersion = unpackDecomposedPlanFromString(key);
+            reconfigurationMarker->addReconfigurationEvent(planWithVersion.id, planWithVersion.version, markerEvent);
         } else if (reconfigurationMetaData.details().Is<SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata>()) {
             auto serializedUpdateQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata();
             reconfigurationMetaData.details().UnpackTo(&serializedUpdateQueryMetadata);
@@ -118,9 +126,25 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
                                                       DecomposedQueryId(serializedUpdateQueryMetadata.decomposedqueryid()),
                                                       serializedUpdateQueryMetadata.decomposedqueryplanversion());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
+            auto planWithVersion = unpackDecomposedPlanFromString(key);
+            reconfigurationMarker->addReconfigurationEvent(planWithVersion.id, planWithVersion.version, markerEvent);
         }
     }
+}
+
+std::string ReconfigurationMarkerSerializationUtil::packDecomposedPlanAsString(uint64_t first, uint32_t second) {
+    std::ostringstream oss;
+    oss << first << "," << second;
+    return oss.str();
+}
+
+DecomposedQueryIdWithVersion ReconfigurationMarkerSerializationUtil::unpackDecomposedPlanFromString(const std::string& key) {
+    std::istringstream iss(key);
+    uint64_t first;
+    uint32_t second;
+    char delimiter;
+    iss >> first >> delimiter >> second;
+    return DecomposedQueryIdWithVersion(first, second);
 }
 
 }// namespace NES

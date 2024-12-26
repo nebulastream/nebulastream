@@ -203,7 +203,7 @@ message GetNodesInRangeRequest {
 
 message QueryFailureNotification{
   uint64 queryId = 1;
-  uint64 subQueryId = 2;
+  uint64 decomposedQueryId = 2;
   uint64 workerId = 3;
   uint64 operatorId = 4;
   string errorMsg = 5;
@@ -265,7 +265,7 @@ message ErrorReply{
 
 message RequestSoftStopMessage{
   uint64 queryId = 1;
-  uint64 subQueryId = 2;
+  uint64 decomposedQueryId = 2;
   uint64 sourceId = 3;
 }
 
@@ -275,7 +275,7 @@ message StopRequestReply{
 
 message SoftStopTriggeredMessage{
   uint64 queryId = 1;
-  uint64 querySubPlanId = 2;
+  uint64 decomposedQueryId = 2;
   uint64 sourceId = 3;
 }
 
@@ -285,7 +285,7 @@ message SoftStopTriggeredReply{
 
 message SoftStopCompletionMessage{
   uint64 queryId = 1;
-  uint64 querySubPlanId = 2;
+  uint64 decomposedQueryId = 2;
 }
 
 message SoftStopCompletionReply{

@@ -58,11 +58,13 @@ class BaseNetworkChannel {
      * @param isEventOnly whether the channel is for events only
      * @param terminationType the type of termination, e.g., graceful
      * @param currentMessageSequenceNumber represents the number of data buffer messages the network sink has sent
+     * @param shouldPropagateMarker says whether marker should be sent futher before closing
      */
     void close(bool isEventOnly,
                Runtime::QueryTerminationType terminationType,
                uint16_t numSendingThreads = 0,
                uint64_t currentMessageSequenceNumber = 0,
+               bool shouldPropagateMarker = true,
                const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker = std::nullopt);
 
   protected:

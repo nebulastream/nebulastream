@@ -128,10 +128,12 @@ bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
 bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
                                                              DecomposedQueryId decomposedQueryId,
+                                                             DecomposedQueryPlanVersion decomposedQueryVersion,
                                                              const std::string& failureReason) {
 
     auto failRequest = RequestProcessor::FailQueryRequest::create(sharedQueryId,
                                                                   decomposedQueryId,
+                                                                  decomposedQueryVersion,
                                                                   failureReason,
                                                                   RequestProcessor::DEFAULT_RETRIES,
                                                                   placementAmendmentHandler);

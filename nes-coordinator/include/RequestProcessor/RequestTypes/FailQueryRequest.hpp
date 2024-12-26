@@ -55,12 +55,14 @@ class FailQueryRequest : public AbstractUniRequest {
      * @brief Constructor
      * @param sharedQueryId: The id of the shared query that failed
      * @param failedDecomposedPlanId: The id of the decomposed plan that caused the failure
+     * @param failedDecomposedPlanVersion: The version of the decomposed plan that caused the failure
      * @param failureReason: the failure reason
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param placementAmendmentHandler: placement amendment handler for updating and un-deploying the operators of the failed shared query
      */
     FailQueryRequest(SharedQueryId sharedQueryId,
                      DecomposedQueryId failedDecomposedPlanId,
+                     DecomposedQueryPlanVersion failedDecomposedPlanVersion,
                      const std::string& failureReason,
                      uint8_t maxRetries,
                      const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
@@ -75,6 +77,7 @@ class FailQueryRequest : public AbstractUniRequest {
     */
     static FailQueryRequestPtr create(SharedQueryId sharedQueryId,
                                       DecomposedQueryId failedDecomposedQueryId,
+                                      DecomposedQueryPlanVersion failedDecomposedPlanVersion,
                                       const std::string& failureReason,
                                       uint8_t maxRetries,
                                       const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
@@ -120,6 +123,7 @@ class FailQueryRequest : public AbstractUniRequest {
   private:
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;
+    DecomposedQueryPlanVersion decomposedQueryVersion;
     std::string failureReason;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Query::QueryCatalogPtr queryCatalog;

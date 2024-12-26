@@ -225,9 +225,14 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
     }
 }
 
-void QueryCatalog::checkAndMarkSharedQueryForFailure(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+void QueryCatalog::checkAndMarkSharedQueryForFailure(SharedQueryId sharedQueryId,
+                                                     DecomposedQueryId decomposedQueryId,
+                                                     DecomposedQueryPlanVersion decomposedQueryVersion) {
 
-    NES_INFO("checkAndMarkForFailure sharedQueryId={} subQueryId={}", sharedQueryId, decomposedQueryId);
+    NES_INFO("checkAndMarkForFailure sharedQueryId={} subQueryId={}.{}",
+             sharedQueryId,
+             decomposedQueryId,
+             decomposedQueryVersion);
     //Fetch shared query and query catalogs
     auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
         folly::acquireLocked(sharedQueryCatalogEntryMapping, queryCatalogEntryMapping);
@@ -300,13 +305,13 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
             break;
         }
         case QueryState::SOFT_STOP_TRIGGERED: {
-            return handleDecomposedQueryPlanSoftStopTriggered(sharedQueryId, decomposedQueryId);
+            return handleDecomposedQueryPlanSoftStopTriggered(sharedQueryId, decomposedQueryId, decomposedQueryPlanVersion);
         }
         case QueryState::MARKED_FOR_SOFT_STOP: {
-            return handleDecomposedQueryPlanMarkedForSoftStop(sharedQueryId, decomposedQueryId);
+            return handleDecomposedQueryPlanMarkedForSoftStop(sharedQueryId, decomposedQueryId, decomposedQueryPlanVersion);
         }
         case QueryState::SOFT_STOP_COMPLETED: {
-            return handleDecomposedQueryPlanSoftStopCompleted(sharedQueryId, decomposedQueryId);
+            return handleDecomposedQueryPlanSoftStopCompleted(sharedQueryId, decomposedQueryId, decomposedQueryPlanVersion);
         }
         default:
             throw Exceptions::InvalidQueryStateException({QueryState::SOFT_STOP_TRIGGERED, QueryState::SOFT_STOP_COMPLETED},
@@ -315,9 +320,12 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
     return true;
 }
 
-bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
-    NES_DEBUG("Handling soft stop triggered for decomposed query with id {} for shared query with id {}",
+bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId,
+                                                              DecomposedQueryId decomposedQueryId,
+                                                              DecomposedQueryPlanVersion decomposedQueryVersion) {
+    NES_DEBUG("Handling soft stop triggered for decomposed query with id {}.{} for shared query with id {}",
               decomposedQueryId,
+              decomposedQueryVersion,
               sharedQueryId);
 
     //Fetch shared query and query catalogs
@@ -362,9 +370,14 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId shar
     }
 }
 
-bool QueryCatalog::handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+bool QueryCatalog::handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId sharedQueryId,
+                                                              DecomposedQueryId decomposedQueryId,
+                                                              DecomposedQueryPlanVersion decomposedQueryVersion) {
 
-    NES_INFO("checkAndMarkForSoftStop sharedQueryId={} subQueryId={}", sharedQueryId, decomposedQueryId);
+    NES_INFO("checkAndMarkForSoftStop sharedQueryId={} subQueryId={}.{}",
+             sharedQueryId,
+             decomposedQueryId,
+             decomposedQueryVersion);
     //Fetch shared query and query catalogs
     auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
         folly::acquireLocked(sharedQueryCatalogEntryMapping, queryCatalogEntryMapping);
@@ -406,11 +419,15 @@ bool QueryCatalog::handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId shar
     return true;
 }
 
-bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
-    NES_DEBUG("QueryCatalogService: Updating the status of decomposed query with id {} to SOFT_STOP_COMPLETED for shared query "
-              "with id {}",
-              decomposedQueryId,
-              sharedQueryId);
+bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId sharedQueryId,
+                                                              DecomposedQueryId decomposedQueryId,
+                                                              DecomposedQueryPlanVersion decomposedQueryVersion) {
+    NES_DEBUG(
+        "QueryCatalogService: Updating the status of decomposed query with id {}.{} to SOFT_STOP_COMPLETED for shared query "
+        "with id {}",
+        decomposedQueryId,
+        decomposedQueryVersion,
+        sharedQueryId);
 
     //Fetch shared query and query catalogs
     auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
@@ -426,10 +443,11 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
 
     //todo #4396: when query migration has its own termination type, this function will not be called during migration. remove MIGRATING below
     if (currentSharedQueryState != QueryState::MARKED_FOR_SOFT_STOP && currentSharedQueryState != QueryState::MIGRATING) {
-        NES_WARNING("Found shared query with id {} in {} but received SOFT_STOP_COMPLETED for the decomposed query with id {}",
+        NES_WARNING("Found shared query with id {} in {} but received SOFT_STOP_COMPLETED for the decomposed query with id {}.{}",
                     sharedQueryId,
                     magic_enum::enum_name(currentSharedQueryState),
-                    decomposedQueryId);
+                    decomposedQueryId,
+                    decomposedQueryVersion);
         //FIXME: #4396 fix what to do when this occurs
         return false;
     }

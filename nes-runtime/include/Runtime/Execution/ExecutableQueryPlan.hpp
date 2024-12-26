@@ -58,6 +58,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @brief Constructor for an executable query plan.
      * @param sharedQueryId id of the overall query
      * @param decomposedQueryId id of the sub query plan
+     * @param decomposedQueryVersion version of sub query plan
      * @param sources vector of data sources
      * @param sinks vector of data sinks
      * @param pipelines vector of pipelines
@@ -66,6 +67,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     explicit ExecutableQueryPlan(SharedQueryId sharedQueryId,
                                  DecomposedQueryId decomposedQueryId,
+                                 DecomposedQueryPlanVersion decomposedQueryVersion,
                                  std::vector<DataSourcePtr>&& sources,
                                  std::vector<DataSinkPtr>&& sinks,
                                  std::vector<ExecutablePipelinePtr>&& pipelines,
@@ -76,6 +78,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @brief Factory to create an new executable query plan.
      * @param sharedQueryId id of the overall query
      * @param decomposedQueryId id of the sub query plan
+     * @param decomposedQueryVersion version of sub query plan
      * @param sources vector of data sources
      * @param sinks vector of data sinks
      * @param pipelines vector of pipelines
@@ -84,6 +87,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     static ExecutableQueryPlanPtr create(SharedQueryId sharedQueryId,
                                          DecomposedQueryId decomposedQueryId,
+                                         DecomposedQueryPlanVersion decomposedQueryVersion,
                                          std::vector<DataSourcePtr> sources,
                                          std::vector<DataSinkPtr> sinks,
                                          std::vector<ExecutablePipelinePtr> pipelines,
@@ -137,7 +141,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     bool fail();
 
-    ExecutableQueryPlanStatus getStatus();
+    ExecutableQueryPlanStatus getStatus() const;
 
     /**
      * @brief Get data sources.
@@ -180,6 +184,12 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     DecomposedQueryId getDecomposedQueryId() const;
 
     /**
+     * @brief Get the query execution plan version
+     * @return the query execution plan version
+     */
+    DecomposedQueryPlanVersion getDecomposedQueryVersion() const;
+
+    /**
      * @brief final reconfigure callback called upon a reconfiguration
      * @param task the reconfig descriptor
      */
@@ -214,6 +224,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
   private:
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
+    const DecomposedQueryPlanVersion decomposedQueryVersion;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;

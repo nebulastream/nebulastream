@@ -63,27 +63,37 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
-void WorkerContext::storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel) {
+void WorkerContext::storeNetworkChannel(OperatorId id, DecomposedQueryPlanVersion, Network::NetworkChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
     dataChannels[id] = std::move(channel);
 }
 
 void WorkerContext::storeNetworkChannelFuture(
     OperatorId id,
+    DecomposedQueryPlanVersion,
     std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    dataChannelFutures[id] = std::move(channelFuture);
+    if (!dataChannelFutures.contains(id)) {
+        dataChannelFutures[id] = std::move(channelFuture);
+    }
 }
+
+bool WorkerContext::containsNetworkChannelFuture(OperatorId id) { return dataChannelFutures.contains(id); }
 
 void WorkerContext::storeEventChannelFuture(
     OperatorId id,
+    DecomposedQueryPlanVersion,
     std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    reverseEventChannelFutures[id] = std::move(channelFuture);
+    if (!reverseEventChannelFutures.contains(id)) {
+        reverseEventChannelFutures[id] = std::move(channelFuture);
+    }
 }
 
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
-    this->storage[nesPartition] = std::make_shared<BufferStorage>();
+    if (!this->storage.contains(nesPartition)) {
+        this->storage[nesPartition] = std::make_shared<BufferStorage>();
+    }
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
@@ -137,14 +147,20 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
 }
 
 bool WorkerContext::releaseNetworkChannel(OperatorId id,
+                                          DecomposedQueryPlanVersion,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
                                           uint64_t currentMessageSequenceNumber,
+                                          bool shouldPropagateMarker,
                                           const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber, reconfigurationMarker);
+            channel->close(terminationType,
+                           sendingThreadCount,
+                           currentMessageSequenceNumber,
+                           shouldPropagateMarker,
+                           reconfigurationMarker);
         }
         dataChannels.erase(it);
         return true;
@@ -169,13 +185,14 @@ bool WorkerContext::releaseEventOnlyChannel(OperatorId id, Runtime::QueryTermina
     return false;
 }
 
-Network::NetworkChannel* WorkerContext::getNetworkChannel(OperatorId ownerId) {
+Network::NetworkChannel* WorkerContext::getNetworkChannel(OperatorId ownerId, DecomposedQueryPlanVersion) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
 
-std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(OperatorId operatorId) {
+std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(OperatorId operatorId,
+                                                                                  DecomposedQueryPlanVersion) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     auto& [futureReference, promiseReference] = iteratorOperatorId->second;

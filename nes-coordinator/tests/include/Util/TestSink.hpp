@@ -159,7 +159,8 @@ class CollectTestSink : public SinkMedium {
                      nodeEngine,
                      numOfProducers,
                      INVALID_SHARED_QUERY_ID,
-                     INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+                     INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                     INVALID_DECOMPOSED_QUERY_PLAN_VERSION) {
         auto bufferManager = nodeEngine->getBufferManager(0);
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only support for row layouts");
     };

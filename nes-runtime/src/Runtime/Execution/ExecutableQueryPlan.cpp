@@ -27,13 +27,15 @@ namespace NES::Runtime::Execution {
 
 ExecutableQueryPlan::ExecutableQueryPlan(SharedQueryId sharedQueryId,
                                          DecomposedQueryId decomposedQueryId,
+                                         DecomposedQueryPlanVersion decomposedQueryVersion,
                                          std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks,
                                          std::vector<ExecutablePipelinePtr>&& pipelines,
                                          QueryManagerPtr&& queryManager,
                                          BufferManagerPtr&& bufferManager)
-    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), sources(std::move(sources)), sinks(std::move(sinks)),
-      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
+    : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
+      sources(std::move(sources)), sinks(std::move(sinks)), pipelines(std::move(pipelines)),
+      queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Execution::ExecutableQueryPlanStatus::Created),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // the +1 is the termination token for the query plan itself
@@ -42,6 +44,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(SharedQueryId sharedQueryId,
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(SharedQueryId sharedQueryId,
                                                    DecomposedQueryId decomposedQueryId,
+                                                   DecomposedQueryPlanVersion decomposedQueryVersion,
                                                    std::vector<DataSourcePtr> sources,
                                                    std::vector<DataSinkPtr> sinks,
                                                    std::vector<ExecutablePipelinePtr> pipelines,
@@ -49,6 +52,7 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(SharedQueryId sharedQueryId,
                                                    BufferManagerPtr bufferManager) {
     return std::make_shared<ExecutableQueryPlan>(sharedQueryId,
                                                  decomposedQueryId,
+                                                 decomposedQueryVersion,
                                                  std::move(sources),
                                                  std::move(sinks),
                                                  std::move(pipelines),
@@ -61,6 +65,8 @@ SharedQueryId ExecutableQueryPlan::getSharedQueryId() const { return sharedQuery
 const std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() const { return pipelines; }
 
 DecomposedQueryId ExecutableQueryPlan::getDecomposedQueryId() const { return decomposedQueryId; }
+
+DecomposedQueryPlanVersion ExecutableQueryPlan::getDecomposedQueryVersion() const { return decomposedQueryVersion; }
 
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep {} {}", sharedQueryId, decomposedQueryId);
@@ -98,7 +104,7 @@ bool ExecutableQueryPlan::fail() {
     return ret;
 }
 
-ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
+ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() const { return qepStatus.load(); }
 
 bool ExecutableQueryPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup sharedQueryId={} decomposedQueryId={}", sharedQueryId, decomposedQueryId);
@@ -214,7 +220,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                                                   Execution::ExecutableQueryPlanStatus::Stopped);
             break;
         }
-        //if a reconfiguration marker was passed int othe function it means that the plan has to be shut down
+        //if a reconfiguration marker was passed into the function it means that the plan has to be shut down
         case ReconfigurationType::ReconfigurationMarker:
         case ReconfigurationType::SoftEndOfStream: {
             NES_WARNING("QueryExecutionPlan: soft stop request received for query plan {} decomposed plan {} left tokens = {}",
@@ -294,9 +300,14 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryId(),
+                                                       getDecomposedQueryVersion(),
                                                        reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
-        queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryId(), reconfMessageQEP, false);
+        queryManager->addReconfigurationMessage(getSharedQueryId(),
+                                                getDecomposedQueryId(),
+                                                getDecomposedQueryVersion(),
+                                                reconfMessageQEP,
+                                                false);
     }
 }
 
@@ -317,9 +328,14 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryId(),
+                                                       getDecomposedQueryVersion(),
                                                        reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
-        queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryId(), reconfMessageQEP, false);
+        queryManager->addReconfigurationMessage(getSharedQueryId(),
+                                                getDecomposedQueryId(),
+                                                getDecomposedQueryVersion(),
+                                                reconfMessageQEP,
+                                                false);
     }
 }
 
@@ -337,9 +353,14 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryId(),
+                                                       getDecomposedQueryVersion(),
                                                        reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
-        queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryId(), reconfMessageQEP, false);
+        queryManager->addReconfigurationMessage(getSharedQueryId(),
+                                                getDecomposedQueryId(),
+                                                getDecomposedQueryVersion(),
+                                                reconfMessageQEP,
+                                                false);
     }
 }
 

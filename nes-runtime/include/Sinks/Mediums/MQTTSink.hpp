@@ -48,6 +48,7 @@ class MQTTSink : public SinkMedium {
                       uint32_t numOfProducers,
                       SharedQueryId sharedQueryId,
                       DecomposedQueryId decomposedQueryId,
+                      DecomposedQueryPlanVersion decomposedQueryVersion,
                       std::string const& address,
                       std::string const& clientId,
                       std::string const& topic,

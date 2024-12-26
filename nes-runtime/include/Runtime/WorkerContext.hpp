@@ -30,6 +30,7 @@
 
 namespace NES {
 class ReconfigurationMarker;
+using HashOperatorId = std::pair<OperatorId, DecomposedQueryPlanVersion>;
 using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 }// namespace NES
 
@@ -55,6 +56,7 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
+    // std::unordered_map<HashOperatorId , Network::NetworkChannelPtr> dataChannels;
     std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
     std::unordered_map<OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
@@ -131,7 +133,9 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(OperatorId id, DecomposedQueryPlanVersion version, Network::NetworkChannelPtr&& channel);
+
+    bool containsNetworkChannel(OperatorId id);
 
     /**
      * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
@@ -140,7 +144,10 @@ class WorkerContext {
      * process is to be aborted
      */
     void storeNetworkChannelFuture(OperatorId id,
+                                   DecomposedQueryPlanVersion version,
                                    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+
+    bool containsNetworkChannelFuture(OperatorId id);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -181,13 +188,16 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param terminationType the termination type
      * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
+     * @param shouldPropagateMarker marker should be sent to downstream, when closing channel
      * @param reconfigurationMarker an optional containing the reconfiguration marker if this channel is closed as part of a
      * reconfiguration
      */
     bool releaseNetworkChannel(OperatorId id,
+                               DecomposedQueryPlanVersion version,
                                Runtime::QueryTerminationType terminationType,
                                uint16_t sendingThreadCount,
                                uint64_t currentMessageSequenceNumber,
+                               bool shouldPropagateMarker,
                                const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker);
 
     /**
@@ -209,7 +219,7 @@ class WorkerContext {
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannel* getNetworkChannel(OperatorId ownerId);
+    Network::NetworkChannel* getNetworkChannel(OperatorId ownerId, DecomposedQueryPlanVersion ownerVersion);
 
     /**
      * @brief retrieves an asynchronously established output channel.
@@ -219,7 +229,7 @@ class WorkerContext {
      * - optional containing nullptr if the conneciton timed out
      * - optional containing valid ptr if connection succeeded
      */
-    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(OperatorId operatorId);
+    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(OperatorId operatorId, DecomposedQueryPlanVersion version);
 
     /**
      * @brief blocks until async connection of a network channel has succeeded or timed out
@@ -275,6 +285,7 @@ class WorkerContext {
      * @param channelFuture the future to be stored
      */
     void storeEventChannelFuture(OperatorId id,
+                                 DecomposedQueryPlanVersion version,
                                  std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
 
     /**

@@ -36,6 +36,7 @@ class RawBufferSink : public SinkMedium {
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
      * @param sharedQueryId shared query plan id
      * @param decomposedQueryId decomposed query plan id
+     * @param decomposedQueryVersion decomposed query plan version
      * @param numberOfOrigins number of origins of a given query
      */
     explicit RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
@@ -44,6 +45,7 @@ class RawBufferSink : public SinkMedium {
                            bool append,
                            SharedQueryId sharedQueryId,
                            DecomposedQueryId decomposedQueryId,
+                           DecomposedQueryPlanVersion decomposedQueryVersion,
                            uint64_t numberOfOrigins = 1);
 
     ~RawBufferSink() override;

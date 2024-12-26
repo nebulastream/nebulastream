@@ -35,13 +35,16 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                Runtime::QueryTerminationType terminationType,
                                uint16_t numSendingThreads,
                                uint64_t currentMessageSequenceNumber,
+                               bool shouldPropagateMarker,
                                const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
 
     auto events = 0;
     if (terminationType == Runtime::QueryTerminationType::Reconfiguration && !isEventOnly) {
         NES_ASSERT((reconfigurationMarker.has_value()),
                    "Reconfiguration marker must be provided for reconfiguration of data channels");
-        events = reconfigurationMarker.value()->getAllReconfigurationMarkerEvents().size();
+        if (shouldPropagateMarker) {
+            events = reconfigurationMarker.value()->getAllReconfigurationMarkerEvents().size();
+        }
     } else {
         NES_ASSERT(!reconfigurationMarker.has_value(), "Reconfiguration marker must not be provided for non-reconfiguration");
     }
@@ -57,11 +60,12 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                   numSendingThreads,
                                                   currentMessageSequenceNumber);
     } else {
-        //check if this is a reconfiguration, if yes, also propagate the reconfiguraiont events
-        if (!reconfigurationMarker) {
+        //check if this is a reconfiguration, if yes, also propagate the reconfiguration events
+        if (!reconfigurationMarker || !shouldPropagateMarker) {
             //not a reconfiguration, no events to propagate
 
             //todo #4313: pass number of threads on client announcement instead of on closing
+            NES_ASSERT(events == 0, "There should be 0 events in this case, as reconfiguration marker is null");
             sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
                                                       channelId,
                                                       Messages::ChannelType::DataChannel,

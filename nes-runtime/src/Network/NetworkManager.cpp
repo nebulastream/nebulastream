@@ -175,6 +175,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
         //notify the sink about successful connection via reconfiguration message
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
                                                 reconfigurationMessage.getParentPlanId(),
+                                                reconfigurationMessage.getParentPlanVersion(),
                                                 reconfigurationMessage,
                                                 false);
     });

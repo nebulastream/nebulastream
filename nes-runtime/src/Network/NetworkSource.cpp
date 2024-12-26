@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -87,7 +88,7 @@ bool NetworkSource::bind() {
 
 bool NetworkSource::start() {
     using namespace Runtime;
-    NES_DEBUG("NetworkSource: start called on {}", nesPartition);
+    NES_DEBUG("NetworkSource: start called on {}, waitingTime: {}, retryTime: {}", nesPartition, waitTime.count(), retryTimes);
     auto emitter = shared_from_base<DataEmitter>();
     auto expected = false;
     if (running.compare_exchange_strong(expected, true)) {
@@ -109,9 +110,10 @@ bool NetworkSource::start() {
 
             auto newReconf = ReconfigurationMessage(sharedQueryId,
                                                     decomposedQueryId,
+                                                    version,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, true);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, version, newReconf, true);
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);
@@ -127,9 +129,14 @@ bool NetworkSource::fail() {
         NES_DEBUG("NetworkSource: fail called on {}", nesPartition);
         auto newReconf = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
                                                 INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                 ReconfigurationType::FailEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
-        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
+        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                newReconf,
+                                                false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
     }
@@ -145,9 +152,14 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
         NES_DEBUG("NetworkSource: stop called on {}", nesPartition);
         auto newReconf = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
                                                 INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                 ReconfigurationType::HardEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
-        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
+        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                newReconf,
+                                                false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
@@ -190,14 +202,15 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                     nesPartition.toString());
                 return;
             }
-
+            // TODO: #5171 uncomment event channels
+            /*
             if (networkManager->getConnectSourceEventChannelsAsync()) {
                 auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
                                                                                             nesPartition,
                                                                                             localBufferManager,
                                                                                             waitTime,
                                                                                             retryTimes);
-                workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
+                workerContext.storeEventChannelFuture(this->operatorId, version, std::move(channelFuture));
                 break;
             } else {
                 auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
@@ -215,7 +228,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
-            }
+            }*/
             break;
         }
         case Runtime::ReconfigurationType::Destroy: {
@@ -244,8 +257,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             auto marker = task.getUserData<ReconfigurationMarkerPtr>();
             auto eventOptional = getReconfigurationEventOptional(marker);
 
-            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
-                NES_WARNING("Non drain reconfigurations not yes supported");
+            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()
+                && !eventOptional.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
+                NES_WARNING("Other reconfigurations not yes supported");
                 NES_NOT_IMPLEMENTED();
             }
 
@@ -258,6 +272,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
+        // TODO: #5171 uncomment event channels
+        /*
         if (!workerContext.doesEventChannelExist(this->operatorId)) {
             //todo #4490: allow aborting connection here
             auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
@@ -268,7 +284,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             }
             return;
         }
-        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
+        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);*/
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
@@ -299,8 +315,9 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             auto marker = task.getUserData<ReconfigurationMarkerPtr>();
             auto eventOptional = getReconfigurationEventOptional(marker);
 
-            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
-                NES_WARNING("Non drain reconfigurations not yes supported");
+            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()
+                && !eventOptional.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
+                NES_WARNING("Other reconfigurations not yes supported");
                 NES_NOT_IMPLEMENTED();
             }
 
@@ -351,9 +368,14 @@ bool NetworkSource::startNewVersion() {
     bind();
     auto reconfMessage = Runtime::ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                          Runtime::ReconfigurationType::UpdateVersion,
                                                          Reconfigurable::shared_from_this());
-    queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
+    queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                            INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                            INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                            reconfMessage,
+                                            false);
     return true;
 }
 
@@ -396,15 +418,24 @@ std::optional<ReconfigurationMarkerEventPtr> NetworkSource::getReconfigurationEv
     auto sourcePtr = shared_from_base<DataSource>();
 
     auto executablePlans = queryManager->getExecutablePlanIdsForSource(sourcePtr);
-    if (executablePlans.size() > 1) {
+
+    auto executablePlanIds = std::unordered_set<DecomposedQueryId>();
+    auto maxVersion = INVALID_DECOMPOSED_QUERY_PLAN_VERSION;
+
+    for (auto& plan : executablePlans) {
+        executablePlanIds.insert(plan.id);
+        maxVersion = std::max(plan.version, version);
+    }
+
+    if (executablePlanIds.size() > 1) {
         NES_ERROR("Source sharing is currently not compatible with query reconfiguration");
         NES_NOT_IMPLEMENTED();
     }
 
     NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
 
-    auto qepId = executablePlans.front();
-    return marker->getReconfigurationEvent(qepId);
+    auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(*executablePlanIds.begin(), maxVersion);
+    return marker->getReconfigurationEvent(decomposedQueryIdWithVersion);
 }
 
 bool NetworkSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
@@ -412,10 +443,10 @@ bool NetworkSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker)
     if (auto eventOptional = getReconfigurationEventOptional(marker)) {
         auto event = eventOptional.value();
         auto metadata = event->reconfigurationMetadata;
-        if (metadata->instanceOf<DrainQueryMetadata>()) {
+        if (metadata->instanceOf<DrainQueryMetadata>() || metadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
             return queryManager->propagateReconfigurationMarker(std::move(marker), sourcePtr);
         }
-        NES_ERROR("Currently only drain reconfigurations are supported");
+        NES_ERROR("Currently not all reconfigurations are supported");
         NES_NOT_IMPLEMENTED();
     }
     return false;

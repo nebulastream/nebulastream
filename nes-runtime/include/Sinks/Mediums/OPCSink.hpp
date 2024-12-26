@@ -47,7 +47,8 @@ class OPCSink : public SinkMedium {
                      std::string user,
                      std::string password,
                      QueryId queryId,
-                     QuerySubPlanId querySubPlanId);
+                     QuerySubPlanId querySubPlanId,
+                     QuerySubPlanVesrion querySubPlanVersion);
 
     /**
      * @brief dtor

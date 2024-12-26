@@ -45,6 +45,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          OperatorId uniqueNetworkSinkDescriptorId,
                          SharedQueryId sharedQueryId,
                          DecomposedQueryId decomposedQueryId,
+                         DecomposedQueryPlanVersion decomposedQueryVersion,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
                          Runtime::NodeEnginePtr nodeEngine,
@@ -123,6 +124,12 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @return node engine pointer
      */
     Runtime::NodeEnginePtr getNodeEngine();
+
+    /**
+     * @brief method to return the plan version
+     * @return decomposed plan version
+     */
+    DecomposedQueryPlanVersion getVersion();
 
     /**
      * @brief reconfigure this sink to point to another downstream network source

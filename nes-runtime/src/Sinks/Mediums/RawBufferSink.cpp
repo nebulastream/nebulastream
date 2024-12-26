@@ -33,8 +33,15 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                              bool append,
                              SharedQueryId sharedQueryId,
                              DecomposedQueryId decomposedQueryId,
+                             DecomposedQueryPlanVersion decomposedQueryVersion,
                              uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins),
+    : SinkMedium(nullptr,
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryId,
+                 decomposedQueryVersion,
+                 numberOfOrigins),
       filePath(filePath), append(append) {}
 
 RawBufferSink::~RawBufferSink() {}

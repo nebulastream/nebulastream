@@ -82,6 +82,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
                                                                      pipelineQueryPlan->getQuerySubPlanId(),
+                                                                     pipelineQueryPlan->getQuerySubPlanVersion(),
                                                                      std::move(sources),
                                                                      std::move(sinks),
                                                                      std::move(executablePipelines),
@@ -279,6 +280,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
+                                                                             pipelineQueryPlan->getQuerySubPlanVersion(),
                                                                              queryManager,
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),

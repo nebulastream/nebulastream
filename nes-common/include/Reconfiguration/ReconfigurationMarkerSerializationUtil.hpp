@@ -27,11 +27,35 @@ class SerializableReconfigurationMarker;
 class ReconfigurationMarkerSerializationUtil {
 
   public:
+    /**
+     * @brief Serialize reconfiguration marker
+     * @param reconfigurationMarker : marker to be serialized
+     * @param serializableReconfigurationMarker : serialized marker
+     */
     static void serialize(const ReconfigurationMarkerPtr& reconfigurationMarker,
                           SerializableReconfigurationMarker& serializableReconfigurationMarker);
 
+    /**
+     * @brief Deserialize reconfiguration marker
+     * @param serializableReconfigurationMarker : serialized marker that needs to be deserialized
+     * @param reconfigurationMarker : deserialized marker
+     */
     static void deserialize(const SerializableReconfigurationMarker& serializableReconfigurationMarker,
                             ReconfigurationMarkerPtr reconfigurationMarker);
+
+  private:
+    /**
+     * @brief Convert pair of plan id and plan version to string
+     * @param first : plan id
+     * @param second : plan version
+     */
+    static std::string packDecomposedPlanAsString(uint64_t first, uint32_t second);
+
+    /**
+     * @brief Convert string back to a pair of plan id and plan version
+     * @param key : plan id and plan version in format "{plan_id},{plan_version}"
+     */
+    static DecomposedQueryIdWithVersion unpackDecomposedPlanFromString(const std::string& key);
 };
 }// namespace NES
 

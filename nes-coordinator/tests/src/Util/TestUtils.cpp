@@ -251,6 +251,7 @@ waitForQueryToStart(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& que
             case QueryState::SOFT_STOP_TRIGGERED:
             case QueryState::STOPPED:
             case QueryState::RUNNING: {
+                NES_TRACE("TestUtils: Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
                 return true;
             }
             case QueryState::FAILED: {
@@ -260,7 +261,6 @@ waitForQueryToStart(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& que
             }
             default: {
                 NES_WARNING("Expected: Running or Scheduling but found {}", magic_enum::enum_name(queryState));
-                break;
             }
         }
 
@@ -323,6 +323,46 @@ checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& q
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for {} at worker {}. Current state =  {}",
                   sharedQueryId,
+                  worker->getWorkerId(),
+                  status);
+        std::this_thread::sleep_for(sleepDuration);
+    }
+    NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+    return false;
+}
+
+[[nodiscard]] bool checkRemovedDecomposedQueryOrTimeoutAtWorker(DecomposedQueryId decomposedQueryId,
+                                                                DecomposedQueryPlanVersion decomposedQueryVersion,
+                                                                NesWorkerPtr worker,
+                                                                std::chrono::seconds timeout) {
+    auto timeoutInSec = std::chrono::seconds(timeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_TRACE("checkStoppedOrTimeout: check decomposed query plan with id {}.{}", decomposedQueryId, decomposedQueryVersion);
+        const auto currentPlan = worker->getNodeEngine()->getExecutableQueryPlan(decomposedQueryId, decomposedQueryVersion);
+        if (currentPlan == NULL) {
+            NES_TRACE("No such plan with id {}.{} yet registered", decomposedQueryId, decomposedQueryVersion);
+            return false;
+        }
+        if (currentPlan->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+            NES_TRACE("checkStoppedOrTimeout: finished status for {}.{} reached stopped",
+                      decomposedQueryId,
+                      decomposedQueryVersion);
+            return true;
+        }
+        std::string status;
+        switch (currentPlan->getStatus()) {
+            case Runtime::Execution::ExecutableQueryPlanStatus::Created: status = "created"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Deployed: status = "deployed"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Running: status = "running"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Finished: status = "finished"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Stopped: status = "stopped"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::ErrorState: status = "error"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Invalid: status = "invalid"; break;
+        }
+        NES_DEBUG("checkStoppedOrTimeout: status not reached for {}.{} at worker {}, status {}.",
+                  decomposedQueryId,
+                  decomposedQueryVersion,
                   worker->getWorkerId(),
                   status);
         std::this_thread::sleep_for(sleepDuration);

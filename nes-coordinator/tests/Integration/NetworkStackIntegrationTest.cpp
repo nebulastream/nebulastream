@@ -121,12 +121,14 @@ class TestSink : public SinkMedium {
              const Runtime::BufferManagerPtr& bufferManager,
              uint32_t numOfProducers = 1,
              SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-             DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
+             DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID,
+             DecomposedQueryPlanVersion decomposedQueryVersion = INVALID_DECOMPOSED_QUERY_PLAN_VERSION)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                      nodeEngine,
                      numOfProducers,
                      sharedQueryId,
-                     decomposedQueryId) {
+                     decomposedQueryId,
+                     decomposedQueryVersion) {
         // nop
     }
 
@@ -322,8 +324,11 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                                    nesPartition,
                                                                    bufferCnt);
             // register the incoming channel
-            auto sink =
-                std::make_shared<NullOutputSink>(recvEngine, 1, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID);
+            auto sink = std::make_shared<NullOutputSink>(recvEngine,
+                                                         1,
+                                                         INVALID_SHARED_QUERY_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION);
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
             auto uniqueId = OperatorId(1);
             auto source = std::make_shared<NetworkSource>(schema,
@@ -340,6 +345,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           uniqueId);
             auto qep = Runtime::Execution::ExecutableQueryPlan::create(INVALID_SHARED_QUERY_ID,
                                                                        INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                                       INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                                        {source},
                                                                        {sink},
                                                                        {},
@@ -376,6 +382,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          INVALID_OPERATOR_ID,
                                                          INVALID_SHARED_QUERY_ID,
                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                          nodeLocationSource,
                                                          nesPartition,
                                                          sendEngine,
@@ -391,6 +398,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
                 auto rt = Runtime::ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
                                                           INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                          INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                           Runtime::ReconfigurationType::Initialize,
                                                           networkSink,
                                                           std::make_any<uint32_t>(1));
@@ -406,6 +414,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                 }
                 auto rt2 = Runtime::ReconfigurationMessage(INITIAL_SHARED_QUERY_ID,
                                                            INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                           INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                            Runtime::ReconfigurationType::SoftEndOfStream,
                                                            networkSink);
                 networkSink->reconfigure(rt2, workerContext);
@@ -513,6 +522,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     std::vector<std::shared_ptr<TestSink>> finalSinks;
 
     uint32_t subPlanId = 0;
+    uint32_t subPlanVersion = 0;
     for (auto i = 1; i <= numQueries; ++i) {
         NesPartition nesPartition{SharedQueryId(i), OperatorId(i * 22), PartitionId(i * 33), SubpartitionId(i * 44)};
         // create NetworkSink
@@ -546,7 +556,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                    nodeEngineReceiver->getBufferManager(),
                                                    1,
                                                    SharedQueryId(i),
-                                                   DecomposedQueryId(subPlanId));
+                                                   DecomposedQueryId(subPlanId),
+                                                   DecomposedQueryPlanVersion(subPlanVersion));
         finalSinks.emplace_back(testSink);
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -587,6 +598,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          OperatorId(i),
                                                          SharedQueryId(i),
                                                          DecomposedQueryId(subPlanId),
+                                                         DecomposedQueryPlanVersion(subPlanVersion),
                                                          nodeLocationReceiver,
                                                          nesPartition,
                                                          nodeEngineSender,
@@ -888,17 +900,20 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint32_t numOfProducers = 1,
                                SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-                               DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
+                               DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                               DecomposedQueryPlanVersion decomposedQueryVersion = INVALID_DECOMPOSED_QUERY_PLAN_VERSION)
             : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                          nodeEngine,
                          numOfProducers,
                          sharedQueryId,
-                         decomposedQueryId) {
+                         decomposedQueryId,
+                         decomposedQueryVersion) {
             // nop
         }
 
         bool writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef context) override {
-            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryId);
+            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(
+                DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
             for (auto& dataSources : parentPlan->getSources()) {
                 auto senderChannel = context.getEventOnlyNetworkChannel(dataSources->getOperatorId());
                 senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
@@ -931,6 +946,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                          INVALID_OPERATOR_ID,
                                                          INVALID_SHARED_QUERY_ID,
                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                          nodeLocationReceiver,
                                                          nesPartition,
                                                          nodeEngineSender,

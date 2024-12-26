@@ -42,6 +42,7 @@ class ArrowFileSinkPlugin : public DataSinkPlugin {
                                                        fileSinkDescriptor->getAppend(),
                                                        querySubPlan->getQueryId(),
                                                        querySubPlan->getQuerySubPlanId(),
+                                                       querySubPlan->getQuerySubPlanVersion(),
                                                        fileSinkDescriptor->getNumberOfOrigins());
             }
         }

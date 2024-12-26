@@ -15,6 +15,7 @@
 #ifndef NES_COMMON_INCLUDE_RECONFIGURATION_RECONFIGURATIONMARKER_HPP_
 #define NES_COMMON_INCLUDE_RECONFIGURATION_RECONFIGURATIONMARKER_HPP_
 
+#include <Identifiers/DecomposedQueryIdWithVersion.hpp>
 #include <Reconfiguration/ReconfigurationMarkerEvent.hpp>
 #include <optional>
 #include <unordered_map>
@@ -49,25 +50,38 @@ class ReconfigurationMarker {
 
     /**
      * @brief Get the reconfiguration marker event
-     * @param decomposedQueryId : the id for which the reconfiguration marker needs to be defined
+     * @param decomposedQueryId : the id and version for which the reconfiguration marker needs to be defined
      * @return optional immutable reconfiguration marker event
      */
-    std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(DecomposedQueryId decomposedQueryId) const;
+    std::optional<ReconfigurationMarkerEventPtr>
+    getReconfigurationEvent(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const;
 
     /**
      * @brief Add a reconfiguration marker event
-     * @param decomposedQueryId : key identifying the decomposed query plan
+     * @param decomposedQueryId : key identifying the decomposed query plan id
+     * @param decomposedQueryVersion : key identifying the decomposed query plan version
      * @param reconfigurationEvent : the reconfiguration marker event
      */
-    void addReconfigurationEvent(DecomposedQueryId decomposedQueryId, const ReconfigurationMarkerEventPtr reconfigurationEvent);
+    void addReconfigurationEvent(DecomposedQueryId decomposedQueryId,
+                                 DecomposedQueryPlanVersion decomposedQueryVersion,
+                                 const ReconfigurationMarkerEventPtr reconfigurationEvent);
+
+    /**
+     * @brief Add a reconfiguration marker event
+     * @param decomposedQueryId : key identifying the decomposed query plan id and version
+     * @param reconfigurationEvent : the reconfiguration marker event
+     */
+    void addReconfigurationEvent(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion,
+                                 const ReconfigurationMarkerEventPtr reconfigurationEvent);
 
     /**
      * @brief Get all reconfiguration marker events defined in the reconfiguration marker
      */
-    const std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr>& getAllReconfigurationMarkerEvents() const;
+    const std::unordered_map<DecomposedQueryIdWithVersion, ReconfigurationMarkerEventPtr>&
+    getAllReconfigurationMarkerEvents() const;
 
   private:
-    std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr> reconfigurationEvents;
+    std::unordered_map<DecomposedQueryIdWithVersion, ReconfigurationMarkerEventPtr> reconfigurationEvents;
 };
 
 }// namespace NES

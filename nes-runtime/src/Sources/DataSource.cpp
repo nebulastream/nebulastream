@@ -36,6 +36,7 @@
 #endif
 #endif
 #include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <utility>
 using namespace std::string_literals;
 namespace NES {
@@ -228,11 +229,11 @@ bool DataSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
     }
 
     NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
-    auto qepId = executablePlans.front();
-    if (auto eventOptional = marker->getReconfigurationEvent(qepId)) {
+    auto decomposedQueryIdWithVersion = *executablePlans.begin();
+    if (auto eventOptional = marker->getReconfigurationEvent(decomposedQueryIdWithVersion)) {
         auto event = eventOptional.value();
         auto metadata = event->reconfigurationMetadata;
-        if (metadata->instanceOf<DrainQueryMetadata>()) {
+        if (metadata->instanceOf<DrainQueryMetadata>() || metadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
             //if this is a drain event, set the marker as a member var and proceed to set running to false
             //the source will then propagate the reconfiguration when close is called
             try {

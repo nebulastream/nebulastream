@@ -50,7 +50,9 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
 
-        testPlan = QueryCompilation::PipelineQueryPlan::create(SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID);
+        testPlan = QueryCompilation::PipelineQueryPlan::create(SharedQueryId(0),
+                                                               INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                               INVALID_DECOMPOSED_QUERY_PLAN_VERSION);
     }
 
     void TearDown() override {

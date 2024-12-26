@@ -52,6 +52,7 @@ class KafkaSink : public SinkMedium {
               const std::string& topic,
               SharedQueryId sharedQueryId,
               DecomposedQueryId decomposedQueryId,
+              DecomposedQueryPlanVersion decomposedQueryVersion,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
               uint64_t numberOfOrigins = 1);
 

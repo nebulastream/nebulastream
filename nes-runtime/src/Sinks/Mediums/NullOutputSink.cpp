@@ -23,8 +23,15 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                SharedQueryId sharedQueryId,
                                DecomposedQueryId decomposedQueryId,
+                               DecomposedQueryPlanVersion decomposedQueryVersion,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins) {}
+    : SinkMedium(nullptr,
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryId,
+                 decomposedQueryVersion,
+                 numberOfOrigins) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

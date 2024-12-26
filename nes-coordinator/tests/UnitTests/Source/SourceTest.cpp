@@ -614,6 +614,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
         return Runtime::Execution::ExecutablePipeline::create(INVALID_PIPELINE_ID,
                                                               SharedQueryId(queryId),
                                                               DecomposedQueryId(queryId),
+                                                              DecomposedQueryPlanVersion(0),
                                                               this->nodeEngine->getQueryManager(),
                                                               context,
                                                               executableStage,
@@ -632,16 +633,20 @@ class SourceTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(SourceTest, testDataSourceGetOperatorId) {
-    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        OriginId(originId),
-        this->statisticId,
-        this->numSourceLocalBuffersDefault,
-        "defaultPhysicalSourceName",
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    const DataSourcePtr source =
+        createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
+                                                      this->nodeEngine->getBufferManager(),
+                                                      this->nodeEngine->getQueryManager(),
+                                                      OperatorId(operatorId),
+                                                      OriginId(originId),
+                                                      this->statisticId,
+                                                      this->numSourceLocalBuffersDefault,
+                                                      "defaultPhysicalSourceName",
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                        1,
+                                                                                        SharedQueryId(1),
+                                                                                        DecomposedQueryId(1),
+                                                                                        DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(source->getOperatorId(), OperatorId(operatorId));
 }
 
@@ -664,40 +669,50 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
 }
 
 TEST_F(SourceTest, testDataSourceGetSchema) {
-    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        OriginId(originId),
-        this->statisticId,
-        this->numSourceLocalBuffersDefault,
-        "defaultPhysicalSourceName",
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    const DataSourcePtr source =
+        createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
+                                                      this->nodeEngine->getBufferManager(),
+                                                      this->nodeEngine->getQueryManager(),
+                                                      OperatorId(operatorId),
+                                                      OriginId(originId),
+                                                      this->statisticId,
+                                                      this->numSourceLocalBuffersDefault,
+                                                      "defaultPhysicalSourceName",
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                        1,
+                                                                                        SharedQueryId(1),
+                                                                                        DecomposedQueryId(1),
+                                                                                        DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(source->getSchema(), this->schema);
 }
 
 TEST_F(SourceTest, testDataSourceRunningImmediately) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_FALSE(mDataSource.isRunning());
 }
 
 TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());// the publicly visible side-effect
@@ -705,14 +720,17 @@ TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
 }
 
 TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_FALSE(mDataSource.start());
@@ -721,26 +739,32 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
 }
 
 TEST_F(SourceTest, testDataSourceStopImmediately) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
 
 TEST_F(SourceTest, testDataSourceStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
@@ -749,14 +773,17 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
 }
 
 TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
@@ -767,14 +794,17 @@ TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
 }
 
 TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 OperatorId(operatorId),
+                                                 this->numSourceLocalBuffersDefault,
+                                                 GatheringMode::INTERVAL_MODE,
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                   1,
+                                                                                   SharedQueryId(1),
+                                                                                   DecomposedQueryId(1),
+                                                                                   DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
@@ -785,14 +815,17 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
 }
 
 TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
-    auto mDataSource =
-        MockDataSource::create(this->schema,
-                               this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(),
-                               OperatorId(operatorId),
-                               this->numSourceLocalBuffersDefault,
-                               GatheringMode::INTERVAL_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    auto mDataSource = MockDataSource::create(this->schema,
+                                              this->nodeEngine->getBufferManager(),
+                                              this->nodeEngine->getQueryManager(),
+                                              OperatorId(operatorId),
+                                              this->numSourceLocalBuffersDefault,
+                                              GatheringMode::INTERVAL_MODE,
+                                              {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                1,
+                                                                                SharedQueryId(1),
+                                                                                DecomposedQueryId(1),
+                                                                                DecomposedQueryPlanVersion(0))});
     ON_CALL(*mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(*mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
     mDataSource->runningRoutine();
@@ -805,7 +838,11 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
                                OperatorId(operatorId),
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::INGESTION_RATE_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                 1,
+                                                                 SharedQueryId(1),
+                                                                 DecomposedQueryId(1),
+                                                                 DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -819,7 +856,11 @@ TEST_F(SourceTest, DISABLED_testDataSourceRunningRoutineKalmanFilter) {
                                OperatorId(operatorId),
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::ADAPTIVE_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                 1,
+                                                                 SharedQueryId(1),
+                                                                 DecomposedQueryId(1),
+                                                                 DecomposedQueryPlanVersion(0))});
     ON_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -832,6 +873,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     auto sink = createCSVFileSink(this->schema,
                                   SharedQueryId(this->queryId),
                                   DecomposedQueryId(this->queryId),
+                                  DecomposedQueryPlanVersion(0),
                                   this->nodeEngine,
                                   1,
                                   "source-test-freq-routine.csv",
@@ -856,6 +898,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(SharedQueryId(this->queryId),
                                                                          DecomposedQueryId(this->queryId),
+                                                                         DecomposedQueryPlanVersion(0),
                                                                          {mDataSource},
                                                                          {sink},
                                                                          {pipeline},
@@ -881,6 +924,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     auto sink = createCSVFileSink(this->schema,
                                   SharedQueryId(this->queryId),
                                   DecomposedQueryId(this->queryId),
+                                  DecomposedQueryPlanVersion(0),
                                   this->nodeEngine,
                                   1,
                                   "source-test-ingest-routine.csv",
@@ -906,6 +950,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(SharedQueryId(this->queryId),
                                                                          DecomposedQueryId(this->queryId),
+                                                                         DecomposedQueryPlanVersion(0),
                                                                          {mDataSource},
                                                                          {sink},
                                                                          {pipeline},
@@ -956,6 +1001,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValue) {
     ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
+                                                                         DecomposedQueryPlanVersion(0),
                                                                          {mDataSource},
                                                                          {sink},
                                                                          {pipeline},
@@ -1004,6 +1050,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
+                                                                         DecomposedQueryPlanVersion(0),
                                                                          {mDataSource},
                                                                          {sink},
                                                                          {pipeline},
@@ -1033,7 +1080,11 @@ TEST_F(SourceTest, testDataSourceOpen) {
                                 OperatorId(operatorId),
                                 this->numSourceLocalBuffersDefault,
                                 GatheringMode::INGESTION_RATE_MODE,
-                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                  1,
+                                                                  SharedQueryId(1),
+                                                                  DecomposedQueryId(1),
+                                                                  DecomposedQueryPlanVersion(0))});
     // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
     mDataSource.open();
     auto size = mDataSource.bufferManager->getAvailableBuffers();
@@ -1041,28 +1092,34 @@ TEST_F(SourceTest, testDataSourceOpen) {
 }
 
 TEST_F(SourceTest, testBinarySourceGetType) {
-    BinarySourceProxy bDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->path_to_bin_file,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  OperatorId(operatorId),
+                                  this->numSourceLocalBuffersDefault,
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                    1,
+                                                                    SharedQueryId(1),
+                                                                    DecomposedQueryId(1),
+                                                                    DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
     ASSERT_THROW(
         try {
-            BinarySourceProxy bDataSource(
-                this->schema,
-                this->nodeEngine->getBufferManager(),
-                this->nodeEngine->getQueryManager(),
-                this->wrong_filepath,
-                OperatorId(operatorId),
-                this->numSourceLocalBuffersDefault,
-                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+            BinarySourceProxy bDataSource(this->schema,
+                                          this->nodeEngine->getBufferManager(),
+                                          this->nodeEngine->getQueryManager(),
+                                          this->wrong_filepath,
+                                          OperatorId(operatorId),
+                                          this->numSourceLocalBuffersDefault,
+                                          {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                            1,
+                                                                            SharedQueryId(1),
+                                                                            DecomposedQueryId(1),
+                                                                            DecomposedQueryPlanVersion(0))});
             ASSERT_FALSE(bDataSource.input.is_open());
         } catch (std::exception const& exception) {
             auto msg = std::string(exception.what());
@@ -1073,26 +1130,32 @@ TEST_F(SourceTest, testBinarySourceWrongPath) {
 }
 
 TEST_F(SourceTest, testBinarySourceCorrectPath) {
-    BinarySourceProxy bDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->path_to_bin_file,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  OperatorId(operatorId),
+                                  this->numSourceLocalBuffersDefault,
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                    1,
+                                                                    SharedQueryId(1),
+                                                                    DecomposedQueryId(1),
+                                                                    DecomposedQueryPlanVersion(0))});
     ASSERT_TRUE(bDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testBinarySourceFillBuffer) {
-    BinarySourceProxy bDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->path_to_bin_file,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  OperatorId(operatorId),
+                                  this->numSourceLocalBuffersDefault,
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                    1,
+                                                                    SharedQueryId(1),
+                                                                    DecomposedQueryId(1),
+                                                                    DecomposedQueryPlanVersion(0))});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
@@ -1107,14 +1170,17 @@ TEST_F(SourceTest, testBinarySourceFillBuffer) {
 }
 
 TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
-    BinarySourceProxy bDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->path_to_bin_file,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  OperatorId(operatorId),
+                                  this->numSourceLocalBuffersDefault,
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                    1,
+                                                                    SharedQueryId(1),
+                                                                    DecomposedQueryId(1),
+                                                                    DecomposedQueryPlanVersion(0))});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
@@ -1133,14 +1199,17 @@ TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
 }
 
 TEST_F(SourceTest, testBinarySourceFillBufferContents) {
-    BinarySourceProxy bDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->path_to_bin_file,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  OperatorId(operatorId),
+                                  this->numSourceLocalBuffersDefault,
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                    1,
+                                                                    SharedQueryId(1),
+                                                                    DecomposedQueryId(1),
+                                                                    DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     bDataSource.fillBuffer(*buf);
     auto content = buf->getBuffer<ysbRecord>();
@@ -1162,7 +1231,11 @@ TEST_F(SourceTest, testCSVSourceGetType) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
 }
 
@@ -1174,14 +1247,17 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
     csvSourceType->setGatheringInterval(this->gatheringInterval);
 
     try {
-        CSVSourceProxy csvDataSource(
-            this->schema,
-            this->nodeEngine->getBufferManager(),
-            this->nodeEngine->getQueryManager(),
-            csvSourceType,
-            OperatorId(operatorId),
-            this->numSourceLocalBuffersDefault,
-            {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+        CSVSourceProxy csvDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     csvSourceType,
+                                     OperatorId(operatorId),
+                                     this->numSourceLocalBuffersDefault,
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                       1,
+                                                                       SharedQueryId(1),
+                                                                       DecomposedQueryId(1),
+                                                                       DecomposedQueryPlanVersion(0))});
         ASSERT_FALSE(csvDataSource.input.is_open());
     } catch (std::exception const& err) {
         std::string msg = err.what();
@@ -1202,7 +1278,11 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
                                  csvSourceType,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_TRUE(csvDataSource.input.is_open());
 }
 
@@ -1219,7 +1299,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
                                  csvSourceType,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     csvDataSource.fileEnded = true;
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1243,7 +1327,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
@@ -1269,7 +1357,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
@@ -1295,7 +1387,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1328,7 +1424,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1361,7 +1461,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1387,7 +1491,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1415,7 +1523,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_FALSE(csvDataSource.fileEnded);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1453,7 +1565,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     ASSERT_FALSE(csvDataSource.fileEnded);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1499,7 +1615,11 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     NES_DEBUG("{}", int_schema->toString());
     auto buf = this->GetEmptyBuffer();
@@ -1559,7 +1679,11 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1598,7 +1722,11 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                  csvSourceType,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1627,7 +1755,11 @@ TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
                                  csvSourceType,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(this->decimalsSchema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1652,7 +1784,11 @@ TEST_F(SourceTest, TCPSourceInit) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     SUCCEED();
 }
@@ -1674,7 +1810,11 @@ TEST_F(SourceTest, TCPSourcePrint) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
@@ -1712,7 +1852,11 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
                                  sourceConfig,
                                  OperatorId(operatorId),
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                   1,
+                                                                   SharedQueryId(1),
+                                                                   DecomposedQueryId(1),
+                                                                   DecomposedQueryPlanVersion(0))});
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
@@ -1727,43 +1871,52 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
 }
 
 TEST_F(SourceTest, testGeneratorSourceGetType) {
-    GeneratorSourceProxy genDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        1,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        GatheringMode::INGESTION_RATE_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    GeneratorSourceProxy genDataSource(this->schema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       1,
+                                       OperatorId(operatorId),
+                                       this->numSourceLocalBuffersDefault,
+                                       GatheringMode::INGESTION_RATE_MODE,
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                         1,
+                                                                         SharedQueryId(1),
+                                                                         DecomposedQueryId(1),
+                                                                         DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
 
 TEST_F(SourceTest, testDefaultSourceGetType) {
-    DefaultSourceProxy defDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        1,
-        1000,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    DefaultSourceProxy defDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     1,
+                                     1000,
+                                     OperatorId(operatorId),
+                                     this->numSourceLocalBuffersDefault,
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                       1,
+                                                                       SharedQueryId(1),
+                                                                       DecomposedQueryId(1),
+                                                                       DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(defDataSource.getType(), SourceType::DEFAULT_SOURCE);
 }
 
 TEST_F(SourceTest, testDefaultSourceReceiveData) {
     // call receiveData, get the generated buffer
     // assert it has values and the tuples are as many as the predefined size
-    DefaultSourceProxy defDataSource(
-        this->schema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        1,
-        1000,
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    DefaultSourceProxy defDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     1,
+                                     1000,
+                                     OperatorId(operatorId),
+                                     this->numSourceLocalBuffersDefault,
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                       1,
+                                                                       SharedQueryId(1),
+                                                                       DecomposedQueryId(1),
+                                                                       DecomposedQueryPlanVersion(0))});
     // open starts the bufferManager, otherwise receiveData will fail
     defDataSource.open();
     auto buf = defDataSource.receiveData();
@@ -1789,17 +1942,20 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeInterval) {
         }
     };
 
-    LambdaSourceProxy lambdaDataSource(
-        lambdaSchema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        numBuffers,
-        0,
-        func,
-        OperatorId(operatorId),
-        12,
-        GatheringMode::INTERVAL_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    LambdaSourceProxy lambdaDataSource(lambdaSchema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       numBuffers,
+                                       0,
+                                       func,
+                                       OperatorId(operatorId),
+                                       12,
+                                       GatheringMode::INTERVAL_MODE,
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                         1,
+                                                                         SharedQueryId(1),
+                                                                         DecomposedQueryId(1),
+                                                                         DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
     ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
@@ -1839,17 +1995,20 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
         }
     };
 
-    LambdaSourceProxy lambdaDataSource(
-        lambdaSchema,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        numBuffers,
-        1,
-        func,
-        OperatorId(operatorId),
-        12,
-        GatheringMode::INGESTION_RATE_MODE,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    LambdaSourceProxy lambdaDataSource(lambdaSchema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       numBuffers,
+                                       1,
+                                       func,
+                                       OperatorId(operatorId),
+                                       12,
+                                       GatheringMode::INGESTION_RATE_MODE,
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                         1,
+                                                                         SharedQueryId(1),
+                                                                         DecomposedQueryId(1),
+                                                                         DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
     lambdaDataSource.open();
@@ -2019,14 +2178,17 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(
-        testCollector,
-        MonitoringSource::DEFAULT_WAIT_TIME,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               OperatorId(operatorId),
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                 1,
+                                                                                 SharedQueryId(1),
+                                                                                 DecomposedQueryId(1),
+                                                                                 DecomposedQueryPlanVersion(0))});
     ASSERT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
 }
 
@@ -2040,14 +2202,17 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(
-        testCollector,
-        MonitoringSource::DEFAULT_WAIT_TIME,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               OperatorId(operatorId),
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                 1,
+                                                                                 SharedQueryId(1),
+                                                                                 DecomposedQueryId(1),
+                                                                                 DecomposedQueryPlanVersion(0))});
 
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
@@ -2072,14 +2237,17 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(
-        testCollector,
-        MonitoringSource::DEFAULT_WAIT_TIME,
-        this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               OperatorId(operatorId),
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                 1,
+                                                                                 SharedQueryId(1),
+                                                                                 DecomposedQueryId(1),
+                                                                                 DecomposedQueryPlanVersion(0))});
 
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
@@ -2108,14 +2276,17 @@ TEST_F(SourceTest, DISABLED_testMonitoringSourceBufferSmallerThanMetric) {
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 12);
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();// MetricCollectorTest.cpp l. 80
 
-    MonitoringSourceProxy monitoringDataSource(
-        testCollector,
-        MonitoringSource::DEFAULT_WAIT_TIME,
-        bufferManager,
-        this->nodeEngine->getQueryManager(),
-        OperatorId(operatorId),
-        this->numSourceLocalBuffersDefault,
-        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, SharedQueryId(1), DecomposedQueryId(1))});
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               bufferManager,
+                                               this->nodeEngine->getQueryManager(),
+                                               OperatorId(operatorId),
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine,
+                                                                                 1,
+                                                                                 SharedQueryId(1),
+                                                                                 DecomposedQueryId(1),
+                                                                                 DecomposedQueryPlanVersion(0))});
 
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();

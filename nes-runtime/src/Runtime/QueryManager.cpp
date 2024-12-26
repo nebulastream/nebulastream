@@ -235,27 +235,29 @@ void AbstractQueryManager::destroy() {
     }
 }
 
-SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryId decomposedQueryId) const {
+SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const {
     std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(decomposedQueryId);
+    auto iterator = runningQEPs.find(decomposedQueryIdWithVersion);
     if (iterator != runningQEPs.end()) {
         return iterator->second->getSharedQueryId();
     }
     return INVALID_SHARED_QUERY_ID;
 }
 
-Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryId id) {
+Execution::ExecutableQueryPlanStatus
+AbstractQueryManager::getQepStatus(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) {
     std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
+    auto it = runningQEPs.find(decomposedQueryIdWithVersion);
     if (it != runningQEPs.end()) {
         return it->second->getStatus();
     }
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryId id) const {
+Execution::ExecutableQueryPlanPtr
+AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const {
     std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
+    auto it = runningQEPs.find(decomposedQueryIdWithVersion);
     if (it != runningQEPs.end()) {
         return it->second;
     }
@@ -292,24 +294,29 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case ReconfigurationType::Destroy: {
-            auto qepId = task.getParentPlanId();
-            auto status = getQepStatus(qepId);
+            auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(task.getParentPlanId(), task.getParentPlanVersion());
+            auto status = getQepStatus(decomposedQueryIdWithVersion);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid) {
-                NES_WARNING("Query {} was already removed or never deployed", qepId);
+                NES_WARNING("Query {}.{} was already removed or never deployed",
+                            decomposedQueryIdWithVersion.id,
+                            decomposedQueryIdWithVersion.version);
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
                            || status == Execution::ExecutableQueryPlanStatus::Finished
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
-                       "query plan " << qepId << " is not in valid state " << int(status));
+                       "query plan " << decomposedQueryIdWithVersion.id << "." << decomposedQueryIdWithVersion.version
+                                     << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
-            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end()) {
+            if (auto it = runningQEPs.find(decomposedQueryIdWithVersion); it != runningQEPs.end()) {
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
             // we need to think if we want to remove this after a soft stop
-            //            queryToStatisticsMap.erase(qepId);
-            NES_DEBUG("AbstractQueryManager: removed running QEP  {}", qepId);
+            //            queryToStatisticsMap.erase(decomposedQueryIdWithVersion);
+            NES_DEBUG("AbstractQueryManager: removed running QEP  {}.{}",
+                      decomposedQueryIdWithVersion.id,
+                      decomposedQueryIdWithVersion.version);
             break;
         }
         default: {
@@ -326,11 +333,11 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
-std::vector<DecomposedQueryId> AbstractQueryManager::getExecutablePlanIdsForSource(DataSourcePtr source) const {
+std::unordered_set<DecomposedQueryIdWithVersion> AbstractQueryManager::getExecutablePlanIdsForSource(DataSourcePtr source) const {
     auto executablePlans = sourceToQEPMapping.at(source->getOperatorId());
-    std::vector<DecomposedQueryId> ids;
+    std::unordered_set<DecomposedQueryIdWithVersion> ids;
     for (auto& plan : executablePlans) {
-        ids.push_back(plan->getDecomposedQueryId());
+        ids.insert(DecomposedQueryIdWithVersion(plan->getDecomposedQueryId(), plan->getDecomposedQueryVersion()));
     }
     return ids;
 }

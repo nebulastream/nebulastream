@@ -325,8 +325,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
     //reconfiguration
     auto subPlanIdWrk3 = 30;
     ASSERT_EQ(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
-    auto oldSubplanId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-    auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
+    auto oldDecomposedQueryId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
+    auto wrk2Source = wrk2->getNodeEngine()
+                          ->getExecutableQueryPlan(oldDecomposedQueryId.id, oldDecomposedQueryId.version)
+                          ->getSources()
+                          .front();
     Network::NesPartition currentWrk1TargetPartition(sharedQueryId,
                                                      wrk2Source->getOperatorId(),
                                                      PartitionId(0),
@@ -334,8 +337,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
 
     ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
     auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-    auto coordinatorSource =
-        crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
+    auto coordinatorSource = crd->getNesWorker()
+                                 ->getNodeEngine()
+                                 ->getExecutableQueryPlan(oldDecomposedQueryId.id, oldDecomposedQueryId.version)
+                                 ->getSources()
+                                 .front();
     Network::NesPartition networkSourceCrdPartition(sharedQueryId,
                                                     coordinatorSource->getOperatorId(),
                                                     PartitionId(0),
@@ -456,7 +462,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         oldWorker = wrk3;
         EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
-        oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
+        oldDecomposedQueryId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
 
         //check that query has left migrating state and is running again
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));

@@ -163,7 +163,7 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool notifyQueryFailure(SharedQueryId sharedQueryId,
-                            DecomposedQueryId subQueryId,
+                            DecomposedQueryId decomposedQueryId,
                             WorkerId workerId,
                             OperatorId operatorId,
                             std::string errorMsg);

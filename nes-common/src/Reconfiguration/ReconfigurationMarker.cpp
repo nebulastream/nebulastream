@@ -20,20 +20,28 @@ namespace NES {
 ReconfigurationMarkerPtr ReconfigurationMarker::create() { return std::make_shared<ReconfigurationMarker>(); }
 
 std::optional<ReconfigurationMarkerEventPtr>
-ReconfigurationMarker::getReconfigurationEvent(DecomposedQueryId decomposedQueryId) const {
-    if (reconfigurationEvents.contains(decomposedQueryId)) {
-        return reconfigurationEvents.at(decomposedQueryId);
+ReconfigurationMarker::getReconfigurationEvent(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const {
+    if (reconfigurationEvents.contains(decomposedQueryIdWithVersion)) {
+        return reconfigurationEvents.at(decomposedQueryIdWithVersion);
     }
-    NES_DEBUG("{} not found in the reconfiguration marker event", decomposedQueryId);
+    NES_DEBUG("{}.{} not found in the reconfiguration marker event",
+              decomposedQueryIdWithVersion.id,
+              decomposedQueryIdWithVersion.version);
     return std::nullopt;
 }
 
 void ReconfigurationMarker::addReconfigurationEvent(DecomposedQueryId decomposedQueryId,
+                                                    DecomposedQueryPlanVersion decomposedQueryVersion,
                                                     const ReconfigurationMarkerEventPtr reconfigurationEvent) {
-    reconfigurationEvents.insert({decomposedQueryId, reconfigurationEvent});
+    reconfigurationEvents.insert({DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion), reconfigurationEvent});
 }
 
-const std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr>&
+void ReconfigurationMarker::addReconfigurationEvent(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion,
+                                                    const ReconfigurationMarkerEventPtr reconfigurationEvent) {
+    reconfigurationEvents.insert({decomposedQueryIdWithVersion, reconfigurationEvent});
+}
+
+const std::unordered_map<DecomposedQueryIdWithVersion, ReconfigurationMarkerEventPtr>&
 ReconfigurationMarker::getAllReconfigurationMarkerEvents() const {
     return reconfigurationEvents;
 }

@@ -65,6 +65,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     void close(Runtime::QueryTerminationType,
                uint16_t numSendingThreads = 0,
                uint64_t currentMessageSequenceNumber = 0,
+               bool shouldPropagateMarker = false,
                const std::optional<ReconfigurationMarkerPtr>& = std::nullopt);
 
     /**

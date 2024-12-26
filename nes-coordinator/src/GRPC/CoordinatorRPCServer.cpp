@@ -315,19 +315,23 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: {} subplan: {} Id of "
                   "worker: {} Reason for failure: {}",
                   request->queryid(),
-                  request->subqueryid(),
+                  request->decomposedqueryid(),
                   request->workerid(),
                   request->errormsg());
 
         NES_ASSERT2_FMT(!request->errormsg().empty(),
-                        "Cannot fail query without error message " << request->queryid() << " subplan: " << request->subqueryid()
+                        "Cannot fail query without error message " << request->queryid()
+                                                                   << " subplan: " << request->decomposedqueryid()
                                                                    << " from worker: " << request->workerid());
 
         auto sharedQueryId = SharedQueryId(request->queryid());
-        auto decomposedQueryId = DecomposedQueryId(request->subqueryid());
+        auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
 
         //Send one failure request for the shared query plan
-        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, decomposedQueryId, request->errormsg())) {
+        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId,
+                                                                     decomposedQueryId,
+                                                                     INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                                     request->errormsg())) {
             NES_ERROR("Failed to create Query Failure request for shared query plan {}", sharedQueryId);
             return Status::CANCELLED;
         }
@@ -375,7 +379,8 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              const ::RequestSoftStopMessage* request,
                                              ::StopRequestReply* response) {
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryId = DecomposedQueryId(request->subqueryid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
+
     NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
 
     //Check with query catalog service if the request possible
@@ -394,7 +399,7 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        const ::SoftStopTriggeredMessage* request,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryId = DecomposedQueryId(request->querysubplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
     NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}",
              decomposedQueryId,
              sharedQueryId)
@@ -416,7 +421,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
                                                      ::SoftStopCompletionReply* response) {
     //Fetch the request
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryId = DecomposedQueryId(request->querysubplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
 
     //inform catalog service
     bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,

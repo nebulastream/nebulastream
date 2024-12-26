@@ -186,11 +186,11 @@ class EndOfStreamMessage : public ExchangeMessage {
 };
 
 /**
- * @brief This message contains a reconfiguratin event which is propagated along the data stream
+ * @brief This message contains a reconfiguration event which is propagated along the data stream
  */
 class ReconfigurationEventMessage {
   public:
-    ReconfigurationEventMessage(DecomposedQueryId key,
+    ReconfigurationEventMessage(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion,
                                 QueryState queryState,
                                 ReconfigurationMetadataType metadataType,
                                 uint16_t numberOfSources,
@@ -198,11 +198,11 @@ class ReconfigurationEventMessage {
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryId decomposedQueryId,
                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion)
-        : key(key), queryState(queryState), metadataType(metadataType), numberOfSources(numberOfSources), workerId(workerId),
-          sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
-          decomposedQueryPlanVersion(decomposedQueryPlanVersion) {}
+        : decomposedQueryIdWithVersion(decomposedQueryIdWithVersion), queryState(queryState), metadataType(metadataType),
+          numberOfSources(numberOfSources), workerId(workerId), sharedQueryId(sharedQueryId),
+          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion) {}
 
-    DecomposedQueryId key;
+    DecomposedQueryIdWithVersion decomposedQueryIdWithVersion;
     QueryState queryState;
     ReconfigurationMetadataType metadataType;
     uint16_t numberOfSources;

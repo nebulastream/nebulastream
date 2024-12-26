@@ -13,6 +13,7 @@
 */
 
 #include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -30,13 +31,15 @@ namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(PipelineId pipelineId,
                                        SharedQueryId sharedQueryId,
                                        DecomposedQueryId decomposedQueryId,
+                                       DecomposedQueryPlanVersion decomposedQueryVersion,
                                        QueryManagerPtr queryManager,
                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        uint32_t numOfProducingPipelines,
                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
                                        bool reconfiguration)
-    : pipelineId(pipelineId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), queryManager(queryManager),
+    : pipelineId(pipelineId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
+      decomposedQueryVersion(decomposedQueryVersion), queryManager(queryManager),
       executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)),
       reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
@@ -48,7 +51,11 @@ ExecutablePipeline::ExecutablePipeline(PipelineId pipelineId,
 
 ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id={} originId={} stage={}", decomposedQueryId, inputBuffer.getOriginId(), pipelineId);
-
+    auto* task = inputBuffer.getBuffer<ReconfigurationMessage>();
+    if (decomposedQueryId == DecomposedQueryId(3) && decomposedQueryVersion == DecomposedQueryPlanVersion(0)) {
+        if (task->getType() == ReconfigurationType::Initialize) {
+        }
+    }
     switch (this->pipelineStatus.load()) {
         case PipelineStatus::PipelineRunning: {
             auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
@@ -77,6 +84,7 @@ bool ExecutablePipeline::start() {
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
         auto newReconf = ReconfigurationMessage(sharedQueryId,
                                                 decomposedQueryId,
+                                                decomposedQueryVersion,
                                                 ReconfigurationType::Initialize,
                                                 inherited0::shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
@@ -84,7 +92,7 @@ bool ExecutablePipeline::start() {
             operatorHandler->start(pipelineContext, localStateVariableId);
             localStateVariableId++;
         }
-        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, true);
+        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf, true);
         executablePipelineStage->start(*pipelineContext.get());
         return true;
     }
@@ -156,11 +164,14 @@ SharedQueryId ExecutablePipeline::getSharedQueryId() const { return sharedQueryI
 
 DecomposedQueryId ExecutablePipeline::getDecomposedQueryId() const { return decomposedQueryId; }
 
+DecomposedQueryPlanVersion ExecutablePipeline::getDecomposedQueryVersion() const { return decomposedQueryVersion; }
+
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
 ExecutablePipelinePtr ExecutablePipeline::create(PipelineId pipelineId,
                                                  SharedQueryId sharedQueryId,
                                                  DecomposedQueryId decomposedQueryId,
+                                                 DecomposedQueryPlanVersion decomposedQueryVersion,
                                                  const QueryManagerPtr& queryManager,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -168,15 +179,16 @@ ExecutablePipelinePtr ExecutablePipeline::create(PipelineId pipelineId,
                                                  const std::vector<SuccessorExecutablePipeline>& successorPipelines,
                                                  bool reconfiguration) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
-                    "Executable pipelinestage is null for " << pipelineId
-                                                            << "within the following query sub plan: " << decomposedQueryId);
+                    "Executable pipelinestage is null for " << pipelineId << "within the following query sub plan: "
+                                                            << decomposedQueryId << "." << decomposedQueryVersion);
     NES_ASSERT2_FMT(pipelineExecutionContext != nullptr,
-                    "Pipeline context is null for " << pipelineId
-                                                    << "within the following query sub plan: " << decomposedQueryId);
+                    "Pipeline context is null for " << pipelineId << "within the following query sub plan: " << decomposedQueryId
+                                                    << "." << decomposedQueryVersion);
 
     return std::make_shared<ExecutablePipeline>(pipelineId,
                                                 sharedQueryId,
                                                 decomposedQueryId,
+                                                decomposedQueryVersion,
                                                 queryManager,
                                                 pipelineExecutionContext,
                                                 executablePipelineStage,
@@ -202,10 +214,11 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
         }
         case ReconfigurationType::ReconfigurationMarker: {
             auto marker = task.getUserData<ReconfigurationMarkerPtr>();
-            auto event = marker->getReconfigurationEvent(decomposedQueryId);
-            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+            auto event = marker->getReconfigurationEvent(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
+            NES_ASSERT2_FMT(event, "Markers should only be propagated to a network sink if the plan is to be reconfigured");
 
-            if (!(event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>())) {
+            if (!(event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>())
+                && !(event.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>())) {
                 NES_WARNING("Non drain reconfigurations not yes supported");
                 NES_NOT_IMPLEMENTED();
             }
@@ -251,15 +264,17 @@ void ExecutablePipeline::propagateReconfiguration(ReconfigurationMessage& task) 
 
     for (const auto& successorPipeline : successorPipelines) {
         if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe, marker);
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            auto newReconf =
+                ReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, task.getType(), *pipe, marker);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf, false);
             NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got EndOfStream  "
                       "with nextPipeline",
                       decomposedQueryId,
                       (*pipe)->getPipelineId());
         } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
-            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink, marker);
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            auto newReconf =
+                ReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, task.getType(), *sink, marker);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf, false);
             NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
                       "nextPipeline",
                       decomposedQueryId,
@@ -289,15 +304,17 @@ void ExecutablePipeline::propagateEndOfStream(ReconfigurationMessage& task) {
 
     for (const auto& successorPipeline : successorPipelines) {
         if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe);
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            auto newReconf =
+                ReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, task.getType(), *pipe);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf, false);
             NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got EndOfStream  "
                       "with nextPipeline",
                       decomposedQueryId,
                       (*pipe)->getPipelineId());
         } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
-            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink);
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            auto newReconf =
+                ReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, task.getType(), *sink);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf, false);
             NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
                       "nextPipeline",
                       decomposedQueryId,
@@ -344,15 +361,31 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                                                        Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe);
-                        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+                        auto newReconf = ReconfigurationMessage(sharedQueryId,
+                                                                decomposedQueryId,
+                                                                decomposedQueryVersion,
+                                                                task.getType(),
+                                                                *pipe);
+                        queryManager->addReconfigurationMessage(sharedQueryId,
+                                                                decomposedQueryId,
+                                                                decomposedQueryVersion,
+                                                                newReconf,
+                                                                false);
                         NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got "
                                   "FailEndOfStream with nextPipeline",
                                   decomposedQueryId,
                                   (*pipe)->getPipelineId());
                     } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink);
-                        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+                        auto newReconf = ReconfigurationMessage(sharedQueryId,
+                                                                decomposedQueryId,
+                                                                decomposedQueryVersion,
+                                                                task.getType(),
+                                                                *sink);
+                        queryManager->addReconfigurationMessage(sharedQueryId,
+                                                                decomposedQueryId,
+                                                                decomposedQueryVersion,
+                                                                newReconf,
+                                                                false);
                         NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id:{} got FailEndOfStream  "
                                   "with nextPipeline",
                                   decomposedQueryId,

@@ -26,7 +26,8 @@ TestSink::TestSink(uint64_t expectedTuples,
                  nodeEngine,
                  numOfProducers,
                  INVALID_SHARED_QUERY_ID,
-                 INVALID_DECOMPOSED_QUERY_PLAN_ID),
+                 INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                 INVALID_DECOMPOSED_QUERY_PLAN_VERSION),
       numOfExpectedTuples(expectedTuples) {
     auto bufferManager = nodeEngine->getBufferManager(0);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {

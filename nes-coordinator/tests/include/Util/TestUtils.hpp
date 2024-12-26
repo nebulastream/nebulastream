@@ -571,6 +571,11 @@ template<typename Predicate = std::equal_to<uint64_t>>
     return false;
 }
 
+[[nodiscard]] bool checkRemovedDecomposedQueryOrTimeoutAtWorker(DecomposedQueryId decomposedQueryId,
+                                                                DecomposedQueryPlanVersion decomposedQueryVersion,
+                                                                NesWorkerPtr worker,
+                                                                std::chrono::seconds timeout = defaultTimeout);
+
 /**
  * @brief Check if the query is been stopped successfully within the timeout.
  * @param queryId: Id of the query to be stopped

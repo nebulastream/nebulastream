@@ -459,14 +459,16 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                             switch (reconfigMsg.metadataType) {
                                 case ReconfigurationMetadataType::DrainQuery:
                                     marker.value()->addReconfigurationEvent(
-                                        reconfigMsg.key,
+                                        reconfigMsg.decomposedQueryIdWithVersion.id,
+                                        reconfigMsg.decomposedQueryIdWithVersion.version,
                                         ReconfigurationMarkerEvent::create(
                                             reconfigMsg.queryState,
                                             std::make_shared<DrainQueryMetadata>(reconfigMsg.numberOfSources)));
                                     break;
                                 case ReconfigurationMetadataType::UpdateAndDrainQuery:
                                     marker.value()->addReconfigurationEvent(
-                                        reconfigMsg.key,
+                                        reconfigMsg.decomposedQueryIdWithVersion.id,
+                                        reconfigMsg.decomposedQueryIdWithVersion.version,
                                         ReconfigurationMarkerEvent::create(
                                             reconfigMsg.queryState,
                                             std::make_shared<UpdateAndDrainQueryMetadata>(reconfigMsg.workerId,
@@ -477,7 +479,8 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                     break;
                                 case ReconfigurationMetadataType::UpdateQuery:
                                     marker.value()->addReconfigurationEvent(
-                                        reconfigMsg.key,
+                                        reconfigMsg.decomposedQueryIdWithVersion.id,
+                                        reconfigMsg.decomposedQueryIdWithVersion.version,
                                         ReconfigurationMarkerEvent::create(
                                             reconfigMsg.queryState,
                                             std::make_shared<UpdateQueryMetadata>(reconfigMsg.workerId,

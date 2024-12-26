@@ -174,8 +174,9 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
     auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
+    auto decomposedQueryVersion = DecomposedQueryPlanVersion(request->decomposedqueryversion());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
-    bool success = nodeEngine->bufferData(decomposedQueryId, uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->bufferData(decomposedQueryId, decomposedQueryVersion, uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
@@ -190,13 +191,18 @@ Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
     auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
+    auto decomposedQueryVersion = DecomposedQueryPlanVersion(request->decomposedqueryversion());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
     auto newNodeId = WorkerId(request->newnodeid());
     std::string newHostname = request->newhostname();
     uint32_t newPort = request->newport();
 
-    bool success =
-        nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, decomposedQueryId, uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->updateNetworkSink(newNodeId,
+                                                 newHostname,
+                                                 newPort,
+                                                 decomposedQueryId,
+                                                 decomposedQueryVersion,
+                                                 uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);

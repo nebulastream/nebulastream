@@ -47,6 +47,7 @@ class MonitoringSink : public SinkMedium {
                             uint32_t numOfProducers,
                             SharedQueryId sharedQueryId,
                             DecomposedQueryId decomposedQueryId,
+                            DecomposedQueryPlanVersion decomposedQueryVersion,
                             uint64_t numberOfOrigins = 1);
 
     /**

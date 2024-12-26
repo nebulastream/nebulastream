@@ -49,6 +49,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Constructor for an executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param querySubPlanId the id of the query sub plan
+     * @param querySubPlanVersion the version of the query sub plan
      * @param queryManager reference to the queryManager
      * @param pipelineContext the pipeline context
      * @param executablePipelineStage the executable pipeline stage
@@ -60,6 +61,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     explicit ExecutablePipeline(PipelineId pipelineId,
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryId decomposedQueryId,
+                                DecomposedQueryPlanVersion decomposedQueryVersion,
                                 QueryManagerPtr queryManager,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
@@ -71,6 +73,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param decomposedQueryId the id of the query sub plan
+     * @param querySubPlanVersion the version of the query sub plan
      * @param pipelineContext the pipeline context
      * @param executablePipelineStage the executable pipeline stage
      * @param numOfProducingPipelines number of producing pipelines
@@ -81,6 +84,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     static ExecutablePipelinePtr create(PipelineId pipelineId,
                                         SharedQueryId sharedQueryId,
                                         DecomposedQueryId decomposedQueryId,
+                                        DecomposedQueryPlanVersion decomposedQueryVersion,
                                         const QueryManagerPtr& queryManager,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -133,6 +137,12 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @return QuerySubPlanId.
      */
     DecomposedQueryId getDecomposedQueryId() const;
+
+    /**
+     * @brief Get query sub plan version.
+     * @return QuerySubPlanVersion.
+     */
+    DecomposedQueryPlanVersion getDecomposedQueryVersion() const;
 
     /**
      * @brief Checks if this pipeline is running
@@ -218,6 +228,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
+    const DecomposedQueryPlanVersion decomposedQueryVersion;
     QueryManagerPtr queryManager;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;

@@ -37,6 +37,7 @@ class ZmqSink : public SinkMedium {
             bool internal,
             SharedQueryId sharedQueryId,
             DecomposedQueryId decomposedQueryId,
+            DecomposedQueryPlanVersion decomposedQueryVersion,
             uint64_t numberOfOrigins = 1);
     ~ZmqSink() override;
 

@@ -35,9 +35,11 @@ OPCSink::OPCSink(SinkFormatPtr format,
                  std::string user,
                  std::string password,
                  QueryId queryId,
-                 QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), nodeEngine, 1, queryId, querySubPlanId), connected(false), url(url), nodeId(nodeId),
-      user(std::move(std::move(user))), password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
+                 QuerySubPlanId querySubPlanId,
+                 QuerySubPlanVersion querySubPlanVersion)
+    : SinkMedium(std::move(format), nodeEngine, 1, queryId, querySubPlanId, querySubPlanVersion), connected(false), url(url),
+      nodeId(nodeId), user(std::move(std::move(user))), password(std::move(password)), retval(UA_STATUSCODE_GOOD),
+      client(UA_Client_new()) {
     NES_DEBUG("OPCSINK   {} : Init OPC Sink to  {}.", this->toString(), url);
 }
 
