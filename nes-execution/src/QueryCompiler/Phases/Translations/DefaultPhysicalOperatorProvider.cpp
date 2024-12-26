@@ -566,17 +566,17 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
 
     Operators::NLJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-        return Operators::NLJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
-                                                            joinOperator->getOutputOriginIds()[0],
-                                                            streamJoinConfig.windowSize,
-                                                            streamJoinConfig.windowSlide,
-                                                            joinOperator->getLeftInputSchema(),
-                                                            joinOperator->getRightInputSchema(),
-                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
-                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
-                                                            streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
-                                                            streamJoinConfig.timeStampFieldRight.toTimeFunction(),
-                                                            joinOperator->getDeploymentTimes());
+        joinOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
+                                                                           joinOperator->getOutputOriginIds()[0],
+                                                                           streamJoinConfig.windowSize,
+                                                                           streamJoinConfig.windowSlide,
+                                                                           joinOperator->getLeftInputSchema(),
+                                                                           joinOperator->getRightInputSchema(),
+                                                                           Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                                           Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                                           streamJoinConfig.timeStampFieldLeft.toTimeFunction(),
+                                                                           streamJoinConfig.timeStampFieldRight.toTimeFunction(),
+                                                                           joinOperator->getDeploymentTimes());
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                               joinOperator->getOutputOriginIds()[0],
@@ -591,6 +591,12 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
     } else {
         NES_NOT_IMPLEMENTED();
     }
+
+    if (joinOperator->getProperty(MIGRATION_FILE).has_value()) {
+        joinOperatorHandler->setRecreationFileName(std::any_cast<std::string>(joinOperator->getProperty(MIGRATION_FILE)));
+    }
+
+    return joinOperatorHandler;
 }
 
 Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr

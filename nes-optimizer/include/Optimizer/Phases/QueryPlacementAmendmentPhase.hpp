@@ -287,6 +287,7 @@ class QueryPlacementAmendmentPhase {
     void handleMigrationPlacement(
         Optimizer::PlacementStrategy placementStrategy,
         const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
+        std::unordered_map<OperatorId, std::string>& migratingOperatorToFileSink,
         std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
         SharedQueryId sharedQueryId,
         DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,

@@ -33,6 +33,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -155,16 +156,22 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
                 // get new location of migrating stateful operator
                 std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>> migratingOperatorToProperties;
+                std::unordered_map<OperatorId, std::string> migratingOperatorToFileSink;
                 for (const auto& logicalOperator : statefulOperatorsPossiblyToBeMigrated) {
                     if (logicalOperator->hasProperty(PINNED_WORKER_ID)) {
                         auto newNodeId = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
                         auto [oldPlanId, oldNodeId] = statefulOperatorToOldProperties.at(logicalOperator->getId());
                         // if location changed then operator's state needs to be migrated
                         if (newNodeId != oldNodeId) {
+                            auto logicalOperatorId = logicalOperator->getId();
                             // store old decomposed plan id, old and new location of operator
                             migratingOperatorToProperties.insert(
-                                std::pair(logicalOperator->getId(),
-                                          MigrateOperatorProperties::create(oldPlanId, oldNodeId, newNodeId)));
+                                std::pair(logicalOperatorId, MigrateOperatorProperties::create(oldPlanId, oldNodeId, newNodeId)));
+                            // store recreation of operator handler file name and add it to logical operator on new node
+                            std::string recreationFileName = sharedQueryId.toString() + "-" + oldPlanId.toString() + "-"
+                                + logicalOperatorId.toString() + ".bin";
+                            migratingOperatorToFileSink.insert(std::pair(logicalOperatorId, recreationFileName));
+                            logicalOperator->addProperty(QueryCompilation::MIGRATION_FILE, recreationFileName);
                             NES_DEBUG("QueryPlacementAmendmentPhase: Location of stateful operator with id {} changed, state "
                                       "needs to be migrated",
                                       logicalOperator->getId());
@@ -176,6 +183,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                 // add new decomposed plans with migration path from old node to new node
                 handleMigrationPlacement(placementStrategy,
                                          migratingOperatorToProperties,
+                                         migratingOperatorToFileSink,
                                          planIdToPlanCopy,
                                          sharedQueryId,
                                          nextDecomposedQueryPlanVersion,
@@ -266,6 +274,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 void QueryPlacementAmendmentPhase::handleMigrationPlacement(
     Optimizer::PlacementStrategy placementStrategy,
     const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
+    std::unordered_map<OperatorId, std::string>& migratingOperatorToFileSink,
     std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
     SharedQueryId sharedQueryId,
     DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
@@ -283,7 +292,9 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
 
         // create sink operator to save state to the file on destination node
         // TODO [#5151] change sink operator
-        auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("state_persisting"));
+        auto recreationFileName = migratingOperatorToFileSink[migratingOperatorId];
+        auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(
+            FileSinkDescriptor::create(recreationFileName, "MIGRATION_FORMAT", "OVERWRITE"));
         // set node id where operator is located now
         migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getNewWorkerId());
         // set downstream sink as a parent to source
@@ -314,7 +325,7 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
         // find deployment context for this plan
         auto statefulOperatorNewPlan = deploymentContexts.find(newPlanId);
 
-        // 3. Link old stateful operator decomposed plan and newly created migration plan
+        // 4. Link old stateful operator decomposed plan and newly created migration plan
         if (statefulOperatorOldPlan != planIdToCopy.end() && statefulOperatorNewPlan != deploymentContexts.end()) {
             // get stateful operator
             auto statefulOperatorInOldPlan = statefulOperatorOldPlan->second->getOperatorWithOperatorId(migratingOperatorId);

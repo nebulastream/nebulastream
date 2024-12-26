@@ -163,6 +163,7 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
     SchemaPtr rightSchema;
     std::string stateFilePath;
     std::string windowInfoFilePath;
+    std::string recreationFilePath;
     uint64_t windowSize = DEFAULT_WINDOW_SIZE;
     const uint64_t handlerIndex = DEFAULT_OP_HANDLER_IDX;
     const uint64_t leftPageSize = DEFAULT_LEFT_PAGE_SIZE;
@@ -185,6 +186,7 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         timestampFieldNameRight = rightSchema->get(2)->getName();
         stateFilePath = "test-serialization-state.bin";
         windowInfoFilePath = "test-serialization-windowInfo.bin";
+        recreationFilePath = "test-recreation.bin";
 
         bm = std::make_shared<BufferManager>(1024, 5000);
 
@@ -218,6 +220,21 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                                                                                Windowing::TimeUnit::Milliseconds()));
         nljOperatorHandler->setBufferManager(bm);
         recreatedOperatorHandler->setBufferManager(bm);
+
+        std::remove(stateFilePath.c_str());
+        std::remove(windowInfoFilePath.c_str());
+        std::remove(recreationFilePath.c_str());
+        std::remove(transformFileName(stateFilePath).c_str());
+        std::remove(transformFileName(windowInfoFilePath).c_str());
+        std::remove(transformFileName(recreationFilePath).c_str());
+    }
+
+    /**
+     * @brief completed file name
+     */
+    std::string transformFileName(std::string filePath) {
+        auto dotPosition = filePath.find_last_of('.');
+        return filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
     }
 
     /**
@@ -241,6 +258,60 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         for (auto buffer : state) {
             rawBufferSink.writeData(buffer, context);
         }
+        rawBufferSink.shutdown();
+    }
+
+    /**
+     * @brief add metadata info to buffer and return it
+     * @param numberOfStateBuffers size of state buffers
+     * @param numberOfWindowInfoBuffers size of window info buffers
+     * @return new buffer with metadata info
+     */
+    Runtime::TupleBuffer addStateAndWindowInfoMetadata(size_t numberOfStateBuffers, size_t numberOfWindowInfoBuffers) {
+        auto metadata = bm->getBufferBlocking();
+        auto metadataPtr = metadata.getBuffer<uint64_t>();
+
+        metadataPtr[0] = numberOfStateBuffers;
+        metadataPtr[1] = numberOfWindowInfoBuffers;
+
+        return metadata;
+    }
+
+    /**
+     * @brief use raw buffer sink to write tuples to the file
+     * @param state vector of state tuple buffers to sink
+     * @param windowInfo vector of window info buffers to sink
+     */
+    void sinkToTheRawBufferSink(std::vector<Runtime::TupleBuffer> state,
+                                std::vector<Runtime::TupleBuffer> windowInfo,
+                                std::string fileName) {
+
+        // create mocked configuration for sink
+        SinkFormatPtr format = std::make_shared<CsvFormat>(leftSchema, bm, false);
+        auto workerConfigurations = Configurations::WorkerConfiguration::create();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                               .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                               .build();
+        // create sink, which is used to write buffers to the file
+        auto rawBufferSink =
+            RawBufferSink(nodeEngine, 1, fileName, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
+        rawBufferSink.setup();
+
+        auto metadata = addStateAndWindowInfoMetadata(state.size(), windowInfo.size());
+
+        // mocked context
+        auto context = WorkerContext(INITIAL<WorkerThreadId>, bm, 100);
+        // 1. write state and window info metadata
+        rawBufferSink.writeData(metadata, context);
+        // 2. write state buffers
+        for (auto buffer : state) {
+            rawBufferSink.writeData(buffer, context);
+        }
+        // 3. write window info buffers
+        for (auto buffer : windowInfo) {
+            rawBufferSink.writeData(buffer, context);
+        }
+        rawBufferSink.shutdown();
     }
 
     /**
@@ -256,12 +327,10 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 
         std::vector<TupleBuffer> recreatedBuffers = {};
         while (!deserFile.eof()) {
-            // read size, number of tuples and sequence number in every tuple buffer from the file
-            uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
-            ;
+            // read size and number of tuples in every tuple buffer from the file
+            uint64_t size = 0, numberOfTuples = 0;
             deserFile.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
             deserFile.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
-            deserFile.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
             NES_DEBUG("size {} tuples{}", size, numberOfTuples);
             if (size > bm->getBufferSize()) {
                 NES_NOT_IMPLEMENTED();
@@ -272,7 +341,6 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                 if (newBuffer.has_value()) {
                     deserFile.read(reinterpret_cast<char*>(newBuffer.value().getBuffer()), size);
                     newBuffer.value().setNumberOfTuples(numberOfTuples);
-                    newBuffer.value().setSequenceNumber(seqNumber);
                     NES_DEBUG("buffer size {}", newBuffer.value().getNumberOfTuples());
                     recreatedBuffers.insert(recreatedBuffers.end(), newBuffer.value());
                 } else {
@@ -282,12 +350,6 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         }
 
         deserFile.close();
-
-        // check order in vector of tuple buffers. Seq numbers start from 1
-        for (size_t i = 1; i <= recreatedBuffers.size(); i++) {
-            EXPECT_EQ(recreatedBuffers[i - 1].getSequenceNumber(), i);
-        }
-
         recreatedOperatorHandler->restoreState(recreatedBuffers);
     }
 
@@ -305,11 +367,9 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         std::vector<TupleBuffer> recreatedBuffers = {};
         while (!deserFile.eof()) {
             // read size and number of tuples in evert tuple buffer from the file
-            uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
-            ;
+            uint64_t size = 0, numberOfTuples = 0;
             deserFile.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
             deserFile.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
-            deserFile.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
             NES_DEBUG("size {} tuples{}", size, numberOfTuples);
             if (size > bm->getBufferSize()) {
                 NES_NOT_IMPLEMENTED();
@@ -320,7 +380,6 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                 if (newBuffer.has_value()) {
                     deserFile.read(reinterpret_cast<char*>(newBuffer.value().getBuffer()), size);
                     newBuffer.value().setNumberOfTuples(numberOfTuples);
-                    newBuffer.value().setSequenceNumber(seqNumber);
                     NES_DEBUG("buffer size {}", newBuffer.value().getNumberOfTuples());
                     recreatedBuffers.insert(recreatedBuffers.end(), newBuffer.value());
                 } else {
@@ -427,7 +486,7 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
      * @brief Compares state inside recreatedOperatorHandler and expected nljOperatorHandler
      * @param maxTimestamp of generated records to iterate over slices
      */
-    void compareExpectedOperatorHandlerAndRecreated(uint64_t maxTimestamp) {
+    void compareExpectedOperatorHandlerAndRecreatedState(uint64_t maxTimestamp) {
         // compare number of slices in both operator handlers
         NES_DEBUG("Checking number of slices = {}", recreatedOperatorHandler->getNumberOfSlices());
         EXPECT_EQ(nljOperatorHandler->getNumberOfSlices(), recreatedOperatorHandler->getNumberOfSlices());
@@ -480,6 +539,43 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
     }
 
     /**
+     * @brief Compares window info inside recreatedOperatorHandler and expected nljOperatorHandler
+     */
+    void compareExpectedOperatorHandlerAndRecreatedWindowsInfo() {
+        // Get recreated and expected window info to compare
+        auto expectedWindowsInfo = nljOperatorHandler->getWindowInfoToCompare();
+        auto recreatedWindowsInfo = recreatedOperatorHandler->getWindowInfoToCompare();
+
+        // check that size of windows info maps is equal
+        EXPECT_EQ(expectedWindowsInfo.size(), recreatedWindowsInfo.size());
+
+        // Go over data tuple buffers with window info and compare them
+        for (auto expectedIt = expectedWindowsInfo.cbegin(), recreatedIt = recreatedWindowsInfo.cbegin();
+             expectedIt != expectedWindowsInfo.cend() && recreatedIt != recreatedWindowsInfo.cend();
+             expectedIt++, recreatedIt++) {
+            // check that window info is equal
+            EXPECT_EQ(expectedIt->first.windowStart, recreatedIt->first.windowStart);
+            EXPECT_EQ(expectedIt->first.windowEnd, recreatedIt->first.windowEnd);
+            EXPECT_EQ(expectedIt->first.windowId, recreatedIt->first.windowId);
+
+            // check window status and slices
+            EXPECT_EQ(expectedIt->second.windowState, recreatedIt->second.windowState);
+            EXPECT_EQ(expectedIt->second.slices.size(), recreatedIt->second.slices.size());
+
+            for (auto expectedSliceIt = expectedIt->second.slices.cbegin(),
+                      recreatedSliceIt = recreatedIt->second.slices.cbegin();
+                 expectedSliceIt != expectedIt->second.slices.cend() && recreatedSliceIt != recreatedIt->second.slices.cend();
+                 expectedSliceIt++, recreatedSliceIt++) {
+                EXPECT_EQ(expectedSliceIt->get()->getSliceIdentifier(), recreatedSliceIt->get()->getSliceIdentifier());
+                EXPECT_EQ(expectedSliceIt->get()->getSliceStart(), recreatedSliceIt->get()->getSliceStart());
+                EXPECT_EQ(expectedSliceIt->get()->getSliceEnd(), recreatedSliceIt->get()->getSliceEnd());
+                EXPECT_EQ(expectedSliceIt->get()->getNumberOfTuplesLeft(), recreatedSliceIt->get()->getNumberOfTuplesLeft());
+                EXPECT_EQ(expectedSliceIt->get()->getNumberOfTuplesRight(), recreatedSliceIt->get()->getNumberOfTuplesRight());
+            }
+        }
+    }
+
+    /**
      * @brief Compares state inside expected and recreated paged vector
      * @param expectedPagedVectorRef - expected content of paged vector
      * @param recreatedPagedVectorRef - recreated content
@@ -524,10 +620,10 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerializationAndDeserialization) {
     sinkToTheRawBufferSink(dataToMigrate, stateFilePath);
 
     // 4. recreate state from the file
-    recreateStateFromTheFile(stateFilePath);
+    recreateStateFromTheFile(transformFileName(stateFilePath));
 
     // 5. compare state inside old and new operator handler
-    compareExpectedOperatorHandlerAndRecreated(maxTimestamp);
+    compareExpectedOperatorHandlerAndRecreatedState(maxTimestamp);
 }
 
 /**
@@ -543,11 +639,11 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerializationAndRecreationFromFile) {
     // 2. get the state from old operator handler
     auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, 5000);
 
-    // 3. write the state to the file using raWBufferSink
+    // 3. write the state to the file using rawBufferSink
     sinkToTheRawBufferSink(dataToMigrate, stateFilePath);
 
     // 4. create stream
-    std::ifstream file(stateFilePath, std::ios::binary | std::ios::in);
+    std::ifstream file(transformFileName(stateFilePath), std::ios::binary | std::ios::in);
 
     if (!file.is_open()) {
         NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
@@ -557,7 +653,7 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerializationAndRecreationFromFile) {
     recreatedOperatorHandler->restoreStateFromFile(file);
 
     // 6. compare state inside old and new operator handler
-    compareExpectedOperatorHandlerAndRecreated(maxTimestamp);
+    compareExpectedOperatorHandlerAndRecreatedState(maxTimestamp);
 }
 
 /**
@@ -573,7 +669,7 @@ TEST_F(NLJSliceSerializationTest, nljWindowsSerialization) {
     // migrate the state
     auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, maxTs);
     sinkToTheRawBufferSink(dataToMigrate, stateFilePath);
-    std::ifstream file(stateFilePath, std::ios::binary | std::ios::in);
+    std::ifstream file(transformFileName(stateFilePath), std::ios::binary | std::ios::in);
     if (!file.is_open()) {
         NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
     }
@@ -586,37 +682,41 @@ TEST_F(NLJSliceSerializationTest, nljWindowsSerialization) {
     sinkToTheRawBufferSink(windowsToMigrate, windowInfoFilePath);
 
     // 4. Recreate window info from the file in operator handler
-    recreateWindowInfoFromTheFile(windowInfoFilePath);
+    recreateWindowInfoFromTheFile(transformFileName(windowInfoFilePath));
 
-    // 5. Get recreated window info to compare
-    auto expectedWindowsInfo = nljOperatorHandler->getWindowInfoToCompare();
-    auto recreatedWindowsInfo = recreatedOperatorHandler->getWindowInfoToCompare();
+    // 5. Compare old and recreated operator handlers
+    compareExpectedOperatorHandlerAndRecreatedWindowsInfo();
+}
 
-    // check that size of windows info maps is equal
-    EXPECT_EQ(expectedWindowsInfo.size(), recreatedWindowsInfo.size());
+/**
+ * Test operator handler recreation from the file
+ */
+TEST_F(NLJSliceSerializationTest, nljFileRecreation) {
+    const auto numberOfRecordsLeft = 10000;
+    const auto numberOfRecordsRight = 10000;
 
-    // 6. Go over data tuple buffers with window info and compare them
-    for (auto expectedIt = expectedWindowsInfo.cbegin(), recreatedIt = recreatedWindowsInfo.cbegin();
-         expectedIt != expectedWindowsInfo.cend() && recreatedIt != recreatedWindowsInfo.cend();
-         expectedIt++, recreatedIt++) {
-        // check that window info is equal
-        EXPECT_EQ(expectedIt->first.windowStart, recreatedIt->first.windowStart);
-        EXPECT_EQ(expectedIt->first.windowEnd, recreatedIt->first.windowEnd);
-        EXPECT_EQ(expectedIt->first.windowId, recreatedIt->first.windowId);
+    // 1. Generate and insert records to the operator handler
+    auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
 
-        // check window status and slices
-        EXPECT_EQ(expectedIt->second.windowState, recreatedIt->second.windowState);
-        EXPECT_EQ(expectedIt->second.slices.size(), recreatedIt->second.slices.size());
+    // 2. Get state and windows info from old operator handler
+    auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, maxTs);
+    auto windowsToMigrate = nljOperatorHandler->getWindowInfoToMigrate();
 
-        for (auto expectedSliceIt = expectedIt->second.slices.cbegin(), recreatedSliceIt = recreatedIt->second.slices.cbegin();
-             expectedSliceIt != expectedIt->second.slices.cend() && recreatedSliceIt != recreatedIt->second.slices.cend();
-             expectedSliceIt++, recreatedSliceIt++) {
-            EXPECT_EQ(expectedSliceIt->get()->getSliceIdentifier(), recreatedSliceIt->get()->getSliceIdentifier());
-            EXPECT_EQ(expectedSliceIt->get()->getSliceStart(), recreatedSliceIt->get()->getSliceStart());
-            EXPECT_EQ(expectedSliceIt->get()->getSliceEnd(), recreatedSliceIt->get()->getSliceEnd());
-            EXPECT_EQ(expectedSliceIt->get()->getNumberOfTuplesLeft(), recreatedSliceIt->get()->getNumberOfTuplesLeft());
-            EXPECT_EQ(expectedSliceIt->get()->getNumberOfTuplesRight(), recreatedSliceIt->get()->getNumberOfTuplesRight());
-        }
-    }
+    // 3. Write buffers to the file using rawBufferSink in other thread
+    std::thread thread([this,
+                        dataToMigrate = dataToMigrate,
+                        windowsToMigrate = windowsToMigrate,
+                        recreationFilePath = recreationFilePath]() mutable {
+        sinkToTheRawBufferSink(dataToMigrate, windowsToMigrate, recreationFilePath);
+    });
+    thread.detach();
+
+    // 4. Start recreation earlier to check waiting on the new operator handler
+    recreatedOperatorHandler->setRecreationFileName(transformFileName(recreationFilePath));
+    recreatedOperatorHandler->recreateOperatorHandlerFromFile();
+
+    // 5. Compare state and window info of old and recreated operator handler
+    compareExpectedOperatorHandlerAndRecreatedState(maxTs);
+    compareExpectedOperatorHandlerAndRecreatedWindowsInfo();
 }
 }// namespace NES::Runtime::Execution

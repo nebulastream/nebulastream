@@ -173,6 +173,15 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend(),
                                            fileSinkDescriptor->getNumberOfOrigins());
+        } else if (fileSinkDescriptor->getSinkFormatAsString() == "MIGRATION_FORMAT") {
+            return createMigrateFileSink(pipelineQueryPlan->getQueryId(),
+                                         pipelineQueryPlan->getQuerySubPlanId(),
+                                         pipelineQueryPlan->getQuerySubPlanVersion(),
+                                         nodeEngine,
+                                         numOfProducers,
+                                         fileSinkDescriptor->getFileName(),
+                                         fileSinkDescriptor->getAppend(),
+                                         fileSinkDescriptor->getNumberOfOrigins());
         } else {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");

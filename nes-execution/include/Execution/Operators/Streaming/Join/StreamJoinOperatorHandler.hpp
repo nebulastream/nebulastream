@@ -71,6 +71,11 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
+     * @brief Recreate state and window info from the file
+     */
+    void recreateOperatorHandlerFromFile();
+
+    /**
      * @brief Retrieve the state as a vector of tuple buffers
      * Format of buffers looks like:
      * start buffers contain metadata in format:
@@ -288,8 +293,22 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @return the approach that was set
      */
     SharedJoinApproach getApproach();
+    /**
+     * set file with the state and recreation flag
+     */
+    void setRecreationFileName(std::string filePath);
+    /**
+     * get recreation file name
+     */
+    std::optional<std::string> getRecreationFileName();
 
   private:
+    /**
+     * read numberOfBuffers amount of buffers from file
+     * @param numberOfBuffers number of buffers to read
+     */
+    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+
     /**
      * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
      * @param buffers as a span
@@ -310,6 +329,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     std::atomic<bool> alreadySetup{false};
+    std::atomic<bool> shouldBeRecreated{false};
+    std::optional<std::string> recreationFilePath;
     // TODO with issue #4517 we can remove the sizes
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;

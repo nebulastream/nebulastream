@@ -82,6 +82,13 @@ void RawBufferSink::setup() {
 
 void RawBufferSink::shutdown() {
     NES_DEBUG("Closing file sink, filePath={}", filePath);
+    // rename file after dumping completed
+    auto dotPosition = filePath.find_last_of('.');
+    auto completedPath = filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
+    if (std::rename(filePath.c_str(), completedPath.c_str()) != 0) {
+        NES_ERROR("Can't rename file after dumping");
+    }
+
     outputFile.close();
 }
 
@@ -106,10 +113,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // 2. write number of tuples in buffer
     auto numberOfTuples = inputBuffer.getNumberOfTuples();
     outputFile.write(reinterpret_cast<char*>((&numberOfTuples)), sizeof(uint64_t));
-    // 3. write sequence number of buffer
-    auto seqNumber = inputBuffer.getSequenceNumber();
-    outputFile.write(reinterpret_cast<char*>((&seqNumber)), sizeof(uint64_t));
-    // 4. write buffer content
+    // 3. write buffer content
     outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), size);
     outputFile.flush();
     return true;

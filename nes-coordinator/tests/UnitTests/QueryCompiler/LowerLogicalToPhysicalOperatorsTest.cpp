@@ -883,4 +883,108 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, checkUsedSameOperator) {
     ASSERT_EQ(expJoinPhysicalOperator->getJoinOperatorHandler(), migrationJoinPhysicalOperator->getJoinOperatorHandler());
 }
 
+/**
+ * @brief Check migration file path is propagated
+ * Input Query Plan:
+ *
+ * --- Sink 1 --- Join   --- Source 1
+ *                        \
+ *                         --- Source 2
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1  --- Physical Join Sink --- Physical Join Build --- Physical Source 1
+ *                                             \
+ *                                             --- Physical Join Build --- Physical Source 2
+ *
+ */
+TEST_F(LowerLogicalToPhysicalOperatorsTest, checkRecreationFileSet) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+
+    auto leftSchema = Schema::create()->addField("left$f1", DataTypeFactory::createInt64());
+    auto rightSchema = Schema::create()->addField("right$f2", DataTypeFactory::createInt64());
+    joinOp1->setLeftInputSchema(leftSchema);
+    joinOp1->setRightInputSchema(rightSchema);
+    joinOp1->setOriginId(OriginId(1));
+    sourceOp1->setOutputSchema(leftSchema);
+    queryPlan->appendOperatorAsNewRoot(joinOp1);
+
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    joinOp1->addChild(sourceOp2);
+    sourceOp2->setOutputSchema(rightSchema);
+
+    // 1. Put migration file path to the operator handler
+    std::string expectedFilePath = "test.bin";
+    joinOp1->addProperty(QueryCompilation::MIGRATION_FILE, expectedFilePath);
+    options->setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
+
+    NES_DEBUG("Query PLan {}", queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
+    auto phase =
+        QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider, OperatorHandlerStore::create());
+
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           queryPlan->getRootOperators());
+
+    // 2. Apply lowering phase for the plan
+    phase->apply(decomposedQueryPlan);
+    NES_DEBUG("Decomposed query plan {}", decomposedQueryPlan->toString());
+
+    // 3. Iterate over first and check file name in operator handler
+    auto planIterator = PlanIterator(decomposedQueryPlan).begin();
+
+    ASSERT_TRUE((*planIterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++planIterator;
+    auto expJoinPhysicalOperator = (*planIterator)->as<QueryCompilation::PhysicalOperators::PhysicalStreamJoinProbeOperator>();
+    ASSERT_TRUE(expJoinPhysicalOperator != nullptr);
+
+    auto operatorHandler = expJoinPhysicalOperator->getJoinOperatorHandler();
+    auto filePath = operatorHandler->getRecreationFileName();
+    ASSERT_TRUE(filePath.has_value());
+    ASSERT_EQ(filePath.value(), expectedFilePath);
+}
+
+/**
+ * @brief check recreation file
+ * Input Query Plan:
+ *
+ * --- Sink 1 --- Filter -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Filter -- Physical Source 1
+ *
+ */
+TEST_F(LowerLogicalToPhysicalOperatorsTest, checkMigrationFileIsPropogatedToSink) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    auto expectedFilePath = "test.bin";
+    auto migrateSinkOp =
+        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(expectedFilePath, "MIGRATION_FORMAT", "OVERWRITE"));
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(migrateSinkOp);
+
+    NES_DEBUG("{}", queryPlan->toString());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           queryPlan->getRootOperators());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
+    auto phase =
+        QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider, OperatorHandlerStore::create());
+
+    phase->apply(decomposedQueryPlan);
+    NES_DEBUG("{}", decomposedQueryPlan->toString());
+
+    auto iterator = PlanIterator(decomposedQueryPlan).begin();
+
+    auto sinkOperator = (*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>();
+    ASSERT_TRUE(sinkOperator != nullptr);
+    ASSERT_EQ(sinkOperator->getSinkDescriptor()->as<FileSinkDescriptor>()->getFileName(), expectedFilePath);
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
 }// namespace NES

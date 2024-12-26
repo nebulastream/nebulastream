@@ -26,6 +26,9 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, u
     NES_INFO("Started StreamJoinOperatorHandler!");
     setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
     setBufferManager(pipelineCtx->getBufferManager());
+    if (shouldBeRecreated) {
+        recreateOperatorHandlerFromFile();
+    }
 }
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
@@ -36,6 +39,48 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     if (queryTerminationType == QueryTerminationType::Graceful) {
         triggerAllSlices(pipelineCtx.get());
     }
+}
+
+void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
+    NES_INFO("Start of recreation from file");
+    if (!recreationFilePath.has_value()) {
+        NES_ERROR("Error: file path for recreation is not set");
+    }
+
+    auto filePath = recreationFilePath.value();
+
+    while (!std::filesystem::exists(filePath)) {
+        NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
+
+    if (!fileStream.is_open()) {
+        NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
+    }
+
+    // 1. Read number of state buffers and number of window info buffers
+    auto numberOfMetadataBuffers = 1;
+    auto metadataBuffers = readBuffers(fileStream, numberOfMetadataBuffers);
+    auto metadataPtr = metadataBuffers[0].getBuffer<uint64_t>();
+    uint64_t numberOfStateBuffers = metadataPtr[0];
+    uint64_t numberOfWindowInfoBuffers = metadataPtr[1];
+
+    // 2. read state buffers
+    std::vector<TupleBuffer> recreatedStateBuffers = readBuffers(fileStream, numberOfStateBuffers);
+
+    // 3. read window info buffers
+    std::vector<TupleBuffer> recreatedWindowInfoBuffers = readBuffers(fileStream, numberOfWindowInfoBuffers);
+
+    fileStream.close();
+
+    // 4. recreate state and window info from read buffers
+    restoreState(recreatedStateBuffers);
+    restoreWindowInfo(recreatedWindowInfoBuffers);
+    // reset recreation flag and delete file
+    shouldBeRecreated = false;
+    std::remove(recreationFilePath->c_str());
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
@@ -309,29 +354,9 @@ void StreamJoinOperatorHandler::restoreStateFromFile(std::ifstream& stream) {
     std::vector<TupleBuffer> recreatedBuffers = {};
 
     while (!stream.eof()) {
-        uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
-        ;
-        // 1. read size of current buffer
-        stream.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-        // 2. read number of tuples in current buffer
-        stream.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
-        // 3. read sequence number of current buffer
-        stream.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
-
-        // if size of the read buffer is more than size of pooled buffers in buffer manager
-        if (size > bufferManager->getBufferSize()) {
-            // then it is not implemented as it should be split into several smaller buffers
-            NES_NOT_IMPLEMENTED();
-        }
-        if (size > 0) {
-            //recreate vector of tuple buffers from the file
-            auto newBuffer = bufferManager->getBufferBlocking();
-            // 3. read buffer content
-            stream.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
-            newBuffer.setNumberOfTuples(numberOfTuples);
-            newBuffer.setSequenceNumber(seqNumber);
-            recreatedBuffers.emplace_back(newBuffer);
-        }
+        // read next buffer from file
+        auto newBuffers = readBuffers(stream, 1);
+        recreatedBuffers.insert(recreatedBuffers.end(), newBuffers.begin(), newBuffers.end());
     }
 
     // restore state from tuple buffers
@@ -404,7 +429,6 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
     uint64_t newGlobalWatermark =
         watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
-
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
@@ -515,6 +539,41 @@ uint64_t StreamJoinOperatorHandler::getNextSliceId() {
 void StreamJoinOperatorHandler::setApproach(SharedJoinApproach approach) { this->approach = approach; }
 
 SharedJoinApproach StreamJoinOperatorHandler::getApproach() { return approach; }
+
+void StreamJoinOperatorHandler::setRecreationFileName(std::string filePath) {
+    shouldBeRecreated = true;
+    recreationFilePath = filePath;
+}
+
+std::optional<std::string> StreamJoinOperatorHandler::getRecreationFileName() { return recreationFilePath; }
+
+std::vector<TupleBuffer> StreamJoinOperatorHandler::readBuffers(std::ifstream& stream, uint64_t numberOfBuffers) {
+    std::vector<TupleBuffer> readBuffers = {};
+
+    for (auto currBuffer = 0ULL; currBuffer < numberOfBuffers; currBuffer++) {
+        uint64_t size = 0, numberOfTuples = 0;
+        // 1. read size of current buffer
+        stream.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+        // 2. read number of tuples in current buffer
+        stream.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+
+        // if size of the read buffer is more than size of pooled buffers in buffer manager
+        if (size > bufferManager->getBufferSize()) {
+            // then it is not implemented as it should be split into several smaller buffers
+            NES_NOT_IMPLEMENTED();
+        }
+        if (size > 0) {
+            //recreate vector of tuple buffers from the file
+            auto newBuffer = bufferManager->getBufferBlocking();
+            // 3. read buffer content
+            stream.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
+            newBuffer.setNumberOfTuples(numberOfTuples);
+            readBuffers.emplace_back(newBuffer);
+        }
+    }
+
+    return readBuffers;
+}
 
 uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");

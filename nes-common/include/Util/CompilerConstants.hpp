@@ -22,6 +22,7 @@ static const char* const LOGICAL_OPERATOR_ID_KEY =
     "LogicalOperatorId";                                   // Property indicating the location where the operator is pinned
 static const char* const MIGRATION_FLAG = "MIGRATION_FLAG";// Property to mark that operator needs to be migrated
 static const char* const MIGRATION_SINK = "MIGRATION_SINK";// Property to mark that sink operator is created for migration
+static const char* const MIGRATION_FILE = "MIGRATION_FILE";// File name to save operator handler state
 
 }// namespace NES::QueryCompilation
 
