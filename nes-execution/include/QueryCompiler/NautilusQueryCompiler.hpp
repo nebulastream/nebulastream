@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Runtime/OperatorHandlerStore.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -32,15 +33,19 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
      * @brief Creates a new instance of the NautilusQueryCompiler, with a set of options and phases.
      * @param options QueryCompilationOptions.
      * @param phaseFactory Factory which allows the injection of query optimization phases.
+     * @param operatorHandlerStore storage for created operator handlers
      * @param sourceSharing indicates if source sharing should be used
      * @return QueryCompilerPtr
      */
-    static QueryCompilerPtr
-    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing = false);
+    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
+                                   Phases::PhaseFactoryPtr const& phaseFactory,
+                                   OperatorHandlerStorePtr operatorHandlerStore,
+                                   bool sourceSharing = false);
 
   protected:
     NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options,
                           Phases::PhaseFactoryPtr const& phaseFactory,
+                          OperatorHandlerStorePtr operatorHandlerStore,
                           bool sourceSharing);
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     QueryCompilation::LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;

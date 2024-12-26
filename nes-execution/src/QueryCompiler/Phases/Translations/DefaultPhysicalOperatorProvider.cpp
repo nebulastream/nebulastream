@@ -111,7 +111,9 @@ void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const Logica
     operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQueryPlan,
+                                            LogicalOperatorPtr operatorNode,
+                                            OperatorHandlerStorePtr& operatorHandlerStore) {
     if (isDemultiplex(operatorNode)) {
         insertDemultiplexOperatorsBefore(operatorNode);
     }
@@ -119,7 +121,10 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
     if (operatorNode->instanceOf<UnaryOperator>()) {
         lowerUnaryOperator(decomposedQueryPlan, operatorNode);
     } else if (operatorNode->instanceOf<BinaryOperator>()) {
-        lowerBinaryOperator(operatorNode);
+        lowerBinaryOperator(operatorNode,
+                            decomposedQueryPlan->getSharedQueryId(),
+                            decomposedQueryPlan->getDecomposedQueryId(),
+                            operatorHandlerStore);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -158,6 +163,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                                                     logicalSinkOperator->getOutputSchema(),
                                                                                     logicalSinkOperator->getSinkDescriptor());
         physicalSinkOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
+        physicalSinkOperator->addProperty(MIGRATION_SINK, operatorNode->getProperty(MIGRATION_SINK));
         operatorNode->replace(physicalSinkOperator);
         decomposedQueryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
@@ -234,11 +240,14 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode,
+                                                          const SharedQueryId queryId,
+                                                          const DecomposedQueryId planId,
+                                                          OperatorHandlerStorePtr& operatorHandlerStore) {
     if (operatorNode->instanceOf<LogicalUnionOperator>()) {
         lowerUnionOperator(operatorNode);
     } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
-        lowerJoinOperator(operatorNode);
+        lowerJoinOperator(operatorNode, queryId, planId, operatorHandlerStore);
     } else if (operatorNode->instanceOf<LogicalIntervalJoinOperator>()) {
         lowerIntervalJoinOperator(operatorNode);
     } else {
@@ -412,11 +421,17 @@ void DefaultPhysicalOperatorProvider::lowerIntervalJoinOperator(const LogicalOpe
     streamJoinOperators.operatorNode->replace(joinProbeOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode) {
-    lowerNautilusJoin(operatorNode);
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode,
+                                                        const SharedQueryId queryId,
+                                                        const DecomposedQueryId planId,
+                                                        OperatorHandlerStorePtr& operatorHandlerStore) {
+    lowerNautilusJoin(operatorNode, queryId, planId, operatorHandlerStore);
 }
 
-void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr& operatorNode,
+                                                        const SharedQueryId queryId,
+                                                        const DecomposedQueryId planId,
+                                                        OperatorHandlerStorePtr& operatorHandlerStore) {
     using namespace Runtime::Execution::Operators;
 
     auto joinOperator = operatorNode->as<LogicalJoinOperator>();
@@ -448,6 +463,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                              joinStrategy);
 
     StreamJoinOperatorHandlerPtr joinOperatorHandler;
+    auto join_migration_flag = false;
+
     switch (joinStrategy) {
         case StreamJoinStrategy::HASH_JOIN_LOCAL:
         case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
@@ -473,7 +490,22 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                     streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getFlagKeepOperator());
                 break;
             }
-            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+
+            auto operatorId = any_cast<OperatorId>(joinOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
+            auto migrationFlagVal = joinOperator->getProperty(MIGRATION_FLAG);
+            // check if operator handler for this operator was already created before
+            if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
+                && std::any_cast<bool>(migrationFlagVal)) {
+                // use already created operator handler
+                joinOperatorHandler = std::dynamic_pointer_cast<StreamJoinOperatorHandler>(
+                    operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+                // mark join to be migrated
+                join_migration_flag = true;
+            } else {
+                // create new operator handler and store it
+                joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+                operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, joinOperatorHandler);
+            }
 
             if (streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getFlagKeepOperator()) {
                 joinOperatorHandler->setThisForReuse(true);
@@ -518,6 +550,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                    options->getWindowingStrategy(),
                                                                    timeStampFieldLeft,
                                                                    timeStampFieldRight);
+    joinProbeOperator->addProperty(MIGRATION_FLAG, join_migration_flag);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);

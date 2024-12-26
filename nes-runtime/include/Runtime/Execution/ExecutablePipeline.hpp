@@ -67,7 +67,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
                                 ExecutablePipelineStagePtr executablePipelineStage,
                                 uint32_t numOfProducingPipelines,
                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                bool reconfiguration);
+                                bool reconfiguration,
+                                bool isMigrationPipeline);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -90,7 +91,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
                                         uint32_t numOfProducingPipelines,
                                         const std::vector<SuccessorExecutablePipeline>& successorPipelines,
-                                        bool reconfiguration = false);
+                                        bool reconfiguration = false,
+                                        bool isMigrationPipeline = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -154,6 +156,11 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
     */
     bool isReconfiguration() const;
+
+    /**
+    * @return returns true if the pipeline is migration pipeline
+    */
+    bool isMigration() const;
 
     /**
      * @brief reconfigure callback called upon a reconfiguration
@@ -233,6 +240,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
+    std::atomic<bool> isMigrationPipeline;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;

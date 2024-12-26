@@ -37,11 +37,12 @@ ExecutablePipeline::ExecutablePipeline(PipelineId pipelineId,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        uint32_t numOfProducingPipelines,
                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                       bool reconfiguration)
+                                       bool reconfiguration,
+                                       bool isMigrationPipeline)
     : pipelineId(pipelineId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
       decomposedQueryVersion(decomposedQueryVersion), queryManager(queryManager),
       executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)),
-      reconfiguration(reconfiguration),
+      reconfiguration(reconfiguration), isMigrationPipeline(isMigrationPipeline),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
       activeProducers(numOfProducingPipelines), successorPipelines(std::move(successorPipelines)) {
     // nop
@@ -177,7 +178,8 @@ ExecutablePipelinePtr ExecutablePipeline::create(PipelineId pipelineId,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
                                                  uint32_t numOfProducingPipelines,
                                                  const std::vector<SuccessorExecutablePipeline>& successorPipelines,
-                                                 bool reconfiguration) {
+                                                 bool reconfiguration,
+                                                 bool isMigrationPipeline) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
                     "Executable pipelinestage is null for " << pipelineId << "within the following query sub plan: "
                                                             << decomposedQueryId << "." << decomposedQueryVersion);
@@ -194,7 +196,8 @@ ExecutablePipelinePtr ExecutablePipeline::create(PipelineId pipelineId,
                                                 executablePipelineStage,
                                                 numOfProducingPipelines,
                                                 successorPipelines,
-                                                reconfiguration);
+                                                reconfiguration,
+                                                isMigrationPipeline);
 }
 
 void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
@@ -216,6 +219,19 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             auto marker = task.getUserData<ReconfigurationMarkerPtr>();
             auto event = marker->getReconfigurationEvent(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
             NES_ASSERT2_FMT(event, "Markers should only be propagated to a network sink if the plan is to be reconfigured");
+
+            // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started
+            if (event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>() && isMigrationPipeline) {
+                // thread took the work and other threads should not do migration again => reset migration flag
+                isMigrationPipeline = false;
+                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+                    // TODO [#5149]: add start and end timestamps based on watermarks [https://github.com/nebulastream/nebulastream/issues/5149]
+                    auto dataToMigrate = operatorHandler->getStateToMigrate(0, 1000);
+                    for (auto& buffer : dataToMigrate) {
+                        pipelineContext->migrateBuffer(buffer, context);
+                    }
+                }
+            }
 
             if (!(event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>())
                 && !(event.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>())) {

@@ -46,10 +46,12 @@ PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptio
     };
 }
 
-LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) {
+LowerLogicalToPhysicalOperatorsPtr
+DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options,
+                                                      OperatorHandlerStorePtr operatorHandlerStore) {
     NES_DEBUG("Create default lower logical plan phase");
     auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create(options);
-    return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+    return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider, operatorHandlerStore);
 }
 
 AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {

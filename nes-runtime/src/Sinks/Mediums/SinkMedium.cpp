@@ -119,4 +119,8 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
 }
+
+void SinkMedium::setMigrationFlag() { migration = true; }
+
+bool SinkMedium::isForMigration() const { return migration; }
 }// namespace NES

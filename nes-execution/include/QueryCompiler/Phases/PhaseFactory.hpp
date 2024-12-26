@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/OperatorHandlerStore.hpp>
 
 namespace NES::QueryCompilation::Phases {
 
@@ -26,9 +27,11 @@ class PhaseFactory {
     /**
      * @brief Creates a lower logical operator to physical operator phase
      * @param QueryCompilerOptionsPtr options
+     * @param OperatorHandlerStorePtr storage for created operator handler
      * @return LowerLogicalToPhysicalOperatorsPtr
      */
-    virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options,
+                                                                                OperatorHandlerStorePtr operatorHandlerStore) = 0;
 
     /**
      * @brief Creates pipelining phase

@@ -41,6 +41,7 @@ add_source_files(nes-runtime
         QueryStatistics.cpp
         QueryTerminationType.cpp
         ReconfigurationType.cpp
+        OperatorHandlerStore.cpp
 )
 
 add_subdirectory(Profiler)

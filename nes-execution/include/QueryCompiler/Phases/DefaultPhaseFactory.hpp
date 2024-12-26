@@ -24,7 +24,8 @@ class DefaultPhaseFactory : public PhaseFactory {
   public:
     virtual ~DefaultPhaseFactory() = default;
     static PhaseFactoryPtr create();
-    LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options,
+                                                                        OperatorHandlerStorePtr operatorHandlerStore) override;
     PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,

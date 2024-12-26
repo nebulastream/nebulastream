@@ -32,11 +32,11 @@ PipelineId getNextPipelineId() {
     return PipelineId(id++);
 }
 
-OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
+OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType, bool isMigration)
     : id(pipelineId),
       decomposedQueryPlan(
           DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
-      pipelineType(pipelineType) {}
+      pipelineType(pipelineType), migration(isMigration) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
@@ -53,6 +53,10 @@ OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
 void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }
 
 bool OperatorPipeline::isOperatorPipeline() const { return pipelineType == Type::OperatorPipelineType; }
+
+bool OperatorPipeline::isMigrationPipeline() const { return migration; }
+
+void OperatorPipeline::markPipelineForMigration() { migration = true; }
 
 bool OperatorPipeline::isSinkPipeline() const { return pipelineType == Type::SinkPipelineType; }
 

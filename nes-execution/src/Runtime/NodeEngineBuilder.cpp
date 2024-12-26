@@ -172,9 +172,11 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
+        auto operatorHandlerStore = OperatorHandlerStore::create();
 
         auto compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
                                                                         phaseFactory,
+                                                                        operatorHandlerStore,
                                                                         workerConfiguration->enableSourceSharing.getValue());
 
         if (!compiler) {
@@ -207,6 +209,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                        workerConfiguration->connectSourceEventChannelsAsync.getValue());
             },
             std::move(partitionManager),
+            std::move(operatorHandlerStore),
             std::move(compiler),
             std::move(nesWorker),
             std::move(openCLManager),

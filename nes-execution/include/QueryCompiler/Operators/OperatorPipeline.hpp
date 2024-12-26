@@ -152,6 +152,18 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @return true if operator pipeline
      */
     bool isOperatorPipeline() const;
+
+    /**
+     * @brief Indicates if this is a migration pipeline.
+     * @return true if migration pipeline
+     */
+    bool isMigrationPipeline() const;
+
+    /**
+     * @brief Sets migration flag for the pipeline
+     */
+    void markPipelineForMigration();
+
     const std::vector<OperatorId>& getOperatorIds() const;
 
     /**
@@ -161,7 +173,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     std::string toString() const;
 
   protected:
-    OperatorPipeline(PipelineId pipelineId, Type pipelineType);
+    OperatorPipeline(PipelineId pipelineId, Type pipelineType, bool isMigration = false);
 
   private:
     PipelineId id;
@@ -170,6 +182,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     DecomposedQueryPlanPtr decomposedQueryPlan;
     std::vector<OperatorId> operatorIds;
     Type pipelineType;
+    bool migration;
 };
 }// namespace NES::QueryCompilation
 

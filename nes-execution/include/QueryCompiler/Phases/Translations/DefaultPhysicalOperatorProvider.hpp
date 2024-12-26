@@ -89,7 +89,9 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
     static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
-    void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) override;
+    void lower(DecomposedQueryPlanPtr decomposedQueryPlan,
+               LogicalOperatorPtr operatorNode,
+               OperatorHandlerStorePtr& operatorHandlerStore) override;
     virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
   protected:
@@ -113,8 +115,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     /**
      * @brief Lowers a binary operator
      * @param operatorNode current operator
+     * @param queryId id of query decomposed query plan belongs to
+     * @param planId id of decomposed query plan
+     * @param operatorHandlerStore storage for created operator handlers
      */
-    void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode,
+                             const SharedQueryId queryId,
+                             const DecomposedQueryId planId,
+                             OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
     * @brief Lowers a unary operator
@@ -183,8 +191,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     /**
     * @brief Lowers a join operator
     * @param operatorNode current operator
+    * @param queryId id of query decomposed query plan belongs to
+    * @param planId id of decomposed query plan
+    * @param operatorHandlerStore storage for created operator handlers
     */
-    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode,
+                           const SharedQueryId queryId,
+                           const DecomposedQueryId planId,
+                           OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
      * @brief Lowers a interval join operator
@@ -222,8 +236,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     /**
      * @brief Lowers a join operator for the nautilus query compiler
      * @param operatorNode
+     * @param queryId id of query decomposed query plan belongs to
+     * @param planId id of decomposed query plan
+     * @param operatorHandlerStore storage for created operator handlers
      */
-    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
+    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode,
+                           const SharedQueryId queryId,
+                           const DecomposedQueryId planId,
+                           OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
      * @brief Returns the left and right timestamp for the interval join; calls the getEventTimeTimestampLeftAndRight() function

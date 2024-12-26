@@ -220,10 +220,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                    bufferManagers[0]);
         };
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
+        auto operatorHandlerStore = OperatorHandlerStore::create();
         auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         options->setNumSourceLocalBuffers(12);
 
-        auto compiler = QueryCompilation::NautilusQueryCompiler::create(options, phaseFactory);
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(options, phaseFactory, operatorHandlerStore);
 
         return std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                   std::move(hwManager),
@@ -231,6 +232,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                   std::move(queryManager),
                                                   std::move(networkManagerCreator),
                                                   std::move(partitionManager),
+                                                  std::move(operatorHandlerStore),
                                                   std::move(compiler),
                                                   std::forward<ExtraParameters>(extraParams)...);
 
@@ -269,6 +271,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                   NES::Runtime::QueryManagerPtr&& queryManager,
                                   std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager,
+                                  OperatorHandlerStorePtr operatorHandlerStore,
                                   QueryCompilation::QueryCompilerPtr&& queryCompiler,
                                   std::promise<bool>& completed,
                                   NesPartition nesPartition,
@@ -279,6 +282,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(queryManager),
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
+                         std::move(operatorHandlerStore),
                          std::move(queryCompiler),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Runtime::OpenCLManager>(),

@@ -150,10 +150,21 @@ class SinkMedium : public Runtime::Reconfigurable {
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
     /**
-     * @brief
-     * @return
+     * @brief Get operator id
+     * @return operator id
      */
     OperatorId getOperatorId() const;
+
+    /**
+     * @brief Sets that sink is used for state migration
+     */
+    void setMigrationFlag();
+
+    /**
+     * @brief Check whether this sink is used for state migration
+     * @return migration flag
+     */
+    bool isForMigration() const;
 
   protected:
     SinkFormatPtr sinkFormat;
@@ -168,6 +179,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
+    bool migration{false};
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

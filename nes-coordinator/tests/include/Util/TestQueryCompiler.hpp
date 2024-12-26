@@ -33,7 +33,7 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
     auto cppCompiler = Compiler::CPPCompiler::create();
-    return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
+    return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider, OperatorHandlerStore::create());
 }
 
 }// namespace NES::TestUtils

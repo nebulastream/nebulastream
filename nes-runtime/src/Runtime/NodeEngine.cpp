@@ -49,6 +49,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager,
+                       OperatorHandlerStorePtr operatorHandlerStore,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
                        OpenCLManagerPtr&& openCLManager,
@@ -58,7 +59,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        uint64_t numberOfBuffersPerWorker,
                        bool sourceSharing)
     : nodeId(INVALID_WORKER_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
-      bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
+      bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)),
+      operatorHandlerStore(std::move(operatorHandlerStore)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
       // TODO for now, we always use the DefaultStatisticStore. A configuration will be done with #4687
       statisticManager(Statistic::StatisticManager::create(Statistic::DefaultStatisticStore::create())),
@@ -321,6 +323,7 @@ bool NodeEngine::unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, Deco
                       isStopped);
             if (isStopped && queryManager->unregisterExecutableQueryPlan(qep)) {
                 deployedExecutableQueryPlans.erase(planIdWithVersion);
+                operatorHandlerStore->removeOperatorHandlers(sharedQueryId, planIdWithVersion.id);
                 NES_DEBUG("unregister of query  {}.{}  succeeded", planIdWithVersion.id, planIdWithVersion.version);
             } else {
                 NES_ERROR("unregister of QEP {}.{} failed", planIdWithVersion.id, planIdWithVersion.version);
@@ -453,9 +456,11 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
             withError = true;
         }
         try {
+            auto sharedQueryId = queryExecutionPlan->getSharedQueryId();
             if (queryManager->unregisterExecutableQueryPlan(queryExecutionPlan)) {
                 NES_DEBUG("unregisterExecutableQueryPlan of QEP  {}  succeeded", decomposedQueryPlanId);
                 it = deployedExecutableQueryPlans.erase(it);
+                operatorHandlerStore->removeOperatorHandlers(sharedQueryId, decomposedQueryPlanId);
             } else {
                 NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed", decomposedQueryPlanId);
                 withError = true;

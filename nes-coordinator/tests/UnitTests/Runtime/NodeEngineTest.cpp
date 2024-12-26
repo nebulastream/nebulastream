@@ -148,7 +148,8 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryCompiler = QueryCompilation::NautilusQueryCompiler::create(compilerOptions, phaseFactory);
+        auto operatorHandlerStore = OperatorHandlerStore::create();
+        auto queryCompiler = QueryCompilation::NautilusQueryCompiler::create(compilerOptions, phaseFactory, operatorHandlerStore);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                              std::make_shared<HardwareManager>(),
@@ -156,6 +157,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
                                                              std::move(queryManager),
                                                              std::move(networkManagerCreator),
                                                              std::move(partitionManager),
+                                                             std::move(operatorHandlerStore),
                                                              std::move(queryCompiler),
                                                              INVALID_WORKER_NODE_ID,
                                                              1024,
@@ -937,6 +939,7 @@ void assertKiller() {
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
+                                  OperatorHandlerStorePtr operatorHandlerStore,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
                                   WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
@@ -948,6 +951,7 @@ void assertKiller() {
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
+                         std::move(operatorHandlerStore),
                          std::move(compiler),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
@@ -982,6 +986,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
+                                  OperatorHandlerStorePtr operatorHandlerStore,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
                                   WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
@@ -993,6 +998,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
+                         std::move(operatorHandlerStore),
                          std::move(compiler),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
@@ -1063,6 +1069,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
+                                  OperatorHandlerStorePtr operatorHandlerStore,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
                                   WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
@@ -1074,6 +1081,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
+                         std::move(operatorHandlerStore),
                          std::move(compiler),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),

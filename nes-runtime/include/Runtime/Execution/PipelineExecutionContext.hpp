@@ -70,13 +70,15 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
-    explicit PipelineExecutionContext(PipelineId pipelineId,
-                                      DecomposedQueryId queryId,
-                                      Runtime::BufferManagerPtr bufferProvider,
-                                      size_t numberOfWorkerThreads,
-                                      std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-                                      std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-                                      std::vector<OperatorHandlerPtr> operatorHandlers);
+    explicit PipelineExecutionContext(
+        PipelineId pipelineId,
+        DecomposedQueryId queryId,
+        Runtime::BufferManagerPtr bufferProvider,
+        size_t numberOfWorkerThreads,
+        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
+        std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+        std::vector<OperatorHandlerPtr> operatorHandlers,
+        std::optional<std::function<void(TupleBuffer&, WorkerContext&)>> emitMigrationHandler = nullptr);
 
     /**
      * @brief Emits a output tuple buffer to the Runtime. Internally we call the emit function which is a callback to the correct handler.
@@ -92,6 +94,13 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     * @param workerContext the worker context
     */
     void dispatchBuffer(TupleBuffer tupleBuffer);
+
+    /**
+    * @brief Emits a output tuple to migration pipeline.
+    * @param outputBuffer the output tuple buffer that is passed to the Runtime
+    * @param workerContext the worker context
+    */
+    void migrateBuffer(TupleBuffer& buffer, WorkerContextRef workerContext);
 
     /**
      * @brief Retrieve all registered operator handlers.
@@ -182,6 +191,11 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @brief List of registered operator handlers.
      */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
+
+    /**
+    * @brief The emit function handler to emit migration buffer.
+    */
+    std::optional<std::function<void(TupleBuffer&, WorkerContext&)>> emitMigrationHandler;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
     folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;

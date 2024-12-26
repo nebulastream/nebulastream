@@ -15,6 +15,7 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_
 
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/OperatorHandlerStore.hpp>
 #include <vector>
 
 namespace NES::QueryCompilation {
@@ -25,12 +26,14 @@ namespace NES::QueryCompilation {
  */
 class LowerLogicalToPhysicalOperators {
   public:
-    explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
-    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider);
+    explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider, OperatorHandlerStorePtr operatorHandlerStore);
+    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider,
+                                                     OperatorHandlerStorePtr operatorHandlerStor);
     DecomposedQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan);
 
   private:
     PhysicalOperatorProviderPtr provider;
+    OperatorHandlerStorePtr operatorHandlerStore;
 };
 }// namespace NES::QueryCompilation
 

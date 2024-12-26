@@ -13,6 +13,7 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_PHYSICALOPERATORPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_PHYSICALOPERATORPROVIDER_HPP_
+#include "Runtime/OperatorHandlerStore.hpp"
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation {
@@ -27,8 +28,11 @@ class PhysicalOperatorProvider {
      * @brief Replaces this node with physical operators that express the same semantics.
      * @param decomposedQueryPlan the current decomposed query plan.
      * @param operatorNode the operator that should be replaced.
+     * @param operatorHandlerStore stores created operator handlers by query, plan and operator ids.
      */
-    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) = 0;
+    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan,
+                       LogicalOperatorPtr operatorNode,
+                       OperatorHandlerStorePtr& operatorHandlerStore) = 0;
 
   protected:
     QueryCompilerOptionsPtr options;

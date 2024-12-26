@@ -34,8 +34,10 @@ namespace NES::QueryCompilation {
 
 NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompilerOptionsPtr& options,
                                              const Phases::PhaseFactoryPtr& phaseFactory,
+                                             OperatorHandlerStorePtr operatorHandlerStore,
                                              bool sourceSharing)
-    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+    : QueryCompiler(options),
+      lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options, operatorHandlerStore)),
       lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options)),
       compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
@@ -44,8 +46,10 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
 
 QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                                Phases::PhaseFactoryPtr const& phaseFactory,
+                                               OperatorHandlerStorePtr operatorHandlerStore,
                                                bool sourceSharing) {
-    return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
+    return std::make_shared<NautilusQueryCompiler>(
+        NautilusQueryCompiler(options, phaseFactory, operatorHandlerStore, sourceSharing));
 }
 
 QueryCompilation::QueryCompilationResultPtr

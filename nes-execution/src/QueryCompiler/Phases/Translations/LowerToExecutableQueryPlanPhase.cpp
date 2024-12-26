@@ -217,6 +217,11 @@ LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline
                                     std::move(nodeEngine),
                                     pipelineQueryPlan,
                                     numOfProducers);
+    // propagate marker from logical sink operator to executable
+    auto migrationFlagVal = sinkOperator->getProperty(MIGRATION_SINK);
+    if (migrationFlagVal.has_value() && std::any_cast<bool>(migrationFlagVal)) {
+        sink->setMigrationFlag();
+    }
     sinks.emplace_back(sink);
     return sink;
 }
@@ -268,6 +273,33 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
+    // Check if pipeline is for migration and one of successor pipelines is sink that should be used for migration
+    std::optional<std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext&)>> emitMigrationHandler = nullptr;
+    if (pipeline->isMigrationPipeline()
+        && std::any_of(executableSuccessorPipelines.begin(),
+                       executableSuccessorPipelines.end(),
+                       [](Runtime::Execution::SuccessorExecutablePipeline pipeline) {
+                           if (const auto* sink = std::get_if<DataSinkPtr>(&pipeline)) {
+                               return (*sink)->isForMigration();
+                           }
+                           return false;
+                       })) {
+
+        // Add migration handler that should be used for migration of the state.
+        // It sends migration buffers only to sinks responsible for migration
+        emitMigrationHandler = [executableSuccessorPipelines](Runtime::TupleBuffer& buffer,
+                                                              Runtime::WorkerContextRef workerContext) {
+            for (const auto& executableSuccessor : executableSuccessorPipelines) {
+                if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
+                    if ((*sink)->isForMigration()) {
+                        NES_TRACE("Emit Buffer to data migration sink {}", (*sink)->toString());
+                        (*sink)->writeData(buffer, workerContext);
+                    }
+                }
+            }
+        };
+    }
+
     auto executionContext =
         std::make_shared<Runtime::Execution::PipelineExecutionContext>(pipeline->getPipelineId(),
                                                                        pipelineQueryPlan->getQuerySubPlanId(),
@@ -275,7 +307,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                        queryManager->getNumberOfWorkerThreads(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
-                                                                       executableOperator->getOperatorHandlers());
+                                                                       executableOperator->getOperatorHandlers(),
+                                                                       emitMigrationHandler);
 
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
@@ -285,7 +318,9 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),
                                                                              pipeline->getPredecessors().size(),
-                                                                             executableSuccessorPipelines);
+                                                                             executableSuccessorPipelines,
+                                                                             false,// reconfiguration
+                                                                             pipeline->isMigrationPipeline());
 
     // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.

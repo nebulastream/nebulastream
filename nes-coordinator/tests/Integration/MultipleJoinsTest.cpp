@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include "Util/TestUtils.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>

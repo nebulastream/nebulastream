@@ -47,8 +47,9 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
   public:
     SampleCPPCodeGenerator(QueryCompilerOptionsPtr const& options,
                            Phases::PhaseFactoryPtr const& phaseFactory,
+                           OperatorHandlerStorePtr operatorHandlerStore,
                            bool sourceSharing)
-        : NautilusQueryCompiler(options, phaseFactory, sourceSharing) {}
+        : NautilusQueryCompiler(options, phaseFactory, operatorHandlerStore, sourceSharing) {}
 
     QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override {
         NES_INFO("Compile Query with Nautilus");
@@ -130,7 +131,11 @@ namespace NES::Optimizer {
 SampleCodeGenerationPhase::SampleCodeGenerationPhase() {
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-    queryCompiler = std::make_shared<QueryCompilation::SampleCPPCodeGenerator>(queryCompilationOptions, phaseFactory, false);
+    auto operatorHandlerStore = OperatorHandlerStore::create();
+    queryCompiler = std::make_shared<QueryCompilation::SampleCPPCodeGenerator>(queryCompilationOptions,
+                                                                               phaseFactory,
+                                                                               operatorHandlerStore,
+                                                                               false);
 }
 
 SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {

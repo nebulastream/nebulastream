@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
+#include "OperatorHandlerStore.hpp"
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
@@ -366,6 +367,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
+                        OperatorHandlerStorePtr,
                         QueryCompilation::QueryCompilerPtr&&,
                         std::weak_ptr<AbstractQueryStatusListener>&&,
                         OpenCLManagerPtr&&,
@@ -399,6 +401,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryManagerPtr queryManager;
     BufferStoragePtr bufferStorage;
     Monitoring::MetricStorePtr metricStore;
+    OperatorHandlerStorePtr operatorHandlerStore;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     AbstractQueryStatusListenerPtr nesWorker;

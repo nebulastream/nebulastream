@@ -21,17 +21,19 @@
 
 namespace NES::Runtime::Execution {
 
-PipelineExecutionContext::PipelineExecutionContext(PipelineId pipelineId,
-                                                   DecomposedQueryId queryId,
-                                                   Runtime::BufferManagerPtr bufferProvider,
-                                                   size_t numberOfWorkerThreads,
-                                                   std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
-                                                   std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-                                                   std::vector<OperatorHandlerPtr> operatorHandlers)
+PipelineExecutionContext::PipelineExecutionContext(
+    PipelineId pipelineId,
+    DecomposedQueryId queryId,
+    Runtime::BufferManagerPtr bufferProvider,
+    size_t numberOfWorkerThreads,
+    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
+    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+    std::vector<OperatorHandlerPtr> operatorHandlers,
+    std::optional<std::function<void(TupleBuffer&, WorkerContext&)>> emitMigrationHandler)
     : pipelineId(pipelineId), queryId(queryId), emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
-      operatorHandlers(std::move(operatorHandlers)), bufferProvider(bufferProvider),
-      numberOfWorkerThreads(numberOfWorkerThreads) {}
+      operatorHandlers(std::move(operatorHandlers)), emitMigrationHandler(std::move(emitMigrationHandler)),
+      bufferProvider(bufferProvider), numberOfWorkerThreads(numberOfWorkerThreads) {}
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
     // call the function handler
@@ -41,6 +43,12 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef 
 void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer) {
     // call the function handler
     emitToQueryManagerFunctionHandler(buffer);
+}
+
+void PipelineExecutionContext::migrateBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
+    if (emitMigrationHandler.has_value() && emitMigrationHandler.value() != nullptr) {
+        emitMigrationHandler.value()(buffer, workerContext);
+    }
 }
 
 std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() { return operatorHandlers; }

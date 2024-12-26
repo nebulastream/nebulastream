@@ -15,6 +15,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -22,6 +23,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -161,6 +163,12 @@ void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipelinePlan,
     if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()) {
         throw QueryCompilationException("Pipelining can only be applied to physical operator. But current operator was: "
                                         + currentOperators->toString());
+    }
+
+    // propagate migration flag from operator to pipeline
+    auto migrationFlag = currentOperators->getProperty(MIGRATION_FLAG);
+    if (migrationFlag.has_value() && std::any_cast<bool>(migrationFlag)) {
+        currentPipeline->markPipelineForMigration();
     }
 
     // Depending on the operator we apply different pipelining strategies
