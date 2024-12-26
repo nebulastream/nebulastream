@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -131,7 +132,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     // metadata buffer
     auto buffer = bufferManager->getBufferBlocking();
     watermarksBuffers.emplace_back(buffer);
-    auto buffersCount = 0;
+    auto buffersCount = 1ULL;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!buffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -142,27 +143,15 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     auto bufferPtr = buffer.getBuffer<uint64_t>();
     auto bufferIdx = 0ULL;
 
-    /** @brief Lambda to write to watermark buffers
-     * captured variables:
-     * buffer - generic metadata buffer, used for checking space left
-     * bufferPtr - pointer to the start of current metadata buffer
-     * bufferIdx - index of size64_t data inside metadata buffer
-     * buffersCount - number of metadata buffers
-     * watermarksBuffers - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to watermark buffers */
     auto writeToBuffer = [&buffer, &bufferPtr, &bufferIdx, this, &buffersCount, &watermarksBuffers](uint64_t dataToWrite) {
-        // check that current metadata buffer has enough space, by sending used space and space needed
-        if (!buffer.hasSpaceLeft(bufferIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // if current buffer does not contain enough space then
-            // get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
-            watermarksBuffers.emplace(watermarksBuffers.begin() + buffersCount++, newBuffer);
-            // update pointer and index
-            bufferPtr = newBuffer.getBuffer<uint64_t>();
-            bufferIdx = 0;
-        }
-        bufferPtr[bufferIdx++] = dataToWrite;
+        StateSerializationUtil::writeToBuffer(bufferManager,
+                                              buffer.getBufferSize(),
+                                              bufferPtr,
+                                              bufferIdx,
+                                              buffersCount,
+                                              watermarksBuffers,
+                                              dataToWrite);
     };
 
     auto buildWatermarksBuffers = watermarkProcessorBuild->serializeWatermarks(bufferManager);
@@ -191,9 +180,9 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
 
 void StreamJoinOperatorHandler::restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers) {
     // get data buffer
-    auto dataBuffersIdx = 0;
+    auto dataBuffersIdx = 0ULL;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0;
+    auto dataIdx = 0ULL;
 
     /** @brief Lambda to read from data buffers
      * captured variables:
@@ -203,13 +192,7 @@ void StreamJoinOperatorHandler::restoreWatermarks(std::vector<Runtime::TupleBuff
      * buffers - vector of buffers
     */
     auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[dataBuffersIdx].hasSpaceLeft(dataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // update metadata pointer and index
-            dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
-            dataIdx = 0;
-        }
-        return dataPtr[dataIdx++];
+        return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
     };
 
     // NOTE: Do not change the order of reads from data buffers(order is documented in function declaration)
@@ -243,7 +226,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata buffer
     auto mainMetadata = bufferManager->getBufferBlocking();
-    auto metadataBuffersCount = 0;
+    auto metadataBuffersCount = 0ULL;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -254,28 +237,16 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
     auto metadataIdx = 1ULL;
 
-    /** @brief Lambda to write to metadata buffers
-     * captured variables:
-     * mainMetadata - generic metadata buffer, used for checking space left
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersCount - number of metadata buffers
-     * buffers - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to metadata buffers */
     auto writeToMetadata =
         [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
-            // check that current metadata buffer has enough space, by sending used space and space needed
-            if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-                // if current buffer does not contain enough space then
-                // get new buffer and insert to vector of buffers
-                auto newBuffer = bufferManager->getBufferBlocking();
-                buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
-                // update pointer and index
-                metadataPtr = newBuffer.getBuffer<uint64_t>();
-                metadataIdx = 0;
-            }
-            metadataPtr[metadataIdx++] = dataToWrite;
+            StateSerializationUtil::writeToBuffer(bufferManager,
+                                                  mainMetadata.getBufferSize(),
+                                                  metadataPtr,
+                                                  metadataIdx,
+                                                  metadataBuffersCount,
+                                                  buffersToTransfer,
+                                                  dataToWrite);
         };
 
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
@@ -311,7 +282,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
     // metadata buffer
     auto dataBuffer = bufferManager->getBufferBlocking();
-    auto dataBuffersCount = 0;
+    auto dataBuffersCount = 0ULL;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -323,28 +294,16 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
     // starting from 1st index to later write number of windows to the 0 place in the buffer
     auto dataInBufferIdx = 1ULL;
 
-    /** @brief Lambda to write to data buffers
-     * captured variables:
-     * dataBuffer - generic metadata buffer, used for checking space left
-     * dataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersCount - number of metadata buffers
-     * buffersToTransfer - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to data buffers */
     auto serializeNextValue =
         [&dataBuffer, &dataInBufferPtr, &dataInBufferIdx, this, &dataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
-            // check that current metadata buffer has enough space, by sending used space and space needed
-            if (!dataBuffer.hasSpaceLeft(dataInBufferIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-                // if current buffer does not contain enough space then
-                // get new buffer and insert to vector of buffers
-                auto newBuffer = bufferManager->getBufferBlocking();
-                buffersToTransfer.emplace(buffersToTransfer.begin() + dataBuffersCount++, newBuffer);
-                // update pointer and index
-                dataInBufferPtr = newBuffer.getBuffer<uint64_t>();
-                dataInBufferIdx = 0;
-            }
-            dataInBufferPtr[dataInBufferIdx++] = dataToWrite;
+            StateSerializationUtil::writeToBuffer(bufferManager,
+                                                  dataBuffer.getBufferSize(),
+                                                  dataInBufferPtr,
+                                                  dataInBufferIdx,
+                                                  dataBuffersCount,
+                                                  buffersToTransfer,
+                                                  dataToWrite);
         };
 
     // counter for number of windows
@@ -387,25 +346,13 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
 void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuffer>& buffers) {
     // get data buffer
-    auto dataBuffersIdx = 0;
+    auto dataBuffersIdx = 0ULL;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0;
+    auto dataIdx = 0ULL;
 
-    /** @brief Lambda to read from data buffers
-     * captured variables:
-     * dataPtr - pointer to the start of current metadata buffer
-     * dataIdx - index of size64_t data inside metadata buffer
-     * dataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
+    /** @brief Lambda to read from data buffers */
     auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[dataBuffersIdx].hasSpaceLeft(dataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // update metadata pointer and index
-            dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
-            dataIdx = 0;
-        }
-        return dataPtr[dataIdx++];
+        return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
     };
 
     // NOTE: Do not change the order of reads from data buffers(order is documented in function declaration)
@@ -441,28 +388,16 @@ void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuff
 void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
 
     // get main metadata buffer
-    auto metadataBuffersIdx = 0;
+    auto metadataBuffersIdx = 0ULL;
     auto metadataPtr = buffers[metadataBuffersIdx].getBuffer<uint64_t>();
-    auto metadataIdx = 0;
+    auto metadataIdx = 0ULL;
 
     // read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
 
-    /** @brief Lambda to read from metadata buffers
-     * captured variables:
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
+    /** @brief Lambda to read from metadata buffers */
     auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // update metadata pointer and index
-            metadataPtr = buffers[++metadataBuffersIdx].getBuffer<uint64_t>();
-            metadataIdx = 0;
-        }
-        return metadataPtr[metadataIdx++];
+        return StateSerializationUtil::readFromBuffer(metadataPtr, metadataIdx, metadataBuffersIdx, buffers);
     };
     // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
     // 1. Retrieve number of slices from metadata buffer
@@ -478,7 +413,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
-        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        auto recreatedSlice = deserializeSlice(std::span<Runtime::TupleBuffer>(spanStart, numberOfBuffers));
 
         // insert recreated slice
         auto indexToInsert = std::find_if(slicesLocked->begin(),
