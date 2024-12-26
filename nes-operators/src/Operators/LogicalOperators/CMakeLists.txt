@@ -28,6 +28,7 @@ add_source_files(nes-operators
         LogicalMeosOperator.cpp
         LogicalTernaryOperator.cpp
         LogicalQuaternaryOperator.cpp
+        LogicalSenaryOperator.cpp
         LogicalIntervalJoinDescriptor.cpp
         LogicalIntervalJoinOperator.cpp
 )

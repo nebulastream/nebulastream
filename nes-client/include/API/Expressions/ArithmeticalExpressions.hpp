@@ -36,6 +36,7 @@ ExpressionNodePtr meosIntersetc(ExpressionNodePtr longitude, ExpressionNodePtr l
 ExpressionNodePtr READ(const ExpressionNodePtr& exp);
 ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
 ExpressionNodePtr meosT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
+ExpressionNodePtr sintersects(const ExpressionNodePtr& one, const ExpressionNodePtr& two, const ExpressionNodePtr& three, const ExpressionNodePtr& four, const ExpressionNodePtr& five, const ExpressionNodePtr& six);
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
@@ -101,6 +102,7 @@ ExpressionNodePtr READ(ExpressionItem exp);
 ExpressionNodePtr LOG10(ExpressionItem exp);
 ExpressionNodePtr readT(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
 ExpressionNodePtr meosT(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
+ExpressionNodePtr sintersects(ExpressionItem one, ExpressionItem two, ExpressionItem three, ExpressionItem four, ExpressionItem five, ExpressionItem six);
 ExpressionNodePtr SIN(ExpressionItem exp);
 ExpressionNodePtr COS(ExpressionItem exp);
 ExpressionNodePtr RADIANS(ExpressionItem exp);

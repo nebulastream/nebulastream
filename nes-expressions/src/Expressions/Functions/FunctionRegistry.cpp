@@ -30,4 +30,10 @@ DataTypePtr TernaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& i
     return inferTernary(inputStamps[0], inputStamps[1], inputStamps[2]);
 }
 
+DataTypePtr SenaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inputStamps) const {
+    NES_INFO("The size is : {}",inputStamps.size());
+    NES_ASSERT(inputStamps.size() == 6, "Senary function should receive six input stamp.");
+    return inferSenary(inputStamps[0], inputStamps[1], inputStamps[2], inputStamps[3], inputStamps[4], inputStamps[5]);
+}
+
 }// namespace NES

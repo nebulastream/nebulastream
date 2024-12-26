@@ -71,6 +71,12 @@ using LogicalTernaryOperatorPtr = std::shared_ptr<LogicalTernaryOperator>;
 class LogicalQuaternaryOperator;
 using LogicalQuaternaryOperatorPtr = std::shared_ptr<LogicalQuaternaryOperator>;
 
+class SenaryOperator;
+using SenaryOperatorPtr = std::shared_ptr<SenaryOperator>;
+
+class LogicalSenaryOperator;
+using LogicalSenaryOperatorPtr = std::shared_ptr<LogicalSenaryOperator>;
+
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 

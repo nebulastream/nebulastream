@@ -67,6 +67,25 @@ class TernaryExpressionWrapper {
     std::shared_ptr<ExpressionType> expression;
 };
 
+template<typename ExpressionType>
+class SenaryExpressionWrapper {
+  public:
+    SenaryExpressionWrapper() {
+        auto oneExpression = std::make_shared<ReadFieldExpression>("one");
+        auto twoExpression = std::make_shared<ReadFieldExpression>("two");
+        auto threeExpression = std::make_shared<ReadFieldExpression>("three");
+        auto fourExpression = std::make_shared<ReadFieldExpression>("four");
+        auto fiveExpression = std::make_shared<ReadFieldExpression>("five");
+        auto sixExpression = std::make_shared<ReadFieldExpression>("six");
+        expression = std::make_shared<ExpressionType>(oneExpression, twoExpression, threeExpression, fourExpression, fiveExpression, sixExpression);
+    }
+    Nautilus::Value<> eval(Nautilus::Value<> one, Nautilus::Value<> two, Nautilus::Value<> three, Nautilus::Value<> four, Nautilus::Value<> five, Nautilus::Value<> six) {
+        auto record = Record({{"one", one}, {"two", two}, {"three", three}, {"four", four}, {"five", five}, {"six", six}});
+        return expression->execute(record);
+    }
+    std::shared_ptr<ExpressionType> expression;
+};
+
 }// namespace NES::Runtime::Execution::Expressions
 
 #endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_

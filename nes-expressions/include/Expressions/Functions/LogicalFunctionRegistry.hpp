@@ -61,5 +61,16 @@ class TernaryLogicalFunction : public LogicalFunction {
     inferTernary(const DataTypePtr& left, const DataTypePtr& midle, const DataTypePtr& right) const = 0;
 };
 
+class SenaryLogicalFunction : public LogicalFunction {
+  public:
+    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
+    [[nodiscard]] virtual DataTypePtr inferSenary(const DataTypePtr& one,
+                                                  const DataTypePtr& two,
+                                                  const DataTypePtr& three,
+                                                  const DataTypePtr& four,
+                                                  const DataTypePtr& five,
+                                                  const DataTypePtr& six) const = 0;
+};
+
 }// namespace NES
 #endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_

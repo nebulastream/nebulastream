@@ -22,6 +22,7 @@ add_source_files(nes-expressions
         CaseExpressionNode.cpp
         ExpressionSerializationUtil.cpp
         TernaryExpressionNode.cpp
+        SenaryExpressionNode.cpp
 )
 add_subdirectory(LogicalExpressions)
 add_subdirectory(ArithmeticalExpressions)

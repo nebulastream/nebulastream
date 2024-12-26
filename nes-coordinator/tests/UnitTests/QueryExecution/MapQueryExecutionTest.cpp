@@ -131,6 +131,13 @@ class MapQueryExecutionTest
                                std::vector<string>{"left$id", "middle$id", "right$id", "meosT"},
                                1);
     }
+    static auto createsintersectsTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapMeosSenaryFunction",
+                               std::vector<string>{"test$one", "test$two", "test$three", "test$four", "test$five", "test$six", "test$sintersects"},
+                               std::vector<string>{"one", "two", "three", "four", "five", "six", "sintersects"},
+                               1);
+    }
 };
 
 static auto getExpression(const std::string expression) {// Includes the names for the query
@@ -162,7 +169,9 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return readT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "meosT") {
         return meosT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
-    } else {
+    } else if (expression == "sintersects") {
+        return sintersects(Attribute("one"), Attribute("two"), Attribute("three"), Attribute("four"), Attribute("five"), Attribute("six"));
+    }else {
         return EXP(Attribute("id"));
     }
 }
@@ -313,6 +322,7 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createReadTestData(),
                                           MapQueryExecutionTest::createRead3TestData(),
                                           MapQueryExecutionTest::createReadmeosTestData(),
+                                          MapQueryExecutionTest::createsintersectsTestData(),
                                           MapQueryExecutionTest::createTrigTestData()),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
                             std::string name = std::get<1>(info.param);

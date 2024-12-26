@@ -45,4 +45,5 @@
          ReadExpression.cpp
          MeosExpression.cpp
          ReadTernaryExpression.cpp
+         SIntersetcsExpression.cpp
          )

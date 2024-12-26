@@ -24,4 +24,5 @@ add_source_files(nes-expressions
         ReadFunction.cpp
         ReadTernaryFunction.cpp
         ReadMeosTernaryFunction.cpp
+        MeosSenaryFunction.cpp
         )

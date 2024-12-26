@@ -91,6 +91,10 @@ ExpressionNodePtr meosT(const ExpressionNodePtr& left, const ExpressionNodePtr& 
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "meosT", {left, middle, right});
 } 
 
+ExpressionNodePtr sintersects(const ExpressionNodePtr& one, const ExpressionNodePtr& two, const ExpressionNodePtr& three, const ExpressionNodePtr& four, const ExpressionNodePtr& five, const ExpressionNodePtr& six) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "sintersects", {one, two, three, four, five, six});
+}
+
 ExpressionNodePtr SIN(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "sin", {exp});
 }
@@ -238,6 +242,10 @@ ExpressionNodePtr readT(ExpressionItem left, ExpressionItem middle, ExpressionIt
 
 ExpressionNodePtr meosT(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
     return meosT(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+}
+
+ExpressionNodePtr sintersects(ExpressionItem one, ExpressionItem two, ExpressionItem three, ExpressionItem four, ExpressionItem five, ExpressionItem six) {
+    return sintersects(one.getExpressionNode(), two.getExpressionNode(), three.getExpressionNode(), four.getExpressionNode(), five.getExpressionNode(), six.getExpressionNode());
 }
 
 ExpressionNodePtr SIN(ExpressionItem exp) { return SIN(exp.getExpressionNode()); }

@@ -82,7 +82,7 @@ TEST_F(ReadSNCB, testReadCSV) {
     try {
         // Initialize MEOS instance
         MEOS::Meos* meos = new MEOS::Meos("UTC");
-
+        auto workerConfiguration1 = WorkerConfiguration::create();
 
         auto gpsSchema = Schema::create()
                         ->addField("timestamp", BasicType::UINT64)
@@ -110,40 +110,29 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
 
-        auto query =
-            Query::from("sncb")
-                .filter(
-                    // Check if train is in a specific geographic area
-                    meosT(Attribute("longitude", BasicType::FLOAT64),
-                        Attribute("latitude", BasicType::FLOAT64),
-                        Attribute("timestamp", BasicType::UINT64)) == 1
-                    && 
-                    // Only process records with valid speed and pressure
-                    Attribute("speed") > 0 && Attribute("PCFA_mbar") > 0
-                    &&
-                    //Show records with the highest noise level
-                    Attribute("speed") * 0.5 + Attribute("PCFA_mbar") * 0.5 > 2
-                )
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
-                .apply(Max(Attribute("PCFA_mbar")));
+
+       auto ThresholExpression = sintersects(Attribute("longitude", BasicType::FLOAT64),
+                                             Attribute("latitude", BasicType::FLOAT64),
+                                             Attribute("timestamp", BasicType::UINT64),
+                                             3.5, 50.5, 1722510000) == 0;
+
+        auto query = Query::from("sncb")
+            .filter(Attribute("Vbat") > 0.0)  // Simple filter first
+            .window(ThresholdWindow::of(ThresholExpression))
+            .apply(Sum(Attribute("Vbat")))
+            .project(Attribute("timestamp"), Attribute("Vbat"));
+
 
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                               .addLogicalSource("sncb", gpsSchema)
-                               .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration);
+                            .addLogicalSource("sncb", gpsSchema)
+                            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration1);
 
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "1722520000, 1722520500, 5.043\n"
-                                                        "1722520500, 1722521000, 5.051\n"
-                                                        "1722521000, 1722521500, 5.047\n"
-                                                        "1722521500, 1722522000, 4.991\n"
-                                                        "1722522000, 1722522500, 5.388\n"
-                                                        "1722522500, 1722523000, 5.152\n"
-                                                        "1722523000, 1722523500, 5.021\n"
-                                                        "1722523500, 1722524000, 5.017\n";
-
+        const auto expectedOutput =  "1722510000, 1722540000, 5.388\n";
+                            
                             
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();

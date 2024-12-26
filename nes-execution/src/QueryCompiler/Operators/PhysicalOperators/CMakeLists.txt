@@ -31,6 +31,7 @@ add_source_files(nes-execution
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
         PhysicalMeosOperator.cpp
+        PhysicalSenaryOperator.cpp
 )
 
 add_subdirectory(Windowing)
