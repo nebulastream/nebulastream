@@ -33,6 +33,6 @@ class MeosSenaryFunction : public SenaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<MeosSenaryFunction> MeosSenaryFunction("sintersects");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<MeosSenaryFunction> MeosSenaryFunction("seintersects");
 
 }// namespace NES

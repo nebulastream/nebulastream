@@ -133,7 +133,7 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         // auto subQueryB = Query::from("press2").filter(lessExpression); // B in query
 
-        auto subQueryB = Query::from("gps").filter(meosT(Attribute("longitude", BasicType::FLOAT64),
+        auto subQueryB = Query::from("gps").filter(teintersects(Attribute("longitude", BasicType::FLOAT64),
                                                         Attribute("latitude", BasicType::FLOAT64),
                                                         Attribute("timestamp", BasicType::UINT64)) > 0
                                                         && Attribute("speed") > 0); // B in query

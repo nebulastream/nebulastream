@@ -88,7 +88,7 @@ TEST_F(MeosDeploy, testIntersectionThresold) {
         csvSourceType->setNumberOfBuffersToProduce(10);       // Produce 10 buffers
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
-        auto ThresholExpression = meosT(Attribute("longitude", BasicType::FLOAT64),
+        auto ThresholExpression = teintersects(Attribute("longitude", BasicType::FLOAT64),
                                  Attribute("latitude", BasicType::FLOAT64),
                                  Attribute("timestamp", BasicType::UINT64)) == 1;
         auto query =

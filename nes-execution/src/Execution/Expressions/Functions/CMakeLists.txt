@@ -46,4 +46,5 @@
          MeosExpression.cpp
          ReadTernaryExpression.cpp
          SIntersetcsExpression.cpp
+         TedwithinExpression.cpp
          )

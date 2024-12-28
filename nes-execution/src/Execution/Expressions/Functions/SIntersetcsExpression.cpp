@@ -55,21 +55,18 @@ std::string convertSecondsToTimestampMEOS(long long seconds) {
 * @param t Time of the point
  * @return true if the point is within the STBox at the given time, false otherwise
  */
-double sintersects(double lon, double lat, int t, int lon2, int lat2, int t2) {
+double seintersects(double lon, double lat, int t, int lon2, int lat2, int t2) {
     // Implement your logic here
-    NES_INFO("sintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
-    NES_INFO("sintersects called with lon2: {}, lat2: {}, t2: {}", lon2, lat2, t2);
-
+    NES_INFO("seintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
+    NES_INFO("seintersects called with lon2: {}, lat2: {}, t2: {}", lon2, lat2, t2);
     meos_initialize("UTC", NULL);
     std::string t_out = convertSecondsToTimestampMEOS(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
 
     std::string t_out2 = convertSecondsToTimestampMEOS(t2);
-    std::string str_pointbuffer2 = std::format("SRID=4326;POINT({} {})@{}", lon2, lat2, t_out2);
+    std::string str_pointbuffer2 = std::format("SRID=4326;POINT({} {})@{}", lon2, lat2, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
-    
-     NES_INFO("Point buffer created {}", str_pointbuffer2);
     TInstant *inst2 = (TInstant *)tgeompoint_in(str_pointbuffer2.c_str());
 
     if (eintersects_tpoint_tpoint((const Temporal *)inst, (const Temporal *)inst2)){
@@ -94,7 +91,7 @@ Value<> SIntersetcsExpression::execute(NES::Nautilus::Record& record) const {
     //NES_INFO("Executing SIntersetcsExpression types: {}, {}, {}, {}, {}, {}", oneValue->getType(), twoValue->getType(), threeValue->getType(), fourValue->getType(), fiveValue->getType(), sixValue->getType());
 
      if (oneValue->isType<Double>()) {
-        return Nautilus::FunctionCall<>("sintersects", sintersects, oneValue.as<Double>(), twoValue.as<Double>(), threeValue.as<UInt64>(), fourValue.as<Double>(), fiveValue.as<Double>(), sixValue.as<UInt64>());
+        return Nautilus::FunctionCall<>("seintersects", seintersects, oneValue.as<Double>(), twoValue.as<Double>(), threeValue.as<UInt64>(), fourValue.as<Double>(), fiveValue.as<Double>(), sixValue.as<UInt64>());
 
     } else {
         // Throw an exception if no type is applicable
@@ -102,6 +99,6 @@ Value<> SIntersetcsExpression::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on numeric input arguments that are Double, Double and Unsigned int.");
     }
 }
-static ExecutableFunctionRegistry::Add<SenaryFunctionProvider<SIntersetcsExpression>> SIntersetcsExpression("sintersects");
+static ExecutableFunctionRegistry::Add<SenaryFunctionProvider<SIntersetcsExpression>> SIntersetcsExpression("seintersects");
 
 }// namespace NES::Runtime::Execution::Expressions

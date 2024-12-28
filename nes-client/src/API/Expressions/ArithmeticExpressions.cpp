@@ -87,12 +87,16 @@ ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& 
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "readT", {left, middle, right});
 }
 
-ExpressionNodePtr meosT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
-    return FunctionExpression::create(DataTypeFactory::createUndefined(), "meosT", {left, middle, right});
+ExpressionNodePtr teintersects(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "teintersects", {left, middle, right});
 } 
 
-ExpressionNodePtr sintersects(const ExpressionNodePtr& one, const ExpressionNodePtr& two, const ExpressionNodePtr& three, const ExpressionNodePtr& four, const ExpressionNodePtr& five, const ExpressionNodePtr& six) {
-    return FunctionExpression::create(DataTypeFactory::createUndefined(), "sintersects", {one, two, three, four, five, six});
+ExpressionNodePtr tedwithin(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "tedwithin", {left, middle, right});
+}
+
+ExpressionNodePtr seintersects(const ExpressionNodePtr& one, const ExpressionNodePtr& two, const ExpressionNodePtr& three, const ExpressionNodePtr& four, const ExpressionNodePtr& five, const ExpressionNodePtr& six) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "seintersects", {one, two, three, four, five, six});
 }
 
 ExpressionNodePtr SIN(const ExpressionNodePtr& exp) {
@@ -240,12 +244,16 @@ ExpressionNodePtr readT(ExpressionItem left, ExpressionItem middle, ExpressionIt
     return readT(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
 }
 
-ExpressionNodePtr meosT(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
-    return meosT(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+ExpressionNodePtr teintersects(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
+    return teintersects(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
 }
 
-ExpressionNodePtr sintersects(ExpressionItem one, ExpressionItem two, ExpressionItem three, ExpressionItem four, ExpressionItem five, ExpressionItem six) {
-    return sintersects(one.getExpressionNode(), two.getExpressionNode(), three.getExpressionNode(), four.getExpressionNode(), five.getExpressionNode(), six.getExpressionNode());
+ExpressionNodePtr tedwithin(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
+    return tedwithin(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+}
+
+ExpressionNodePtr seintersects(ExpressionItem one, ExpressionItem two, ExpressionItem three, ExpressionItem four, ExpressionItem five, ExpressionItem six) {
+    return seintersects(one.getExpressionNode(), two.getExpressionNode(), three.getExpressionNode(), four.getExpressionNode(), five.getExpressionNode(), six.getExpressionNode());
 }
 
 ExpressionNodePtr SIN(ExpressionItem exp) { return SIN(exp.getExpressionNode()); }

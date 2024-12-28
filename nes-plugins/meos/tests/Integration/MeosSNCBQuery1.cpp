@@ -114,7 +114,7 @@ TEST_F(ReadSNCB, testReadCSV) {
             Query::from("sncb")
                 .filter(
                     // Check if train is in maintenance area
-                    meosT(Attribute("longitude", BasicType::FLOAT64),
+                    teintersects(Attribute("longitude", BasicType::FLOAT64),
                         Attribute("latitude", BasicType::FLOAT64),
                         Attribute("timestamp", BasicType::UINT64)) == 1
                     && 

@@ -21,18 +21,18 @@ namespace NES {
 /*
 * Defines the read function and registers it to the FunctionRegistry.
 */
-class ReadMeosTernaryFunction : public TernaryLogicalFunction {
+class MeosTernaryFunctionTdwithin : public TernaryLogicalFunction {
   public:
     [[nodiscard]] DataTypePtr
     inferTernary(const DataTypePtr& longitude, const DataTypePtr& latitude, const DataTypePtr& timestamp) const override {
         if (!longitude->isNumeric() || !latitude->isNumeric() || !timestamp->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("ReadMeosT can only be evaluated on numeric values.");
+            NES_THROW_RUNTIME_ERROR("tedwithin can only be evaluated on numeric values.");
         }
         // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
         return DataTypeFactory::createDouble();
     }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<ReadMeosTernaryFunction> readMeosTernaryFunction("teintersects");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<MeosTernaryFunctionTdwithin> MeosTernaryFunctionTdwithin("tedwithin");
 
 }// namespace NES

@@ -83,6 +83,11 @@ TEST_F(ReadSNCB, testReadCSV) {
         // Initialize MEOS instance
         MEOS::Meos* meos = new MEOS::Meos("UTC");
         auto workerConfiguration1 = WorkerConfiguration::create();
+        auto workerConfiguration2 = WorkerConfiguration::create();
+
+        const double slackMeters = 5.0;
+        const double slackDegrees = slackMeters / 111320.0; // 1 degree ≈ 111.32 km
+
 
         auto gpsSchema = Schema::create()
                         ->addField("timestamp", BasicType::UINT64)
@@ -110,42 +115,71 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
 
+        auto highriskAreaSchema = Schema::create()
+            ->addField("timestamp", BasicType::UINT64)
+            ->addField("latitude", BasicType::FLOAT64)
+            ->addField("longitude", BasicType::FLOAT64);
 
-       auto ThresholExpression = sintersects(Attribute("longitude", BasicType::FLOAT64),
-                                             Attribute("latitude", BasicType::FLOAT64),
-                                             Attribute("timestamp", BasicType::UINT64),
-                                             3.5, 50.5, 1722510000) == 0;
+                    
+        auto csvSourceType2 = CSVSourceType::create("highriskArea", "arear_time");
+            csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "high_risk_areas_ordered_unix.csv");
+            csvSourceType2->setNumberOfTuplesToProducePerBuffer(40); // Read 40 tuples per buffer
+            csvSourceType2->setNumberOfBuffersToProduce(20);        // Produce 20 buffers
+            csvSourceType2->setSkipHeader(true);                    // Skip the header
 
+    
+
+        auto query1 = Query::from("highriskArea")
+        .map(Attribute("highriskArea$timestamp") = Attribute("timestamp"))
+        .filter(tedwithin(Attribute("longitude", BasicType::FLOAT64),
+                        Attribute("latitude", BasicType::FLOAT64),
+                        Attribute("timestamp", BasicType::UINT64)) == 1
+                        && Attribute("timestamp", BasicType::UINT64) > 0);
+
+
+        
         auto query = Query::from("sncb")
-            .filter(Attribute("Vbat") > 0.0)  // Simple filter first
-            .window(ThresholdWindow::of(ThresholExpression))
-            .apply(Sum(Attribute("Vbat")))
-            .project(Attribute("timestamp"), Attribute("Vbat"));
-
-
+                    .joinWith(query1)
+                    .where(Attribute("timestamp") == Attribute("highriskArea$timestamp"))
+                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(30), Seconds(10)))
+                    .filter(
+                        (ABS(Attribute("sncb$latitude") - Attribute("highriskArea$latitude")) <= slackDegrees) &&
+                        (ABS(Attribute("sncb$longitude") - Attribute("highriskArea$longitude")) <= slackDegrees)
+                    )
+                    .project(Attribute("timestamp"),
+                            Attribute("id"),
+                            Attribute("speed"),
+                            Attribute("Vbat"));
+            
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                            .addLogicalSource("sncb", gpsSchema)
-                            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration1);
+            .addLogicalSource("sncb", gpsSchema)
+            .addLogicalSource("highriskArea", highriskAreaSchema)
+            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration1)
+            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType2, workerConfiguration2);
+
 
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "1722510000, 1722540000, 5.388\n";
-                            
-                            
+        const auto expectedOutput =  "1722520348, 3, 1.4671, 29.4\n"
+                                                        "1722520348, 3, 1.4671, 29.4\n"
+                                                        "1722520348, 3, 1.4671, 29.4\n";
+
+                          
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
 
-
+        
         for (const auto& buffer : actualBuffers) {
             size_t numTuples = buffer.getNumberOfTuples();
             for (size_t i = 0; i < numTuples; ++i) {
                 auto tuple = buffer[i];
-                NES_INFO("The result is : {}, {}, {}",
-                    tuple[0].read<uint64_t>(), // window_start
-                    tuple[1].read<uint64_t>(), // window_end
-                    tuple[2].read<double>()); // speed            
+                NES_INFO("The result is : {}, {}, {}, {}",
+                    tuple[0].read<uint64_t>(), // timestamp
+                    tuple[1].read<uint64_t>(), // id
+                    tuple[2].read<double>(), // speed
+                    tuple[3].read<double>()); // battery            
             }
         }
 

@@ -127,15 +127,22 @@ class MapQueryExecutionTest
     static auto createReadmeosTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapReadMeosTernaryFunction",
-                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$meosT"},
-                               std::vector<string>{"left$id", "middle$id", "right$id", "meosT"},
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$teintersects"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "teintersects"},
                                1);
     }
-    static auto createsintersectsTestData() {
+    static auto createTdwithTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadMeosTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$tedwithin"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "tedwithin"},
+                               1);
+    }
+    static auto createseintersectsTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapMeosSenaryFunction",
-                               std::vector<string>{"test$one", "test$two", "test$three", "test$four", "test$five", "test$six", "test$sintersects"},
-                               std::vector<string>{"one", "two", "three", "four", "five", "six", "sintersects"},
+                               std::vector<string>{"test$one", "test$two", "test$three", "test$four", "test$five", "test$six", "test$seintersects"},
+                               std::vector<string>{"one", "two", "three", "four", "five", "six", "seintersects"},
                                1);
     }
 };
@@ -167,11 +174,13 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return READ(Attribute("left$id"));
     } else if (expression == "readT") {
         return readT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
-    } else if (expression == "meosT") {
-        return meosT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
-    } else if (expression == "sintersects") {
-        return sintersects(Attribute("one"), Attribute("two"), Attribute("three"), Attribute("four"), Attribute("five"), Attribute("six"));
-    }else {
+    } else if (expression == "teintersects") {
+        return teintersects(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+    } else if (expression == "tedwithin") {
+         return tedwithin(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+    } else if (expression == "seintersects") {
+        return seintersects(Attribute("one"), Attribute("two"), Attribute("three"), Attribute("four"), Attribute("five"), Attribute("six"));
+    } else {
         return EXP(Attribute("id"));
     }
 }
@@ -322,7 +331,8 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createReadTestData(),
                                           MapQueryExecutionTest::createRead3TestData(),
                                           MapQueryExecutionTest::createReadmeosTestData(),
-                                          MapQueryExecutionTest::createsintersectsTestData(),
+                                          MapQueryExecutionTest::createTdwithTestData(),
+                                          MapQueryExecutionTest::createseintersectsTestData(),
                                           MapQueryExecutionTest::createTrigTestData()),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
                             std::string name = std::get<1>(info.param);

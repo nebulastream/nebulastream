@@ -181,7 +181,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         size_t numTuples = buffer.getNumberOfTuples();
         for (size_t i = 0; i < numTuples; ++i) {
             auto tuple = buffer[i];
-            NES_INFO("The result is : {}, {}, {}, {}",
+            NES_INFO("The result is : {}, {}, {},{}",
                 tuple[0].read<uint64_t>(),  // timestamp is UINT64
                 tuple[1].read<uint64_t>(),  // device_id is UINT64
                 tuple[2].read<double>(),    // gps_speed is FLOAT64

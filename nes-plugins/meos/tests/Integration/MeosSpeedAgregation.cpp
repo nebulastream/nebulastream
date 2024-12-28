@@ -87,7 +87,7 @@ TEST_F(MeosDeploy, testCSVIntersection) {
 
         auto query =
             Query::from("ais")
-                .filter(meosT(Attribute("longitude", BasicType::FLOAT64),
+                .filter(teintersects(Attribute("longitude", BasicType::FLOAT64),
                                  Attribute("latitude", BasicType::FLOAT64),
                                  Attribute("timestamp", BasicType::UINT64)) > 0
                                 && Attribute("sog") > 0)
