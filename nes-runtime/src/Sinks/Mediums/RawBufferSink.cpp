@@ -85,11 +85,13 @@ void RawBufferSink::shutdown() {
     // rename file after dumping completed
     auto dotPosition = filePath.find_last_of('.');
     auto completedPath = filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
-    if (std::rename(filePath.c_str(), completedPath.c_str()) != 0) {
+    outputFile.close();
+
+    if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
+        NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
+    } else {
         NES_ERROR("Can't rename file after dumping");
     }
-
-    outputFile.close();
 }
 
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
@@ -106,7 +108,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
         return false;
     }
 
-    NES_DEBUG("Writing tuples to file sink; filePath={}", filePath);
+    NES_DEBUG("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
     // 1. write buffer size
     auto size = inputBuffer.getBufferSize();
     outputFile.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));

@@ -55,6 +55,7 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
+    NES_DEBUG("File exists. Start of recreation from file");
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
 
     if (!fileStream.is_open()) {
@@ -66,8 +67,11 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     auto metadataBuffers = readBuffers(fileStream, numberOfMetadataBuffers);
     auto metadataPtr = metadataBuffers[0].getBuffer<uint64_t>();
     uint64_t numberOfWatermarkBuffers = metadataPtr[0];
+    NES_DEBUG("Number of read watermark buffers: {}", numberOfWatermarkBuffers);
     uint64_t numberOfStateBuffers = metadataPtr[1];
+    NES_DEBUG("Number of read state buffers: {}", numberOfStateBuffers);
     uint64_t numberOfWindowInfoBuffers = metadataPtr[2];
+    NES_DEBUG("Number of read window info buffers: {}", numberOfWindowInfoBuffers);
 
     // 2. read watermarks buffers
     auto recreatedWatermarkBuffers = readBuffers(fileStream, numberOfWatermarkBuffers);
@@ -86,7 +90,11 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     restoreWindowInfo(recreatedWindowInfoBuffers);
     // reset recreation flag and delete file
     shouldBeRecreated = false;
-    std::remove(recreationFilePath->c_str());
+    if (std::remove(recreationFilePath->c_str()) == 0) {
+        NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
+    } else {
+        NES_WARNING("File {} was not deleted after recreation", recreationFilePath->c_str());
+    }
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHandlerForMigration() {
@@ -94,22 +102,24 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     auto migrationTimestamp =
         std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
 
+    // add sizes to metadata
+    auto metadata = bufferManager->getBufferBlocking();
+    auto metadataPtr = metadata.getBuffer<uint64_t>();
+    metadata.setSequenceNumber(++lastMigratedSeqNumber);
+
     // get watermarks, state and windows info to migrate
     auto watermarkBuffers = getWatermarksToMigrate();
     auto stateBuffers = getStateToMigrate(migrationTimestamp, UINT64_MAX);
     auto windowInfoBuffers = getWindowInfoToMigrate();
 
-    // add sizes to metadata
-    auto metadata = bufferManager->getBufferBlocking();
-    auto metadataPtr = metadata.getBuffer<uint64_t>();
-    metadata.setSequenceNumber(lastMigratedSeqNumber++);
-
     metadataPtr[0] = watermarkBuffers.size();
+    NES_DEBUG("Number of serialized watermark buffers: {}", watermarkBuffers.size());
     metadataPtr[1] = stateBuffers.size();
+    NES_DEBUG("Number of serialized state buffers: {}", stateBuffers.size());
     metadataPtr[2] = windowInfoBuffers.size();
+    NES_DEBUG("Number of serialized window info buffers: {}", windowInfoBuffers.size());
 
     std::vector<TupleBuffer> mergedBuffers = {metadata};
-    mergedBuffers.reserve(watermarkBuffers.size() + stateBuffers.size() + windowInfoBuffers.size());
 
     mergedBuffers.insert(mergedBuffers.end(),
                          std::make_move_iterator(watermarkBuffers.begin()),
@@ -122,7 +132,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     mergedBuffers.insert(mergedBuffers.end(),
                          std::make_move_iterator(windowInfoBuffers.begin()),
                          std::make_move_iterator(windowInfoBuffers.end()));
-
+    NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
     return mergedBuffers;
 }
 
@@ -132,7 +142,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     // metadata buffer
     auto buffer = bufferManager->getBufferBlocking();
     watermarksBuffers.emplace_back(buffer);
-    auto buffersCount = 1ULL;
+    uint64_t buffersCount = 1;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!buffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -141,7 +151,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
 
     // metadata pointer
     auto bufferPtr = buffer.getBuffer<uint64_t>();
-    auto bufferIdx = 0ULL;
+    uint64_t bufferIdx = 0;
 
     /** @brief Lambda to write to watermark buffers */
     auto writeToBuffer = [&buffer, &bufferPtr, &bufferIdx, this, &buffersCount, &watermarksBuffers](uint64_t dataToWrite) {
@@ -155,12 +165,14 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     };
 
     auto buildWatermarksBuffers = watermarkProcessorBuild->serializeWatermarks(bufferManager);
+    NES_DEBUG("build buffers size {}", buildWatermarksBuffers.size());
 
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
     // 1. Insert number of build origins to metadata buffer
     writeToBuffer(buildWatermarksBuffers.size());
 
     auto probeWatermarks = watermarkProcessorProbe->serializeWatermarks(bufferManager);
+    NES_DEBUG("probe buffers size {}", probeWatermarks.size());
 
     // 3. Insert number of probe origins to metadata buffer
     writeToBuffer(probeWatermarks.size());
@@ -180,9 +192,9 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
 
 void StreamJoinOperatorHandler::restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers) {
     // get data buffer
-    auto dataBuffersIdx = 0ULL;
+    uint64_t dataBuffersIdx = 0;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0ULL;
+    uint64_t dataIdx = 0;
 
     /** @brief Lambda to read from data buffers
      * captured variables:
@@ -226,7 +238,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata buffer
     auto mainMetadata = bufferManager->getBufferBlocking();
-    auto metadataBuffersCount = 0ULL;
+    uint64_t metadataBuffersCount = 0;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -235,7 +247,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata pointer
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
-    auto metadataIdx = 1ULL;
+    uint64_t metadataIdx = 1;
 
     /** @brief Lambda to write to metadata buffers */
     auto writeToMetadata =
@@ -282,7 +294,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
     // metadata buffer
     auto dataBuffer = bufferManager->getBufferBlocking();
-    auto dataBuffersCount = 0ULL;
+    uint64_t dataBuffersCount = 0;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -292,7 +304,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
     // get buffer data pointer
     auto dataInBufferPtr = dataBuffer.getBuffer<uint64_t>();
     // starting from 1st index to later write number of windows to the 0 place in the buffer
-    auto dataInBufferIdx = 1ULL;
+    uint64_t dataInBufferIdx = 1;
 
     /** @brief Lambda to write to data buffers */
     auto serializeNextValue =
@@ -346,9 +358,9 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
 void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuffer>& buffers) {
     // get data buffer
-    auto dataBuffersIdx = 0ULL;
+    uint64_t dataBuffersIdx = 0;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0ULL;
+    uint64_t dataIdx = 0;
 
     /** @brief Lambda to read from data buffers */
     auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
@@ -388,9 +400,9 @@ void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuff
 void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
 
     // get main metadata buffer
-    auto metadataBuffersIdx = 0ULL;
+    uint64_t metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx].getBuffer<uint64_t>();
-    auto metadataIdx = 0ULL;
+    uint64_t metadataIdx = 0;
 
     // read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];

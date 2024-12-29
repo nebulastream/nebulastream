@@ -221,7 +221,11 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                                                                                Windowing::TimeUnit::Milliseconds()));
         nljOperatorHandler->setBufferManager(bm);
         recreatedOperatorHandler->setBufferManager(bm);
+    }
 
+    /* Will be called after a test is executed. */
+    void TearDown() override {
+        BaseUnitTest::TearDown();
         std::remove(stateFilePath.c_str());
         std::remove(windowInfoFilePath.c_str());
         std::remove(recreationFilePath.c_str());
@@ -608,8 +612,8 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
             std::span<const Runtime::TupleBuffer>(expectedWatermarks.data() + 1, expectedBuildBuffersSize),
             std::span<const Runtime::TupleBuffer>(recreatedWatermarks.data() + 1, recreatedBuildBuffersSize));
 
-        auto expectedProbeBuffersSize = expectedDataPtr[0];
-        auto recreatedProbeBuffersSize = recreatedDataPtr[0];
+        auto expectedProbeBuffersSize = expectedDataPtr[1];
+        auto recreatedProbeBuffersSize = recreatedDataPtr[1];
         ASSERT_EQ(expectedProbeBuffersSize, recreatedProbeBuffersSize);
 
         compareExpectedOperatorHandlerAndRecreatedWatermarkBuffers(
@@ -690,7 +694,7 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         for (uint64_t pos = 0; pos < numberOfTuples; ++pos) {
             auto record = *(recreatedPagedVector.at(pos));
             auto expectedRecord = *expectedPagedVector.at(pos);
-            NES_DEBUG("readRecord {} record{}", record.toString(), expectedRecord.toString());
+            // NES_DEBUG("readRecord {} record{}", record.toString(), expectedRecord.toString());
 
             for (auto& field : schema->fields) {
                 EXPECT_EQ(record.read(field->getName()), expectedRecord.read(field->getName()));
@@ -836,9 +840,10 @@ TEST_F(NLJSliceSerializationTest, nljWindowsSerialization) {
 /**
  * Test operator handler recreation from the file
  */
-TEST_F(NLJSliceSerializationTest, nljSeparateSerializationFunctionsTests) {
+TEST_F(NLJSliceSerializationTest, nljSeparateSerializationFunctionsTest) {
     const auto numberOfRecordsLeft = 10000;
     const auto numberOfRecordsRight = 10000;
+    recreationFilePath = "nljSeparateSerializationFunctionsTest-" + recreationFilePath;
 
     // 1. Generate and insert records to the operator handler
     auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
@@ -874,6 +879,7 @@ TEST_F(NLJSliceSerializationTest, nljSeparateSerializationFunctionsTests) {
 TEST_F(NLJSliceSerializationTest, nljSerializeOperatorHandlerForMigrationFunctionTest) {
     const auto numberOfRecordsLeft = 10000;
     const auto numberOfRecordsRight = 10000;
+    recreationFilePath = "nljSerializeOperatorHandlerForMigrationFunctionTest-" + recreationFilePath;
 
     // 1. Generate and insert records to the operator handler
     auto maxTs = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
@@ -903,6 +909,7 @@ TEST_F(NLJSliceSerializationTest, nljSerializeOperatorHandlerForMigrationFunctio
 TEST_F(NLJSliceSerializationTest, nljTriggeredSerializeOperatorHandlerForMigrationFunctionTest) {
     const auto numberOfRecordsLeft = 10000;
     const auto numberOfRecordsRight = 10000;
+    recreationFilePath = "nljTriggeredSerializeOperatorHandlerForMigrationFunctionTest-" + recreationFilePath;
 
     auto pipelineCtx = MockedPipelineExecutionContext({nljOperatorHandler});
     triggerWindows(&pipelineCtx);

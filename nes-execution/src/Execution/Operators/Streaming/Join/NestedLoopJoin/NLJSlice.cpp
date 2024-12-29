@@ -106,7 +106,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
 
     auto mainMetadata = bufferManager->getBufferBlocking();
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
-    auto metadataBuffersCount = 1ULL;
+    uint64_t metadataBuffersCount = 1;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -114,7 +114,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
             "Buffer size has to be at least greater or equal to uint64_t in size for successful state migration.");
     }
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
-    auto metadataIdx = 1ULL;
+    uint64_t metadataIdx = 1;
 
     /** @brief Lambda to write to metadata buffers */
     auto writeToMetadata = [&mainMetadata, &metadataPtr, &metadataIdx, &bufferManager, &metadataBuffersCount, &buffersToTransfer](
@@ -172,9 +172,9 @@ StreamSlicePtr NLJSlice::deserialize(BufferManagerPtr& bufferManager,
     auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, 0, bufferManager, leftSchema, leftPageSize, rightSchema, rightPageSize);
 
     // get main metadata buffer
-    auto metadataBuffersIdx = 0ULL;
+    uint64_t metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
-    auto metadataIdx = 0ULL;
+    uint64_t metadataIdx = 0;
 
     // read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];

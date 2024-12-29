@@ -187,7 +187,7 @@ class NonBlockingMonotonicSeqQueue {
     }
 
     /**
-     * !NOTE!
+     * @warning !NOTE!
      * Do not run this function concurrently
      * @brief serialize watermark processor
      * @return vector of ContainerState
@@ -209,7 +209,7 @@ class NonBlockingMonotonicSeqQueue {
     }
 
     /**
-     * !NOTE!
+     * @warning !NOTE!
      * Do not run this function concurrently
      * @brief Gets the state of every container with valid sequence number
      * @return container state
