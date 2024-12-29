@@ -70,7 +70,7 @@ MultiOriginWatermarkProcessor::serializeWatermarks(std::shared_ptr<BufferManager
 
     auto dataBuffer = bufferManager->getBufferBlocking();
     buffersToTransfer.emplace(buffersToTransfer.begin(), dataBuffer);
-    auto dataBuffersCount = 1ULL;
+    uint64_t dataBuffersCount = 1;
 
     // check that tuple buffer size is more than or equal to uint64_t
     if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -78,7 +78,7 @@ MultiOriginWatermarkProcessor::serializeWatermarks(std::shared_ptr<BufferManager
             "Buffer size has to be at least greater or equal to uint64_t in size for successful state migration.");
     }
     auto dataPtr = dataBuffer.getBuffer<uint64_t>();
-    auto dataIdx = 0ULL;
+    uint64_t dataIdx = 0;
 
     // TODO: make Util function for that actually
 
@@ -122,9 +122,9 @@ MultiOriginWatermarkProcessor::serializeWatermarks(std::shared_ptr<BufferManager
 
 void MultiOriginWatermarkProcessor::restoreWatermarks(std::span<const Runtime::TupleBuffer> buffers) {
     // get first buffer
-    auto dataBuffersIdx = 0ULL;
+    uint64_t dataBuffersIdx = 0;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0ULL;
+    uint64_t dataIdx = 0;
 
     /** @brief Lambda to read from metadata buffers */
     auto readFromMetadata = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
