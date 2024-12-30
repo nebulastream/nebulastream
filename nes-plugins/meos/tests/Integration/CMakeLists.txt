@@ -21,6 +21,8 @@ add_nes_integration_test(meos-MeosSNCBQuery1 "MeosSNCBQuery1.cpp")
 add_nes_integration_test(meos-MeosSNCBQuery2 "MeosSNCBQuery2.cpp")
 add_nes_integration_test(meos-MeosSNCBQuery3 "MeosSNCBQuery3.cpp")
 add_nes_integration_test(meos-MeosSNCBQuery4 "MeosSNCBQuery4.cpp")
+add_nes_integration_test(meos-MeosSNCBQuery5 "MeosSNCBQuery5.cpp")
+
 
 target_link_libraries(meos-speedAgregation nes-meos)
 target_link_libraries(meos-intersection nes-meos)
@@ -33,3 +35,4 @@ target_link_libraries(meos-MeosSNCBQuery1 nes-meos)
 target_link_libraries(meos-MeosSNCBQuery2 nes-meos)
 target_link_libraries(meos-MeosSNCBQuery3 nes-meos)
 target_link_libraries(meos-MeosSNCBQuery4 nes-meos)
+target_link_libraries(meos-MeosSNCBQuery5 nes-meos)
