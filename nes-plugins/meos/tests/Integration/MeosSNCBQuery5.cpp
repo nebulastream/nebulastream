@@ -148,7 +148,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         .seqWith(subquery)
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(60), Seconds(30)))
         .filter(
-            // Distance check to nearest workshop using slack
+            distancetpointstbox(Attribute("gps$longitude"), Attribute("gps$latitude"), Attribute("timestamp")) < 3 &&
             (ABS(Attribute("gps$latitude") - Attribute("workshops$latitude")) <= 0.5) &&  // 0.5 degree ≈ 55.66 km
             (ABS(Attribute("gps$longitude") - Attribute("workshops$longitude")) <= 0.5) &&
             // Battery and speed conditions
@@ -177,12 +177,13 @@ TEST_F(ReadSNCB, testReadCSV) {
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput = "1722520348, 3, 29.4, 1.4671, 50.6456, 4.3658, 50.4542, 4.8372\n"
-                                    "1722520348, 3, 29.4, 1.4671, 50.6456, 4.3658, 50.8699, 4.3797\n"
-                                    "1722520348, 5, 29.7, 94.9161, 51.3001, 4.4325, 50.8699, 4.3797\n"
-                                    "1722520348, 3, 29.4, 1.4671, 50.6456, 4.3658, 50.4542, 4.8372\n"
-                                    "1722520348, 3, 29.4, 1.4671, 50.6456, 4.3658, 50.8699, 4.3797\n"
-                                    "1722520348, 5, 29.7, 94.9161, 51.3001, 4.4325, 50.8699, 4.3797\n";
+        const auto expectedOutput = "1722520348,3,29.4,1.4671,50.6456,4.3658,50.4542,4.8372\n"
+                                    "1722520348,3,29.4,1.4671,50.6456,4.3658,50.8699,4.3797\n"
+                                    "1722520348,5,29.7,94.9161,51.3001,4.4325,50.8699,4.3797\n"
+                                    "1722520348,3,29.4,1.4671,50.6456,4.3658,50.4542,4.8372\n"
+                                    "1722520348,3,29.4,1.4671,50.6456,4.3658,50.8699,4.3797\n"
+                                    "1722520348,5,29.7,94.9161,51.3001,4.4325,50.8699,4.3797\n";
+
 
           
         // Run the query and get the actual dynamic buffers

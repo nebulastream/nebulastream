@@ -26,4 +26,6 @@ add_source_files(nes-expressions
         ReadMeosTernaryFunction.cpp
         MeosSenaryFunction.cpp
         MeosTernaryFunctionTdwithin.cpp
+        MeosTernaryFunctionAtStBox.cpp
+        MeosTernaryFunctionDistance.cpp
         )

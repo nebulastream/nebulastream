@@ -147,8 +147,6 @@ TEST_F(ReadSNCB, testReadCSV) {
         .project(Attribute("timestamp"),Attribute("device_id"), Attribute("gps_speed"), Attribute("adjusted_speed_limit"));
 
 
-
-
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                             .addLogicalSource("sncb", gpsSchema)
                             .addLogicalSource("weather", weatherSchema) // Added battery logical source

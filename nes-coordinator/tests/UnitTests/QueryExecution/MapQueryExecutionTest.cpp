@@ -131,6 +131,23 @@ class MapQueryExecutionTest
                                std::vector<string>{"left$id", "middle$id", "right$id", "teintersects"},
                                1);
     }
+
+    static auto createAtStBoxTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadMeosTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$tpointatstbox"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "tpointatstbox"},
+                               1);
+
+    }
+
+    static auto createDistanceTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadMeosTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$distancetpointstbox"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "distancetpointstbox"},
+                               1);
+    }
     static auto createTdwithTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapReadMeosTernaryFunction",
@@ -176,6 +193,10 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return readT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "teintersects") {
         return teintersects(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+    } else if (expression == "tpointatstbox") {
+        return tpointatstbox(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+    } else if (expression == "distancetpointstbox") {
+        return distancetpointstbox(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "tedwithin") {
          return tedwithin(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "seintersects") {
@@ -331,6 +352,8 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createReadTestData(),
                                           MapQueryExecutionTest::createRead3TestData(),
                                           MapQueryExecutionTest::createReadmeosTestData(),
+                                          MapQueryExecutionTest::createAtStBoxTestData(),
+                                          MapQueryExecutionTest::createDistanceTestData(),
                                           MapQueryExecutionTest::createTdwithTestData(),
                                           MapQueryExecutionTest::createseintersectsTestData(),
                                           MapQueryExecutionTest::createTrigTestData()),

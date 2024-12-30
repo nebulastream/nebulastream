@@ -47,4 +47,6 @@
          ReadTernaryExpression.cpp
          SIntersetcsExpression.cpp
          TedwithinExpression.cpp
+         MeosAtStboxExpression.cpp
+         MeosDistancePointSTBoxExpression.cpp
          )

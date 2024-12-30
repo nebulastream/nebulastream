@@ -35,6 +35,14 @@
 
 #include <Execution/Operators/MEOS/Meos.hpp>
 
+// struct InputValue {
+//     uint64_t timestamp;
+//     uint64_t id;
+//     double speed;
+//     double latitude;
+//     double longitude;
+// };
+
 struct InputValue {
     uint64_t timestamp;
     uint64_t id;
@@ -82,6 +90,7 @@ TEST_F(ReadSNCB, testReadCSV) {
     try {
         // Initialize MEOS instance
         MEOS::Meos* meos = new MEOS::Meos("UTC");
+        auto workerConfiguration1 = WorkerConfiguration::create();
 
 
         auto gpsSchema = Schema::create()
@@ -103,60 +112,76 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         ASSERT_EQ(sizeof(InputValue), gpsSchema->getSchemaSizeInBytes());
 
-        auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
+        auto csvSourceType = CSVSourceType::create("gps", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
-        csvSourceType->setSkipHeader(true);                   // Skip the header
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(20); // Produce 20 tuples per buffer
+        csvSourceType->setNumberOfBuffersToProduce(40);  
+        csvSourceType->setSkipHeader(true);                 // Skip the header
 
+  
+        auto subQueryA = Query::from("gps")
+                    .map(
+                        Attribute("passenger_count") = 
+                            (Attribute("PCFA_mbar") + Attribute("PCFF_mbar") +
+                            Attribute("PCF1_mbar") + Attribute("PCF2_mbar")) / 4.0
+                    )
+                    .filter(Attribute("passenger_count") > 3.15);
 
-        auto query =
-            Query::from("sncb")
-                .filter(
-                    // Check if train is in a specific geographic area
-                    tpointatstbox(Attribute("longitude", BasicType::FLOAT64),
-                        Attribute("latitude", BasicType::FLOAT64),
-                        Attribute("timestamp", BasicType::UINT64)) == 1
-                    && 
-                    // Only process records with valid speed and pressure
-                    Attribute("speed") > 0 && Attribute("PCFA_mbar") > 0
-                    &&
-                    //Show records with the highest noise level
-                    Attribute("speed") * 0.5 + Attribute("PCFA_mbar") * 0.5 > 2
-                )
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
-                .apply(Max(Attribute("PCFA_mbar")));
+                        
+        auto query = Query::from("gps")
+                    .filter(tpointatstbox(Attribute("longitude", BasicType::FLOAT64),
+                                              Attribute("latitude", BasicType::FLOAT64),
+                                              Attribute("timestamp", BasicType::UINT64)) == 1 &&
+                            Attribute("speed") > -1)
+                    .andWith(subQueryA)
+                    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(20)))
+                    .map( Attribute("adjusted_temp") = 20.0)
+                    .map( Attribute("adjusted_light") = 80.0)
+                    .project(
+                        Attribute("timestamp"),
+                        Attribute("id"),
+                        Attribute("passenger_count"),
+                        Attribute("adjusted_temp"),
+                        Attribute("adjusted_light")
+                    );
 
-        // Create the test harness and attach the CSV source
+                    
+    
+        // Create the Test Harness and Attach CSV Sources
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                               .addLogicalSource("sncb", gpsSchema)
-                               .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration);
+            .addLogicalSource("gps", gpsSchema)
+            .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration1);
 
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "1722520000, 1722520500, 5.043\n"
-                                                        "1722520500, 1722521000, 5.051\n"
-                                                        "1722521000, 1722521500, 5.047\n"
-                                                        "1722521500, 1722522000, 4.991\n"
-                                                        "1722522000, 1722522500, 5.388\n"
-                                                        "1722522500, 1722523000, 5.152\n"
-                                                        "1722523000, 1722523500, 5.021\n"
-                                                        "1722523500, 1722524000, 5.017\n";
-
-                            
+        const auto expectedOutput = "1722521041, 1, 3.3305, 20, 80\n"
+                                                        "1722521051,1, 3.517, 20, 80\n"
+                                                        "1722521041,1, 3.3305, 20, 80\n"
+                                                        "1722521051,1, 3.517, 20, 80\n"
+                                                        "1722521041,1, 3.3305, 20, 80\n"
+                                                        "1722521051,1, 3.517, 20, 80\n"
+                                                        "1722522227,5, 3.16375, 20, 80\n"
+                                                        "1722522227,5, 3.16375, 20, 80\n"
+                                                        "1722522227,5, 3.16375, 20, 80\n"
+                                                        "1722522227,5, 3.16375, 20, 80\n";
+                                 
+          
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
 
 
+            // Iterate Through Buffers and Log Results
         for (const auto& buffer : actualBuffers) {
             size_t numTuples = buffer.getNumberOfTuples();
             for (size_t i = 0; i < numTuples; ++i) {
                 auto tuple = buffer[i];
-                NES_INFO("The result is : {}, {}, {}",
-                    tuple[0].read<uint64_t>(), // window_start
-                    tuple[1].read<uint64_t>(), // window_end
-                    tuple[2].read<double>()); // speed            
+                NES_INFO("Battery Monitoring Result -  Timestamp: {}, ID : {},passenger_count: {},adjusted_temp: {}, adjusted_light: {}",
+                    tuple[0].read<uint64_t>(), 
+                    tuple[1].read<uint64_t>(),
+                    tuple[2].read<double>(),
+                    tuple[3].read<double>(),
+                    tuple[4].read<double>());
             }
         }
 

@@ -35,6 +35,8 @@ ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr READ(const ExpressionNodePtr& exp);
 ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
 ExpressionNodePtr teintersects(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
+ExpressionNodePtr tpointatstbox(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
+ExpressionNodePtr distancetpointstbox(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
 ExpressionNodePtr tedwithin(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right);
 ExpressionNodePtr seintersects(const ExpressionNodePtr& one, const ExpressionNodePtr& two, const ExpressionNodePtr& three, const ExpressionNodePtr& four, const ExpressionNodePtr& five, const ExpressionNodePtr& six);
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
@@ -101,6 +103,8 @@ ExpressionNodePtr READ(ExpressionItem exp);
 ExpressionNodePtr LOG10(ExpressionItem exp);
 ExpressionNodePtr readT(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
 ExpressionNodePtr teintersects(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
+ExpressionNodePtr tpointatstbox(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
+ExpressionNodePtr distancetpointstbox(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
 ExpressionNodePtr tedwithin(ExpressionItem left, ExpressionItem middle, ExpressionItem right);
 ExpressionNodePtr seintersects(ExpressionItem one, ExpressionItem two, ExpressionItem three, ExpressionItem four, ExpressionItem five, ExpressionItem six);
 ExpressionNodePtr SIN(ExpressionItem exp);

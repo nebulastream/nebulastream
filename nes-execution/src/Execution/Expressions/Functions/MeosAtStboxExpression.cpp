@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/Functions/MeosExpression.hpp>
+#include <Execution/Expressions/Functions/MeosAtStboxExpression.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -25,11 +25,11 @@
 namespace NES::Runtime::Execution::Expressions {
 
 
-MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
+MeosAtStboxExpression::MeosAtStboxExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
     : left(left), middle(middle), right(right) {}
 
 
-std::string convertSecondsToTimestamp(long long seconds) {
+std::string convertSecondsToTimestampAT(long long seconds) {
     // Convert seconds to time_point
     std::chrono::seconds sec(seconds);
     std::chrono::time_point<std::chrono::system_clock> tp(sec);
@@ -49,43 +49,36 @@ std::string convertSecondsToTimestamp(long long seconds) {
 
 /**
  * @brief This method if the given point is within the given STBox at the given time.
- * This function is basically a wrapper for MEOS ever intersects function.
+ * This function is basically a wrapper for MEOS ever tpoint_at_stbox function.
  * @param lon Longitude of the point
 * @param lat Latitude of the point
 * @param t Time of the point
  * @return true if the point is within the STBox at the given time, false otherwise
  */
-double teintersects(double lon, double lat, int t) {
-    NES_INFO("teintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
+double tpointatstbox(double lon, double lat, int t) {
+    NES_INFO("tpointatstbox called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
-    STBox* stbx = stbox_in("SRID=4326;STBOX X((3.5, 50.5),(4.5, 51.5))"); // Adjust the coordinates to cover half of the points
-    //STBox *stbx = stbox_in("SRID=4326;STBOX X((13, 58),(14, 59))");
-    GSERIALIZED *geom = stbox_to_geo(stbx);
-    std::string t_out = convertSecondsToTimestamp(t);
+    STBox* stbx = stbox_in("SRID=4326;STBOX X((2.8, 50.5),(4.5, 51.5))");
+    std::string t_out = convertSecondsToTimestampAT(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 
-    if (eintersects_tpoint_geo((const Temporal *)inst, geom)){
-        NES_INFO("Intersects");
+    if (tpoint_at_stbox((const Temporal *)inst, stbx, true)){
         return 1;
-    } else {
-        NES_INFO("Does not intersect");
-        return 0;
-    }
-
-    return 1;
+    } 
+    return 0;
 }
 
-Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
+Value<> MeosAtStboxExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = left->execute(record);
     Value middleValue = middle->execute(record);
     Value rightValue = right->execute(record);
 
-    //NES_INFO("Executing MeosExpression types: left: {}, middle: {}, right: {}", leftValue->getType()->toString(), middleValue->getType()->toString(), rightValue->getType()->toString());
+    //NES_INFO("Executing MeosAtStboxExpression types: left: {}, middle: {}, right: {}", leftValue->getType()->toString(), middleValue->getType()->toString(), rightValue->getType()->toString());
 
      if (leftValue->isType<Double>()) {
-        return Nautilus::FunctionCall<>("teintersects", teintersects, leftValue.as<Double>(), middleValue.as<Double>(), rightValue.as<Int64>());
+        return Nautilus::FunctionCall<>("tpointatstbox", tpointatstbox, leftValue.as<Double>(), middleValue.as<Double>(), rightValue.as<Int64>());
 
     } else {
         // Throw an exception if no type is applicable
@@ -93,6 +86,6 @@ Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on numeric input arguments that are Double, Double and Unsigned int.");
     }
 }
-static ExecutableFunctionRegistry::Add<TernaryFunctionProvider<MeosExpression>> MeosExpression("teintersects");
+static ExecutableFunctionRegistry::Add<TernaryFunctionProvider<MeosAtStboxExpression>> MeosAtStboxExpression("tpointatstbox");
 
 }// namespace NES::Runtime::Execution::Expressions

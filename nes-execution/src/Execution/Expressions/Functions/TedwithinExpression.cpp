@@ -56,7 +56,6 @@ std::string convertSecondsToTimestampTD(long long seconds) {
  * @return true if the point is within the STBox at the given time, false otherwise
  */
 double tedwithin(double lon, double lat, int t) {
-    // Implement your logic here
     NES_INFO("tedwithin called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
     STBox* stbx = stbox_in("SRID=4326;STBOX X((3.5, 50.5),(4.5, 51.5))"); // Adjust the coordinates to cover half of the points
