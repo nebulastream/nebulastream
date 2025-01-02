@@ -111,40 +111,56 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
 
-        auto weatherSchema = Schema::create()
-            ->addField("snowc", BasicType::FLOAT64)
-            ->addField("sp", BasicType::FLOAT64)
-            ->addField("ssrd", BasicType::FLOAT64)
-            ->addField("strd", BasicType::FLOAT64)
-            ->addField("tp", BasicType::FLOAT64)
-            ->addField("u10", BasicType::FLOAT64)
-            ->addField("v10", BasicType::FLOAT64)
-            ->addField("timestamp", BasicType::UINT64);
+    auto weatherSchema = Schema::create()
+        ->addField("timestamp", BasicType::UINT64)           // timestamp
+        ->addField("temperature", BasicType::FLOAT64)     // temperature in °C
+        ->addField("precipitation", BasicType::FLOAT64)      // precipitation in mm
+        ->addField("rain", BasicType::FLOAT64)              // rain in mm
+        ->addField("snowfall", BasicType::FLOAT64)          // snowfall in cm
+        ->addField("snowfall_height", BasicType::FLOAT64)    // snowfall height in m
+        ->addField("freezing_level_height", BasicType::FLOAT64) // freezing level in m
+        ->addField("weather_code", BasicType::UINT64)        // WMO code
+        ->addField("wind_speed", BasicType::FLOAT64)     // wind speed at 10m in km/h
+        ->addField("wind_speed_80m", BasicType::FLOAT64)     // wind speed at 80m in km/h
+        ->addField("wind_direction_10m", BasicType::FLOAT64) // wind direction at 10m in %
+        ->addField("wind_direction_80m", BasicType::FLOAT64) // wind direction at 80m in %
+        ->addField("wind_gusts_10m", BasicType::FLOAT64)     // wind gusts at 10m in km/h
+        ->addField("gps_lat", BasicType::FLOAT64)           // latitude coordinate
+        ->addField("gps_lon", BasicType::FLOAT64);         // longitude coordinate
 
 
 
         auto csvSourceType2 = CSVSourceType::create("weather", "weather_time");
-        csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "weather_with_timestamp.csv");
-        csvSourceType2->setNumberOfTuplesToProducePerBuffer(40); // Read 10 tuples per buffer
-        csvSourceType2->setNumberOfBuffersToProduce(20);        // Produce 20 buffers
+        csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "weatherwithsynccoordinates.csv");
+        csvSourceType2->setNumberOfTuplesToProducePerBuffer(5); // Read 10 tuples per buffer
+        csvSourceType2->setNumberOfBuffersToProduce(10);        // Produce 20 buffers
         csvSourceType2->setSkipHeader(true);                    // Skip the header
 
 
         auto weatherQuery = Query::from("weather")
-        .map(Attribute("weather_timestamp") = Attribute("timestamp"))
-        .filter(Attribute("snowc") > 0.0 || 
-                Attribute("u10") > 10.0 || 
-                Attribute("tp") > 0.018)
-        .map(Attribute("adjusted_speed_limit") = 15.0);
+            .filter(
+                tedwithin(Attribute("gps_lon"), 
+                        Attribute("gps_lat"),
+                        Attribute("timestamp"))==1
+            )
+            .filter(
+                Attribute("temperature") < 12.0 || 
+                Attribute("temperature") > 16.0
+            )
+            .filter(
+                Attribute("snowfall") >= 0.0 ||          
+                Attribute("wind_speed") > 15.0 ||        // Higher than median wind speed
+                Attribute("precipitation") > 0.1          // Match actual precipitation events
+            )
+            .map(Attribute("adjusted_speed_limit") = 15.0);
 
-
-        // Define the main query
         auto query = Query::from("sncb")
         .joinWith(weatherQuery)
-        .where(Attribute("timestamp") == Attribute("weather_timestamp"))  // Join on the mapped timestamp
-        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(30), Seconds(10)))
-        .filter(Attribute("gps_speed") > Attribute("adjusted_speed_limit"))
+        .where(Attribute("timestamp") ==  Attribute("weather$timestamp"))  // Join on the mapped timestamp
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
+        .filter(Attribute("timestamp") > 0)
         .project(Attribute("timestamp"),Attribute("device_id"), Attribute("gps_speed"), Attribute("adjusted_speed_limit"));
+
 
 
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -157,18 +173,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         testHarness.validate().setupTopology();
 
         // Expected output as a string (adjust as needed)
-        const auto expectedOutput = "1722520348, 5, 94.9161, 15\n"
-                                                        "1722520600, 3, 60.0418, 15\n"
-                                                        "1722520647, 1, 24.5384, 15\n"
-                                                        "1722520651, 5, 61.9343, 15\n"
-                                                        "1722520348, 5, 94.9161, 15\n"
-                                                        "1722520600, 3, 60.0418, 15\n"
-                                                        "1722520647, 1, 24.5384, 15\n"
-                                                        "1722520651, 5, 61.9343, 15\n"
-                                                        "1722520348, 5, 94.9161, 15\n"
-                                                        "1722520600, 3, 60.0418, 15\n"
-                                                        "1722520647, 1, 24.5384, 15\n"
-                                                        "1722520651, 5, 61.9343, 15\n";
+        const auto expectedOutput = "1722523500, 5, 0.0056, 15\n";
 
                             
         // Run the query and get the actual dynamic buffers
@@ -179,11 +184,11 @@ TEST_F(ReadSNCB, testReadCSV) {
         size_t numTuples = buffer.getNumberOfTuples();
         for (size_t i = 0; i < numTuples; ++i) {
             auto tuple = buffer[i];
-            NES_INFO("The result is : {}, {}, {},{}",
+            NES_INFO("The result is : {}, {}, {}, {}",
                 tuple[0].read<uint64_t>(),  // timestamp is UINT64
                 tuple[1].read<uint64_t>(),  // device_id is UINT64
                 tuple[2].read<double>(),    // gps_speed is FLOAT64
-                tuple[3].read<double>());   // adjusted_speed_limit is FLOAT64
+                tuple[3].read<double>());    // adjusted_speed_limit is FLOAT64
             }
         }
 
