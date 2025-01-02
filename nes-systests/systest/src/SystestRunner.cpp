@@ -29,6 +29,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
+#include <nlohmann/adl_serializer.hpp>
+#include <nlohmann/json.hpp>
 
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
@@ -361,6 +363,49 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
     }
 
     return failedQueries.copy();
+}
+
+
+std::vector<RunningQuery> runQueriesAndBenchmark(
+    const std::vector<Query>& queries,
+    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson
+    )
+{
+    SingleNodeWorker worker(configuration);
+    std::vector<RunningQuery> failedQueries;
+    nlohmann::json resultArray = nlohmann::json::array();
+    std::size_t queryFinishedCounter = 0;
+    const auto totalQueries = queries.size();
+    for (const auto& queryToRun : queries)
+    {
+        const auto queryId = worker.registerQuery(queryToRun.queryPlan);
+        const RunningQuery runningQuery = {queryToRun, QueryId(queryId)};
+        const auto startTime = std::chrono::high_resolution_clock::now();
+        worker.startQuery(queryId);
+        while (worker.getQuerySummary(queryId)->currentStatus != Runtime::Execution::QueryStatus::Stopped
+                and worker.getQuerySummary(queryId)->currentStatus != Runtime::Execution::QueryStatus::Failed)
+        {
+            // Busy wait instead, so more accurate time?
+            //std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        }
+        const auto endTime = std::chrono::high_resolution_clock::now();
+        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        auto errorMessage = checkResult(runningQuery);
+        printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+        if (errorMessage.has_value())
+        {
+            failedQueries.emplace_back(runningQuery);
+        }
+        worker.unregisterQuery(queryId);
+        queryFinishedCounter += 1;
+        const auto queryName = queryToRun.name + ":" + std::to_string(queryToRun.queryIdInFile + 1);
+        resultArray.push_back({{"query name", queryName}, {"time", duration.count()}});
+
+    }
+
+    resultJson = resultArray;
+    return failedQueries;
 }
 
 void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)

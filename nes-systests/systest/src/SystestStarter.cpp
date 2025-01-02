@@ -25,6 +25,9 @@
 #include <fmt/ranges.h>
 #include <folly/MPMCQueue.h>
 #include <google/protobuf/text_format.h>
+#include <nlohmann/detail/meta/call_std/begin.hpp>
+#include <nlohmann/json.hpp>
+
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SystestConfiguration.hpp>
@@ -75,9 +78,20 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .default_value(std::vector<std::string>{})
         .remaining();
 
+    /// Benchmark (time) all specified queries
+    program.add_argument("-b")
+        .help("Benchmark (time) all specified queries")
+        .default_value(false)
+        .implicit_value(true);
+
     program.parse_args(argc, argv);
 
     auto config = Configuration::SystestConfiguration();
+
+    if (program.is_used("-b"))
+    {
+        config.benchmark = true;
+    }
 
     if (program.is_used("-d"))
     {
@@ -303,7 +317,6 @@ int main(int argc, const char** argv)
         {
             shuffleQueries(queries);
         }
-
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
@@ -321,10 +334,23 @@ int main(int argc, const char** argv)
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
+            if (config.benchmark)
+            {
+                nlohmann::json benchmarkResults;
+                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                std::cout << benchmarkResults.dump(4) << std::endl;
+                std::filesystem::path const outputPath(config.resultDir.getValue() + "BenchmarkResults.json");
+                std::ofstream outputFile(outputPath);
+                outputFile << benchmarkResults.dump(4);
+                outputFile.close();
+            }
+            else
+            {
 
-            failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+
+            }
         }
-
         if (failedQueries.empty())
         {
             std::stringstream outputMessage;
@@ -342,6 +368,7 @@ int main(int argc, const char** argv)
             std::exit(1);
         }
     }
+
     catch (...)
     {
         tryLogCurrentException();

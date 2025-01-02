@@ -42,6 +42,7 @@ public:
     Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
+    Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Benchmark (time) run Queries"};
     Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
     Configurations::StringOption grpcAddressUri

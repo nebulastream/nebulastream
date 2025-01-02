@@ -23,7 +23,7 @@
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
-
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Systest
 {
@@ -59,6 +59,12 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 /// @return false if one query result is incorrect
 [[nodiscard]] std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+
+
+/// Run queries sequentially locally and benchmark the run time of each query.
+/// @return vector containing failed queries
+[[nodiscard]] std::vector<RunningQuery>
+runQueriesAndBenchmark(const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed
