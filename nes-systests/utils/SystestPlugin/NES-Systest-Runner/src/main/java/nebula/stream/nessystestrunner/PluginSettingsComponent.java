@@ -14,7 +14,6 @@ public class PluginSettingsComponent {
     private final JTextField dockerTestFilePath;
 
     public PluginSettingsComponent() {
-
         /// Main Panel
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -36,6 +35,8 @@ public class PluginSettingsComponent {
                 " /tmp/nebulastream-public/cmake-build-docker/nes-systests/systest/systest'");
         dockerCommandField = new JTextField();
         JPanel dockerCommandPanel = createSettingPanel(dockerCommandLabel, dockerCommandField);
+        dockerCommandPanel.add(dockerCommandLabel);
+        dockerCommandPanel.add(dockerCommandField);
 
         /// Use Docker CheckBox
         JLabel dockerCommandCheckBoxLabel = new JLabel("Use Docker?:");
@@ -43,10 +44,8 @@ public class PluginSettingsComponent {
         dockerCommandCheckBox = new JCheckBox();
         JPanel dockerCommandCheckBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         dockerCommandCheckBoxLabel.setPreferredSize(new Dimension(120, 25));
-        //dockerCommandCheckBox.setPreferredSize(new Dimension(300, 25));
         dockerCommandCheckBoxPanel.setMaximumSize(new Dimension(800, 35));
         dockerCommandCheckBoxPanel.setPreferredSize(new Dimension(600, 35));
-
         dockerCommandCheckBoxPanel.add(dockerCommandCheckBoxLabel);
         dockerCommandCheckBoxPanel.add(dockerCommandCheckBox);
 
@@ -58,13 +57,12 @@ public class PluginSettingsComponent {
                 " /tmp/nebulastream-public/cmake-build-docker/nes-systests/systest/systest" +
                 " -t /tmp/nebulastream-public/nes-systests/operator/filter/Filter.test:01'");
         dockerTestFilePath = new JTextField();
-        JPanel dockerTestFilePathPanel = createSettingPanel(dockerTestFilePathLabel, dockerTestFilePath);
 
         /// Main Panel
-        panel.add(pathPanel);
-        panel.add(dockerCommandCheckBoxPanel);
-        panel.add(dockerCommandPanel);
-        //panel.add(dockerTestFilePathPanel);
+        /// NOTE: these settings have become obsolete and have been hidden. However, we may need to implement settings in the future.
+        //panel.add(pathPanel);
+        //panel.add(dockerCommandCheckBoxPanel);
+        //panel.add(dockerCommandPanel);
 
         browseButton.addActionListener(new ActionListener() {
             @Override

@@ -1,5 +1,6 @@
 package nebula.stream.nessystestrunner;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,9 +8,13 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.icons.AllIcons;
 import javax.swing.*;
 
+/// This class defines systest files as their own language to check whether SysTestLineMarkerProvider should run
+/// affected extensions are: .test, .test_disabled, .test.disabled
 public class SysTestFileType extends LanguageFileType {
 
-    private SysTestFileType() {
+    public static final @NotNull FileType INSTANCE = new SysTestFileType();
+
+    SysTestFileType() {
         super(SysTestLanguage.INSTANCE);
     }
 
