@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
         name = "com.example.nessystestrunner.PluginSettings",
         storages = @Storage("PluginSettings.xml")
 )
+
+/// Plugin Settings of the NES-Systest-Runner Plugin displayed in Settings/Tools/NES-Systest-Runner
+/// NOTE: All settings have become obsolete for now and have been hidden
 public class PluginSettings implements PersistentStateComponent<PluginSettings> {
     private String pathSetting = "";
     private boolean dockerCommandCheckBox;
@@ -66,5 +69,4 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     public void setDockerTestFilePath(String dockerTestFilePath) {
         this.dockerTestFilePath = dockerTestFilePath;
     }
-
 }

@@ -20,6 +20,16 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.xdebugger</depends>
+    <depends>com.intellij.modules.clion.ide</depends>
+    <depends>com.intellij.modules.cidr.ide</depends>
+    <depends>com.intellij.cidr.base</depends>
+    <depends>com.intellij.clion</depends>
+    <depends>com.intellij.modules.clion.cmake</depends>
+    <depends>com.intellij.modules.cmake</depends>
+    <depends>com.intellij.modules.cmake</depends>
+    <depends>com.intellij.modules.json</depends>
+    <depends>com.intellij.modules.clion</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
