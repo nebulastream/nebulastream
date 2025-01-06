@@ -145,7 +145,8 @@ class SharedQueryPlan {
      * @param downstreamOperatorIds: downstream Operator ids
      */
     void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
-                                    const std::set<OperatorId>& downstreamOperatorIds);
+                                    const std::set<OperatorId>& downstreamOperatorIds,
+                                    WorkerId targetWorkerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Method to update the placement information and state of the shared query plan operators
