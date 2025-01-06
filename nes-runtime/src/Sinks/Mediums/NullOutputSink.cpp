@@ -41,6 +41,20 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
+        if (faultToleranceType == FaultToleranceType::M || faultToleranceType == FaultToleranceType::AS) {
+            duplicateDetectionCallback = [this](Runtime::TupleBuffer& inputBuffer){
+                return watermarkProcessor->isDuplicate(inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+            };
+        }
+        else {
+            duplicateDetectionCallback = [](Runtime::TupleBuffer&){
+                return false;
+            };
+        }
+    }
+    else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
     }
 }
 
@@ -51,6 +65,9 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NU
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef workerContext) {
     workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
+    if(!duplicateDetectionCallback(inputBuffer)) {
+        return true;
+    }
     return true;
 }
 

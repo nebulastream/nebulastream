@@ -47,6 +47,47 @@ service WorkerRPCService {
     rpc UploadMlModelServerStream (MlModelFileUploadRequest) returns (stream MlModelFileUploadResponse) {}
 
     rpc ProbeStatistics (ProbeStatisticsRequest) returns (ProbeStatisticsReply) {}
+
+    rpc GetLoadStatistics(LoadStatsRequest) returns (LoadStatsReply);
+    rpc PerformResourceHandshake(ResourceHandshakeRequest) returns (ResourceHandshakeReply);
+
+    rpc UpdateNeighbors(UpdateNeighborsRequest) returns (UpdateNeighborsReply);
+}
+
+message LoadStatsRequest {}
+message LoadStatsEntry {
+    int64 subqueryid = 1;
+    uint64 tasks = 2;
+    uint64 tuples = 3;
+    uint64 buffers = 4;
+    uint64 latencysum = 5;
+    uint64 queuesum = 6;
+    uint64 availableglobalbuffersum = 7;
+    uint64 availablefixedbuffersum = 8;
+}
+message LoadStatsReply {
+    repeated LoadStatsEntry stats = 1;
+}
+
+message ResourceHandshakeRequest {
+    uint64 workerId = 1;
+    uint64 memoryCapacity = 2;
+}
+message ResourceHandshakeReply {
+    bool success = 1;
+}
+
+message NeighborInfo {
+    int64 workerId = 1;
+    string address = 2;
+}
+
+message UpdateNeighborsRequest {
+    repeated NeighborInfo neighbors = 1;
+}
+
+message UpdateNeighborsReply {
+    bool success = 1;
 }
 
 message DeployDecomposedQueryRequest {

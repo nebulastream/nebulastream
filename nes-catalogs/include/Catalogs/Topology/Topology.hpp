@@ -373,6 +373,12 @@ class Topology {
     bool findAllDownstreamNodes(const WorkerId& startNode,
                                 std::set<WorkerId>& reachableDownstreamNodes,
                                 std::vector<WorkerId> targetNodes);
+ std::vector<TopologyNodePtr>
+findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                            const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators,
+                                                            WorkerId targetWorkerId);
+
+ void setNeighborUpdateCallback(std::function<void(WorkerId, std::string , std::vector<std::pair<WorkerId, std::string>>)> callback);
 
   private:
     explicit Topology();
@@ -447,6 +453,7 @@ class Topology {
                                                 std::vector<TopologyNodePtr> searchedNodes,
                                                 std::unordered_map<WorkerId, TopologyNodePtr>& uniqueNodes);
 
+
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
      * @return next topology node id
@@ -462,11 +469,14 @@ class Topology {
 
  void assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels);
 
+ void informNeighborsOfNode(WorkerId nodeId, std::string targetAddress);
+
     std::vector<WorkerId> rootWorkerIds;
     std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
     std::atomic_uint64_t topologyNodeIdNextIndex = INITIAL_WORKER_NODE_ID.getRawValue();
+ std::function<void(WorkerId, std::string, std::vector<std::pair<WorkerId, std::string>> neighborInfo)> neighborUpdateCallback;
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

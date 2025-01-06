@@ -12,4 +12,5 @@
 
 add_source_files(nes-coordinator
         IncrementalPlacementUtils.cpp
+        OffloadPlannerUtil.cpp
 )

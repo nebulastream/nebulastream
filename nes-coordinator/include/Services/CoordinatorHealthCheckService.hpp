@@ -36,6 +36,7 @@ class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
      */
     void startHealthCheck() override;
 
+  void informWorkerAboutNeighbors(WorkerId targetWorkerId, std::string targetAddress, std::vector<std::pair<WorkerId, std::string>> neighborInfo);
   private:
     TopologyPtr topology;
     WorkerRPCClientPtr workerRPCClient;

@@ -23,6 +23,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPOffloadQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
@@ -147,6 +148,39 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
     reply->set_workerid(INVALID_WORKER_NODE_ID.getRawValue());
     return Status::CANCELLED;
+}
+
+Status CoordinatorRPCServer::RequestQueryOffload(ServerContext*,
+                                                 const RequestQueryOffloadRequest* request,
+                                                 RequestQueryOffloadResponse* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RequestQueryOffload: Received request for shared_query_id={}", request->sharedqueryid());
+
+    WorkerId originWorkerId = WorkerId(request->originworkerid());
+    SharedQueryId sharedQueryId(request->sharedqueryid());
+    DecomposedQueryId decomposedQueryId(request->decomposedqueryid());
+    WorkerId targetWorkerId = WorkerId(request->targetworkerid());
+
+
+    bool offloadSuccess = false;
+    std::string offloadMessage;
+
+    try {
+        auto event = NES::RequestProcessor::ISQPOffloadQueryEvent::create(originWorkerId, sharedQueryId, decomposedQueryId, targetWorkerId);
+        auto responseFuture = requestHandlerService->queueISQPRequest({event});
+
+        offloadMessage = "Offload request accepted and scheduled.";
+        offloadSuccess = true;
+        NES_INFO("CoordinatorRPCServer::RequestQueryOffload: offload successful for query {}", sharedQueryId);
+    } catch (const std::exception& ex) {
+        offloadSuccess = false;
+        offloadMessage = std::string("Exception while attempting offload: ") + ex.what();
+        NES_ERROR("CoordinatorRPCServer::RequestQueryOffload: exception: {}", ex.what());
+    }
+
+    reply->set_success(offloadSuccess);
+    reply->set_message(offloadMessage);
+
+    return Status::OK;
 }
 
 Status

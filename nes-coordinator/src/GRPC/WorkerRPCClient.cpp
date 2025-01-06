@@ -32,6 +32,7 @@ namespace NES {
 
 WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
 
+
 bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
@@ -501,6 +502,37 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
         NES_ERROR(" WorkerRPCClient::checkHealth error={}: {}", status.error_code(), status.error_message());
         return response.status();
     }
+}
+
+bool WorkerRPCClient::updateNeighbors(const std::string& address, const std::vector<std::pair<WorkerId, std::string>>& neighbors) {
+    NES_DEBUG("WorkerRPCClient::updateNeighbors: sending neighbors to {}", address);
+
+    UpdateNeighborsRequest request;
+    for (auto& [wid, addr] : neighbors) {
+        auto* ni = request.add_neighbors();
+        ni->set_workerid(wid.getRawValue());
+        ni->set_address(addr);
+    }
+
+    UpdateNeighborsReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->UpdateNeighbors(&context, request, &reply);
+
+    if (!status.ok()) {
+        NES_ERROR("WorkerRPCClient::updateNeighbors RPC failed: {} - {}", status.error_code(), status.error_message());
+        return false;
+    }
+
+    if (!reply.success()) {
+        NES_WARNING("WorkerRPCClient::updateNeighbors: Worker at {} did not accept the neighbors update", address);
+        return false;
+    }
+
+    NES_INFO("WorkerRPCClient::updateNeighbors: Successfully updated neighbors for {}", address);
+    return true;
 }
 
 Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address) {

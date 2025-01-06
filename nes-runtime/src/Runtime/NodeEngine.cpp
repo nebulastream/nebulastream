@@ -922,6 +922,37 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
     return false;
 }
 
+void NodeEngine::addNeighbourStatistics(WorkerId workerId, std::map<DecomposedQueryId, QueryPreviousMetrics> stats) { previousNeighborMetricsMap[workerId] = stats; }
+std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> NodeEngine::getNeighbourStatistics() const { return previousNeighborMetricsMap; }
+void NodeEngine::setSelfStatistics(std::map<DecomposedQueryId, QueryPreviousMetrics> stats) {
+    selfStatistics = stats;
+}
+std::map<DecomposedQueryId, QueryPreviousMetrics> NodeEngine::getSelfStatistics() const { return selfStatistics; }
+
+void NodeEngine::addNeighbour(WorkerId neighbourId) {
+    neighbours[neighbourId] =  0;
+}
+
+void NodeEngine::removeNeighbour(WorkerId neighbourId) {
+    neighbours.erase(neighbourId);
+}
+
+std::map<WorkerId, uint64_t> NodeEngine::getNeighbours() const {
+    return neighbours;
+}
+
+void NodeEngine::addNeighbourResources(WorkerId neighbourId, uint64_t resources) {
+    neighbours[neighbourId] =  resources;
+}
+
+uint64_t NodeEngine::getNeighbourResources(WorkerId neighbourId) {
+    return neighbours[neighbourId];
+}
+
+void NodeEngine::clearNeighbours() {
+    neighbours.clear();
+}
+
 std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);

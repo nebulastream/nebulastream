@@ -16,6 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPOffloadQueryEvent.hpp>
 #include <thread>
 
 namespace z3 {
@@ -140,6 +141,7 @@ class ISQPRequest : public AbstractUniRequest {
      */
     QueryId handleAddQueryRequest(ISQPAddQueryEventPtr addQueryEvent);
 
+  void handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEvent);
     /**
      * @brief handle remove query event by marking the affected operators for removal
      * @param removeQueryEvent
@@ -157,6 +159,8 @@ class ISQPRequest : public AbstractUniRequest {
      * @param removeLinkEvent
      */
     void handleRemoveLinkRequest(ISQPRemoveLinkEventPtr removeLinkEvent);
+
+  bool validateTargetNodeForRedundancy(SharedQueryPlanPtr sharedQueryPlan, WorkerId originWorkerId, WorkerId targetWorkerId);
 
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     z3::ContextPtr z3Context;

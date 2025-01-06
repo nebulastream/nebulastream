@@ -17,6 +17,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
@@ -44,6 +45,8 @@
 #include <Services/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
+#include <Util/OffloadPlannerUtil.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 
 namespace NES::RequestProcessor {
 
@@ -91,7 +94,16 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
                 auto removeLinkEvent = event->as<ISQPRemoveLinkEvent>();
                 topology->removeTopologyNodeAsChild(removeLinkEvent->getParentNodeId(), removeLinkEvent->getChildNodeId());
-            } else if (event->instanceOf<ISQPAddLinkEvent>()) {
+            }
+            else if (event->instanceOf<ISQPOffloadQueryEvent>()) {
+                handleOffloadQueryRequest(event->as<ISQPOffloadQueryEvent>());
+                struct ISQPOffloadQueryResponse : ISQPResponse {
+                    explicit ISQPOffloadQueryResponse(bool success) : success(success) {}
+                    bool success;
+                };
+                event->response.set_value(std::make_shared<ISQPOffloadQueryResponse>(true));
+            }
+            else if (event->instanceOf<ISQPAddLinkEvent>()) {
                 auto addLinkEvent = event->as<ISQPAddLinkEvent>();
                 topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
                 event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
@@ -262,6 +274,104 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
         sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
 }
+
+void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEvent) {
+
+    auto sharedQueryId = offloadEvent->getSharedQueryId();
+    auto decomposedQueryId = offloadEvent->getDecomposedQueryId();
+    auto targetWorkerId = offloadEvent->getTargetWorkerId();
+    auto originWorkerId = offloadEvent->getOriginWorkerId();
+    NES_DEBUG("ISQPRequest::handleOffloadQueryRequest: Handling offload request for shared query plan {}", sharedQueryId);
+    auto decomposedQueryPlanCopy = globalExecutionPlan->getCopyOfDecomposedQueryPlan(originWorkerId, sharedQueryId, decomposedQueryId);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+
+    Optimizer::OffloadPlanner offloadPlanner(globalExecutionPlan, topology, sharedQueryPlan);
+    //1. If the origin execution node does not have any shared query plan placed then skip rest of the operation
+    auto impactedSharedQueryIds = globalExecutionPlan->getPlacedSharedQueryIds(originWorkerId);
+    if (impactedSharedQueryIds.empty()) {
+        NES_INFO("Offloading node {} has no effect on the running queries as there are no queries placed "
+                 "on the node.",
+                 originWorkerId);
+        return;
+    }
+    NES_DEBUG("ISQPRequest::handleOffloadQueryRequest: Offload process initiated for {}", sharedQueryId);
+    //2. Fetch upstream and downstream topology nodes connected via the requested for offload topology node
+    auto downstreamTopologyNodes = topology->getParentTopologyNodeIds(originWorkerId);
+    auto upstreamTopologyNodes = topology->getChildTopologyNodeIds(originWorkerId);
+
+   //3. Validate targetWorkerId for redundancy
+    // bool validTarget = offloadPlanner.validateTargetNodeForRedundancy(originWorkerId, targetWorkerId);
+    // if (!validTarget) {
+    //     NES_WARNING("Selected target node {} does not fulfill redundancy requirements. Adjusting...", targetWorkerId);
+    //
+    //     // Try finding a new target in the same path
+    //     auto newTargetInSamePath = offloadPlanner.findNewTargetNodeInSamePath(originWorkerId, targetWorkerId);
+    //     if (newTargetInSamePath.has_value()) {
+    //         targetWorkerId = newTargetInSamePath.value();
+    //         NES_INFO("Found a new target node {} in the same path.", targetWorkerId.getRawValue());
+    //     } else {
+    //         auto newTargetOnAltPath = offloadPlanner.findNewTargetNodeOnAlternativePath(originWorkerId);
+    //         if (newTargetOnAltPath.has_value()) {
+    //             targetWorkerId = *newTargetOnAltPath;
+    //             NES_INFO("Found a new target node {} on an alternative path.", targetWorkerId.getRawValue());
+    //         } else {
+    //             // Try creating a new link
+    //             bool linkCreated = offloadPlanner.tryCreatingNewLinkToEnableAlternativePath();
+    //             if (!linkCreated) {
+    //                 NES_ERROR("Unable to find or create a suitable target node for offloading.");
+    //                 return; // fail the offload request
+    //             } else {
+    //                 NES_INFO("Successfully created a new link to enable alternative path. Need to re-derive target node.");
+    //                 auto newTargetAfterLink = offloadPlanner.findNewTargetNodeOnAlternativePath(originWorkerId);
+    //                 if (!newTargetAfterLink.has_value()) {
+    //                     NES_ERROR("Even after creating new link, no target node found.");
+    //                     return;
+    //                 }
+    //                 targetWorkerId = *newTargetAfterLink;
+    //             }
+    //         }
+    //     }
+    // }
+
+    //4. Iterate over all upstream and downstream topology node pairs and try to mark operators for re-placement
+    for (auto const& upstreamTopologyNode : upstreamTopologyNodes) {
+        for (auto const& downstreamTopologyNode : downstreamTopologyNodes) {
+
+            //4.1. Iterate over impacted shared query plan ids to identify the shared query plans placed on the
+            // upstream and downstream execution nodes
+            for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
+
+                auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamTopologyNode);
+                auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamTopologyNode);
+
+                //4.2. If there exists no upstream or downstream execution nodes than skip rest of the operation
+                if (!upstreamExecutionNode || !downstreamExecutionNode) {
+                    continue;
+                }
+
+                //4.3. Only process the upstream and downstream execution node pairs when both have shared query plans
+                // with the impacted shared query id
+                if (upstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)
+                    && downstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)) {
+
+                    //Fetch the shared query plan and update its status
+                    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(impactedSharedQueryId);
+                    sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
+
+                    queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
+
+                    //find the pinned operators for the changelog
+                    auto [upstreamOperatorIds, downstreamOperatorIds] =  offloadPlanner.findUpstreamAndDownstreamPinnedOperators(originWorkerId, sharedQueryId, decomposedQueryId, targetWorkerId);
+                    //perform re-operator placement on the query plan
+                    sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+                }
+                upstreamExecutionNode->unlock();
+                downstreamExecutionNode->unlock();
+            }
+        }
+    }
+}
+
 
 void ISQPRequest::handleRemoveNodeRequest(NES::RequestProcessor::ISQPRemoveNodeEventPtr removeNodeEvent) {
 

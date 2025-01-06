@@ -209,6 +209,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
 
+ CoordinatorHealthCheckServicePtr getCoordinatorHealthCheckService() const;
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient

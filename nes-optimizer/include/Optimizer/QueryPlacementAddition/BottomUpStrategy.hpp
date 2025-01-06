@@ -73,6 +73,7 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
+
 };
 }// namespace NES::Optimizer
 

@@ -34,6 +34,16 @@
 
 namespace NES {
 
+
+struct QueryPreviousMetrics {
+ uint64_t tasks;
+ uint64_t tuples;
+ uint64_t buffers;
+ uint64_t latencySum;
+ uint64_t queueSum;
+ uint64_t availableGlobalBufferSum;
+ uint64_t availableFixedBufferSum;
+};
 class ReconfigurationMarker;
 using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 
@@ -389,6 +399,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersPerWorker,
                         bool sourceSharing);
 
+ void addNeighbourStatistics(WorkerId workerId, std::map<DecomposedQueryId, QueryPreviousMetrics> stats);
+std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> getNeighbourStatistics() const;
+ void setSelfStatistics(std::map<DecomposedQueryId, QueryPreviousMetrics> stats);
+ std::map<DecomposedQueryId, QueryPreviousMetrics> getSelfStatistics() const;
+
+ void addNeighbour(WorkerId neighbourId);
+ void addNeighbourResources(WorkerId neighbourId, uint64_t resources);
+ void removeNeighbour(WorkerId neighbourId);
+ std::map<WorkerId, uint64_t> getNeighbours() const;
+ void clearNeighbours();
+ uint64_t getNeighbourResources(WorkerId neighbourId);
+
   private:
     /**
      * @brief method to start a already deployed query
@@ -427,6 +449,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+ std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> previousNeighborMetricsMap;
+ std::map<DecomposedQueryId, QueryPreviousMetrics> selfStatistics;
+ std::map<WorkerId, uint64_t> neighbours;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

@@ -266,6 +266,7 @@ class BasePlacementAdditionStrategy {
      */
     void markOperatorsAsPlaced(WorkerId workerId, DecomposedQueryPlanPtr decomposedQueryPlan);
 
+ WorkerId findOffloadOperator(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators);
     /**
      * @brief check if a computed sink operator corresponds to a placed sink that is to be reconfigured. If so,
      * update the version, the receiver location and the partition of the placed sink
@@ -306,6 +307,7 @@ class BasePlacementAdditionStrategy {
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;
+ WorkerId workerToOffload = INVALID_WORKER_NODE_ID;
 };
 }// namespace Optimizer
 }// namespace NES

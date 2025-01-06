@@ -215,6 +215,8 @@ class TopologyNode : public Node {
      */
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
+ std::string getFullRPCAddress() const;
+
   private:
     WorkerId workerId;
     std::string ipAddress;

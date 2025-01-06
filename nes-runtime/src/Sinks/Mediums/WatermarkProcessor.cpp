@@ -43,4 +43,8 @@ WatermarkTs WatermarkProcessor::getCurrentWatermark() const { return currentWate
 
 bool WatermarkProcessor::isWatermarkSynchronized() const { return transactionLog.empty(); }
 
+bool WatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber) const {
+    return currentSequenceNumber >= sequenceNumber;
+}
+
 }// namespace NES::Windowing

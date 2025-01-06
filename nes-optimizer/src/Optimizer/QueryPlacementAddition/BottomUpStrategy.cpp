@@ -117,12 +117,20 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         return;
     }
 
+    if (logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
+        candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
+    }
+    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
+    && logicalOperator->getOriginalId() == logicalOperator->getId()) {
+        if (pathsFound.size() > 1) {
+            candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
+        }
+        else {
+            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+        }
+    }
     NES_DEBUG("Place {}", logicalOperator->toString());
 
-    if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
-        && logicalOperator->getOriginalId() == logicalOperator->getId()) {
-        candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
-    }
 
     if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
         || logicalOperator->instanceOf<SinkLogicalOperator>()) {
@@ -192,29 +200,35 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     candidateTopologyNode->occupySlots(1);
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
-    if (faultTolerance == FaultToleranceType::AS && !logicalOperator->instanceOf<SourceLogicalOperator>()
-        && !logicalOperator->instanceOf<SinkLogicalOperator>() && logicalOperator->getOriginalId() == logicalOperator->getId()) {
+    if ((faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) && !logicalOperator->instanceOf<SourceLogicalOperator>()
+        && !logicalOperator->instanceOf<SinkLogicalOperator>() && logicalOperator->getOriginalId() == logicalOperator->getId() && !logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
         // Get alternative nodes for the candidate topology node
 
-        auto alternativeNodeId = candidateTopologyNode->getAlternativeNodeCandidateIds()[0];
-        TopologyNodePtr alternativeNode = lockedTopologyNodeMap.at(alternativeNodeId)->operator*();
+        auto alternativeNodeIds = candidateTopologyNode->getAlternativeNodeCandidateIds();
+        if (!alternativeNodeIds.empty()) {
+            auto alternativeNodeId = alternativeNodeIds[0];
+            TopologyNodePtr alternativeNode = lockedTopologyNodeMap.at(alternativeNodeId)->operator*();
 
-        LogicalOperatorPtr operatorCopy = logicalOperator->copy()->as<LogicalOperator>();
-        operatorCopy->setId(getNextOperatorId());
-        operatorCopy->setOriginalId(logicalOperator->getId());
+            LogicalOperatorPtr operatorCopy = logicalOperator->copy()->as<LogicalOperator>();
+            operatorCopy->setId(getNextOperatorId());
+            operatorCopy->setOriginalId(logicalOperator->getId());
 
-        for (const auto& parent : logicalOperator->getParents()) {
-            LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
+            for (const auto& parent : logicalOperator->getParents()) {
+                LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
 
-            parentOperator->addChild(operatorCopy);
+                parentOperator->addChild(operatorCopy);
+            }
+
+            for (const auto& child : logicalOperator->getChildren()) {
+                LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+                childOperator->addParent(operatorCopy);
+            }
+            operatorIdToOriginalOperatorMap[operatorCopy->getId()] = operatorCopy;
+            identifyPinningLocation(operatorCopy, alternativeNode, pinnedDownStreamOperators);
         }
-
-        for (const auto& child : logicalOperator->getChildren()) {
-            LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-            childOperator->addParent(operatorCopy);
+        else {
+            NES_WARNING("Fault tolerance placement: No alternative candidates found, please spawn a new worker.");
         }
-        operatorIdToOriginalOperatorMap[operatorCopy->getId()] = operatorCopy;
-        identifyPinningLocation(operatorCopy, alternativeNode, pinnedDownStreamOperators);
     }
     auto isOperatorAPinnedDownStreamOperator =
         std::find_if(pinnedDownStreamOperators.begin(),

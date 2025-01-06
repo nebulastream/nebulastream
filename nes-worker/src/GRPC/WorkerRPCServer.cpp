@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
@@ -268,4 +269,64 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 
     return Status::OK;
 }
+
+Status WorkerRPCServer::GetLoadStatistics(ServerContext*, const LoadStatsRequest*, LoadStatsReply* reply) {
+    auto statsMap = nodeEngine->getSelfStatistics();
+    for (auto& [dqid, metrics] : statsMap) {
+        auto entry = reply->add_stats();
+        entry->set_subqueryid(dqid.getRawValue());
+        entry->set_tasks(metrics.tasks);
+        entry->set_tuples(metrics.tuples);
+        entry->set_buffers(metrics.buffers);
+        entry->set_latencysum(metrics.latencySum);
+        entry->set_queuesum(metrics.queueSum);
+        entry->set_availableglobalbuffersum(metrics.availableGlobalBufferSum);
+        entry->set_availablefixedbuffersum(metrics.availableFixedBufferSum);
+    }
+    return Status::OK;
+}
+
+Status WorkerRPCServer::UpdateNeighbors(ServerContext*,
+                                        const UpdateNeighborsRequest* request,
+                                        UpdateNeighborsReply* reply) {
+    NES_DEBUG("WorkerRPCServer::UpdateNeighbors received request with {} neighbors",
+              request->neighbors_size());
+
+    auto listener = nodeEngine->getQueryStatusListener();
+    if (!listener) {
+        NES_ERROR("UpdateNeighbors: QueryStatusListener no longer exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    if (!listener) {
+        NES_ERROR("UpdateNeighbors: Listener is not a NesWorker");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    std::vector<std::pair<WorkerId, std::string>> neighborInfo;
+    for (const auto& n : request->neighbors()) {
+        WorkerId wId(n.workerid());
+        std::string addr = n.address();
+        neighborInfo.emplace_back(wId, addr);
+    }
+
+    listener->propagateNeighbourInformation(neighborInfo);
+
+    NES_INFO("WorkerRPCServer::UpdateNeighbors: neighbors updated successfully");
+    reply->set_success(true);
+    return Status::OK;
+}
+
+
+Status WorkerRPCServer::PerformResourceHandshake(ServerContext*, const ResourceHandshakeRequest* request, ResourceHandshakeReply* reply) {
+    NES_INFO("PerformResourceHandshake: memory={}", request->memorycapacity());
+    auto workerId = WorkerId(request->workerid());
+    auto memoryCapacity = request->memorycapacity();
+    nodeEngine->addNeighbourResources(workerId, memoryCapacity);
+    reply->set_success(true);
+    return Status::OK;
+}
+
 }// namespace NES

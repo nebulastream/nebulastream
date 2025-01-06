@@ -17,6 +17,9 @@ import "WorkerLocation.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
+  // Sends a request to the coordinator to offload the query with the shared query plan id
+  rpc RequestQueryOffload (RequestQueryOffloadRequest) returns (RequestQueryOffloadResponse);
+
   // Sends a registration request for new worker to the coordinator
   rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerReply) {}
 
@@ -223,6 +226,18 @@ message EpochBarrierPropagationReply{
 }
 message GetNodesInRangeReply{
   repeated NES.Spatial.Protobuf.WorkerLocationInfo nodes = 1;
+}
+
+message RequestQueryOffloadRequest {
+  int64 sharedQueryId = 1;
+  int64 decomposedQueryId = 2;
+  int64 originWorkerId = 3;
+  int64 targetWorkerId = 4;
+}
+
+message RequestQueryOffloadResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 message SendScheduledReconnectRequest {

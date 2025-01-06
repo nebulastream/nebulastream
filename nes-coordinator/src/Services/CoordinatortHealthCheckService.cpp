@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
@@ -78,6 +79,18 @@ void CoordinatorHealthCheckService::startHealthCheck() {
         shutdownRPC->set_value(true);
         NES_DEBUG("NesCoordinator: stop health checking");
     }));
+}
+
+void CoordinatorHealthCheckService::informWorkerAboutNeighbors(WorkerId targetWorkerId, std::string targetAddress, std::vector<std::pair<WorkerId, std::string>> neighborInfo) {
+    NES_DEBUG("informWorkerAboutNeighbors: Updating neighbors for worker {}", targetWorkerId);
+
+
+    bool success = workerRPCClient->updateNeighbors(targetAddress, neighborInfo);
+    if (!success) {
+        NES_WARNING("Failed to update neighbors for worker {} at address {}", targetWorkerId, targetAddress);
+    } else {
+        NES_INFO("Successfully updated neighbors for worker {}", targetWorkerId);
+    }
 }
 
 }// namespace NES

@@ -56,6 +56,8 @@ class WatermarkProcessor {
      */
     bool isWatermarkSynchronized() const;
 
+  bool isDuplicate(SequenceNumber sequenceNumber) const;
+
   private:
     struct WatermarkBarrierComparator {
         bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2) {

@@ -272,7 +272,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
      */
-    StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
+    StringOption configPath = {CONFIG_PATH, "worker.yaml", "Path to configuration file."};
 
 #ifdef TFDEF
     BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
@@ -301,6 +301,15 @@ class WorkerConfiguration : public BaseConfiguration {
                                           "100",
                                           "Number of tuple buffers allowed in one epoch.",
                                           {std::make_shared<NumberValidation>()}};
+
+ /**
+ * @brief Number of buffers per epoch
+ * Set trimming frequency for upstream backup
+ */
+ BoolOption loadBalancing = {LOAD_BALANCING,
+                                       "false",
+                                       "Is load balancing enabled.",
+                                       {std::make_shared<BooleanValidation>()}};
 
     /**
      * @brief Configuration queryManagerMode
@@ -386,6 +395,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &sourceGatheringInterval,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
+         &loadBalancing,
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,

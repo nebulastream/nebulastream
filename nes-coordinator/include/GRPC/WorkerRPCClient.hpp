@@ -102,6 +102,8 @@ class WorkerRPCClient {
                                       const DecomposedQueryPlanPtr& decomposedQueryPlan,
                                       const CompletionQueuePtr& cq);
 
+ bool updateNeighbors(const std::string& address, const std::vector<std::pair<WorkerId, std::string>>& neighbors);
+
     /**
      * @brief unregisters a decomposed query
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves

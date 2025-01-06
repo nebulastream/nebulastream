@@ -19,4 +19,5 @@ add_source_files(nes-coordinator
         ISQPRemoveLinkEvent.cpp
         ISQPRemoveNodeEvent.cpp
         ISQPRemoveQueryEvent.cpp
+        ISQPOffloadQueryEvent.cpp
 )

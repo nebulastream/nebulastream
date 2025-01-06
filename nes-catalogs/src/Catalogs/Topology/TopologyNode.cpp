@@ -30,7 +30,9 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            uint16_t totalSlots,
                            const std::map<std::string, std::any>& properties)
     : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), totalSlots(totalSlots), occupiedSlots(0),
-      nodeProperties(properties) {}
+      nodeProperties(properties) {
+    alternativeNodeIds = std::vector<WorkerId>();
+}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
@@ -158,7 +160,9 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
     return true;
 }
 
-std::vector<WorkerId> TopologyNode::getAlternativeNodeCandidateIds() { return alternativeNodeIds; }
+std::vector<WorkerId> TopologyNode::getAlternativeNodeCandidateIds() {
+    return alternativeNodeIds;
+}
 
 void TopologyNode::setAlternativeNodeCandidate(WorkerId node) { alternativeNodeIds.emplace_back(node); }
 
@@ -190,5 +194,9 @@ void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatia
 
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
+}
+
+std::string TopologyNode::getFullRPCAddress() const {
+    return ipAddress + ":" + std::to_string(grpcPort);
 }
 }// namespace NES

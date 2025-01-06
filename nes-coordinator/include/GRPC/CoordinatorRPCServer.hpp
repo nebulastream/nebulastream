@@ -80,6 +80,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status
     RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
 
+ Status RequestQueryOffload(ServerContext* context,
+                                                 const RequestQueryOffloadRequest* request,
+                                                 RequestQueryOffloadResponse* reply) override;
     /**
      * @brief RPC Call to unregister a node
      * @param context: the server context

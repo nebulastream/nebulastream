@@ -56,7 +56,6 @@ void termFunc(int) {
 }
 
 namespace NES {
-
 constexpr WorkerId NES_COORDINATOR_ID = WorkerId(1);
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr workerConfig, Monitoring::MetricStorePtr metricStore)
@@ -460,7 +459,14 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         } else {
             workerMobilityHandler->start(parentIds);
         }
+        }
+
+    if(workerConfig->loadBalancing) {
+        decisionManagerRunning = true;
+        lastMeasurementTime = std::chrono::steady_clock::now();
+        decisionManagerThread = std::make_shared<std::thread>(&NesWorker::runDecisionManager, this);
     }
+
 
     if (workerConfig->enableStatisticOutput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
@@ -515,6 +521,151 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
 Runtime::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
+void NesWorker::runDecisionManager() {
+    NES_DEBUG("Decision Manager thread started.");
+    while (decisionManagerRunning.load()) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsedSec = std::chrono::duration<double>(now - lastMeasurementTime).count();
+
+        auto allQueryStats = nodeEngine->getQueryStatistics(true);
+        computePerSecondMetricsAndDecide(allQueryStats, elapsedSec);
+
+        lastMeasurementTime = now;
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    NES_DEBUG("Decision Manager thread stopped.");
+}
+
+void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::QueryStatistics>& localStats, double elapsedSec) {
+    // 1. Compute local per-second metrics
+    std::map<DecomposedQueryId, QueryPreviousMetrics> currentStats;
+    for (const auto& qStat : localStats) {
+        DecomposedQueryId decomposedQueryId = qStat.getSubQueryId();
+        SharedQueryId sharedQueryId = qStat.getQueryId();
+
+        uint64_t currentTasks = qStat.getProcessedTasks();
+        uint64_t currentTuples = qStat.getProcessedTuple();
+        uint64_t currentBuffers = qStat.getProcessedBuffers();
+        uint64_t currentLatencySum = qStat.getLatencySum();
+        uint64_t currentQueueSum = qStat.getQueueSizeSum();
+        uint64_t currentAvailableGlobalBufferSum = qStat.getAvailableGlobalBufferSum();
+        uint64_t currentAvailableFixedBufferSum = qStat.getAvailableFixedBufferSum();
+
+        auto it = previousMetricsMap.find(decomposedQueryId);
+        if (it == previousMetricsMap.end()) {
+            previousMetricsMap[decomposedQueryId] = {
+                currentTasks,
+                currentTuples,
+                currentBuffers,
+                currentLatencySum,
+                currentQueueSum,
+                currentAvailableGlobalBufferSum,
+                currentAvailableFixedBufferSum
+            };
+            continue;
+        }
+
+        uint64_t deltaTasks = currentTasks > it->second.tasks ? currentTasks - it->second.tasks : 0;
+        uint64_t deltaTuples = currentTuples > it->second.tuples ? currentTuples - it->second.tuples : 0;
+        uint64_t deltaBuffers = currentBuffers > it->second.buffers ? currentBuffers - it->second.buffers : 0;
+        uint64_t deltaLatency = currentLatencySum > it->second.latencySum ? currentLatencySum - it->second.latencySum : 0;
+        uint64_t deltaQueue = currentQueueSum > it->second.queueSum ? currentQueueSum - it->second.queueSum : 0;
+
+        currentStats[qStat.getSubQueryId()].tasks = deltaTasks;
+        currentStats[qStat.getSubQueryId()].tuples = deltaTuples;
+        currentStats[qStat.getSubQueryId()].buffers = deltaBuffers;
+        currentStats[qStat.getSubQueryId()].latencySum = deltaLatency;
+        currentStats[qStat.getSubQueryId()].queueSum = deltaQueue;
+        currentStats[qStat.getSubQueryId()].availableGlobalBufferSum = currentAvailableGlobalBufferSum;
+        currentStats[qStat.getSubQueryId()].availableFixedBufferSum = currentAvailableFixedBufferSum;
+
+        double tasksPerSec = elapsedSec > 0 ? deltaTasks / elapsedSec : 0;
+        double tuplesPerSec = elapsedSec > 0 ? deltaTuples / elapsedSec : 0;
+        double buffersPerSec = elapsedSec > 0 ? deltaBuffers / elapsedSec : 0;
+        double queueGrowthPerSec = elapsedSec > 0 ? deltaQueue / elapsedSec : 0;
+        double avgLatencyIncrease = deltaTasks > 0 ? (double)deltaLatency / (double)deltaTasks : (double)deltaLatency;
+
+        NES_DEBUG("Query {}:{} metrics: tasks/s={}, tuples/s={}, buffers/s={}, queueGrowth/s={}, avgLatencyInc={}",
+                  decomposedQueryId.getRawValue(),
+                  sharedQueryId.getRawValue(),
+                  tasksPerSec,
+                  tuplesPerSec,
+                  buffersPerSec,
+                  queueGrowthPerSec,
+                  avgLatencyIncrease);
+
+        it->second.tasks = currentTasks;
+        it->second.tuples = currentTuples;
+        it->second.buffers = currentBuffers;
+        it->second.latencySum = currentLatencySum;
+        it->second.queueSum = currentQueueSum;
+        it->second.availableGlobalBufferSum = currentAvailableGlobalBufferSum;
+        it->second.availableFixedBufferSum = currentAvailableFixedBufferSum;
+
+        // 2. Check if local query is overloaded
+        bool overloaded = (queueGrowthPerSec > QUEUE_SIZE_THRESHOLD) || (avgLatencyIncrease > LATENCY_THRESHOLD);
+
+        if (overloaded) {
+            NES_WARNING("Query {}:{} considered overloaded due to per-second metrics. Checking neighbors...",
+                        decomposedQueryId.getRawValue(), sharedQueryId.getRawValue());
+
+            // 3. Fetch neighbor stats and compute their load
+            auto currentNeighbors = nodeEngine->getNeighbours();
+            std::map<WorkerId, double> neighborLoadScores;
+
+            for (auto neighbor : currentNeighbors) {
+                auto neighborStats = nodeEngine->getNeighbourStatistics().at(neighbor.first);
+                double totalNeighborLoad = 0.0;
+
+                for (auto& nStat : neighborStats) {
+                    uint64_t nLatencySum = nStat.second.latencySum;
+                    uint64_t nQueueSum = nStat.second.queueSum;
+
+                    double neighborQueueContribution = (double)nQueueSum / 1000.0;
+                    double neighborLatencyContribution = (double)nLatencySum / 1000.0;
+                    totalNeighborLoad += neighborQueueContribution + neighborLatencyContribution;
+                }
+
+                // If no stats returned, assume zero load
+                if (neighborStats.empty()) {
+                    totalNeighborLoad = 0.0;
+                }
+
+                neighborLoadScores[neighbor.first] = totalNeighborLoad;
+            }
+
+            // 4. Find the best neighbor to offload to (lowest load score)
+            WorkerId bestTarget = INVALID_WORKER_NODE_ID;
+            double bestScore = MAXFLOAT;
+
+            for (auto& [nId, score] : neighborLoadScores) {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestTarget = nId;
+                }
+            }
+
+            if (bestTarget != INVALID_WORKER_NODE_ID) {
+                NES_INFO("Selected neighbor {} for offloading query {} based on load scores.", bestTarget, decomposedQueryId.getRawValue());
+
+                // 5. Offload query to bestTarget
+                bool offloadSuccess = coordinatorRpcClient->requestQueryOffload(workerId, sharedQueryId, decomposedQueryId, bestTarget);
+                if (offloadSuccess) {
+                    NES_INFO("Successfully requested offload for query {} to worker {}.", decomposedQueryId.getRawValue(), bestTarget);
+                } else {
+                    NES_ERROR("Failed to request offload for query {}.", decomposedQueryId.getRawValue());
+                }
+            } else {
+                NES_WARNING("No suitable neighbor found for offloading query {}.", decomposedQueryId.getRawValue());
+            }
+        }
+    }
+    nodeEngine->setSelfStatistics(currentStats);
+}
+
+
+
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
 
@@ -541,6 +692,9 @@ bool NesWorker::stop(bool) {
         //shut down the async queue
         completionQueue->Shutdown();
 
+        for (auto client : neighborClients) {
+            client.second.reset();
+        }
         if (rpcThread->joinable()) {
             NES_INFO("NesWorker: join rpcThread");
             rpcThread->join();
@@ -553,7 +707,10 @@ bool NesWorker::stop(bool) {
             statisticOutputThread->join();
         }
         statisticOutputThread.reset();
-
+        decisionManagerRunning = false;
+        if (decisionManagerThread && decisionManagerThread->joinable()) {
+            decisionManagerThread->join();
+        }
         return successShutdownNodeEngine;
     }
     NES_WARNING("NesWorker::stop: already stopped");
@@ -883,6 +1040,7 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 #endif
 }
 
+
 WorkerId NesWorker::getWorkerId() const { return workerId; }
 
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
@@ -892,5 +1050,41 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 }
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
+
+uint64_t NesWorker::requestResourceInfoFromNeighbor(WorkerId workerId) {
+    return nodeEngine->getNeighbourResources(workerId);
+}
+
+bool NesWorker::requestOffload(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId bestTarget) {
+    return coordinatorRpcClient->requestQueryOffload(workerId, sharedQueryId, decomposedQueryId, bestTarget);
+}
+
+bool NesWorker::propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) {
+    NES_DEBUG("NesWorker::propagateNeighbourInformation: received {} neighbors", neighbourInfo.size());
+
+    nodeEngine->clearNeighbours();
+    neighborClients.clear();
+
+    for (auto& [wid, addr] : neighbourInfo) {
+        // Add to the neighbor vector
+        nodeEngine->addNeighbour(wid);
+
+        // Create/update RPC client for this neighbor if needed
+        auto client = std::make_shared<NesRPCClient>(addr);
+        neighborClients[wid] = client;
+    }
+
+    for (auto& [wid, client] : neighborClients) {
+        bool success = client->performResourceHandshake(workerId, workerConfig->numberOfBuffersInGlobalBufferManager);
+        if (success) {
+            NES_INFO("Handshake with neighbor {} succeeded.", wid);
+        } else {
+            NES_WARNING("Handshake with neighbor {} failed.", wid);
+        }
+    }
+
+    NES_INFO("NesWorker::propagateNeighbourInformation: Successfully updated {} neighbors", neighbourInfo.size());
+    return true;
+}
 
 }// namespace NES

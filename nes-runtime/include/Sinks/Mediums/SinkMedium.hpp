@@ -202,6 +202,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t bufferCount;
 
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
+ std::function<bool(Runtime::TupleBuffer&)> duplicateDetectionCallback;
     std::function<void(uint64_t)> notifyEpochCallback;
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;

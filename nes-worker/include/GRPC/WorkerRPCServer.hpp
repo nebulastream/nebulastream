@@ -15,7 +15,9 @@
 #ifndef NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 #define NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 
+#include <Components/NesWorker.hpp>
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
@@ -61,6 +63,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
                                      const UnregisterDecomposedQueryRequest* request,
                                      UnregisterDecomposedQueryReply* reply) override;
 
+  Status UpdateNeighbors(ServerContext*,
+                                        const UpdateNeighborsRequest* request,
+                                        UpdateNeighborsReply* reply) override;
+
     Status StartDecomposedQuery(ServerContext* context,
                                 const StartDecomposedQueryRequest* request,
                                 StartDecomposedQueryReply* reply) override;
@@ -87,6 +93,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
     Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
+
+  Status GetLoadStatistics(ServerContext*, const LoadStatsRequest*, LoadStatsReply* reply) override;
+
+  Status PerformResourceHandshake(ServerContext*, const ResourceHandshakeRequest* request, ResourceHandshakeReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

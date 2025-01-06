@@ -118,7 +118,6 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
             }
         }
     }
-
     return {upstreamPinned, downstreamPinned};
 }
 

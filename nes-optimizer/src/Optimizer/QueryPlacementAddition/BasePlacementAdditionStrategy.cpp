@@ -51,6 +51,9 @@ BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecuti
 void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
                                                          const std::set<LogicalOperatorPtr>& downStreamPinnedOperators) {
 
+    if (faultTolerance == FaultToleranceType::M || faultTolerance == FaultToleranceType::AS) {
+        workerToOffload = findOffloadOperator(upStreamPinnedOperators);
+    }
     //1. Find the topology nodes that will host upstream operators
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_WORKER_ID);
@@ -101,15 +104,24 @@ bool BasePlacementAdditionStrategy::optimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     uint64_t numberOfPath = 1;
-    if (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)
+    if (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) {
         numberOfPath = 2;
+    }
+
     bool success = false;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
     while (!success) {
 
         // 1.1. Performs path selection
-        std::vector<std::vector<TopologyNodePtr>> sourceTopologyNodesInSelectedPath =
-            findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+        std::vector<std::vector<TopologyNodePtr>> sourceTopologyNodesInSelectedPath;
+        if (workerToOffload != INVALID_WORKER_NODE_ID) {
+            sourceTopologyNodesInSelectedPath = {topology->findPathThatIncludesNode(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators, workerToOffload)};
+        }
+        else {
+            sourceTopologyNodesInSelectedPath =
+   findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+        }
+
 
         for (uint64_t i = 0; i < numberOfPath; i++) {
             PathInfo pathInfo;
@@ -155,21 +167,30 @@ bool BasePlacementAdditionStrategy::optimisticPathSelection(
     return success;
 }
 
+
 bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
     uint64_t numberOfPath = 1;
-    if (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)
-        numberOfPath = 2;
+
 
     // 1. Perform path selection and if failure then use the exponential back-off and retry strategy
     while (!success) {
 
         // 1.1 Perform path selection
-        std::vector<std::vector<TopologyNodePtr>> sourceTopologyNodesInSelectedPath =
-            findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+        std::vector<std::vector<TopologyNodePtr>> sourceTopologyNodesInSelectedPath;
+        if (workerToOffload != INVALID_WORKER_NODE_ID) {
+            sourceTopologyNodesInSelectedPath = {topology->findPathThatIncludesNode(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators, workerToOffload)};
+        }
+        else {
+            sourceTopologyNodesInSelectedPath =
+   findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+            if ((faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) && sourceTopologyNodesInSelectedPath.size() > 1) {
+                numberOfPath = 2;
+            }
+        }
 
         std::set<WorkerId> nodesToLock;
 
@@ -189,6 +210,44 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
         success = lockTopologyNodes(nodesToLock);
     }
     return success;
+}
+
+WorkerId BasePlacementAdditionStrategy::findOffloadOperator(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators) {
+
+
+    if (upStreamPinnedOperators.empty()) {
+        return INVALID_WORKER_NODE_ID;
+    }
+
+    std::unordered_set<OperatorId> visited;
+    std::queue<LogicalOperatorPtr> toExplore;
+
+    for (auto& pinnedOp : upStreamPinnedOperators) {
+        toExplore.push(pinnedOp);
+    }
+
+    while (!toExplore.empty()) {
+        auto currentOp = toExplore.front();
+        toExplore.pop();
+
+        if (!visited.insert(currentOp->getId()).second) {
+            continue;
+        }
+
+        if (currentOp->hasProperty("WORKER_ID_TO_OFFLOAD")) {
+            auto offloadId = std::any_cast<WorkerId>(currentOp->getProperty("WORKER_ID_TO_OFFLOAD"));
+            return offloadId;
+        }
+
+        for (auto& parent : currentOp->getParents()) {
+            auto parentLogOp = parent->as_if<LogicalOperator>();
+            if (parentLogOp) {
+                toExplore.push(parentLogOp);
+            }
+        }
+    }
+
+    return INVALID_WORKER_NODE_ID;
 }
 
 bool BasePlacementAdditionStrategy::lockTopologyNodes(const std::set<WorkerId>& nodesToLock) {

@@ -92,7 +92,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     coordinatorHealthCheckService =
         std::make_shared<CoordinatorHealthCheckService>(topology, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
     globalQueryPlan = GlobalQueryPlan::create();
-
     z3::config cfg;
     cfg.set("timeout", 1000);
     cfg.set("model", false);
@@ -180,6 +179,14 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
+    if (coordinatorConfiguration->worker.loadBalancing) {
+        topology->setNeighborUpdateCallback([this](WorkerId wid, std::string targetAddress, std::vector<std::pair<WorkerId, std::string>> neighborInfo) {
+    this->coordinatorHealthCheckService->informWorkerAboutNeighbors(wid, targetAddress, neighborInfo);
+});
+    }
+    else {
+        topology->setNeighborUpdateCallback([](WorkerId, std::string, std::vector<std::pair<WorkerId, std::string>>) {});
+    }
     //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
@@ -402,5 +409,7 @@ void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
 Optimizer::GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
+
+CoordinatorHealthCheckServicePtr NesCoordinator::getCoordinatorHealthCheckService() const { return coordinatorHealthCheckService; };
 
 }// namespace NES

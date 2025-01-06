@@ -117,7 +117,8 @@ WorkerId Topology::registerWorker(WorkerId workerId,
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         workerIdToTopologyNode[workerId] = newTopologyNode;
         NES_DEBUG(" register node");
-        if (rootWorkerIds.empty()) {
+        auto isRoot = rootWorkerIds.empty();
+        if (isRoot) {
             NES_DEBUG(" tree is empty so this becomes new root");
             addAsRootWorkerId(workerId);
         } else {
@@ -128,9 +129,13 @@ WorkerId Topology::registerWorker(WorkerId workerId,
             }
         }
         NES_DEBUG(" topology after insert {} ", toString());
+        if (workerId != INVALID_WORKER_NODE_ID && !isRoot) {
+            informNeighborsOfNode(workerId, newTopologyNode->getGrpcAddress());
+        }
         return workerId;
     }
     NES_WARNING("Topology node with id {} already exists. Failed to register the new topology node.", workerId);
+
     return INVALID_WORKER_NODE_ID;
 }
 
@@ -182,19 +187,31 @@ bool Topology::addTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWor
         return false;
     }
 
-    auto lockedParent = workerIdToTopologyNode.at(parentWorkerId).rlock();
-    auto children = (*lockedParent)->getChildren();
-    for (const auto& child : children) {
-        if (child->as<TopologyNode>()->getId() == childWorkerId) {
-            NES_ERROR("TopologyManagerService::AddParent: parent relationship between nodes {} and {} already exists",
-                      childWorkerId,
-                      parentWorkerId);
-            return false;
+    auto success = false;
+    std::string parentAddress = "";
+    std::string childAddress = "";
+    {
+        auto lockedParent = workerIdToTopologyNode.at(parentWorkerId).rlock();
+        auto children = (*lockedParent)->getChildren();
+        for (const auto& child : children) {
+            if (child->as<TopologyNode>()->getId() == childWorkerId) {
+                NES_ERROR("TopologyManagerService::AddParent: parent relationship between nodes {} and {} already exists",
+                          childWorkerId,
+                          parentWorkerId);
+                return false;
+            }
         }
+
+        auto lockedChild = workerIdToTopologyNode.at(childWorkerId).rlock();
+        NES_INFO("Adding Node {} as child to the node {}", (*lockedChild)->toString(), (*lockedParent)->toString());
+
+        success = (*lockedParent)->addChild((*lockedChild));
+        parentAddress = (*lockedParent)->getFullRPCAddress();
+        childAddress = (*lockedChild)->getFullRPCAddress();
     }
-    auto lockedChild = workerIdToTopologyNode.at(childWorkerId).rlock();
-    NES_INFO("Adding Node {} as child to the node {}", (*lockedChild)->toString(), (*lockedParent)->toString());
-    return (*lockedParent)->addChild((*lockedChild));
+    informNeighborsOfNode(parentWorkerId, parentAddress);
+    informNeighborsOfNode(childWorkerId, childAddress);
+    return success;
 }
 
 bool Topology::unregisterWorker(WorkerId topologyNodeId) {
@@ -211,25 +228,28 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
         NES_WARNING("Removing the root node {}.", topologyNodeId);
         rootWorkerIds.erase(found);
     }
-
-    // Fetch topology node and clear parent child nodes
-    auto lockedTopologyNode = workerIdToTopologyNode.at(topologyNodeId).wlock();
-    if ((*lockedTopologyNode)->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        auto lockedLocationIndex = locationIndex.wlock();
-        if (!(*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId)) {
-            NES_ERROR("Unable to remove the topology node from the spatial index.");
-            return false;
+    std::string nodeAddress = "";
+    {
+        // Fetch topology node and clear parent child nodes
+        auto lockedTopologyNode = workerIdToTopologyNode.at(topologyNodeId).wlock();
+        if ((*lockedTopologyNode)->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
+            auto lockedLocationIndex = locationIndex.wlock();
+            if (!(*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId)) {
+                NES_ERROR("Unable to remove the topology node from the spatial index.");
+                return false;
+            }
         }
+
+        (*lockedTopologyNode)->removeAllParent();
+        (*lockedTopologyNode)->removeChildren();
+        nodeAddress = (*lockedTopologyNode)->getFullRPCAddress();
+        // ULTRA IMPORTANT COMMON SENSE: Release the lock on the object before its deletion.
+        lockedTopologyNode.unlock();
+        // Delete the object
+        workerIdToTopologyNode.erase(topologyNodeId);
+        NES_DEBUG("Successfully removed the node {}.", topologyNodeId);
     }
-
-    (*lockedTopologyNode)->removeAllParent();
-    (*lockedTopologyNode)->removeChildren();
-    // ULTRA IMPORTANT COMMON SENSE: Release the lock on the object before its deletion.
-    lockedTopologyNode.unlock();
-
-    // Delete the object
-    workerIdToTopologyNode.erase(topologyNodeId);
-    NES_DEBUG("Successfully removed the node {}.", topologyNodeId);
+    informNeighborsOfNode(topologyNodeId, nodeAddress);
     return true;
 }
 
@@ -284,14 +304,24 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
         return false;
     }
 
-    auto [lockedParentTopologyNode, lockedChildTopologyNode] =
-        folly::acquireLocked(workerIdToTopologyNode.at(parentWorkerId), workerIdToTopologyNode.at(childWorkerId));
+    bool success = false;
+    std::string parentAddress = "";
+    std::string childAddress = "";
+    {
+        auto [lockedParentTopologyNode, lockedChildTopologyNode] =
+           folly::acquireLocked(workerIdToTopologyNode.at(parentWorkerId), workerIdToTopologyNode.at(childWorkerId));
 
-    //Remove associated link property if exists
-    (*lockedParentTopologyNode)->removeLinkProperty(childWorkerId);
-    (*lockedChildTopologyNode)->removeLinkProperty(parentWorkerId);
 
-    return (*lockedParentTopologyNode)->removeChild((*lockedChildTopologyNode));
+        //Remove associated link property if exists
+        (*lockedParentTopologyNode)->removeLinkProperty(childWorkerId);
+        (*lockedChildTopologyNode)->removeLinkProperty(parentWorkerId);
+        success = (*lockedParentTopologyNode)->removeChild((*lockedChildTopologyNode));
+        parentAddress = (*lockedParentTopologyNode)->getFullRPCAddress();
+        childAddress = (*lockedChildTopologyNode)->getFullRPCAddress();
+    }
+    informNeighborsOfNode(parentWorkerId, parentAddress);
+    informNeighborsOfNode(childWorkerId, childAddress);
+    return success;
 }
 
 bool Topology::addLinkProperty(WorkerId parentWorkerId, WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS) {
@@ -526,8 +556,28 @@ void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
     currentPath.pop_back();
 }
 
+std::vector<TopologyNodePtr>
+Topology::findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                            const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators,
+                                                            WorkerId targetWorkerId)
+{
+
+    auto allPaths = findAllPathsBetween(std::vector(topologyNodesWithUpStreamPinnedOperators.begin(), topologyNodesWithUpStreamPinnedOperators.end()), std::vector(topologyNodesWithDownStreamPinnedOperators.begin(), topologyNodesWithDownStreamPinnedOperators.end()));
+
+    for (auto& path : allPaths) {
+        bool foundTarget = std::any_of(path.begin(), path.end(), [&](const TopologyNodePtr& node) {
+            return node->getId() == targetWorkerId;
+        });
+        if (foundTarget) {
+            return path;
+        }
+    }
+
+    return {};
+}
+
 void Topology::assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels) {
-    // Map from level to set of node IDs at that level
+
     std::unordered_map<int, std::set<WorkerId>> levelToNodeIds;
 
     for (const auto& [nodeId, levels] : nodeLevels) {
@@ -536,7 +586,6 @@ void Topology::assignAlternativeNodes(const std::unordered_map<WorkerId, std::se
         }
     }
 
-    // For each node, assign alternative nodes
     for (const auto& [nodeId, levels] : nodeLevels) {
         TopologyNodePtr node = workerIdToTopologyNode.at(nodeId).copy();
         std::set<WorkerId> alternativeNodeIds;
@@ -558,6 +607,7 @@ void Topology::assignAlternativeNodes(const std::unordered_map<WorkerId, std::se
         workerIdToTopologyNode[nodeId] = node;
     }
 }
+
 
 
 bool Topology::findAllDownstreamNodes(const WorkerId& startNode,
@@ -1210,4 +1260,35 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
 }
 
 WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdNextIndex++); }
+void Topology::setNeighborUpdateCallback(std::function<void(WorkerId, std::string, std::vector<std::pair<WorkerId, std::string>> neighborInfo)> callback) {
+    neighborUpdateCallback = std::move(callback);
+}
+
+void Topology::informNeighborsOfNode(WorkerId nodeId, std::string targetAddress) {
+    if (!neighborUpdateCallback) {
+        NES_DEBUG("No neighbor update callback set, skipping informNeighborsOfNode for {}", nodeId);
+        return;
+    }
+
+    std::vector<std::pair<WorkerId, std::string>> neighborInfo;
+
+    auto parentIds = getParentTopologyNodeIds(nodeId);
+    auto childIds = getChildTopologyNodeIds(nodeId);
+    auto addNeighbor = [&](WorkerId wid) {
+        auto node = getCopyOfTopologyNodeWithId(wid);
+        if (node) {
+            neighborInfo.emplace_back(wid, node->getFullRPCAddress());
+        }
+    };
+
+    for (auto pid : parentIds) {
+        addNeighbor(pid);
+    }
+    for (auto cid : childIds) {
+        addNeighbor(cid);
+    }
+    neighborUpdateCallback(nodeId, targetAddress, neighborInfo);
+}
+
+WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdCounter++); }
 }// namespace NES

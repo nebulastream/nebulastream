@@ -939,6 +939,9 @@ class DummyQueryListener : public AbstractQueryStatusListener {
     bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryId, Runtime::Execution::ExecutableQueryPlanStatus) override {
         return true;
     }
+ bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>>) override {
+     return true;
+    }
 };
 
 /**

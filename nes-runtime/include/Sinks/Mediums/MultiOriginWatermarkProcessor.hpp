@@ -73,6 +73,8 @@ class MultiOriginWatermarkProcessor {
      */
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
+ bool isDuplicate(SequenceNumber sequenceNumber, OriginId originId) const;
+
   private:
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;

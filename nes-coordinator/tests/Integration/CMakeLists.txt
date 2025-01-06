@@ -50,6 +50,8 @@ add_nes_integration_test(upstream-backup-test "UpstreamBackupTest.cpp")
 ### Active Standby  Test
 add_nes_integration_test(active-standby-test "ActiveStandbyTest.cpp")
 
+add_nes_integration_test(meerkat-test "MeerkatTest.cpp")
+
 ### Filter Push Down Test ###
 #add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")
 

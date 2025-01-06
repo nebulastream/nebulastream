@@ -17,6 +17,7 @@
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <GRPC/NesRPCClient.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -32,6 +33,9 @@ class ServerCompletionQueue;
 }// namespace grpc
 
 namespace NES {
+
+const uint64_t LATENCY_THRESHOLD = 1000;
+const uint64_t QUEUE_SIZE_THRESHOLD = 5000;
 
 class WorkerHealthCheckService;
 
@@ -188,6 +192,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
                                  DecomposedQueryId decomposedQueryId,
                                  Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
 
+ bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) override;
     /**
      * @brief Method to let the Coordinator know of errors and exceptions
      * @param workerId of the worker that handled the failed query
@@ -235,6 +240,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+ uint64_t requestResourceInfoFromNeighbor(WorkerId workerId);
+ bool requestOffload(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId bestTarget);
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -242,6 +249,9 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @return bool indicating success
      */
     bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
+
+ void runDecisionManager();
+ void computePerSecondMetricsAndDecide(const std::vector<Runtime::QueryStatistics>& stats, double elapsedSec);
 
     /**
      * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
@@ -284,6 +294,11 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     WorkerId parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
+ std::shared_ptr<std::thread> decisionManagerThread;
+ std::atomic<bool> decisionManagerRunning{false};
+ std::map<DecomposedQueryId, QueryPreviousMetrics> previousMetricsMap;
+ std::chrono::steady_clock::time_point lastMeasurementTime;
+ std::map<WorkerId, std::shared_ptr<NesRPCClient>> neighborClients;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

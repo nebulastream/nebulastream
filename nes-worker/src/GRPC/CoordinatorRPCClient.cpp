@@ -667,6 +667,31 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, 
     return softStopCompletionReply.success();
 }
 
+bool CoordinatorRPCClient::requestQueryOffload(WorkerId originWorkerId, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId targetWorkerId) {
+    RequestQueryOffloadRequest request;
+    request.set_originworkerid(originWorkerId.getRawValue());
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
+request.set_targetworkerid(targetWorkerId.getRawValue());
+    RequestQueryOffloadResponse response;
+    ClientContext context;
+
+    Status status = coordinatorStub->RequestQueryOffload(&context, request, &response);
+
+    if (!status.ok()) {
+        NES_ERROR("requestQueryOffload RPC failed with error: {}", status.error_message());
+        return false;
+    }
+
+    if (!response.success()) {
+        NES_WARNING("requestQueryOffload completed but coordinator declined with message: {}", response.message());
+        return false;
+    }
+
+    NES_INFO("requestQueryOffload success.");
+    return true;
+}
+
 bool CoordinatorRPCClient::sendReconnectPrediction(
     const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
     const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {

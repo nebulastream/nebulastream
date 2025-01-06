@@ -38,6 +38,8 @@ class AbstractQueryStatusListener {
     virtual bool notifyQueryStatusChange(SharedQueryId sharedQueryId,
                                          DecomposedQueryId decomposedQueryId,
                                          Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
+
+  virtual bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) = 0;
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 }// namespace NES

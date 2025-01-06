@@ -51,6 +51,7 @@
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES {
+struct QueryPreviousMetrics;
 class NesWorker;
 class BasePersistentSourceProperties;
 
@@ -138,6 +139,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 * @return bool indicating success
 */
     bool injectEpochBarrier(uint64_t epochBarrier, OperatorId sourceOperatorId);
+
+
     /**
      * @brief process task from task queue
      * @param bool indicating if the thread pool is still running

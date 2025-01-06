@@ -61,4 +61,7 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
     return maxWatermarkTs;
 }
 
+bool MultiOriginWatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber, OriginId originId) const {
+    return localWatermarkProcessor.at(originId.getRawValue())->isDuplicate(sequenceNumber);
+}
 }// namespace NES::Windowing
