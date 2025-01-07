@@ -65,7 +65,7 @@ std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
-    std::unordered_map<OriginId, std::vector<Execution::ExecutablePipelinePtr>> instantiatedSinksWithSourcePredecessor;
+    std::unordered_map<OriginId, std::vector<std::shared_ptr<Execution::ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
     PipelineId::Underlying pipelineIdGenerator = executableQueryPlan->pipelines.size() + PipelineId::INITIAL;
 
     for (auto& [descriptor, predecessors] : executableQueryPlan->sinks)

@@ -18,5 +18,5 @@
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
-Runtime::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan);
+std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> apply(const PipelineQueryPlanPtr& pipelineQueryPlan);
 }
