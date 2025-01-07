@@ -29,15 +29,13 @@ namespace NES::QueryCompilation
 class QueryCompilationResult
 {
 public:
-    static std::shared_ptr<QueryCompilationResult> create(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> qep, Timer<>&& timer);
+    QueryCompilationResult(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan, Timer<> timer);
 
     std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> takeExecutableQueryPlan();
     [[nodiscard]] uint64_t getCompilationTimeMilli() const;
 
 private:
-    explicit QueryCompilationResult(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan, Timer<> timer);
     std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan;
     Timer<> timer;
 };
-using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 }
