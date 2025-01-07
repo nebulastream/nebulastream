@@ -24,7 +24,7 @@ namespace NES::QueryCompilation
 
 ExecutableOperator::ExecutableOperator(
     OperatorId id,
-    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+    std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
     : Operator(id)
     , UnaryOperator(id)
@@ -34,7 +34,7 @@ ExecutableOperator::ExecutableOperator(
 }
 
 std::shared_ptr<Operator> ExecutableOperator::create(
-    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+    std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
 {
     return std::make_shared<ExecutableOperator>(

@@ -47,5 +47,4 @@ protected:
     virtual std::ostream& toString(std::ostream& os) const = 0;
 };
 
-using ExecutablePipelineStagePtr = std::unique_ptr<ExecutablePipelineStage>;
 }

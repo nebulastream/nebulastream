@@ -66,8 +66,4 @@ struct ExecutableQueryPlan
     std::vector<Sink> sinks;
     std::vector<Source> sources;
 };
-
-using ExecutableQueryPlanPtr = std::unique_ptr<ExecutableQueryPlan>;
-using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
-
 }
