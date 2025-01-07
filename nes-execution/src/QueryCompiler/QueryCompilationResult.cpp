@@ -21,10 +21,6 @@
 namespace NES::QueryCompilation
 {
 
-QueryCompilationResultPtr QueryCompilationResult::create(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> qep, Timer<>&& timer)
-{
-    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(qep), std::move(timer)));
-}
 QueryCompilationResult::QueryCompilationResult(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan, Timer<> timer)
     : executableQueryPlan(std::move(executableQueryPlan)), timer(std::move(timer))
 {

@@ -42,7 +42,7 @@ QueryCompiler::QueryCompiler(
 {
 }
 
-std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request)
+QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request)
 {
     NES_INFO("Compile Query with Nautilus");
 
@@ -79,6 +79,6 @@ std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(const QueryC
     timer.snapshot("AfterNautilusCompilationPhase");
 
     auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan);
-    return QueryCompilationResult::create(std::move(executableQueryPlan), std::move(timer));
+    return {std::move(executableQueryPlan), std::move(timer)};
 }
 }
