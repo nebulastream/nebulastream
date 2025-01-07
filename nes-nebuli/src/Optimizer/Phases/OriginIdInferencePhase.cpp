@@ -43,7 +43,7 @@ DecomposedQueryPlanPtr OriginIdInferencePhase::execute(DecomposedQueryPlanPtr de
 }
 
 void OriginIdInferencePhase::performInference(
-    std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorPtr> rootOperators)
+    std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<std::shared_ptr<Operator>> rootOperators)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();

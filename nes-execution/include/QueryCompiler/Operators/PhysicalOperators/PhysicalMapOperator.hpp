@@ -30,7 +30,7 @@ public:
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
 
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
     /**
      * @brief Returns the function of this map operator

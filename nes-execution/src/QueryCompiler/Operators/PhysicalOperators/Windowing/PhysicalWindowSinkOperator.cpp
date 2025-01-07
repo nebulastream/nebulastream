@@ -40,7 +40,7 @@ std::string PhysicalWindowSinkOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalWindowSinkOperator::copy()
+std::shared_ptr<Operator> PhysicalWindowSinkOperator::copy()
 {
     return create(id, inputSchema, outputSchema, windowDefinition);
 }

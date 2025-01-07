@@ -102,7 +102,7 @@ public:
     static Windowing::WatermarkStrategyDescriptorPtr
     deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
 
-    static void serializeInputSchema(const OperatorPtr& operatorNode, SerializableOperator& serializedOperator);
+    static void serializeInputSchema(const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator);
 
     static void deserializeInputSchema(LogicalOperatorPtr operatorNode, const SerializableOperator& serializedOperator);
 

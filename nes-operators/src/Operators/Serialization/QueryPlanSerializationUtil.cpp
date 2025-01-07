@@ -28,7 +28,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
 {
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan.toString());
-    std::vector<OperatorPtr> rootOperators = queryPlan.getRootOperators();
+    std::vector<std::shared_ptr<Operator>> rootOperators = queryPlan.getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     ///Serialize Query Plan operators
@@ -65,8 +65,8 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializedQueryPlan->DebugString());
-    std::vector<OperatorPtr> rootOperators;
-    std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
+    std::vector<std::shared_ptr<Operator>> rootOperators;
+    std::map<uint64_t, std::shared_ptr<Operator>> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())

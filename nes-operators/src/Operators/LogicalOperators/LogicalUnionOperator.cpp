@@ -87,7 +87,7 @@ bool LogicalUnionOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalUnionOperator::copy()
+std::shared_ptr<Operator> LogicalUnionOperator::copy()
 {
     auto copy = std::make_shared<LogicalUnionOperator>(id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
@@ -117,7 +117,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 
 void LogicalUnionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
     ///Infer query signatures for child operators

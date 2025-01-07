@@ -60,7 +60,7 @@ std::string PhysicalInferModelOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalInferModelOperator::copy()
+std::shared_ptr<Operator> PhysicalInferModelOperator::copy()
 {
     auto result = create(id, inputSchema, outputSchema, model, inputFields, outputFields);
     result->addAllProperties(properties);

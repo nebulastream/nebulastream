@@ -40,7 +40,7 @@ std::string PhysicalDemultiplexOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalDemultiplexOperator::copy()
+std::shared_ptr<Operator> PhysicalDemultiplexOperator::copy()
 {
     return create(id, inputSchema);
 }

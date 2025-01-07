@@ -27,7 +27,7 @@ public:
     PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
     /**
    * @brief get the limit.

@@ -31,9 +31,9 @@ public:
      * @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers.
      * @param executablePipelineStage the executable pipeline stage
      * @param operatorHandlers a list of operator handlers
-     * @return OperatorPtr
+     * @return std::shared_ptr<Operator>
      */
-    static OperatorPtr create(
+    static std::shared_ptr<Operator> create(
         Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
         std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
@@ -50,7 +50,7 @@ public:
      * @return std::vector<Runtime::Execution::OperatorHandlerPtr>
      */
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

@@ -29,7 +29,6 @@ namespace NES
 {
 
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -47,23 +46,23 @@ class DecomposedQueryPlan
 {
 public:
     explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId);
-    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators);
+    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<std::shared_ptr<Operator>> rootOperators);
 
     /// Remove the operator with given id as the root
     bool removeAsRootOperator(OperatorId rootOperatorId);
-    void addRootOperator(OperatorPtr newRootOperator);
+    void addRootOperator(std::shared_ptr<Operator> newRootOperator);
 
     /// Replaces a particular root operator with a new one
-    bool replaceRootOperator(const OperatorPtr& oldRoot, const OperatorPtr& newRoot);
+    bool replaceRootOperator(const std::shared_ptr<Operator>& oldRoot, const std::shared_ptr<Operator>& newRoot);
 
     /// Appends an operator to the query plan and make the new operator as root
-    void appendOperatorAsNewRoot(const OperatorPtr& operatorNode);
+    void appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode);
 
     [[nodiscard]] bool hasOperatorWithId(OperatorId operatorId) const;
-    [[nodiscard]] OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
+    [[nodiscard]] std::shared_ptr<Operator> getOperatorWithOperatorId(OperatorId operatorId) const;
 
-    [[nodiscard]] std::vector<OperatorPtr> getRootOperators() const;
-    [[nodiscard]] std::vector<OperatorPtr> getLeafOperators() const;
+    [[nodiscard]] std::vector<std::shared_ptr<Operator>> getRootOperators() const;
+    [[nodiscard]] std::vector<std::shared_ptr<Operator>> getLeafOperators() const;
 
     template <typename LogicalSourceType>
     [[nodiscard]] std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
@@ -82,7 +81,7 @@ public:
     }
     [[nodiscard]] std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
-    [[nodiscard]] std::unordered_set<OperatorPtr> getAllOperators() const;
+    [[nodiscard]] std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
 
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
@@ -123,6 +122,7 @@ public:
 private:
     QueryId queryId;
     WorkerId workerId;
-    std::vector<OperatorPtr> rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
+    std::vector<std::shared_ptr<Operator>>
+        rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };
 }
