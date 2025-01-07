@@ -33,7 +33,7 @@ public:
      * @brief copies the current operator node
      * @return a copy of this node
      */
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
     /**
      * @brief compares this operator node with another

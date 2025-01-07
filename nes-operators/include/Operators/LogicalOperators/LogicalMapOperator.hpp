@@ -45,7 +45,7 @@ public:
     void inferStringSignature() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

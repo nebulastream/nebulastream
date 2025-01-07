@@ -60,10 +60,10 @@ bool Operator::hasMultipleParents() const
     return !getParents().empty() && getParents().size() > 1;
 }
 
-OperatorPtr Operator::duplicate()
+std::shared_ptr<Operator> Operator::duplicate()
 {
     NES_INFO("Operator: Create copy of the operator");
-    const OperatorPtr copyOperator = copy();
+    const std::shared_ptr<Operator> copyOperator = copy();
 
     NES_DEBUG("Operator: copy all parents");
     for (const auto& parent : getParents())
@@ -85,10 +85,10 @@ OperatorPtr Operator::duplicate()
     return copyOperator;
 }
 
-OperatorPtr Operator::getDuplicateOfParent(const OperatorPtr& operatorNode)
+std::shared_ptr<Operator> Operator::getDuplicateOfParent(const std::shared_ptr<Operator>& operatorNode)
 {
     NES_DEBUG("Operator: create copy of the input operator");
-    const OperatorPtr& copyOfOperator = operatorNode->copy();
+    const std::shared_ptr<Operator>& copyOfOperator = operatorNode->copy();
     if (operatorNode->getParents().empty())
     {
         NES_TRACE("Operator: No ancestor of the input node. Returning the copy of the input operator");
@@ -104,10 +104,10 @@ OperatorPtr Operator::getDuplicateOfParent(const OperatorPtr& operatorNode)
     return copyOfOperator;
 }
 
-OperatorPtr Operator::getDuplicateOfChild(const OperatorPtr& operatorNode)
+std::shared_ptr<Operator> Operator::getDuplicateOfChild(const std::shared_ptr<Operator>& operatorNode)
 {
     NES_DEBUG("Operator: create copy of the input operator");
-    OperatorPtr copyOfOperator = operatorNode->copy();
+    std::shared_ptr<Operator> copyOfOperator = operatorNode->copy();
     if (operatorNode->getChildren().empty())
     {
         NES_TRACE("Operator: No children of the input node. Returning the copy of the input operator");

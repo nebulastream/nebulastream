@@ -61,9 +61,9 @@ bool LogicalBinaryOperator::inferSchema()
     return true;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) const
+std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) const
 {
-    std::vector<OperatorPtr> operators;
+    std::vector<std::shared_ptr<Operator>> operators;
     for (const auto& child : getChildren())
     {
         auto childOperator = NES::Util::as<Operator>(child);
@@ -75,12 +75,12 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
     return operators;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() const
+std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getLeftOperators() const
 {
     return getOperatorsBySchema(getLeftInputSchema());
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const
+std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getRightOperators() const
 {
     return getOperatorsBySchema(getRightInputSchema());
 }

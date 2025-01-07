@@ -64,7 +64,7 @@ bool LogicalWindowOperator::equal(NodePtr const& rhs) const
     return false;
 }
 
-OperatorPtr LogicalWindowOperator::copy()
+std::shared_ptr<Operator> LogicalWindowOperator::copy()
 {
     auto copy = std::make_shared<LogicalWindowOperator>(windowDefinition, id);
     copy->setOriginId(originId);
@@ -154,7 +154,7 @@ bool LogicalWindowOperator::inferSchema()
 
 void LogicalWindowOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators

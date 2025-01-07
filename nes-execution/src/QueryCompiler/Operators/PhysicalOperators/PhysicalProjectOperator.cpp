@@ -49,7 +49,7 @@ std::string PhysicalProjectOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalProjectOperator::copy()
+std::shared_ptr<Operator> PhysicalProjectOperator::copy()
 {
     auto result = create(id, inputSchema, outputSchema, getFunctions());
     result->addAllProperties(properties);

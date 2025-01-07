@@ -26,16 +26,16 @@ public:
      * @brief Sets the root operator of an pipeline.
      * @param rootOperator
      */
-    void setRootOperator(Operators::OperatorPtr rootOperator);
+    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
 
     /**
      * @brief Returns the root operator of an pipeline
      * @return operator
      */
-    Operators::OperatorPtr getRootOperator() const;
+    std::shared_ptr<Operators::Operator> getRootOperator() const;
 
 private:
-    Operators::OperatorPtr rootOperator;
+    std::shared_ptr<Operators::Operator> rootOperator;
 };
 
 }

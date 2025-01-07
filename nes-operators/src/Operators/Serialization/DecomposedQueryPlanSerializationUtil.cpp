@@ -27,7 +27,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     const DecomposedQueryPlan& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
 {
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan.toString());
-    std::vector<OperatorPtr> rootOperators = decomposedQueryPlan.getRootOperators();
+    std::vector<std::shared_ptr<Operator>> rootOperators = decomposedQueryPlan.getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     ///Serialize Query Plan operators
@@ -63,8 +63,8 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     const NES::SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
 {
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializableDecomposedQueryPlan->DebugString());
-    std::vector<OperatorPtr> rootOperators;
-    std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
+    std::vector<std::shared_ptr<Operator>> rootOperators;
+    std::map<uint64_t, std::shared_ptr<Operator>> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap())

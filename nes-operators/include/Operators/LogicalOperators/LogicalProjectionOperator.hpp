@@ -37,7 +37,7 @@ public:
     void inferStringSignature() override;
 
     bool inferSchema() override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

@@ -154,7 +154,7 @@ std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const
     return successorPipelines;
 }
 
-void OperatorPipeline::prependOperator(OperatorPtr newRootOperator)
+void OperatorPipeline::prependOperator(std::shared_ptr<Operator> newRootOperator)
 {
     PRECONDITION(this->isOperatorPipeline() || !this->hasOperators(), "Sink and Source pipelines can have more then one operator");
     if (newRootOperator->hasProperty("LogicalOperatorId"))

@@ -34,12 +34,12 @@ DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : q
 {
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<std::shared_ptr<Operator>> rootOperators)
     : queryId(queryId), workerId(workerId), rootOperators(std::move(rootOperators))
 {
 }
 
-void DecomposedQueryPlan::addRootOperator(OperatorPtr newRootOperator)
+void DecomposedQueryPlan::addRootOperator(std::shared_ptr<Operator> newRootOperator)
 {
     rootOperators.emplace_back(newRootOperator);
 }
@@ -60,16 +60,16 @@ bool DecomposedQueryPlan::removeAsRootOperator(OperatorId rootOperatorId)
     return true;
 }
 
-std::vector<OperatorPtr> DecomposedQueryPlan::getRootOperators() const
+std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getRootOperators() const
 {
     return rootOperators;
 }
 
-std::vector<OperatorPtr> DecomposedQueryPlan::getLeafOperators() const
+std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
-    std::vector<OperatorPtr> leafOperators;
+    std::vector<std::shared_ptr<Operator>> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
@@ -130,7 +130,7 @@ bool DecomposedQueryPlan::hasOperatorWithId(OperatorId operatorId) const
     return false;
 }
 
-OperatorPtr DecomposedQueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const
+std::shared_ptr<Operator> DecomposedQueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const
 {
     NES_DEBUG("Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators)
@@ -152,7 +152,7 @@ OperatorPtr DecomposedQueryPlan::getOperatorWithOperatorId(OperatorId operatorId
     return nullptr;
 }
 
-bool DecomposedQueryPlan::replaceRootOperator(const OperatorPtr& oldRoot, const OperatorPtr& newRoot)
+bool DecomposedQueryPlan::replaceRootOperator(const std::shared_ptr<Operator>& oldRoot, const std::shared_ptr<Operator>& newRoot)
 {
     for (auto& rootOperator : rootOperators)
     {
@@ -166,7 +166,7 @@ bool DecomposedQueryPlan::replaceRootOperator(const OperatorPtr& oldRoot, const 
     return false;
 }
 
-void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
+void DecomposedQueryPlan::appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode)
 {
     NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
@@ -180,10 +180,10 @@ void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNod
     rootOperators.push_back(operatorNode);
 }
 
-std::unordered_set<OperatorPtr> DecomposedQueryPlan::getAllOperators() const
+std::unordered_set<std::shared_ptr<Operator>> DecomposedQueryPlan::getAllOperators() const
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<OperatorPtr> visitedOperators;
+    std::unordered_set<std::shared_ptr<Operator>> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
@@ -207,7 +207,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
 {
     NES_INFO("DecomposedQueryPlan: make copy.");
     /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
-    std::map<OperatorId, OperatorPtr> operatorIdToOperatorMap;
+    std::map<OperatorId, std::shared_ptr<Operator>> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty())
     {
@@ -269,7 +269,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
         }
     }
 
-    std::vector<OperatorPtr> duplicateRootOperators;
+    std::vector<std::shared_ptr<Operator>> duplicateRootOperators;
     for (const auto& rootOperator : rootOperators)
     {
         NES_TRACE("DecomposedQueryPlan: Finding the operator with same id in the map.");

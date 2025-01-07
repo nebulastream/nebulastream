@@ -139,6 +139,7 @@ private:
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr
+    addBinaryOperatorAndUpdateSource(std::shared_ptr<Operator> operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
 }

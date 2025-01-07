@@ -29,7 +29,7 @@ public:
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     NodeFunctionPtr getPredicate();
 
 protected:

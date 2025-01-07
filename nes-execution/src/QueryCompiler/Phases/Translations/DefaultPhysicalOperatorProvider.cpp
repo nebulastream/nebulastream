@@ -224,8 +224,8 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
     operatorNode->replace(physicalMapOperator);
 }
 
-OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
-    const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<OperatorPtr> children)
+std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
+    const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 

@@ -22,7 +22,7 @@ namespace NES::QueryCompilation
 class NautilusPipelineOperator final : public UnaryOperator
 {
 public:
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();

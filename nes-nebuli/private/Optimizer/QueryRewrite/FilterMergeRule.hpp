@@ -25,9 +25,6 @@ namespace NES
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
-
 class LogicalSelectionOperator;
 using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
 }
