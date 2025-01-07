@@ -12,7 +12,7 @@
 
 add_source_files(nes-execution
         PhysicalOperatorPipeline.cpp
-        InterpreterPipelineProvider.cpp
+        InterpretationPipelineProvider.cpp
         CompilationPipelineProvider.cpp
         CompiledExecutablePipelineStage.cpp
 )
