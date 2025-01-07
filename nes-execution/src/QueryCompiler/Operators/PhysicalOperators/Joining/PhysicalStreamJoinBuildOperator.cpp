@@ -44,7 +44,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
 {
 }
 
-OperatorPtr PhysicalStreamJoinBuildOperator::copy()
+std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::copy()
 {
     auto result = std::make_shared<PhysicalStreamJoinBuildOperator>(
         inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, timeStampField, buildSide, id);

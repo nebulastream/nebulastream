@@ -49,7 +49,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
     std::vector<std::shared_ptr<SourceNameLogicalOperator>> sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
 
     /// Compute a map of all blocking operators in the query plan
-    std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
+    std::unordered_map<OperatorId, std::shared_ptr<Operator>> blockingOperators;
     if (expandSourceOnly)
     {
         /// Add downstream operators of the source operators as blocking operator

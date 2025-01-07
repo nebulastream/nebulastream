@@ -68,7 +68,8 @@ public:
 private:
     explicit OriginIdInferencePhase();
 
-    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorPtr> rootOperators);
+    void performInference(
+        std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<std::shared_ptr<Operator>> rootOperators);
 };
 }
 }

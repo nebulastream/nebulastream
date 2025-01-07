@@ -25,9 +25,6 @@ namespace NES
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
-
 class LogicalSelectionOperator;
 using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
 }
@@ -79,7 +76,7 @@ public:
 private:
     /**
      * @brief Given a node, check if the parent or the child is a filter.
-     * @param OperatorPtr: the node to be check
+     * @param std::shared_ptr<Operator>: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
     static std::vector<LogicalSelectionOperatorPtr> getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& firstFilter);

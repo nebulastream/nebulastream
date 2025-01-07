@@ -20,7 +20,6 @@ namespace NES
 
 class Query;
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 
 class FunctionItem;
 

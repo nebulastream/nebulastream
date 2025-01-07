@@ -36,7 +36,7 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan)
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
     std::set<LogicalSelectionOperatorPtr> filterOperatorsSet;
-    for (const OperatorPtr& rootOperator : rootOperators)
+    for (const std::shared_ptr<Operator>& rootOperator : rootOperators)
     {
         auto filters = rootOperator->getNodesByType<LogicalSelectionOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());

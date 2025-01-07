@@ -50,7 +50,7 @@ std::vector<NodePtr> PlanIterator::snapshot()
     return nodes;
 }
 
-PlanIterator::Iterator::Iterator(const std::vector<OperatorPtr>& rootOperators)
+PlanIterator::Iterator::Iterator(const std::vector<std::shared_ptr<Operator>>& rootOperators)
 {
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--)
     {

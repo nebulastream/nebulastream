@@ -34,7 +34,7 @@ public:
      * @return  std::vector<NodeFunctionPtr>
      */
     std::vector<NodeFunctionPtr> getFunctions();
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

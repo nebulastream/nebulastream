@@ -43,7 +43,7 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 

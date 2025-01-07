@@ -16,12 +16,12 @@
 
 namespace NES::Runtime::Execution
 {
-Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const
+std::shared_ptr<Operators::Operator> PhysicalOperatorPipeline::getRootOperator() const
 {
     return rootOperator;
 }
 
-void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator)
+void PhysicalOperatorPipeline::setRootOperator(std::shared_ptr<Operators::Operator> rootOperator)
 {
     this->rootOperator = rootOperator;
 }

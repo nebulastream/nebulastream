@@ -36,7 +36,6 @@ class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;

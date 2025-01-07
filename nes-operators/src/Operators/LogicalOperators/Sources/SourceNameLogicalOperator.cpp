@@ -61,7 +61,7 @@ bool SourceNameLogicalOperator::inferSchema()
     return true;
 }
 
-OperatorPtr SourceNameLogicalOperator::copy()
+std::shared_ptr<Operator> SourceNameLogicalOperator::copy()
 {
     auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);

@@ -44,7 +44,7 @@ QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan)
     return queryPlan;
 }
 
-OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode)
+std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::shared_ptr<Operator>& operatorNode)
 {
     /// Fetch the new source name and input schema for the as operator
     auto renameSourceOperator = NES::Util::as<RenameSourceOperator>(operatorNode);

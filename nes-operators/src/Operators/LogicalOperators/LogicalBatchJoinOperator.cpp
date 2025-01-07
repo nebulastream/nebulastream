@@ -142,7 +142,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalBatchJoinOperator::copy()
+std::shared_ptr<Operator> LogicalBatchJoinOperator::copy()
 {
     auto copy = std::make_shared<LogicalBatchJoinOperator>(batchJoinDefinition, id);
     copy->setLeftInputSchema(leftInputSchema);
@@ -164,7 +164,7 @@ bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const
 
 void LogicalBatchJoinOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
     ///Infer query signatures for child operators

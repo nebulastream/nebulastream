@@ -1188,7 +1188,8 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
     }
 }
 
-void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operatorNode, SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::serializeInputSchema(
+    const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
     if (!NES::Util::instanceOf<BinaryOperator>(operatorNode))

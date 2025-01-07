@@ -55,6 +55,6 @@ TEST_F(QueryPlanTest, testLeafOperators)
     auto op2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op2);
 
-    std::vector<OperatorPtr> leafOptrs = queryPlan->getLeafOperators();
+    std::vector<std::shared_ptr<Operator>> leafOptrs = queryPlan->getLeafOperators();
     EXPECT_TRUE(std::find(leafOptrs.begin(), leafOptrs.end(), op1) != leafOptrs.end());
 }

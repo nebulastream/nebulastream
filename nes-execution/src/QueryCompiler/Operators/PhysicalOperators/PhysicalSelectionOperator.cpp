@@ -49,7 +49,7 @@ std::string PhysicalSelectionOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalSelectionOperator::copy()
+std::shared_ptr<Operator> PhysicalSelectionOperator::copy()
 {
     auto result = create(id, inputSchema, outputSchema, getPredicate());
     result->addAllProperties(properties);

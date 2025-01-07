@@ -40,7 +40,7 @@ std::string PhysicalSliceMergingOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalSliceMergingOperator::copy()
+std::shared_ptr<Operator> PhysicalSliceMergingOperator::copy()
 {
     return create(id, inputSchema, outputSchema, windowDefinition);
 }
