@@ -35,6 +35,8 @@
 
 #include <Execution/Operators/MEOS/Meos.hpp>
 
+#include <nlohmann/json.hpp> 
+
 struct InputValue {
     uint64_t timestamp;
     uint64_t id;
@@ -55,6 +57,26 @@ struct InputValue {
 
 namespace NES {
 using namespace Configurations;
+
+void exportToJson(const std::vector<NES::Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
+                  const std::string& outputPath) {
+    nlohmann::json jsonData = nlohmann::json::array();
+    for (const auto& buffer : actualBuffers) {
+        size_t numTuples = buffer.getNumberOfTuples();
+        for (size_t i = 0; i < numTuples; ++i) {
+            auto tuple = buffer[i];
+            // Adjust fields as needed
+            nlohmann::json row;
+            row["window_start"] = tuple[0].read<uint64_t>();
+            row["window_end"]   = tuple[1].read<uint64_t>();
+            row["speed_sum"]    = tuple[2].read<double>();
+            jsonData.push_back(row);
+        }
+    }
+    std::ofstream outFile(outputPath);
+    outFile << jsonData.dump(2);
+    outFile.close();
+}
 
 class ReadSNCB : public Testing::BaseIntegrationTest,
                    public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::string>> {
@@ -149,6 +171,7 @@ TEST_F(ReadSNCB, testReadCSV) {
                     tuple[2].read<double>()); // speed            
             }
         }
+        exportToJson(actualBuffers, "sncb_output.json");
 
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =

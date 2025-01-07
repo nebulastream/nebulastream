@@ -158,7 +158,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         .joinWith(weatherQuery)
         .where(Attribute("timestamp") ==  Attribute("weather$timestamp"))  // Join on the mapped timestamp
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
-        .filter(Attribute("timestamp") > 0)
+        .filter(readT(Attribute("weather$timestamp"), Attribute("weather$gps_lat"), Attribute("weather$gps_long")) == 1)
         .project(Attribute("timestamp"),Attribute("device_id"), Attribute("gps_speed"), Attribute("adjusted_speed_limit"));
 
 

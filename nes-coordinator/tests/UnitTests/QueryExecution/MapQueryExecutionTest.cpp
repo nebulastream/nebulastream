@@ -140,6 +140,14 @@ class MapQueryExecutionTest
                                1);
 
     }
+    static auto createAtworkshopTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadMeosTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$tpointatsworkshop"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "tpointatsworkshop"},
+                               1);
+
+    }
 
     static auto createDistanceTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
@@ -195,7 +203,10 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return teintersects(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "tpointatstbox") {
         return tpointatstbox(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
-    } else if (expression == "distancetpointstbox") {
+    } else if (expression == "pointatsworkshop") {
+        return tpointatsworkshop(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+
+    }else if (expression == "distancetpointstbox") {
         return distancetpointstbox(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else if (expression == "tedwithin") {
          return tedwithin(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
@@ -353,6 +364,7 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createRead3TestData(),
                                           MapQueryExecutionTest::createReadmeosTestData(),
                                           MapQueryExecutionTest::createAtStBoxTestData(),
+                                          MapQueryExecutionTest::createAtworkshopTestData(),
                                           MapQueryExecutionTest::createDistanceTestData(),
                                           MapQueryExecutionTest::createTdwithTestData(),
                                           MapQueryExecutionTest::createseintersectsTestData(),

@@ -34,6 +34,8 @@
 #include <gtest/gtest.h>
 
 #include <Execution/Operators/MEOS/Meos.hpp>
+#include <nlohmann/json.hpp> 
+
 
 struct InputValue {
     uint64_t timestamp;
@@ -56,6 +58,32 @@ struct InputValue {
 
 namespace NES {
 using namespace Configurations;
+
+void exportToJson(const std::vector<NES::Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
+                  const std::string& outputPath) {
+    nlohmann::json jsonData = nlohmann::json::array();
+    for (const auto& buffer : actualBuffers) {
+        size_t numTuples = buffer.getNumberOfTuples();
+        for (size_t i = 0; i < numTuples; ++i) {
+            auto tuple = buffer[i];
+            // Adjust fields as needed
+            nlohmann::json row;
+            row["timestamp"] = tuple[0].read<uint64_t>();
+            row["id"]        = tuple[1].read<uint64_t>();
+            row["Vbat"]      = tuple[2].read<double>();
+            row["speed"]     = tuple[3].read<double>();
+            row["latitude"]  = tuple[4].read<double>();
+            row["longitude"] = tuple[5].read<double>();
+            row["workshop_latitude"]  = tuple[6].read<double>();
+            row["workshop_longitude"] = tuple[7].read<double>();
+
+            jsonData.push_back(row);
+        }
+    }
+    std::ofstream outFile(outputPath);
+    outFile << jsonData.dump(2);
+    outFile.close();
+}
 
 class ReadSNCB : public Testing::BaseIntegrationTest,
                    public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::string>> {
@@ -206,6 +234,9 @@ TEST_F(ReadSNCB, testReadCSV) {
                     tuple[7].read<double>());     // workshop longitude
             }
         }
+
+        // Export the actual output to a JSON file
+        exportToJson(actualBuffers, "query5.json");
 
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =

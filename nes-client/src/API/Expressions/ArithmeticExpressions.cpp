@@ -95,6 +95,10 @@ ExpressionNodePtr tpointatstbox(const ExpressionNodePtr& left, const ExpressionN
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "tpointatstbox", {left, middle, right});
 } 
 
+ExpressionNodePtr tpointatsworkshop(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "tpointatsworkshop", {left, middle, right});
+} 
+
 ExpressionNodePtr distancetpointstbox(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "distancetpointstbox", {left, middle, right});
 }
@@ -258,6 +262,10 @@ ExpressionNodePtr teintersects(ExpressionItem left, ExpressionItem middle, Expre
 
 ExpressionNodePtr tpointatstbox(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
     return tpointatstbox(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+}
+
+ExpressionNodePtr tpointatsworkshop(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
+    return tpointatsworkshop(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
 }
 
 ExpressionNodePtr distancetpointstbox(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {

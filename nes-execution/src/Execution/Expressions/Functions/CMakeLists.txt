@@ -48,5 +48,6 @@
          SIntersetcsExpression.cpp
          TedwithinExpression.cpp
          MeosAtStboxExpression.cpp
+         MeosAtWorkshopExpression.cpp
          MeosDistancePointSTBoxExpression.cpp
          )
