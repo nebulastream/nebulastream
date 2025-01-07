@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Execution/Pipelines/InterpreterPipelineProvider.hpp>
+#include <Execution/Pipelines/InterpretationPipelineProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
@@ -26,10 +26,10 @@ namespace NES::Runtime::Execution
 
 std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider()
 {
-    return std::make_unique<InterpreterPipelineProvider>();
+    return std::make_unique<InterpretationPipelineProvider>();
 }
 
-std::unique_ptr<ExecutablePipelineStage> InterpreterPipelineProvider::create(
+std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(
     std::shared_ptr<PhysicalOperatorPipeline> pipeline,
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options& options)
