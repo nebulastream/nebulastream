@@ -42,37 +42,37 @@ public:
 protected:
     void process(
         const PipelineQueryPlanPtr& pipeline,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         const OperatorPipelinePtr& currentPipeline,
-        const OperatorPtr& currentOperator);
+        const std::shared_ptr<Operator>& currentOperator);
     void processSink(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         const OperatorPipelinePtr& currentPipeline,
         const SinkLogicalOperator& currentOperator);
     static void processSource(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         OperatorPipelinePtr currentPipeline,
         const std::shared_ptr<SourceDescriptorLogicalOperator>& sourceOperator);
     void processMultiplex(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         OperatorPipelinePtr currentPipeline,
         const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processDemultiplex(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         OperatorPipelinePtr currentPipeline,
         const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processFusibleOperator(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         const OperatorPipelinePtr& currentPipeline,
         const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processPipelineBreakerOperator(
         const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
         const OperatorPipelinePtr& currentPipeline,
         const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
 

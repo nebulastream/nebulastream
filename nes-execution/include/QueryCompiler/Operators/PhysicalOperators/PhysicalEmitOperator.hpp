@@ -47,7 +47,7 @@ public:
      */
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
 
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

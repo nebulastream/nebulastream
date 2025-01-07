@@ -31,7 +31,6 @@ namespace NES
 {
 
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -42,10 +41,10 @@ class QueryPlan
 {
 public:
     QueryPlan() = default;
-    explicit QueryPlan(OperatorPtr rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators);
-    static QueryPlanPtr create(OperatorPtr rootOperator);
-    static QueryPlanPtr create(QueryId queryId, std::vector<OperatorPtr> rootOperators);
+    explicit QueryPlan(std::shared_ptr<Operator> rootOperator);
+    explicit QueryPlan(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
+    static QueryPlanPtr create(std::shared_ptr<Operator> rootOperator);
+    static QueryPlanPtr create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
 
     template <typename LogicalSourceType>
     std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
@@ -65,17 +64,17 @@ public:
 
     std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
-    void appendOperatorAsNewRoot(const OperatorPtr& operatorNode);
+    void appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode);
 
     std::string toString() const;
 
     /// in certain stages the sink operators might not be the root operators
-    std::vector<OperatorPtr> getRootOperators() const;
+    std::vector<std::shared_ptr<Operator>> getRootOperators() const;
 
     /// add subQuery's rootnode into the current node for merging purpose.
-    void addRootOperator(const OperatorPtr& newRootOperator);
+    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator);
 
-    void removeAsRootOperator(OperatorPtr root);
+    void removeAsRootOperator(std::shared_ptr<Operator> root);
 
     template <class T>
     std::vector<std::shared_ptr<T>> getOperatorByType() const
@@ -107,15 +106,15 @@ public:
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators
-    std::vector<OperatorPtr> getLeafOperators() const;
+    std::vector<std::shared_ptr<Operator>> getLeafOperators() const;
 
-    std::unordered_set<OperatorPtr> getAllOperators() const;
+    std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
 
     /// @note: This method only check if there exists another operator with same Id or not.
     /// @note: The system generated operators are ignored from this check.
     [[nodiscard]] bool hasOperatorWithId(OperatorId operatorId) const;
 
-    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
+    std::shared_ptr<Operator> getOperatorWithOperatorId(OperatorId operatorId) const;
 
     void setQueryId(QueryId queryId);
 
@@ -135,8 +134,8 @@ public:
 
     /// Find all operators between given set of downstream and upstream operators
     /// @return all operators between (excluding) downstream and upstream operators
-    std::set<OperatorPtr>
-    findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators, const std::set<OperatorPtr>& upstreamOperators);
+    std::set<std::shared_ptr<Operator>> findAllOperatorsBetween(
+        const std::set<std::shared_ptr<Operator>>& downstreamOperators, const std::set<std::shared_ptr<Operator>>& upstreamOperators);
 
     QueryState getQueryState() const;
 
@@ -151,10 +150,10 @@ public:
 private:
     /// Find operators between source and target operators
     /// @return empty or operators between source and target operators
-    static std::set<OperatorPtr>
-    findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator, const std::set<OperatorPtr>& targetOperators);
+    static std::set<std::shared_ptr<Operator>> findOperatorsBetweenSourceAndTargetOperators(
+        const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators);
 
-    std::vector<OperatorPtr> rootOperators{};
+    std::vector<std::shared_ptr<Operator>> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
     std::string sourceConsumed;
     QueryState currentState;

@@ -41,7 +41,7 @@ private:
      * @param operatorNode : the rename source operator
      * @return pointer to the converted project operator
      */
-    static OperatorPtr convert(const OperatorPtr& operatorNode);
+    static std::shared_ptr<Operator> convert(const std::shared_ptr<Operator>& operatorNode);
 };
 
 }

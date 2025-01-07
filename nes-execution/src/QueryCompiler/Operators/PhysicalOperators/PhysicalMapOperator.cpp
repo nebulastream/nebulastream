@@ -55,7 +55,7 @@ std::string PhysicalMapOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalMapOperator::copy()
+std::shared_ptr<Operator> PhysicalMapOperator::copy()
 {
     auto result = create(id, inputSchema, outputSchema, getMapFunction());
     result->addAllProperties(properties);

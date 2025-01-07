@@ -43,7 +43,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
 {
     /// splits the query plan of physical operators in pipelines
     NES_DEBUG("Pipeline: query id: {}", decomposedQueryPlan->getQueryId());
-    std::map<OperatorPtr, OperatorPipelinePtr> pipelineOperatorMap;
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan = PipelineQueryPlan::create(decomposedQueryPlan->getQueryId());
     for (const auto& sinkOperator : decomposedQueryPlan->getRootOperators())
     {
@@ -58,7 +58,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
 
 void DefaultPipeliningPhase::processMultiplex(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     OperatorPipelinePtr currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
@@ -81,7 +81,7 @@ void DefaultPipeliningPhase::processMultiplex(
 
 void DefaultPipeliningPhase::processDemultiplex(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     OperatorPipelinePtr currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
@@ -110,7 +110,7 @@ void DefaultPipeliningPhase::processDemultiplex(
 
 void DefaultPipeliningPhase::processPipelineBreakerOperator(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
@@ -128,7 +128,7 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(
 
 void DefaultPipeliningPhase::processFusibleOperator(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
@@ -142,7 +142,7 @@ void DefaultPipeliningPhase::processFusibleOperator(
 
 void DefaultPipeliningPhase::processSink(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
     const SinkLogicalOperator& currentOperator)
 {
@@ -157,7 +157,7 @@ void DefaultPipeliningPhase::processSink(
 
 void DefaultPipeliningPhase::processSource(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>&,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>&,
     OperatorPipelinePtr currentPipeline,
     const std::shared_ptr<SourceDescriptorLogicalOperator>& sourceOperator)
 {
@@ -175,9 +175,9 @@ void DefaultPipeliningPhase::processSource(
 
 void DefaultPipeliningPhase::process(
     const PipelineQueryPlanPtr& pipelinePlan,
-    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
-    const OperatorPtr& currentOperator)
+    const std::shared_ptr<Operator>& currentOperator)
 {
     PRECONDITION(
         Util::instanceOf<PhysicalOperators::PhysicalOperator>(currentOperator)

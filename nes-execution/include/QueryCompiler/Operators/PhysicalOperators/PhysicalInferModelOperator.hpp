@@ -48,7 +48,7 @@ public:
         std::vector<NodeFunctionPtr> inputFields,
         std::vector<NodeFunctionPtr> outputFields);
 
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     const std::string& getModel() const;
     const std::vector<NodeFunctionPtr>& getInputFields() const;
     const std::vector<NodeFunctionPtr>& getOutputFields() const;

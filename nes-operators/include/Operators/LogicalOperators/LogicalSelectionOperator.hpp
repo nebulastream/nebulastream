@@ -59,7 +59,7 @@ public:
     * @return true if schema was correctly inferred
     */
     bool inferSchema() override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     void inferStringSignature() override;
 
     /**

@@ -33,7 +33,7 @@ public:
     bool inferSchema() override;
     void inferInputOrigins() override;
     void inferStringSignature() override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
 protected:

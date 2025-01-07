@@ -75,7 +75,7 @@ std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() 
     return sinkDescriptor;
 }
 
-OperatorPtr SinkLogicalOperator::copy()
+std::shared_ptr<Operator> SinkLogicalOperator::copy()
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
     auto sinkDescriptorPtrCopy = sinkDescriptor;
@@ -96,7 +96,7 @@ OperatorPtr SinkLogicalOperator::copy()
 
 void SinkLogicalOperator::inferStringSignature()
 {
-    const OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators

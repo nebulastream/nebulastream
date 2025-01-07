@@ -52,7 +52,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
 {
 }
 
-OperatorPtr PhysicalStreamJoinProbeOperator::copy()
+std::shared_ptr<Operator> PhysicalStreamJoinProbeOperator::copy()
 {
     return std::make_shared<PhysicalStreamJoinProbeOperator>(
         leftInputSchema,

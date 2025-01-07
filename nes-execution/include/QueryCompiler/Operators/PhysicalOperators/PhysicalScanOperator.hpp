@@ -44,7 +44,7 @@ public:
      * @param outputSchema output schema
      */
     static PhysicalOperatorPtr create(SchemaPtr outputSchema);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

@@ -33,7 +33,7 @@ ExecutableOperator::ExecutableOperator(
 {
 }
 
-OperatorPtr ExecutableOperator::create(
+std::shared_ptr<Operator> ExecutableOperator::create(
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
 {
@@ -60,7 +60,7 @@ std::string ExecutableOperator::toString() const
     return "ExecutableOperator";
 }
 
-OperatorPtr ExecutableOperator::copy()
+std::shared_ptr<Operator> ExecutableOperator::copy()
 {
     throw NotImplemented();
 }

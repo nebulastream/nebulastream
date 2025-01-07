@@ -26,7 +26,6 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 using OperatorProperties = std::unordered_map<std::string, std::any>;
 
 
@@ -47,9 +46,9 @@ public:
     void setId(OperatorId id);
 
     /// Create duplicate of this operator by copying its context information and also its parent and child operator set.
-    OperatorPtr duplicate();
+    std::shared_ptr<Operator> duplicate();
 
-    virtual OperatorPtr copy() = 0;
+    virtual std::shared_ptr<Operator> copy() = 0;
 
     bool hasMultipleChildrenOrParents() const;
 
@@ -84,9 +83,9 @@ public:
     virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
 protected:
-    OperatorPtr getDuplicateOfParent(const OperatorPtr& operatorNode);
+    std::shared_ptr<Operator> getDuplicateOfParent(const std::shared_ptr<Operator>& operatorNode);
 
-    OperatorPtr getDuplicateOfChild(const OperatorPtr& operatorNode);
+    std::shared_ptr<Operator> getDuplicateOfChild(const std::shared_ptr<Operator>& operatorNode);
 
     std::string toString() const override;
 

@@ -26,7 +26,7 @@ public:
     LogicalWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition, OperatorId id);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
 
