@@ -118,7 +118,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setNumberOfBuffersToProduce(40);  
         csvSourceType->setSkipHeader(true);                 // Skip the header
 
-  
+    
 
         auto subQueryA = Query::from("gps")
                     .map(
