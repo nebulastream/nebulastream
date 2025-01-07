@@ -37,23 +37,28 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  faultToleranceType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
-    if (faultToleranceType != FaultToleranceType::NONE) {
+    if (faultToleranceType == FaultToleranceType::AS || faultToleranceType == FaultToleranceType::UB) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
-        if (faultToleranceType == FaultToleranceType::M || faultToleranceType == FaultToleranceType::AS) {
-            duplicateDetectionCallback = [this](Runtime::TupleBuffer& inputBuffer){
-                return watermarkProcessor->isDuplicate(inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-            };
-        }
-        else {
-            duplicateDetectionCallback = [](Runtime::TupleBuffer&){
-                return false;
-            };
-        }
+    }
+    else if (faultToleranceType == FaultToleranceType::M){
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+        };
     }
     else {
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
+    if (faultToleranceType == FaultToleranceType::M || faultToleranceType == FaultToleranceType::AS) {
+        duplicateDetectionCallback = [this](Runtime::TupleBuffer& inputBuffer){
+            return watermarkProcessor->isDuplicate(inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+        };
+    }
+    else {
+        duplicateDetectionCallback = [](Runtime::TupleBuffer&){
+            return false;
         };
     }
 }
