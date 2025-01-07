@@ -482,8 +482,6 @@ std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(
     const std::vector<WorkerId>& destinationTopologyNodeIds) {
 
     std::vector<std::vector<TopologyNodePtr>> allPaths;
-    // Map from node ID to a set of levels at which the node appears
-    std::unordered_map<WorkerId, std::set<int>> nodeLevels;
 
     // Fetch the source and destination topology nodes (same as existing code)
     std::vector<TopologyNodePtr> sourceTopologyNodes;
@@ -512,11 +510,11 @@ std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(
     for (const auto& sourceNode : sourceTopologyNodes) {
         std::vector<TopologyNodePtr> currentPath;
         std::set<WorkerId> visited;
-        findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths, nodeLevels);
+        findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths);
     }
 
     // After finding all paths, assign alternative nodes
-    assignAlternativeNodes(nodeLevels);
+    assignAlternativeNodes();
 
     return allPaths;
 }
@@ -525,8 +523,7 @@ void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
                                const std::vector<TopologyNodePtr>& destinationNodes,
                                std::set<WorkerId>& visited,
                                std::vector<TopologyNodePtr>& currentPath,
-                               std::vector<std::vector<TopologyNodePtr>>& allPaths,
-                               std::unordered_map<WorkerId, std::set<int>>& nodeLevels) {
+                               std::vector<std::vector<TopologyNodePtr>>& allPaths) {
 
     visited.insert(currentNode->getId());
     currentPath.push_back(currentNode);
@@ -547,7 +544,7 @@ void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
             for (const auto& parentNode : currentNode->getParents()) {
                 WorkerId parentId = parentNode->as<TopologyNode>()->getId();
                 if (visited.find(parentId) == visited.end()) {
-                    findAllPathsDFS(parentNode->as<TopologyNode>(), destinationNodes, visited, currentPath, allPaths, nodeLevels);
+                    findAllPathsDFS(parentNode->as<TopologyNode>(), destinationNodes, visited, currentPath, allPaths);
                 }
             }
         }
@@ -576,7 +573,38 @@ Topology::findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUp
     return {};
 }
 
-void Topology::assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels) {
+// bool Topology::tryForceAlternativeLinkOnSinglePath(
+//     const std::vector<TopologyNodePtr>& singlePath) {
+//     bool linkCreated = false;
+//
+//     TopologyNodePtr leafSourceNode = singlePath.front();
+//     WorkerId leafSourceId         = leafSourceNode->getId();
+//
+//     int sourceLevel = *nodeLevels.at(leafSourceId).begin();
+//
+//     for (const auto& [alternativeNodeId, levelsSet] : nodeLevels) {
+//         if (alternativeNodeId == leafSourceId)
+//             continue;
+//         if (levelsSet.find(sourceLevel) == levelsSet.end())
+//             continue;
+//
+//         addTopologyNodeAsChild(alternativeNodeId, leafSourceId);
+//         addTopologyNodeAsChild(leafSourceId, alternativeNodeId);
+//         TopologyNodePtr alternativeNode = workerIdToTopologyNode.at(alternativeNodeId).copy();
+//         TopologyNodePtr leafNode = workerIdToTopologyNode.at(leafSourceId).copy();
+//         leafNode->setAlternativeNodeCandidate(alternativeNodeId);
+//         alternativeNode->setAlternativeNodeCandidate(leafSourceId);
+//         NES_INFO("Created single alternative link: node {} -> node {} (both at level {})",
+//                  leafSourceId, alternativeNodeId, sourceLevel);
+//
+//         workerIdToTopologyNode[alternativeNodeId] = alternativeNode;
+//         workerIdToTopologyNode[leafSourceId] = leafNode;
+//         return true;
+//     }
+//     return linkCreated;
+// }
+
+void Topology::assignAlternativeNodes() {
 
     std::unordered_map<int, std::set<WorkerId>> levelToNodeIds;
 

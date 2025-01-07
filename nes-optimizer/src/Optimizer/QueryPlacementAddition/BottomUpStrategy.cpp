@@ -122,11 +122,8 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     }
     else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
     && logicalOperator->getOriginalId() == logicalOperator->getId()) {
-        if (pathsFound.size() > 1) {
+        if (pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
             candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
-        }
-        else {
-            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
         }
     }
     NES_DEBUG("Place {}", logicalOperator->toString());
@@ -205,7 +202,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         // Get alternative nodes for the candidate topology node
 
         auto alternativeNodeIds = candidateTopologyNode->getAlternativeNodeCandidateIds();
-        if (!alternativeNodeIds.empty()) {
+        if (!alternativeNodeIds.empty() && pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
             auto alternativeNodeId = alternativeNodeIds[0];
             TopologyNodePtr alternativeNode = lockedTopologyNodeMap.at(alternativeNodeId)->operator*();
 

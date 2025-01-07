@@ -203,7 +203,7 @@ class BasePlacementAdditionStrategy {
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
     std::vector<PathInfo> pathsFound;
     FaultToleranceType faultTolerance;
-
+ std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
   private:
     /**
      * @brief create a new network sink operator
@@ -303,7 +303,6 @@ class BasePlacementAdditionStrategy {
     //Time interval in which to retry
     static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
     // Metadata
-    std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;

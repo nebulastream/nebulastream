@@ -173,7 +173,7 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
-    uint64_t numberOfPath = 1;
+    uint64_t numberOfPath = topologyNodesWithUpStreamPinnedOperators.size();
 
 
     // 1. Perform path selection and if failure then use the exponential back-off and retry strategy
@@ -191,6 +191,25 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
                 numberOfPath = 2;
             }
         }
+
+        // if (faultTolerance == FaultToleranceType::M
+        //     && sourceTopologyNodesInSelectedPath.size() == topologyNodesWithUpStreamPinnedOperators.size())
+        // {
+        //     // Attempt to add an alternative link in the topology
+        //     bool linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
+        //         sourceTopologyNodesInSelectedPath[0]
+        //     );
+        //
+        //     if (linkCreated) {
+        //         sourceTopologyNodesInSelectedPath =
+        //             findPath(topologyNodesWithUpStreamPinnedOperators,
+        //                      topologyNodesWithDownStreamPinnedOperators);
+        //
+        //         if (sourceTopologyNodesInSelectedPath.size() > 1) {
+        //             numberOfPath = 2;
+        //         }
+        //     }
+        // }
 
         std::set<WorkerId> nodesToLock;
 

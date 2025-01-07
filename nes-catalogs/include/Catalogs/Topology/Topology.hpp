@@ -380,6 +380,9 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
 
  void setNeighborUpdateCallback(std::function<void(WorkerId, std::string , std::vector<std::pair<WorkerId, std::string>>)> callback);
 
+ bool tryForceAlternativeLinkOnSinglePath(
+   const std::vector<TopologyNodePtr>& singlePath);
+
   private:
     explicit Topology();
 
@@ -464,14 +467,14 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
                             const std::vector<TopologyNodePtr>& destinationNodes,
                             std::set<WorkerId>& visited,
                             std::vector<TopologyNodePtr>& currentPath,
-                            std::vector<std::vector<TopologyNodePtr>>& allPaths,
-                            std::unordered_map<WorkerId, std::set<int>>& nodeLevels);
+                            std::vector<std::vector<TopologyNodePtr>>& allPaths);
 
- void assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels);
+ void assignAlternativeNodes();
 
  void informNeighborsOfNode(WorkerId nodeId, std::string targetAddress);
 
     std::vector<WorkerId> rootWorkerIds;
+ std::unordered_map<WorkerId, std::set<int>> nodeLevels;
     std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
