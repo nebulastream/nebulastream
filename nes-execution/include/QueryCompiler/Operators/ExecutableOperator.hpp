@@ -34,7 +34,7 @@ public:
      * @return std::shared_ptr<Operator>
      */
     static std::shared_ptr<Operator> create(
-        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+        std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
         std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
@@ -43,7 +43,7 @@ public:
      */
     const Runtime::Execution::ExecutablePipelineStage& getStage() const;
 
-    Runtime::Execution::ExecutablePipelineStagePtr takeStage();
+    std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> takeStage();
 
     /**
      * @brief Gets the operator handlers, which capture specific operator state.
@@ -58,9 +58,9 @@ protected:
 private:
     ExecutableOperator(
         OperatorId id,
-        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+        std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
         std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
-    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
+    std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
