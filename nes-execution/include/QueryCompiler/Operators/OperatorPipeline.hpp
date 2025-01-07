@@ -132,7 +132,7 @@ public:
      * @brief Prepends a new operator to this pipeline.
      * @param newRootOperator
      */
-    void prependOperator(OperatorPtr newRootOperator);
+    void prependOperator(std::shared_ptr<Operator> newRootOperator);
 
     /**
      * @brief Checks if this pipeline has an operator.

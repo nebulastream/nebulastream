@@ -36,7 +36,7 @@ public:
         Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
     static PhysicalOperatorPtr
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
     /**
     * @brief Returns the watermark strategy.

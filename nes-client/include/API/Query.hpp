@@ -26,7 +26,6 @@ namespace NES
 
 class Query;
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
 
 class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;

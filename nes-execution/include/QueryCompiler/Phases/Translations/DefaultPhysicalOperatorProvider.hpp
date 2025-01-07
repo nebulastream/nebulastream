@@ -49,13 +49,16 @@ struct WindowOperatorProperties
 /// All operator nodes for lowering the stream joins
 struct StreamJoinOperators
 {
-    StreamJoinOperators(const LogicalOperatorPtr& operatorNode, const OperatorPtr& leftInputOperator, const OperatorPtr& rightInputOperator)
+    StreamJoinOperators(
+        const LogicalOperatorPtr& operatorNode,
+        const std::shared_ptr<Operator>& leftInputOperator,
+        const std::shared_ptr<Operator>& rightInputOperator)
         : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator)
     {
     }
     const LogicalOperatorPtr& operatorNode;
-    const OperatorPtr& leftInputOperator;
-    const OperatorPtr& rightInputOperator;
+    const std::shared_ptr<Operator>& leftInputOperator;
+    const std::shared_ptr<Operator>& rightInputOperator;
 };
 
 struct StreamJoinConfigs
@@ -125,7 +128,8 @@ protected:
 
     void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
-    OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
+    std::shared_ptr<Operator> getJoinBuildInputOperator(
+        const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<std::shared_ptr<Operator>> children);
 
 private:
     /// Lowers the stream nested loop join

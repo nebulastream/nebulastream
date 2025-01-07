@@ -36,7 +36,7 @@ public:
     create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(const SchemaPtr& schema);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

@@ -78,7 +78,7 @@ bool LogicalSelectionOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalSelectionOperator::copy()
+std::shared_ptr<Operator> LogicalSelectionOperator::copy()
 {
     auto copy = std::make_shared<LogicalSelectionOperator>(predicate->deepCopy(), id);
     copy->setInputOriginIds(inputOriginIds);
@@ -96,7 +96,7 @@ OperatorPtr LogicalSelectionOperator::copy()
 
 void LogicalSelectionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
 

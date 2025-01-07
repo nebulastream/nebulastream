@@ -126,7 +126,7 @@ bool LogicalProjectionOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalProjectionOperator::copy()
+std::shared_ptr<Operator> LogicalProjectionOperator::copy()
 {
     std::vector<std::shared_ptr<NodeFunction>> copyOfProjectionFunctions;
     for (const auto& originalFunction : functions)
@@ -149,7 +149,7 @@ OperatorPtr LogicalProjectionOperator::copy()
 
 void LogicalProjectionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
     ///Infer query signatures for child operators

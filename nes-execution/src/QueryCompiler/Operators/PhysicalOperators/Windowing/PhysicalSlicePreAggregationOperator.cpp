@@ -40,7 +40,7 @@ std::string PhysicalSlicePreAggregationOperator::toString() const
     return out.str();
 }
 
-OperatorPtr PhysicalSlicePreAggregationOperator::copy()
+std::shared_ptr<Operator> PhysicalSlicePreAggregationOperator::copy()
 {
     return create(id, inputSchema, outputSchema, windowDefinition);
 }

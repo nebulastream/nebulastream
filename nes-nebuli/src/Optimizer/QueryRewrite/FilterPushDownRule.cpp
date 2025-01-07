@@ -52,9 +52,9 @@ FilterPushDownRule::FilterPushDownRule() = default;
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("Applying FilterPushDownRule to query {}", queryPlan->toString());
-    const std::vector<OperatorPtr> rootOperators = queryPlan->getRootOperators();
+    const std::vector<std::shared_ptr<Operator>> rootOperators = queryPlan->getRootOperators();
     std::set<LogicalSelectionOperatorPtr> filterOperatorsSet;
-    for (const OperatorPtr& rootOperator : rootOperators)
+    for (const std::shared_ptr<Operator>& rootOperator : rootOperators)
     {
         std::vector<LogicalSelectionOperatorPtr> filters = rootOperator->getNodesByType<LogicalSelectionOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());

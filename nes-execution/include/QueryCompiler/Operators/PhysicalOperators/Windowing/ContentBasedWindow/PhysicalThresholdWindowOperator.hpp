@@ -43,7 +43,7 @@ public:
 
     Windowing::LogicalWindowDescriptorPtr getWindowDefinition();
 
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
 

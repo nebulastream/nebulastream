@@ -38,18 +38,18 @@ public:
 
     /**
      * @brief Get all left input operators.
-     * @return std::vector<OperatorPtr>
+     * @return std::vector<std::shared_ptr<Operator>>
      */
-    std::vector<OperatorPtr> getLeftOperators() const;
+    std::vector<std::shared_ptr<Operator>> getLeftOperators() const;
 
     /**
     * @brief Get all right input operators.
-    * @return std::vector<OperatorPtr>
+    * @return std::vector<std::shared_ptr<Operator>>
     */
-    std::vector<OperatorPtr> getRightOperators() const;
+    std::vector<std::shared_ptr<Operator>> getRightOperators() const;
 
 private:
-    std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema) const;
+    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const SchemaPtr& schema) const;
 };
 using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 }

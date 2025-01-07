@@ -34,7 +34,7 @@ public:
     PhysicalDemultiplexOperator(OperatorId id, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

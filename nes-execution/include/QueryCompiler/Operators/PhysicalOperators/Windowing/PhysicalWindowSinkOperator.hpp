@@ -33,7 +33,7 @@ public:
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
         const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
-    OperatorPtr copy() override;
+    std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;

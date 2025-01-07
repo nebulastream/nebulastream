@@ -85,7 +85,7 @@ std::string LogicalMapOperator::toString() const
     return ss.str();
 }
 
-OperatorPtr LogicalMapOperator::copy()
+std::shared_ptr<Operator> LogicalMapOperator::copy()
 {
     auto copy = std::make_shared<LogicalMapOperator>(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
     copy->setInputOriginIds(inputOriginIds);

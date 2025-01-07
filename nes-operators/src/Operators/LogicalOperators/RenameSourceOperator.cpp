@@ -73,7 +73,7 @@ std::string RenameSourceOperator::getNewSourceName() const
     return newSourceName;
 }
 
-OperatorPtr RenameSourceOperator::copy()
+std::shared_ptr<Operator> RenameSourceOperator::copy()
 {
     auto copy = std::make_shared<RenameSourceOperator>(newSourceName, id);
     copy->setInputOriginIds(inputOriginIds);
@@ -91,7 +91,7 @@ OperatorPtr RenameSourceOperator::copy()
 
 void RenameSourceOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     ///Infer query signatures for child operators

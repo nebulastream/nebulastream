@@ -54,7 +54,7 @@ bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const
     return false;
 }
 
-OperatorPtr WatermarkAssignerLogicalOperator::copy()
+std::shared_ptr<Operator> WatermarkAssignerLogicalOperator::copy()
 {
     auto copy = std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
@@ -82,7 +82,7 @@ bool WatermarkAssignerLogicalOperator::inferSchema()
 
 void WatermarkAssignerLogicalOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators

@@ -62,7 +62,7 @@ bool LogicalLimitOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalLimitOperator::copy()
+std::shared_ptr<Operator> LogicalLimitOperator::copy()
 {
     auto copy = std::make_shared<LogicalLimitOperator>(limit, id);
     copy->setInputOriginIds(inputOriginIds);
@@ -79,7 +79,7 @@ OperatorPtr LogicalLimitOperator::copy()
 
 void LogicalLimitOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
