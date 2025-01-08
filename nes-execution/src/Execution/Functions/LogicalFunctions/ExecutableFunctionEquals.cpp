@@ -20,6 +20,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 #include <function.hpp>
 
 
@@ -39,10 +40,12 @@ ExecutableFunctionEquals::ExecutableFunctionEquals(
 {
 }
 
-std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionEquals>(std::move(childFunctions[0]), std::move(childFunctions[1]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionEquals>(
+        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

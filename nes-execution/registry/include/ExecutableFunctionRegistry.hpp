@@ -13,21 +13,29 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
+#include <vector>
 #include <Execution/Functions/Function.hpp>
 #include <Util/PluginRegistry.hpp>
-namespace NES::Execution::Functions
+
+namespace NES::Runtime::Execution::Functions
 {
 
-using RegistryFunctionExecutableSignature = RegistrySignature<
-    std::string,
-    Runtime::Execution::Functions::Function,
-    std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>;
-class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutable, RegistryFunctionExecutableSignature>
+using ExecutableFunctionRegistryReturnType = Function;
+struct ExecutableFunctionRegistryArguments
+{
+    mutable std::vector<std::unique_ptr<ExecutableFunctionRegistryReturnType>> childFunctions;
+};
+
+using ExecutableFunctionRegistrySignature
+    = RegistrySignature<std::string, ExecutableFunctionRegistryReturnType, ExecutableFunctionRegistryArguments>;
+class ExecutableFunctionRegistry : public BaseRegistry<ExecutableFunctionRegistry, ExecutableFunctionRegistrySignature>
 {
 };
 }
 
 
 #define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.inc>
+#include <ExecutableFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE

@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        ExecutableFunctionGreater.cpp
-        ExecutableFunctionGreaterEquals.cpp
-        ExecutableFunctionLess.cpp
-        ExecutableFunctionLessEquals.cpp
-        )
+add_plugin(Greater ExecutableFunction nes-execution ExecutableFunctionGreater.cpp)
+add_plugin(GreaterEquals ExecutableFunction nes-execution ExecutableFunctionGreaterEquals.cpp)
+add_plugin(Less ExecutableFunction nes-execution ExecutableFunctionLess.cpp)
+add_plugin(LessEquals ExecutableFunction nes-execution ExecutableFunctionLessEquals.cpp)

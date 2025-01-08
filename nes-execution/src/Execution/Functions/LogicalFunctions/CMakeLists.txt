@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        ExecutableFunctionEquals.cpp
-        ExecutableFunctionNegate.cpp
-        ExecutableFunctionAnd.cpp
-        ExecutableFunctionOr.cpp
-        )
+add_plugin(And ExecutableFunction nes-execution ExecutableFunctionAnd.cpp)
+add_plugin(Equals ExecutableFunction nes-execution ExecutableFunctionEquals.cpp)
+add_plugin(Negate ExecutableFunction nes-execution ExecutableFunctionNegate.cpp)
+add_plugin(Or ExecutableFunction nes-execution ExecutableFunctionOr.cpp)
