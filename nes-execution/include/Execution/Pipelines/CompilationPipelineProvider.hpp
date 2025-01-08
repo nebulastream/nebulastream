@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution
 /**
  * @brief Creates an executable pipeline stage that can be executed using compilation.
  */
-class CompilationPipelineProvider : public ExecutablePipelineProvider
+class CompilationPipelineProvider final : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage> create(

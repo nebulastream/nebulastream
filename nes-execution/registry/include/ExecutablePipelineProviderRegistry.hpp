@@ -19,6 +19,7 @@
 namespace NES::Runtime::Execution
 {
 /// TODO #323: !!!IMPORTANT!!! This is not how we should use registries. We have an open issue to address this problem
+using ExecutablePipelineProviderRegistryReturnType = ExecutablePipelineProvider;
 using ExecutablePipelineProviderRegistrySignature = RegistrySignature<std::string, ExecutablePipelineProvider>;
 class ExecutablePipelineProviderRegistry
     : public BaseRegistry<ExecutablePipelineProviderRegistry, ExecutablePipelineProviderRegistrySignature>
@@ -27,5 +28,5 @@ class ExecutablePipelineProviderRegistry
 }
 
 #define INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.inc>
+#include <ExecutablePipelineProviderGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
