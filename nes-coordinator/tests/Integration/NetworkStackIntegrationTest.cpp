@@ -197,7 +197,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             notifyQueryStatusChange(SharedQueryId, DecomposedQueryId, Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }
-            bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) override {
+            bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>>) override {
                 return true;
             }
         };
