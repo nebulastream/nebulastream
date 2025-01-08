@@ -13,11 +13,11 @@
 */
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
-#include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -27,6 +27,7 @@
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -62,7 +63,8 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
     }
 
     /// 4. Calling the registry to create an executable function.
-    auto function = Execution::Functions::RegistryFunctionExecutable::instance().create(nodeFunction->getType(), std::move(childFunction));
+    auto executableFunctionArguments = ExecutableFunctionRegistryArguments(std::move(childFunction));
+    auto function = ExecutableFunctionRegistry::instance().create(nodeFunction->getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
         throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));

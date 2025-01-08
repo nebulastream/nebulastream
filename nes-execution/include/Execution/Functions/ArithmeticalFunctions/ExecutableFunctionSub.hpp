@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Functions
 {
 
 /// Performs leftExecutableFunction - rightExecutableFunction
-class ExecutableFunctionSub : public Function
+class ExecutableFunctionSub final : public Function
 {
 public:
     ExecutableFunctionSub(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);

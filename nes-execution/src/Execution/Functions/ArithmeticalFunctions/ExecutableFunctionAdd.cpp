@@ -15,6 +15,7 @@
 #include <utility>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -32,10 +33,12 @@ ExecutableFunctionAdd::ExecutableFunctionAdd(
 {
 }
 
-std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<std::unique_ptr<Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterAddExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 2, "Add function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionAdd>(std::move(childFunctions[0]), std::move(childFunctions[1]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionAdd>(
+        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
 }
