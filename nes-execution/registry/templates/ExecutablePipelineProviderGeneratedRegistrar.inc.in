@@ -14,25 +14,29 @@
 
 #pragma once
 
+/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#    error "This file should not be included directly! " \
-"Include instead include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>"
+#    error "This file should not be included directly! Include instead include <ExecutablePipelineProviderRegistry.hpp>"
 #endif
 
-namespace NES::Runtime::Execution
+#include <memory>
+#include <string>
+#include <Util/PluginRegistry.hpp>
+
+namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar
 {
-std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider();
-std::unique_ptr<ExecutablePipelineProvider> RegisterCompilationPipelineProvider();
+
+/// declaration of register functions for 'ExecutablePipelineProviders'
+@REGISTER_FUNCTION_DECLARATIONS@
 }
 namespace NES
 {
 template <>
 inline void
 Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, Runtime::Execution::ExecutablePipelineProviderRegistrySignature>::
-    registerAll(Registry<Registrar>& registry)
+    registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Runtime::Execution;
-    registry.registerPlugin("PipelineInterpreter", RegisterInterpreterPipelineProvider);
-    registry.registerPlugin("PipelineCompiler", RegisterCompilationPipelineProvider);
+    using namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar;
+    @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

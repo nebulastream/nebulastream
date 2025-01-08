@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution
 /**
  * @brief Creates an executable pipeline stage that can be executed using interpretation
  */
-class InterpretationPipelineProvider : public ExecutablePipelineProvider
+class InterpretationPipelineProvider final : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage> create(
