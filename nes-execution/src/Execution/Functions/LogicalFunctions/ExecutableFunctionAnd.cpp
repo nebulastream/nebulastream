@@ -19,6 +19,7 @@
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionAnd.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
@@ -37,10 +38,12 @@ ExecutableFunctionAnd::ExecutableFunctionAnd(
 {
 }
 
-std::unique_ptr<Function> RegisterExecutableFunctionAnd(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 2, "And function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionAnd>(std::move(childFunctions[0]), std::move(childFunctions[1]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionAnd>(
+        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

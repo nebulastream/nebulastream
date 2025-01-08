@@ -18,6 +18,7 @@
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -36,10 +37,12 @@ ExecutableFunctionMod::ExecutableFunctionMod(
 }
 
 
-std::unique_ptr<Function> RegisterExecutableFunctionMod(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionMod>(std::move(childFunctions[0]), std::move(childFunctions[1]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionMod>(
+        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

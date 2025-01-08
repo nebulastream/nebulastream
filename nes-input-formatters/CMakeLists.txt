@@ -10,7 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# include registrar generation functions
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)

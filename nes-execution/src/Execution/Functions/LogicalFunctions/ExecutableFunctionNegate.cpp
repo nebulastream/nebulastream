@@ -14,6 +14,7 @@
 #include <memory>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -29,10 +30,11 @@ ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> chi
 }
 
 
-std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return std::make_unique<ExecutableFunctionNegate>(std::move(childFunctions[0]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return std::make_unique<ExecutableFunctionNegate>(std::move(executableFunctionRegistryArguments.childFunctions[0]));
 }
 
 }

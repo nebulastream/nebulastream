@@ -19,6 +19,7 @@
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableFunctionRegistry.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
@@ -37,10 +38,12 @@ ExecutableFunctionLess::ExecutableFunctionLess(
 {
 }
 
-std::unique_ptr<Function> RegisterExecutableFunctionLess(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterLessExecutableFunction(
+    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
 {
-    PRECONDITION(childFunctions.size() == 2, "Less function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionLess>(std::move(childFunctions[0]), std::move(childFunctions[1]));
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionLess>(
+        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
 }
