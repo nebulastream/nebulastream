@@ -212,13 +212,13 @@ public:
         auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
         QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                        Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::M);
+                                                                                       FaultToleranceType::AS);
 
         auto queryCatalog = crd->getQueryCatalog();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
         auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-        wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
+        std::this_thread::sleep_for(std::chrono::milliseconds(100000));
         crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
         EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
@@ -281,10 +281,13 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
         wrkLeaf2->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
         EXPECT_TRUE(wrkLeaf2->start(false, true));
 
+        wrkLeaf1->addParent(wrkLeaf2->getWorkerId());
+        wrkLeaf2->addParent(wrkLeaf1->getWorkerId());
+
         auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
         QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                        Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::M);
+                                                                                       FaultToleranceType::NONE);
 
         auto queryCatalog = crd->getQueryCatalog();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));

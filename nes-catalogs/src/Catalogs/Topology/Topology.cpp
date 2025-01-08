@@ -513,9 +513,6 @@ std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(
         findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths);
     }
 
-    // After finding all paths, assign alternative nodes
-    assignAlternativeNodes();
-
     return allPaths;
 }
 
@@ -531,8 +528,6 @@ void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
     int currentLevel = currentPath.size() - 1;
     WorkerId currentNodeId = currentNode->getId();
 
-    // Record the level of the current node
-    nodeLevels[currentNodeId].insert(currentLevel);
 
     // Check if currentNode is a destination node
     if (std::any_of(destinationNodes.begin(), destinationNodes.end(), [&](const TopologyNodePtr& destNode) {
@@ -573,36 +568,56 @@ Topology::findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUp
     return {};
 }
 
-// bool Topology::tryForceAlternativeLinkOnSinglePath(
-//     const std::vector<TopologyNodePtr>& singlePath) {
-//     bool linkCreated = false;
-//
-//     TopologyNodePtr leafSourceNode = singlePath.front();
-//     WorkerId leafSourceId         = leafSourceNode->getId();
-//
-//     int sourceLevel = *nodeLevels.at(leafSourceId).begin();
-//
-//     for (const auto& [alternativeNodeId, levelsSet] : nodeLevels) {
-//         if (alternativeNodeId == leafSourceId)
-//             continue;
-//         if (levelsSet.find(sourceLevel) == levelsSet.end())
-//             continue;
-//
-//         addTopologyNodeAsChild(alternativeNodeId, leafSourceId);
-//         addTopologyNodeAsChild(leafSourceId, alternativeNodeId);
-//         TopologyNodePtr alternativeNode = workerIdToTopologyNode.at(alternativeNodeId).copy();
-//         TopologyNodePtr leafNode = workerIdToTopologyNode.at(leafSourceId).copy();
-//         leafNode->setAlternativeNodeCandidate(alternativeNodeId);
-//         alternativeNode->setAlternativeNodeCandidate(leafSourceId);
-//         NES_INFO("Created single alternative link: node {} -> node {} (both at level {})",
-//                  leafSourceId, alternativeNodeId, sourceLevel);
-//
-//         workerIdToTopologyNode[alternativeNodeId] = alternativeNode;
-//         workerIdToTopologyNode[leafSourceId] = leafNode;
-//         return true;
-//     }
-//     return linkCreated;
-// }
+void Topology::assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators)
+{
+    nodeLevels.clear();
+
+    std::queue<std::pair<WorkerId,int>> queue;
+
+    for (auto leafId : topologyNodesWithUpStreamPinnedOperators) {
+        queue.push({leafId, 0});
+        nodeLevels[leafId].insert(0);
+    }
+
+    while (!queue.empty()) {
+        auto [currentId, level] = queue.front();
+        queue.pop();
+
+        TopologyNodePtr currentNode = workerIdToTopologyNode.at(currentId).copy();
+        for (auto& parentPtr : currentNode->getParents()) {
+            WorkerId parentId = parentPtr->as<TopologyNode>()->getId();
+
+            auto& parentLevels = nodeLevels[parentId];
+            if (!parentLevels.count(level + 1)) {
+                parentLevels.insert(level + 1);
+                queue.push({parentId, level + 1});
+            }
+        }
+    }
+}
+
+bool Topology::tryForceAlternativeLinkOnSinglePath(
+    const std::vector<TopologyNodePtr>& singlePath) {
+    bool linkCreated = false;
+
+    TopologyNodePtr leafSourceNode = singlePath.front();
+    WorkerId leafSourceId         = leafSourceNode->getId();
+
+    int sourceLevel = *nodeLevels.at(leafSourceId).begin();
+
+    for (const auto& [alternativeNodeId, levelsSet] : nodeLevels) {
+        if (alternativeNodeId == leafSourceId)
+            continue;
+        if (levelsSet.find(sourceLevel) == levelsSet.end())
+            continue;
+
+        addTopologyNodeAsChild(alternativeNodeId, leafSourceId);
+        NES_INFO("Created single alternative link: node {} -> node {} (both at level {})",
+                 leafSourceId, alternativeNodeId, sourceLevel);
+        return true;
+    }
+    return linkCreated;
+}
 
 void Topology::assignAlternativeNodes() {
 

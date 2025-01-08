@@ -175,58 +175,75 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     bool success = false;
     uint64_t numberOfPath = topologyNodesWithUpStreamPinnedOperators.size();
 
+topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
+    topology->assignAlternativeNodes();
 
     // 1. Perform path selection and if failure then use the exponential back-off and retry strategy
     while (!success) {
 
         // 1.1 Perform path selection
-        std::vector<std::vector<TopologyNodePtr>> sourceTopologyNodesInSelectedPath;
+        std::vector<std::vector<TopologyNodePtr>> allSourcesAllPaths;
+
         if (workerToOffload != INVALID_WORKER_NODE_ID) {
-            sourceTopologyNodesInSelectedPath = {topology->findPathThatIncludesNode(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators, workerToOffload)};
+            auto pathIncludingOffload = topology->findPathThatIncludesNode(
+     topologyNodesWithUpStreamPinnedOperators,
+     topologyNodesWithDownStreamPinnedOperators,
+     workerToOffload
+ );
+            if (!pathIncludingOffload.empty()) {
+                allSourcesAllPaths.push_back(std::move(pathIncludingOffload));
+            }
         }
         else {
-            sourceTopologyNodesInSelectedPath =
-   findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
-            if ((faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) && sourceTopologyNodesInSelectedPath.size() > 1) {
-                numberOfPath = 2;
-            }
-        }
+            for (auto sourceId : topologyNodesWithUpStreamPinnedOperators) {
+                auto perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
 
-        // if (faultTolerance == FaultToleranceType::M
-        //     && sourceTopologyNodesInSelectedPath.size() == topologyNodesWithUpStreamPinnedOperators.size())
-        // {
-        //     // Attempt to add an alternative link in the topology
-        //     bool linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
-        //         sourceTopologyNodesInSelectedPath[0]
-        //     );
-        //
-        //     if (linkCreated) {
-        //         sourceTopologyNodesInSelectedPath =
-        //             findPath(topologyNodesWithUpStreamPinnedOperators,
-        //                      topologyNodesWithDownStreamPinnedOperators);
-        //
-        //         if (sourceTopologyNodesInSelectedPath.size() > 1) {
-        //             numberOfPath = 2;
-        //         }
-        //     }
-        // }
-
-        std::set<WorkerId> nodesToLock;
-
-        for (uint64_t i = 0; i < numberOfPath; i++) {
-            PathInfo pathInfo;
-
-            if (!sourceTopologyNodesInSelectedPath[i].empty()) {
-                for (const auto& topologyNode : sourceTopologyNodesInSelectedPath[i]) {
-                    WorkerId id = topologyNode->getId();
-                    nodesToLock.insert(id);
-                    pathInfo.workerNodeIdsInBFS.emplace_back(id);
-                    pathInfo.workerIdToTopologyNodeMap[id] = topologyNode;
+                if (faultTolerance == FaultToleranceType::NONE
+                    || faultTolerance == FaultToleranceType::UB)
+                {
+                    for (auto& p : perSourcePaths) {
+                        allSourcesAllPaths.push_back(std::move(p));
+                    }
+                    continue;
                 }
-                pathsFound.push_back(std::move(pathInfo));
+                if ((faultTolerance == FaultToleranceType::M
+                     || faultTolerance == FaultToleranceType::AS)
+                    && perSourcePaths.size() == 1)
+                {
+                    bool linkCreated = false;
+                    if (!perSourcePaths[0].empty()) {
+                        linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
+                            perSourcePaths[0]);
+                    }
+
+                    if (linkCreated) {
+                        perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
+                    }
+                }
+
+                for (auto& p : perSourcePaths) {
+                    allSourcesAllPaths.push_back(std::move(p));
+                }
             }
+
+            std::set<WorkerId> nodesToLock;
+            for (auto& singlePath : allSourcesAllPaths)
+            {
+                if (!singlePath.empty())
+                {
+                    PathInfo pathInfo;
+                    for (auto& node : singlePath) {
+                        WorkerId id = node->getId();
+                        nodesToLock.insert(id);
+                        pathInfo.workerNodeIdsInBFS.push_back(id);
+                        pathInfo.workerIdToTopologyNodeMap[id] = node;
+                    }
+                    pathsFound.push_back(std::move(pathInfo));
+                }
+            }
+            success = lockTopologyNodes(nodesToLock);
         }
-        success = lockTopologyNodes(nodesToLock);
+
     }
     return success;
 }

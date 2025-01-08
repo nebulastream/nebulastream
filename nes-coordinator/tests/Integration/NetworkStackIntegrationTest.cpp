@@ -197,6 +197,9 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             notifyQueryStatusChange(SharedQueryId, DecomposedQueryId, Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }
+            bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) override {
+                return true;
+            }
         };
         auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};

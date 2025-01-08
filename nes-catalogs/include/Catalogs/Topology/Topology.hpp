@@ -383,6 +383,10 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
  bool tryForceAlternativeLinkOnSinglePath(
    const std::vector<TopologyNodePtr>& singlePath);
 
+ void assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators);
+
+ void assignAlternativeNodes();
+
   private:
     explicit Topology();
 
@@ -468,8 +472,6 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
                             std::set<WorkerId>& visited,
                             std::vector<TopologyNodePtr>& currentPath,
                             std::vector<std::vector<TopologyNodePtr>>& allPaths);
-
- void assignAlternativeNodes();
 
  void informNeighborsOfNode(WorkerId nodeId, std::string targetAddress);
 
