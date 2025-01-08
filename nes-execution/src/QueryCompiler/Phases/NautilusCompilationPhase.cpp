@@ -14,7 +14,6 @@
 #include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
@@ -24,6 +23,7 @@
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutablePipelineProviderRegistry.hpp>
 
 
 namespace NES::QueryCompilation
@@ -52,10 +52,10 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
     switch (compilerOptions->nautilusBackend)
     {
         case NautilusBackend::INTERPRETER: {
-            return "PipelineInterpreter";
+            return "Interpreter";
         };
         case NautilusBackend::COMPILER: {
-            return "PipelineCompiler";
+            return "Compiler";
         };
         default: {
             INVARIANT(false, "Invalid backend");

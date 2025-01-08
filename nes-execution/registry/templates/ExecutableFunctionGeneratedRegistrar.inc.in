@@ -37,7 +37,7 @@ namespace NES
 template <>
 inline void
 Registrar<Runtime::Execution::Functions::ExecutableFunctionRegistry, Runtime::Execution::Functions::ExecutableFunctionRegistrySignature>::registerAll(
-    Registry<Registrar>& registry)
+    [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@

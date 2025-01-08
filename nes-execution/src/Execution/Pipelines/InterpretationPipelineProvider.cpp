@@ -18,16 +18,12 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/InterpretationPipelineProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <ExecutablePipelineProviderRegistry.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
 
 namespace NES::Runtime::Execution
 {
-
-std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider()
-{
-    return std::make_unique<InterpretationPipelineProvider>();
-}
 
 std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(
     std::shared_ptr<PhysicalOperatorPipeline> pipeline,
@@ -37,6 +33,12 @@ std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(
     /// As we are creating here a pipeline that is interpreted, we need to set the compilation option to false
     options.setOption("engine.Compilation", false);
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, std::move(operatorHandlers), options);
+}
+
+std::unique_ptr<ExecutablePipelineProviderRegistryReturnType>
+ExecutablePipelineProviderGeneratedRegistrar::RegisterInterpreterExecutablePipelineProvider()
+{
+    return std::make_unique<InterpretationPipelineProvider>();
 }
 
 }

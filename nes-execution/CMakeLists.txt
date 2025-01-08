@@ -42,4 +42,4 @@ add_tests_if_enabled(tests)
 create_plugin_registry_library(nes-execution-registry nes-execution)
 target_link_libraries(nes-execution PRIVATE nes-execution-registry)
 # Generate a registrar for each registry in nes-executions
-generate_plugin_registrars(nes-execution ExecutableFunction)
+generate_plugin_registrars(nes-execution ExecutableFunction ExecutablePipelineProvider)
