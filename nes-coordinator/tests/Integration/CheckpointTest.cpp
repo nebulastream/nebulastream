@@ -113,7 +113,7 @@ class CheckpointTest : public Testing::BaseIntegrationTest {
 /*
  * @brief test if CheckpointTest backup doesn't fail
  */
-TEST_F(CheckpointTest, testCheckpointTestTest) {
+TEST_F(CheckpointTest, testCheckpointTest) {
     NES_INFO("CheckpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
