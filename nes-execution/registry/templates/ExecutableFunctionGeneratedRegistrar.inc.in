@@ -36,7 +36,7 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Runtime::Execution::Functions::ExecutableFunctionRegistry, Runtime::Execution::Functions::ExecutableFunctionRegistrySignature>::registerAll(
+Registrar<Runtime::Execution::Functions::ExecutableFunctionRegistry, std::string, Runtime::Execution::Functions::ExecutableFunctionRegistryReturnType, Runtime::Execution::Functions::ExecutableFunctionRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar;

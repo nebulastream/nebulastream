@@ -37,11 +37,10 @@ public:
     Registry& operator=(Registry&& other) noexcept = delete;
     ~Registry() = default;
 
-    [[nodiscard]] bool contains(const typename Registrar::Signature::KeyType& key) const { return registryImpl.contains(key); }
+    [[nodiscard]] bool contains(const typename Registrar::KeyType& key) const { return registryImpl.contains(key); }
 
     template <typename... Args>
-    [[nodiscard]] std::optional<typename Registrar::Signature::ReturnType>
-    create(const typename Registrar::Signature::KeyType& key, Args&&... args) const
+    [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Args&&... args) const
     {
         if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
         {
@@ -51,9 +50,9 @@ public:
         return std::nullopt;
     }
 
-    [[nodiscard]] std::vector<typename Registrar::Signature::KeyType> getRegisteredNames() const
+    [[nodiscard]] std::vector<typename Registrar::KeyType> getRegisteredNames() const
     {
-        std::vector<typename Registrar::Signature::KeyType> names;
+        std::vector<typename Registrar::KeyType> names;
         names.reserve(registryImpl.size());
         std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first; });
         return names;
@@ -65,44 +64,37 @@ protected:
 
 private:
     /// Only the Registrar can register new plugins.
-    void registerPlugin(typename Registrar::Signature::KeyType key, typename Registrar::Signature::CreatorFn creatorFunction)
+    void registerPlugin(typename Registrar::KeyType key, typename Registrar::CreatorFn creatorFunction)
     {
         registryImpl.emplace(std::move(key), std::move(creatorFunction));
     }
     friend Registrar;
 
-    std::unordered_map<typename Registrar::Signature::KeyType, typename Registrar::Signature::CreatorFn> registryImpl;
+    std::unordered_map<typename Registrar::KeyType, typename Registrar::CreatorFn> registryImpl;
 };
 
 /// Tagging the Registrar avoids the following issue:
-/// If the Registrar is not tagged with a ConcreteRegistry and two registries have the same signature, then we would instantiate
-/// the same 'Registrar<DuplicatedSignature>' for both Registries. Since the registries are templated on the Registrar, both registries
+/// If the Registrar is not tagged with a ConcreteRegistry and two registries have the same key, return type and arguments, then we would instantiate
+/// the same 'Registrar<key, returnType, arguments>' for both Registries. Since the registries are templated on the Registrar, both registries
 /// would be instantiated with the same Registrar, leading to the same instantiation of the Registry, leading to the generation of only one
 /// implementation for the Registry. If we then call 'instance()' on the first registry and afterward 'instance()' on the second registry,
 /// both 'instance()' calls would access the same implementation. Since the registry is a singleton, both would access the first registry.
-template <typename ConcreteRegistry, typename RegistrySignature>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename... Args>
 class Registrar
 {
     using Tag = ConcreteRegistry;
-    using Signature = RegistrySignature;
+    using KeyType = KeyTypeT;
+    using ReturnType = std::unique_ptr<ReturnTypeT>;
+    using CreatorFn = std::function<ReturnType(Args...)>;
     static void registerAll(Registry<Registrar>& registry);
     template <typename Registrar>
     friend class Registry;
 };
 
-
-template <typename KeyTypeT, typename ReturnTypeT, typename... Args>
-struct RegistrySignature
-{
-    using KeyType = KeyTypeT;
-    using ReturnType = std::unique_ptr<ReturnTypeT>;
-    using CreatorFn = std::function<ReturnType(Args...)>;
-};
-
 /// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
 /// if custom member functions are added to the concrete registry class.
-template <typename ConcreteRegistry, typename RegistrySignature>
-class BaseRegistry : public Registry<Registrar<ConcreteRegistry, RegistrySignature>>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename... Args>
+class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Args...>>
 {
 public:
     static ConcreteRegistry& instance()

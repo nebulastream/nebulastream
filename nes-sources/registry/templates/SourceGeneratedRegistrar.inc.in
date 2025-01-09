@@ -36,7 +36,7 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
     using namespace NES::Sources::SourceGeneratedRegistrar;

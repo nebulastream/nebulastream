@@ -28,8 +28,8 @@ struct SinkValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-using SinkValidationRegistrySignature = RegistrySignature<std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>;
-class SinkValidationRegistry final : public BaseRegistry<SinkValidationRegistry, SinkValidationRegistrySignature>
+class SinkValidationRegistry final
+    : public BaseRegistry<SinkValidationRegistry, std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>
 {
 };
 
