@@ -67,7 +67,7 @@ void NES::Sources::NoOpInputFormatter::parseTupleBufferRaw(
     const Memory::TupleBuffer& tbRaw,
     Memory::AbstractBufferProvider& bufferProvider,
     size_t,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(const Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
     auto newBuffer = Testing::copyBuffer(tbRaw, bufferProvider);
     emitFunction(newBuffer, true);
@@ -140,7 +140,8 @@ void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds 
     fail_during_close_duration = blockFor;
     fail_during_close = true;
 }
-size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t NES::Sources::TestSource::fillTupleBuffer(
+    NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.

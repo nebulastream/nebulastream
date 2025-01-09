@@ -43,8 +43,8 @@ struct NoOpInputFormatter : NES::InputFormatters::InputFormatter
     void parseTupleBufferRaw(
         const NES::Memory::TupleBuffer& tbRaw,
         NES::Memory::AbstractBufferProvider& bufferProvider,
-        size_t,
-        const std::function<void(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        size_t numBytesInTBRaw,
+        const std::function<void(const Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << "NoOpInputFormatter"; }
@@ -103,7 +103,8 @@ private:
 class TestSource : public Source
 {
 public:
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(
+        NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
 
