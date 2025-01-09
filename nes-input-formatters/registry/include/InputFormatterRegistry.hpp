@@ -17,7 +17,7 @@
 #include <string>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::InputFormatters
 {

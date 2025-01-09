@@ -22,6 +22,7 @@
 #include <string>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Sinks::SinkGeneratedRegistrar
 {
