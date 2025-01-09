@@ -33,7 +33,7 @@ namespace NES::Sinks::SinkGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<Sinks::SinkRegistry, Sinks::SinkRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<Sinks::SinkRegistry, std::string, Sinks::SinkRegistryReturnType, Sinks::SinkRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sinks::SinkGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@

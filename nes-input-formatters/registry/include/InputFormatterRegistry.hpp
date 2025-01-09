@@ -31,9 +31,8 @@ struct InputFormatterRegistryArguments
     std::string fieldDelimiter;
 };
 
-using InputFormatterRegistrySignature
-    = RegistrySignature<std::string, InputFormatterRegistryReturnType, const InputFormatterRegistryArguments>;
-class InputFormatterRegistry : public BaseRegistry<InputFormatterRegistry, InputFormatterRegistrySignature>
+class InputFormatterRegistry
+    : public BaseRegistry<InputFormatterRegistry, std::string, InputFormatterRegistryReturnType, InputFormatterRegistryArguments>
 {
 };
 

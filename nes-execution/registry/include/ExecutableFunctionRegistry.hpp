@@ -28,9 +28,11 @@ struct ExecutableFunctionRegistryArguments
     mutable std::vector<std::unique_ptr<ExecutableFunctionRegistryReturnType>> childFunctions;
 };
 
-using ExecutableFunctionRegistrySignature
-    = RegistrySignature<std::string, ExecutableFunctionRegistryReturnType, ExecutableFunctionRegistryArguments>;
-class ExecutableFunctionRegistry : public BaseRegistry<ExecutableFunctionRegistry, ExecutableFunctionRegistrySignature>
+class ExecutableFunctionRegistry : public BaseRegistry<
+                                       ExecutableFunctionRegistry,
+                                       std::string,
+                                       ExecutableFunctionRegistryReturnType,
+                                       ExecutableFunctionRegistryArguments>
 {
 };
 }

@@ -29,8 +29,7 @@ struct SinkRegistryArguments
     SinkDescriptor sinkDescriptor;
 };
 
-using SinkRegistrySignature = RegistrySignature<std::string, SinkRegistryReturnType, const SinkRegistryArguments>;
-class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
+class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
 {
 };
 
