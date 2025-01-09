@@ -585,6 +585,34 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     return false;
 }
 
+bool CoordinatorRPCClient::sendCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryData) {
+    CheckpointMessage request;
+    request.set_partition(nesPartitionId);
+    request.set_storage(binaryData.data(), binaryData.size());
+    CheckpointReply reply;
+    ClientContext context;
+    Status status = coordinatorStub->sendCheckpoint(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::sendCheckpoint: status ok");
+        return true;
+    }
+    return false;
+}
+
+bool CoordinatorRPCClient::trimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) {
+    TrimMessage request;
+    request.set_partition(nesPartitionId);
+    request.set_timestamp(timestamp);
+    TrimReply reply;
+    ClientContext context;
+    Status status = coordinatorStub->trimCheckpoint(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::trimCheckpoint: status ok");
+        return true;
+    }
+    return false;
+}
+
 bool CoordinatorRPCClient::sendErrors(WorkerId pWorkerId, std::string errorMsg) {
 
     // create & fill the protobuf

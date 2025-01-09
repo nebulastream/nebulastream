@@ -75,6 +75,10 @@ service CoordinatorRPCService {
   rpc notifySourceStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
+
+  rpc sendCheckpoint (CheckpointMessage) returns (CheckpointReply) {}
+
+  rpc trimCheckpoint (TrimMessage) returns (TrimReply) {}
 }
 
 message SerializedOpenCLDeviceInfo {
@@ -304,6 +308,24 @@ message SoftStopCompletionMessage{
 }
 
 message SoftStopCompletionReply{
+  bool success = 1;
+}
+
+message CheckpointMessage{
+  uint64 partition = 1;
+  bytes storage = 2;
+}
+
+message CheckpointReply{
+  bool success = 1;
+}
+
+message TrimMessage{
+  uint64 partition = 1;
+  uint64 timestamp = 2;
+}
+
+message TrimReply{
   bool success = 1;
 }
 

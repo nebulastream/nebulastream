@@ -957,4 +957,12 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
+void NodeEngine::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) {
+    nesWorker->offloadCheckpoint(nesPartitionId, binaryStorage);
+}
+
+void NodeEngine::rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) {
+    nesWorker->rpcTrimCheckpoint(nesPartitionId, timestamp);
+}
+
 }// namespace NES::Runtime

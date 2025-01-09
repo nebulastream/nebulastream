@@ -40,6 +40,10 @@ class AbstractQueryStatusListener {
                                          Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
 
   virtual bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) = 0;
+
+    virtual void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) = 0;
+
+    virtual void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) = 0;
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 }// namespace NES

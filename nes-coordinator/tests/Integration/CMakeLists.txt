@@ -52,6 +52,9 @@ add_nes_integration_test(active-standby-test "ActiveStandbyTest.cpp")
 
 add_nes_integration_test(meerkat-test "MeerkatTest.cpp")
 
+### Checkpoint Test
+add_nes_integration_test(checkpoint-test "CheckpointTest.cpp")
+
 ### Filter Push Down Test ###
 #add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")
 

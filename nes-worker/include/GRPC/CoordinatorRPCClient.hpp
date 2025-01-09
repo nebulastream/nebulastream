@@ -17,6 +17,8 @@
 
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <Identifiers/Identifiers.hpp>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>
@@ -176,6 +178,22 @@ class CoordinatorRPCClient {
       * @return bool indicating success
       */
     bool notifyEpochTermination(uint64_t timestamp, uint64_t queryId);
+
+    /**
+     * @brief method to send new checkpoint to coordinator
+     * @param nesPartitionId: the partition where tuple belongs
+     * @param binaryData: storage containing tupels as binary
+     * @return bool indicating success
+     */
+    bool sendCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryData);
+
+    /**
+        * @brief method to trim checkpoints from coordinator
+        * @param nesPartition: the partition where tuple belongs
+        * @param timestamp: indicates which checkpoints to trim
+        * @return bool indicating success
+        */
+    bool trimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp);
 
     /**
      * Experimental

@@ -200,6 +200,12 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>>) override {
                 return true;
             }
+            void offloadCheckpoint(uint64_t, std::vector<char>) override {
+                return;
+            }
+            void rpcTrimCheckpoint(uint64_t, uint64_t) override {
+                return;
+            }
         };
         auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};

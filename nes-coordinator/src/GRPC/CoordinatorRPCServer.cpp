@@ -378,6 +378,16 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
     }
 }
 
+Status CoordinatorRPCServer::sendCheckpoint(ServerContext*, const CheckpointMessage* , CheckpointReply* reply) {  // request
+    reply->set_success(true);
+    return Status::OK;
+}
+
+Status CoordinatorRPCServer::trimCheckpoint(ServerContext*, const TrimMessage* , TrimReply* reply) {  // request
+    reply->set_success(true);
+    return Status::OK;
+}
+
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     auto inRange = topology->getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),

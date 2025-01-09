@@ -125,6 +125,12 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
             bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>>) override {
                 return true;
             }
+            void offloadCheckpoint(uint64_t, std::vector<char>) override {
+                return;
+            }
+            void rpcTrimCheckpoint(uint64_t, uint64_t) override {
+                return;
+            }
         };
 
         DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");

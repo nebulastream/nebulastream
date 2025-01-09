@@ -18,6 +18,8 @@
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -174,6 +176,28 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status NotifyQueryFailure(ServerContext* context,
                               const QueryFailureNotification* request,
                               QueryFailureNotificationReply* reply) override;
+
+    /**
+     * @brief RPC Call to receive new checkpoint
+     * @param context: the server context
+     * @param request that is sent from worker to the coordinator and filled with information for the checkpoint (nesPartition, binaryData)
+     * @param reply: that is sent back from the coordinator to the worker to confirm that checkpointing was successful
+     * @return bool indicating success
+     */
+    Status sendCheckpoint(ServerContext*,
+                        const CheckpointMessage* request,
+                        CheckpointReply* reply) override;
+
+    /**
+     * @brief RPC Call trim checkpoints
+     * @param context: the server context
+     * @param request that is sent from worker to the coordinator and filled with information to trim checkpoints (nesPartition, timestamp)
+     * @param reply: that is sent back from the coordinator to the worker to confirm that triming was successful
+     * @return bool indicating success
+     */
+    Status trimCheckpoint(ServerContext*,
+                       const TrimMessage* request,
+                       TrimReply* reply) override;
 
     /**
      * @brief RPC Call to get a list of field nodes within a defined radius around a geographical location

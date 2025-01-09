@@ -133,6 +133,11 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     insertIntoStorageCallback(inputBuffer, workerContext);
+    if (faultToleranceType == FaultToleranceType::CH) {
+        // workerContext.createCheckpoint(nesPartition, inputBuffer);  // uses HDFS
+        std::vector<char> binaryStorage = workerContext.getBinaryStorage(nesPartition);
+        nodeEngine->offloadCheckpoint(nesPartition.getPartitionId().getRawValue(), binaryStorage);
+    }
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
 
@@ -207,6 +212,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           task.getUserData<uint32_t>());
             }
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
+            workerContext.storeSchema(nesPartition, SinkMedium::getSchemaPtr());
             workerContext.createStorage(nesPartition);
             break;
         }
@@ -227,6 +233,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", decomposedQueryId, timestamp);
             workerContext.trimStorage(nesPartition, timestamp);
+            // TODO trim hdfs
+            if (faultToleranceType == FaultToleranceType::CH) {
+                // workerContext.trimCheckpoint(nesPartition, timestamp);  // uses HDFS
+                nodeEngine->rpcTrimCheckpoint(nesPartition.getPartitionId().getRawValue(), timestamp);
+            }
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {

@@ -948,6 +948,14 @@ bool NesWorker::notifyQueryStatusChange(SharedQueryId sharedQueryId,
     return false;
 }
 
+void NesWorker::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) {
+    coordinatorRpcClient->sendCheckpoint(nesPartitionId, binaryStorage);
+}
+
+void NesWorker::rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) {
+    coordinatorRpcClient->trimCheckpoint(nesPartitionId, timestamp);
+}
+
 bool NesWorker::canTriggerEndOfStream(SharedQueryId sharedQueryId,
                                       DecomposedQueryId decomposedQueryId,
                                       OperatorId sourceId,

@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -48,6 +52,9 @@ WorkerContext::~WorkerContext() {
     statisticsFile.flush();
     statisticsFile.close();
     storageFile.close();
+    if (hdfsClient) {
+        delete hdfsClient;
+    }
 }
 
 size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
@@ -120,6 +127,10 @@ void WorkerContext::storeEventChannelFuture(
 
 void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
     this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
+}
+
+void WorkerContext::storeSchema(Network::NesPartition nesPartitionId, const SchemaPtr& schema) {
+    this->schemas[nesPartitionId] = schema;
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
@@ -199,6 +210,100 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->removeTopElementFromQueue();
     }
+}
+
+std::vector<char> WorkerContext::getBinaryStorage(Network::NesPartition nesPartition) {
+    SchemaPtr& schema = schemas[nesPartition];
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> buffer = storage[nesPartition];
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> bufferCpy = buffer;
+    std::vector<char> binaryData;
+
+    // Serialize the buffer into a binary format
+    while(!bufferCpy.empty()) {
+        auto tuple = bufferCpy.top();
+        std::vector<char> binaryTuple = serializeBuffer(tuple, schema);
+        bufferCpy.pop();
+
+        binaryData.insert(binaryData.end(), binaryTuple.begin(), binaryTuple.end());
+    }
+
+    return binaryData;
+}
+
+void WorkerContext::createCheckpoint(Network::NesPartition nesPartition, Runtime::TupleBuffer& inputBuffer) {
+    if (!hdfsClient) {
+        hdfsClient = new HDFSClient("localhost", 9000); // Example HDFS host and port
+    }
+    SchemaPtr& schema = schemas[nesPartition];
+
+    std::string filePath = "/user/hadoop/" + std::to_string(nesPartition.getPartitionId().getRawValue()) + "/checkpoint_"
+        + std::to_string(inputBuffer.getOriginId().getRawValue()) + "_" + std::to_string(inputBuffer.getSequenceNumber())
+        + "_" + std::to_string(inputBuffer.getWatermark()) + ".bin";
+
+    // Serialize the buffer into a binary format
+    std::vector<char> binaryData = serializeBuffer(inputBuffer, schema);
+
+    // Write serialized data to HDFS
+    hdfsClient->writeToFile(filePath, binaryData, nesPartition.getPartitionId().getRawValue());
+}
+
+std::vector<char> WorkerContext::serializeBuffer(NES::Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
+    // Convert TupleBuffer to a binary representation
+    std::vector<char> binaryData;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    const char* curPosition = buffer.getBuffer<const char>();
+    const char* endPosition = curPosition + buffer.getBufferSize();
+
+    int numberOfAttributeFields = schema->getSize();
+    int numberOfTuple = buffer.getNumberOfTuples();
+
+    for (int t = 0; t < numberOfTuple; t++) {
+        OriginId originId = buffer.getOriginId();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&originId), reinterpret_cast<char*>(&originId) + sizeof(originId));
+        uint64_t watermark = buffer.getWatermark();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&watermark), reinterpret_cast<char*>(&watermark) + sizeof(watermark));
+        uint64_t creationTimestamp = buffer.getCreationTimestampInMS();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&creationTimestamp), reinterpret_cast<char*>(&creationTimestamp) + sizeof(creationTimestamp));
+        SequenceData sequenceData = buffer.getSequenceData();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&sequenceData), reinterpret_cast<char*>(&sequenceData) + sizeof(sequenceData));
+        uint64_t messageSequenceNumber = buffer.getSequenceNumber();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&messageSequenceNumber), reinterpret_cast<char*>(&messageSequenceNumber) + sizeof(messageSequenceNumber));
+        uint32_t numOfChildren = buffer.getNumberOfChildrenBuffer();
+        binaryData.insert(binaryData.end(), reinterpret_cast<char*>(&numOfChildren), reinterpret_cast<char*>(&numOfChildren) + sizeof(numOfChildren));
+
+        for(int a = 0; a < numberOfAttributeFields; a++) {
+            PhysicalTypePtr type = physicalDataTypeFactory.getPhysicalType(schema->get(a)->getDataType());
+            uint64_t fieldSize = type->size();
+
+            if (curPosition + fieldSize > endPosition) {
+                NES_ERROR("WorkerContext: buffer overflow detected during serialization");
+            }
+
+            binaryData.insert(binaryData.end(), curPosition, curPosition + fieldSize);
+            curPosition += fieldSize;
+            }
+    }
+    return binaryData;
+}
+
+bool WorkerContext::trimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp) {
+    bool isTrimmed = false;
+    int numEntries = 0;
+    std::string path = "/user/hadoop/" + std::to_string(nesPartition.getPartitionId().getRawValue());
+    hdfsFileInfo* fileList = hdfsClient->listFiles(path, numEntries);
+
+    for (int i = 0; i < numEntries; i++) {
+        std::string filePath = fileList[i].mName;
+        size_t lastUnderscore = filePath.find_last_of("_");
+        std::string watermarkSegment = filePath.substr(lastUnderscore + 1);
+        uint64_t watermark = std::stoull(watermarkSegment);
+
+        if(watermark < timestamp) {
+            hdfsClient->deleteFile(filePath);
+            isTrimmed = true;
+        }
+    }
+    return isTrimmed;
 }
 
 bool WorkerContext::releaseNetworkChannel(OperatorId id,

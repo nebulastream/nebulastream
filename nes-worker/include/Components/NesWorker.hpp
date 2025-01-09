@@ -202,6 +202,20 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool notifyErrors(WorkerId workerId, std::string errorMsg);
 
     /**
+     * @brief This method sends the storage as binary to the coordinator to be used as a checkpoint
+     * @param nesPartitionId the id of the corresponding partition
+     * @param binaryStorage storage in binary
+     */
+    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) override;
+
+    /**
+        * @brief This method trims the checkpoints saved at coordinator
+        * @param nesPartitionId the id of the corresponding partition
+        * @param timestamp up to which timestamp the checkpoints will be trimmed
+        */
+    void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) override;
+
+    /**
      * @brief Method to get worker id
      * @return worker id
     */
