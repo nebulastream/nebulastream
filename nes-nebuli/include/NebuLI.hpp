@@ -22,15 +22,19 @@
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::CLI
 {
 
 struct SchemaField
 {
+    SchemaField(std::string name, std::string typeName);
+    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
+    SchemaField() = default;
+
     std::string name;
-    BasicType type;
+    std::shared_ptr<NES::DataType> type;
 };
 
 struct Sink
