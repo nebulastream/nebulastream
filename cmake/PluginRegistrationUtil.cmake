@@ -72,7 +72,7 @@ function(generate_plugin_registrar plugin_registry plugin_registry_component)
         else ()
             list(APPEND REGISTER_FUNCTION_DECLARATIONS "std::unique_ptr<${plugin_registry}RegistryReturnType> Register${reg_func}${plugin_registry}(const ${plugin_registry}RegistryArguments&)")
         endif ()
-        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.registerPlugin(\"${reg_func}\", Register${reg_func}${plugin_registry})")
+        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.addEntry(\"${reg_func}\", Register${reg_func}${plugin_registry})")
     endforeach ()
 
     # link all plugin libraries against the component that the plugin registry belongs to, this makes the implementation

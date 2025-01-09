@@ -42,10 +42,10 @@ public:
     template <typename... Args>
     [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Args&&... args) const
     {
-        if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
+        if (const auto entry = registryImpl.find(key); entry != registryImpl.end())
         {
-            /// Call the creator function of the plugin.
-            return plugin->second(std::forward<Args>(args)...);
+            /// Call the creator function of the entry.
+            return entry->second(std::forward<Args>(args)...);
         }
         return std::nullopt;
     }
@@ -63,8 +63,8 @@ protected:
     Registry() { Registrar::registerAll(*this); }
 
 private:
-    /// Only the Registrar can register new plugins.
-    void registerPlugin(typename Registrar::KeyType key, typename Registrar::CreatorFn creatorFunction)
+    /// Only the Registrar can register new entries.
+    void addEntry(typename Registrar::KeyType key, typename Registrar::CreatorFn creatorFunction)
     {
         registryImpl.emplace(std::move(key), std::move(creatorFunction));
     }

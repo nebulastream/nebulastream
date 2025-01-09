@@ -13,8 +13,9 @@
 */
 
 #pragma once
+#include <string>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Runtime::Execution
 {
