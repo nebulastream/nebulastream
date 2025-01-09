@@ -148,8 +148,8 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     throw UnsupportedOperation("This function is not supported here");
 }
-std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
+std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t size)
 {
-    throw UnsupportedOperation("This function is not supported here");
+    return this->bufferManager->getUnpooledBuffer(size);
 }
 }
