@@ -452,7 +452,7 @@ std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> getNeighbo
     OperatorHandlerStorePtr operatorHandlerStore;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
-    AbstractQueryStatusListenerPtr nesWorker;  // method here that accepts checkpoints and gives it to nesWorker
+    AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
     Statistic::StatisticManagerPtr statisticManager;
     OpenCLManagerPtr openCLManager;

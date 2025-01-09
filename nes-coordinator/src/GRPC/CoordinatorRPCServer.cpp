@@ -378,12 +378,12 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
     }
 }
 
-Status CoordinatorRPCServer::sendCheckpoint(ServerContext*, const CheckpointMessage* , CheckpointReply* reply) {  // request
+Status CoordinatorRPCServer::sendCheckpoint(ServerContext*, const CheckpointMessage* , CheckpointReply* reply) {
     reply->set_success(true);
     return Status::OK;
 }
 
-Status CoordinatorRPCServer::trimCheckpoint(ServerContext*, const TrimMessage* , TrimReply* reply) {  // request
+Status CoordinatorRPCServer::trimCheckpoint(ServerContext*, const TrimMessage* , TrimReply* reply) {
     reply->set_success(true);
     return Status::OK;
 }

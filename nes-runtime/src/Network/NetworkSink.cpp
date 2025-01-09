@@ -233,7 +233,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", decomposedQueryId, timestamp);
             workerContext.trimStorage(nesPartition, timestamp);
-            // TODO trim hdfs
             if (faultToleranceType == FaultToleranceType::CH) {
                 // workerContext.trimCheckpoint(nesPartition, timestamp);  // uses HDFS
                 nodeEngine->rpcTrimCheckpoint(nesPartition.getPartitionId().getRawValue(), timestamp);

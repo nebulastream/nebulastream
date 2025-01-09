@@ -42,7 +42,7 @@ namespace NES {
 using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 100;
-const uint64_t numberOfBuffersToProduceInTuples = 10;  // 1000000
+const uint64_t numberOfBuffersToProduceInTuples = 1000000;
 const uint64_t ingestionRate = 20;
 
 class CheckpointTest : public Testing::BaseIntegrationTest {
