@@ -28,9 +28,8 @@ struct SourceValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-using SourceValidationRegistrySignature
-    = RegistrySignature<std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>;
-class SourceValidationRegistry final : public BaseRegistry<SourceValidationRegistry, SourceValidationRegistrySignature>
+class SourceValidationRegistry final
+    : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
 {
 };
 

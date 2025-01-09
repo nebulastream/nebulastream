@@ -28,8 +28,7 @@ struct SourceRegistryArguments
     SourceDescriptor sourceDescriptor;
 };
 
-using SourceRegistrySignature = RegistrySignature<std::string, SourceRegistryReturnType, const SourceRegistryArguments&>;
-class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
+class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>
 {
 };
 
