@@ -34,6 +34,7 @@
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
 #include <DataServer/TCPDataServer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
@@ -202,7 +203,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token&)
 {
     try
     {

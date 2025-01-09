@@ -125,7 +125,7 @@ dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, Abstra
         }
         auto emptyBuffer = *emptyBufferOpt;
 
-        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, bufferProvider, stopToken);
 
         if (numReadBytes != 0)
         {

@@ -149,7 +149,7 @@ void NES::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
     fail_during_close = true;
 }
 
-size_t NES::TestSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t NES::TestSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.

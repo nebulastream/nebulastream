@@ -95,7 +95,7 @@ private:
 class TestSource : public Source
 {
 public:
-    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
 
