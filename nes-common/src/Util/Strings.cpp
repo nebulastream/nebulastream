@@ -153,11 +153,17 @@ std::string toLowerCase(std::string_view input)
     return input | std::views::transform(::tolower) | ranges::to<std::string>();
 }
 
-
-std::string_view trimWhiteSpaces(const std::string_view input)
+std::string_view trimWhiteSpaces(std::string_view input)
 {
     const auto start = input.find_first_not_of(" \t\n\r");
     const auto end = input.find_last_not_of(" \t\n\r");
+    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+}
+
+std::string_view trimCharacters(std::string_view input, char c)
+{
+    const auto start = input.find_first_not_of(c);
+    const auto end = input.find_last_not_of(c);
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
 }
 

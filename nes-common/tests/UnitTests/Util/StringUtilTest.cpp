@@ -384,4 +384,65 @@ TEST(ReplaceFirstTest, ReplaceFirstSpecialCharacters)
     EXPECT_EQ(replaceFirst("a*b*c*", "*", "X"), "aXb*c*"); /// Only replaces the first '*'
 }
 
+TEST(TrimCharactersTest, EmptyStringReturnsEmpty)
+{
+    EXPECT_TRUE(trimCharacters("", ' ').empty());
+}
+
+TEST(TrimCharactersTest, StringWithoutTargetCharacterRemainsSame)
+{
+    std::string_view input = "hello world";
+    EXPECT_EQ(trimCharacters(input, '#'), input);
+}
+
+TEST(TrimCharactersTest, TrimLeadingSpaces)
+{
+    EXPECT_EQ(trimCharacters("   hello", ' '), "hello");
+}
+
+TEST(TrimCharactersTest, TrimTrailingSpaces)
+{
+    EXPECT_EQ(trimCharacters("hello   ", ' '), "hello");
+}
+
+TEST(TrimCharactersTest, TrimBothEndsSpaces)
+{
+    EXPECT_EQ(trimCharacters("   hello world   ", ' '), "hello world");
+}
+
+TEST(TrimCharactersTest, TrimMultipleOccurrencesOfChar)
+{
+    EXPECT_EQ(trimCharacters("###hello###", '#'), "hello");
+}
+
+TEST(TrimCharactersTest, StringWithOnlyTrimCharacter)
+{
+    EXPECT_TRUE(trimCharacters("     ", ' ').empty());
+}
+
+TEST(TrimCharactersTest, PreservesInnerSpaces)
+{
+    EXPECT_EQ(trimCharacters("  hello   world  ", ' '), "hello   world");
+}
+
+TEST(TrimCharactersTest, TrimSpecialCharacters)
+{
+    EXPECT_EQ(trimCharacters("\t\thello\t", '\t'), "hello");
+}
+
+TEST(TrimCharactersTest, SingleCharacterString)
+{
+    EXPECT_TRUE(trimCharacters("h", 'h').empty());
+}
+
+TEST(TrimCharactersTest, VerifyUnderlyingDataNotModified)
+{
+    std::string original = "  hello  ";
+    std::string_view view(original);
+    auto result = trimCharacters(view, ' ');
+
+    EXPECT_EQ(original, "  hello  ") << "Original string should not have been modified";
+    EXPECT_TRUE(result.data() >= view.data() && result.data() + result.length() <= view.data() + view.length());
+}
+
 }
