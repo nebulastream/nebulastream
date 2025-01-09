@@ -43,14 +43,14 @@
 namespace NES::Systest
 {
 std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName, const std::string& testDataDir)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema;
 
-    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
+    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
 
     if (!parser.loadFile(testFilePath))
     {

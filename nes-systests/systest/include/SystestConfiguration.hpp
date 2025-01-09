@@ -39,6 +39,7 @@ public:
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
     Configurations::StringOption resultDir = {"resultDir", PATH_TO_BINARY_DIR "/nes-systests/result/", "Directory for query results"};
+    Configurations::StringOption testDataDir = {"testDataDir", TEST_DATA_DIR, "Directory where the data needed for all tests is stored"};
     Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};

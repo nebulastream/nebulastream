@@ -84,6 +84,11 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .default_value(false)
         .implicit_value(true);
 
+    /// set location of test Data
+    program.add_argument("--testDataDir")
+        .help("Path to Directory containing all test Data")
+        .default_value(TEST_DATA_DIR);
+
     program.parse_args(argc, argv);
 
     auto config = Configuration::SystestConfiguration();
@@ -244,6 +249,15 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
     }
 
+    if (program.is_used("--testDataDir"))
+    {
+        config.testDataDir = program.get<std::string>("--testDataDir");
+        if (not std::filesystem::is_directory(config.testDataDir.getValue()))
+        {
+            NES_ERROR("Test data directory not found.");
+        }
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << loadTestFileMap(config);
@@ -299,7 +313,7 @@ int main(int argc, const char** argv)
         auto config = Systest::readConfiguration(argc, argv);
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
+        const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue(), config.testDataDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
         if (queries.empty())
         {
@@ -339,6 +353,7 @@ int main(int argc, const char** argv)
                 nlohmann::json benchmarkResults;
                 failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
                 std::cout << benchmarkResults.dump(4) << std::endl;
+                NES_LOG(LogLevel::LOG_INFO, "Writing results to {}", config.resultDir.getValue() + "BenchmarkResults.json");
                 std::filesystem::path const outputPath(config.resultDir.getValue() + "BenchmarkResults.json");
                 std::ofstream outputFile(outputPath);
                 outputFile << benchmarkResults.dump(4);

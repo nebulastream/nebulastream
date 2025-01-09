@@ -49,9 +49,9 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir)
+void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir, const std::string& testDataDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
+    auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
@@ -108,13 +108,13 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) {};
 
-std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir)
+std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir, const std::string& testDataDir)
 {
     std::vector<Query> queries;
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
-        loadQueriesFromTestFile(testfile, resultDir);
+        loadQueriesFromTestFile(testfile, resultDir, testDataDir);
         for (auto& query : testfile.queries)
         {
             queries.emplace_back(std::move(query));
