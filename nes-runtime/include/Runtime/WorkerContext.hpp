@@ -166,20 +166,20 @@ class WorkerContext {
     */
     void storeSchema(Network::NesPartition nesPartitionId, const SchemaPtr& schema);
 
-    /*/**
+    /**
       * @brief This method deletes Checkpoints from HDFS
       * @param nesPartition partition
       * @param timestamp timestamp
       * @return success in the case something was trimmed
-      #1#
-    bool trimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp);
+      */
+    //bool trimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp);
 
     /**
     * @brief This method writes a tuple to the remote storage as a checkpoint
     * @param nesPartitionId partition id
     * @param inputBuffer tuple
-    #1#
-    void createCheckpoint(Network::NesPartition nesPartitionId, Runtime::TupleBuffer& inputBuffer);*/
+    */
+    //void createCheckpoint(Network::NesPartition nesPartitionId, Runtime::TupleBuffer& inputBuffer);
 
     /**
        * @brief This method returns the storage as binary to be used as a checkpoint
