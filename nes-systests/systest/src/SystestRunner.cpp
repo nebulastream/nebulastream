@@ -71,7 +71,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& [type, name] : source.fields)
                     {
-                        schema.push_back({.name = name, .type = type});
+                        schema.emplace_back(name, std::string(magic_enum::enum_name(type)));
                     }
                     return schema;
                 }()});
@@ -95,7 +95,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& field : source.fields)
                     {
-                        schema.push_back({.name = field.name, .type = field.type});
+                        schema.emplace_back(field.name, std::string(magic_enum::enum_name(field.type)));
                     }
                     return schema;
                 }()});

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <NebuLI.hpp>
+
 #include <algorithm>
 #include <fstream>
 #include <ranges>
@@ -38,18 +40,89 @@
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <NebuLI.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace YAML
 {
 using namespace NES::CLI;
+
+NES::DataTypePtr stringToFieldType(const std::string& fieldNodeType)
+{
+    if (fieldNodeType == "TEXT")
+    {
+        return NES::DataTypeFactory::createVariableSizedData();
+    }
+
+    if (fieldNodeType == "BOOLEAN")
+    {
+        return NES::DataTypeFactory::createBoolean();
+    }
+
+    if (fieldNodeType == "INT8")
+    {
+        return NES::DataTypeFactory::createInt8();
+    }
+
+    if (fieldNodeType == "UINT8")
+    {
+        return NES::DataTypeFactory::createUInt8();
+    }
+
+    if (fieldNodeType == "INT16")
+    {
+        return NES::DataTypeFactory::createInt16();
+    }
+
+    if (fieldNodeType == "UINT16")
+    {
+        return NES::DataTypeFactory::createUInt16();
+    }
+
+    if (fieldNodeType == "INT32")
+    {
+        return NES::DataTypeFactory::createInt32();
+    }
+
+    if (fieldNodeType == "UINT32")
+    {
+        return NES::DataTypeFactory::createUInt32();
+    }
+
+    if (fieldNodeType == "INT64")
+    {
+        return NES::DataTypeFactory::createInt64();
+    }
+
+    if (fieldNodeType == "UINT64")
+    {
+        return NES::DataTypeFactory::createUInt64();
+    }
+
+    if (fieldNodeType == "FLOAT32")
+    {
+        return NES::DataTypeFactory::createFloat();
+    }
+
+    if (fieldNodeType == "FLOAT64")
+    {
+        return NES::DataTypeFactory::createDouble();
+    }
+
+    if (fieldNodeType == "CHAR")
+    {
+        return NES::DataTypeFactory::createChar();
+    }
+
+    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType << " is not a proper Schema Field Type.");
+}
+
 template <>
 struct convert<SchemaField>
 {
     static bool decode(const Node& node, SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = *magic_enum::enum_cast<NES::BasicType>(node["type"].as<std::string>());
+        rhs.type = stringToFieldType(node["type"].as<std::string>());
         return true;
     }
 };
@@ -226,6 +299,14 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+}
+
+SchemaField::SchemaField(std::string name, std::string typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
+{
+}
+
+SchemaField::SchemaField(std::string name, NES::DataTypePtr type) : name(std::move(name)), type(std::move(type))
+{
 }
 
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
