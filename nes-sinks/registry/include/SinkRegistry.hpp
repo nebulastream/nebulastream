@@ -18,7 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Sinks
 {

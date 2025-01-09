@@ -23,7 +23,7 @@
 #include <string>
 #include <unordered_map>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Sources::SourceValidationGeneratedRegistrar
 {

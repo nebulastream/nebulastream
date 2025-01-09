@@ -21,7 +21,7 @@
 
 #include <memory>
 #include <string>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar
 {

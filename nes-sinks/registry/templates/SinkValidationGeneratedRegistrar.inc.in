@@ -19,7 +19,7 @@
 #endif
 
 #include <string>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 #include <Configurations/Descriptor.hpp>
 
 namespace NES::Sinks::SinkValidationGeneratedRegistrar

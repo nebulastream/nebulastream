@@ -17,7 +17,7 @@
 #include <string>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Sinks
 {

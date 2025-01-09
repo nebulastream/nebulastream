@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 #include <Execution/Functions/Function.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
