@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Systest
 {
@@ -47,8 +47,11 @@ static constexpr auto padSizeQueryCounter = 3;
 
 /// Load query plan objects by parsing an SLT file for queries and lowering it
 /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-[[nodiscard]] std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName, const std::string& testDataDir);
+[[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
+    const std::filesystem::path& testFilePath,
+    const std::filesystem::path& resultDir,
+    const std::string& testFileName,
+    const std::string& testDataDir);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect
@@ -63,8 +66,8 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurre
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueriesAndBenchmark(const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
+[[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
+    const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed

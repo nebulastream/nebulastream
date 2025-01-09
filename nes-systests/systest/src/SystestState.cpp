@@ -34,7 +34,10 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     };
 
     std::string desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
-
+    if (!std::filesystem::exists(path))
+    {
+        NES_WARNING("{} does not exist, you may need to set the test discovery directory!", path);
+    }
     for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
              | std::views::filter([](auto entry) { return entry.is_regular_file(); }))
     {
