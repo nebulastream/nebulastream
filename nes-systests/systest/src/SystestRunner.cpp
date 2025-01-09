@@ -42,8 +42,11 @@
 
 namespace NES::Systest
 {
-std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName, const std::string& testDataDir)
+std::vector<LoadedQueryPlan> loadFromSLTFile(
+    const std::filesystem::path& testFilePath,
+    const std::filesystem::path& resultDir,
+    const std::string& testFileName,
+    const std::string& testDataDir)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -367,10 +370,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<Query>& queries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration,
-    nlohmann::json& resultJson
-    )
+    const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
 {
     SingleNodeWorker worker(configuration);
     std::vector<RunningQuery> failedQueries;
@@ -384,13 +384,13 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         const auto startTime = std::chrono::high_resolution_clock::now();
         worker.startQuery(queryId);
         while (worker.getQuerySummary(queryId)->currentStatus != Runtime::Execution::QueryStatus::Stopped
-                and worker.getQuerySummary(queryId)->currentStatus != Runtime::Execution::QueryStatus::Failed)
+               and worker.getQuerySummary(queryId)->currentStatus != Runtime::Execution::QueryStatus::Failed)
         {
             // Busy wait instead, so more accurate time?
             //std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
         const auto endTime = std::chrono::high_resolution_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime);
         auto errorMessage = checkResult(runningQuery);
         printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
         if (errorMessage.has_value())
@@ -399,9 +399,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         }
         worker.unregisterQuery(queryId);
         queryFinishedCounter += 1;
-        const auto queryName = queryToRun.name + ":" + std::to_string(queryToRun.queryIdInFile + 1);
+        const auto queryName = queryToRun.name + "." + std::to_string(queryToRun.queryIdInFile + 1);
         resultArray.push_back({{"query name", queryName}, {"time", duration.count()}});
-
     }
 
     resultJson = resultArray;

@@ -39,6 +39,7 @@ namespace NES::Systest
 {
 Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
 {
+
     using namespace argparse;
     ArgumentParser program("systest");
 
@@ -79,15 +80,10 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .remaining();
 
     /// Benchmark (time) all specified queries
-    program.add_argument("-b")
-        .help("Benchmark (time) all specified queries")
-        .default_value(false)
-        .implicit_value(true);
+    program.add_argument("-b").help("Benchmark (time) all specified queries").default_value(false).implicit_value(true);
 
     /// set location of test Data
-    program.add_argument("--testDataDir")
-        .help("Path to Directory containing all test Data")
-        .default_value(TEST_DATA_DIR);
+    program.add_argument("--testDataDir").help("Path to Directory containing all test Data").default_value(TEST_DATA_DIR);
 
     program.parse_args(argc, argv);
 
@@ -174,7 +170,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
             });
         config.testGroup = expectedGroup;
     }
-
+    std::cout << "past groups: " << std::endl;
+    NES_INFO("Past Groups");
     if (program.is_used("--shuffle"))
     {
         config.randomQueryOrder = true;
@@ -251,6 +248,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     if (program.is_used("--testDataDir"))
     {
+        std::cout << "runner is using resultDir" << std::endl;
+        NES_INFO("runner is using resultDir");
         config.testDataDir = program.get<std::string>("--testDataDir");
         if (not std::filesystem::is_directory(config.testDataDir.getValue()))
         {
@@ -352,18 +351,24 @@ int main(int argc, const char** argv)
             {
                 nlohmann::json benchmarkResults;
                 failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
-                std::cout << benchmarkResults.dump(4) << std::endl;
-                NES_LOG(LogLevel::LOG_INFO, "Writing results to {}", config.resultDir.getValue() + "BenchmarkResults.json");
+                //std::cout << benchmarkResults.dump(4) << std::endl;
                 std::filesystem::path const outputPath(config.resultDir.getValue() + "BenchmarkResults.json");
-                std::ofstream outputFile(outputPath);
-                outputFile << benchmarkResults.dump(4);
-                outputFile.close();
+                if (std::filesystem::exists(outputPath))
+                {
+                    NES_ERROR("{} does not exist! Can not write results to disk", config.resultDir.getValue());
+                }
+                else
+                {
+                    NES_LOG(LogLevel::LOG_INFO, "Writing results to {}", config.resultDir.getValue() + "BenchmarkResults.json");
+                    std::ofstream outputFile(outputPath);
+                    outputFile << benchmarkResults.dump(4);
+                    outputFile.close();
+                }
+
             }
             else
             {
-
                 failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
-
             }
         }
         if (failedQueries.empty())
