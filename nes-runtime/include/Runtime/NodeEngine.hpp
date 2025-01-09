@@ -388,6 +388,20 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp);
 
+    /**
+     * @brief This method passes the storage as binary to be used as a checkpoint
+     * @param nesPartitionId the id of the corresponding partition
+     * @param binaryStorage storage in binary
+     */
+    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage);
+
+    /**
+     * @brief This method trims the checkpoints saved at coordinator
+     * @param nesPartitionId the id of the corresponding partition
+     * @param timestamp up to which timestamp the checkpoints will be trimmed
+     */
+    void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -448,7 +462,7 @@ std::map<DecomposedQueryId, QueryPreviousMetrics> getNeighbourStatistics(WorkerI
     OperatorHandlerStorePtr operatorHandlerStore;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
-    AbstractQueryStatusListenerPtr nesWorker;
+    AbstractQueryStatusListenerPtr nesWorker;  // method here that accepts checkpoints and gives it to nesWorker
     Network::NetworkManagerPtr networkManager;
     Statistic::StatisticManagerPtr statisticManager;
     OpenCLManagerPtr openCLManager;
