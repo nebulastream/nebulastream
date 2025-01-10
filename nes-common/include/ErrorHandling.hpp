@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <cpptrace/cpptrace.hpp>
@@ -78,11 +80,17 @@ private:
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
-#define PRECONDITION(condition, ...) \
-    if (!(condition)) \
+#define PRECONDITION(condition, formatString, ...) \
+    do \
     { \
-        throw NES::PreconditionViolated(__VA_ARGS__); \
-    }
+        if (!(condition)) \
+        { \
+            std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+            cpptrace::generate_trace().print(); \
+            std::terminate(); \
+        } \
+    } while (false)
 
 /**
  * @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
@@ -90,11 +98,17 @@ private:
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
-#define INVARIANT(condition, ...) \
-    if (!(condition)) \
+#define INVARIANT(condition, formatString, ...) \
+    do \
     { \
-        throw NES::InvariantViolated(__VA_ARGS__); \
-    }
+        if (!(condition)) \
+        { \
+            std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+            cpptrace::generate_trace().print(); \
+            std::terminate(); \
+        } \
+    } while (false)
 
 /**
  * @brief This function is used to log the current exception.

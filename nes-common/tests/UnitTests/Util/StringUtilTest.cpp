@@ -264,8 +264,8 @@ TEST(StringCaseConversionTest, ToLowerCaseSpecialCharacters)
 
 TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
 {
-    EXPECT_ANY_THROW(auto _ = toLowerCase("ÉÇÀÔ"));
-    EXPECT_ANY_THROW(auto _ = toUpperCase("éçàô"));
+    EXPECT_DEATH(auto _ = toLowerCase("ÉÇÀÔ"), "Precondition violated:.*");
+    EXPECT_DEATH(auto _ = toUpperCase("éçàô"), "Precondition violated:*");
 }
 
 TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
@@ -307,9 +307,9 @@ TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
 TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
 {
     std::string lowerStr = "héllô!123";
-    EXPECT_ANY_THROW(toUpperCaseInplace(lowerStr));
+    EXPECT_DEATH(toUpperCaseInplace(lowerStr), "Precondition failed:.*");
     std::string str = "HÉLLÔ!123";
-    EXPECT_ANY_THROW(toLowerCaseInplace(str));
+    EXPECT_DEATH(toLowerCaseInplace(str), "Precondition failed:.*");
 }
 
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)

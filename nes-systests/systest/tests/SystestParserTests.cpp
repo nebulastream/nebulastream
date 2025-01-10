@@ -212,7 +212,7 @@ TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
 
     SystestParser parser{};
     parser.registerSubstitutionRule(rule1);
-    ASSERT_EXCEPTION_ERRORCODE({ parser.registerSubstitutionRule(rule2); }, ErrorCode::PreconditionViolated)
+    ASSERT_DEATH({ parser.registerSubstitutionRule(rule2); }, "Precondition violated:.*");
 }
 
 }

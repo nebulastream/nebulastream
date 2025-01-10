@@ -92,7 +92,7 @@ FunctionItem::FunctionItem(NodeFunctionPtr exp) : function(std::move(exp))
 FunctionItem FunctionItem::as(std::string newName)
 {
     ///rename function node
-    PRECONDITION(Util::instanceOf<NodeFunctionFieldAccess>(function), "Renaming is only allowed on Field Access Attributes")
+    PRECONDITION(Util::instanceOf<NodeFunctionFieldAccess>(function), "Renaming is only allowed on Field Access Attributes");
     auto fieldAccessFunction = Util::as<NodeFunctionFieldAccess>(function);
     return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(newName));
 }
@@ -105,7 +105,7 @@ NodeFunctionFieldAssignmentPtr FunctionItem::operator=(FunctionItem assignItem)
 NodeFunctionFieldAssignmentPtr FunctionItem::operator=(NodeFunctionPtr assignFunction)
 {
     PRECONDITION(
-        Util::instanceOf<NodeFunctionFieldAccess>(function), "Function API: we can only assign something to a field access function")
+        Util::instanceOf<NodeFunctionFieldAccess>(function), "Function API: we can only assign something to a field access function");
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(function), assignFunction);
 }
 

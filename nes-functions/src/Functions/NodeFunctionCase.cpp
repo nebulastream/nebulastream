@@ -67,7 +67,7 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
             "was: {}",
             *elem,
             elem->getStamp()->toString(),
-            defaultExp->getStamp()->toString())
+            defaultExp->getStamp()->toString());
     }
 
     stamp = defaultExp->getStamp();
