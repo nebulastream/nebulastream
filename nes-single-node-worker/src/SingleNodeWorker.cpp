@@ -33,7 +33,7 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : qc(std::make_unique<QueryCompilation::QueryCompiler>(
+    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , listener(std::make_shared<Runtime::PrintingStatisticListener>(
@@ -58,7 +58,7 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 
-        auto compilationResult = qc->compileQuery(std::move(request));
+        auto compilationResult = compiler->compileQuery(std::move(request));
         return nodeEngine->registerExecutableQueryPlan(compilationResult.takeExecutableQueryPlan());
     }
     catch (Exception& e)
