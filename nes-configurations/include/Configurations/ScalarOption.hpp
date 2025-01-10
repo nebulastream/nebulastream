@@ -14,12 +14,11 @@
 #pragma once
 
 #include <ostream>
-#include <ErrorHandling.hpp>
-#include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/yaml.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
