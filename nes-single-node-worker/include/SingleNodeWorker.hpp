@@ -40,7 +40,7 @@ class QueryCompiler;
  */
 class SingleNodeWorker
 {
-    std::unique_ptr<QueryCompilation::QueryCompiler> qc;
+    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
     std::shared_ptr<Runtime::PrintingStatisticListener> listener;
     std::shared_ptr<Runtime::NodeEngine> nodeEngine;
     size_t bufferSize;
