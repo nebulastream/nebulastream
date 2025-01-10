@@ -27,7 +27,7 @@ Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function
-    const auto value = mapFunction->execute(record);
+    const auto value = mapFunction->execute(record, ctx.getBufferProvider());
     /// write the result to the record
     record.write(fieldToWriteTo, value);
     /// call next operator

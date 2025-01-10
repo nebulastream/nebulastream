@@ -52,7 +52,7 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
-
+    [[nodiscard]] nautilus::val<Memory::AbstractBufferProvider*> getBufferProvider() const;
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;

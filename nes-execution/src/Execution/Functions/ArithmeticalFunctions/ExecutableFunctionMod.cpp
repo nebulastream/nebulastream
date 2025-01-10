@@ -23,10 +23,10 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionMod::execute(const Record& record) const
+VarVal ExecutableFunctionMod::execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record);
-    const auto rightValue = rightExecutableFunctionSub->execute(record);
+    const auto leftValue = leftExecutableFunctionSub->execute(record, bufferProvider);
+    const auto rightValue = rightExecutableFunctionSub->execute(record, bufferProvider);
     return leftValue % rightValue;
 }
 

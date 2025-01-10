@@ -105,13 +105,13 @@ Nautilus::Record MedianAggregationFunction::lower(
         nautilus::val<int64_t> countLessThan = 0;
         nautilus::val<int64_t> countEqual = 0;
         const auto candidateRecord = *candidateIt;
-        const auto candidateValue = inputFunction->execute(candidateRecord);
+        const auto candidateValue = inputFunction->execute(candidateRecord, bufferProvider);
 
         /// Counting how many items are smaller or equal for the current candidate
         for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
         {
             const auto itemRecord = *itemIt;
-            const auto itemValue = inputFunction->execute(itemRecord);
+            const auto itemValue = inputFunction->execute(itemRecord, bufferProvider);
             if (itemValue < candidateValue)
             {
                 countLessThan = countLessThan + 1;
@@ -142,8 +142,8 @@ Nautilus::Record MedianAggregationFunction::lower(
     const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
     const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
 
-    const auto medianValue1 = inputFunction->execute(medianRecord1);
-    const auto medianValue2 = inputFunction->execute(medianRecord2);
+    const auto medianValue1 = inputFunction->execute(medianRecord1, bufferProvider);
+    const auto medianValue2 = inputFunction->execute(medianRecord2, bufferProvider);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
     const auto medianValue = (medianValue1.castToType(resultType) + medianValue2.castToType(resultType)) / two.castToType(resultType);
 

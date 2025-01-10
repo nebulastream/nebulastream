@@ -44,7 +44,7 @@ AvgAggregationFunction::AvgAggregationFunction(
 
 void AvgAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
+    const nautilus::val<Memory::AbstractBufferProvider*>& provider,
     const Nautilus::Record& record)
 {
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
@@ -54,7 +54,7 @@ void AvgAggregationFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record);
+    const auto value = inputFunction->execute(record, provider);
     const auto newSum = sum + value;
     const auto newCount = count + nautilus::val<uint64_t>(1);
 

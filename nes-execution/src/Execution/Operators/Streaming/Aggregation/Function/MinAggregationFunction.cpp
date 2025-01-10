@@ -41,7 +41,7 @@ MinAggregationFunction::MinAggregationFunction(
 
 void MinAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
     const Nautilus::Record& record)
 {
     /// Reading the old min value from the aggregation state.
@@ -49,7 +49,7 @@ void MinAggregationFunction::lift(
     const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction->execute(record);
+    const auto value = inputFunction->execute(record, bufferProvider);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);

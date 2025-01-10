@@ -149,7 +149,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
         {
             auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields))
+            if (joinFunction->execute(joinedKeyFields, executionCtx.getBufferProvider()))
             {
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);

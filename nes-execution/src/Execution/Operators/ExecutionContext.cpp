@@ -66,6 +66,11 @@ nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
     return bufferPtr;
 }
 
+nautilus::val<Memory::AbstractBufferProvider*> ExecutionContext::getBufferProvider() const
+{
+    return nautilus::invoke(+[](PipelineExecutionContext* pec) { return pec->getBufferManager().get(); }, pipelineContext);
+}
+
 void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());

@@ -26,7 +26,7 @@ class ExecutableFunctionSub final : public Function
 {
 public:
     ExecutableFunctionSub(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const override;
 
 private:
     const std::unique_ptr<Function> leftExecutableFunction;

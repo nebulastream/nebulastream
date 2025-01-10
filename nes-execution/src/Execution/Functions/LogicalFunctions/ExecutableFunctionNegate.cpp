@@ -21,9 +21,9 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionNegate::execute(const Record& record) const
+VarVal ExecutableFunctionNegate::execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const
 {
-    const auto value = childFunction->execute(record);
+    const auto value = childFunction->execute(record, bufferProvider);
     return !value;
 }
 

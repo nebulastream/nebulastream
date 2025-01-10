@@ -27,7 +27,7 @@ class ExecutableFunctionReadField : public Function
 {
 public:
     explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const override;
 
 private:
     const Record::RecordFieldIdentifier field;

@@ -21,7 +21,7 @@ ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIden
 {
 }
 
-VarVal ExecutableFunctionReadField::execute(const Record& record) const
+VarVal ExecutableFunctionReadField::execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*>) const
 {
     return record.read(field);
 }

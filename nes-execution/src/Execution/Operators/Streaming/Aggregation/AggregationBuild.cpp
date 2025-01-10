@@ -71,7 +71,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     /// Calling the key functions to add/update the keys to the record
     for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
     {
-        const auto value = function->execute(record);
+        const auto value = function->execute(record, ctx.bufferProvider);
         record.write(field.fieldIdentifier, value);
     }
 

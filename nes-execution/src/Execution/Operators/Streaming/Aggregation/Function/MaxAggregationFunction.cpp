@@ -40,7 +40,7 @@ MaxAggregationFunction::MaxAggregationFunction(
 
 void MaxAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
+    const nautilus::val<Memory::AbstractBufferProvider*>& provider,
     const Nautilus::Record& record)
 {
     /// Reading the old max value from the aggregation state.
@@ -48,7 +48,7 @@ void MaxAggregationFunction::lift(
     const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
 
     /// Updating the max value with the new value, if the new value is larger
-    const auto value = inputFunction->execute(record);
+    const auto value = inputFunction->execute(record, provider);
     if (value > max)
     {
         value.writeToMemory(memAreaMax);
