@@ -28,6 +28,7 @@
     "video": {
       "description": "video queries",
       "dependencies": [
+        "aravis",
         {
           "name": "opencv4",
           "default-features": false,

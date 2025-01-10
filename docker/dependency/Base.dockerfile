@@ -28,6 +28,7 @@ RUN apt update -y && apt install \
     ninja-build \
     bison \
     pkg-config \
+    libglib2.0-dev-bin \
     pipx \
     -y
 
