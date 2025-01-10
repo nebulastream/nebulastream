@@ -646,10 +646,10 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
                 implicitFieldName = fmt::format("{}_{}", fieldAccessNodePtr->getFieldName(), helper.implicitMapCountHelper);
                 INVARIANT(
                     ++countNodeFieldAccess < 2,
-                    "The function of a named function must only have one child that is a field access function.")
+                    "The function of a named function must only have one child that is a field access function.");
             }
         }
-        INVARIANT(not implicitFieldName.empty(), "")
+        INVARIANT(not implicitFieldName.empty(), "");
         helper.functionBuilder.pop_back();
         helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
 
@@ -707,7 +707,7 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
     }
     else
     {
-        INVARIANT(helper.functionBuilder.size() >= 2, "Requires two functions")
+        INVARIANT(helper.functionBuilder.size() >= 2, "Requires two functions");
         const auto rightFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
         const auto leftFunction = helper.functionBuilder.back();

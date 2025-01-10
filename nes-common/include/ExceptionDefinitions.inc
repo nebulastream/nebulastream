@@ -108,14 +108,12 @@ EXCEPTION(QueryUnregistrationFailedGRPC, 6005, "query unregistration via grpc fa
 EXCEPTION(QueryStatusFailedGRPC, 6006, "query status via grpc failed")
 
 /// 9XXX Internal errors (e.g. bugs)
-EXCEPTION(PreconditionViolated, 9000, "precondition violated")
-EXCEPTION(InvariantViolated, 9001, "invariant violated")
-EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
-EXCEPTION(DeprecatedFeatureUsed, 9003, "deprecated feature used")
-EXCEPTION(InvalidRefCountForBuffer, 9004, "invalid reference counter for buffer")
-EXCEPTION(InvalidDynamicCast, 9005, "Invalid dynamic cast")
-EXCEPTION(UnknownOperator, 9006, "unknown operator")
-EXCEPTION(NotImplemented, 9007, "not implemented")
+EXCEPTION(FunctionNotImplemented, 9000, "function not implemented")
+EXCEPTION(DeprecatedFeatureUsed, 9001, "deprecated feature used")
+EXCEPTION(InvalidRefCountForBuffer, 9002, "invalid reference counter for buffer")
+EXCEPTION(InvalidDynamicCast, 9003, "Invalid dynamic cast")
+EXCEPTION(UnknownOperator, 9004, "unknown operator")
+EXCEPTION(NotImplemented, 9005, "not implemented")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")

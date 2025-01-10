@@ -73,9 +73,11 @@ void LocalBufferPool::destroy()
 #endif
     size_t exclusiveBufferCount = this->exclusiveBufferCount.load();
 
-    NES_ASSERT2_FMT(
+    INVARIANT(
         numberOfReservedBuffers == exclusiveBufferCount,
-        "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected " << numberOfReservedBuffers);
+        "one or more buffers were not returned to the pool: {} but expected {}",
+        exclusiveBufferCount,
+        numberOfReservedBuffers);
 
     NES_DEBUG("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 
@@ -114,7 +116,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
 
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
-    NES_VERIFY(memSegment, "null memory segment");
+    PRECONDITION(memSegment, "null memory segment");
     INVARIANT(
         memSegment->isAvailable(),
         "Recycling buffer callback invoked on used memory segment refcnt={}",
@@ -144,7 +146,7 @@ size_t LocalBufferPool::getNumOfUnpooledBuffers() const
 
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
 {

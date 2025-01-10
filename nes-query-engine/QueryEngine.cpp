@@ -383,7 +383,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
             pool.bufferProvider,
             [](const auto&, auto)
             {
-                /// Catch Emits, that are currently not supported during pipeline stage initilialization.
+                /// Catch Emits, that are currently not supported during pipeline stage initialization.
                 INVARIANT(
                     false,
                     "Currently we assume that a pipeline cannot emit data during setup. All pipeline initializations happen "
@@ -401,7 +401,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
     INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
-    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0);
+    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop should always have pedining tasks");
 
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {

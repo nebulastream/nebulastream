@@ -170,7 +170,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
     PRECONDITION(
         NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode),
         "{} is no binaryOperator",
-        *operatorNode)
+        *operatorNode);
     if (NES::Util::instanceOf<LogicalUnionOperator>(operatorNode))
     {
         lowerUnionOperator(operatorNode);
@@ -391,9 +391,10 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
         auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
 
-        NES_ASSERT(
+        INVARIANT(
             !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-            "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+            "Could not find timestampfieldname {} in both streams!",
+            timeStampFieldNameWithoutSourceName);
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
         return {

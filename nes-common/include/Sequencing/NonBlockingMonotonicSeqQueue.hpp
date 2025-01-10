@@ -30,30 +30,24 @@
 namespace NES::Sequencing
 {
 
-/**
- * @brief This class implements a non blocking monotonic sequence queue,
- * which is mainly used as a foundation for an efficient watermark processor.
- * This queue receives values of type T with an associated sequence number and
- * returns the value with the highest sequence number in strictly monotonic increasing order.
- *
- * Internally this queue is implemented as a linked-list of blocks and each block stores a array of <seq,T> pairs.
- * |------- |       |------- |
- * | s1, s2 | ----> | s3, s4 |
- * |------- |       | ------ |
- *
- * The high level flow is the following:
- * If we receive the following sequence of input pairs <seq,T>:
- * Note that the events with seq 3 and 5 are received out-of-order.
- *
- * [<1,T1>,<2,T2>,<4,T4>,<6,T6>,<3,T3>,<7,T7>,<5,T5>]
- *
- * GetCurrentValue will return the following sequence of current values:
- * [<1,T1>,<2,T2>,<2,T2>,<2,T2>,<2,T2>,<4,T6>,<7,T7>]
- *
- *
- * @tparam T
- * @tparam blockSize
- */
+/// @brief This class implements a non blocking monotonic sequence queue,
+/// which is mainly used as a foundation for an efficient watermark processor.
+/// This queue receives values of type T with an associated sequence number and
+/// returns the value with the highest sequence number in strictly monotonic increasing order.
+///
+/// Internally this queue is implemented as a linked-list of blocks and each block stores a array of <seq,T> pairs.
+/// |------- |       |------- |
+/// | s1, s2 | ----> | s3, s4 |
+/// |------- |       | ------ |
+///
+/// The high level flow is the following:
+/// If we receive the following sequence of input pairs <seq,T>:
+/// Note that the events with seq 3 and 5 are received out-of-order.
+///
+/// [<1,T1>,<2,T2>,<4,T4>,<6,T6>,<3,T3>,<7,T7>,<5,T5>]
+///
+/// GetCurrentValue will return the following sequence of current values:
+/// [<1,T1>,<2,T2>,<2,T2>,<2,T2>,<2,T2>,<4,T6>,<7,T7>]
 template <class T, uint64_t BlockSize = 8192>
 class NonBlockingMonotonicSeqQueue
 {
@@ -65,10 +59,8 @@ private:
         std::atomic<T> value;
     };
 
-    /**
-     * @brief Block of values, which is one element in the linked-list.
-     * If the next block exists *next* contains the reference.
-     */
+    /// @brief Block of values, which is one element in the linked-list.
+    /// If the next block exists *next* contains the reference.
     class Block
     {
     public:
@@ -90,13 +82,11 @@ public:
         return *this;
     }
 
-    /**
-     * @brief Emplace a new element to the queue.
-     * This method can be called concurrently.
-     * However, only one element with a given sequence number and chunk number can be inserted.
-     * @param sequenceData of the new element.
-     * @param newValue
-     */
+    /// @brief Emplace a new element to the queue.
+    /// This method can be called concurrently.
+    /// However, only one element with a given sequence number and chunk number can be inserted.
+    /// @param sequenceData of the new element.
+    /// @param newValue
     void emplace(SequenceData sequenceData, T newValue)
     {
         if (auto opt = chunks.collect(sequenceData, Runtime::Timestamp(newValue)))
@@ -115,11 +105,9 @@ public:
         }
     }
 
-    /**
-     * @brief Returns the current value.
-     * This method is thread save, however it is not guaranteed that current value dose not change concurrently.
-     * @return T value
-     */
+    /// @brief Returns the current value.
+    /// This method is thread save, however it is not guaranteed that current value dose not change concurrently.
+    /// @return T value
     auto getCurrentValue() const
     {
         auto currentBlock = std::atomic_load(&head);
@@ -134,16 +122,14 @@ public:
     }
 
 private:
-    /**
-     * @brief Emplace a value T to the specific location of the passed sequence number
-     *
-     * The method is split in two phased:
-     * 1. Find the correct block for this sequence number. If the block not yet exists we add a new block to the linked-list.
-     * 2. Place value at the correct slot associated with the sequence number.
-     *
-     * @param seq the sequence number of the value
-     * @param value the value that should be stored.
-     */
+    /// @brief Emplace a value T to the specific location of the passed sequence number
+    ///
+    /// The method is split in two phased:
+    /// 1. Find the correct block for this sequence number. If the block not yet exists we add a new block to the linked-list.
+    /// 2. Place value at the correct slot associated with the sequence number.\
+    ///
+    /// @param seq the sequence number of the value
+    /// @param value the value that should be stored.
     void emplaceValueInBlock(SequenceNumber::Underlying seq, T value)
     {
         /// Each block contains blockSize elements and covers sequence numbers from
@@ -172,7 +158,7 @@ private:
         }
 
         /// check if we really found the correct block
-        INVARIANT(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize)
+        INVARIANT(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize, "Incorrect block");
 
         /// Emplace value in block
         /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
@@ -183,12 +169,10 @@ private:
         currentBlock->log[seqIndexInBlock].value.store(value, std::memory_order::relaxed);
     }
 
-    /**
-     * @brief This method shifts tries to shift the current value.
-     * To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
-     * If the next sequence number is available it replaces the currentSeq with the next one.
-     * If the next sequence number is in a new block this method also replaces the pointer to the next block.
-     */
+    /// @brief This method shifts tries to shift the current value.
+    /// To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
+    /// If the next sequence number is available it replaces the currentSeq with the next one.
+    // If the next sequence number is in a new block this method also replaces the pointer to the next block.
     void shiftCurrentValue()
     {
         auto checkForUpdate = true;
@@ -238,20 +222,18 @@ private:
         }
     }
 
-    /**
-     * @brief This function traverses the linked list of blocks, till the target block index is found.
-     * It assumes, that the target block index exists. If not, the function throws an Invariant.
-     * @param currentBlock the start block, usually the head.
-     * @param targetBlockIndex the target address
-     * @return the found block, which contains the target block index.
-     */
+    /// @brief This function traverses the linked list of blocks, till the target block index is found.
+    /// It assumes, that the target block index exists. If not, the function throws an Invariant.
+    /// @param currentBlock the start block, usually the head.
+    /// @param targetBlockIndex the target address
+    /// @return the found block, which contains the target block index.
     std::shared_ptr<Block> getTargetBlock(std::shared_ptr<Block> currentBlock, uint64_t targetBlockIndex) const
     {
         while (currentBlock->blockIndex < targetBlockIndex)
         {
             /// append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
-            INVARIANT(nextBlock, "The next block does not exist. This should not happen here.")
+            PRECONDITION(nextBlock, "Number of blocks in queue is smaller than targetBlockIndex");
             /// move to the next block
             currentBlock = nextBlock;
         }
