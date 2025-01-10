@@ -24,8 +24,15 @@
           ]
         }
       ]
+    },
+    "video": {
+      "description": "video source",
+      "dependencies": [
+        "aravis"
+      ]
     }
   },
+  "default-features": ["video"],
   "dependencies": [
     "antlr4",
     "argparse",

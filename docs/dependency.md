@@ -139,3 +139,10 @@ Nautilus is not currently on vcpkg.
 
 Based on the current vcpkg version. The version of gRPC on vcpkg does not compile with C++23, therefor we introduced
 additional patches to fix compilation error.
+
+### Aravis and Cairo
+
+Aravis is a library which enables communication with GigE Vision Cameras. It is not currently supported via the official
+vcpkg and we require a patch to enable the "legacy endianness" for our camera. Both aravis and cairo are meson based
+c projects. The official cairo port is not flagged as a C library and complains about our C++ command line flags.
+Our port marks the meson project as C only.
