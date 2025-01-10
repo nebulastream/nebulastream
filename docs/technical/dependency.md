@@ -134,3 +134,14 @@ nautilus.
 ### Nautilus
 
 Nautilus is not currently on vcpkg.
+
+### paho mqtt
+
+Neither the C nor C++ library currently build with libc++19 due to the removal of `std::char_traits<unsigned char>`.
+
+### Aravis and Cairo
+
+Aravis is a library which enables communication with GigE Vision Cameras. It is not currently supported via the official
+vcpkg and we require a patch to enable the "legacy endianness" for our camera. Both aravis and cairo are meson based
+c projects. The official cairo port is not flagged as a C library and complains about our C++ command line flags.
+Our port marks the meson project as C only.

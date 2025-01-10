@@ -16,6 +16,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
 

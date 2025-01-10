@@ -1,0 +1,25 @@
+From 8ea88d99e1969c72790cd59a930011be7cd9e1ff Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Wed, 18 Dec 2024 14:11:47 +0100
+Subject: [PATCH] Always uses legacy endinaness
+
+---
+ src/arvgcport.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/arvgcport.c b/src/arvgcport.c
+index 84b8ee11..8f523e89 100644
+--- a/src/arvgcport.c
++++ b/src/arvgcport.c
+@@ -142,6 +142,8 @@ _use_legacy_endianness_mechanism (ArvGcPort *port, guint64 length)
+ 		const char *model_name;
+ 		int i;
+ 
++                return TRUE;
++
+ 		document = arv_dom_node_get_owner_document (ARV_DOM_NODE (port));
+ 		register_description = ARV_GC_REGISTER_DESCRIPTION_NODE (arv_dom_document_get_document_element (document));
+ 		vendor_name = arv_gc_register_description_node_get_vendor_name(register_description);
+-- 
+2.45.2
+

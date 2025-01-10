@@ -1,0 +1,53 @@
+From e3ab53c8c9d3c03c8b8a6c7027eb41453f2eda71 Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sat, 24 May 2025 19:25:04 +0200
+Subject: [PATCH] disable binaries
+
+---
+ src/meson.build | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/src/meson.build b/src/meson.build
+index 25d720ba..3c7f9f54 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -281,21 +281,21 @@ pkg.generate (aravis_library,
+ 
+ arv_test_resources = gnome.compile_resources('arvtestresources','arvtestresources.xml')
+ 
+-progs = [
+-  [ 'arv-tool', 		'arvtool.c'],
+-  [ 'arv-test', 		['arvtest.c'] + arv_test_resources],
+-  [ 'arv-camera-test',		'arvcameratest.c'],
+-  [ 'arv-fake-gv-camera', 	'arvfakegvcamera.c'],
+-]
+-
+-foreach p: progs
+-	executable ((p[0] + '-@0@').format (aravis_api_version),
+-		p[1],
+-		link_with: aravis_library,
+-		c_args: library_c_args,
+-		dependencies: aravis_dependencies,
+-		install: true)
+-endforeach
++# progs = [
++#   [ 'arv-tool', 		'arvtool.c'],
++#   [ 'arv-test', 		['arvtest.c'] + arv_test_resources],
++#   [ 'arv-camera-test',		'arvcameratest.c'],
++#   [ 'arv-fake-gv-camera', 	'arvfakegvcamera.c'],
++# ]
++#
++# foreach p: progs
++# 	executable ((p[0] + '-@0@').format (aravis_api_version),
++# 		p[1],
++# 		link_with: aravis_library,
++# 		c_args: library_c_args,
++# 		dependencies: aravis_dependencies,
++# 		install: true)
++# endforeach
+ 
+ introspection_option = get_option('introspection')
+ introspection_enabled = false
+-- 
+2.45.2
+

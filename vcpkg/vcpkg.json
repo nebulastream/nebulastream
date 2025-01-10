@@ -32,6 +32,8 @@
     "opencv": {
       "description": "opencv",
       "dependencies": [
+        "aravis",
+        "scnlib",
         {
           "name": "opencv4",
           "default-features": false,
