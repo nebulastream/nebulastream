@@ -51,7 +51,7 @@ namespace NES::IntegrationTestUtil
     bool skipFirstLine)
 {
     std::vector<Memory::TupleBuffer> recordBuffers;
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
+    INVARIANT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile {} does not exist", csvFile);
 
     /// Creating everything for the csv parser
     std::ifstream file(csvFile);

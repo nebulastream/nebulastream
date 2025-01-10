@@ -201,7 +201,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
         }
     }
 
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
+    INVARIANT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();
@@ -228,7 +228,7 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(
     auto probeKeyFieldAccess = asNodeFunctionFieldAccess(onProbeKey, "onProbeKey");
     auto buildKeyFieldAccess = asNodeFunctionFieldAccess(onBuildKey, "onBuildKey");
 
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
+    INVARIANT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();

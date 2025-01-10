@@ -81,7 +81,7 @@ void LogicalLimitOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", *operatorNode);
-    NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
+    INVARIANT(!children.empty(), "Limit should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)

@@ -354,7 +354,7 @@ public:
                      {
                          if constexpr (IsString<decltype(fieldValue)>)
                          {
-                             NES_ASSERT(bufferProvider != nullptr, "BufferManager can not be null while using variable sized data!");
+                             INVARIANT(bufferProvider != nullptr, "BufferManager can not be null while using variable sized data!");
                              (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, *bufferProvider);
                          }
                          else
@@ -382,10 +382,11 @@ public:
     template <typename... Types>
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
-        NES_ASSERT(
+        PRECONDITION(
             (sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
-            "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: "
-                                     << memoryLayout->getFieldSizes().size() << '\n');
+            "Provided tuple types: {} do not match the number of fields in the memory layout: {}",
+            sizeof...(Types),
+            memoryLayout->getFieldSizes().size());
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;

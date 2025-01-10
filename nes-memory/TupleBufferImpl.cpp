@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include "TupleBufferImpl.hpp"
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <TupleBufferImpl.hpp>
 #include <magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -56,8 +57,8 @@ MemorySegment::MemorySegment(
     uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
     : ptr(ptr), size(size)
 {
-    NES_ASSERT2_FMT(this->ptr, "invalid ptr");
-    NES_ASSERT2_FMT(this->size, "invalid size");
+    INVARIANT(this->ptr, "invalid pointer");
+    INVARIANT(this->size, "invalid size");
     controlBlock.reset(
         new BufferControlBlock(this, recycler, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
     controlBlock->prepare();
@@ -73,7 +74,7 @@ MemorySegment::~MemorySegment()
         ///      the release function in general. Do you agree?).
         {
             auto const refCnt = controlBlock->getReferenceCount();
-            NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
+            INVARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
         }
 
         /// Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
@@ -129,9 +130,9 @@ MemorySegment* BufferControlBlock::getOwner() const
 
 void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
 {
-    NES_ASSERT2_FMT(recycler, "invalid recycler");
+    PRECONDITION(recycler, "invalid recycler");
     auto* oldRecycler = owningBufferRecycler.exchange(recycler);
-    NES_ASSERT2_FMT(recycler != oldRecycler, "invalid recycler");
+    INVARIANT(recycler != oldRecycler, "invalid recycler");
 }
 
 void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept
@@ -236,7 +237,7 @@ bool BufferControlBlock::release()
     }
     else
     {
-        NES_ASSERT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
+        INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     {
@@ -351,7 +352,7 @@ uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 
 bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    NES_ASSERT2_FMT(index < children.size(), "Invalid index");
+    PRECONDITION(index < children.size(), "Invalid index");
 
     auto* child = children[index];
     control = child->controlBlock->retain();

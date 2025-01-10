@@ -14,6 +14,7 @@
 
 #include "TaggedPointer.hpp"
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include "TupleBufferImpl.hpp"
 
 namespace NES
@@ -42,7 +43,7 @@ template <typename T>
 void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
 {
     uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
-    NES_ASSERT(!(pointer >> 48), "invalid pointer");
+    PRECONDITION(!(pointer >> 48), "invalid pointer");
     pointer |= static_cast<uintptr_t>(tag) << 48;
     data = pointer;
 }

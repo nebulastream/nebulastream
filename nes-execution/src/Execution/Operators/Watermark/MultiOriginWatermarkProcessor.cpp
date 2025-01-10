@@ -16,6 +16,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

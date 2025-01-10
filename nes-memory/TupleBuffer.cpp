@@ -16,6 +16,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include "TupleBufferImpl.hpp"
 namespace NES::Memory
 {
@@ -187,7 +188,7 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
-    NES_ASSERT2_FMT(controlBlock != control, "Cannot attach buffer to self");
+    INVARIANT(controlBlock != control, "Cannot attach buffer to self");
     auto index = controlBlock->storeChildBuffer(control);
     std::swap(empty, buffer);
     return index;
@@ -196,7 +197,7 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
-    NES_ASSERT(
+    INVARIANT(
         controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
         "Cannot load tuple buffer");
     return childBuffer;
@@ -204,7 +205,7 @@ TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const
 
 bool recycleTupleBuffer(void* bufferPointer)
 {
-    NES_ASSERT2_FMT(bufferPointer, "invalid bufferPointer");
+    PRECONDITION(bufferPointer, "invalid bufferPointer");
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
