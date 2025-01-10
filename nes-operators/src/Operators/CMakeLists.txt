@@ -14,7 +14,6 @@ add_source_files(nes-operators
         Operator.cpp
 )
 
-add_subdirectory(Exceptions)
 add_subdirectory(AbstractOperators)
 add_subdirectory(Serialization)
 add_subdirectory(LogicalOperators)
