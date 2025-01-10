@@ -87,6 +87,10 @@ public:
 
     /**
      * @brief Interprets the void* as a pointer to the content of tuple buffer
+     * This function is intended to be used in combination with Nautilus. Calling from Nautilus to C++ and returning a TupleBuffer from
+     * C++ is not directly supported. Instead, a pointer to the memory segment of the buffer is returned. Based on the pointer to the segmented
+     * a TupleBuffer can be reconstructed. When returning a pointer from C++ the reference counter must be increased `using retain`, as otherwise
+     * the destructor will decrease the last reference and the memory segment is invalid.
      * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
      * @param bufferPointer
      * @return TupleBuffer
