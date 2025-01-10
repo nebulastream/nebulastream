@@ -170,7 +170,8 @@ namedExpressionSeq
     ;
 
 expression
-    : booleanExpression
+    : valueExpression
+    | booleanExpression
     | identifier
     ;
 
@@ -235,15 +236,14 @@ advancebyParameter: ADVANCE BY INTEGER_VALUE timeUnit;
 
 timeUnit: MS
         | SEC
-        | MIN
+        | MINUTE
         | HOUR
         | DAY
         ;
 
 timestampParameter: IDENTIFIER;
 
-/// added Median
-functionName:  AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -275,7 +275,7 @@ predicate
 
 
 valueExpression
-    : primaryExpression                                                                      #valueExpressionDefault
+    : functionName '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
     | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
@@ -283,6 +283,7 @@ valueExpression
     | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
     | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
+    | primaryExpression                                                                      #valueExpressionDefault
     ;
 
 comparisonOperator
@@ -304,7 +305,6 @@ primaryExpression
     | base=primaryExpression '.' fieldName=identifier                                          #dereference
     | '(' query ')'                                                                            #subqueryExpression
     | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
-    | functionName '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
     | '(' expression ')'                                                                       #parenthesizedExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
@@ -523,14 +523,9 @@ SIZE: 'SIZE' | 'size';
 ADVANCE: 'ADVANCE' | 'advance';
 MS: 'MS' | 'ms';
 SEC: 'SEC' | 'sec';
-MIN: 'MIN' | 'min';
+MINUTE: 'MINUTE' | 'minute' | 'MINUTES' | 'minutes';
 HOUR: 'HOUR' | 'hour' | 'HOURS' | 'hours';
 DAY: 'DAY' | 'day' | 'DAYS' | 'days';
-MAX: 'MAX' | 'max';
-AVG: 'AVG' | 'avg';
-SUM: 'SUM' | 'sum';
-COUNT: 'COUNT' | 'count';
-MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
 LOCALHOST: 'LOCALHOST' | 'localhost';

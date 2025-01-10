@@ -26,6 +26,7 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
@@ -37,6 +38,7 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/RandomAssFunctions/NodeFunctionImageManip.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -401,10 +403,21 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (helper.isFunctionCall and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
-        auto aggFunc = helper.windowAggs.back();
-        helper.windowAggs.pop_back();
-        aggFunc = aggFunc->as(Attribute(context->getText()));
-        helper.windowAggs.push_back(aggFunc);
+        if (!helper.windowAggs.empty())
+        {
+            auto aggFunc = helper.windowAggs.back();
+            helper.windowAggs.pop_back();
+            aggFunc = aggFunc->as(Attribute(context->getText()));
+            helper.windowAggs.push_back(aggFunc);
+        }
+        else
+        {
+            auto projection = helper.functionBuilder.back();
+            helper.functionBuilder.pop_back();
+            auto renamedAttribute = Attribute(context->getText()) = projection;
+            helper.functionBuilder.push_back(renamedAttribute);
+            helper.mapBuilder.push_back(renamedAttribute);
+        }
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
@@ -664,9 +677,11 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
+    helpers.top().isFunctionCall = true;
     AntlrSQLHelper helper = helpers.top();
+    helper.functionBuilder.clear();
     helper.isFunctionCall = true;
-    poppush(helper);
+    helpers.push(helper);
     AntlrSQLBaseListener::enterFunctionCall(context);
 }
 
@@ -872,56 +887,68 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         }
         else
         {
-            throw InvalidQuerySyntax("Unknown data type: {}", concreteValue->getText());
+            throw InvalidQuerySyntax("Unknown numerical data type: {}", concreteValue->getText());
         }
+        const auto constantText = context->getText();
+        auto constFunctionItem
+            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
+        helper.functionBuilder.push_back(constFunctionItem);
+    }
+    else if (const auto valueAsString = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()))
+    {
+        auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(
+            DataTypeFactory::createVariableSizedData(), std::string(Util::trimCharacters(valueAsString->getText(), '\"'))));
+        helper.functionBuilder.push_back(constFunctionItem);
+    }
+    else
+    {
+        throw InvalidQuerySyntax("Unknown data type: {}", context->getText());
     }
 
     /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
-    const auto constantText = context->getText();
-    auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
-    helper.functionBuilder.push_back(constFunctionItem);
     poppush(helper);
 }
 
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
+    helpers.pop();
+    AntlrSQLHelper& parentHelper = helpers.top();
+
     const auto funcName = Util::toLowerCase(context->children[0]->getText());
     if (funcName == "count")
     {
-        helper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
+        parentHelper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
         helper.functionBuilder.pop_back();
     }
     else if (funcName == "avg")
     {
-        helper.windowAggs.push_back(API::Avg(helper.functionBuilder.back())->aggregation);
-        helper.functionBuilder.pop_back();
+        parentHelper.windowAggs.push_back(API::Avg(helper.functionBuilder.back())->aggregation);
     }
     else if (funcName == "max")
     {
-        helper.windowAggs.push_back(API::Max(helper.functionBuilder.back())->aggregation);
-        helper.functionBuilder.pop_back();
+        parentHelper.windowAggs.push_back(API::Max(helper.functionBuilder.back())->aggregation);
     }
     else if (funcName == "min")
     {
-        helper.windowAggs.push_back(API::Min(helper.functionBuilder.back())->aggregation);
-        helper.functionBuilder.pop_back();
+        parentHelper.windowAggs.push_back(API::Min(helper.functionBuilder.back())->aggregation);
     }
     else if (funcName == "sum")
     {
-        helper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
-        helper.functionBuilder.pop_back();
+        parentHelper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
     }
     else if (funcName == "median")
     {
-        helper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
-        helper.functionBuilder.pop_back();
+        parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
+    }
+    else if (funcName == "image_manip")
+    {
+        parentHelper.functionBuilder.push_back(NodeFunctionImageManip::create(std::move(helper.functionBuilder)));
     }
     else
     {
         throw InvalidQuerySyntax("Unknown aggregation function: {}", funcName);
     }
-    poppush(helper);
 }
 
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
