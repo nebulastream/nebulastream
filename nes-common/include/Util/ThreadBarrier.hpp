@@ -17,6 +17,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <Runtime/NesThread.hpp>
+#include <ErrorHandling.hpp>
 namespace NES
 {
 
@@ -33,7 +34,7 @@ public:
      */
     explicit ThreadBarrier(uint32_t size) : size(size), count(0)
     {
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        INVARIANT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count {}", size);
     }
 
     ThreadBarrier() = delete;
@@ -45,8 +46,8 @@ public:
     ~ThreadBarrier()
     {
         std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier count=" << count << " size=" << size);
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        INVARIANT(count >= size, "destroying not completed thread barrier count={} size={}", count, size);
+        INVARIANT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count={}", size);
     }
 
     /**
@@ -55,7 +56,7 @@ public:
     void wait()
     {
         std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        INVARIANT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count {}", size);
         if (++count >= size)
         {
             cvar.notify_all();

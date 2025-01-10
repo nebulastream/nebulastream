@@ -28,14 +28,14 @@ LocalBufferPool::LocalBufferPool(
     , exclusiveBufferCount(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)
 {
-    NES_ASSERT2_FMT(this->bufferManager, "Invalid buffer manager");
+    PRECONDITION(this->bufferManager, "Invalid buffer manager");
     while (!buffers.empty())
     {
         auto* memSegment = buffers.front();
         buffers.pop_front();
-        NES_VERIFY(memSegment, "null memory segment");
+        INVARIANT(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
-        NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
+        INVARIANT(memSegment->isAvailable(), "Buffer not available");
 
         exclusiveBuffers.write(memSegment);
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

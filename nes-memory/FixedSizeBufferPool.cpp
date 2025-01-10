@@ -33,9 +33,9 @@ FixedSizeBufferPool::FixedSizeBufferPool(
     {
         auto* memSegment = buffers.front();
         buffers.pop_front();
-        NES_VERIFY(memSegment, "null memory segment");
+        INVARIANT(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
-        NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
+        INVARIANT(memSegment->isAvailable(), "Buffer not available");
 
         exclusiveBuffers.write(memSegment);
     }
@@ -106,7 +106,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
-    NES_VERIFY(memSegment, "null memory segment");
+    INVARIANT(memSegment, "null memory segment");
     if (isDestroyed)
     {
         /// return recycled buffer to the global pool
@@ -139,14 +139,14 @@ size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 }
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 }

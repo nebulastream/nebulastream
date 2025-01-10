@@ -104,7 +104,7 @@ std::shared_ptr<Operator> LogicalMapOperator::copy()
 void LogicalMapOperator::inferStringSignature()
 {
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
-    NES_ASSERT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
+    INVARIANT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
     ///Infer query signatures for child operator
     auto child = NES::Util::as<LogicalOperator>(children[0]);
     child->inferStringSignature();

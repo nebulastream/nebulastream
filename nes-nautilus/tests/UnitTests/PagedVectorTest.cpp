@@ -85,7 +85,7 @@ public:
                         std::memcpy(varSizedData.cast<VariableSizedData>().getContent().value, ss.str().c_str(), ss.str().length());
                         newRecord.write(field, varSizedData);
 
-                        NES_ASSERT2_FMT(ss.str().length() > minTextLength, "Length of the generated text is not long enough!");
+                        INVARIANT(ss.str().length() > minTextLength, "Length of the generated text is not long enough!");
                         testStrings.emplace_back(buffer.value());
                     }
                     else

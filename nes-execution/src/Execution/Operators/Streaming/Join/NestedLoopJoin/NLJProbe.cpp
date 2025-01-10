@@ -56,13 +56,13 @@ NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceE
 
 Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
 {
-    NES_ASSERT2_FMT(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
+    PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowStart;
 }
 
 Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
 {
-    NES_ASSERT2_FMT(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
+    PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 

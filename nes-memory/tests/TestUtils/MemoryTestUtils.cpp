@@ -26,7 +26,7 @@ namespace NES::Testing
 Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
 {
     auto copiedBuffer = provider.getBufferBlocking();
-    NES_ASSERT(copiedBuffer.getBufferSize() >= buffer.getBufferSize(), "Attempt to copy buffer into smaller buffer");
+    PRECONDITION(copiedBuffer.getBufferSize() >= buffer.getBufferSize(), "Attempt to copy buffer into smaller buffer");
     auto bufferData = std::span(buffer.getBuffer(), buffer.getBufferSize());
     std::ranges::copy(bufferData, copiedBuffer.getBuffer());
     copiedBuffer.setWatermark(buffer.getWatermark());
