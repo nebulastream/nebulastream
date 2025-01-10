@@ -44,14 +44,14 @@ uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, Se
 
 bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
 {
-    NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
+    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
     return pipelineCtx->processChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
 void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
-    NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
+    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
     pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
 }

@@ -307,9 +307,9 @@ TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
 TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
 {
     std::string lowerStr = "héllô!123";
-    EXPECT_DEATH(toUpperCaseInplace(lowerStr), "Precondition failed:.*");
+    EXPECT_DEATH(toUpperCaseInplace(lowerStr), "Precondition violated:.*");
     std::string str = "HÉLLÔ!123";
-    EXPECT_DEATH(toLowerCaseInplace(str), "Precondition failed:.*");
+    EXPECT_DEATH(toLowerCaseInplace(str), "Precondition violated:.*");
 }
 
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)

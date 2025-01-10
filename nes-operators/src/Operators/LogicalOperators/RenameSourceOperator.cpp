@@ -93,7 +93,7 @@ void RenameSourceOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", *operatorNode);
-    NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
+    INVARIANT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {

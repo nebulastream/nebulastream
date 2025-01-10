@@ -119,8 +119,8 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     NES_DEBUG("Binary infer left schema={} right schema={}", leftInputSchema->toString(), rightInputSchema->toString());
-    NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
-    NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
+    PRECONDITION(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
+    PRECONDITION(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
 
     ///Reset output schema and add fields from left and right input schema
     outputSchema->clear();
@@ -166,7 +166,7 @@ void LogicalBatchJoinOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", *operatorNode);
-    NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
+    PRECONDITION(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {

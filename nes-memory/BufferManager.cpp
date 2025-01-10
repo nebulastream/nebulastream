@@ -94,10 +94,11 @@ void BufferManager::destroy()
                     holder.segment->controlBlock->dumpOwningThreadInfo();
                 }
 #endif
-                NES_ASSERT2_FMT(
+                INVARIANT(
                     false,
-                    "Deletion of unpooled buffer invoked on used memory segment size="
-                        << holder.size << " refcnt=" << holder.segment->controlBlock->getReferenceCount());
+                    "Deletion of unpooled buffer invoked on used memory segment size={} refcnt={}",
+                    holder.size,
+                    holder.segment->controlBlock->getReferenceCount());
             }
         }
         unpooledBuffers.clear();
@@ -130,10 +131,11 @@ void BufferManager::initialize(uint32_t withAlignment)
     NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
 
     ///    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
-    NES_ASSERT2_FMT(
+    INVARIANT(
         requiredMemorySpace < memorySizeInBytes,
-        "NES tries to allocate more memory than physically available requested=" << requiredMemorySpace
-                                                                                 << " available=" << memorySizeInBytes);
+        "NES tries to allocate more memory than physically available requested={} available={}",
+        requiredMemorySpace,
+        memorySizeInBytes);
     if (withAlignment > 0)
     {
         if ((withAlignment & (withAlignment - 1)))
@@ -146,9 +148,10 @@ void BufferManager::initialize(uint32_t withAlignment)
         PRECONDITION(false, "NES tries to align memory but alignment is invalid");
     }
 
-    NES_ASSERT2_FMT(
+    PRECONDITION(
         alignof(detail::BufferControlBlock) <= withAlignment,
-        "Requested alignment is too small, must be at least " << alignof(detail::BufferControlBlock));
+        "Requested alignment is too small, must be at least {}",
+        alignof(detail::BufferControlBlock));
 
     allBuffers.reserve(numOfBuffers);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
@@ -438,7 +441,7 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixe
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size)
 {
     auto optBuffer = provider->getUnpooledBuffer(size);
-    NES_ASSERT2_FMT(!!optBuffer, "Cannot allocate buffer of size " << size);
+    INVARIANT(!!optBuffer, "Cannot allocate buffer of size {}", size);
     return *optBuffer;
 }
 

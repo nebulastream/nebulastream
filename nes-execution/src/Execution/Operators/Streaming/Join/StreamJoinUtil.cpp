@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 
@@ -23,7 +24,7 @@ namespace NES::Runtime::Execution::Util
 {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema)
 {
-    NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(), "Left and right schema do not have the same layout type");
+    PRECONDITION(leftSchema->getLayoutType() == rightSchema->getLayoutType(), "Left and right schema do not have the same layout type");
     auto retSchema = Schema::create(leftSchema->getLayoutType());
     auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
 

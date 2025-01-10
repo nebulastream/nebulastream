@@ -32,7 +32,7 @@ std::string escapeJson(const std::string& str);
 template <typename T>
 std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage)
 {
-    NES_ASSERT(ptr, errorMessage);
+    INVARIANT(ptr, errorMessage);
     return ptr;
 }
 

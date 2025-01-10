@@ -43,10 +43,10 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
     , joinType(joinType)
     , originId(originId)
 {
-    NES_ASSERT(this->windowType, "Invalid window type");
-    NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
-    NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
-    NES_ASSERT((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
+    PRECONDITION(this->windowType, "Invalid window type");
+    PRECONDITION(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
+    PRECONDITION(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
+    PRECONDITION((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
 LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(

@@ -51,7 +51,7 @@ SourceThread::SourceThread(
     , sourceImplementation(std::move(sourceImplementation))
     , inputFormatter(std::move(inputFormatter))
 {
-    NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
+    PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
 namespace detail
@@ -193,7 +193,7 @@ void dataSourceThread(
 
 bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 {
-    NES_ASSERT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
+    INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
     if (started.exchange(true))
     {
         return false;

@@ -241,7 +241,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
             }
             else
             {
-                NES_ASSERT(false, "DecomposedQueryPlan: Copying the plan failed because parent operator not found.");
+                INVARIANT(false, "DecomposedQueryPlan: Copying the plan failed because parent operator not found.");
             }
         }
 

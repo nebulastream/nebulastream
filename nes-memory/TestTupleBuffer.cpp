@@ -181,9 +181,11 @@ std::string DynamicField::toString() const
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
-    NES_ASSERT(
+    PRECONDITION(
         *physicalType == *rhs.physicalType,
-        "Physical types have to be the same but are " + physicalType->toString() + " and " + rhs.physicalType->toString());
+        "Physical types have to be the same but are {} and {}",
+        physicalType->toString(),
+        rhs.physicalType->toString());
 
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
 };
@@ -230,7 +232,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
-    NES_ASSERT(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
+    PRECONDITION(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
 }
 
 Memory::TupleBuffer TestTupleBuffer::getBuffer()

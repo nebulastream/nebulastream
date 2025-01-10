@@ -17,6 +17,7 @@
 #include <random>
 #include <Util/Logger/Logger.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 #if defined(__linux__)
 #endif
 namespace NES::Testing
@@ -95,8 +96,8 @@ std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
 
 BaseIntegrationTest::~BaseIntegrationTest()
 {
-    NES_ASSERT2_FMT(setUpCalled, "SetUp not called for test " << typeid(*this).name());
-    NES_ASSERT2_FMT(tearDownCalled, "TearDown not called for test " << typeid(*this).name());
+    INVARIANT(setUpCalled, "SetUp not called for test {}", typeid(*this).name());
+    INVARIANT(tearDownCalled, "TearDown not called for test {}", typeid(*this).name());
 }
 
 void BaseIntegrationTest::TearDown()

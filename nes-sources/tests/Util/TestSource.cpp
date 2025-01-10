@@ -178,7 +178,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
     {
         return 0;
     }
-    NES_ASSERT(data->data.size() <= tupleBuffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
+    INVARIANT(data->data.size() <= tupleBuffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
     tupleBuffer.setNumberOfTuples(data->numberOfTuples);
     std::ranges::copy(data->data, tupleBuffer.getBuffer<std::byte>());
     return data->data.size();

@@ -283,7 +283,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr
     const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
-    NES_ASSERT(
+    INVARIANT(
         NES::Util::instanceOf<Windowing::TumblingWindow>(windowType) || NES::Util::instanceOf<Windowing::SlidingWindow>(windowType),
         "Only a tumbling or sliding window is currently supported for StreamJoin");
 

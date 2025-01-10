@@ -19,6 +19,7 @@
 #include <cstring>
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime
 {
@@ -35,7 +36,7 @@ template <typename T = void>
 T* allocAligned(size_t size, size_t alignment = 16)
 {
     void* tmp = nullptr;
-    NES_ASSERT2_FMT(
+    INVARIANT(
         0 == posix_memalign(&tmp, alignment, sizeof(T) * size), "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
     return reinterpret_cast<T*>(tmp);
 }
@@ -51,14 +52,13 @@ template <typename T = void, size_t huge_page_size = 1 << 21>
 T* allocHugePages(size_t size)
 {
     void* tmp = nullptr;
-    NES_ASSERT2_FMT(
-        0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
-        "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
+    INVARIANT(
+        0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size), "Cannot allocate {} bytes: {}", sizeof(T) * size, strerror(errno));
 #ifdef __linux__
     madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
 #endif
 
-    NES_ASSERT2_FMT(tmp != nullptr, "Cannot remap as huge pages");
+    INVARIANT(tmp != nullptr, "Cannot remap as huge pages");
     mlock(tmp, size * sizeof(T));
     return reinterpret_cast<T*>(tmp);
 }
@@ -80,10 +80,14 @@ public:
     {
         auto ptr = tail.fetch_add(pageSize);
         allocCnt++;
-        NES_ASSERT2_FMT(
+        INVARIANT(
             ptr < overrunAddress,
-            "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
-                               << " total size=" << totalSize << " allocCnt=" << allocCnt);
+            "Invalid address {} < {} head={} total size={} allocCnt={}",
+            ptr,
+            overrunAddress,
+            reinterpret_cast<uintptr_t>(head),
+            totalSize,
+            allocCnt);
 
         return reinterpret_cast<uint8_t*>(ptr);
     }
