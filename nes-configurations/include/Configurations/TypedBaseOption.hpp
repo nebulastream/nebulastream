@@ -16,10 +16,9 @@
 #include <typeinfo>
 #include <vector>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/ConfigurationException.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
-
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -167,7 +166,7 @@ void TypedBaseOption<T>::isValid(std::string pValue)
         {
             exceptionMessage += pair.second + "\n";
         }
-        throw ConfigurationException(exceptionMessage);
+        throw InvalidConfigParameter(exceptionMessage);
     }
 }
 
