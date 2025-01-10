@@ -15,6 +15,7 @@ add_source_files(nes-execution
         ExecutableFunctionConstantValue.cpp
         )
 
+add_subdirectory(RandomAssFunctions)
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(Comparison)
 add_subdirectory(LogicalFunctions)

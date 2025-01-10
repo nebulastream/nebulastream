@@ -11,17 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-functions
-        FunctionSerializationUtil.cpp
-        NodeFunction.cpp
-        NodeFunctionBinary.cpp
-        NodeFunctionCase.cpp
-        NodeFunctionConstantValue.cpp
-        NodeFunctionFieldAccess.cpp
-        NodeFunctionFieldAssignment.cpp
-        NodeFunctionFieldRename.cpp
-        NodeFunctionUnary.cpp
-        NodeFunctionWhen.cpp
+        NodeFunctionImageManip.cpp
 )
-add_subdirectory(LogicalFunctions)
-add_subdirectory(ArithmeticalFunctions)
-add_subdirectory(RandomAssFunctions)

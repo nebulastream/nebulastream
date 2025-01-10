@@ -42,9 +42,12 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
+#include <Functions/RandomAssFunctions/NodeFunctionImageManip.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+
+#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 
@@ -65,6 +68,20 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
     {
         /// serialize arithmetical functions
         serializeArithmeticalFunctions(function, serializedFunction);
+    }
+    else if (Util::instanceOf<NodeFunctionImageManip>(function))
+    {
+        /// serialize constant value function node.
+        NES_TRACE("FunctionSerializationUtil:: serialize image_manip function node.");
+        auto absNodeFunction = Util::as<NodeFunctionImageManip>(function);
+        auto serializedNodeFunction = SerializableFunction_FunctionImageManip();
+        serializedNodeFunction.set_functionname(absNodeFunction->getFunctionName());
+        for (const auto& child : absNodeFunction->getChildren())
+        {
+            auto* serialized_child = serializedNodeFunction.add_children();
+            serializeFunction(Util::as<NodeFunction>(child), serialized_child);
+        }
+        serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
     }
     else if (Util::instanceOf<NodeFunctionConstantValue>(function))
     {
@@ -165,6 +182,16 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             /// The data type stored in the function's stamp is equal to the datatype of the value
             auto valueDataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
             nodeFunction = NodeFunctionConstantValue::create(valueDataType, serializedConstantValue.value());
+        }
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionImageManip>())
+        {
+            NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as toBase64 function node.");
+            auto serializedNodeFunction = SerializableFunction_FunctionImageManip();
+            serializedFunction.details().UnpackTo(&serializedNodeFunction);
+
+            return NodeFunctionImageManip::create(
+                std::views::transform(serializedNodeFunction.children(), [](const auto& child) { return deserializeFunction(child); })
+                | ranges::to<std::vector>());
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
         {

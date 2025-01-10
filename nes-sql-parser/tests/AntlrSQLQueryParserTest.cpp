@@ -18,6 +18,9 @@
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Windowing.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/RandomAssFunctions/NodeFunctionImageManip.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Types/SlidingWindow.hpp>
@@ -71,6 +74,29 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     ///     const auto internalLogicalQuery = Query::from("window").map(Attribute("id") = Attribute("id") * 3).sink("File");
     ///     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
     /// }
+}
+
+TEST_F(AntlrSQLQueryParserTest, functionInProjectionTest)
+{
+    const auto inputQuery = "SELECT "
+                            "image_manip(\"ToBase64\", img) as encoded, "
+                            "image_manip(\"ToBase64\", image_manip(\"ToBase64\", img)) as nested "
+                            "FROM stream INTO Print"s;
+
+    const auto internalLogicalQuery
+        = Query::from("stream")
+              .map(
+                  Attribute("encoded") = FunctionItem(NodeFunctionImageManip::create(
+                      {NodeFunctionConstantValue::create(DataTypeFactory::createVariableSizedData(), "ToBase64"), Attribute("img")})))
+              .map(
+                  Attribute("nested") = FunctionItem(NodeFunctionImageManip::create(
+                      {NodeFunctionConstantValue::create(DataTypeFactory::createVariableSizedData(), "ToBase64"),
+                       NodeFunctionImageManip::create(
+                           {NodeFunctionConstantValue::create(DataTypeFactory::createVariableSizedData(), "ToBase64"),
+                            Attribute("img")})})))
+              .project(Attribute("encoded"), Attribute("nested"))
+              .sink("Print");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
 }
 
 TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
