@@ -1,0 +1,27 @@
+query: |
+  SELECT ImageManipFaceDetection(image) as image FROM video INTO TCP_sink
+sink:
+  # ffplay -f rawvideo -pixel_format yuyv422 -video_size 640x480 -i 'tcp://127.0.0.1:1234?listen'
+  name: TCP_sink
+  type: TCP
+  config:
+    host: 127.0.0.1
+    port: 1234
+logical:
+  - name: video
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: width
+        type: UINT64
+      - name: height
+        type: UINT64
+      - name: image
+        type: VARSIZED
+physical:
+  - logical: video
+    parserConfig:
+      type: Raw
+    sourceConfig:
+      type: Video
+      sourceSelector: 0
