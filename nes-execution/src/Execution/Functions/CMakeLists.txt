@@ -12,6 +12,7 @@
 
 add_source_files(nes-execution
         ExecutableFunctionReadField.cpp
+        ExecutableFunctionConstantValue.cpp
         )
 
 add_subdirectory(ArithmeticalFunctions)

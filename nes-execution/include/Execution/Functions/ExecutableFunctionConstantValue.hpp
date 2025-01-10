@@ -26,10 +26,22 @@ class ExecutableFunctionConstantValue final : public Function
 public:
     explicit ExecutableFunctionConstantValue(T value) : value(value) { }
 
-   [[nodiscard]] VarVal execute(const Record&, nautilus::val<Memory::AbstractBufferProvider*>) const override { return VarVal(value); }
+    [[nodiscard]] VarVal execute(const Record&, nautilus::val<Memory::AbstractBufferProvider*>) const override { return VarVal(value); }
 
 private:
     const T value;
+};
+
+class ExecutableFunctionConstantText final : public Function
+{
+public:
+    explicit ExecutableFunctionConstantText(std::string_view value);
+
+    VarVal execute(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const override;
+
+private:
+    size_t sizeIncludingLength;
+    std::unique_ptr<int8_t[]> data;
 };
 
 using ConstantInt8ValueFunction = ExecutableFunctionConstantValue<int8_t>;

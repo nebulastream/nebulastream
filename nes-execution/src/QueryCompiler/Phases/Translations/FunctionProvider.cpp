@@ -30,6 +30,7 @@
 #include <ExecutableFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -127,6 +128,10 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
                 throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", basicType->toString()));
             }
         }
+    }
+    else if (auto variableSizeDataType = std::dynamic_pointer_cast<VariableSizedDataPhysicalType>(physicalType))
+    {
+        return std::make_unique<ExecutableFunctionConstantText>(stringValue);
     }
     throw UnknownPhysicalType(
         fmt::format("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString()));
