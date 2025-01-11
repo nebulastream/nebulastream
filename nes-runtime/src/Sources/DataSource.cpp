@@ -422,7 +422,7 @@ void DataSource::runningRoutine() {
 
 void DataSource::runningRoutineWithIngestionRate() {
     NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
-    NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
+    // NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
     std::string thName = fmt::format("DataSrc-{}", operatorId);
     setThreadName(thName.c_str());
 
@@ -442,7 +442,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
+    uint64_t buffersToProducePer100Ms = gatheringIngestionRate;
     while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
@@ -475,7 +475,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         //next point in time when to start producing again
-        nextPeriodStartTime = uint64_t(startPeriod + (100));
+        nextPeriodStartTime = uint64_t(startPeriod + (1));
         NES_TRACE("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
                   startPeriod,
                   endPeriod,
