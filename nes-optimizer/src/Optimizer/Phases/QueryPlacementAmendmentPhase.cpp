@@ -271,7 +271,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::PROCESSED);
     }
 
-    NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
+    // NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator};
 }
 

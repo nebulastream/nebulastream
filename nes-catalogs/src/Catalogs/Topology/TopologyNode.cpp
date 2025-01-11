@@ -116,12 +116,34 @@ std::string TopologyNode::toString() const {
 }
 
 bool TopologyNode::containAsParent(NodePtr parentTopologyNode) {
-    std::vector<NodePtr> ancestors = this->getAndFlattenAllAncestors();
+    std::vector<NodePtr> ancestors = getAllAncestors();
     auto found = std::find_if(ancestors.begin(), ancestors.end(), [parentTopologyNode](const NodePtr& familyMember) {
         return familyMember->as<TopologyNode>()->getId() == parentTopologyNode->as<TopologyNode>()->getId();
     });
     return found != ancestors.end();
 }
+
+std::vector<NodePtr> TopologyNode::getAllAncestors() {
+    std::unordered_set<WorkerId> visited;
+    return getAndFlattenAncestors(visited);
+}
+
+std::vector<NodePtr> TopologyNode::getAndFlattenAncestors(std::unordered_set<WorkerId>& visited) {
+    if (visited.count(this->getId()) != 0) {
+        return {};
+    }
+    visited.insert(this->getId());
+
+    std::vector<NodePtr> result { this->shared_from_this() };
+    for (auto& parent : this->getParents()) {
+        if (auto tparent = std::dynamic_pointer_cast<TopologyNode>(parent)) {
+            auto sub = tparent->getAndFlattenAncestors(visited);
+            result.insert(result.end(), sub.begin(), sub.end());
+        }
+    }
+    return result;
+}
+
 
 bool TopologyNode::containAsChild(NodePtr childTopologyNode) {
     std::vector<NodePtr> children = this->getAndFlattenAllChildren(false);

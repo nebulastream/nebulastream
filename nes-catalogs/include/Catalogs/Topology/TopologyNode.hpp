@@ -106,6 +106,7 @@ class TopologyNode : public Node {
      */
     bool releaseSlots(uint16_t freedSlots);
 
+ std::vector<NodePtr> getAllAncestors();
     /**
      * @brief Get ip address of the node
      * @return ip address
@@ -216,6 +217,8 @@ class TopologyNode : public Node {
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
  std::string getFullRPCAddress() const;
+
+ std::vector<NodePtr> getAndFlattenAncestors(std::unordered_set<WorkerId>& visited);
 
   private:
     WorkerId workerId;

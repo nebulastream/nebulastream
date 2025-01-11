@@ -193,203 +193,40 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].d = u % 4;
             records[u].e = u % 5;
             records[u].f = u % 6;
-            records[u].g = u % 7;
-            records[u].h = u % 8;
-            records[u].i = u % 9;
-            records[u].j = u % 10;
-            records[u].k = u % 11;
-            records[u].l = u % 12;
-            records[u].m = u % 13;
-            records[u].n = u % 14;
-            records[u].o = u % 15;
-            records[u].p = u % 16;
-            records[u].q = u % 17;
-            records[u].r = u % 18;
-            records[u].s = u % 19;
-            records[u].t = u % 20;
-            records[u].u = u % 21;
-            records[u].v = u % 22;
-            records[u].w = u % 23;
-            records[u].x = u % 24;
+            // records[u].g = u % 7;
+            // records[u].h = u % 8;
+            // records[u].i = u % 9;
+            // records[u].j = u % 10;
+            // records[u].k = u % 11;
+            // records[u].l = u % 12;
+            // records[u].m = u % 13;
+            // records[u].n = u % 14;
+            // records[u].o = u % 15;
+            // records[u].p = u % 16;
+            // records[u].q = u % 17;
+            // records[u].r = u % 18;
+            // records[u].s = u % 19;
+            // records[u].t = u % 20;
+            // records[u].u = u % 21;
+            // records[u].v = u % 22;
+            // records[u].w = u % 23;
+            // records[u].x = u % 24;
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
     };
-    switch (workerConfig->lambdaSource) {
-        case 1: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 2: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A2",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 3: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A3",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 4: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A4",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 5: {
-            auto lambdaSourceType1 = LambdaSourceType::create("B",
-                                                              "B1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 6: {
-            auto lambdaSourceType1 = LambdaSourceType::create("C",
-                                                              "C1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            break;
-        }
-        case 7: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            auto lambdaSourceType2 = LambdaSourceType::create("A",
-                                                              "A2",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType2);
-            break;
-        }
-        case 8: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            auto lambdaSourceType2 = LambdaSourceType::create("A",
-                                                              "A2",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType2);
-            auto lambdaSourceType3 = LambdaSourceType::create("A",
-                                                              "A3",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType3);
-            break;
-        }
-        case 9: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            auto lambdaSourceType2 = LambdaSourceType::create("A",
-                                                              "A2",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType2);
-            auto lambdaSourceType3 = LambdaSourceType::create("A",
-                                                              "A3",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType3);
-            auto lambdaSourceType4 = LambdaSourceType::create("A",
-                                                              "A4",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType4);
-            break;
-        }
-        case 10: {
-            auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                              "A1",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType1);
-            auto lambdaSourceType2 = LambdaSourceType::create("A",
-                                                              "A2",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType2);
-            auto lambdaSourceType3 = LambdaSourceType::create("A",
-                                                              "A3",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType3);
-            auto lambdaSourceType4 = LambdaSourceType::create("A",
-                                                              "A4",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType4);
-            auto lambdaSourceType5 = LambdaSourceType::create("A",
-                                                              "A5",
-                                                              std::move(func1),
-                                                              workerConfig->numberOfBuffersToProduce,
-                                                              workerConfig->sourceGatheringInterval,
-                                                              GatheringMode::INGESTION_RATE_MODE);
-            workerConfig->physicalSourceTypes.add(lambdaSourceType5);
-            break;
-        }
+    if (workerConfig->lambdaSource) {
+        auto lambdaSourceType1 = LambdaSourceType::create("A",
+                                                          "A" + workerId.toString(),
+                                                          std::move(func1),
+                                                          workerConfig->numberOfBuffersToProduce,
+                                                          workerConfig->sourceGatheringInterval,
+                                                          GatheringMode::INGESTION_RATE_MODE);
+        workerConfig->physicalSourceTypes.add(lambdaSourceType1);
     }
 
     // load all plugins from the default folder.
-    pluginLoader.loadDefaultPlugins();
+    // pluginLoader.loadDefaultPlugins();
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());

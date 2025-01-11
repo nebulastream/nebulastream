@@ -80,13 +80,44 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
 
+    auto inputSchema = Schema::create()
+                  ->addField("a", DataTypeFactory::createUInt64())
+                  ->addField("b", DataTypeFactory::createUInt64())
+                  ->addField("c", DataTypeFactory::createUInt64())
+                  ->addField("d", DataTypeFactory::createUInt64())
+                  ->addField("e", DataTypeFactory::createUInt64())
+                  ->addField("f", DataTypeFactory::createUInt64())
+//                    ->addField("g", DataTypeFactory::createUInt64())
+//                    ->addField("h", DataTypeFactory::createUInt64())
+//                    ->addField("i", DataTypeFactory::createUInt64())
+//                    ->addField("j", DataTypeFactory::createUInt64())
+//                    ->addField("k", DataTypeFactory::createUInt64())
+//                    ->addField("l", DataTypeFactory::createUInt64())
+//                    ->addField("m", DataTypeFactory::createUInt64())
+//                    ->addField("n", DataTypeFactory::createUInt64())
+//                    ->addField("o", DataTypeFactory::createUInt64())
+//                    ->addField("p", DataTypeFactory::createUInt64())
+//                    ->addField("q", DataTypeFactory::createUInt64())
+//                    ->addField("r", DataTypeFactory::createUInt64())
+//                    ->addField("s", DataTypeFactory::createUInt64())
+//                    ->addField("t", DataTypeFactory::createUInt64())
+//                    ->addField("u", DataTypeFactory::createUInt64())
+//                    ->addField("v", DataTypeFactory::createUInt64())
+//                    ->addField("w", DataTypeFactory::createUInt64())
+//                    ->addField("x", DataTypeFactory::createUInt64())
+                  ->addField("timestamp1", DataTypeFactory::createUInt64())
+                  ->addField("timestamp2", DataTypeFactory::createUInt64());
+
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     queryParsingService = QueryParsingService::create(jitCompiler);
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    sourceCatalog->addLogicalSource("A", inputSchema);
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+
+
 
     topology = Topology::create();
     coordinatorHealthCheckService =

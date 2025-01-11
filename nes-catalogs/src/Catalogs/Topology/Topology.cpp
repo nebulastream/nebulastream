@@ -571,12 +571,13 @@ Topology::findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUp
 void Topology::assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators)
 {
     nodeLevels.clear();
-
     std::queue<std::pair<WorkerId,int>> queue;
+    std::unordered_set<WorkerId> visited;
 
     for (auto leafId : topologyNodesWithUpStreamPinnedOperators) {
         queue.push({leafId, 0});
         nodeLevels[leafId].insert(0);
+        visited.insert(leafId);
     }
 
     while (!queue.empty()) {
@@ -587,10 +588,10 @@ void Topology::assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpSt
         for (auto& parentPtr : currentNode->getParents()) {
             WorkerId parentId = parentPtr->as<TopologyNode>()->getId();
 
-            auto& parentLevels = nodeLevels[parentId];
-            if (!parentLevels.count(level + 1)) {
-                parentLevels.insert(level + 1);
+            if (!visited.count(parentId)) {
+                nodeLevels[parentId].insert(level + 1);
                 queue.push({parentId, level + 1});
+                visited.insert(parentId);
             }
         }
     }

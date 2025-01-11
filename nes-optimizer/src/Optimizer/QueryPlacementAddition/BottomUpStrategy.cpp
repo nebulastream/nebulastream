@@ -121,7 +121,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
     }
     else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
-    && logicalOperator->getOriginalId() == logicalOperator->getId()) {
+    && logicalOperator->getOriginalId() == logicalOperator->getId() && (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)) {
         if (pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
             candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
         }
@@ -251,10 +251,6 @@ TopologyNodePtr BottomUpStrategy::findCandidateTopologyNode(TopologyNodePtr star
     while ((candidateNode->getAvailableResources() == 0 || candidateNode->getAlternativeNodeCandidateIds().empty())
            && !candidateNode->getParents().empty()) {
         candidateNode = candidateNode->getParents()[0]->as<TopologyNode>();
-    }
-    if (candidateNode->getAvailableResources() == 0 || candidateNode->getAlternativeNodeCandidateIds().empty()) {
-        NES_ERROR("No node available for placement with available resources and alternative nodes.");
-        throw Exceptions::RuntimeException("No suitable node found for operator placement.");
     }
     return candidateNode;
 }

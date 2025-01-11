@@ -173,8 +173,6 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
-    uint64_t numberOfPath = topologyNodesWithUpStreamPinnedOperators.size();
-
 topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
     topology->assignAlternativeNodes();
 
@@ -199,7 +197,7 @@ topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
                 auto perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
 
                 if (faultTolerance == FaultToleranceType::NONE
-                    || faultTolerance == FaultToleranceType::UB)
+                    || faultTolerance == FaultToleranceType::UB || faultTolerance == FaultToleranceType::AS)
                 {
                     for (auto& p : perSourcePaths) {
                         allSourcesAllPaths.push_back(std::move(p));

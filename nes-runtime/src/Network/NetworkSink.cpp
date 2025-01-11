@@ -70,9 +70,25 @@ faultToleranceType,
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
         deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
-            return this->trimmingStarted = workerContext.trimStorage(this->nesPartition, timestamp);
+            return workerContext.trimStorage(this->nesPartition, timestamp);
         };
-    } else {
+    }
+    else if (faultToleranceType == FaultToleranceType::CH) {
+        insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
+            // workerContext.createCheckpoint(nesPartition, inputBuffer);  // uses HDFS
+            if (this->bufferCount == 50) {
+                std::vector<char> binaryStorage = workerContext.getBinaryStorage(this->nesPartition);
+                this->nodeEngine->offloadCheckpoint(this->nesPartition.getPartitionId().getRawValue(), binaryStorage);
+            }
+        };
+        deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
+            // workerContext.trimCheckpoint(nesPartition, timestamp);  // uses HDFS
+            this->nodeEngine->rpcTrimCheckpoint(this->nesPartition.getPartitionId().getRawValue(), timestamp);
+            return workerContext.trimStorage(this->nesPartition, timestamp);
+        };
+    }
+    else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
         };
         deleteFromStorageCallback = [](uint64_t, Runtime::WorkerContext&) {
@@ -133,11 +149,6 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     insertIntoStorageCallback(inputBuffer, workerContext);
-    if (faultToleranceType == FaultToleranceType::CH) {
-        // workerContext.createCheckpoint(nesPartition, inputBuffer);  // uses HDFS
-        std::vector<char> binaryStorage = workerContext.getBinaryStorage(nesPartition);
-        nodeEngine->offloadCheckpoint(nesPartition.getPartitionId().getRawValue(), binaryStorage);
-    }
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
 
@@ -232,11 +243,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", decomposedQueryId, timestamp);
-            workerContext.trimStorage(nesPartition, timestamp);
-            if (faultToleranceType == FaultToleranceType::CH) {
-                // workerContext.trimCheckpoint(nesPartition, timestamp);  // uses HDFS
-                nodeEngine->rpcTrimCheckpoint(nesPartition.getPartitionId().getRawValue(), timestamp);
-            }
+            deleteFromStorageCallback(timestamp, workerContext);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {

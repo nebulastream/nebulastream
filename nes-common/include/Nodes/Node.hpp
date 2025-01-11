@@ -15,9 +15,11 @@
 #ifndef NES_COMMON_INCLUDE_NODES_NODE_HPP_
 #define NES_COMMON_INCLUDE_NODES_NODE_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 namespace NES {
 
@@ -394,6 +396,7 @@ class Node : public std::enable_shared_from_this<Node> {
                                         NodePtr const& excludedNode,
                                         bool allowDuplicate);
 
+ std::vector<NodePtr> getAndFlattenAllAncestorsImpl(std::unordered_set<WorkerId>& visited);
     /**
      * @brief helper function of cycle detector
      */

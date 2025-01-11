@@ -37,7 +37,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  faultToleranceType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
-    if (faultToleranceType == FaultToleranceType::AS || faultToleranceType == FaultToleranceType::UB) {
+    if (faultToleranceType == FaultToleranceType::AS || faultToleranceType == FaultToleranceType::UB || faultToleranceType == FaultToleranceType::CH) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
@@ -67,8 +67,8 @@ NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef workerContext) {
-    workerContext.printStatistics(inputBuffer);
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    // workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     if(!duplicateDetectionCallback(inputBuffer)) {
         return true;

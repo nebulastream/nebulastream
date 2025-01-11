@@ -58,6 +58,7 @@ public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     SchemaPtr inputSchema;
     LambdaSourceTypePtr lambdaSource;
+    LambdaSourceTypePtr lambdaSource1;
     TopologyPtr topology;
 
     static void SetUpTestCase() {
@@ -119,6 +120,7 @@ public:
         };
 
         lambdaSource = LambdaSourceType::create("window", "x1", std::move(func1), 1000000, 20, GatheringMode::INGESTION_RATE_MODE);
+        lambdaSource1 = LambdaSourceType::create("window", "x2", std::move(func1), 1000000, 20, GatheringMode::INGESTION_RATE_MODE);
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         topology = Topology::create();
@@ -278,20 +280,18 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
         EXPECT_TRUE(wrkLeaf1->start(false, true));
 
         NesWorkerPtr wrkLeaf2 = std::make_shared<NesWorker>(std::move(workerConfig1));
-        wrkLeaf2->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+        wrkLeaf2->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource1);
         EXPECT_TRUE(wrkLeaf2->start(false, true));
 
-        wrkLeaf1->addParent(wrkLeaf2->getWorkerId());
-        wrkLeaf2->addParent(wrkLeaf1->getWorkerId());
 
         auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
         QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                        Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::NONE);
+                                                                                       FaultToleranceType::UB);
 
         auto queryCatalog = crd->getQueryCatalog();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100000));
         crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
         EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
