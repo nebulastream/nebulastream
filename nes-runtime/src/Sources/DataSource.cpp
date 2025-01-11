@@ -421,37 +421,25 @@ void DataSource::runningRoutine() {
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
-    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
-    // NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
-    std::string thName = fmt::format("DataSrc-{}", operatorId);
+    NES_ASSERT(this->operatorId.getRawValue() != 0, "The id of the source is not set properly");
+//    NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
+    std::string thName = "DataSrc-" + operatorId.toString();
     setThreadName(thName.c_str());
 
-    NES_DEBUG("DataSource {} Running Data Source of type={} ingestion rate={}",
-              operatorId,
-              magic_enum::enum_name(getType()),
-              gatheringIngestionRate);
-    if (numberOfBuffersToProduce == 0) {
-        NES_DEBUG(
-            "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
-            "the source is empty");
-    } else {
-        NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
-    }
     open();
 
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
     uint64_t buffersToProducePer100Ms = gatheringIngestionRate;
-    while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
+    while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
-        //produce buffers until limit for this second or for all periods is reached or source is topped
-        while (buffersProcessedCnt < buffersToProducePer100Ms && running
-               && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
+        //produce buffers until limit for this second or for all perionds is reached or source is topped
+        while (buffersProcessedCnt < buffersToProducePer100Ms && running && processedOverallBufferCnt < numberOfBuffersToProduce) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -459,16 +447,13 @@ void DataSource::runningRoutineWithIngestionRate() {
                 NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWork(buf);
+
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
-                if (!running) {// necessary if source stops while receiveData is called due to stricter shutdown logic
-                    break;
-                }
             } else {
                 NES_ERROR("DataSource: Buffer is invalid");
                 running = false;
             }
-            NES_TRACE("DataSource: buffersProcessedCnt={} buffersPerSecond={}", buffersProcessedCnt, gatheringIngestionRate);
         }
 
         uint64_t endPeriod =
@@ -476,18 +461,13 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (1));
-        NES_TRACE("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
-                  startPeriod,
-                  endPeriod,
-                  nextPeriodStartTime);
 
         //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
-        if (nextPeriodStartTime < endPeriod) {
-            NES_ERROR(
-                "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}",
-                nextPeriodStartTime,
-                endPeriod);
-        }
+        // if (nextPeriodStartTime < endPeriod) {
+
+            //            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
+            //                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
+        // }
 
         uint64_t sleepCnt = 0;
         uint64_t curTime =
@@ -497,19 +477,8 @@ void DataSource::runningRoutineWithIngestionRate() {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
-        NES_DEBUG("DataSource: Done with period {} and overall buffers={} sleepCnt={} startPeriod={} endPeriod={} "
-                  "nextPeriodStartTime={} curTime={}",
-                  curPeriod++,
-                  processedOverallBufferCnt,
-                  sleepCnt,
-                  startPeriod,
-                  endPeriod,
-                  nextPeriodStartTime,
-                  curTime);
     }//end of while
-    NES_DEBUG("DataSource {} call close", operatorId);
     close();
-    NES_DEBUG("DataSource {} end running", operatorId);
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
