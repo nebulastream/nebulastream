@@ -14,18 +14,21 @@
 
 #include <memory>
 
-#include "ErrorHandling.hpp"
-#include "InputFormatters/InputFormatterProvider.hpp"
-#include "SourceRegistry.hpp"
-#include "Sources/AsyncSourceExecutor.hpp"
-#include "Sources/SourceDescriptor.hpp"
-#include "Sources/SourceHandle.hpp"
-#include "Sources/SourceProvider.hpp"
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/AsyncSourceExecutor.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
 
 namespace NES::Sources
 {
 
-std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
     return std::make_unique<SourceProvider>();
 }
@@ -33,7 +36,7 @@ std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction,
     std::shared_ptr<AsyncSourceExecutor> executor)
 {

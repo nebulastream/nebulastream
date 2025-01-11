@@ -18,12 +18,12 @@
 #include <unordered_map>
 
 #include "Configurations/Descriptor.hpp"
-#include "Util/PluginRegistry.hpp"
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources
 {
 
-using SourceValidationRegistryReturnType = NES::Configurations::DescriptorConfig::Config;
+using SourceValidationRegistryReturnType = Configurations::DescriptorConfig::Config;
 struct SourceValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;

@@ -16,20 +16,20 @@
 
 #include <cstdint>
 #include <optional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
 #include <boost/asio/awaitable.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/posix/stream_descriptor.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES::Sources
 {
-
-namespace asio = boost::asio;
 
 class FileSource final : public Source
 {
@@ -44,16 +44,15 @@ public:
     FileSource(FileSource&&) = delete;
     FileSource& operator=(FileSource&&) = delete;
 
-    asio::awaitable<InternalSourceResult> fillBuffer(ByteBuffer& buffer) override;
+    asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) override;
 
     /// Open file socket.
     asio::awaitable<void> open(asio::io_context& ioc) override;
     /// Close file socket.
-    asio::awaitable<void> close(asio::io_context& ioc) override;
+    void close() override;
 
     /// validates and formats a string to string configuration
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static std::unique_ptr<Configurations::DescriptorConfig::Config> validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -66,9 +65,10 @@ private:
 struct ConfigParametersFile
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
-        }};
+        "filePath",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);

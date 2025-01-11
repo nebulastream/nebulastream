@@ -14,23 +14,20 @@
 
 #include "Sources/AsyncSourceExecutor.hpp"
 
-#include "boost/asio/co_spawn.hpp"
-#include "boost/asio/detached.hpp"
-#include "boost/asio/io_context.hpp"
+#include <functional>
+
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
 
 
 namespace NES::Sources
 {
 
-namespace asio = boost::asio;
-
-AsyncSourceExecutor::AsyncSourceExecutor(size_t numThreads) : workGuard(asio::make_work_guard(ioc))
+AsyncSourceExecutor::AsyncSourceExecutor() : workGuard(make_work_guard(ioc)), thread([this] { ioc.run(); })
 {
-    threadPool.reserve(numThreads);
-    for (size_t i = 0; i < numThreads; ++i)
-    {
-        threadPool.emplace_back([this] { ioc.run(); });
-    }
 }
 
 AsyncSourceExecutor::~AsyncSourceExecutor()

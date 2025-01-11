@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <ostream>
 #include <string>
 
 #include "API/Schema.hpp"
@@ -30,7 +29,7 @@ struct ParserConfig
     std::string fieldDelimiter;
 };
 
-struct SourceDescriptor : public Configurations::Descriptor
+struct SourceDescriptor : Configurations::Descriptor
 {
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(

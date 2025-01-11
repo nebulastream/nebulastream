@@ -35,7 +35,7 @@ namespace NES::Sources
 
 namespace asio = boost::asio;
 
-class AsyncSourceRunner : public std::enable_shared_from_this<AsyncSourceRunner>
+class AsyncSourceRunner final : public std::enable_shared_from_this<AsyncSourceRunner>
 {
 public:
     explicit AsyncSourceRunner(
@@ -48,7 +48,6 @@ public:
         std::shared_ptr<AsyncSourceExecutor> executor);
 
     AsyncSourceRunner() = delete;
-    virtual ~AsyncSourceRunner() = default;
 
     AsyncSourceRunner(const AsyncSourceRunner&) = delete;
     AsyncSourceRunner& operator=(const AsyncSourceRunner&) = delete;
@@ -72,20 +71,20 @@ protected:
 
     const OriginId originId;
     uint64_t maxSequenceNumber;
-    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     const SourceReturnType::EmitFunction emitFn;
     std::unique_ptr<Source> sourceImpl;
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
     std::shared_ptr<AsyncSourceExecutor> executor;
     RunnerState state{RunnerState::Initial};
 
-    void addBufferMetadata(ByteBuffer& buffer, SequenceNumber sequenceNumber)
+    void addBufferMetadata(IOBuffer& buffer, const SequenceNumber sequenceNumber) const
     {
         buffer.setOriginId(originId);
-        buffer.setCreationTimestampInMS(Timestamp(
+        buffer.setCreationTimestampInMS(Runtime::Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         buffer.setSequenceNumber(sequenceNumber);
-        buffer.setChunkNumber(ChunkNumber(1));
+        buffer.setChunkNumber(ChunkNumber{1});
         buffer.setLastChunk(true);
 
         NES_TRACE(
@@ -97,13 +96,9 @@ protected:
     }
 
 
-    friend std::ostream& operator<<(std::ostream& out, const AsyncSourceRunner& sourceRunner)
+    friend std::ostream& operator<<(std::ostream& out, const AsyncSourceRunner& /*sourceRunner*/)
     {
-        out << "\nAsyncSourceRunner(";
-        out << "\n  originId: " << sourceRunner.originId;
-        out << "\n  maxSequenceNumber: " << sourceRunner.maxSequenceNumber;
-        out << "\n  source implementation:" << *sourceRunner.sourceImpl;
-        out << ")\n";
+        out << "\nAsyncSourceRunner()";
         return out;
     }
 };

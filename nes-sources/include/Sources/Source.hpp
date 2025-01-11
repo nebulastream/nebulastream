@@ -26,7 +26,7 @@ namespace NES::Sources
 
 namespace asio = boost::asio;
 
-using ByteBuffer = NES::Memory::TupleBuffer;
+using IOBuffer = Memory::TupleBuffer;
 
 /// Source is the interface for all sources that read data into buffers.
 class Source
@@ -56,12 +56,12 @@ public:
     Source(Source&&) = delete;
     Source& operator=(Source&&) = delete;
 
-    virtual asio::awaitable<InternalSourceResult> fillBuffer(ByteBuffer& buffer) = 0;
+    virtual asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual asio::awaitable<void> open(asio::io_context& ioc) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
-    virtual asio::awaitable<void> close(asio::io_context& ioc) = 0;
+    virtual void close() = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 

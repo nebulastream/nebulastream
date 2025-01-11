@@ -24,3 +24,5 @@ add_source_files(nes-sources
 # Register plugins
 add_plugin(File Source nes-sources FileSource.cpp)
 add_plugin(File SourceValidation nes-sources FileSource.cpp)
+add_plugin(TCP Source nes-sources TCPSource.cpp)
+add_plugin(TCP SourceValidation nes-sources TCPSource.cpp)
