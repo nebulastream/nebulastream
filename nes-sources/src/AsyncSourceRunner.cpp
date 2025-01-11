@@ -105,7 +105,7 @@ asio::awaitable<void> AsyncSourceRunner::coroutine()
             },
             result);
     }
-    co_await sourceImpl->close(executor->ioContext());
+    sourceImpl->close();
 }
 
 }

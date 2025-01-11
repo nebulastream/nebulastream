@@ -12,26 +12,30 @@
     limitations under the License.
 */
 
+#include "TCPSource.hpp"
+
 #include <cstring>
+#include <memory>
 #include <ostream>
+#include <string>
 #include <unordered_map>
-#include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
-#include <TCPSource.hpp>
-#include "ErrorHandling.hpp"
 
 #include <boost/asio/as_tuple.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/connect.hpp>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceValidationRegistry.hpp>
 
 namespace NES::Sources
 {
@@ -68,7 +72,7 @@ asio::awaitable<void> TCPSource::open(asio::io_context& ioc)
     co_await async_connect(socket.value(), endpoints, asio::use_awaitable);
 }
 
-asio::awaitable<Source::InternalSourceResult> TCPSource::fillBuffer(ByteBuffer& buffer)
+asio::awaitable<Source::InternalSourceResult> TCPSource::fillBuffer(IOBuffer& buffer)
 {
     auto [errorCode, bytesRead] = co_await asio::async_read(
         socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
@@ -84,27 +88,25 @@ asio::awaitable<Source::InternalSourceResult> TCPSource::fillBuffer(ByteBuffer& 
     co_return Continue{};
 }
 
-asio::awaitable<void> TCPSource::close(asio::io_context& /*ioc*/)
+void TCPSource::close()
 {
     socket->close();
-    co_return;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-TCPSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+std::unique_ptr<Configurations::DescriptorConfig::Config> TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceValidationGeneratedRegistrar::RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&& sourceConfig)
+std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(const SourceValidationRegistryArguments& arguments)
 {
-    return TCPSource::validateAndFormat(std::move(sourceConfig));
+    return TCPSource::validateAndFormat(arguments.config);
 }
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterTCPSource(const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterTCPSource(const SourceRegistryArguments& arguments)
 {
-    return std::make_unique<TCPSource>(sourceDescriptor);
+    return std::make_unique<TCPSource>(arguments.sourceDescriptor);
 }
 
 }

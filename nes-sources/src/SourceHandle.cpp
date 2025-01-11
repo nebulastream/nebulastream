@@ -13,9 +13,11 @@
 */
 
 #include <memory>
+
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/AsyncSourceExecutor.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -25,8 +27,8 @@ namespace NES::Sources
 {
 SourceHandle::SourceHandle(
     OriginId originId,
-    std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-    Sources::SourceReturnType::EmitFunction&& emitFunction,
+    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
+    SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImpl,
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
@@ -45,11 +47,12 @@ SourceHandle::~SourceHandle() = default;
 
 void SourceHandle::start() const
 {
-    return this->sourceRunner->start();
+    this->sourceRunner->start();
 }
+
 void SourceHandle::stop() const
 {
-    return this->sourceRunner->stop();
+    this->sourceRunner->stop();
 }
 
 OriginId SourceHandle::getSourceId() const

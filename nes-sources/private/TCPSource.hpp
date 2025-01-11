@@ -21,6 +21,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include <Configurations/Descriptor.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -30,13 +31,45 @@ namespace NES::Sources
 
 namespace asio = boost::asio;
 
+
+class TCPSource final : public Source
+{
+public:
+    static inline const std::string NAME = "TCP";
+
+    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
+    ~TCPSource() override = default;
+
+    TCPSource(const TCPSource&) = delete;
+    TCPSource& operator=(const TCPSource&) = delete;
+    TCPSource(TCPSource&&) = delete;
+    TCPSource& operator=(TCPSource&&) = delete;
+
+    asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) override;
+
+    /// Open TCP connection.
+    asio::awaitable<void> open(asio::io_context& ioc) override;
+    /// Close TCP connection.
+    void close() override;
+
+    static std::unique_ptr<Configurations::DescriptorConfig::Config> validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+private:
+    const std::string socketHost;
+    const std::string socketPort;
+
+    std::optional<asio::ip::tcp::socket> socket;
+};
+
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
-        "socketHost", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(HOST, config);
-        }};
+        "socketHost",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return Configurations::DescriptorConfig::tryGet(HOST, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
@@ -55,45 +88,8 @@ struct ConfigParametersTCP
             }
             return portNumber;
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> NUM_RETRIES{
-        "numRetries", 5, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(NUM_RETRIES, config);
-        }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, PORT);
 };
-
-class TCPSource : public Source
-{
-public:
-    static inline const std::string NAME = "TCP";
-
-    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
-    ~TCPSource() override = default;
-
-    TCPSource(const TCPSource&) = delete;
-    TCPSource& operator=(const TCPSource&) = delete;
-    TCPSource(TCPSource&&) = delete;
-    TCPSource& operator=(TCPSource&&) = delete;
-
-    asio::awaitable<InternalSourceResult> fillBuffer(ByteBuffer& tupleBuffer) override;
-
-    /// Open TCP connection.
-    asio::awaitable<void> open(asio::io_context& ioc) override;
-    /// Close TCP connection.
-    asio::awaitable<void> close(asio::io_context& ioc) override;
-
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
-
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
-private:
-    const std::string socketHost;
-    const std::string socketPort;
-
-    std::optional<asio::ip::tcp::socket> socket;
-};
-
 }

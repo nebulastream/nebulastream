@@ -16,7 +16,6 @@
 #pragma once
 
 #include <thread>
-#include <vector>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/executor_work_guard.hpp>
@@ -30,8 +29,7 @@ namespace asio = boost::asio;
 class AsyncSourceExecutor
 {
 public:
-    explicit AsyncSourceExecutor(size_t numThreads);
-    AsyncSourceExecutor() = delete;
+    AsyncSourceExecutor();
     ~AsyncSourceExecutor();
 
     AsyncSourceExecutor(const AsyncSourceExecutor&) = delete;
@@ -47,7 +45,7 @@ public:
 private:
     asio::io_context ioc;
     asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
-    std::vector<std::jthread> threadPool;
+    std::jthread thread;
 };
 
 }

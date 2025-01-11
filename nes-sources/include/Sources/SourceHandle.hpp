@@ -37,7 +37,7 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId,
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+        std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImpl,

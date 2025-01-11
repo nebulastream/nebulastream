@@ -17,7 +17,6 @@
 #include <fcntl.h>
 
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <format>
 #include <memory>
@@ -26,20 +25,21 @@
 #include <unordered_map>
 #include <utility>
 
-#include "boost/asio/as_tuple.hpp"
-#include "boost/asio/awaitable.hpp"
-#include "boost/asio/io_context.hpp"
-#include "boost/asio/posix/stream_descriptor.hpp"
-#include "boost/asio/read.hpp"
-#include "boost/asio/use_awaitable.hpp"
+#include <boost/asio/as_tuple.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/posix/stream_descriptor.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/use_awaitable.hpp>
 
-#include "Configurations/Descriptor.hpp"
-#include "ErrorHandling.hpp"
-#include "SourceRegistry.hpp"
-#include "SourceValidationRegistry.hpp"
-#include "Sources/Source.hpp"
-#include "Sources/SourceDescriptor.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Configurations/Descriptor.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceValidationRegistry.hpp>
 
 namespace NES::Sources
 {
@@ -59,7 +59,6 @@ asio::awaitable<void> FileSource::open(asio::io_context& ioc)
 
     if (fileDescriptor == -1)
     {
-        NES_DEBUG("Throw CannotOpenSource");
         throw CannotOpenSource("FileSource: Failed to open file: {}", filePath);
     }
 
@@ -67,7 +66,7 @@ asio::awaitable<void> FileSource::open(asio::io_context& ioc)
     co_return;
 }
 
-asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(ByteBuffer& buffer)
+asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(IOBuffer& buffer)
 {
     INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
@@ -85,7 +84,7 @@ asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(ByteBuffer&
     co_return Continue{};
 }
 
-asio::awaitable<void> FileSource::close(asio::io_context& /*ioc*/)
+void FileSource::close()
 {
     try
     {
@@ -95,11 +94,10 @@ asio::awaitable<void> FileSource::close(asio::io_context& /*ioc*/)
     {
         NES_DEBUG("FileSource: Failed to close file: {} with error: {}", filePath, e.what());
     }
-    co_return;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-FileSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+std::unique_ptr<Configurations::DescriptorConfig::Config>
+FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
@@ -110,16 +108,16 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceValidationGeneratedRegistrar::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
+std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(const SourceValidationRegistryArguments& arguments)
 {
-    return FileSource::validateAndFormat(std::move(sourceConfig));
+    return FileSource::validateAndFormat(arguments.config);
 }
 
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterFileSource(const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterFileSource(const SourceRegistryArguments& arguments)
 {
-    return std::make_unique<FileSource>(sourceDescriptor);
+    return std::make_unique<FileSource>(arguments.sourceDescriptor);
 }
 
 }

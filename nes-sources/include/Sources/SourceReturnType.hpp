@@ -18,12 +18,11 @@
 
 #include "ErrorHandling.hpp"
 #include "Identifiers/Identifiers.hpp"
+#include <Sources/Source.hpp>
 #include "Runtime/TupleBuffer.hpp"
 
 namespace NES::Sources::SourceReturnType
 {
-
-using ByteBuffer = NES::Memory::TupleBuffer;
 
 struct Error
 {
@@ -32,7 +31,7 @@ struct Error
 
 struct Data
 {
-    ByteBuffer buffer;
+    IOBuffer buffer;
 };
 
 struct EoS
@@ -44,6 +43,6 @@ struct Stopped
 };
 
 using SourceReturnType = std::variant<Error, Data, EoS, Stopped>;
-using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
+using EmitFunction = std::function<void(OriginId, SourceReturnType)>;
 
 }

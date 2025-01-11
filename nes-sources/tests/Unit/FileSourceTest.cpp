@@ -12,30 +12,37 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <future>
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/use_future.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+
+#include <API/Schema.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <FileSource.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include "ErrorHandling.hpp"
-#include "Runtime/BufferManager.hpp"
+#include "Sources/Source.hpp"
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Logger/LogLevel.hpp>
 
 namespace NES
 {
 
 namespace asio = boost::asio;
 
-static constexpr auto TEST_DATA_DIR = "testdata";
+static constexpr auto TEST_DATA_DIR = "/tmp/nebulastream-public/nes-sources/tests/testdata";
 static constexpr size_t DEFAULT_BUFFER_SIZE = 32; // bytes
 static constexpr size_t DEFAULT_NUM_BUFFERS = 4;
 
@@ -45,7 +52,7 @@ struct FileSourceTestConfig
     std::shared_ptr<Schema> schema = Schema::create()->addField("id", BasicType::INT32);
     Sources::ParserConfig parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
 
-    explicit FileSourceTestConfig(std::string filePath) : filePath(std::move(filePath)) { }
+    explicit FileSourceTestConfig(std::string filePath) : filePath(fmt::format("{}/{}", TEST_DATA_DIR, filePath)) { }
 };
 
 class FileSourceTest : public Testing::BaseUnitTest
@@ -75,7 +82,7 @@ protected:
 
 TEST_F(FileSourceTest, FillBuffer)
 {
-    auto config = FileSourceTestConfig{fmt::format("{}/fileSourceTestSimple.csv", TEST_DATA_DIR)};
+    auto config = FileSourceTestConfig{"fileSourceTestSimple.csv"};
 
     auto fileSource = Sources::FileSource{
         Sources::SourceDescriptor{config.schema, "fileSource", "File", config.parserConfig, {{"filePath", config.filePath}}}};
@@ -87,11 +94,12 @@ TEST_F(FileSourceTest, FillBuffer)
         {
             co_await fileSource.open(ioc);
             auto result = co_await fileSource.fillBuffer(buf);
-            co_await fileSource.close(ioc);
+            fileSource.close();
             co_return result;
         },
         asio::use_future);
 
+    /// This returns when all handlers are completed
     ioc.run();
 
     auto sourceResult = future.get();
@@ -99,7 +107,7 @@ TEST_F(FileSourceTest, FillBuffer)
     EXPECT_TRUE(std::holds_alternative<Sources::Source::EoS>(sourceResult));
 
     const std::string expected = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
-    const std::string actual = std::string{buf.getBuffer<const char>(), expected.size()};
+    const auto actual = std::string{buf.getBuffer<const char>(), expected.size()};
 
     EXPECT_EQ(expected, actual);
 }
@@ -107,7 +115,7 @@ TEST_F(FileSourceTest, FillBuffer)
 
 TEST_F(FileSourceTest, FileNotPresent)
 {
-    auto config = FileSourceTestConfig{fmt::format("{}/missingFile.csv", TEST_DATA_DIR)};
+    auto config = FileSourceTestConfig{"missingFile.csv"};
 
     Sources::FileSource fileSource{
         Sources::SourceDescriptor{config.schema, "fileSource", "File", config.parserConfig, {{"filePath", config.filePath}}}};
@@ -131,7 +139,7 @@ TEST_F(FileSourceTest, FileNotPresent)
 
 TEST_F(FileSourceTest, ReadIntoTwoBuffers)
 {
-    auto config = FileSourceTestConfig{fmt::format("{}/fileSourceTestTwoBuffers.csv", TEST_DATA_DIR)};
+    auto config = FileSourceTestConfig{"fileSourceTestTwoBuffers.csv"};
 
     auto fileSource = Sources::FileSource{
         Sources::SourceDescriptor{config.schema, "fileSource", "File", config.parserConfig, {{"filePath", config.filePath}}}};
@@ -148,7 +156,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
             co_await fileSource.open(ioc);
             resultAfterFirstBuffer.set_value(co_await fileSource.fillBuffer(buf1));
             resultAfterSecondBuffer.set_value(co_await fileSource.fillBuffer(buf2));
-            co_await fileSource.close(ioc);
+            fileSource.close();
         },
         asio::detached);
 
@@ -168,7 +176,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
     EXPECT_TRUE(std::holds_alternative<Sources::Source::EoS>(sourceResult2));
 
     const std::string expected2 = "14\n15";
-    const std::string actual2 = std::string{buf2.getBuffer<const char>(), expected2.size()};
+    const auto actual2 = std::string{buf2.getBuffer<const char>(), expected2.size()};
 
     EXPECT_EQ(expected2, actual2);
 }
