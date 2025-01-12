@@ -162,24 +162,22 @@ class QueryController : public oatpp::web::server::api::ApiController {
             if (error.has_value()) {
                 return error.value();
             }
+            auto faultToleranceMode = stringToFaultToleranceTypeMap(requestJson["faultTolerance"].get<std::string>());
+            if (faultToleranceMode == FaultToleranceType::INVALID) {
+                std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + toString(faultToleranceMode)
+                    + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
+                return errorHandler->handleError(Status::CODE_400, errorMessage);
+                ;
+            }
             if (!validatePlacementStrategy(requestJson["placement"].get<std::string>())) {
                 std::string errorMessage = "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>()
                     + ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
                 return errorHandler->handleError(Status::CODE_400, errorMessage);
             }
             auto userQuery = requestJson["userQuery"].get<std::string>();
+
             std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
-            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
-            if (requestJson.contains("faultTolerance")) {
-                if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
-                    std::string errorMessage =
-                        "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>()
-                        + ". Valid Fault Tolerance Types are: 'M', 'AS', 'CH', 'NONE'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);
-                } else {
-                    faultToleranceString = requestJson["faultTolerance"].get<std::string>();
-                }
-            }
+
             if (requestJson.contains("placement")) {
                 if (!validatePlacementStrategy(placementStrategyString = requestJson["placement"].get<std::string>())) {
                     NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
@@ -193,7 +191,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
@@ -231,7 +228,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto* context = protobufMessage->mutable_context();
 
             std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
-            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
             if (context->contains("placement")) {
                 if (!validatePlacementStrategy(placementStrategyString = context->at("placement").value())) {
                     NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
@@ -243,19 +239,16 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     placementStrategyString = context->at("placement").value();
                 }
             }
+            auto faultToleranceMode = stringToFaultToleranceTypeMap(context->at("faultTolerance").value());
             if (context->contains("faultTolerance")) {
-                if (!validateFaultToleranceType(faultToleranceString = context->at("faultTolerance").value())) {
-                    std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + faultToleranceString
+                if (faultToleranceMode == FaultToleranceType::INVALID) {
+                    std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + toString(faultToleranceMode)
                         + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
                     return errorHandler->handleError(Status::CODE_400, errorMessage);
-                    ;
-                } else {
-                    faultToleranceString = context->at("faultTolerance").value();
                 }
             }
 
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
 
             QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryPlan, placementStrategy);
 
@@ -350,11 +343,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_400, errorMessage);
         }
         return std::nullopt;
-    }
-
-    bool validateFaultToleranceType(const std::string& faultToleranceString) {
-        auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-        return faultToleranceMode == FaultToleranceType::INVALID;
     }
 
     bool validatePlacementStrategy(const std::string& placementStrategy) {
