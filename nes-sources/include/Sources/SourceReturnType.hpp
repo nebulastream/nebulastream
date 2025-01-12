@@ -14,12 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <variant>
 
 #include "ErrorHandling.hpp"
 #include "Identifiers/Identifiers.hpp"
 #include <Sources/Source.hpp>
-#include "Runtime/TupleBuffer.hpp"
 
 namespace NES::Sources::SourceReturnType
 {

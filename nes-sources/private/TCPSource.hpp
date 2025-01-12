@@ -52,6 +52,9 @@ public:
     /// Close TCP connection.
     void close() override;
 
+    /// Cancels underlying socket read operations
+    void cancel() override;
+
     static std::unique_ptr<Configurations::DescriptorConfig::Config> validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

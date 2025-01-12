@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <InputFormatters/InputFormatter.hpp>
-#include <Sources/AsyncSourceExecutor.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <fmt/format.h>
@@ -41,8 +40,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImpl,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
-        std::shared_ptr<AsyncSourceExecutor> executor);
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     ~SourceHandle();
 

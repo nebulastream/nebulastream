@@ -17,7 +17,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/AsyncSourceExecutor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include "SourceDescriptor.hpp"
@@ -41,8 +40,7 @@ public:
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&& emitFunction,
-        std::shared_ptr<AsyncSourceExecutor> executor);
+        SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;
 };

@@ -14,86 +14,110 @@
 
 #pragma once
 
-#include <Sources/AsyncSourceExecutor.hpp>
-
-#include <cstdint>
+#include <cstddef>
 #include <iostream>
 #include <memory>
-
-#include <Util/Logger/Logger.hpp>
-#include <boost/asio/awaitable.hpp>
+#include <optional>
+#include <variant>
 
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-
+#include <Util/Logger/Logger.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
+#include <CoroutineExecutionContext.hpp>
+#include <SourceCoroutine.hpp>
 
 namespace NES::Sources
 {
 
-namespace asio = boost::asio;
 
-class AsyncSourceRunner final : public std::enable_shared_from_this<AsyncSourceRunner>
+class AsyncSourceRunner
 {
 public:
-    explicit AsyncSourceRunner(
-        OriginId originId,
-        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-        SourceReturnType::EmitFunction&& emitFn,
-        size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImpl,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
-        std::shared_ptr<AsyncSourceExecutor> executor);
+    /* -------------------------------- Events -------------------------------- */
+    struct EventStart
+    {
+        OriginId originId;
+        std::unique_ptr<Source> sourceImpl;
+        SourceReturnType::EmitFunction emitFn;
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    };
+    struct EventStop
+    {
+    };
 
-    AsyncSourceRunner() = delete;
+    using Event = std::variant<EventStart, EventStop>;
+    /* ------------------------------------------------------------------------ */
+
+
+    explicit AsyncSourceRunner(OriginId originId);
+    ~AsyncSourceRunner() = default;
 
     AsyncSourceRunner(const AsyncSourceRunner&) = delete;
     AsyncSourceRunner& operator=(const AsyncSourceRunner&) = delete;
     AsyncSourceRunner(AsyncSourceRunner&&) = delete;
     AsyncSourceRunner& operator=(AsyncSourceRunner&&) = delete;
 
-    void start();
-    void stop();
-    asio::awaitable<void> coroutine();
+    void dispatch(const Event& event);
 
-    [[nodiscard]] OriginId getOriginId() const { return originId; }
-
-
-protected:
-    enum class RunnerState
+private:
+    /* -------------------------------- States -------------------------------- */
+    struct Idle
     {
-        Initial,
-        Running,
-        Stopped,
+    };
+    struct Running
+    {
+        std::shared_ptr<SourceCoroutine> coro;
+    };
+    struct Stopped
+    {
     };
 
-    const OriginId originId;
-    uint64_t maxSequenceNumber;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    const SourceReturnType::EmitFunction emitFn;
-    std::unique_ptr<Source> sourceImpl;
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
-    std::shared_ptr<AsyncSourceExecutor> executor;
-    RunnerState state{RunnerState::Initial};
+    using State = std::variant<Idle, Running, Stopped>;
 
-    void addBufferMetadata(IOBuffer& buffer, const SequenceNumber sequenceNumber) const
+    State currentState;
+    /* ------------------------------------------------------------------------ */
+
+
+    /* ------------------------------ Transitions ----------------------------- */
+    struct Transitions
     {
-        buffer.setOriginId(originId);
-        buffer.setCreationTimestampInMS(Runtime::Timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-        buffer.setSequenceNumber(sequenceNumber);
-        buffer.setChunkNumber(ChunkNumber{1});
-        buffer.setLastChunk(true);
+        std::optional<State> operator()(Idle&, EventStart& event) const
+        {
+            NES_DEBUG("Idle -> Running");
+            CoroutineExecutionContext cec = {
+                .originId = event.originId,
+                .sourceImpl = std::move(event.sourceImpl),
+                .emitFn = event.emitFn,
+                .bufferProvider = event.bufferProvider
+            };
+            auto coro = std::make_shared<SourceCoroutine>(cec);
+            auto& ioc = cec.executor->ioContext();
+            cec.executor->execute([&ioc, coro]
+            {
+                asio::co_spawn(ioc, (*coro)(), asio::detached);
+            });
+            return Running{.coro = std::make_shared<SourceCoroutine>(cec)};
+        }
 
-        NES_TRACE(
-            "Setting buffer metadata with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
-            buffer.getOriginId(),
-            buffer.getSequenceNumber(),
-            buffer.getChunkNumber(),
-            buffer.isLastChunk());
-    }
+        std::optional<State> operator()(const Running& runningState, const EventStop&) const
+        {
+            NES_DEBUG("Running -> Stopped");
+            runningState.coro->stop();
+            return Stopped{};
+        }
+
+        template <typename StateT, typename EventT>
+        std::optional<State> operator()(StateT&, const EventT&) const
+        {
+            NES_DEBUG("Undefined state transition.");
+            return std::nullopt;
+        }
+    };
+    /* ------------------------------------------------------------------------ */
 
 
     friend std::ostream& operator<<(std::ostream& out, const AsyncSourceRunner& /*sourceRunner*/)

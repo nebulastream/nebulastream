@@ -14,12 +14,14 @@
 
 #pragma once
 
-#include <fmt/ostream.h>
-#include "boost/asio/awaitable.hpp"
-#include "boost/asio/io_context.hpp"
-#include "boost/system/system_error.hpp"
+#include <variant>
 
-#include "Runtime/TupleBuffer.hpp"
+#include <fmt/ostream.h>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/system/system_error.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Sources
 {
@@ -32,7 +34,7 @@ using IOBuffer = Memory::TupleBuffer;
 class Source
 {
 public:
-    struct EoS
+    struct EndOfStream
     {
         bool dataAvailable;
     };
@@ -46,7 +48,12 @@ public:
         boost::system::system_error error;
     };
 
-    using InternalSourceResult = std::variant<Continue, EoS, Error>;
+    struct Cancelled
+    {
+
+    };
+
+    using InternalSourceResult = std::variant<Continue, Cancelled, EndOfStream, Error>;
 
     Source() = default;
     virtual ~Source() = default;
@@ -62,6 +69,11 @@ public:
     virtual asio::awaitable<void> open(asio::io_context& ioc) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
+
+    /// Cancel outstanding asynchronous operations
+    /// Handlers for completed operations will reveive asio::error::operation_aborted signal
+    /// Sources will typically implement this by calling cancel() on their associated I/O object
+    virtual void cancel() = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
