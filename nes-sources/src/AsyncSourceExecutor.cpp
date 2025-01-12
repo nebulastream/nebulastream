@@ -12,21 +12,16 @@
     limitations under the License.
 */
 
-#include "Sources/AsyncSourceExecutor.hpp"
+#include <AsyncSourceExecutor.hpp>
 
-#include <functional>
-
-#include <boost/asio/awaitable.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
-#include <boost/asio/io_context.hpp>
 
 
 namespace NES::Sources
 {
 
-AsyncSourceExecutor::AsyncSourceExecutor() : workGuard(make_work_guard(ioc)), thread([this] { ioc.run(); })
+AsyncSourceExecutor::AsyncSourceExecutor() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
 {
 }
 
@@ -36,9 +31,10 @@ AsyncSourceExecutor::~AsyncSourceExecutor()
     ioc.stop();
 }
 
-void AsyncSourceExecutor::dispatch(const std::function<asio::awaitable<void>()>& coroutine)
+template<typename Callable>
+void AsyncSourceExecutor::execute(Callable&& task)
 {
-    asio::co_spawn(ioc, coroutine(), asio::detached);
+    asio::post(ioc, std::forward<Callable>(task));
 }
 
 }

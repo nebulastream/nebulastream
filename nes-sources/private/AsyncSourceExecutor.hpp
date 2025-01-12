@@ -17,7 +17,6 @@
 
 #include <thread>
 
-#include <boost/asio/awaitable.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 
@@ -38,7 +37,8 @@ public:
     AsyncSourceExecutor& operator=(AsyncSourceExecutor&&) = delete;
 
 
-    void dispatch(const std::function<asio::awaitable<void>()>& coroutine);
+    template <typename Callable>
+    void execute(Callable&& task);
 
     asio::io_context& ioContext() { return ioc; }
 

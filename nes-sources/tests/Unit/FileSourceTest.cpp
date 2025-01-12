@@ -104,7 +104,7 @@ TEST_F(FileSourceTest, FillBuffer)
 
     auto sourceResult = future.get();
 
-    EXPECT_TRUE(std::holds_alternative<Sources::Source::EoS>(sourceResult));
+    EXPECT_TRUE(std::holds_alternative<Sources::Source::EndOfStream>(sourceResult));
 
     const std::string expected = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
     const auto actual = std::string{buf.getBuffer<const char>(), expected.size()};
@@ -173,7 +173,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
 
     auto sourceResult2 = resultAfterSecondBuffer.get_future().get();
 
-    EXPECT_TRUE(std::holds_alternative<Sources::Source::EoS>(sourceResult2));
+    EXPECT_TRUE(std::holds_alternative<Sources::Source::EndOfStream>(sourceResult2));
 
     const std::string expected2 = "14\n15";
     const auto actual2 = std::string{buf2.getBuffer<const char>(), expected2.size()};

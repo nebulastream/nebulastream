@@ -28,9 +28,9 @@
 #include <boost/asio/as_tuple.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/posix/stream_descriptor.hpp>
 #include <boost/asio/read.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
 #include <Configurations/Descriptor.hpp>
@@ -70,18 +70,26 @@ asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(IOBuffer& b
 {
     INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
-    auto [errorCode, bytesRead] = co_await asio::async_read(
-        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
+    auto [errorCode, bytesRead] =
+        co_await asio::async_read(fileStream.value(),
+            asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()),
+            asio::as_tuple(asio::use_awaitable));
 
-    if (errorCode)
+    switch (errorCode)
     {
-        if (errorCode == asio::error::eof)
-        {
-            co_return EoS{.dataAvailable = bytesRead != 0};
-        }
-        co_return Error{boost::system::system_error{errorCode}};
+        case asio::error::eof:
+            co_return EndOfStream{.dataAvailable = bytesRead != 0};
+        case asio::error::operation_aborted:
+            co_return Cancelled{};
+        default:
+            co_return Error{boost::system::system_error{errorCode}};
     }
     co_return Continue{};
+}
+
+void FileSource::cancel()
+{
+    fileStream->cancel();
 }
 
 void FileSource::close()
@@ -96,8 +104,7 @@ void FileSource::close()
     }
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config>
-FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+std::unique_ptr<Configurations::DescriptorConfig::Config> FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }

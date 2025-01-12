@@ -67,7 +67,6 @@ asio::awaitable<void> TCPSource::open(asio::io_context& ioc)
         throw CannotOpenSource("TCPSource: Failed to resolve host {} on port {}", socketHost, socketPort);
     }
 
-
     socket.emplace(ioc);
     co_await async_connect(socket.value(), endpoints, asio::use_awaitable);
 }
@@ -81,7 +80,11 @@ asio::awaitable<Source::InternalSourceResult> TCPSource::fillBuffer(IOBuffer& bu
     {
         if (errorCode == asio::error::eof)
         {
-            co_return EoS{.dataAvailable = bytesRead != 0};
+            co_return EndOfStream{.dataAvailable = bytesRead != 0};
+        }
+        if (errorCode == asio::error::operation_aborted)
+        {
+            co_return Cancelled{};
         }
         co_return Error{boost::system::system_error{errorCode}};
     }
@@ -92,6 +95,12 @@ void TCPSource::close()
 {
     socket->close();
 }
+
+void TCPSource::cancel()
+{
+    socket->cancel();
+}
+
 
 std::unique_ptr<Configurations::DescriptorConfig::Config> TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {

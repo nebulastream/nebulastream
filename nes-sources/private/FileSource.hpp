@@ -51,6 +51,9 @@ public:
     /// Close file socket.
     void close() override;
 
+    /// Cancel operations on the file stream
+    void cancel() override;
+
     /// validates and formats a string to string configuration
     static std::unique_ptr<Configurations::DescriptorConfig::Config> validateAndFormat(std::unordered_map<std::string, std::string> config);
 
