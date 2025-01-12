@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(src)
+add_subdirectory(tests)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
