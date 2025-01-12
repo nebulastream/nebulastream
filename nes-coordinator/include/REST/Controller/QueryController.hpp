@@ -162,23 +162,24 @@ class QueryController : public oatpp::web::server::api::ApiController {
             if (error.has_value()) {
                 return error.value();
             }
-            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
-            if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
-                std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + faultToleranceString
-                    + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
-                return errorHandler->handleError(Status::CODE_400, errorMessage);
-                ;
-            }
             if (!validatePlacementStrategy(requestJson["placement"].get<std::string>())) {
                 std::string errorMessage = "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>()
                     + ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
                 return errorHandler->handleError(Status::CODE_400, errorMessage);
             }
-            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
             auto userQuery = requestJson["userQuery"].get<std::string>();
-
             std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
-
+            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
+            if (requestJson.contains("faultTolerance")) {
+                if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
+                    std::string errorMessage =
+                        "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>()
+                        + ". Valid Fault Tolerance Types are: 'M', 'AS', 'CH', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    faultToleranceString = requestJson["faultTolerance"].get<std::string>();
+                }
+            }
             if (requestJson.contains("placement")) {
                 if (!validatePlacementStrategy(placementStrategyString = requestJson["placement"].get<std::string>())) {
                     NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
@@ -192,6 +193,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
+            auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
