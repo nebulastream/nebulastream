@@ -64,8 +64,8 @@ public:
         filterOp3 = std::make_shared<LogicalSelectionOperator>(pred3, getNextOperatorId());
         filterOp4 = std::make_shared<LogicalSelectionOperator>(pred4, getNextOperatorId());
         sinkOp1 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
-        sinkOp2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
-        sinkOp3 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
+        sinkOp2 = std::make_shared<SinkLogicalOperator>("print_sink2", getNextOperatorId());
+        sinkOp3 = std::make_shared<SinkLogicalOperator>("print_sink3", getNextOperatorId());
 
         children.clear();
         parents.clear();
