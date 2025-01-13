@@ -16,40 +16,37 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <AsyncSourceExecutor.hpp>
 
-namespace NES::Sources {
-
-struct CoroutineExecutionContext
+namespace NES::Sources
 {
-    static std::shared_ptr<AsyncSourceExecutor> getExecutor()
-    {
-        static std::weak_ptr<AsyncSourceExecutor> weakExecutor;
-        static std::mutex mutex;
 
-        std::lock_guard const lock(mutex);
+class AsyncSourceExecutor;
 
-        std::shared_ptr<AsyncSourceExecutor> executor = weakExecutor.lock();
-        if (!executor)
-        {
-            executor = std::make_shared<AsyncSourceExecutor>();
-            weakExecutor = executor;
-        }
-        return executor;
-    }
+struct SourceExecutionContext
+{
+    SourceExecutionContext() = delete;
+    SourceExecutionContext(
+        OriginId originId,
+        std::unique_ptr<Source> sourceImpl,
+        SourceReturnType::EmitFunction emitFn,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
 
     OriginId originId;
     std::unique_ptr<Source> sourceImpl;
     SourceReturnType::EmitFunction emitFn;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    uint64_t maxSequenceNumber{0};
-    std::shared_ptr<AsyncSourceExecutor> executor{getExecutor()};
+    uint64_t maxSequenceNumber;
+    std::shared_ptr<AsyncSourceExecutor> executor;
+
+private:
+    /// If the shared_ptr is nullptr (does not manage an underlying pointer to an executor, create one atomically and return it
+    /// This makes sure that the I/O thread(s) within the executor are only running when at least one source is active
+    static std::shared_ptr<AsyncSourceExecutor> getExecutor();
 };
 
 }

@@ -14,6 +14,7 @@ add_source_files(nes-sources
         FileSource.cpp
         SourceDescriptor.cpp
         Source.cpp
+        SourceExecutionContext.cpp
         SourceHandle.cpp
         SourceProvider.cpp
         SourceValidationProvider.cpp

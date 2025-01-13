@@ -12,18 +12,19 @@
     limitations under the License.
 */
 
+#include <Sources/SourceHandle.hpp>
+
 #include <memory>
 
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/AsyncSourceExecutor.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 
 namespace NES::Sources
 {
@@ -50,13 +51,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
-        return std::make_unique<SourceHandle>(
-            originId,
-            std::move(bufferPool),
-            std::move(emitFunction),
-            NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(source.value()),
-            std::move(inputFormatter));
+        return std::make_unique<SourceHandle>(SourceExecutionContext{originId, std::move(source.value()), emitFunction, bufferPool->createFixedSizeBufferPool(64)});
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

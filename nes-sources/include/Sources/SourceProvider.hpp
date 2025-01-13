@@ -19,7 +19,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include "SourceDescriptor.hpp"
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::Sources
 {

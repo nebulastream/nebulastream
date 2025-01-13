@@ -12,52 +12,37 @@
     limitations under the License.
 */
 
+#include <Sources/SourceHandle.hpp>
+
 #include <memory>
 
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/AsyncSourceExecutor.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <AsyncSourceRunner.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 
 namespace NES::Sources
 {
-SourceHandle::SourceHandle(
-    OriginId originId,
-    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-    SourceReturnType::EmitFunction&& emitFunction,
-    size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImpl,
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
-    std::shared_ptr<AsyncSourceExecutor> executor)
+
+SourceHandle::SourceHandle(SourceExecutionContext context) : originId(context.originId), sourceRunner(std::make_unique<AsyncSourceRunner>()), sourceExecutionContext(std::move(context))
 {
-    this->sourceRunner = std::make_unique<AsyncSourceRunner>(
-        std::move(originId),
-        std::move(bufferPool),
-        std::move(emitFunction),
-        numSourceLocalBuffers,
-        std::move(sourceImpl),
-        std::move(inputFormatter),
-        executor);
 }
+
 SourceHandle::~SourceHandle() = default;
 
-void SourceHandle::start() const
+void SourceHandle::start()
 {
-    this->sourceRunner->start();
+
+    sourceRunner->dispatch(AsyncSourceRunner::EventStart{.sourceExecutionContext = std::move(sourceExecutionContext)});
 }
 
 void SourceHandle::stop() const
 {
-    this->sourceRunner->stop();
+    sourceRunner->dispatch(AsyncSourceRunner::EventStop{});
 }
 
 OriginId SourceHandle::getSourceId() const
 {
-    return this->sourceRunner->getOriginId();
+    return this->sourceExecutionContext.originId;
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)

@@ -70,19 +70,20 @@ asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(IOBuffer& b
 {
     INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
-    auto [errorCode, bytesRead] =
-        co_await asio::async_read(fileStream.value(),
-            asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()),
-            asio::as_tuple(asio::use_awaitable));
+    auto [errorCode, bytesRead] = co_await asio::async_read(
+        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
 
-    switch (errorCode)
+    if (errorCode)
     {
-        case asio::error::eof:
+        if (errorCode == asio::error::eof)
+        {
             co_return EndOfStream{.dataAvailable = bytesRead != 0};
-        case asio::error::operation_aborted:
+        }
+        if (errorCode == asio::error::operation_aborted)
+        {
             co_return Cancelled{};
-        default:
-            co_return Error{boost::system::system_error{errorCode}};
+        }
+        co_return Error{boost::system::system_error{errorCode}};
     }
     co_return Continue{};
 }

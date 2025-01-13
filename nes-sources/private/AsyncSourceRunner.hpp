@@ -20,15 +20,15 @@
 #include <optional>
 #include <variant>
 
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
-#include <CoroutineExecutionContext.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <SourceCoroutine.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 
 namespace NES::Sources
 {
@@ -40,10 +40,7 @@ public:
     /* -------------------------------- Events -------------------------------- */
     struct EventStart
     {
-        OriginId originId;
-        std::unique_ptr<Source> sourceImpl;
-        SourceReturnType::EmitFunction emitFn;
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+        SourceExecutionContext sourceExecutionContext;
     };
     struct EventStop
     {
@@ -53,7 +50,7 @@ public:
     /* ------------------------------------------------------------------------ */
 
 
-    explicit AsyncSourceRunner(OriginId originId);
+    AsyncSourceRunner() = default;
     ~AsyncSourceRunner() = default;
 
     AsyncSourceRunner(const AsyncSourceRunner&) = delete;
@@ -70,7 +67,7 @@ private:
     };
     struct Running
     {
-        std::shared_ptr<SourceCoroutine> coro;
+        std::shared_ptr<SourceCoroutineFunctor> coro;
     };
     struct Stopped
     {
@@ -85,24 +82,26 @@ private:
     /* ------------------------------ Transitions ----------------------------- */
     struct Transitions
     {
+        /// Transition from Idle to Running state.
+        /// This does two things:
+        /// 1. Create a shared pointer to the functor that maintains the root coroutine of the sources
+        /// 2. Give one shared pointer object to the executor to spawn the root coroutine
+        /// 3. Keep one shared pointer object in the Running state
+        /// With this, we ensure that the lifetime of the functor will be longer than the Running state if necessary
         std::optional<State> operator()(Idle&, EventStart& event) const
         {
             NES_DEBUG("Idle -> Running");
-            CoroutineExecutionContext cec = {
-                .originId = event.originId,
-                .sourceImpl = std::move(event.sourceImpl),
-                .emitFn = event.emitFn,
-                .bufferProvider = event.bufferProvider
-            };
-            auto coro = std::make_shared<SourceCoroutine>(cec);
-            auto& ioc = cec.executor->ioContext();
-            cec.executor->execute([&ioc, coro]
-            {
-                asio::co_spawn(ioc, (*coro)(), asio::detached);
-            });
-            return Running{.coro = std::make_shared<SourceCoroutine>(cec)};
+            auto& ioc = event.sourceExecutionContext.executor->ioContext();
+            const auto executor = event.sourceExecutionContext.executor;
+
+            auto coro = std::make_shared<SourceCoroutineFunctor>(event.sourceExecutionContext);
+            executor->execute([&ioc, coro] { asio::co_spawn(ioc, (*coro)(), asio::detached); });
+            return Running{.coro = coro};
         }
 
+        /// Transition from Running to Stopped state
+        /// Call stop() on the coroutine functor, which will call cancel on the source's I/O object
+        /// It is safe to destroy this, as we still have a shared pointer living in the executor.
         std::optional<State> operator()(const Running& runningState, const EventStop&) const
         {
             NES_DEBUG("Running -> Stopped");

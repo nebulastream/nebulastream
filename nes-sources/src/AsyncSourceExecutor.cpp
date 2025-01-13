@@ -15,8 +15,7 @@
 #include <AsyncSourceExecutor.hpp>
 
 #include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/co_spawn.hpp>
-
+#include <boost/asio/post.hpp>
 
 namespace NES::Sources
 {

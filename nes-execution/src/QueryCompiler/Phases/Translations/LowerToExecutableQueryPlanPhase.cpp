@@ -115,8 +115,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
         sourceOperator->getOriginId(),
         sourceOperator->getSourceDescriptorRef(),
         nodeEngine->getBufferManager(),
-        std::move(emitFunction),
-        nodeEngine->getAsyncSourceExecutor());
+        std::move(emitFunction));
     sources.emplace_back(std::move(source));
 }
 

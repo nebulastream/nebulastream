@@ -15,11 +15,12 @@
 #pragma once
 
 #include <memory>
-#include <InputFormatters/InputFormatter.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
+
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 
 namespace NES::Sources
 {
@@ -34,17 +35,11 @@ class AsyncSourceRunner;
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        OriginId originId,
-        std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&&,
-        size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImpl,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
+    explicit SourceHandle(SourceExecutionContext context);
 
     ~SourceHandle();
 
-    void start() const;
+    void start();
     void stop() const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
@@ -52,8 +47,9 @@ public:
     [[nodiscard]] OriginId getSourceId() const;
 
 private:
-    /// Used to print the data source via the overloaded '<<' operator.
+    OriginId originId;
     std::unique_ptr<AsyncSourceRunner> sourceRunner;
+    SourceExecutionContext sourceExecutionContext;
 };
 
 }
