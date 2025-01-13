@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -58,7 +59,12 @@ std::ostream& SourceNameLogicalOperator::toDebugString(std::ostream& os) const
 
 std::ostream& SourceNameLogicalOperator::toQueryPlanString(std::ostream& os) const
 {
-    return os << fmt::format("SOURCE({})", logicalSourceName);
+    std::string originIds;
+    if (!inputOriginIds.empty())
+    {
+        originIds = fmt::format(", {}", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+    }
+    return os << fmt::format("SOURCE({}{})", logicalSourceName, originIds);
 }
 
 bool SourceNameLogicalOperator::inferSchema()

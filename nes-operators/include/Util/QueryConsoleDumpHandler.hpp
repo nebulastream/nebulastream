@@ -14,46 +14,100 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <memory>
+#include <ostream>
 #include <string>
-#include <Nodes/Node.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include "Operators/Operator.hpp"
 
 namespace NES
 {
 
-/**
- * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
- */
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+/// Dumps query plans to an output stream
 class QueryConsoleDumpHandler
 {
 public:
     virtual ~QueryConsoleDumpHandler() = default;
     static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
     explicit QueryConsoleDumpHandler(std::ostream& out);
-    /**
-    * Dump the specific node and its children.
-    */
-    void dump(const std::shared_ptr<Node>& node);
 
-    /**
-    * Dump the specific node and its children with details in multiple lines.
-    */
-    void multilineDump(const std::shared_ptr<Node>& node);
-
-    /**
-     * @brief Dump a query plan with a specific context and scope.
-     * @param context the context
-     * @param scope the scope
-     * @param plan the query plan
-     */
-    void dump(const std::string& context, const std::string& scope, const std::shared_ptr<QueryPlan>& plan);
+    void dump(const QueryPlanPtr& plan);
+    void dump(const QueryPlan& plan);
+    void dump(const std::vector<std::shared_ptr<Operator>>& rootOperators);
 
 private:
     std::ostream& out;
-    void dumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+
+    struct PrintNode;
+    struct PrintNode
+    {
+        /// String representation of the Node
+        std::string text;
+        /// Position of the parents' connectors (where this node wants to connect to). Filled in while drawing.
+        std::vector<size_t> parentPositions;
+        std::vector<std::shared_ptr<PrintNode>> parents;
+        std::vector<std::shared_ptr<PrintNode>> children;
+        /// A dummy is actual a vertical branch: '|'
+        bool isDummy;
+        OperatorId id;
+    };
+    /// Each entry is a layer in the dag. It holds information on each node of that depth layer and its cumulative width.
+    struct Layer
+    {
+        std::vector<std::shared_ptr<PrintNode>> nodes;
+        size_t width;
+    };
+
+    enum class BranchCase : uint8_t
+    {
+        /// └
+        ParentFirst,
+        /// ┘
+        ParentLast,
+        /// ┌
+        ChildFirst,
+        /// ┐
+        ChildLast,
+        /// │
+        Direct,
+        /// ─
+        NoConnector
+    };
+
+    std::vector<Layer> treeProperties;
+    std::deque<std::pair<std::shared_ptr<Operator>, std::vector<std::shared_ptr<PrintNode>>>> layerCalcQueue;
+
+    size_t calculateLayers(const std::vector<std::shared_ptr<Operator>>& rootOperators);
+    void queueChild(
+        std::vector<OperatorId> alreadySeen,
+        size_t& numberOfNodesOnThisLayer,
+        size_t& numberOfNodesOnNextLayer,
+        const size_t& depth,
+        const NodePtr& child,
+        const std::shared_ptr<PrintNode>& layerNode);
+    bool insertDummies(
+        size_t startDepth,
+        size_t endDepth,
+        size_t nodesIndex,
+        OperatorId toBeReplacedId,
+        std::shared_ptr<Operator> toBeReplaced,
+        const auto& queueIt,
+        size_t& numberOfNodesOnNextLayer);
+    [[nodiscard]] std::string drawTree(size_t maxWidth) const;
+    /// Prints `toPrint` at position, but depending on what is already there, eg if the parent has a connector to a child on the right and
+    /// we want to print another child underneath, replace the PARENT_LAST_BRANCH (┘) connector with a PARENT_CHILD_LAST_BRANCH (┤).
+    static void printAsciiBranch(BranchCase toPrint, size_t position, std::string& output);
+    void dumpAndUseUnicodeBoxDrawing(const std::string& asciiOutput) const;
 };
 
 }

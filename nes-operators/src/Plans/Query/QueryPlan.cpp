@@ -91,10 +91,7 @@ std::string QueryPlan::toString() const
 {
     std::stringstream ss;
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
-    for (const auto& rootOperator : rootOperators)
-    {
-        dumpHandler->dump(rootOperator);
-    }
+    dumpHandler->dump(*this);
     return ss.str();
 }
 

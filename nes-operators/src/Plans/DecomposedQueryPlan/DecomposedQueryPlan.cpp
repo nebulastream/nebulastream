@@ -290,7 +290,7 @@ std::string DecomposedQueryPlan::toString() const
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
     for (const auto& rootOperator : rootOperators)
     {
-        dumpHandler->dump(rootOperator);
+        dumpHandler->dump({rootOperator});
     }
     return ss.str();
 }
