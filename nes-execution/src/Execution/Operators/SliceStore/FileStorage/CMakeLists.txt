@@ -11,9 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        Slice.cpp
-        DefaultTimeBasedSliceStore.cpp
+        FileStorage.cpp
 )
-
-add_subdirectory(FileStorage)
-add_subdirectory(MemoryController)

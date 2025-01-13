@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <Time/Timestamp.hpp>
+#include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
 
 namespace NES::Runtime
 {
@@ -56,6 +57,10 @@ public:
 
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
+
+    virtual void writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections);
+    virtual void readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections);
+    virtual void truncate(std::vector<std::string> projections);
 
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;

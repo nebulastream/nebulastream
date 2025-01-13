@@ -21,6 +21,7 @@
 #include <optional>
 #include <vector>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
 #include <folly/Synchronized.h>
 
 #include <Execution/Operators/SliceStore/Slice.hpp>
@@ -70,6 +71,7 @@ private:
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
     folly::Synchronized<std::map<SliceEnd, std::shared_ptr<Slice>>> slices;
     Operators::SliceAssigner sliceAssigner;
+    MemoryController memCtrl;
 
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.

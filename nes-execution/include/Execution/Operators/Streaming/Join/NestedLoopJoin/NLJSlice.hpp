@@ -44,6 +44,15 @@ public:
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
+    /// Writes the projected fields of all tuples to fileStorage.
+    void writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections) override;
+
+    /// Reads the projected fields of all tuples from fileStorage.
+    void readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections) override;
+
+    /// Deletes the projected fields of all tuples.
+    void truncate(std::vector<std::string> projections) override;
+
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
