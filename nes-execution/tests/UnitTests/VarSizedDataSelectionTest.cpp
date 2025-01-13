@@ -14,28 +14,22 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
-#include <API/Functions/ArithmeticalFunctions.hpp>
-#include "../../../nes-client/include/API/Functions/Functions.hpp"
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include "../../../nes-data-types/include/API/Schema.hpp"
 #include "../../../nes-data-types/include/Common/DataTypes/BasicTypes.hpp"
 #include "../../../nes-data-types/include/Common/DataTypes/DataTypeFactory.hpp"
 #include "../../../nes-functions/include/Functions/NodeFunction.hpp"
-#include "../../../nes-functions/include/Functions/NodeFunctionFieldAccess.hpp"
-#include "../../../nes-functions/include/Functions/LogicalFunctions/NodeFunctionEquals.hpp"
 #include "../../../nes-common/include/Util/Logger/Logger.hpp"
 #include "../../../nes-common/include/Util/Logger/LogLevel.hpp"
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 #include <BaseUnitTest.hpp>
 #include <nautilus/val.hpp>
@@ -123,8 +117,16 @@ public:
         {
             auto testTuple = std::make_tuple(
                 (uint16_t)i,
-                (i % 2 == 0) ? ("testString" + std::to_string(i)) : ("testString" + std::to_string(i) + "testString" +std::to_string(i)),
-                "testString" + std::to_string(i));
+                // atr2:
+                (i % 4 == 0) ? ("testString" + std::to_string(i) + "testString" + std::to_string(i) + "testString" + std::to_string(i)) :
+                    (i % 3 == 0) ? ("testString" + std::to_string(i) + "testString" +std::to_string(i)) :
+                        (i % 2 == 0) ? ("testString" + std::to_string(i) + std::to_string(i) ) :
+                            ("testString" + std::to_string(i)),
+                // atr2:
+                (i % 4== 0) ? ("testString" + std::to_string(i) + "testString" +std::to_string(i)) :
+                    (i % 3 == 0) ? ("testString" + std::to_string(i)) :
+                        (i % 2 == 0) ? ("testString" + std::to_string(i) + std::to_string(i) ) :
+                            "testString" + std::to_string(i) + "testString" + std::to_string(i) + "testString" + std::to_string(i));
             testTupleBufferVarSize->pushRecordToBuffer(testTuple, bufferManager.get());
             //ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<uint16_t, std::string, std::string>(i)), testTuple);
         }
@@ -134,7 +136,7 @@ public:
     auto layoutScan = std::make_shared<Memory::MemoryLayouts::RowLayout>(varSizedDataSchema, bufferManager->getBufferSize());
     // Set up a memoryProvider for the scan that takes care of reading and writing data from/to the TupleBuffer.
     // Note: We use row-wise memory accesses.
-    auto memoryProviderScan = std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layoutScan);
+    auto memoryProviderScan = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layoutScan);
     // Set-up scan-operator for execution
     scanOperator = std::make_shared<Runtime::Execution::Operators::Scan>(
         std::move(memoryProviderScan),
@@ -150,7 +152,7 @@ public:
     // Define output layout:
     auto layoutEmit = std::make_shared<Memory::MemoryLayouts::RowLayout>(varSizedDataSchema, bufferManager->getBufferSize());
     // Memory provider for row-oriented access for the results:
-    auto memoryProviderEmit = std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layoutEmit);
+    auto memoryProviderEmit = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layoutEmit);
     // Actual emit operator fr execution:
     const auto emitOperator =
         std::make_shared<Runtime::Execution::Operators::Emit>(
@@ -183,7 +185,8 @@ public:
     nautilus::engine::Options options;
     // Set engine compilation mode:
     const auto& engineCompilation = GetParam();
-    options.setOption("engine.Compilation", engineCompilation);
+    //options.setOption("engine.Compilation", engineCompilation); // Greater crashes here if compiled mode is on
+    options.setOption("engine.Compilation", false);
     // Capture the dump:
     options.setOption("dump.all", true);
     // Register the options:
@@ -193,11 +196,11 @@ public:
 
     // Allocate temp. tupleBuffer to execute function
     auto tupleBuffer = new Memory::TupleBuffer(testTupleBufferVarSize->getBuffer());
-    executable(workerContext.get(), pipelineExecutionContext.get(), tupleBuffer); // BREAKS HERE, not sure why, seems like get() is valueless, not sure which one
+    executable(workerContext.get(), pipelineExecutionContext.get(), tupleBuffer);
     delete tupleBuffer;
     }
 
-    void verifyResults(const std::string& comparison)
+    void verifyResults(const std::string& comparison) const
     {
         auto testTupleBufferResult = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(emittedBuffers[0], varSizedDataSchema);
         // Iterate through resulting testTupleBuffer, i.e. after selection on scan, and do assertions:
@@ -243,6 +246,9 @@ protected:
         {"greater", [](const std::string& p1, const std::string& p2){
                 ASSERT_TRUE(std::strcmp(p1.c_str(), p2.c_str()) > 0);
             }},
+            {"less", [](const std::string& p1, const std::string& p2){
+                ASSERT_TRUE(std::strcmp(p1.c_str(), p2.c_str()) < 0);
+            }},
     };
 };
 
@@ -269,8 +275,7 @@ TEST_P(VarSizedDataSelectionTest, Equal)
 
 TEST_P(VarSizedDataSelectionTest, NotEqual)
 {
-    //
-    auto notEqualComparison = (Attribute("attr2") !=  Attribute("attr3"));
+    auto notEqualComparison = (Attribute("attr2") != Attribute("attr3"));
     auto function = QueryCompilation::FunctionProvider::lowerFunction(notEqualComparison);
     const auto filterOperator = std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
     scanOperator->setChild(filterOperator);
@@ -280,32 +285,22 @@ TEST_P(VarSizedDataSelectionTest, NotEqual)
     verifyResults("notEqual");
 }
 
-/* GreaterThan is not working nt its own,
- * we need to use the operator overload for == or !+ and then call the greater functionality.
- * TODO: Dicsuss with nils why this is not working atm.
- *
- *
- *
-TEST_P(VarSizedDataSelectionTest, GreaterThan)
+TEST_P(VarSizedDataSelectionTest, Less)
 {
-    // we use the != to overload greaterThan:
-    // See GeneratedExecutableFunctionRegistrar.hpp for available operations:
-    auto notEqualComparison = (Attribute("attr2") !=  Attribute("attr3"));
-    auto function = QueryCompilation::FunctionProvider::lowerFunction(notEqualComparison);
+    auto lessComparison = Attribute("attr2") < Attribute("attr3");
+    auto function = QueryCompilation::FunctionProvider::lowerFunction(lessComparison);
     const auto filterOperator = std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
     scanOperator->setChild(filterOperator);
 
     setupAndExecutePipeline(filterOperator);
 
-    verifyResults("greater");
-}*/
+    verifyResults("less");
+}
 
-// instead of
-
-TEST_P(VarSizedDataSelectionTest, GreaterThan)
+TEST_P(VarSizedDataSelectionTest, Greater)
 {
-    // TODO: somethings breaks here in filterOperator
-    auto greaterComparison = Attribute("attr2") >  Attribute("attr3");
+    // TODO: Why does greater has some issues when (engineCompilation option = true) ? Find out!
+    auto greaterComparison = Attribute("attr2") > Attribute("attr3");
     auto function = QueryCompilation::FunctionProvider::lowerFunction(greaterComparison);
     const auto filterOperator = std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
     scanOperator->setChild(filterOperator);
@@ -316,7 +311,7 @@ TEST_P(VarSizedDataSelectionTest, GreaterThan)
 }
 
 /// Selection using equality:
-/// TODO: overload operators to add more operations here, e.g. find(), substr(), concat() etc. (see VariableSizedData.cpp)
+/// TODO: overload operators to add more operations here, e.g. find(), substr(), concat(), toUpper, toLower etc. (see VariableSizedData.cpp)
 /// e.g. ((Attribute("attr2") + Attribute("attr3") == Attribute("attr1") + Attribute("attr3")) for concat + equality
 
 // We want to test on compiled + interpreted mode w.r.t engine.Compilation:

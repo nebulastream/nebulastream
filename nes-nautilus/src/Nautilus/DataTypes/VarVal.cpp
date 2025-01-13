@@ -53,6 +53,7 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
         {
             if constexpr (std::is_same_v<ValType, VariableSizedData>)
             {
+                // future with in-place optimization: call function from VariableSizedData to store all pointers, e.g. in concat, "insert pointer to std vector"
                 throw UnsupportedOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
                 return;
             }

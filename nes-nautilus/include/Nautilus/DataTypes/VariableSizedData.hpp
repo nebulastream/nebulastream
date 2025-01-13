@@ -36,7 +36,7 @@ public:
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
-    //~VariableSizedData();
+    ~VariableSizedData();
 
     [[nodiscard]] nautilus::val<uint32_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
@@ -54,8 +54,10 @@ public:
     /// Performing an equality check between two VariableSizedData objects. Two VariableSizedData objects are equal if their size and
     /// content are byte-wise equal. To check the equality of the content, we compare the content byte-wise via a memcmp.
     nautilus::val<bool> operator==(const VariableSizedData&) const;
+    //VariableSizedData& createNewVariableSizedData(const nautilus::val<uint32_t>& size) const;
     //VariableSizedData operator+(const VariableSizedData& other) const;
     nautilus::val<bool> operator>(const VariableSizedData& other) const;
+    nautilus::val<bool> operator<(const VariableSizedData& other) const;
     nautilus::val<bool> operator!=(const VariableSizedData&) const;
     nautilus::val<bool> operator!() const;
     [[nodiscard]] nautilus::val<bool> isValid() const;

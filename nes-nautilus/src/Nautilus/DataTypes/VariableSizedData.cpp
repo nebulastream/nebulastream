@@ -25,6 +25,10 @@
 
 namespace NES::Nautilus
 {
+int8_t* mallocProxy()
+{
+    nautilus::calloc()
+}
 
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size)
     : size(size), ptrToVarSized(content)
@@ -39,6 +43,14 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarS
 VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
 {
 }
+
+/*
+VariableSizedData& createNewVariableSizedData(size_t size)
+{
+    auto content = std::malloc(size);
+    VariableSizedData varSizedData = new VariableSizedData(content, size);
+    return ;
+}*/
 
 VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
 {
@@ -97,14 +109,13 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     return {compareResult};
 }
 
-// TODO: Implement new operations: concat(), substr(), find() -> index
-// Note: Hardcode stuff for now based on a operator => think about how to allocate space for new operators
-/*VariableSizedData VariableSizedData::operator>(const VariableSizedData& other) const
+/*
+VariableSizedData VariableSizedData::operator+(const VariableSizedData& other) const
 {
-    // Think about how to allocate new memory here for storing a new value
-    // as a result of the string operation.
-    auto newPtr = createNewVariableSizedData(size + other.size);
-    nautilus::memcpy(newPtr, ptrToVarSized, size);
+    // TODO: Think about how to allocate new memory here for storing a new value as a result of the string operation.
+    auto totalSize = size + other.size;
+    auto resultPtr = createNewVariableSizedData(size + other.size);
+    nautilus::memcpy(newPtr, resultPtr, size);
     return VariableSizedData(newPtr);
 }*/
 
@@ -115,21 +126,24 @@ nautilus::val<bool> greaterThan(const VariableSizedData& left, const VariableSiz
     nautilus::val<uint32_t> sizeRight = right.getSize();
     nautilus::val<uint32_t> minLength = sizeLeft < sizeRight ? sizeLeft : sizeRight;
 
+    // Compare up to shared length, if still the same, compare lengths.
     const auto compareResult = nautilus::memcmp(left.getContent(), right.getContent(), minLength);
-    return compareResult > 0 || (compareResult == 0 && sizeLeft > sizeRight);
+    return {compareResult > 0 || (compareResult == 0 && sizeLeft > sizeRight)};
 }
 
-
-// Compare up to shared length, if still the same, compare lengths
 nautilus::val<bool> VariableSizedData::operator>(const VariableSizedData& other) const
 {
     return greaterThan(*this, other);
 }
 
+nautilus::val<bool> VariableSizedData::operator<(const VariableSizedData& other) const
+{
+    return greaterThan(other, *this);
+}
+
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
 {
-    //return !(*this == rhs);
-    return greaterThan(*this, rhs);;
+    return !(*this == rhs);
 }
 
 nautilus::val<bool> VariableSizedData::operator!() const
