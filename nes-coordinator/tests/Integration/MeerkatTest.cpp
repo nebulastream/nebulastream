@@ -275,29 +275,29 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
         crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
         EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-        NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig2));
-        wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
-        EXPECT_TRUE(wrkLeaf1->start(false, true));
+        for (auto i = 0; i < 8; i++) {
 
-        NesWorkerPtr wrkLeaf2 = std::make_shared<NesWorker>(std::move(workerConfig1));
-        wrkLeaf2->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource1);
-        EXPECT_TRUE(wrkLeaf2->start(false, true));
+            auto workerConfig = WorkerConfiguration::create();
+            workerConfig->numberOfBuffersPerEpoch = 2;
+            workerConfig->numWorkerThreads = 1;
+            workerConfig->loadBalancing = true;
 
-
-        auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
+            NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
+            wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+            EXPECT_TRUE(wrkLeaf1->start(false, true));
+        }
+        auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
         QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                        Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::UB);
+                                                                                       FaultToleranceType::AS);
 
         auto queryCatalog = crd->getQueryCatalog();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-        std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000000000));
         crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
         EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
 
-        EXPECT_TRUE(wrkLeaf1->stop(true));
-        // EXPECT_TRUE(wrkLeaf2->stop(true));
         EXPECT_TRUE(crd->stopCoordinator(true));
     }
 }

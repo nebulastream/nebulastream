@@ -204,20 +204,20 @@ topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
                     }
                     continue;
                 }
-                if ((faultTolerance == FaultToleranceType::M
-                     || faultTolerance == FaultToleranceType::AS)
-                    && perSourcePaths.size() == 1)
-                {
-                    bool linkCreated = false;
-                    if (!perSourcePaths[0].empty()) {
-                        linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
-                            perSourcePaths[0]);
-                    }
-
-                    if (linkCreated) {
-                        perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
-                    }
-                }
+                // if ((faultTolerance == FaultToleranceType::M
+                //      || faultTolerance == FaultToleranceType::AS)
+                //     && perSourcePaths.size() == 1)
+                // {
+                //     bool linkCreated = false;
+                //     if (!perSourcePaths[0].empty()) {
+                //         linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
+                //             perSourcePaths[0]);
+                //     }
+                //
+                //     if (linkCreated) {
+                //         perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
+                //     }
+                // }
 
                 for (auto& p : perSourcePaths) {
                     allSourcesAllPaths.push_back(std::move(p));
