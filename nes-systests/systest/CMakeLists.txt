@@ -46,24 +46,36 @@ add_test(NAME systest_interpreter COMMAND systest -n 100 --resultDir=${CMAKE_CUR
 add_test(NAME systest_compiler COMMAND systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 
 
-## We wish to run all join tests with 1, 2, 4 worker threads
+## We wish to run all join and aggregation tests with 1, 2, 4 worker threads
 set(workerThreads 1 2 4 8)
-foreach(workerThreads IN LISTS workerThreads)
+foreach (workerThreads IN LISTS workerThreads)
     if (CODE_COVERAGE)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join -- --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_aggregation_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Aggregation --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
     endif (CODE_COVERAGE)
 
     add_test(
             NAME systest_join_${workerThreads}_interpreter
-            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
     add_test(
             NAME systest_join_${workerThreads}_compiler
-            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
-endforeach()
+            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler_join
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
+
+    add_test(
+            NAME systest_aggregation_${workerThreads}_interpreter
+            COMMAND systest -n 6 --group Aggregation --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
+    add_test(
+            NAME systest_aggregation_${workerThreads}_compiler
+            COMMAND systest -n 6 --group Aggregation --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler_aggregation
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
+endforeach ()
 
 
 function(add_nes_test_systest)

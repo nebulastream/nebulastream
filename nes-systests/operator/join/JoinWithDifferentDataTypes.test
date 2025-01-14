@@ -1,6 +1,6 @@
 # name: join/JoinWithDifferentDataTypes.test
 # description: Test join operator and the join function performs the join operation with different data types
-# groups: [Join]
+# groups: [WindowOperators, Join]
 
 Source stream1 INT8 i8_s1 INT16 i16_s1 INT32 i32_s1 INT64 i64_s1 UINT8 u8_s1 UINT16 u16_s1 UINT32 u32_s1 UINT64 u64_s1 FLOAT32 f32_s1 FLOAT64 f64_s1 UINT64 ts
 1,2,3,4,5,6,7,8,9,10,100
