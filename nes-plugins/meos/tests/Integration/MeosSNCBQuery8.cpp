@@ -161,32 +161,6 @@ TEST_F(ReadSNCB, testReadCSV) {
         When these anomalies appear, the system sends an alert to help staff take prompt action. 
         This approach ensures safer operations and targeted maintenance in unusual brake activity areas.*/
   
-
-
-        // Main query combines patterns with location data
-        // auto query = Query::from("gps")
-        //                 .filter(
-        //                     // Any brake activation
-        //                     Attribute("Code1") > 0 &&
-        //                     // More sensitive pressure ranges (20% deviation)
-        //                     (
-        //                         Attribute("PCFA_mbar") < 1.9 ||  // 20% below avg 2.48
-        //                         Attribute("PCFF_mbar") < 1.4 ||  // 20% below avg 1.77
-        //                         Attribute("PCF1_mbar") < 0.8 ||  // 20% below avg 1.08
-        //                         Attribute("PCF2_mbar") < 1.0 ||  // 20% below avg 1.35
-        //                         Attribute("PCFA_mbar") > 3.0 ||  // 20% above avg
-        //                         Attribute("PCFF_mbar") > 2.1 ||  // 20% above avg
-        //                         Attribute("PCF1_mbar") > 1.3 ||  // 20% above avg
-        //                         Attribute("PCF2_mbar") > 1.6     // 20% above avg
-        //                     ) &&
-        //                     Attribute("latitude") > 0 &&
-        //                     Attribute("longitude") > 0
-        //                 )
-        //                 .times()
-        //                 .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(200)))
-        //                 .limit(100);
-                    
-
         auto pressureQuery = Query::from("gps")
             .filter(
                 Attribute("Code1") > 0 &&

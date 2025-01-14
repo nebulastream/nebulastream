@@ -137,6 +137,12 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType2->setSkipHeader(true);                    // Skip the header
 
 
+        /*
+        Weather-Based Speed Zones
+        The system uses integrated weather data to suggest speed limits for 
+        conditions such as heavy rain or fog, maintaining safety operations.
+        */
+        
         auto weatherQuery = Query::from("weather")
             .filter(
                 tedwithin(Attribute("gps_lon"), 

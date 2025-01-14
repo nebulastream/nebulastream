@@ -137,6 +137,11 @@ TEST_F(ReadSNCB, testReadCSV) {
                         && Attribute("timestamp", BasicType::UINT64) > 0);
 
 
+        /*
+        Dynamic Speed Limit
+        We can suggest speed restrictions dynamically, adapting to specific zones, 
+        such as curves and other construction zones.
+        */
         
         auto query = Query::from("sncb")
                     .joinWith(query1)

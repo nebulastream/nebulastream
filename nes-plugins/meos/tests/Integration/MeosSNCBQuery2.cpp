@@ -131,7 +131,10 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
-
+        /*
+        Location-Based Noise Monitoring
+        The query constantly monitors the sound levels outside the train using speed and break pressure data.
+        */
         auto query =
             Query::from("sncb")
                 .filter(

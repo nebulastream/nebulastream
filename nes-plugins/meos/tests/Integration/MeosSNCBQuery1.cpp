@@ -127,11 +127,18 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
+        csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(20); // Read 410,668 tuples per buffer
         csvSourceType->setNumberOfBuffersToProduce(40);  
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
-        // Define query
+        /*
+        Location-Based Alert Filtering
+        The system determines whether a train is within a maintenance area. 
+        If confirmed, alerts such as speed violations or equipment malfunctions are filtered out, 
+        as they are redundant during maintenance.
+        */
+        
         auto query =
             Query::from("sncb")
                 .filter(
