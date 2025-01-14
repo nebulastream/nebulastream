@@ -41,7 +41,7 @@ public:
     explicit RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
-    nautilus::val<uint64_t> getNumRecords();
+    [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
 
     /// Retrieve the reference to the underling memory area from the record buffer.
     nautilus::val<int8_t*> getBuffer() const;
