@@ -26,9 +26,6 @@ class FunctionItem;
 class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
-class NodeFunctionFieldAssignment;
-using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
-
 namespace API
 {
 class WindowAggregation;
