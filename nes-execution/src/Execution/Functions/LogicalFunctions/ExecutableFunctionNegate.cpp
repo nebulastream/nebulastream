@@ -12,14 +12,16 @@
     limitations under the License.
 */
 #include <memory>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionNegate::execute(Record& record) const
+VarVal ExecutableFunctionNegate::execute(const Record& record) const
 {
     const auto value = childFunction->execute(record);
     return !value;

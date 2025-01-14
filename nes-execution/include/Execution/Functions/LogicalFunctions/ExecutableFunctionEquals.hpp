@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -24,7 +25,7 @@ class ExecutableFunctionEquals final : public Function
 {
 public:
     ExecutableFunctionEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    VarVal execute(Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record) const override;
 
 private:
     const std::unique_ptr<Function> leftExecutableFunction;
