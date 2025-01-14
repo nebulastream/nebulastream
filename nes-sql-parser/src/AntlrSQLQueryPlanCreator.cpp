@@ -888,7 +888,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = Util::toLowerCase(context->children[0]->getText());
     if (funcName == "count")
     {
-        helper.windowAggs.push_back(API::Count()->aggregation);
+        helper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
+        helper.functionBuilder.pop_back();
     }
     else if (funcName == "avg")
     {

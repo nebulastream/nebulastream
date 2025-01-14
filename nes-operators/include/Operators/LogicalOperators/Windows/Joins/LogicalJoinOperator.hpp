@@ -18,6 +18,8 @@
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+
 
 namespace NES
 {
@@ -45,39 +47,15 @@ public:
     void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
-
-    /**
-     * @brief Getter for the window start field name
-     * @return std::string
-     */
-    const std::string& getWindowStartFieldName() const;
-
-    /**
-     * @brief Getter for the window end field name
-     * @return std::string
-     */
-    const std::string& getWindowEndFieldName() const;
-
-    /**
-     * @brief Getter for join function, i.e. a set of binary functions
-     * @return joinFunctions
-     */
     const NodeFunctionPtr getJoinFunction() const;
 
-    /**
-     * @brief Sets the window start, end, and key field name during the serialization of the operator
-     * @param windowStartFieldName
-     * @param windowEndFieldName
-     */
-    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
+    WindowMetaData windowMetaData;
 
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
 };
 using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 }

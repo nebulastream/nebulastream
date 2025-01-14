@@ -58,9 +58,9 @@ API::WindowAggregationPtr Max(const FunctionItem& onField)
     return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-API::WindowAggregationPtr Count()
+API::WindowAggregationPtr Count(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on());
+    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
 API::WindowAggregationPtr Median(const FunctionItem& onField)

@@ -422,7 +422,10 @@ LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_Win
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
     windowDef->setOriginId(OriginId(windowDetails.originid()));
-    return std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
+    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
+    windowOperator->windowMetaData.windowStartFieldName = windowDetails.windowstartfieldname();
+    windowOperator->windowMetaData.windowEndFieldName = windowDetails.windowendfieldname();
+    return windowOperator;
 }
 
 LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
@@ -504,7 +507,8 @@ LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDe
     const auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
     auto joinOperator = std::make_shared<LogicalJoinOperator>(joinDefinition, operatorId);
-    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname());
+    joinOperator->windowMetaData.windowStartFieldName = joinDetails.windowstartfieldname();
+    joinOperator->windowMetaData.windowEndFieldName = joinDetails.windowendfieldname();
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 }
@@ -856,6 +860,10 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         }
     }
 
+    windowDetails.set_windowstartfieldname(windowOperator.windowMetaData.windowStartFieldName);
+    windowDetails.set_windowendfieldname(windowOperator.windowMetaData.windowEndFieldName);
+
+
     serializedOperator.mutable_details()->PackFrom(windowDetails);
 }
 
@@ -909,8 +917,8 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 
     joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
-    joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
-    joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
+    joinDetails.set_windowstartfieldname(joinOperator.windowMetaData.windowStartFieldName);
+    joinDetails.set_windowendfieldname(joinOperator.windowMetaData.windowEndFieldName);
     joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN)
