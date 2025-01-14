@@ -217,7 +217,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment;
-    auto deadline = std::chrono::steady_clock::now() + timeoutMs;
+    const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
     if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
         return std::nullopt;
@@ -298,8 +298,8 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
 {
     std::unique_lock lock(unpooledBuffersMutex);
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
-    UnpooledBufferHolder probe(segment->getSize());
-    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
+    const UnpooledBufferHolder probe(segment->getSize());
+    const auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())
     {
         for (auto it = candidate; it != unpooledBuffers.end(); ++it)
@@ -347,7 +347,7 @@ size_t BufferManager::getAvailableBuffersInFixedSizePools() const
     size_t sum = 0;
     for (auto& pool : localBufferPools)
     {
-        auto type = pool->getBufferManagerType();
+        const auto type = pool->getBufferManagerType();
         if (type == BufferManagerType::FIXED)
         {
             sum += pool->getAvailableBuffers();

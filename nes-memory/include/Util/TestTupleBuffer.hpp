@@ -383,10 +383,10 @@ public:
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
         PRECONDITION(
-            (sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
+            (sizeof...(Types)) == memoryLayout->getSchema()->getFieldCount(),
             "Provided tuple types: {} do not match the number of fields in the memory layout: {}",
             sizeof...(Types),
-            memoryLayout->getFieldSizes().size());
+            memoryLayout->getSchema()->getFieldCount());
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;

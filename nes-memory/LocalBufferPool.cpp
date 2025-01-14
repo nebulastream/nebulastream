@@ -93,7 +93,7 @@ void LocalBufferPool::destroy()
 
 size_t LocalBufferPool::getAvailableBuffers() const
 {
-    auto qSize = exclusiveBuffers.size();
+    const auto qSize = exclusiveBuffers.size();
     return qSize > 0 ? qSize : 0;
 }
 
@@ -150,7 +150,7 @@ std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 }
 std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
-    auto now = std::chrono::steady_clock::now();
+    const auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
     if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
     {
