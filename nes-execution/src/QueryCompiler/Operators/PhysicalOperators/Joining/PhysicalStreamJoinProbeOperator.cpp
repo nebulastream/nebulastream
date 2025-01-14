@@ -38,8 +38,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
     const std::vector<std::string>& joinFieldNamesLeft,
     const std::vector<std::string>& joinFieldNamesRight,
-    const std::string& windowStartFieldName,
-    const std::string& windowEndFieldName,
+    const WindowMetaData& windowMetaData,
     const OperatorId id)
     : Operator(id)
     , PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
@@ -48,7 +47,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     , joinFunction(std::move(joinFunction))
     , joinFieldNamesLeft(joinFieldNamesLeft)
     , joinFieldNamesRight(joinFieldNamesRight)
-    , windowMetaData(windowStartFieldName, windowEndFieldName)
+    , windowMetaData(windowMetaData)
 {
 }
 
@@ -63,8 +62,7 @@ std::shared_ptr<Operator> PhysicalStreamJoinProbeOperator::copy()
         std::move(joinFunction),
         joinFieldNamesLeft,
         joinFieldNamesRight,
-        windowMetaData.windowStartFieldName,
-        windowMetaData.windowEndFieldName,
+        windowMetaData,
         id);
 }
 
@@ -99,7 +97,7 @@ Runtime::Execution::JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() 
     return {leftInputSchema, rightInputSchema, outputSchema};
 }
 
-const Runtime::Execution::WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const
+const WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const
 {
     return windowMetaData;
 }
