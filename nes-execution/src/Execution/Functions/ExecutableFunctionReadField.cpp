@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -20,7 +21,7 @@ ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIden
 {
 }
 
-VarVal ExecutableFunctionReadField::execute(Record& record) const
+VarVal ExecutableFunctionReadField::execute(const Record& record) const
 {
     return record.read(field);
 }

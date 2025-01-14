@@ -15,12 +15,14 @@
 #include <utility>
 #include <vector>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionMul::execute(Record& record) const
+VarVal ExecutableFunctionMul::execute(const Record& record) const
 {
     const auto leftValue = leftExecutableFunction->execute(record);
     const auto rightValue = rightExecutableFunction->execute(record);

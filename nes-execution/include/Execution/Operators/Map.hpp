@@ -12,28 +12,24 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-/**
- * @brief Map operator that evaluates a map function on a input records.
- * Map functions read record fields, apply transformations, and can set/update fields.
- */
+/// @brief Map operator that evaluates a map function on a input records.
+/// Map functions read record fields, apply transformations, and can set/update fields.
 class Map : public ExecutableOperator
 {
 public:
-    /**
-     * @brief Creates a map operator with a map function.
-     * @param mapFunction map function.
-     */
-    Map(std::unique_ptr<Functions::Function> mapFunction) : mapFunction(std::move(mapFunction)) {};
+    Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
+    Record::RecordFieldIdentifier fieldToWriteTo;
+    std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
 };
 
 }

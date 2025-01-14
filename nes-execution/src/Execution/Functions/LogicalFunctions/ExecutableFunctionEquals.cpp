@@ -14,7 +14,9 @@
 
 #include <memory>
 #include <utility>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
@@ -26,7 +28,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionEquals::execute(Record& record) const
+VarVal ExecutableFunctionEquals::execute(const Record& record) const
 {
     const auto leftValue = leftExecutableFunction->execute(record);
     const auto rightValue = rightExecutableFunction->execute(record);
