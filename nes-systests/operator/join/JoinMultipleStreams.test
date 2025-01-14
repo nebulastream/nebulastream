@@ -1,6 +1,6 @@
 # name: join/JoinMultipleStreams.test
 # description: Test join operator
-# groups: [Join]
+# groups: [WindowOperators, Join]
 
 # Source definitions
 SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/stream.csv

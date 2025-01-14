@@ -1,6 +1,6 @@
 # name: join/JoinMultipleKeys.test
 # description: Test join operator with multiple join keys
-# groups: [Legacy, Join]
+# groups: [WindowOperators, Join]
 
 # Source definitions
 SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/stream.csv
