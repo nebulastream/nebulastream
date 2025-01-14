@@ -65,6 +65,7 @@ uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, c
     auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
     return tupleBuffer->storeChildBuffer(textBuffer);
 }
+
 VarVal TupleBufferMemoryProvider::storeValue(
     const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
 {

@@ -81,9 +81,9 @@ inline ColumnLayoutField<T, boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getFieldSizes().size(),
+        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
         "fieldIndex out of bounds {} >= {}",
-        layout->getFieldSizes().size(),
+        layout->getSchema()->getFieldCount(),
         fieldIndex);
 
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);

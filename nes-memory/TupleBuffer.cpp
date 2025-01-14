@@ -26,10 +26,11 @@ namespace NES::Memory
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
 {
-    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
-    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
-    auto memorySegment = block->getOwner();
+    PRECONDITION(bufferPointer != nullptr, "Buffer pointer must not be nullptr");
+    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
+    auto* const buffer = reinterpret_cast<uint8_t*>(bufferPointer);
+    auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
+    auto* const memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();
     return tb;

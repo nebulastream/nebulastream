@@ -11,8 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <utility>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -20,10 +24,10 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(SchemaPtr schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
-    for (auto& fieldSize : physicalFieldSizes)
+    for (const auto& fieldSize : physicalFieldSizes)
     {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += fieldSize * capacity;
@@ -40,7 +44,7 @@ std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bu
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
-uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
 {
     if (fieldIndex >= physicalFieldSizes.size())
     {
@@ -57,13 +61,14 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
             std::to_string(getCapacity()));
     }
 
-    auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
+    const auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + getColumnOffset(fieldIndex);
     return fieldOffset;
 }
 
-const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
+uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
 {
-    return columnOffsets;
+    PRECONDITION(fieldIndex < columnOffsets.size(), "Field index is out of bounds");
+    return columnOffsets[fieldIndex];
 }
 
 std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -20,24 +21,25 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <val_ptr.hpp>
+#include <nautilus/static.hpp>
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayoutPtr(std::move(std::move(columnMemoryLayoutPtr))) {};
+    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) {};
 
 Memory::MemoryLayouts::MemoryLayoutPtr ColumnTupleBufferMemoryProvider::getMemoryLayoutPtr()
 {
-    return columnMemoryLayoutPtr;
+    return columnMemoryLayout;
 }
 
 nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
     const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, const uint64_t fieldIndex) const
 {
-    auto& fieldSize = columnMemoryLayoutPtr->getFieldSizes()[fieldIndex];
-    auto& columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[fieldIndex];
+    auto fieldSize = columnMemoryLayout->getFieldSize(fieldIndex);
+    auto columnOffset = columnMemoryLayout->getColumnOffset(fieldIndex);
     const auto fieldOffset = recordIndex * fieldSize + columnOffset;
     auto fieldAddress = bufferAddress + fieldOffset;
     return fieldAddress;
@@ -48,7 +50,7 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
-    auto& schema = columnMemoryLayoutPtr->getSchema();
+    const auto& schema = columnMemoryLayout->getSchema();
     /// read all fields
     const auto bufferAddress = recordBuffer.getBuffer();
     Record record;
@@ -60,7 +62,7 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
             continue;
         }
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = loadValue(columnMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress);
+        auto value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
         record.write(fieldName, value);
     }
     return record;
@@ -69,14 +71,13 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
 void ColumnTupleBufferMemoryProvider::writeRecord(
     nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const
 {
-    auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
-    auto& schema = columnMemoryLayoutPtr->getSchema();
+    const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
-    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < schema->getFieldCount(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto& value = rec.read(schema->getFieldByIndex(i)->getName());
-        storeValue(columnMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress, value);
+        const auto value = rec.read(schema->getFieldByIndex(i)->getName());
+        storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value);
     }
 }
 
