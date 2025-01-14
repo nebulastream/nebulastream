@@ -48,5 +48,4 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
     }
 }
-
 }

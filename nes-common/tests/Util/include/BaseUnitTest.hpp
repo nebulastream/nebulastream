@@ -14,6 +14,7 @@
 
 #pragma once
 #include <atomic>
+#include <cstdint>
 #include <future>
 #include <thread>
 #include <Exceptions/ErrorListener.hpp>
