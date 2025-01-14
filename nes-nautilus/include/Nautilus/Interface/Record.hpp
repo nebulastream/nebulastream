@@ -32,6 +32,8 @@ public:
     explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;
 
+    /// Adds all fields from the other record to this record. This will overwrite existing fields.
+    void combineRecords(const Record& other);
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType);
     nautilus::val<uint64_t> getNumberOfFields() const;

@@ -10,11 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
-
 add_source_files(nes-execution
-        WindowBasedOperatorHandler.cpp
-        WindowOperatorBuild.cpp
-        WindowOperatorProbe.cpp
+        AggregationBuild.cpp
+        AggregationProbe.cpp
+        AggregationOperatorHandler.cpp
+        AggregationSlice.cpp
 )
+
+add_subdirectory(Function)

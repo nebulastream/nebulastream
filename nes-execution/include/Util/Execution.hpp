@@ -25,6 +25,8 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include "Sequencing/SequenceData.hpp"
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
 
 namespace NES::QueryCompilation
 {
@@ -96,6 +98,49 @@ struct BufferMetaData
     SequenceData seqNumber;
     OriginId originId;
 };
+
+namespace Util
+{
+Nautilus::VarVal createMinValue(const PhysicalTypePtr& physicalType);
+Nautilus::VarVal createMaxValue(const PhysicalTypePtr& physicalType);
+template <typename T>
+static Nautilus::VarVal createConstValue(T value, const PhysicalTypePtr& physicalType)
+{
+    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+    {
+        const auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
+        switch (basicType->nativeType)
+        {
+            case BasicPhysicalType::NativeType::INT_8:
+                return Nautilus::VarVal(nautilus::val<int8_t>(value));
+            case BasicPhysicalType::NativeType::INT_16:
+                return Nautilus::VarVal(nautilus::val<int16_t>(value));
+            case BasicPhysicalType::NativeType::INT_32:
+                return Nautilus::VarVal(nautilus::val<int32_t>(value));
+            case BasicPhysicalType::NativeType::INT_64:
+                return Nautilus::VarVal(nautilus::val<int64_t>(value));
+            case BasicPhysicalType::NativeType::UINT_8:
+                return Nautilus::VarVal(nautilus::val<uint8_t>(value));
+            case BasicPhysicalType::NativeType::UINT_16:
+                return Nautilus::VarVal(nautilus::val<uint16_t>(value));
+            case BasicPhysicalType::NativeType::UINT_32:
+                return Nautilus::VarVal(nautilus::val<uint32_t>(value));
+            case BasicPhysicalType::NativeType::UINT_64:
+                return Nautilus::VarVal(nautilus::val<uint64_t>(value));
+            case BasicPhysicalType::NativeType::FLOAT:
+                return Nautilus::VarVal(nautilus::val<float>(value));
+            case BasicPhysicalType::NativeType::DOUBLE:
+                return Nautilus::VarVal(nautilus::val<double>(value));
+            default: {
+                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
+            }
+        }
+    }
+    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
+}
+}
+
+
 }
 
 namespace NES::QueryCompilation::Util

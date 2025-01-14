@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -73,7 +74,10 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(co
     const auto windowSize = sliceAssigner.getWindowSize();
     const auto windowSlide = sliceAssigner.getWindowSlide();
 
-    const auto firstWindowEnd = sliceEnd;
+    /// We need to get here the max of the sliceEnd or the window size.
+    /// With this, we would not create windows, such as 0-5 for slide 5 and size 100.
+    /// In our window model, a window is always at least the size of the window size.
+    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
     const auto lastWindowEnd = sliceStart + windowSize;
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)

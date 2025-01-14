@@ -20,8 +20,6 @@
 
 namespace NES::Nautilus::Util
 {
-
-
 void logProxy(const char* message, const LogLevel logLevel);
 
 /// Allows to use our general logging calls from our nautilus-runtime
