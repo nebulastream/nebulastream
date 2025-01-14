@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
@@ -22,10 +23,10 @@ namespace NES::Memory
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
 {
-    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
-    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
-    auto memorySegment = block->getOwner();
+    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
+    auto* const buffer = reinterpret_cast<uint8_t*>(bufferPointer);
+    auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
+    auto* const memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();
     return tb;

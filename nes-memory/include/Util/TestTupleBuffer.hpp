@@ -379,9 +379,9 @@ public:
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
         NES_ASSERT(
-            (sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
+            (sizeof...(Types)) == memoryLayout->getSchema()->getFieldCount(),
             "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: "
-                                     << memoryLayout->getFieldSizes().size() << '\n');
+                                     << memoryLayout->getSchema()->getFieldCount() << '\n');
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;

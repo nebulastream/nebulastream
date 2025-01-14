@@ -53,7 +53,7 @@ public:
      * For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
      * @return vector of field offsets.
      */
-    const std::vector<uint64_t>& getFieldOffSets() const;
+    uint64_t getFieldOffset(uint64_t fieldIndex) const;
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.

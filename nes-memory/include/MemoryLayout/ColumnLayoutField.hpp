@@ -80,9 +80,9 @@ template <class T, bool boundaryChecks>
 inline ColumnLayoutField<T, boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
 {
-    if (boundaryChecks && fieldIndex >= layout->getFieldSizes().size())
+    if (boundaryChecks && fieldIndex >= layout->getSchema()->getFieldCount())
     {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldSizes().size() << " >= " << fieldIndex);
+        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getSchema()->getFieldCount() << " >= " << fieldIndex);
     }
 
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);

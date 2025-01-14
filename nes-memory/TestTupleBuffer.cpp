@@ -36,15 +36,15 @@ DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType)
 DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const
 {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
-    auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
+    const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
-    auto physicalType = memoryLayout->getPhysicalTypes()[fieldIndex];
+    const auto physicalType = memoryLayout->getPhysicalType(fieldIndex);
     return DynamicField{basePointer, physicalType};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
 {
-    auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
+    const auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
     {
         throw BufferAccessException("field name {} does not exist in layout", fieldName);
@@ -240,7 +240,7 @@ Memory::TupleBuffer TestTupleBuffer::getBuffer()
 std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer)
 {
     auto buf = buffer;
-    auto str = buf.toString(buffer.memoryLayout->getSchema());
+    const auto str = buf.toString(buffer.memoryLayout->getSchema());
     os << str;
     return os;
 }
@@ -259,7 +259,7 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : *schema)
     {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -349,12 +349,12 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
+        const auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
+        const auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);
     }
     else

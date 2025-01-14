@@ -38,20 +38,14 @@ public:
 
     static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
-    /**
-     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
-     * For the column layout the field offset is calculated as follows:
-     * \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex] \f$
-     * @param tupleIndex index of the tuple.
-     * @param fieldIndex index of the field.
-     * @throws BufferAccessException if the tuple index or the field index is out of bounds.
-     * @return offset in the tuple buffer.
-     */
+    /// Calculates the offset in the tuple buffer of a particular field for a specific tuple.
+    /// For the column layout the field offset is calculated as follows:
+    /// \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex] \f$
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
     std::shared_ptr<MemoryLayout> deepCopy() const override;
 
-    const std::vector<uint64_t>& getColumnOffsets() const;
+    uint64_t getColumnOffset(uint64_t fieldIndex) const;
 
 private:
     std::vector<uint64_t> columnOffsets;
