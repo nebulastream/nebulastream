@@ -14,54 +14,45 @@
 
 #include <cstdint>
 #include <memory>
+#include <numeric>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-NLJSlice::NLJSlice(
-    const SliceStart sliceStart,
-    const SliceEnd sliceEnd,
-    const uint64_t numWorkerThreads,
-    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider,
-    const Memory::MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
-    const Memory::MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout)
-    : Slice(sliceStart, sliceEnd)
+NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads) : Slice(sliceStart, sliceEnd)
 {
-    for (uint64_t i = 0; i < numWorkerThreads; ++i)
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(bufferProvider, leftMemoryLayout));
+        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
     }
 
-    for (uint64_t i = 0; i < numWorkerThreads; ++i)
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(bufferProvider, rightMemoryLayout));
+        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
     }
 }
 
-uint64_t NLJSlice::getNumberOfTuplesLeft()
+uint64_t NLJSlice::getNumberOfTuplesLeft() const
 {
-    uint64_t sum = 0;
-    for (const auto& pagedVec : leftPagedVectors)
-    {
-        sum += pagedVec->getTotalNumberOfEntries();
-    }
-    return sum;
+    return std::accumulate(
+        leftPagedVectors.begin(),
+        leftPagedVectors.end(),
+        0,
+        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-uint64_t NLJSlice::getNumberOfTuplesRight()
+uint64_t NLJSlice::getNumberOfTuplesRight() const
 {
-    uint64_t sum = 0;
-    for (const auto& pagedVec : rightPagedVectors)
-    {
-        sum += pagedVec->getTotalNumberOfEntries();
-    }
-    return sum;
+    return std::accumulate(
+        rightPagedVectors.begin(),
+        rightPagedVectors.end(),
+        0,
+        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
