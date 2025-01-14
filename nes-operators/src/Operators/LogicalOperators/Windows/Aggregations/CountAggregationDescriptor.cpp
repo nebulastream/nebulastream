@@ -17,6 +17,7 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 
@@ -38,13 +39,17 @@ WindowAggregationDescriptorPtr CountAggregationDescriptor::create(NodeFunctionFi
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr CountAggregationDescriptor::on()
+WindowAggregationDescriptorPtr CountAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    auto countField = NodeFunctionFieldAccess::create("count");
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(NES::Util::as<NodeFunctionFieldAccess>(countField)));
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
+    {
+        throw DifferentFieldTypeExpected("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
+    }
+    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
+    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(fieldAccess));
 }
 
-void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
+void CountAggregationDescriptor::inferStamp(const SchemaPtr schema)
 {
     auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();

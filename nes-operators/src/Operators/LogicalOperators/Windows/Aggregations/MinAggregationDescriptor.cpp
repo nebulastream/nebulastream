@@ -63,7 +63,7 @@ DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp()
     return onField->getStamp();
 }
 
-void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
+void MinAggregationDescriptor::inferStamp(const SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
@@ -87,7 +87,7 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(onField->getStamp());
+    asField->setStamp(getFinalAggregateStamp());
 }
 WindowAggregationDescriptorPtr MinAggregationDescriptor::copy()
 {

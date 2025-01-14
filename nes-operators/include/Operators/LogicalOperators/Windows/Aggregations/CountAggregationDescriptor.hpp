@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 namespace NES::Windowing
 {
@@ -28,7 +29,7 @@ public:
     /**
     * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
     */
-    static WindowAggregationDescriptorPtr on();
+    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& keyFunction);
 
     static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
