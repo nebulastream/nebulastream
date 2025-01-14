@@ -13,8 +13,10 @@
 */
 
 #include <memory>
+#include <type_traits>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <fmt/format.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -141,7 +143,15 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     return std::visit(
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
-            if constexpr (requires(typename T::basic_type t) { os << (nautilus::val<typename T::basic_type>(t)); })
+            /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char
+            using Tremoved = std::remove_cv_t<std::remove_reference_t<T>>;
+            if constexpr (
+                std::is_same_v<Tremoved, nautilus::val<uint8_t>> || std::is_same_v<Tremoved, nautilus::val<int8_t>>
+                || std::is_same_v<Tremoved, nautilus::val<unsigned char>> || std::is_same_v<Tremoved, nautilus::val<char>>)
+            {
+                return os.operator<<(static_cast<nautilus::val<int>>(value));
+            }
+            else if constexpr (requires(typename T::basic_type t) { os << (nautilus::val<typename T::basic_type>(t)); })
             {
                 return os.operator<<(nautilus::val<typename T::basic_type>(value));
             }
