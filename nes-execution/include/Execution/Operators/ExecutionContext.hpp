@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -62,6 +63,7 @@ struct ExecutionContext final
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
+    const nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function
