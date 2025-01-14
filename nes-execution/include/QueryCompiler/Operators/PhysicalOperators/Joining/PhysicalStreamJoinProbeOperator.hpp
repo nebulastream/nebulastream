@@ -23,6 +23,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
@@ -44,8 +45,7 @@ public:
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
         const std::vector<std::string>& joinFieldNamesLeft,
         const std::vector<std::string>& joinFieldNamesRight,
-        const std::string& windowStartFieldName,
-        const std::string& windowEndFieldName,
+        const WindowMetaData& windowMetaData,
         OperatorId id = getNextOperatorId());
 
     /// Performs a deep copy of this physical operator
@@ -57,7 +57,7 @@ public:
     std::vector<std::string> getJoinFieldNameLeft() const;
     std::vector<std::string> getJoinFieldNameRight() const;
     Runtime::Execution::JoinSchema getJoinSchema() const;
-    const Runtime::Execution::WindowMetaData& getWindowMetaData() const;
+    const WindowMetaData& getWindowMetaData() const;
 
 protected:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
@@ -65,6 +65,6 @@ protected:
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
     std::vector<std::string> joinFieldNamesLeft;
     std::vector<std::string> joinFieldNamesRight;
-    Runtime::Execution::WindowMetaData windowMetaData;
+    WindowMetaData windowMetaData;
 };
 }

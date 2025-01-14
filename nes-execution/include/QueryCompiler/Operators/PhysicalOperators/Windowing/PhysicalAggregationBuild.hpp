@@ -11,31 +11,36 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
+#pragma once
+#include <memory>
+#include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-/**
- * @brief Physical operator for slice merging.
- * This operator receives pre-aggregated slices, e.g., from the slice merger, and merges them in its local operator state.
- */
-class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public AbstractEmitOperator, public AbstractScanOperator
+class PhysicalAggregationBuild final : public PhysicalWindowOperator
 {
 public:
-    PhysicalSliceMergingOperator(
-        OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
     static PhysicalOperatorPtr create(
         OperatorId id,
-        const SchemaPtr& inputSchema,
-        const SchemaPtr& outputSchema,
-        const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::LogicalWindowDescriptorPtr windowDefinition,
+        std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
+
     std::shared_ptr<Operator> copy() override;
 
-protected:
-    std::string toString() const override;
+private:
+    PhysicalAggregationBuild(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::LogicalWindowDescriptorPtr windowDefinition,
+        std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
 };
+
 }

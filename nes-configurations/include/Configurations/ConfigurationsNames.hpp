@@ -54,10 +54,10 @@ const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
 
 ///Configurations for the hash table
-const std::string STREAM_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
-const std::string STREAM_JOIN_PAGE_SIZE_CONFIG = "pageSize";
-const std::string STREAM_JOIN_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
-const std::string STREAM_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
+const std::string WINDOW_OPERATOR_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
+const std::string WINDOW_OPERATOR_PAGE_SIZE_CONFIG = "pageSize";
+const std::string WINDOW_OPERATOR_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
+const std::string WINDOW_OPERATOR_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
 
 ///Configuration for joins
 const std::string JOIN_STRATEGY = "joinStrategy";
