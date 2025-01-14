@@ -20,10 +20,8 @@
 namespace NES::Nautilus
 {
 
-/**
- * @brief A record is the primitive abstraction of a single entry/tuple in a data set.
- * Operators receive records can read and write fields.
- */
+/// A record is the primitive abstraction of a single entry/tuple in a data set.
+/// Operators receiving records can read and write fields of the record.
 class Record
 {
 public:
@@ -32,6 +30,8 @@ public:
     explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;
 
+    /// Adds all fields from the other record to this record. This will overwrite existing fields.
+    void reassignFields(const Record& other);
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType);
     nautilus::val<uint64_t> getNumberOfFields() const;

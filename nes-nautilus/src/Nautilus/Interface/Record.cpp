@@ -49,6 +49,14 @@ void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const Var
     }
 }
 
+void Record::reassignFields(const Record& other)
+{
+    for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(other.recordFields))
+    {
+        write(fieldIdentifier, value);
+    }
+}
+
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record)
 {
     for (const auto& [_, value] : nautilus::static_iterable(record.recordFields))

@@ -112,7 +112,6 @@ public:
     /// Construct a VarVal object from memory
     static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type);
 
-
     /// Construct a VarVal object for example via VarVal(32)
     template <typename T>
     explicit VarVal(const T t)
@@ -145,7 +144,7 @@ public:
     explicit operator bool() const;
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 
-    /// Casts the underlying value to the given type T1. This should be the only way how the underlying value can be accessed.
+    /// Casts the underlying value to the given type T1. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
     template <typename T1>
     T1 cast() const
     {
@@ -171,6 +170,9 @@ public:
             },
             value);
     }
+
+    /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
+    [[nodiscard]] VarVal castToType(const PhysicalTypePtr& type) const;
 
     template <typename T>
     VarVal customVisit(T t) const

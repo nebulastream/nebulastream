@@ -12,22 +12,31 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
+#include <numeric>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -44,6 +53,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -51,6 +62,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -133,6 +145,99 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(map);
         return map;
     }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationBuild>(operatorNode))
+    {
+        const auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalAggregationBuild>(operatorNode);
+        const auto windowDefinition = buildOperator->getWindowDefinition();
+
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        const auto handlerIndex = operatorHandlers.size() - 1;
+        auto timeFunction = buildOperator->getTimeFunction();
+        auto aggregationFunctions = buildOperator->getAggregationFunctions(*options);
+        const auto valueSize = std::accumulate(
+            aggregationFunctions.begin(),
+            aggregationFunctions.end(),
+            0,
+            [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
+
+        /// Lowering the key functions
+        std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+        uint64_t keySize = 0;
+        auto keyFunctionLogical = windowDefinition->getKeys();
+        for (const auto& nodeFunctionKey : keyFunctionLogical)
+        {
+            DefaultPhysicalTypeFactory const typeFactory;
+            const auto loweredFunctionType = nodeFunctionKey->getStamp();
+            keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
+            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+        }
+        const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
+        const auto entriesPerPage = options->windowOperatorOptions.pageSize / entrySize;
+        const auto& [fieldKeyNames, fieldValueNames] = buildOperator->getKeyAndValueFields();
+        const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
+            *buildOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
+
+        Runtime::Execution::Operators::WindowAggregationOperator windowAggregationOperator(
+            std::move(aggregationFunctions),
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+            fieldKeys,
+            fieldValues,
+            entriesPerPage,
+            entrySize);
+        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
+        const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
+            handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
+        parentOperator->setChild(executableAggregationBuild);
+        return executableAggregationBuild;
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationProbe>(operatorNode))
+    {
+        const auto probeOperator = NES::Util::as<PhysicalOperators::PhysicalAggregationProbe>(operatorNode);
+        const auto windowDefinition = probeOperator->getWindowDefinition();
+        const auto windowMetaData = probeOperator->getWindowMetaData();
+
+        operatorHandlers.push_back(probeOperator->getOperatorHandler());
+        const auto handlerIndex = operatorHandlers.size() - 1;
+        auto aggregationFunctions = probeOperator->getAggregationFunctions(*options);
+        const auto valueSize = std::accumulate(
+            aggregationFunctions.begin(),
+            aggregationFunctions.end(),
+            0,
+            [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
+
+        /// Lowering the key functions
+        std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+        uint64_t keySize = 0;
+        for (const auto& nodeFunctionKey : windowDefinition->getKeys())
+        {
+            DefaultPhysicalTypeFactory const typeFactory;
+            const auto loweredFunctionType = nodeFunctionKey->getStamp();
+            keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
+            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+        }
+        const auto pageSize = options->windowOperatorOptions.pageSize;
+        const auto numberOfBuckets = options->windowOperatorOptions.numberOfPartitions;
+        const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
+        const auto entriesPerPage = pageSize / entrySize;
+        const auto& [fieldKeyNames, fieldValueNames] = probeOperator->getKeyAndValueFields();
+        const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
+            *probeOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
+        std::dynamic_pointer_cast<Runtime::Execution::Operators::AggregationOperatorHandler>(probeOperator->getOperatorHandler())
+            ->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
+
+        Runtime::Execution::Operators::WindowAggregationOperator windowAggregationOperator(
+            std::move(aggregationFunctions),
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+            fieldKeys,
+            fieldValues,
+            entriesPerPage,
+            entrySize);
+        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
+        const auto executableAggregationProbe
+            = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(std::move(windowAggregationOperator), handlerIndex, windowMetaData);
+        pipeline.setRootOperator(executableAggregationProbe);
+        return executableAggregationProbe;
+    }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {
         const auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
@@ -141,7 +246,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto memoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->joinOptions.pageSize, buildOperator->getInputSchema());
+            options->windowOperatorOptions.pageSize, buildOperator->getInputSchema());
 
         auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
 
@@ -158,7 +263,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
     }
-    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode))
+
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode))
     {
         const auto probeOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode);
 
@@ -166,10 +272,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->joinOptions.pageSize, probeOperator->getLeftInputSchema());
+            options->windowOperatorOptions.pageSize, probeOperator->getLeftInputSchema());
         leftMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames({probeOperator->getJoinFieldNameLeft()});
         auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->joinOptions.pageSize, probeOperator->getRightInputSchema());
+            options->windowOperatorOptions.pageSize, probeOperator->getRightInputSchema());
         rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
 
         std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;

@@ -1,0 +1,90 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <Execution/Functions/Function.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES::Runtime::Execution::Aggregation
+{
+
+/// Base class for any aggregation state. This class is used to store the intermediate state of an aggregation.
+/// For example, the aggregation state for a sum aggregation would be the sum of all values seen so far.
+/// For a median aggregation, the aggregation value would be a data structure that stores all seen values so far.
+struct AggregationState
+{
+};
+
+/// This class represents an aggregation function. An aggregation function is used to aggregate records in a window.
+/// It represents a single aggregation operation, e.g., sum, min, max, etc.
+/// We take the lift, combine, lower, and reset functions from the paper "General Incremental Sliding-Window Aggregation" by Kanat Tangwongsan et al.
+/// We add a reset function to reset the aggregation state to its initial state.
+class AggregationFunction
+{
+public:
+    AggregationFunction(
+        PhysicalTypePtr inputType,
+        PhysicalTypePtr resultType,
+        std::unique_ptr<Functions::Function> inputFunction,
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+
+    /// Adds the incoming record to the existing aggregation state
+    virtual void lift(
+        const nautilus::val<AggregationState*>& aggregationState,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const Nautilus::Record& record)
+        = 0;
+
+    /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
+    virtual void combine(
+        nautilus::val<AggregationState*> aggregationState1,
+        nautilus::val<AggregationState*> aggregationState2,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        = 0;
+
+    /// Returns the aggregation state as a nautilus record. The record will contain the aggregation state in the field specified by resultFieldIdentifier
+    /// It will NOT contain any other metadata fields, e.g., window start and end fields
+    virtual Nautilus::Record
+    lower(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        = 0;
+
+    /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
+    virtual void
+    reset(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        = 0;
+
+    /// Returns the size of the aggregation state in bytes
+    [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;
+
+    virtual ~AggregationFunction();
+
+protected:
+    const PhysicalTypePtr inputType;
+    const PhysicalTypePtr resultType;
+    const std::unique_ptr<Functions::Function> inputFunction;
+    const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
+};
+
+}
