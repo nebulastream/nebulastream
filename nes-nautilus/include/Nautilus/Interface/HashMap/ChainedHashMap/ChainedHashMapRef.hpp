@@ -1,0 +1,137 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <cstdint>
+#include <functional>
+#include <vector>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/HashMap/HashMapInterface.hpp>
+#include <Nautilus/Interface/HashMap/HashMapRefInterface.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
+namespace NES::Nautilus::Interface
+{
+
+/// Forward declaration of EntryIterator so that we can use it in ChainedHashMapRef for making EntryIterator friend.
+class EntryIterator;
+
+/// A nautilus wrapper to operate on the chained hash map.
+/// Especially a wrapper around a ChainedHashMapEntry.
+struct ChainedEntryRef
+{
+    void copyKeysToEntry(const Nautilus::Record& keys) const;
+    void copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const;
+    void copyValuesToEntry(const Nautilus::Record& values) const;
+    void copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const;
+    [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
+    [[nodiscard]] Record getKey() const;
+    [[nodiscard]] Record getValue() const;
+    void updateEntryRef(const nautilus::val<ChainedHashMapEntry*>& entryRef);
+    [[nodiscard]] nautilus::val<int8_t*> getValueMemArea() const;
+    [[nodiscard]] HashFunction::HashValue getHash() const;
+    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
+    ChainedEntryRef(
+        const nautilus::val<ChainedHashMapEntry*>& entryRef,
+        std::vector<MemoryProvider::FieldOffsets> fieldsKey,
+        std::vector<MemoryProvider::FieldOffsets> fieldsValue);
+
+    ChainedEntryRef(
+        const nautilus::val<ChainedHashMapEntry*>& entryRef,
+        MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
+        MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues);
+
+    ChainedEntryRef(const ChainedEntryRef& other);
+    ChainedEntryRef& operator=(const ChainedEntryRef& other);
+
+    nautilus::val<ChainedHashMapEntry*> entryRef;
+    MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys;
+    MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues;
+};
+
+class ChainedHashMapRef final : public HashMapRefInterface
+{
+public:
+    /// Making the EntryIterator a friend so that it can access the private members of ChainedHashMapRef.
+    friend class EntryIterator;
+
+    ChainedHashMapRef(
+        const nautilus::val<HashMapInterface*>& hashMapRef,
+        std::vector<MemoryProvider::FieldOffsets> fieldsKey,
+        std::vector<MemoryProvider::FieldOffsets> fieldsValue,
+        uint64_t entriesPerPage,
+        uint64_t entrySize);
+    nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
+        const Nautilus::Record& recordKey,
+        const HashFunction& hashFunction,
+        const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
+    void insertOrUpdateEntry(
+        const nautilus::val<AbstractHashMapEntry*>& otherEntry,
+        const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
+        const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
+    [[nodiscard]] EntryIterator begin() const;
+    [[nodiscard]] EntryIterator end() const;
+
+
+private:
+    /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.
+    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findChain(const HashFunction::HashValue& hash) const;
+    nautilus::val<ChainedHashMapEntry*>
+    insert(const HashFunction::HashValue& hash, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+    [[nodiscard]] nautilus::val<bool> compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const;
+    [[nodiscard]] nautilus::val<bool> compareKeys(const ChainedEntryRef& entryRef, const ChainedEntryRef& otherEntryRef) const;
+    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Nautilus::Record& recordKey, const HashFunction::HashValue& hash) const;
+    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;
+
+    std::vector<MemoryProvider::FieldOffsets> fieldKeys;
+    std::vector<MemoryProvider::FieldOffsets> fieldValues;
+    nautilus::val<uint64_t> entriesPerPage;
+    nautilus::val<uint64_t> entrySize;
+};
+
+/// Iterator for iterating over all entries in the hash map.
+/// The idea is that we are starting at each chain until we reach the end of the chain.
+/// Then, we are moving to the next chain until we reach the end of the hash map.
+class EntryIterator
+{
+public:
+    EntryIterator(
+        const nautilus::val<HashMapInterface*>& hashMapRef,
+        const nautilus::val<uint64_t>& tupleIndex,
+        const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
+        const std::vector<MemoryProvider::FieldOffsets>& fieldValues);
+    EntryIterator& operator++();
+    nautilus::val<bool> operator==(const EntryIterator& other) const;
+    nautilus::val<bool> operator!=(const EntryIterator& other) const;
+    nautilus::val<ChainedHashMapEntry*> operator*() const;
+
+private:
+    nautilus::val<HashMapInterface*> hashMapRef;
+    ChainedEntryRef currentEntry;
+    nautilus::val<uint64_t> chainIndex;
+    nautilus::val<uint64_t> tupleIndex;
+    nautilus::val<uint64_t> numberOfChains;
+};
+
+}

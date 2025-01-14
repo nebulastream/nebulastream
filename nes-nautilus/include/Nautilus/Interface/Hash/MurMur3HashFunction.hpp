@@ -20,7 +20,7 @@ namespace NES::Nautilus::Interface
 
 /**
  * @brief Implementation of the MurMur3 hash function for nautilus types.
- * This implementations is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
+ * This implementation is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
  */
 class MurMur3HashFunction : public HashFunction
 {
@@ -32,7 +32,7 @@ public:
      * @brief Inits the HashValue with the seed
      * @return HashValue
      */
-    HashValue init() override;
+    [[nodiscard]] HashValue init() const override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash
@@ -40,13 +40,13 @@ public:
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, VarVal& value) override;
+    [[nodiscard]] HashValue calculate(HashValue& hash, const VarVal& value) const override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(VarVal& value);
+    [[nodiscard]] HashValue calculate(const VarVal& value) const;
 };
 }

@@ -13,24 +13,25 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
-#include <Execution/Functions/Function.hpp>
-#include <Nautilus/Interface/Record.hpp>
-
-namespace NES::Runtime::Execution::Functions
+namespace NES::Nautilus::Interface
 {
 
-/**
- * @brief This function writes a particular Value to a specific field of an record.
- */
-class ExecutableFunctionWriteField : public Function
+class AbstractHashMapEntry
 {
 public:
-    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, std::unique_ptr<Function> childFunction);
-    VarVal execute(Record& record) const override;
+    virtual ~AbstractHashMapEntry() = default;
+};
 
-private:
-    const Record::RecordFieldIdentifier field;
-    const std::unique_ptr<Function> childFunction;
+
+class HashMapInterface
+{
+public:
+    virtual ~HashMapInterface() = default;
+    virtual AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider) = 0;
+    virtual uint64_t getNumberOfTuples() = 0;
 };
 }
