@@ -47,12 +47,8 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
         childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
     }
 
-    /// 3. The field assignment, field access and constant value nodes are special as they require a different treatment,
+    /// 3. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAssignmentNode = NES::Util::as_if<NodeFunctionFieldAssignment>(nodeFunction); fieldAssignmentNode != nullptr)
-    {
-        return std::make_unique<ExecutableFunctionWriteField>(fieldAssignmentNode->getField()->getFieldName(), std::move(childFunction[0]));
-    }
     if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
     {
         return std::make_unique<ExecutableFunctionReadField>(fieldAccessNode->getFieldName());

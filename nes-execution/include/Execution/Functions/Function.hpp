@@ -27,7 +27,7 @@ class Function
 {
 public:
     Function() = default;
-    virtual VarVal execute(Record& record) const = 0;
+    [[nodiscard]] virtual VarVal execute(const Record& record) const = 0;
     virtual ~Function() = default;
 };
 

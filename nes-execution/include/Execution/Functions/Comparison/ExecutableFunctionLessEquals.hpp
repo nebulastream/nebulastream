@@ -25,7 +25,7 @@ class ExecutableFunctionLessEquals final : public Function
 {
 public:
     ExecutableFunctionLessEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    VarVal execute(Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record) const override;
 
 private:
     const std::unique_ptr<Function> leftExecutableFunction;
