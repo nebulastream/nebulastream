@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
@@ -34,7 +35,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 /// This task models the information for a join window trigger
-struct EmittedNLJWindowTriggerTask
+struct EmittedNLJWindowTrigger
 {
     SliceEnd leftSliceEnd;
     SliceEnd rightSliceEnd;
@@ -52,7 +53,8 @@ public:
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
 
 private:
     void emitSliceIdsToProbe(
