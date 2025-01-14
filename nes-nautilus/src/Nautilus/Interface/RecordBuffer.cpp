@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
+#include <val.hpp>
 
 namespace NES::Nautilus
 {
@@ -26,7 +28,7 @@ RecordBuffer::RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBuffe
 {
 }
 
-nautilus::val<uint64_t> RecordBuffer::getNumRecords()
+nautilus::val<uint64_t> RecordBuffer::getNumRecords() const
 {
     return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getNumberOfTuples, tupleBufferRef);
 }
