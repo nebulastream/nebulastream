@@ -51,7 +51,7 @@ public:
     };
 
     explicit Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
-    Schema(SchemaPtr const& query, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    Schema(SchemaPtr const& query, MemoryLayoutType layoutType);
 
     /**
      * @brief Schema qualifier separator
