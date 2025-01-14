@@ -54,20 +54,19 @@ NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceE
     INVARIANT(false, "Could not find a slice for slice end {}", sliceEnd);
 }
 
-Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
+Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
 {
     PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowStart;
 }
 
-Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
+Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
 {
     PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 
-SliceEnd
-getNLJSliceEndProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask, const QueryCompilation::JoinBuildSideType joinBuildSide)
+SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
 
@@ -104,7 +103,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     Operator::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
-    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTriggerTask*>>(recordBuffer.getBuffer());
+    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
     const auto sliceIdLeft = invoke(
         getNLJSliceEndProxy,
         nljWindowTriggerTaskRef,
@@ -135,8 +134,8 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         workerThreadIdForPages,
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
 
-    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider);
-    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider);
+    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider, executionCtx.bufferProvider);
+    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider, executionCtx.bufferProvider);
 
     const auto leftKeyFields = leftMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
     const auto rightKeyFields = rightMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
