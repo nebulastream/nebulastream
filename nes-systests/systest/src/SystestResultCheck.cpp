@@ -355,6 +355,7 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
     /// Check if the size is the same
     if (left.size() != right.size())
     {
+        NES_ERROR("Size of fields does not match: {} != {}", left.size(), right.size());
         return false;
     }
 
