@@ -12,15 +12,24 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators
 {
+Map::Map(Record::RecordFieldIdentifier fieldToWrite, std::unique_ptr<Functions::Function> mapFunction)
+    : fieldToWrite(std::move(fieldToWrite)), mapFunction(std::move(mapFunction))
+{
+}
 
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// assume that map function performs a field write
-    mapFunction->execute(record);
+    /// execute map function
+    const auto value = mapFunction->execute(record);
+    /// write the result to the record
+    record.write(fieldToWrite, value);
     /// call next operator
     child->execute(ctx, record);
 }

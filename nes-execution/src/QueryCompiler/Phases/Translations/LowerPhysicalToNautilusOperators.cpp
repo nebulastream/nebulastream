@@ -258,9 +258,7 @@ LowerPhysicalToNautilusOperators::lowerMap(const PhysicalOperators::PhysicalOper
     auto assignmentField = mapOperator->getMapFunction()->getField();
     auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
     auto function = FunctionProvider::lowerFunction(assignmentFunction);
-    auto writeField = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionWriteField>(
-        assignmentField->getFieldName(), std::move(function));
-    return std::make_shared<Runtime::Execution::Operators::Map>(std::move(writeField));
+    return std::make_shared<Runtime::Execution::Operators::Map>(assignmentField->getFieldName(), std::move(function));
 }
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;

@@ -14,12 +14,14 @@
 #include <memory>
 #include <utility>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
+#include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionDiv::execute(Record& record) const
+VarVal ExecutableFunctionDiv::execute(const Record& record) const
 {
     const auto leftValue = leftExecutableFunction->execute(record);
     const auto rightValue = rightExecutableFunction->execute(record);

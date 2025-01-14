@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
@@ -25,14 +26,12 @@ namespace NES::Runtime::Execution::Operators
 class Map : public ExecutableOperator
 {
 public:
-    /**
-     * @brief Creates a map operator with a map function.
-     * @param mapFunction map function.
-     */
-    Map(std::unique_ptr<Functions::Function> mapFunction) : mapFunction(std::move(mapFunction)) {};
+    /// Creates a map operator with a map function.
+    Map(Record::RecordFieldIdentifier fieldToWrite, std::unique_ptr<Functions::Function> mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
+    const Record::RecordFieldIdentifier fieldToWrite;
     const std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
 };
 
