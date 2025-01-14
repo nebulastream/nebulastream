@@ -1,0 +1,424 @@
+From 3359796355c4d2d6ed5af5ab7d16971b20e3ea32 Mon Sep 17 00:00:00 2001
+From: Nils Schubert <nilslpschubert@gmail.com>
+Date: Fri, 13 Dec 2024 15:29:28 +0100
+Subject: [PATCH 1/3] Renamed passed variable in mod operation of the
+ MLIRLoweringProvider Also added a missing declaration in nautilus::val<ptr>
+ so that it can be used with tracing enabled and also disabled
+
+Signed-off-by: Nils Schubert <nilslpschubert@gmail.com>
+---
+ nautilus/include/nautilus/val_ptr.hpp         | 11 ++++++++--
+ .../backends/mlir/MLIRLoweringProvider.cpp    | 20 +++++++++----------
+ 2 files changed, 19 insertions(+), 12 deletions(-)
+
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+index f1c11bce..e979f466 100644
+--- a/nautilus/include/nautilus/val_ptr.hpp
++++ b/nautilus/include/nautilus/val_ptr.hpp
+@@ -85,9 +85,9 @@ class base_ptr_val {
+ 	using basic_type = std::remove_pointer_t<ValuePtrType>;
+ 	using pointer_type = ValuePtrType;
+
+-	base_ptr_val() : value() {
+-	}
+ #ifdef ENABLE_TRACING
++	base_ptr_val() : state(tracing::traceConstant(nullptr)), value() {
++	}
+ 	base_ptr_val(ValuePtrType ptr) : state(tracing::traceConstant((void*) ptr)), value(ptr) {
+ 	}
+ 	base_ptr_val(ValuePtrType ptr, tracing::TypedValueRef tc) : state(tc), value(ptr) {
+@@ -100,6 +100,8 @@ class base_ptr_val {
+ #else
+ 	base_ptr_val(ValuePtrType ptr) : value(ptr) {
+ 	}
++	base_ptr_val() : value() {
++	}
+ #endif
+
+ #ifdef ENABLE_TRACING
+@@ -242,6 +244,11 @@ val<ValueType> inline operator+(val<ValueType>& left, IndexType offset) {
+ 	return left + val<size_t>(offset);
+ }
+
++template <is_ptr ValueType, is_integral IndexType>
++val<ValueType> inline operator+(val<ValueType>& left, static_val<IndexType> offset) {
++	return left + static_cast<IndexType>(offset);
++}
++
+ template <is_ptr ValueType, typename IndexType>
+     requires is_integral<IndexType> || is_fundamental_val<IndexType>
+ val<ValueType> inline operator-(val<ValueType>& left, IndexType&& offset) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+index 37d5e146..f220ab8c 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -500,23 +500,23 @@ void MLIRLoweringProvider::generateMLIR(ir::DivOperation* divIntOp, ValueFrame&
+ 	}
+ }
+
+-void MLIRLoweringProvider::generateMLIR(ir::ModOperation* divIntOp, ValueFrame& frame) {
+-	auto leftInput = frame.getValue(divIntOp->getLeftInput()->getIdentifier());
+-	auto rightInput = frame.getValue(divIntOp->getRightInput()->getIdentifier());
++void MLIRLoweringProvider::generateMLIR(ir::ModOperation* modIntOp, ValueFrame& frame) {
++	auto leftInput = frame.getValue(modIntOp->getLeftInput()->getIdentifier());
++	auto rightInput = frame.getValue(modIntOp->getRightInput()->getIdentifier());
+ 	auto resultType = leftInput.getType();
+-	if (isFloat(divIntOp->getStamp())) {
++	if (isFloat(modIntOp->getStamp())) {
+ 		auto mlirDivOp = builder->create<mlir::LLVM::FRemOp>(getNameLoc("binOpResult"), resultType, leftInput,
+ 		                                                     rightInput, mlir::LLVM::FastmathFlags::fast);
+-		frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
++		frame.setValue(modIntOp->getIdentifier(), mlirDivOp);
+ 	} else {
+-		if (resultType.isSignedInteger()) {
++		if (isSignedInteger(modIntOp->getStamp())) {
+ 			auto mlirDivOp =
+-			    builder->create<mlir::arith::RemSIOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+-			frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
++			builder->create<mlir::arith::RemSIOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
++			frame.setValue(modIntOp->getIdentifier(), mlirDivOp);
+ 		} else {
+ 			auto mlirDivOp =
+-			    builder->create<mlir::arith::RemUIOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+-			frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
++			builder->create<mlir::arith::RemUIOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
++			frame.setValue(modIntOp->getIdentifier(), mlirDivOp);
+ 		}
+ 	}
+ }
+
+From 1447a437f592a498a36458b3b8cba10338ced4ea Mon Sep 17 00:00:00 2001
+From: Nils Schubert <nilslpschubert@gmail.com>
+Date: Fri, 20 Dec 2024 08:23:58 +0100
+Subject: [PATCH 2/3] Implemented move operator for CallableFunction
+
+Signed-off-by: Nils Schubert <nilslpschubert@gmail.com>
+---
+ nautilus/include/nautilus/Engine.hpp | 158 +++++++++++++++------------
+ 1 file changed, 86 insertions(+), 72 deletions(-)
+
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index f9ea7e03..0302395d 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -27,7 +27,8 @@ auto createTraceableArgument() {
+ #ifdef ENABLE_TRACING
+
+ template <size_t... Indices, typename R, typename... FunctionArguments>
+-std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>, std::function<R(FunctionArguments...)> func) {
++std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>,
++                                            std::function<R(FunctionArguments...)> func) {
+ 	[[maybe_unused]] std::size_t args = sizeof...(FunctionArguments);
+ 	auto traceFunc = [=]() {
+ 		if constexpr (std::is_void_v<R>) {
+@@ -53,7 +54,7 @@ template <class... Ts>
+ struct overloaded : Ts... {
+ 	using Ts::operator()...;
+ };
+-template<class... Ts>
++template <class... Ts>
+ overloaded(Ts...) -> overloaded<Ts...>;
+
+ template <typename R, typename... FunctionArguments>
+@@ -64,86 +65,99 @@ class CallableFunction {
+
+ 	explicit CallableFunction(std::unique_ptr<compiler::Executable>& executable)
+ 	    : func(executable->getInvocableMember<typename R::raw_type, FunctionArguments...>("execute")),
+-	      executable(std::move(executable)) {
+-	}
++	      executable(std::move(executable)) {}
+
+-	typename R::raw_type operator()(FunctionArguments... args) {
+-		return std::visit(
+-		    overloaded {[&](std::function<R(val<FunctionArguments>...)>& fn) -> typename R::raw_type {
+-			                return nautilus::details::RawValueResolver<typename R::raw_type>::getRawValue(
+-			                    fn(make_value(args)...));
+-		                },
+-		                [&](compiler::Executable::Invocable<typename R::raw_type, FunctionArguments...>& fn) ->
+-		                typename R::raw_type {
+-			                return fn(args...);
+-		                }},
+-		    func);
+-	}
++		CallableFunction(const CallableFunction& other) = delete;
++		CallableFunction(CallableFunction && other) noexcept
++		    : func(std::move(other.func)), executable(std::move(other.executable)) {
++		}
++		CallableFunction& operator=(const CallableFunction& other) = delete;
++		CallableFunction& operator=(CallableFunction&& other) noexcept {
++			if (this == &other)
++				return *this;
++			func = std::move(other.func);
++			executable = std::move(other.executable);
++			return *this;
++		}
+
+-private:
+-	std::variant<std::function<R(val<FunctionArguments>...)>,
+-	             compiler::Executable::Invocable<typename R::raw_type, FunctionArguments...>>
+-	    func;
+-	std::unique_ptr<compiler::Executable> executable;
+-};
++		typename R::raw_type operator()(FunctionArguments... args) {
++			return std::visit(
++			    overloaded {[&](std::function<R(val<FunctionArguments>...)>& fn) -> typename R::raw_type {
++				                return nautilus::details::RawValueResolver<typename R::raw_type>::getRawValue(
++				                    fn(make_value(args)...));
++			                },
++			                [&](compiler::Executable::Invocable<typename R::raw_type, FunctionArguments...>& fn) ->
++			                typename R::raw_type {
++				                return fn(args...);
++			                }},
++			    func);
++		}
+
+-/// Specialization for void return type
+-template <typename... FunctionArguments>
+-class CallableFunction<void, FunctionArguments...> {
+-public:
+-	explicit CallableFunction(std::function<void(val<FunctionArguments>...)> func) : func(func), executable(nullptr) {
+-	}
++	private:
++		std::variant<std::function<R(val<FunctionArguments>...)>,
++		             compiler::Executable::Invocable<typename R::raw_type, FunctionArguments...>>
++		    func;
++		std::unique_ptr<compiler::Executable> executable;
++	};
+
+-	explicit CallableFunction(std::unique_ptr<compiler::Executable>& executable)
+-	    : func(executable->getInvocableMember<void, FunctionArguments...>("execute")),
+-	      executable(std::move(executable)) {
+-	}
++	/// Specialization for void return type
++	template <typename... FunctionArguments>
++	class CallableFunction<void, FunctionArguments...> {
++	public:
++		explicit CallableFunction(std::function<void(val<FunctionArguments>...)> func)
++		    : func(func), executable(nullptr) {
++		}
+
+-	auto operator()(FunctionArguments... args) {
+-		std::visit(overloaded {[&](std::function<void(val<FunctionArguments>...)>& fn) { fn(make_value(args)...); },
+-		                       [&](compiler::Executable::Invocable<void, FunctionArguments...>& fn) {
+-			                       fn(args...);
+-		                       }},
+-		           func);
+-	}
++		explicit CallableFunction(std::unique_ptr<compiler::Executable>& executable)
++		    : func(executable->getInvocableMember<void, FunctionArguments...>("execute")),
++		      executable(std::move(executable)) {
++		}
+
+-private:
+-	std::variant<std::function<void(val<FunctionArguments>...)>,
+-	             compiler::Executable::Invocable<void, FunctionArguments...>>
+-	    func;
+-	std::unique_ptr<compiler::Executable> executable;
+-};
++		auto operator()(FunctionArguments... args) {
++			std::visit(overloaded {[&](std::function<void(val<FunctionArguments>...)>& fn) { fn(make_value(args)...); },
++			                       [&](compiler::Executable::Invocable<void, FunctionArguments...>& fn) {
++				                       fn(args...);
++			                       }},
++			           func);
++		}
+
+-/**
+- * The Nautilus Engine maintains the execution context of one or multiple nautilus functions,
+- * which are registered using registerFunction.
+- * Depending on the provided options, this functions may be compiled using a compilation backend or are executed directly.
+- * In general, the NautilusEngine mussed outlive any registered functions.
+- */
+-class NautilusEngine {
+-public:
+-	NautilusEngine(const Options& options = Options());
++	private:
++		std::variant<std::function<void(val<FunctionArguments>...)>,
++		             compiler::Executable::Invocable<void, FunctionArguments...>>
++		    func;
++		std::unique_ptr<compiler::Executable> executable;
++	};
+
+-	template <typename R, is_val... FunctionArguments>
+-	auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const {
+-		std::function<R(val<FunctionArguments>...)> inputFunction = fnptr;
+-		return registerFunction(inputFunction);
+-	}
++	/**
++	 * The Nautilus Engine maintains the execution context of one or multiple nautilus functions,
++	 * which are registered using registerFunction.
++	 * Depending on the provided options, this functions may be compiled using a compilation backend or are executed
++	 * directly. In general, the NautilusEngine mussed outlive any registered functions.
++	 */
++	class NautilusEngine {
++	public:
++		NautilusEngine(const Options& options = Options());
++
++		template <typename R, is_val... FunctionArguments>
++		auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const {
++			std::function<R(val<FunctionArguments>...)> inputFunction = fnptr;
++			return registerFunction(inputFunction);
++		}
+
+-	template <typename R, typename... FunctionArguments>
+-	auto registerFunction(std::function<R(val<FunctionArguments>...)> func) const {
++		template <typename R, typename... FunctionArguments>
++		auto registerFunction(std::function<R(val<FunctionArguments>...)> func) const {
+ #ifdef ENABLE_TRACING
+-		if (options.getOptionOrDefault("engine.Compilation", true)) {
+-			auto wrapper = details::createFunctionWrapper(func);
+-			auto executable = jit.compile(wrapper);
+-			return CallableFunction<R, FunctionArguments...>(executable);
+-		}
++			if (options.getOptionOrDefault("engine.Compilation", true)) {
++				auto wrapper = details::createFunctionWrapper(func);
++				auto executable = jit.compile(wrapper);
++				return CallableFunction<R, FunctionArguments...>(executable);
++			}
+ #endif
+-		return CallableFunction<R, FunctionArguments...>(func);
+-	}
++			return CallableFunction<R, FunctionArguments...>(func);
++		}
+
+-private:
+-	const compiler::JITCompiler jit;
+-	const Options options;
+-};
++	private:
++		const compiler::JITCompiler jit;
++		const Options options;
++	};
+ } // namespace nautilus::engine
+
+From ef602ba4664eec49744b23339cc8d580fca0efbd Mon Sep 17 00:00:00 2001
+From: Nils Schubert <nilslpschubert@gmail.com>
+Date: Mon, 13 Jan 2025 17:16:31 +0100
+Subject: [PATCH 3/3] Added operator bool() to val_ptr
+
+Signed-off-by: Nils Schubert <nilslpschubert@gmail.com>
+---
+ nautilus/include/nautilus/val.hpp               |  2 +-
+ nautilus/include/nautilus/val_ptr.hpp           | 13 +++++++++++++
+ .../SymbolicExecutionContext.hpp                |  2 +-
+ nautilus/test/common/BoolOperations.hpp         |  9 +++++++++
+ .../test/execution-tests/BoolExecutionTest.cpp  | 17 +++++++++++++++++
+ 5 files changed, 41 insertions(+), 2 deletions(-)
+
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+index cd123160..f6a2542f 100644
+--- a/nautilus/include/nautilus/val.hpp
++++ b/nautilus/include/nautilus/val.hpp
+@@ -154,7 +154,7 @@ class val<bool> {
+ 	// move constructor
+ 	val(const val<bool>&& other) : state(other.state), value(other.value) {
+ 	}
+-	val(tracing::TypedValueRef& tc) : state(tc) {
++	val(tracing::TypedValueRef& tc) : state(tc), value() {
+ 	}
+
+ #else
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+index e979f466..2610c09e 100644
+--- a/nautilus/include/nautilus/val_ptr.hpp
++++ b/nautilus/include/nautilus/val_ptr.hpp
+@@ -104,6 +104,10 @@ class base_ptr_val {
+ 	}
+ #endif
+
++	operator bool() const {
++		return *this != static_cast<val<ValuePtrType>>(nullptr);
++	}
++
+ #ifdef ENABLE_TRACING
+ 	const tracing::TypedValueRefHolder state;
+ #endif
+@@ -180,6 +184,10 @@ class val<ValuePtrType> : public base_ptr_val<ValuePtrType> {
+ #endif
+ 	}
+
++	operator bool() const {
++		return *this != static_cast<val<ValuePtrType>>(nullptr);
++	}
++
+ 	const val<ValuePtrType>& operator++() {
+ 		// increment
+ 		++this->value;
+@@ -222,6 +230,11 @@ class val<ValuePtrType> : public base_ptr_val<ValuePtrType> {
+ 		return val<OtherType>((OtherType) this->value);
+ #endif
+ 	}
++
++
++	operator bool() const {
++		return *this != static_cast<val<ValuePtrType>>(nullptr);
++	}
+ };
+
+ template <is_ptr ValueType, is_fundamental_val IndexType>
+diff --git a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp
+index f8e6ceba..1774e6bb 100644
+--- a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp
++++ b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp
+@@ -30,7 +30,7 @@ class SymbolicExecutionContext {
+
+ 	/**
+ 	 * @brief Check if we should continue the symbolic execution or if we evaluated all possible execution passes.
+-	 * @return false if all execution passes trough a function have been evaluated.
++	 * @return false if all execution passes through a function have been evaluated.
+ 	 */
+ 	bool shouldContinue();
+
+diff --git a/nautilus/test/common/BoolOperations.hpp b/nautilus/test/common/BoolOperations.hpp
+index 2d5ed89e..ec9a6554 100644
+--- a/nautilus/test/common/BoolOperations.hpp
++++ b/nautilus/test/common/BoolOperations.hpp
+@@ -59,4 +59,13 @@ val<bool> boolNestedFunction(val<bool> x, val<bool> z) {
+ 	}
+ }
+
++template<typename T>
++val<bool> operatorBool(val<T> x) {
++	if (x) {
++		return true;
++	} else {
++		return false;
++	}
++}
++
+ } // namespace nautilus::engine
+diff --git a/nautilus/test/execution-tests/BoolExecutionTest.cpp b/nautilus/test/execution-tests/BoolExecutionTest.cpp
+index e1515ac1..ed1435b8 100644
+--- a/nautilus/test/execution-tests/BoolExecutionTest.cpp
++++ b/nautilus/test/execution-tests/BoolExecutionTest.cpp
+@@ -1,6 +1,8 @@
+ #include "BoolOperations.hpp"
+ #include "nautilus/Engine.hpp"
+ #include "nautilus/val_concepts.hpp"
++#include "nautilus/val_ptr.hpp"
++#include "nautilus/val.hpp"
+ #include <catch2/catch_all.hpp>
+
+ namespace nautilus::engine {
+@@ -80,6 +82,21 @@ void boolTest(engine::NautilusEngine& engine) {
+ 		REQUIRE(f(false, true) == false);
+ 		REQUIRE(f(true, false) == false);
+ 	}
++
++	SECTION("operatorBool") {
++		auto f = engine.registerFunction(operatorBool<bool>);
++		REQUIRE(f(true) == true);
++		REQUIRE(f(false) == false);
++	}
++
++	SECTION("operatorBoolPtr") {
++		auto f = engine.registerFunction(operatorBool<int*>);
++		int* x = nullptr;
++		int tmp = 1234;
++		int* y = &tmp;
++		REQUIRE(f(x) == false);
++		REQUIRE(f(y) == true);
++	}
+ }
+
+ TEST_CASE("Bool Interpreter Test") {
