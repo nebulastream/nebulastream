@@ -104,8 +104,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
-    const auto result = emitState->outputIndex >= maxRecordsPerBuffer;
-    if (result)
+    if (emitState->outputIndex >= maxRecordsPerBuffer)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();

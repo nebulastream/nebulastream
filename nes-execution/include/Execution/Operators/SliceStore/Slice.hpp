@@ -57,9 +57,6 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    [[nodiscard]] virtual uint64_t getNumberOfTuplesLeft() = 0;
-    [[nodiscard]] virtual uint64_t getNumberOfTuplesRight() = 0;
-
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;
 
