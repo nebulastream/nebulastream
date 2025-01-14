@@ -18,6 +18,7 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -34,6 +35,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
@@ -46,9 +48,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
@@ -326,8 +327,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr
         std::move(joinFunctionLowered),
         streamJoinConfig.joinFieldNamesLeft,
         streamJoinConfig.joinFieldNamesRight,
-        joinOperator->getWindowStartFieldName(),
-        joinOperator->getWindowEndFieldName());
+        joinOperator->windowMetaData);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -341,10 +341,10 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->joinOptions.pageSize, joinOperator->getLeftInputSchema());
+        options->windowOperatorOptions.pageSize, joinOperator->getLeftInputSchema());
     leftMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->joinOptions.pageSize, joinOperator->getRightInputSchema());
+        options->windowOperatorOptions.pageSize, joinOperator->getRightInputSchema());
     rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",
@@ -419,7 +419,8 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
 {
     NES_DEBUG("Create Thread local window aggregation");
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
-    PRECONDITION(!windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+    PRECONDITION(
+        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();
     const auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -432,26 +433,29 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
-    const auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
-    operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
-    /// if we have a sliding window and use slicing we have to create another slice merge operator
-    if (NES::Util::instanceOf<Windowing::SlidingWindow>(timeBasedWindowType))
-    {
-        const auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
-            getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
-        operatorNode->insertBetweenThisAndChildNodes(mergingOperator);
-    }
-    const auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
-    operatorNode->replace(windowSink);
+    /// For now, we always use the default time beased slice store
+    const auto numberOfInputOrigins = windowOperator->getInputOriginIds().size();
+    INVARIANT(numberOfInputOrigins == 1, "We expect exactly one input origin for a time based window operator");
+    std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
+        = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
+            timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
+    const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
+        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
+
+    const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
+    const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
+    operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
+    operatorNode->replace(aggregationProbe);
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode)
 {
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
-    PRECONDITION(windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+    PRECONDITION(
+        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
     PRECONDITION(NES::Util::instanceOf<LogicalWindowOperator>(operatorNode), "The operator should be a window operator.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();
