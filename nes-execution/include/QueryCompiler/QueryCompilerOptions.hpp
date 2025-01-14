@@ -33,9 +33,9 @@ struct QueryCompilerOptions
         PREDICATION /// Uses predication for filter functions if possible
     };
 
-    struct StreamJoinOptions
+    struct WindowOperatorOptions
     {
-        uint64_t numberOfPartitions = Configurations::DEFAULT_HASH_NUM_PARTITIONS;
+        uint64_t numberOfPartitions = Configurations::DEFAULT_NUMBER_OF_PARTITIONS;
         uint64_t pageSize = Configurations::DEFAULT_PAGED_VECTOR_SIZE;
         uint64_t preAllocPageCnt = Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT;
         uint64_t totalSizeForDataStructures = Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE;
@@ -48,7 +48,7 @@ struct QueryCompilerOptions
     DumpMode dumpMode = DumpMode::FILE_AND_CONSOLE;
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
-    StreamJoinOptions joinOptions;
+    WindowOperatorOptions windowOperatorOptions;
 } __attribute__((aligned(64)));
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
@@ -62,13 +62,13 @@ queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfigurati
     options->compilationStrategy = queryCompilerConfiguration.compilationStrategy;
     options->dumpMode = queryCompilerConfiguration.queryCompilerDumpMode;
     options->nautilusBackend = queryCompilerConfiguration.nautilusBackend;
-    options->joinOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
-    options->joinOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
-    options->joinOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();
+    options->windowOperatorOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
+    options->windowOperatorOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
+    options->windowOperatorOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();
     /// zero indicate that it has not been set in the yaml config
     if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0)
     {
-        options->joinOptions.totalSizeForDataStructures = queryCompilerConfiguration.maxHashTableSize.getValue();
+        options->windowOperatorOptions.totalSizeForDataStructures = queryCompilerConfiguration.maxHashTableSize.getValue();
     }
 
     options->joinStrategy = queryCompilerConfiguration.joinStrategy;
