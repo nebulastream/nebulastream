@@ -205,6 +205,9 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         // Combine patterns using sequence
         auto query = Query::from("gps")
+            .filter(tedwithin(Attribute("longitude"), 
+                        Attribute("latitude"),
+                        Attribute("timestamp"))==1)
             .joinWith(pressureQuery)
             .where(Attribute("timestamp") ==  Attribute("gps$timestamp")) 
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(200)))
@@ -245,8 +248,11 @@ TEST_F(ReadSNCB, testReadCSV) {
                                                 "1722520697,3,0.013,50.6845,4.3758\n"
                                                 "1722520697,5,69.893,51.3233,4.4381\n"
                                                 "1722520697,1,27.1488,50.8587,4.3608\n";
-
           
+
+
+
+
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
 
