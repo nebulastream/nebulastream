@@ -83,7 +83,7 @@ API::WindowAggregationPtr Max(const FunctionItem& onField);
  * @brief Defines a Count Aggregation function on a particular field.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Count();
+API::WindowAggregationPtr Count(const FunctionItem& onField);
 
 /**
  * @brief Defines a Median Aggregation function on a particular field.

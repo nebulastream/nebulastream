@@ -17,6 +17,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
@@ -25,12 +26,13 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 
 namespace NES
 {
 
-LogicalWindowOperator::LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id)
+LogicalWindowOperator::LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, const OperatorId id)
     : Operator(id), WindowOperator(windowDefinition, id)
 {
 }
@@ -43,9 +45,9 @@ std::string LogicalWindowOperator::toString() const
     ss << "WINDOW AGGREGATION(OP-" << id << ", ";
     for (auto agg : windowAggregation)
     {
-        ss << agg->getTypeAsString() << ";";
+        ss << agg->toString() << ";";
     }
-    ss << ")";
+    ss << ") on window type: " << windowType->toString();
     return ss.str();
 }
 
@@ -99,6 +101,7 @@ bool LogicalWindowOperator::inferSchema()
     ///Construct output schema
     ///First clear()
     outputSchema->clear();
+
     /// Distinguish process between different window types (currently time-based and content-based)
     auto windowType = windowDefinition->getWindowType();
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
@@ -108,9 +111,13 @@ bool LogicalWindowOperator::inferSchema()
         {
             return false;
         }
-        outputSchema
-            = outputSchema->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64)
-                  ->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64);
+        const auto& sourceName = inputSchema->getQualifierNameForSystemGeneratedFields();
+        const auto& newQualifierForSystemField = sourceName;
+
+        windowStartFieldName = newQualifierForSystemField + "$start";
+        windowEndFieldName = newQualifierForSystemField + "$end";
+        outputSchema->addField(windowStartFieldName, BasicType::UINT64);
+        outputSchema->addField(windowEndFieldName, BasicType::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
@@ -144,7 +151,7 @@ bool LogicalWindowOperator::inferSchema()
     for (const auto& agg : windowAggregation)
     {
         outputSchema->addField(
-            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->on()->getStamp()));
+            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema->toString());

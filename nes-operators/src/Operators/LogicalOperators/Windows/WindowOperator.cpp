@@ -12,14 +12,20 @@
     limitations under the License.
 */
 
+#include <string_view>
+#include <utility>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {
 
-WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(windowDefinition)
+WindowOperator::WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, const OperatorId id, const OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(std::move(windowDefinition))
 {
 }
 
@@ -32,10 +38,27 @@ std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
-void WindowOperator::setOriginId(OriginId originId)
+void WindowOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
     windowDefinition->setOriginId(originId);
+}
+
+
+void WindowOperator::setWindowStartEndKeyFieldName(const std::string_view windowStartFieldName, const std::string_view windowEndFieldName)
+{
+    WindowOperator::windowStartFieldName = windowStartFieldName;
+    WindowOperator::windowEndFieldName = windowEndFieldName;
+}
+
+std::string WindowOperator::getWindowStartFieldName() const
+{
+    return windowStartFieldName;
+}
+
+std::string WindowOperator::getWindowEndFieldName() const
+{
+    return windowEndFieldName;
 }
 
 }

@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -31,7 +34,7 @@ using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDescriptorPtr
@@ -50,8 +53,16 @@ public:
      */
     void setOriginId(OriginId originId) override;
 
+    /// Sets the window start, end, and key field name during the serialization of the operator
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
+    [[nodiscard]] std::string getWindowStartFieldName() const;
+    [[nodiscard]] std::string getWindowEndFieldName() const;
+
+
 protected:
     const Windowing::LogicalWindowDescriptorPtr windowDefinition;
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
 };
 
 }

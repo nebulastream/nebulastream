@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -19,6 +20,7 @@
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -31,7 +33,7 @@
 namespace NES
 {
 
-LogicalJoinOperator::LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition, OperatorId id, OriginId originId)
+LogicalJoinOperator::LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalBinaryOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(std::move(joinDefinition))
 {
 }
@@ -243,7 +245,7 @@ std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-void LogicalJoinOperator::setOriginId(OriginId originId)
+void LogicalJoinOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
     joinDefinition->setOriginId(originId);
@@ -264,7 +266,8 @@ const std::string& LogicalJoinOperator::getWindowEndFieldName() const
     return windowEndFieldName;
 }
 
-void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName)
+void LogicalJoinOperator::setWindowStartEndKeyFieldName(
+    const std::string_view windowStartFieldName, const std::string_view windowEndFieldName)
 {
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;

@@ -115,12 +115,12 @@ SchemaPtr LogicalJoinDescriptor::getOutputSchema() const
     return outputSchema;
 }
 
-void LogicalJoinDescriptor::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft)
+void LogicalJoinDescriptor::setNumberOfInputEdgesLeft(const uint64_t numberOfInputEdgesLeft)
 {
     LogicalJoinDescriptor::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
 }
 
-void LogicalJoinDescriptor::setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight)
+void LogicalJoinDescriptor::setNumberOfInputEdgesRight(const uint64_t numberOfInputEdgesRight)
 {
     LogicalJoinDescriptor::numberOfInputEdgesRight = numberOfInputEdgesRight;
 }
@@ -129,7 +129,7 @@ OriginId LogicalJoinDescriptor::getOriginId() const
 {
     return originId;
 }
-void LogicalJoinDescriptor::setOriginId(OriginId originId)
+void LogicalJoinDescriptor::setOriginId(const OriginId originId)
 {
     this->originId = originId;
 }

@@ -56,7 +56,7 @@ uint64_t LogicalWindowDescriptor::getNumberOfInputEdges() const
 {
     return numberOfInputEdges;
 }
-void LogicalWindowDescriptor::setNumberOfInputEdges(uint64_t numberOfInputEdges)
+void LogicalWindowDescriptor::setNumberOfInputEdges(const uint64_t numberOfInputEdges)
 {
     this->numberOfInputEdges = numberOfInputEdges;
 }
@@ -112,7 +112,7 @@ OriginId LogicalWindowDescriptor::getOriginId() const
 {
     return originId;
 }
-void LogicalWindowDescriptor::setOriginId(OriginId originId)
+void LogicalWindowDescriptor::setOriginId(const OriginId originId)
 {
     this->originId = originId;
 }

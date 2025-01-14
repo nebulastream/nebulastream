@@ -422,7 +422,9 @@ LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_Win
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
     windowDef->setOriginId(OriginId(windowDetails.originid()));
-    return std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
+    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
+    windowOperator->setWindowStartEndKeyFieldName(windowDetails.windowstartfieldname(), windowDetails.windowendfieldname());
+    return windowOperator;
 }
 
 LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
@@ -855,6 +857,10 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
                 NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
+
+    windowDetails.set_windowstartfieldname(windowOperator.getWindowStartFieldName());
+    windowDetails.set_windowendfieldname(windowOperator.getWindowEndFieldName());
+
 
     serializedOperator.mutable_details()->PackFrom(windowDetails);
 }
