@@ -38,7 +38,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
     auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.schema,
+        *sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
