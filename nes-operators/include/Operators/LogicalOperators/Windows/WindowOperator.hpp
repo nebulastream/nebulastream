@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -25,13 +28,26 @@ namespace NES
 class WindowOperator;
 using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
+/// Stores the window start and window end field names
+struct WindowMetaData
+{
+    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
+        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
+    {
+    }
+    WindowMetaData() = default;
+
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+};
+
 /**
  * @brief Window operator, which defines the window definition.
  */
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDescriptorPtr
@@ -49,6 +65,9 @@ public:
      * @param originId
      */
     void setOriginId(OriginId originId) override;
+
+
+    WindowMetaData windowMetaData;
 
 protected:
     const Windowing::LogicalWindowDescriptorPtr windowDefinition;

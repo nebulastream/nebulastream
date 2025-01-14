@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
@@ -26,9 +27,6 @@ namespace NES
 
 class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
-
-class NodeFunctionFieldAssignment;
-using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
 /// A function item represents the leaf in an function tree.
 /// It is converted to an constant value function or a field access function.

@@ -49,7 +49,7 @@ WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const NodeFunctionPt
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(SchemaPtr schema)
+void SumAggregationDescriptor::inferStamp(const SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
@@ -73,7 +73,7 @@ void SumAggregationDescriptor::inferStamp(SchemaPtr schema)
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(onField->getStamp());
+    asField->setStamp(getFinalAggregateStamp());
 }
 WindowAggregationDescriptorPtr SumAggregationDescriptor::copy()
 {
