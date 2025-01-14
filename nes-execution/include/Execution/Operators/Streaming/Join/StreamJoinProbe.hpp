@@ -20,10 +20,11 @@
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <val_concepts.hpp>
-#include "Time/Timestamp.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -31,7 +32,7 @@ namespace NES::Runtime::Execution::Operators
 /// This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
 /// is not part of this class. This class takes care of the close() functionality as this universal.
 /// Furthermore, it provides a method of creating the joined tuple
-class StreamJoinProbe : public Operator
+class StreamJoinProbe : public WindowOperatorProbe
 {
 public:
     StreamJoinProbe(
@@ -39,15 +40,6 @@ public:
         const std::shared_ptr<Functions::Function>& joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema);
-
-    /// Initializes the operator handler
-    void setup(ExecutionContext& executionCtx) const override;
-
-    /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-    /// Terminates the operator by deleting all slices and windows
-    void terminate(ExecutionContext& executionCtx) const override;
 
 protected:
     /// Creates a joined record out of the left and right record, but it only uses the provided projection
@@ -66,9 +58,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    uint64_t operatorHandlerIndex;
     std::shared_ptr<Functions::Function> joinFunction;
-    WindowMetaData windowMetaData;
     JoinSchema joinSchema;
 };
 }
