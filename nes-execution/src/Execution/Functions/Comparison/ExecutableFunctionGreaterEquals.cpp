@@ -25,7 +25,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionGreaterEquals::execute(Record& record) const
+VarVal ExecutableFunctionGreaterEquals::execute(const Record& record) const
 {
     const auto leftValue = leftExecutableFunction->execute(record);
     const auto rightValue = rightExecutableFunction->execute(record);

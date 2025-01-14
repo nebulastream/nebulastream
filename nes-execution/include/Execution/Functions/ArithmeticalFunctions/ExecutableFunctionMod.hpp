@@ -26,7 +26,7 @@ class ExecutableFunctionMod final : public Function
 {
 public:
     ExecutableFunctionMod(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
-    VarVal execute(Record& record) const override;
+    VarVal execute(const Record& record) const override;
 
 private:
     std::unique_ptr<Function> leftExecutableFunctionSub;
