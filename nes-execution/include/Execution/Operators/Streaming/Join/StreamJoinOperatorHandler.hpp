@@ -19,7 +19,7 @@
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/WindowBasedOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -38,16 +38,10 @@ public:
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
-    /// Checks and triggers windows that are ready. This method updates the watermarkProcessor and is thread-safe
-    void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
-
-    /// Triggers all windows that have not been already emitted to the probe
-    void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
-
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-        PipelineExecutionContext* pipelineCtx);
+        PipelineExecutionContext* pipelineCtx) override;
 
     /// Emits the left and right slice to the probe
     virtual void emitSliceIdsToProbe(

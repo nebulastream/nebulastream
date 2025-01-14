@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -35,84 +36,14 @@
 
 namespace NES::Runtime::Execution::Operators
 {
-void garbageCollectSlices(
-    OperatorHandler* ptrOpHandler,
-    const Timestamp watermarkTs,
-    const SequenceNumber sequenceNumber,
-    const ChunkNumber chunkNumber,
-    const bool lastChunk,
-    const OriginId originId)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
-
-    opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
-}
-
-void deleteAllSlicesAndWindowsProxy(OperatorHandler* ptrOpHandler)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    const auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
-    opHandler->getSliceAndWindowStore().deleteState();
-}
-
-void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
-    opHandler->setBufferProvider(pipelineCtx->getBufferManager());
-    opHandler->setWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
-}
-
 
 StreamJoinProbe::StreamJoinProbe(
     const uint64_t operatorHandlerIndex,
     const std::shared_ptr<Functions::Function>& joinFunction,
     WindowMetaData windowMetaData,
     JoinSchema joinSchema)
-    : operatorHandlerIndex(operatorHandlerIndex)
-    , joinFunction(joinFunction)
-    , windowMetaData(std::move(windowMetaData))
-    , joinSchema(std::move(joinSchema))
+    : WindowOperatorProbe(operatorHandlerIndex, std::move(windowMetaData)), joinFunction(joinFunction), joinSchema(std::move(joinSchema))
 {
-}
-
-void StreamJoinProbe::setup(ExecutionContext& executionCtx) const
-{
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    invoke(setupProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
-}
-
-
-void StreamJoinProbe::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    /// Update the watermark for the nlj probe and delete all slices that can be deleted
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    invoke(
-        garbageCollectSlices,
-        operatorHandlerMemRef,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
-
-    /// Now close for all children
-    Operator::close(executionCtx, recordBuffer);
-}
-
-void StreamJoinProbe::terminate(ExecutionContext& executionCtx) const
-{
-    /// Delete all slices as the query has ended
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
-
-    /// Now terminate for all children
-    Operator::terminate(executionCtx);
 }
 
 Record StreamJoinProbe::createJoinedRecord(

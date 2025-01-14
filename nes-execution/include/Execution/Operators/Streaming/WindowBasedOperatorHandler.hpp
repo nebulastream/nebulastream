@@ -16,7 +16,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -28,12 +30,13 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
-/// The build phase is the phase where the operator adds tuples to window(s)/state.
+/// The build phase is the phase where the operator adds tuples to window(s) / the state.
 /// The probe phase gets triggered from the build phase and is the phase where the operator processes the build-up state, e.g., perform the join or aggregation.
 class WindowBasedOperatorHandler : public OperatorHandler
 {
@@ -47,7 +50,6 @@ public:
 
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
-    void setBufferProvider(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
@@ -56,19 +58,33 @@ public:
     /// Updates the corresponding watermark processor and then garbage collect all slices and windows that are not valid anymore
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
 
-    /// Returns the sequence number for this window info. It is assumed that the first call to this method is the first window that is triggered.
-    /// This is important as a window-based operator acts as a source and thus needs to set the sequence number for the emitted tuples
-    [[nodiscard]] SequenceNumber getNextSequenceNumber(const WindowInfo& windowInfo);
+    /// Checks and triggers windows that are ready. This method updates the watermarkProcessor and is thread-safe
+    virtual void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
+    /// Triggers all windows that have not been already emitted to the probe
+    virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
 
-    virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
+    virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const = 0;
 
 protected:
+    /// Is being called so that each window operator can be specific about what to do if the given slices are ready to be emitted
+    virtual void triggerSlices(
+        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        PipelineExecutionContext* pipelineCtx)
+        = 0;
+
+    /// This lambda is being called, if the numberOfWorkerThreads is not set
+    std::function<std::optional<uint64_t>(void)> numberOfWorkerThreadsValueLess = []
+    {
+        throw QueryRuntimeError("Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
+        return std::optional<uint64_t>(0);
+    };
+
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
-    uint64_t numberOfWorkerThreads;
+    std::optional<uint64_t> numberOfWorkerThreads;
     const OriginId outputOriginId;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
 };
 }
