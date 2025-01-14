@@ -1,12 +1,10 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF a48e9513def6000b49717a5e8dce954511b1e649
-        SHA512 a343ad0e5d3babb1ed071eede64ea2047871f6f139adc094ae43b0fbff5cd950be9c62871ee7cf5068d5e56f05d7647ccdccef29107cfdd4ddc201d9d2c82971
+		REF ea13704e7e47eadcf9fc816f74d1e5b742afdcc5
+        SHA512 c57b321cfeff45a3d71de592655734b76d9ae788f23411b74c3de2457a0ace461a84906a9fb978ae855c6cf16231cf0ab8f9b0380d756b700503d40b0582ec2a
 		PATCHES
-		mod_signess__Signed-off-by__Nils_Schubert__nilslpschubert@gmail_com_.patch
-		cache.patch
-		llvm.patch
+		0001_some_changes_pr_76.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
