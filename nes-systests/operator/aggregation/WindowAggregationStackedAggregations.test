@@ -1,0 +1,119 @@
+# name: window/WindowAggregationStackedAggregations.test
+# description: Test window aggregations over different data types for (keyed) windows with stacked aggregations
+# groups: [Aggregation, WindowOperators]
+
+# Source definitions
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+12,1,1001
+4,1,1002
+1,2,2000
+11,2,2001
+16,2,2002
+1,3,3000
+11,3,3001
+1,3,3003
+1,3,3200
+1,4,4000
+1,5,5000
+1,6,6000
+1,7,7000
+1,8,8000
+1,9,9000
+1,10,10000
+1,11,11000
+1,12,12000
+1,13,13000
+1,14,14000
+1,15,15000
+1,16,16000
+1,17,17000
+1,18,18000
+1,19,19000
+1,20,20000
+1,21,21000
+
+SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$sumValue
+SINK sinkStreamNonKeyed UINT64 stream$start UINT64 stream$end UINT64 stream$sumValue
+
+
+# Two window aggregations
+SELECT SUM(value) as sumValue FROM (
+    SELECT SUM(value) as value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
+) WHERE id < 10 GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStream;
+----
+0 2000 1 1
+0 2000 4 1
+10000 12000 1 21
+12000 14000 1 25
+14000 16000 1 29
+16000 18000 1 33
+18000 20000 1 37
+2000 4000 1 11
+20000 22000 1 41
+4000 6000 1 9
+6000 8000 1 13
+8000 10000 1 17
+
+# Two window aggregations with one larger tumbling and one larger sliding window
+SELECT SUM(value) as sumValue FROM (
+    SELECT SUM(value) as value FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec)
+) GROUP BY id WINDOW SLIDING(start, size 10 sec, advance by 5 sec) INTO sinkStream;
+----
+0 10000 1 51
+0 10000 4 1
+0 10000 11 5
+0 10000 12 1
+0 10000 16 2
+5000 15000 1 95
+10000 20000 1 145
+15000 25000 1 126
+20000 30000 1 41
+
+# Two window aggregations with a keyed sliding and then a keyed tumbling window
+SELECT SUM(inputValue) as sumValue FROM (
+    SELECT SUM(value) as inputValue FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 2 sec)
+) WHERE id < 10 GROUP BY id WINDOW SLIDING(start, size 1 sec, advance by 500 ms) INTO sinkStream;
+----
+0 1000 1 1
+0 1000 4 1
+1500 2500 1 11
+2000 3000 1 11
+3500 4500 1 9
+4000 5000 1 9
+5500 6500 1 13
+6000 7000 1 13
+7500 8500 1 17
+8000 9000 1 17
+9500 10500 1 21
+10000 11000 1 21
+11500 12500 1 25
+12000 13000 1 25
+13500 14500 1 29
+14000 15000 1 29
+15500 16500 1 33
+16000 17000 1 33
+17500 18500 1 37
+18000 19000 1 37
+19500 20500 1 41
+20000 21000 1 41
+
+
+# Three window aggregations with a sliding (keyed), then a tumbling (keyed), and then a tumbling window
+SELECT SUM(inputValue2) as sumValue FROM (
+    SELECT SUM(inputValue1) as inputValue2 FROM (
+        SELECT SUM(value) as inputValue1 FROM stream WHERE id < 15 GROUP BY id WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+    )  GROUP BY id WINDOW TUMBLING(start, size 1 sec)
+) WHERE id < 10 WINDOW TUMBLING(start, size 2 sec) INTO sinkStreamNonKeyed;
+----
+0 2000 6
+2000 4000 24
+4000 6000 20
+6000 8000 28
+8000 10000 36
+10000 12000 44
+12000 14000 52
+14000 16000 60
+16000 18000 68
+18000 20000 76
+20000 22000 62

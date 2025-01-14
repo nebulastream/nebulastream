@@ -1,0 +1,202 @@
+# name: window/WindowAggregationDifferentDataTypes.test
+# description: Test window aggregations over different data types
+# groups: [Aggregation, WindowOperators]
+
+
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 UINT64 ts
+1,2,3,4,5,6,7,8,9,10,100
+2,3,4,5,6,7,8,9,10,11,125
+0,0,0,0,0,0,0,0,0,0,150
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23,200
+1,1,1,1,1,1,1,1,1,1,250
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23,300
+1,2,3,4,5,6,7,8,9,10,325
+2,3,4,5,6,7,8,9,10,11,350
+
+SINK sinkStream UINT64 stream$start UINT64 stream$end INT8 stream$i8_out INT16 stream$i16_out INT32 stream$i32_out INT64 stream$i64_out UINT8 stream$u8_out UINT16 stream$u16_out UINT32 stream$u32_out UINT64 stream$u64_out FLOAT32 stream$f32_out FLOAT64 stream$f64_out
+SINK sinkStreamAllU64 UINT64 stream$start UINT64 stream$end UINT64 stream$i8_out UINT64 stream$i16_out UINT64 stream$i32_out UINT64 stream$i64_out UINT64 stream$u8_out UINT64 stream$u16_out UINT64 stream$u32_out UINT64 stream$u64_out UINT64 stream$f32_out UINT64 stream$f64_out
+SINK sinkStreamAllF64 UINT64 stream$start UINT64 stream$end FLOAT64 stream$i8_out FLOAT64 stream$i16_out FLOAT64 stream$i32_out FLOAT64 stream$i64_out FLOAT64 stream$u8_out FLOAT64 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out FLOAT64 stream$f32_out FLOAT64 stream$f64_out
+SINK sinkStreamAllAggsTW UINT64 stream$start UINT64 stream$end FLOAT64 stream$i8_out INT16 stream$i16_out INT32 stream$i32_out INT64 stream$i64_out UINT8 stream$u8_out UINT16 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out UINT64 stream$f32_out FLOAT64 stream$f64_out
+SINK sinkStreamAllAggsSW UINT64 stream$start UINT64 stream$end INT8 stream$i8_out INT16 stream$i16_out FLOAT64 stream$i32_out INT64 stream$i64_out UINT64 stream$u8_out UINT16 stream$u16_out UINT64 stream$u32_out FLOAT64 stream$u64_out FLOAT32 stream$f32_out FLOAT64 stream$f64_out
+
+# Checking if a count over a tumbling window works for all data types
+SELECT COUNT(i8) as i8_out, COUNT(i16) as i16_out, COUNT(i32) as i32_out, COUNT(i64) as i64_out,
+       COUNT(u8) as u8_out, COUNT(u16) as u16_out, COUNT(u32) as u32_out, COUNT(u64) as u64_out,
+       COUNT(f32) as f32_out, COUNT(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllU64
+----
+100,200,3,3,3,3,3,3,3,3,3,3
+200,300,2,2,2,2,2,2,2,2,2,2
+300,400,3,3,3,3,3,3,3,3,3,3
+
+
+# Checking if an average over a tumbling window works for all data types
+SELECT AVG(i8) as i8_out, AVG(i16) as i16_out, AVG(i32) as i32_out, AVG(i64) as i64_out,
+       AVG(u8) as u8_out, AVG(u16) as u16_out, AVG(u32) as u32_out, AVG(u64) as u64_out,
+       AVG(f32) as f32_out, AVG(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
+----
+100,200,1,1.66666666666667,2.33333333333333,3,3.66666666666667,4.33333333333333,5,5.66666666666667,6.33333333333333,7
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+300,400,-13,-41.3333333333333,-10920.6666666667,-715827880,17.6666666666667,89.6666666666667,21850.3333333333,1431655771,14,14.6666666666667
+
+
+# Checking if a sum over a tumbling window works for all data types
+SELECT SUM(i8) as i8_out, SUM(i16) as i16_out, SUM(i32) as i32_out, SUM(i64) as i64_out,
+       SUM(u8) as u8_out, SUM(u16) as u16_out, SUM(u32) as u32_out, SUM(u64) as u64_out,
+       SUM(f32) as f32_out, SUM(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStream
+----
+100,200,3,5,7,9,11,13,15,17,19,21
+200,300,-41,-128,-32768,-2147483648,43,257,65537,4294967297,24,24
+300,400,-39,-124,-32762,-2147483640,53,269,65551,4294967313,42,44
+
+
+# Checking if a min over a tumbling window works for all data types
+SELECT MIN(i8) as i8_out, MIN(i16) as i16_out, MIN(i32) as i32_out, MIN(i64) as i64_out,
+       MIN(u8) as u8_out, MIN(u16) as u16_out, MIN(u32) as u32_out, MIN(u64) as u64_out,
+       MIN(f32) as f32_out, MIN(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStream
+----
+100,200,0,0,0,0,0,0,0,0,0,0
+200,300,-42,-129,-32769,-2147483649,1,1,1,1,1,1
+300,400,-42,-129,-32769,-2147483649,5,6,7,8,9,10
+
+
+# Checking if a max over a tumbling window works for all data types
+SELECT MAX(i8) as i8_out, MAX(i16) as i16_out, MAX(i32) as i32_out, MAX(i64) as i64_out,
+       MAX(u8) as u8_out, MAX(u16) as u16_out, MAX(u32) as u32_out, MAX(u64) as u64_out,
+       MAX(f32) as f32_out, MAX(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStream
+----
+100,200,2,3,4,5,6,7,8,9,10,11
+200,300,1,1,1,1,42,256,65536,4294967296,23,23
+300,400,2,3,4,5,42,256,65536,4294967296,23,23
+
+
+# Checking if a median over a tumbling window works for all data types
+SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
+----
+100,200,1,2,3,4,5,6,7,8,9,10,11
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+300,400,1,2,3,4,6,7,8,9,10,11
+
+
+# Checking if all aggregations over a tumbling window work for all data types in one query
+SELECT AVG(i8) as i8_out, MIN(i16) as i16_out, MAX(i32) as i32_out, MAX(i64) as i64_out,
+       SUM(u8) as u8_out, SUM(u16) as u16_out, AVG(u32) as u32_out, MEDIAN(u64) as u64_out,
+       COUNT(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllAggsTW
+----
+100,200,1,0,4,5,11,13,5,8,3,10
+200,300,-20.5,-129,1,1,43,257,32768.5,2147483648.5,2,12
+300,400,-13,-129,4,5,53,269,21850.3333333333,9,3,11
+
+
+#################################### Sliding Windows ####################################
+# Checking if a count over a sliding window works for all data types
+SELECT COUNT(i8) as i8_out, COUNT(i16) as i16_out, COUNT(i32) as i32_out, COUNT(i64) as i64_out,
+       COUNT(u8) as u8_out, COUNT(u16) as u16_out, COUNT(u32) as u32_out, COUNT(u64) as u64_out,
+       COUNT(f32) as f32_out, COUNT(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllU64
+----
+50,150,2,2,2,2,2,2,2,2,2,2
+100,200,3,3,3,3,3,3,3,3,3,3
+150,250,2,2,2,2,2,2,2,2,2,2
+200,300,2,2,2,2,2,2,2,2,2,2
+250,350,3,3,3,3,3,3,3,3,3,3
+300,400,3,3,3,3,3,3,3,3,3,3
+350,450,1,1,1,1,1,1,1,1,1,1
+
+
+# Checking if an average over a sliding window works for all data types
+SELECT AVG(i8) as i8_out, AVG(i16) as i16_out, AVG(i32) as i32_out, AVG(i64) as i64_out,
+       AVG(u8) as u8_out, AVG(u16) as u16_out, AVG(u32) as u32_out, AVG(u64) as u64_out,
+       AVG(f32) as f32_out, AVG(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllF64
+----
+50,150,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5
+100,200,1,1.66666666666667,2.33333333333333,3,3.66666666666667,4.33333333333333,5,5.66666666666667,6.33333333333333,7
+150,250,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+250,350,-13.3333333333333,-42,-10921.6666666667,-715827881.333333,16,87.6666666666667,21848,1431655768.33333,11,11.3333333333333
+300,400,-13,-41.3333333333333,-10920.6666666667,-715827880,17.6666666666667,89.6666666666667,21850.3333333333,1431655771,14,14.6666666666667
+350,450,2,3,4,5,6,7,8,9,10,11
+
+
+# Checking if a sum over a sliding window works for all data types
+SELECT SUM(i8) as i8_out, SUM(i16) as i16_out, SUM(i32) as i32_out, SUM(i64) as i64_out,
+       SUM(u8) as u8_out, SUM(u16) as u16_out, SUM(u32) as u32_out, SUM(u64) as u64_out,
+       SUM(f32) as f32_out, SUM(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStream
+----
+50,150,3,5,7,9,11,13,15,17,19,21
+100,200,3,5,7,9,11,13,15,17,19,21
+150,250,-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
+200,300,-41,-128,-32768,-2147483648,43,257,65537,4294967297,24,24
+250,350,-40,-126,-32765,-2147483644,48,263,65544,4294967305,33,34
+300,400,-39,-124,-32762,-2147483640,53,269,65551,4294967313,42,44
+350,450,2,3,4,5,6,7,8,9,10,11
+
+
+# Checking if a min over a sliding window works for all data types
+SELECT MIN(i8) as i8_out, MIN(i16) as i16_out, MIN(i32) as i32_out, MIN(i64) as i64_out,
+       MIN(u8) as u8_out, MIN(u16) as u16_out, MIN(u32) as u32_out, MIN(u64) as u64_out,
+       MIN(f32) as f32_out, MIN(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStream
+----
+50,150,1,2,3,4,5,6,7,8,9,10
+100,200,0,0,0,0,0,0,0,0,0,0
+150,250,-42,-129,-32769,-2147483649,0,0,0,0,0,0
+200,300,-42,-129,-32769,-2147483649,1,1,1,1,1,1
+250,350,-42,-129,-32769,-2147483649,1,1,1,1,1,1
+300,400,-42,-129,-32769,-2147483649,5,6,7,8,9,10
+350,450,2,3,4,5,6,7,8,9,10,11
+
+
+# Checking if a max over a sliding window works for all data types
+SELECT MAX(i8) as i8_out, MAX(i16) as i16_out, MAX(i32) as i32_out, MAX(i64) as i64_out,
+       MAX(u8) as u8_out, MAX(u16) as u16_out, MAX(u32) as u32_out, MAX(u64) as u64_out,
+       MAX(f32) as f32_out, MAX(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStream
+----
+50,150,2,3,4,5,6,7,8,9,10,11
+100,200,2,3,4,5,6,7,8,9,10,11
+150,250,0,0,0,0,42,256,65536,4294967296,23,23
+200,300,1,1,1,1,42,256,65536,4294967296,23,23
+250,350,1,2,3,4,42,256,65536,4294967296,23,23
+300,400,2,3,4,5,42,256,65536,4294967296,23,23
+350,450,2,3,4,5,6,7,8,9,10,11
+
+
+# Checking if a median over a sliding window works for all data types
+SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllF64
+----
+50,150,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5
+100,200,1,2,3,4,5,6,7,8,9,10
+150,250,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+250,350,1,1,1,1,5,6,7,8,9,10
+300,400,1,2,3,4,6,7,8,9,10,11
+350,450,2,3,4,5,6,7,8,9,10,11
+
+# Checking if all aggregations over a sliding window work for all data types in one query
+SELECT MIN(i8) as i8_out, SUM(i16) as i16_out, AVG(i32) as i32_out, MAX(i64) as i64_out,
+       COUNT(u8) as u8_out, SUM(u16) as u16_out, COUNT(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MAX(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllAggsSW
+----
+50,150,1,5,3.5,5,2,13,2,8.5,10,10.5
+100,200,0,5,2.33333333333333,5,3,13,3,8,10,10
+150,250,-42,-129,-16384.5,0,2,256,2,2147483648,23,11.5
+200,300,-42,-128,-16384,1,2,257,2,2147483648.5,23,12
+250,350,-42,-126,-10921.6666666667,4,3,263,3,8,23,10
+300,400,-42,-124,-10920.6666666667,5,3,269,3,9,23,11
+350,450,2,3,4,5,1,7,1,9,10,11
+
