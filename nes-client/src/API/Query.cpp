@@ -281,15 +281,6 @@ Query::joinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& j
 
 Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction)
 {
-    /*
-    NES_DEBUG("Query: add Batch Join Operator to Query");
-    PRECONDITION(joinExpression->as<EqualsExpressionNode>() != nullptr,
-        "Query:joinExpression has to be a EqualsExpressionNode");
-    auto onProbeKey = joinExpression->as<BinaryExpressionNode>()->getLeft();
-    auto onBuildKey = joinExpression->as<BinaryExpressionNode>()->getRight();
-    this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
-    return *this;
-     */
     NES_DEBUG("Query: add Batch Join Operator to Query");
     if (NES::Util::as<NodeFunctionEquals>(joinFunction))
     {
