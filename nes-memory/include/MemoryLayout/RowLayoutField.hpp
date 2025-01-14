@@ -72,11 +72,11 @@ private:
      * @param fieldIndex
      * @param recordSize
      */
-    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
+    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, uint64_t fieldIndex, uint64_t recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) {};
 
-    const FIELD_SIZE fieldIndex;
-    const FIELD_SIZE recordSize;
+    const uint64_t fieldIndex;
+    const uint64_t recordSize;
     uint8_t* basePointer;
     std::shared_ptr<RowLayout> layout;
 };
@@ -86,9 +86,9 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getFieldOffSets().size(),
+        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
         "fieldIndex out of bounds! {} >= {}",
-        layout->getFieldOffSets().size(),
+        layout->getSchema()->getFieldCount(),
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address

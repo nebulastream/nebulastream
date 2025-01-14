@@ -26,7 +26,7 @@ class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 public:
     /// Creates a column memory provider based on a valid column memory layout pointer.
     ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() = default;
+    ~ColumnTupleBufferMemoryProvider() override = default;
 
     Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
@@ -41,7 +41,8 @@ private:
     nautilus::val<int8_t*>
     calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
 
-    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
+    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
+    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayout;
 };
 
 }

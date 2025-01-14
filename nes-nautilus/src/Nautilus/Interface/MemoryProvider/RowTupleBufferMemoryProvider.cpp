@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -23,17 +25,17 @@ namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr)
-    : rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
+    : rowMemoryLayout(std::move(rowMemoryLayoutPtr)) {};
 
 Memory::MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr()
 {
-    return rowMemoryLayoutPtr;
+    return rowMemoryLayout;
 }
 
 nautilus::val<int8_t*>
 RowTupleBufferMemoryProvider::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const
 {
-    auto& fieldOffset = rowMemoryLayoutPtr->getFieldOffSets()[fieldIndex];
+    auto fieldOffset = rowMemoryLayout->getFieldOffset(fieldIndex);
     auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
     return fieldAddress;
 }
@@ -44,9 +46,9 @@ Record RowTupleBufferMemoryProvider::readRecord(
     nautilus::val<uint64_t>& recordIndex) const
 {
     /// read all fields
-    auto& schema = rowMemoryLayoutPtr->getSchema();
+    const auto& schema = rowMemoryLayout->getSchema();
     Record record;
-    const auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
+    const auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
@@ -57,8 +59,8 @@ Record RowTupleBufferMemoryProvider::readRecord(
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        auto value = loadValue(rowMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress);
-        record.write(rowMemoryLayoutPtr->getSchema()->getFieldByIndex(i)->getName(), value);
+        auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
+        record.write(rowMemoryLayout->getSchema()->getFieldByIndex(i)->getName(), value);
     }
     return record;
 }
@@ -66,16 +68,15 @@ Record RowTupleBufferMemoryProvider::readRecord(
 void RowTupleBufferMemoryProvider::writeRecord(
     nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const
 {
-    const auto fieldSizes = rowMemoryLayoutPtr->getFieldSizes();
-    auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
+    auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    const auto schema = rowMemoryLayoutPtr->getSchema();
-    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
+    const auto schema = rowMemoryLayout->getSchema();
+    for (nautilus::static_val<size_t> i = 0; i < schema->getFieldCount(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         const auto& value = rec.read(schema->getFieldByIndex(i)->getName());
-        storeValue(rowMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress, value);
+        storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value);
     }
 }
 
