@@ -11,7 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <utility>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -20,10 +24,10 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(SchemaPtr schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
-    for (auto& fieldSize : physicalFieldSizes)
+    for (const auto& fieldSize : physicalFieldSizes)
     {
         fieldOffSets.emplace_back(offsetCounter);
         offsetCounter += fieldSize;
@@ -39,12 +43,17 @@ std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSi
     return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
-const std::vector<FIELD_SIZE>& RowLayout::getFieldOffSets() const
+uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
 {
-    return fieldOffSets;
+    PRECONDITION(
+        fieldIndex < fieldOffSets.size(),
+        "field index: {} is larger the number of field in the memory layout {}",
+        fieldIndex,
+        physicalFieldSizes.size());
+    return fieldOffSets[fieldIndex];
 }
 
-uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
 {
     if (fieldIndex >= fieldOffSets.size())
     {

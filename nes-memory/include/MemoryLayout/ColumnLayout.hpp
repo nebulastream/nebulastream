@@ -47,7 +47,7 @@ public:
 
     std::shared_ptr<MemoryLayout> deepCopy() const override;
 
-    const std::vector<uint64_t>& getColumnOffsets() const;
+    uint64_t getColumnOffset(uint64_t fieldIndex) const;
 
 private:
     std::vector<uint64_t> columnOffsets;
