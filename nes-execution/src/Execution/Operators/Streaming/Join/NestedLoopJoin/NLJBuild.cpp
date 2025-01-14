@@ -21,6 +21,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -68,9 +69,12 @@ NLJBuild::NLJBuild(
 
 void NLJBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    /// We are calling the open method of the parent class
+    WindowOperatorBuild::open(executionCtx, recordBuffer);
+
     auto opHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs());
+    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs(), executionCtx.bufferProvider);
     auto sliceStart = invoke(getNLJSliceStartProxy, sliceReference);
     auto sliceEnd = invoke(getNLJSliceEndProxy, sliceReference);
     const auto pagedVectorReference = invoke(
@@ -91,7 +95,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Get the current join state that stores the slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
+    const auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(localJoinState->nljPagedVectorMemRef, memoryProvider);

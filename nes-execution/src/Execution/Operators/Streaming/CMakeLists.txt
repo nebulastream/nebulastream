@@ -11,3 +11,9 @@
 # limitations under the License.
 
 add_subdirectory(Join)
+
+add_source_files(nes-execution
+        WindowBasedOperatorHandler.cpp
+        WindowOperatorBuild.cpp
+        WindowOperatorProbe.cpp
+)
