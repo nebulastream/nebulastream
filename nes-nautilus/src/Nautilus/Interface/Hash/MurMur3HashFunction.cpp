@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
 {
-HashFunction::HashValue MurMur3HashFunction::init()
+HashFunction::HashValue MurMur3HashFunction::init() const
 {
     return SEED;
 }
@@ -27,11 +28,11 @@ HashFunction::HashValue MurMur3HashFunction::init()
 VarVal hashVarVal(const VarVal& input)
 {
     /// We are not using the input variable here but rather are creating a new one, as otherwise, the underlying value of the input could change.
-    auto x = input ^ (input >> VarVal(33));
+    auto x = input ^ (input >> VarVal(HashFunction::HashValue(33)));
     x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
-    x = x ^ (x >> VarVal(33));
+    x = x ^ (x >> VarVal(HashFunction::HashValue(33)));
     x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xc4ceb9fe1a85ec53)));
-    x = x ^ (x >> VarVal(33));
+    x = x ^ (x >> VarVal(HashFunction::HashValue(33)));
     return x;
 }
 
@@ -100,7 +101,7 @@ uint64_t hashBytes(void* data, uint64_t length)
     return h;
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, VarVal& value)
+HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const VarVal& value) const
 {
     return value
         .customVisit(
@@ -111,9 +112,14 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, VarVal& 
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
                 }
+                else if constexpr (std::is_same_v<T, nautilus::val<double>> || std::is_same_v<T, nautilus::val<float>>)
+                {
+                    /// For floating points, we do not support the >> operator, as it is not defined for floats.
+                    throw UnsupportedOperation("Cannot hash floating point values.");
+                }
                 else
                 {
-                    return VarVal(hash) ^ hashVarVal(val);
+                    return VarVal(hash) ^ hashVarVal(static_cast<nautilus::val<uint64_t>>(val));
                 }
             })
         .cast<HashValue>();
