@@ -11,20 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <vector>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <static.hpp>
 
 namespace NES::Nautilus::Interface
 {
-HashFunction::HashValue HashFunction::calculate(VarVal value)
+HashFunction::HashValue HashFunction::calculate(const VarVal& value) const
 {
     auto hash = init();
     return calculate(hash, value);
 };
 
-HashFunction::HashValue HashFunction::calculate(std::vector<VarVal>& values)
+HashFunction::HashValue HashFunction::calculate(const std::vector<VarVal>& values) const
 {
     auto hash = init();
-    for (auto& value : values)
+    for (const auto& value : nautilus::static_iterable(values))
     {
         hash = calculate(hash, value);
     }
