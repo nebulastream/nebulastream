@@ -55,7 +55,7 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
             return "Interpreter";
         };
         case NautilusBackend::COMPILER: {
-            return "Compiler";
+            return "Compilation";
         };
         default: {
             INVARIANT(false, "Invalid backend");
@@ -83,7 +83,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setOption("toFile", compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
-    if (const auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName))
+    auto providerArguments = Runtime::Execution::ExecutablePipelineProviderRegistryArguments{};
+    if (const auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName, providerArguments))
     {
         auto pipelineStage
             = provider.value()->create(nautilusPipeline->getNautilusPipeline(), nautilusPipeline->getOperatorHandlers(), options);

@@ -15,7 +15,6 @@
 #pragma once
 
 #include <string>
-#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>

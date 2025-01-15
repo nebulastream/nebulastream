@@ -39,13 +39,13 @@ public:
 
     [[nodiscard]] bool contains(const typename Registrar::KeyType& key) const { return registryImpl.contains(key); }
 
-    template <typename... Args>
-    [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Args&&... args) const
+    template <typename Arguments>
+    [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Arguments&& args) const
     {
         if (const auto entry = registryImpl.find(key); entry != registryImpl.end())
         {
             /// Call the creator function of the entry.
-            return entry->second(std::forward<Args>(args)...);
+            return entry->second(std::forward<Arguments>(args));
         }
         return std::nullopt;
     }
@@ -79,13 +79,13 @@ private:
 /// would be instantiated with the same Registrar, leading to the same instantiation of the Registry, leading to the generation of only one
 /// implementation for the Registry. If we then call 'instance()' on the first registry and afterward 'instance()' on the second registry,
 /// both 'instance()' calls would access the same implementation. Since the registry is a singleton, both would access the first registry.
-template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename... Args>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments>
 class Registrar
 {
     using Tag = ConcreteRegistry;
     using KeyType = KeyTypeT;
     using ReturnType = std::unique_ptr<ReturnTypeT>;
-    using CreatorFn = std::function<ReturnType(Args...)>;
+    using CreatorFn = std::function<ReturnType(Arguments)>;
     static void registerAll(Registry<Registrar>& registry);
     template <typename Registrar>
     friend class Registry;
@@ -93,8 +93,8 @@ class Registrar
 
 /// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
 /// if custom member functions are added to the concrete registry class.
-template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename... Args>
-class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Args...>>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments>
+class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>>
 {
 public:
     static ConcreteRegistry& instance()
