@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Sources/SourceHandle.hpp>
 
 #include <memory>
 
@@ -20,11 +19,10 @@
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
-#include <Sources/SourceExecutionContext.hpp>
 
 namespace NES::Sources
 {
@@ -35,23 +33,22 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
 }
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-    SourceReturnType::EmitFunction&& emitFunction)
+    OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider)
 {
-    /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
-    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
         sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
-    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
+    auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
-        return std::make_unique<SourceHandle>(SourceExecutionContext{originId, std::move(source.value()), emitFunction, bufferPool->createFixedSizeBufferPool(64)});
+        if (auto bufferProvider = poolProvider->createFixedSizeBufferPool(NUM_SOURCE_LOCAL_BUFFERS); bufferProvider)
+        {
+            return std::make_unique<SourceHandle>(originId, *bufferProvider, std::move(*source), std::move(inputFormatter));
+        }
+        throw CannotAllocateBuffer();
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

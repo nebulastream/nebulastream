@@ -14,16 +14,19 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <variant>
 
-#include "Sources/Source.hpp"
-#include "Sources/SourceDescriptor.hpp"
-#include "Util/PluginRegistry.hpp"
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources
 {
 
-using SourceRegistryReturnType = Source;
+using SourceRegistryReturnType = std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>>;
 struct SourceRegistryArguments
 {
     SourceDescriptor sourceDescriptor;

@@ -24,7 +24,7 @@
 #include <boost/system/system_error.hpp>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,7 +37,7 @@ namespace NES::Sources
 class SourceCoroutineFunctor
 {
 public:
-    explicit SourceCoroutineFunctor(SourceExecutionContext& ctx) : ctx(std::move(ctx)) { }
+    explicit SourceCoroutineFunctor(AsyncSourceExecutionContext& ctx) : ctx(std::move(ctx)) { }
     ~SourceCoroutineFunctor() = default;
 
     SourceCoroutineFunctor(const SourceCoroutineFunctor&) = delete;
@@ -81,21 +81,21 @@ public:
 
 
 private:
-    SourceExecutionContext ctx;
+    AsyncSourceExecutionContext ctx;
 
-    bool handleSourceResult(IOBuffer& buffer, Source::InternalSourceResult result)
+    bool handleSourceResult(IOBuffer& buffer, AsyncSource::InternalSourceResult result)
     {
         return std::visit(
             [this, &buffer](auto&& result) -> bool
             {
                 using T = std::decay_t<decltype(result)>;
-                if constexpr (std::is_same_v<T, Source::Continue>)
+                if constexpr (std::is_same_v<T, AsyncSource::Continue>)
                 {
                     /// Usual case, the source is ready to continue to ingest more data
                     ctx.emitFn(ctx.originId, SourceReturnType::Data(std::move(buffer)));
                     return true;
                 }
-                else if constexpr (std::is_same_v<T, Source::EndOfStream>)
+                else if constexpr (std::is_same_v<T, AsyncSource::EndOfStream>)
                 {
                     /// The source signalled the end of the stream, i.e., because the external system closed the connection.
                     /// Check for a partially filled buffer before signalling EoS and exiting
@@ -106,15 +106,18 @@ private:
                     ctx.emitFn(ctx.originId, SourceReturnType::EoS{});
                     return false;
                 }
-                else if constexpr (std::is_same_v<T, Source::Cancelled>)
+                else if constexpr (std::is_same_v<T, AsyncSource::Cancelled>)
                 {
                     /// The source received a cancellation request, and
                     // asio reported successful cancellation via the operation_aborted signal
-                    /// Therefore, it is now safe to exit the loop and release the buffer and close the source
+                    if (result.dataAvailable)
+                    {
+                        ctx.emitFn(ctx.originId, SourceReturnType::Data(std::move(buffer)));
+                    }
                     ctx.emitFn(ctx.originId, SourceReturnType::EoS{});
                     return false;
                 }
-                else if constexpr (std::is_same_v<T, Source::Error>)
+                else if constexpr (std::is_same_v<T, AsyncSource::Error>)
                 {
                     const boost::system::system_error error = result.error;
                     ctx.emitFn(ctx.originId, SourceReturnType::Error{Exception{std::string(error.what()), 0}});

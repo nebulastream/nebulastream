@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -12,22 +12,15 @@
     limitations under the License.
 */
 
-#include <AsyncSourceRunner.hpp>
+#include <Sources/BlockingSource.hpp>
 
-#include <optional>
-#include <variant>
-#include <memory>
-
+#include <ostream>
 
 namespace NES::Sources
 {
-
-void AsyncSourceRunner::dispatch(const Event& event)
+std::ostream& operator<<(std::ostream& out, const BlockingSource& source)
 {
-    if (std::optional<State> newState = std::visit(Transitions{}, currentState, event))
-    {
-        currentState = *std::move(newState);
-    }
+    return source.toString(out);
 }
 
 }

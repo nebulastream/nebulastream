@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#include "Sources/Source.hpp"
+#include <Sources/AsyncSource.hpp>
+#include <ostream>
 
 namespace NES::Sources
 {
-std::ostream& operator<<(std::ostream& out, const Source& source)
+std::ostream& operator<<(std::ostream& out, const AsyncSource& source)
 {
     return source.toString(out);
 }

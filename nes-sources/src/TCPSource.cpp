@@ -31,7 +31,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
@@ -71,7 +71,7 @@ asio::awaitable<void> TCPSource::open(asio::io_context& ioc)
     co_await async_connect(socket.value(), endpoints, asio::use_awaitable);
 }
 
-asio::awaitable<Source::InternalSourceResult> TCPSource::fillBuffer(IOBuffer& buffer)
+asio::awaitable<AsyncSource::InternalSourceResult> TCPSource::fillBuffer(IOBuffer& buffer)
 {
     auto [errorCode, bytesRead] = co_await asio::async_read(
         socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
@@ -107,13 +107,13 @@ std::unique_ptr<Configurations::DescriptorConfig::Config> TCPSource::validateAnd
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
 }
 
-std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationRegistryReturnType
 SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(const SourceValidationRegistryArguments& arguments)
 {
     return TCPSource::validateAndFormat(arguments.config);
 }
 
-std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterTCPSource(const SourceRegistryArguments& arguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(const SourceRegistryArguments& arguments)
 {
     return std::make_unique<TCPSource>(arguments.sourceDescriptor);
 }

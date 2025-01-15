@@ -17,13 +17,13 @@
 #include <string>
 #include <unordered_map>
 
-#include "Configurations/Descriptor.hpp"
+#include <Configurations/Descriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources
 {
 
-using SourceValidationRegistryReturnType = Configurations::DescriptorConfig::Config;
+using SourceValidationRegistryReturnType = std::unique_ptr<Configurations::DescriptorConfig::Config>;
 struct SourceValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;

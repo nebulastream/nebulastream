@@ -22,7 +22,7 @@
 namespace NES::Sinks
 {
 
-using SinkRegistrySignature = RegistrySignature<std::string, Sink, const SinkDescriptor&>;
+using SinkRegistrySignature = RegistrySignature<std::string, std::unique_ptr<Sink>, const SinkDescriptor&>;
 class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
 {
 };

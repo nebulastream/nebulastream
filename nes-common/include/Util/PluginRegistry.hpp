@@ -95,7 +95,7 @@ template <typename KeyTypeT, typename ReturnTypeT, typename... Args>
 struct RegistrySignature
 {
     using KeyType = KeyTypeT;
-    using ReturnType = std::unique_ptr<ReturnTypeT>;
+    using ReturnType = ReturnTypeT;
     using CreatorFn = std::function<ReturnType(Args...)>;
 };
 

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -23,7 +24,7 @@ namespace NES::InputFormatters
 {
 
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
-using InputFormatterRegistrySignature = RegistrySignature<std::string, InputFormatter, const Schema&, std::string, std::string>;
+using InputFormatterRegistrySignature = RegistrySignature<std::string, std::unique_ptr<InputFormatter>, const Schema&, std::string, std::string>;
 class InputFormatterRegistry : public BaseRegistry<InputFormatterRegistry, InputFormatterRegistrySignature>
 {
 };

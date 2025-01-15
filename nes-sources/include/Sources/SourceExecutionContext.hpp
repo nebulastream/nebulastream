@@ -19,32 +19,35 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/AsyncSource.hpp>
 
 namespace NES::Sources
 {
 
 class AsyncSourceExecutor;
 
-struct SourceExecutionContext
+struct AsyncSourceExecutionContext
 {
-    SourceExecutionContext() = delete;
-    SourceExecutionContext(
+    AsyncSourceExecutionContext() = delete;
+    AsyncSourceExecutionContext(
         OriginId originId,
-        std::unique_ptr<Source> sourceImpl,
-        SourceReturnType::EmitFunction emitFn,
+        std::unique_ptr<AsyncSource> sourceImpl,
         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
 
+    void setEmitFunction(SourceReturnType::EmitFunction emit)
+    {
+        emitFn = emit;
+    }
+
     OriginId originId;
-    std::unique_ptr<Source> sourceImpl;
-    SourceReturnType::EmitFunction emitFn;
+    std::unique_ptr<AsyncSource> sourceImpl;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     uint64_t maxSequenceNumber;
     std::shared_ptr<AsyncSourceExecutor> executor;
+    SourceReturnType::EmitFunction emitFn;
 
 private:
-    /// If the shared_ptr is nullptr (does not manage an underlying pointer to an executor, create one atomically and return it
+    /// If the shared_ptr is nullptr (does not manage an underlying pointer to an executor, create one in a thread-safe way and return it
     /// This makes sure that the I/O thread(s) within the executor are only running when at least one source is active
     static std::shared_ptr<AsyncSourceExecutor> getExecutor();
 };

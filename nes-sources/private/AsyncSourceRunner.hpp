@@ -40,7 +40,7 @@ public:
     /* -------------------------------- Events -------------------------------- */
     struct EventStart
     {
-        SourceExecutionContext sourceExecutionContext;
+        SourceReturnType::EmitFunction emitFn;
     };
     struct EventStop
     {
@@ -50,7 +50,9 @@ public:
     /* ------------------------------------------------------------------------ */
 
 
-    AsyncSourceRunner() = default;
+    explicit AsyncSourceRunner(AsyncSourceExecutionContext&& ctx) : currentState(Idle{(std::move(ctx))})
+    {
+    }
     ~AsyncSourceRunner() = default;
 
     AsyncSourceRunner(const AsyncSourceRunner&) = delete;
@@ -64,6 +66,7 @@ private:
     /* -------------------------------- States -------------------------------- */
     struct Idle
     {
+        AsyncSourceExecutionContext sourceExecutionContext;
     };
     struct Running
     {
@@ -88,13 +91,14 @@ private:
         /// 2. Give one shared pointer object to the executor to spawn the root coroutine
         /// 3. Keep one shared pointer object in the Running state
         /// With this, we ensure that the lifetime of the functor will be longer than the Running state if necessary
-        std::optional<State> operator()(Idle&, EventStart& event) const
+        std::optional<State> operator()(Idle& state, EventStart& event) const
         {
             NES_DEBUG("Idle -> Running");
-            auto& ioc = event.sourceExecutionContext.executor->ioContext();
-            const auto executor = event.sourceExecutionContext.executor;
+            auto& ioc = state.sourceExecutionContext.executor->ioContext();
+            const auto executor = state.sourceExecutionContext.executor;
+            state.sourceExecutionContext.setEmitFunction(event.emitFn);
 
-            auto coro = std::make_shared<SourceCoroutineFunctor>(event.sourceExecutionContext);
+            auto coro = std::make_shared<SourceCoroutineFunctor>(state.sourceExecutionContext);
             executor->execute([&ioc, coro] { asio::co_spawn(ioc, (*coro)(), asio::detached); });
             return Running{.coro = coro};
         }

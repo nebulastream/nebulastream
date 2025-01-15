@@ -13,10 +13,12 @@
 add_source_files(nes-sources
         FileSource.cpp
         SourceDescriptor.cpp
-        Source.cpp
+        AsyncSource.cpp
+        BlockingSource.cpp
         SourceExecutionContext.cpp
         SourceHandle.cpp
         SourceProvider.cpp
+        BlockingSourceRunner.cpp
         SourceValidationProvider.cpp
         AsyncSourceRunner.cpp
         AsyncSourceExecutor.cpp

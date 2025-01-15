@@ -34,7 +34,7 @@
 #include <boost/asio/use_awaitable.hpp>
 
 #include <Configurations/Descriptor.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -66,7 +66,7 @@ asio::awaitable<void> FileSource::open(asio::io_context& ioc)
     co_return;
 }
 
-asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(IOBuffer& buffer)
+asio::awaitable<AsyncSource::InternalSourceResult> FileSource::fillBuffer(IOBuffer& buffer)
 {
     INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
@@ -81,7 +81,7 @@ asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(IOBuffer& b
         }
         if (errorCode == asio::error::operation_aborted)
         {
-            co_return Cancelled{};
+            co_return Cancelled{.dataAvailable = bytesRead != 0};
         }
         co_return Error{boost::system::system_error{errorCode}};
     }
@@ -116,14 +116,14 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationRegistryReturnType
 SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(const SourceValidationRegistryArguments& arguments)
 {
     return FileSource::validateAndFormat(arguments.config);
 }
 
 
-std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterFileSource(const SourceRegistryArguments& arguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(const SourceRegistryArguments& arguments)
 {
     return std::make_unique<FileSource>(arguments.sourceDescriptor);
 }

@@ -18,21 +18,19 @@
 #include <mutex>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <AsyncSourceExecutor.hpp>
 
 namespace NES::Sources {
 
-SourceExecutionContext::SourceExecutionContext(
+AsyncSourceExecutionContext::AsyncSourceExecutionContext(
     OriginId originId,
-    std::unique_ptr<Source> sourceImpl,
-    SourceReturnType::EmitFunction emitFn,
+    std::unique_ptr<AsyncSource> sourceImpl,
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
     : originId(originId)
     , sourceImpl(std::move(sourceImpl))
-    , emitFn(emitFn)
     , bufferProvider(bufferProvider)
     , maxSequenceNumber(0)
     , executor(getExecutor())
@@ -40,7 +38,7 @@ SourceExecutionContext::SourceExecutionContext(
 }
 
 
-std::shared_ptr<AsyncSourceExecutor> SourceExecutionContext::getExecutor()
+std::shared_ptr<AsyncSourceExecutor> AsyncSourceExecutionContext::getExecutor()
     {
         static std::weak_ptr<AsyncSourceExecutor> weakExecutor;
         static std::mutex mutex;

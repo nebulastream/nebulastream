@@ -36,7 +36,7 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -135,7 +135,7 @@ TEST_F(TCPSourceTest, FillBuffer)
     auto buf = bufferManager->getBufferBlocking();
     auto future = asio::co_spawn(
         ioc,
-        [&]() -> asio::awaitable<Sources::Source::InternalSourceResult>
+        [&]() -> asio::awaitable<Sources::AsyncSource::InternalSourceResult>
         {
             /// Open the connection to our mock server
             co_await tcpSource.open(ioc);
@@ -159,6 +159,6 @@ TEST_F(TCPSourceTest, FillBuffer)
     EXPECT_EQ(expected, actual);
 
     /// We expect to receive the Continue message since we have received exactly 32 bytes, which is equal to the buffer size specified
-    EXPECT_TRUE(std::holds_alternative<Sources::Source::Continue>(sourceResult));
+    EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::Continue>(sourceResult));
 }
 }

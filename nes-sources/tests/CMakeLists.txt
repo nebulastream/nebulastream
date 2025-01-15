@@ -10,12 +10,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_unit_test(file-source-unit-tests
+
+add_library(nes-sources-test-utils Util/TestSource.cpp)
+target_include_directories(nes-sources-test-utils PUBLIC ../private Util)
+target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils)
+
+function(add_nes_source_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-memory-test-utils nes-sources-test-utils)
+endfunction()
+
+add_nes_source_test(blocking-source-runner-test Unit/BlockingSourceRunnerTest.cpp)
+
+
+add_nes_unit_test(source-unit-tests
         "Unit/FileSourceTest.cpp"
         "Unit/TCPSourceTest.cpp"
 )
 
-target_include_directories(file-source-unit-tests PRIVATE 
+target_include_directories(source-unit-tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../private)
 
-target_link_libraries(file-source-unit-tests nes-sources)
+target_link_libraries(source-unit-tests nes-sources)

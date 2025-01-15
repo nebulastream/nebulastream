@@ -15,39 +15,86 @@
 #include <Sources/SourceHandle.hpp>
 
 #include <memory>
+#include <ostream>
+#include <type_traits>
+#include <variant>
 
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/BlockingSource.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <AsyncSourceRunner.hpp>
-#include <Sources/SourceExecutionContext.hpp>
+#include <BlockingSourceRunner.hpp>
+#include "ErrorHandling.hpp"
+#include <Sources/SourceReturnType.hpp>
 
 namespace NES::Sources
 {
 
-SourceHandle::SourceHandle(SourceExecutionContext context) : originId(context.originId), sourceRunner(std::make_unique<AsyncSourceRunner>()), sourceExecutionContext(std::move(context))
+SourceHandle::SourceHandle(
+    OriginId originId,
+    std::shared_ptr<Memory::AbstractBufferProvider> /*bufferProvider*/,
+    std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>> /*sourceImpl*/,
+    std::unique_ptr<InputFormatters::InputFormatter> /*inputFormatter*/)
+    : originId(originId)
 {
 }
 
 SourceHandle::~SourceHandle() = default;
 
-void SourceHandle::start()
+bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFn) const
 {
-
-    sourceRunner->dispatch(AsyncSourceRunner::EventStart{.sourceExecutionContext = std::move(sourceExecutionContext)});
+    return std::visit(
+        [this, emitFn]<typename T>(T&& sourceRunner) -> bool
+        {
+            if constexpr (std::is_same_v<std::decay_t<T>, AsyncSourceRunner>)
+            {
+                return sourceRunner->dispatch(AsyncSourceRunner::EventStart{emitFn});
+            }
+            else if constexpr (std::is_same_v<std::decay_t<T>, BlockingSourceRunner>)
+            {
+                return sourceRunner->start(emitFn);
+            }
+            else
+            {
+                emitFn(originId, SourceReturnType::Error{CannotStartQuery()});
+                return false;
+            }
+        },
+        sourceRunner);
 }
 
-void SourceHandle::stop() const
+bool SourceHandle::stop() const
 {
-    sourceRunner->dispatch(AsyncSourceRunner::EventStop{});
+    return std::visit(
+        []<typename T>(T&& sourceRunner) -> bool
+        {
+            if constexpr (std::is_same_v<std::decay_t<T>, AsyncSourceRunner>)
+            {
+                return sourceRunner->dispatch(AsyncSourceRunner::EventStop{});
+            }
+            else if constexpr (std::is_same_v<std::decay_t<T>, BlockingSourceRunner>)
+            {
+                return sourceRunner->stop();
+            }
+            else
+            {
+                return false;
+            }
+        },
+        sourceRunner);
 }
 
 OriginId SourceHandle::getSourceId() const
 {
-    return this->sourceExecutionContext.originId;
+    return originId;
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
+std::ostream& operator<<(std::ostream& out, const SourceHandle& /*sourceHandle*/)
 {
-    return out << *sourceHandle.sourceRunner;
+    return out;
 }
 
 }

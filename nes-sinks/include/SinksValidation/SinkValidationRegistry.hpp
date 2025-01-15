@@ -23,7 +23,7 @@ namespace NES::Sinks
 {
 
 using SinkValidationRegistrySignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
+    = RegistrySignature<std::string, std::unique_ptr<Configurations::DescriptorConfig::Config>, std::unordered_map<std::string, std::string>>;
 class SinkValidationRegistry final : public BaseRegistry<SinkValidationRegistry, SinkValidationRegistrySignature>
 {
 };

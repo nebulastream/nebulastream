@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include "SourceReturnType.hpp"
-
 
 #include <variant>
 
@@ -24,17 +22,17 @@
 #include <boost/system/system_error.hpp>
 #include <fmt/ostream.h>
 
+#include <Sources/SourceReturnType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Sources
 {
 
+using IOBuffer = Memory::TupleBuffer;
 namespace asio = boost::asio;
 
-using IOBuffer = Memory::TupleBuffer;
-
-/// Source is the interface for all sources that read data into buffers.
-class Source
+/// AsyncSource is the interface for all sources that read data into buffers asynchronously.
+class AsyncSource
 {
 public:
     struct EndOfStream
@@ -53,18 +51,18 @@ public:
 
     struct Cancelled
     {
-
+        bool dataAvailable;
     };
 
     using InternalSourceResult = std::variant<Continue, Cancelled, EndOfStream, Error>;
 
-    Source() = default;
-    virtual ~Source() = default;
+    AsyncSource() = default;
+    virtual ~AsyncSource() = default;
 
-    Source(const Source&) = delete;
-    Source& operator=(const Source&) = delete;
-    Source(Source&&) = delete;
-    Source& operator=(Source&&) = delete;
+    AsyncSource(const AsyncSource&) = delete;
+    AsyncSource& operator=(const AsyncSource&) = delete;
+    AsyncSource(AsyncSource&&) = delete;
+    AsyncSource& operator=(AsyncSource&&) = delete;
 
     virtual asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) = 0;
 
@@ -78,7 +76,7 @@ public:
     /// Sources will typically implement this by calling cancel() on their associated I/O object
     virtual void cancel() = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const Source& source);
+    friend std::ostream& operator<<(std::ostream& out, const AsyncSource& source);
 
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
@@ -90,7 +88,7 @@ protected:
 namespace fmt
 {
 template <>
-struct formatter<NES::Sources::Source> : ostream_formatter
+struct formatter<NES::Sources::AsyncSource> : ostream_formatter
 {
 };
 }

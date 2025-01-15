@@ -21,11 +21,17 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceExecutionContext.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 
 namespace NES::Sources
 {
 
 class AsyncSourceRunner;
+class BlockingSourceRunner;
 
 /// Interface class to handle sources.
 /// Created from a source descriptor via the SourceProvider.
@@ -35,12 +41,16 @@ class AsyncSourceRunner;
 class SourceHandle
 {
 public:
-    explicit SourceHandle(SourceExecutionContext context);
+    explicit SourceHandle(
+        OriginId originId,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+        std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>> sourceImpl,
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     ~SourceHandle();
 
-    void start();
-    void stop() const;
+    bool start(SourceReturnType::EmitFunction&& emitFn) const;
+    bool stop() const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 
@@ -48,8 +58,7 @@ public:
 
 private:
     OriginId originId;
-    std::unique_ptr<AsyncSourceRunner> sourceRunner;
-    SourceExecutionContext sourceExecutionContext;
+    std::variant<std::unique_ptr<AsyncSourceRunner>, std::unique_ptr<BlockingSourceRunner>> sourceRunner;
 };
 
 }

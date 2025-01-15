@@ -16,13 +16,17 @@
 
 #include <cstdint>
 #include <memory>
+#include <ostream>
+#include <unordered_map>
+#include <string>
+#include <optional>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 #include <Configurations/Descriptor.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 
@@ -32,7 +36,7 @@ namespace NES::Sources
 namespace asio = boost::asio;
 
 
-class TCPSource final : public Source
+class TCPSource final : public AsyncSource
 {
 public:
     static inline const std::string NAME = "TCP";

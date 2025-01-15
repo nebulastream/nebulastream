@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <optional>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 
@@ -24,14 +25,15 @@
 #include <boost/asio/posix/stream_descriptor.hpp>
 #include <boost/asio/io_context.hpp>
 
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Sources/AsyncSource.hpp>
 
 namespace NES::Sources
 {
 
-class FileSource final : public Source
+class FileSource final : public AsyncSource
 {
 public:
     static inline const std::string NAME = "File";

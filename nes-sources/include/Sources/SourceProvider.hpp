@@ -39,8 +39,7 @@ public:
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&& emitFunction);
+        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider);
 
     ~SourceProvider() = default;
 };
