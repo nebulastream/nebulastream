@@ -36,10 +36,6 @@ public:
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
     std::string toString() override;
 };
 

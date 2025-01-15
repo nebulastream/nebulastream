@@ -65,7 +65,6 @@ public:
     /// @param rawData a pointer to the raw value
     std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
-    /// Returns the string representation of this physical data type.
     [[nodiscard]] std::string toString() const noexcept override;
 
     NativeType const nativeType;

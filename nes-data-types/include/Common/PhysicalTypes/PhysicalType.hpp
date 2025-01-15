@@ -48,11 +48,6 @@ public:
 
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    /**
-     * @brief Checks if two PhysicalType objects are equal.
-     * @param rhs the other PhysicalType object
-     * @return true if they are equal, false otherwise
-     */
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 
     /// Type that is contained by this PhysicalType container
