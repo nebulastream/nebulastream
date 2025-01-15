@@ -37,7 +37,6 @@ RUN \
     && vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics \
     && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" \
     && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --raw --output-dir / --output vcpkg \
-    && cp vcpkg_repository/scripts/vcpkgTools.xml /vcpkg/scripts/ \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
 
