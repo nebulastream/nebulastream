@@ -11,12 +11,24 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
-        Char.cpp
-        Boolean.cpp
-        Undefined.cpp
         Numeric.cpp
-        Integer.cpp
-        Float.cpp
-        DataTypeFactory.cpp
-        VariableSizedDataType.cpp
+        DataTypeProvider.cpp
         )
+
+# Register plugins
+add_plugin(BOOLEAN DataType nes-data-types Boolean.cpp)
+add_plugin(CHAR DataType nes-data-types Char.cpp)
+add_plugin(FLOAT32 DataType nes-data-types Float.cpp)
+add_plugin(FLOAT64 DataType nes-data-types Float.cpp)
+add_plugin(INT8 DataType nes-data-types Integer.cpp)
+add_plugin(INT16 DataType nes-data-types Integer.cpp)
+add_plugin(INT32 DataType nes-data-types Integer.cpp)
+add_plugin(INT64 DataType nes-data-types Integer.cpp)
+add_plugin(UINT8 DataType nes-data-types Integer.cpp)
+add_plugin(UINT16 DataType nes-data-types Integer.cpp)
+add_plugin(UINT32 DataType nes-data-types Integer.cpp)
+add_plugin(UINT64 DataType nes-data-types Integer.cpp)
+add_plugin(UNDEFINED DataType nes-data-types Undefined.cpp)
+add_plugin(VARSIZED DataType nes-data-types VariableSizedDataType.cpp)
+
+

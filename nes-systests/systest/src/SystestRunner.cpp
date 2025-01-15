@@ -40,7 +40,7 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include "Common/DataTypes/DataTypeFactory.hpp"
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -55,7 +55,9 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     CLI::QueryConfig config{};
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
-        {"CHECKSUM", {{DataTypeFactory::createUInt64(), "S$Count"}, {DataTypeFactory::createUInt64(), "S$Checksum"}}}};
+        {"CHECKSUM",
+         {{DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Count"},
+          {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))

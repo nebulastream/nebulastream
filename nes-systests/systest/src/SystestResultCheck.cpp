@@ -38,7 +38,7 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
@@ -70,11 +70,11 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         std::shared_ptr<DataType> dataType;
         if (auto type = magic_enum::enum_cast<BasicType>(typeTrimmed); type.has_value())
         {
-            dataType = DataTypeFactory::createType(type.value());
+            dataType = DataTypeProvider::provideBasicType(type.value());
         }
         else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
-            dataType = DataTypeFactory::createVariableSizedData();
+            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
         }
         else
         {

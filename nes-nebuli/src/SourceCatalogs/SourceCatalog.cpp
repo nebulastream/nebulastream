@@ -24,7 +24,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Catalogs::Source
 {

@@ -20,7 +20,7 @@
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -280,18 +280,28 @@ TEST_F(VarValTest, readFromMemoryTest)
     };
 
     const DefaultPhysicalTypeFactory factory;
-    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, factory.getPhysicalType(DataTypeFactory::createInt8()));
-    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, factory.getPhysicalType(DataTypeFactory::createInt16()));
-    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, factory.getPhysicalType(DataTypeFactory::createInt32()));
-    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, factory.getPhysicalType(DataTypeFactory::createInt64()));
-    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, factory.getPhysicalType(DataTypeFactory::createUInt8()));
-    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, factory.getPhysicalType(DataTypeFactory::createUInt16()));
-    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, factory.getPhysicalType(DataTypeFactory::createUInt32()));
-    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, factory.getPhysicalType(DataTypeFactory::createUInt64()));
-    testVarValReadFromMemory.operator()<float>(someRandomNumber, factory.getPhysicalType(DataTypeFactory::createFloat()));
-    testVarValReadFromMemory.operator()<double>(someRandomNumber, factory.getPhysicalType(DataTypeFactory::createDouble()));
-    testVarValReadFromMemory.operator()<bool>(true, factory.getPhysicalType(DataTypeFactory::createBoolean()));
-    testVarValReadFromMemory.operator()<bool>(false, factory.getPhysicalType(DataTypeFactory::createBoolean()));
+    testVarValReadFromMemory.operator()<int8_t>(
+        -someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT8)));
+    testVarValReadFromMemory.operator()<int16_t>(
+        minI8Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT16)));
+    testVarValReadFromMemory.operator()<int32_t>(
+        minI16Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT32)));
+    testVarValReadFromMemory.operator()<int64_t>(
+        minI32Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT64)));
+    testVarValReadFromMemory.operator()<uint8_t>(
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT8)));
+    testVarValReadFromMemory.operator()<uint16_t>(
+        maxUI8Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT16)));
+    testVarValReadFromMemory.operator()<uint32_t>(
+        maxUI16Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT32)));
+    testVarValReadFromMemory.operator()<uint64_t>(
+        maxUI32Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64)));
+    testVarValReadFromMemory.operator()<float>(
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT32)));
+    testVarValReadFromMemory.operator()<double>(
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT64)));
+    testVarValReadFromMemory.operator()<bool>(true, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
+    testVarValReadFromMemory.operator()<bool>(false, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
 }
 
 TEST_F(VarValTest, operatorBoolTest)

@@ -18,7 +18,6 @@
 #include <string>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {

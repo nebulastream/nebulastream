@@ -22,7 +22,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 namespace NES
@@ -36,8 +36,7 @@ NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionMod::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto addNode = std::make_shared<NodeFunctionMod>(
-        DataTypeFactory::createFloat()); /// TODO: stamp should always be float, but is this the right way?
+    auto addNode = std::make_shared<NodeFunctionMod>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
     addNode->setChildren(left, right);
     return addNode;
 }

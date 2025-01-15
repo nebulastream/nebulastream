@@ -19,7 +19,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -54,9 +55,9 @@ public:
 
         varSizedDataSchema = Schema::create(memoryLayout)
                                  ->addField("test$t1", BasicType::UINT16)
-                                 ->addField("test$t2", DataTypeFactory::createVariableSizedData())
+                                 ->addField("test$t2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
                                  ->addField("test$t3", BasicType::FLOAT64)
-                                 ->addField("test$t4", DataTypeFactory::createVariableSizedData());
+                                 ->addField("test$t4", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();

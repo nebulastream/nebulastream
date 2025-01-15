@@ -21,7 +21,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 
@@ -92,11 +92,11 @@ std::shared_ptr<DataType> MedianAggregationDescriptor::getInputStamp()
 }
 std::shared_ptr<DataType> MedianAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeFactory::createUndefined();
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 std::shared_ptr<DataType> MedianAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeFactory::createDouble();
+    return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
 }
 
 }

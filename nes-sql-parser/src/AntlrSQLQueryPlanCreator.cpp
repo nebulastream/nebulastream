@@ -49,6 +49,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Parsers
 {
@@ -828,47 +829,47 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         /// Signed Integers
         if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt8();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt16();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt32();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt64();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
         }
 
         /// Unsigned Integers
         else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt8();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt16();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt32();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createInt64();
+            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
         }
 
         /// Floating Point
         else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createDouble();
+            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT64);
         }
         else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeFactory::createFloat();
+            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT32);
         }
         else
         {
@@ -884,7 +885,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
 
-        const auto dataType = DataTypeFactory::createVariableSizedData();
+        const auto dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
         auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
 
         helper.functionBuilder.push_back(constFunctionItem);

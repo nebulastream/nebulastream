@@ -21,7 +21,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 namespace NES
@@ -35,7 +35,7 @@ NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionPow::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeFactory::createFloat());
+    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
     powNode->setChildren(left, right);
     return powNode;
 }

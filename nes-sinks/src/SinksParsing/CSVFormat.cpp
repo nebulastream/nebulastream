@@ -36,7 +36,7 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -90,7 +90,7 @@ std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer
     if (addTimestamp)
     {
         auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
+        schema->removeField(AttributeField::create("timestamp", DataTypeProvider::provideDataType(LogicalType::UINT64)));
         bufferContent = tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
         bufferContent = Util::replaceAll(bufferContent, "\n", fmt::format(",{}\n", timestamp));
         schema->addField("timestamp", BasicType::UINT64);

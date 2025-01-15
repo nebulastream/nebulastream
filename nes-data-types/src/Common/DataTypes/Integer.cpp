@@ -14,11 +14,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
@@ -60,6 +61,46 @@ std::shared_ptr<DataType> Integer::join(const std::shared_ptr<DataType> otherDat
 std::string Integer::toString()
 {
     return fmt::format("{}{}", lowerBound == 0 ? "UINT" : "INT", std::to_string(bits));
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(8, INT8_MIN, INT8_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(8, 0, UINT8_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(16, INT16_MIN, INT16_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(16, 0, UINT16_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(32, INT32_MIN, INT32_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(32, 0, UINT32_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(64, INT64_MIN, INT64_MAX);
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Integer>(64, 0, UINT64_MAX);
 }
 
 }
