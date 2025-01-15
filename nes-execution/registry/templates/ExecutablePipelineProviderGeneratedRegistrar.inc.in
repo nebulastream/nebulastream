@@ -33,7 +33,7 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, std::string, Runtime::Execution::ExecutablePipelineProviderRegistryReturnType>::
+Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, std::string, Runtime::Execution::ExecutablePipelineProviderRegistryReturnType, Runtime::Execution::ExecutablePipelineProviderRegistryArguments>::
     registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar;

@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Functions
 {
 
 /// Performs leftExecutableFunctionSub % rightExecutableFunctionSub
-class ExecutableFunctionMod : public Function
+class ExecutableFunctionMod final : public Function
 {
 public:
     ExecutableFunctionMod(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);

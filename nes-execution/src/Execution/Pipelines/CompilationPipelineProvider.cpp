@@ -37,7 +37,8 @@ std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
 }
 
 std::unique_ptr<ExecutablePipelineProviderRegistryReturnType>
-ExecutablePipelineProviderGeneratedRegistrar::RegisterCompilationExecutablePipelineProvider()
+ExecutablePipelineProviderGeneratedRegistrar::RegisterCompilationExecutablePipelineProvider(
+    const ExecutablePipelineProviderRegistryArguments&)
 {
     return std::make_unique<CompilationPipelineProvider>();
 }
