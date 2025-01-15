@@ -26,11 +26,7 @@ class Char final : public DataType
 public:
     ~Char() override = default;
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
+
     bool operator==(const DataType& other) const override;
 
     /**
@@ -41,10 +37,7 @@ public:
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-     * @brief Returns a string representation of the data type.
-     * @return string
-     */
+
     std::string toString() override;
 };
 
