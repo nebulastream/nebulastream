@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <Common/DataTypes/Numeric.hpp>
 
@@ -35,8 +36,7 @@ public:
      * @param lowerBound the lower bound, which is contained in that integer.
      * @param upperBound the upper bound, which is contained in that integer.
      */
-    inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
-        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
+    Integer(int8_t bits, int64_t lowerBound, uint64_t upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
     {
     }
 
@@ -56,7 +56,7 @@ public:
     std::string toString() override;
 
     int64_t lowerBound;
-    int64_t upperBound;
+    uint64_t upperBound;
 };
 
 }

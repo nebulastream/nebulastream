@@ -19,7 +19,7 @@
 #include <BaseUnitTest.hpp>
 #include <SystestParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -46,22 +46,22 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
     SystestParser::SLTSource expextedSLTSource
-        = {.name = "e123", .fields = {{DataTypeFactory::createUInt32(), "id"}}, .tuples = {"1", "1", "1", "1"}};
+        = {.name = "e123", .fields = {{DataTypeProvider::provideDataType(LogicalType::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
     SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
-           = {{DataTypeFactory::createInt8(), "i"},
-              {DataTypeFactory::createUInt8(), "i"},
-              {DataTypeFactory::createInt16(), "i"},
-              {DataTypeFactory::createUInt16(), "i"},
-              {DataTypeFactory::createInt32(), "i"},
-              {DataTypeFactory::createUInt32(), "i"},
-              {DataTypeFactory::createInt64(), "i"},
-              {DataTypeFactory::createFloat(), "i"},
-              {DataTypeFactory::createUInt64(), "i"},
-              {DataTypeFactory::createDouble(), "i"},
-              {DataTypeFactory::createBoolean(), "i"},
-              {DataTypeFactory::createChar(), "i"}},
+           = {{DataTypeProvider::provideDataType(LogicalType::INT8), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::UINT8), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::INT16), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::UINT16), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::INT32), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::UINT32), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::INT64), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::FLOAT32), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::UINT64), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::FLOAT64), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::BOOLEAN), "i"},
+              {DataTypeProvider::provideDataType(LogicalType::CHAR), "i"}},
            .csvFilePath = "xyz.txt"};
 
     SystestParser parser{};
@@ -81,9 +81,9 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeFactory::createUInt64(), "id"},
-           {DataTypeFactory::createUInt64(), "value"},
-           {DataTypeFactory::createUInt64(), "timestamp"}};
+        = {{DataTypeProvider::provideDataType(LogicalType::UINT64), "id"},
+           {DataTypeProvider::provideDataType(LogicalType::UINT64), "value"},
+           {DataTypeProvider::provideDataType(LogicalType::UINT64), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
@@ -143,9 +143,9 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeFactory::createUInt64(), "id"},
-           {DataTypeFactory::createUInt64(), "value"},
-           {DataTypeFactory::createUInt64(), "timestamp"}};
+        = {{DataTypeProvider::provideDataType(LogicalType::UINT64), "id"},
+           {DataTypeProvider::provideDataType(LogicalType::UINT64), "value"},
+           {DataTypeProvider::provideDataType(LogicalType::UINT64), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",

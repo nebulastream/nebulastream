@@ -22,7 +22,7 @@
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 
 namespace NES::Windowing
@@ -73,7 +73,7 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     /// a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeFactory::createUInt64());
+    onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
     asField->setStamp(onField->getStamp());
 }
 
@@ -83,15 +83,15 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 }
 std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
 {
-    return DataTypeFactory::createUInt64();
+    return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
 std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeFactory::createUInt64();
+    return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
 std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeFactory::createUInt64();
+    return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
 
 }

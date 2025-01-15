@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
@@ -23,7 +24,7 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Undefined.hpp>
@@ -84,53 +85,44 @@ std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const S
     NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)
     {
-        return DataTypeFactory::createUndefined();
+        return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
     }
     if (serializedDataType.type() == SerializableDataType_Type_CHAR)
     {
-        return DataTypeFactory::createChar();
+        return DataTypeProvider::provideDataType(LogicalType::CHAR);
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_INTEGER)
+    if (serializedDataType.type() == SerializableDataType_Type_INTEGER)
     {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType.details().UnpackTo(&integerDetails);
-        if (integerDetails.bits() == 64)
+        if (integerDetails.lowerbound() < 0)
         {
-            if (integerDetails.lowerbound() == 0)
-            {
-                return DataTypeFactory::createUInt64();
-            }
-            else
-            {
-                return DataTypeFactory::createInt64();
-            }
+            return DataTypeProvider::provideDataType("INT" + std::to_string(integerDetails.bits()));
         }
-        return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.upperbound());
+        /// TODO #391: Parsing of string into value should be handled centrally
+        return DataTypeProvider::provideDataType("UINT" + std::to_string(integerDetails.bits()));
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_FLOAT)
+    if (serializedDataType.type() == SerializableDataType_Type_FLOAT)
     {
         auto floatDetails = SerializableDataType_FloatDetails();
         serializedDataType.details().UnpackTo(&floatDetails);
         if (floatDetails.bits() == 32)
         {
-            return DataTypeFactory::createFloat();
+            return DataTypeProvider::provideDataType(LogicalType::FLOAT32);
         }
-        else
-        {
-            return DataTypeFactory::createDouble();
-        }
+        return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_BOOLEAN)
+    if (serializedDataType.type() == SerializableDataType_Type_BOOLEAN)
     {
-        return DataTypeFactory::createBoolean();
+        return DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_CHAR)
+    if (serializedDataType.type() == SerializableDataType_Type_CHAR)
     {
-        return DataTypeFactory::createChar();
+        return DataTypeProvider::provideDataType(LogicalType::CHAR);
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_VARIABLE_SIZED_DATA)
+    if (serializedDataType.type() == SerializableDataType_Type_VARIABLE_SIZED_DATA)
     {
-        return DataTypeFactory::createVariableSizedData();
+        return DataTypeProvider::provideDataType(LogicalType::VARSIZED);
     }
     throw CannotDeserialize("deserialization is not possible for {}", magic_enum::enum_name(serializedDataType.type()));
 }

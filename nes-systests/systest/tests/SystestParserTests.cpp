@@ -20,7 +20,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -72,11 +72,11 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
         [&](SystestParser::CSVSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(*sourceOut.fields[0].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[0].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(*sourceOut.fields[1].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[1].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(*sourceOut.fields[2].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[2].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
             ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
             callbackCalled = true;
@@ -139,11 +139,11 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
         [&](SystestParser::SLTSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(*sourceOut.fields[0].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[0].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(*sourceOut.fields[1].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[1].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(*sourceOut.fields[2].type, *DataTypeFactory::createUInt64());
+            ASSERT_EQ(*sourceOut.fields[2].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
             ASSERT_EQ(sourceOut.tuples[0], tpl1);
             ASSERT_EQ(sourceOut.tuples[1], tpl2);

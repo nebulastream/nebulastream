@@ -32,7 +32,7 @@
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {

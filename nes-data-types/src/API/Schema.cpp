@@ -24,7 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES
@@ -91,7 +91,7 @@ std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& 
 ///TODO #473: investigate if we can remove this method
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicType& type)
 {
-    return addField(name, DataTypeFactory::createType(type));
+    return addField(name, DataTypeProvider::provideBasicType(type));
 }
 
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)

@@ -29,7 +29,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 using namespace std;
 
@@ -49,13 +49,13 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "1");
-        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "2");
-        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "3");
-        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "4");
-        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "5");
-        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "6");
-        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "7");
+        pred1 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "1");
+        pred2 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "2");
+        pred3 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "3");
+        pred4 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "4");
+        pred5 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "5");
+        pred6 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "6");
+        pred7 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "7");
 
         sourceOp1 = std::make_shared<SourceNameLogicalOperator>("test_source_1", getNextOperatorId());
         sourceOp2 = std::make_shared<SourceNameLogicalOperator>("test_source_2", getNextOperatorId());
