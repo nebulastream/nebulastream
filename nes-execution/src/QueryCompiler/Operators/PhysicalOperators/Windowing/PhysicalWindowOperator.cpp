@@ -41,7 +41,7 @@
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -144,7 +144,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
             {
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
                     /// We assume that the count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::AvgAggregationFunction>(
                         physicalInputType,
                         physicalFinalType,
@@ -160,7 +160,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Count: {
                     /// We assume that a count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
                         countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;

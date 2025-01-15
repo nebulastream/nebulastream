@@ -23,7 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 namespace NES
 {
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName)
@@ -38,7 +38,7 @@ std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::shared_ptr<Da
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::string fieldName)
 {
-    return create(DataTypeFactory::createUndefined(), std::move(fieldName));
+    return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED), std::move(fieldName));
 }
 
 bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const

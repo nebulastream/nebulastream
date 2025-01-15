@@ -27,63 +27,65 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
+/// TODO #391: Use std::from_chars to check value for data type validity
 FunctionItem::FunctionItem(int8_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint8_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt8(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT8), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int16_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt16(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT16), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint16_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT16), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int32_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt32(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint32_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt32(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int64_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt64(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint64_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt64(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(float value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createFloat(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::FLOAT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(double value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createDouble(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(bool value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createBoolean(), std::to_string(static_cast<int>(value))))
+    : FunctionItem(NodeFunctionConstantValue::create(
+          DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::to_string(static_cast<int>(value))))
 {
 }
 
@@ -118,12 +120,12 @@ std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const std::
 
 FunctionItem Attribute(std::string fieldName)
 {
-    return FunctionItem(NodeFunctionFieldAccess::create(std::move(fieldName)));
+    return {NodeFunctionFieldAccess::create(std::move(fieldName))};
 }
 
 FunctionItem Attribute(std::string fieldName, BasicType type)
 {
-    return FunctionItem(NodeFunctionFieldAccess::create(DataTypeFactory::createType(type), std::move(fieldName)));
+    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideBasicType(type), std::move(fieldName))};
 }
 
 std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)

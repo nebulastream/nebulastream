@@ -44,7 +44,7 @@ message SerializableDataType{
    */
   message IntegerDetails{
     uint64 bits = 1;
-    int64 upperBound = 2;
+    uint64 upperBound = 2;
     int64 lowerBound = 3;
   }
 

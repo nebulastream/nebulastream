@@ -14,10 +14,11 @@
 
 #include <memory>
 #include <Util/Common.hpp>
+#include <DataTypeRegistry.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Char.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -31,14 +32,19 @@ std::shared_ptr<DataType> Char::join(const std::shared_ptr<DataType> otherDataTy
 {
     if (NES::Util::instanceOf<Char>(otherDataType))
     {
-        return DataTypeFactory::createChar();
+        return DataTypeProvider::provideDataType(LogicalType::CHAR);
     }
-    return DataTypeFactory::createUndefined();
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 
 std::string Char::toString()
 {
     return std::string(magic_enum::enum_name(BasicType::CHAR));
+}
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Char>();
 }
 
 }

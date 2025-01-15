@@ -15,28 +15,28 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#    error "This file should not be included directly! Include instead include ExecutablePipelineProviderRegistry.hpp"
+#ifndef INCLUDED_FROM_DATA_TYPE_REGISTRY
+#    error "This file should not be included directly! Include instead include DataTypeRegistry.hpp"
 #endif
 
-#include <memory>
 #include <string>
 #include <Util/Registry.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar
+namespace NES::DataTypeGeneratedRegistrar
 {
 
-/// declaration of register functions for 'ExecutablePipelineProviders'
+/// declaration of all functions for 'DataTypes'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
+
 namespace NES
 {
 template <>
-inline void
-Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, std::string, Runtime::Execution::ExecutablePipelineProviderRegistryReturnType, Runtime::Execution::ExecutablePipelineProviderRegistryArguments>::
-    registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>::registerAll(
+    [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar;
+    using namespace NES::DataTypeGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

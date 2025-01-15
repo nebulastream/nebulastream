@@ -21,6 +21,7 @@
 #include <memory>
 #include <ranges>
 #include <regex>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
@@ -45,7 +46,7 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace YAML
 {
@@ -53,72 +54,14 @@ using namespace NES::CLI;
 
 std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
 {
-    if (fieldNodeType == "VARSIZED")
+    try
     {
-        return NES::DataTypeFactory::createVariableSizedData();
+        return NES::DataTypeProvider::provideDataType(fieldNodeType);
     }
-
-    if (fieldNodeType == "BOOLEAN")
+    catch (std::runtime_error& e)
     {
-        return NES::DataTypeFactory::createBoolean();
+        throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
     }
-
-    if (fieldNodeType == "INT8")
-    {
-        return NES::DataTypeFactory::createInt8();
-    }
-
-    if (fieldNodeType == "UINT8")
-    {
-        return NES::DataTypeFactory::createUInt8();
-    }
-
-    if (fieldNodeType == "INT16")
-    {
-        return NES::DataTypeFactory::createInt16();
-    }
-
-    if (fieldNodeType == "UINT16")
-    {
-        return NES::DataTypeFactory::createUInt16();
-    }
-
-    if (fieldNodeType == "INT32")
-    {
-        return NES::DataTypeFactory::createInt32();
-    }
-
-    if (fieldNodeType == "UINT32")
-    {
-        return NES::DataTypeFactory::createUInt32();
-    }
-
-    if (fieldNodeType == "INT64")
-    {
-        return NES::DataTypeFactory::createInt64();
-    }
-
-    if (fieldNodeType == "UINT64")
-    {
-        return NES::DataTypeFactory::createUInt64();
-    }
-
-    if (fieldNodeType == "FLOAT32")
-    {
-        return NES::DataTypeFactory::createFloat();
-    }
-
-    if (fieldNodeType == "FLOAT64")
-    {
-        return NES::DataTypeFactory::createDouble();
-    }
-
-    if (fieldNodeType == "CHAR")
-    {
-        return NES::DataTypeFactory::createChar();
-    }
-
-    throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
 }
 
 template <>

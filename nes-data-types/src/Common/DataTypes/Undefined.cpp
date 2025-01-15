@@ -14,7 +14,8 @@
 
 #include <memory>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <DataTypeRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
@@ -27,11 +28,17 @@ bool Undefined::operator==(const DataType& other) const
 
 std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>)
 {
-    return DataTypeFactory::createUndefined();
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 std::string Undefined::toString()
 {
     return "Undefined";
 }
+
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
+{
+    return std::make_unique<Undefined>();
+}
+
 
 }

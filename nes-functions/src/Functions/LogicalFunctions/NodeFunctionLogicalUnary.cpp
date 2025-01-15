@@ -13,19 +13,22 @@
 */
 
 #include <memory>
+#include <utility>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include "Functions/LogicalFunctions/NodeFunctionLogical.hpp"
+#include "Functions/NodeFunctionUnary.hpp"
 
 
 namespace NES
 {
 
 NodeFunctionLogicalUnary::NodeFunctionLogicalUnary(std::string name)
-    : NodeFunctionUnary(DataTypeFactory::createBoolean(), std::move(name)), LogicalNodeFunction()
+    : NodeFunctionUnary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(name)), LogicalNodeFunction()
 {
 }
 

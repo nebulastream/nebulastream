@@ -17,7 +17,7 @@
 #include <optional>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
@@ -48,20 +48,24 @@ std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& l
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (Util::instanceOf<const Float>(left) && Util::instanceOf<const Integer>(right))
     {
-        return (left.bits == sizeOfIntInBits ? DataTypeFactory::createFloat() : DataTypeFactory::createDouble());
+        return (
+            left.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32)
+                                         : DataTypeProvider::provideDataType(LogicalType::FLOAT64));
     }
 
     if (Util::instanceOf<const Integer>(left) && Util::instanceOf<const Float>(right))
     {
-        return (right.bits == sizeOfIntInBits ? DataTypeFactory::createFloat() : DataTypeFactory::createDouble());
+        return (
+            right.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32)
+                                          : DataTypeProvider::provideDataType(LogicalType::FLOAT64));
     }
 
 
     if (Util::instanceOf<const Float>(right) && Util::instanceOf<const Float>(left))
     {
         return (
-            left.bits == sizeOfLongInBits || right.bits == sizeOfLongInBits ? DataTypeFactory::createDouble()
-                                                                            : DataTypeFactory::createFloat());
+            left.bits == sizeOfLongInBits || right.bits == sizeOfLongInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT64)
+                                                                            : DataTypeProvider::provideDataType(LogicalType::FLOAT32));
     }
 
     if (Util::instanceOf<const Integer>(right) && Util::instanceOf<const Integer>(left))
@@ -75,37 +79,45 @@ std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& l
         const auto rightBits = rightInt.getBits();
         if (leftBits < sizeOfIntInBits && rightBits < sizeOfIntInBits)
         {
-            return DataTypeFactory::createInt32();
+            return DataTypeProvider::provideDataType(LogicalType::INT32);
         }
 
         if (leftBits == sizeOfIntInBits && rightBits < sizeOfIntInBits)
         {
-            return (leftSign ? DataTypeFactory::createInt32() : DataTypeFactory::createUInt32());
+            return (
+                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT32) : DataTypeProvider::provideDataType(LogicalType::UINT32));
         }
 
         if (leftBits < sizeOfIntInBits && rightBits == sizeOfIntInBits)
         {
-            return (rightSign ? DataTypeFactory::createInt32() : DataTypeFactory::createUInt32());
+            return (
+                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT32) : DataTypeProvider::provideDataType(LogicalType::UINT32));
         }
 
         if (leftBits == sizeOfIntInBits && rightBits == sizeOfIntInBits)
         {
-            return ((leftSign && rightSign) ? DataTypeFactory::createInt32() : DataTypeFactory::createUInt32());
+            return (
+                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT32)
+                                        : DataTypeProvider::provideDataType(LogicalType::UINT32));
         }
 
         if (leftBits == sizeOfLongInBits && rightBits < sizeOfLongInBits)
         {
-            return (leftSign ? DataTypeFactory::createInt64() : DataTypeFactory::createUInt64());
+            return (
+                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT64) : DataTypeProvider::provideDataType(LogicalType::UINT64));
         }
 
         if (leftBits < sizeOfLongInBits && rightBits == sizeOfLongInBits)
         {
-            return (rightSign ? DataTypeFactory::createInt64() : DataTypeFactory::createUInt64());
+            return (
+                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT64) : DataTypeProvider::provideDataType(LogicalType::UINT64));
         }
 
         if (leftBits == sizeOfLongInBits && rightBits == sizeOfLongInBits)
         {
-            return ((leftSign && rightSign) ? DataTypeFactory::createInt64() : DataTypeFactory::createUInt64());
+            return (
+                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT64)
+                                        : DataTypeProvider::provideDataType(LogicalType::UINT64));
         }
     }
 

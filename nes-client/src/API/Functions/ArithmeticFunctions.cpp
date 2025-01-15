@@ -31,7 +31,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -109,22 +109,22 @@ std::shared_ptr<NodeFunction> FLOOR(const std::shared_ptr<NodeFunction>& otherFu
 
 std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT16), "1");
 }
 
 std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT16), "1");
 }
 
 const std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction, int)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT16), "1");
 }
 
 const std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction, int)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::UINT16), "1");
 }
 
 /// calls of Binary operators with one or two FunctionItems

@@ -23,6 +23,7 @@
 #include <BaseUnitTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -55,7 +56,7 @@ public:
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
-            rndFields.emplace_back(AttributeField::create(fieldName, DataTypeFactory::createType(basicType)));
+            rndFields.emplace_back(AttributeField::create(fieldName, DataTypeProvider::provideBasicType(basicType)));
         }
 
         return rndFields;
@@ -101,7 +102,7 @@ TEST_F(SchemaTest, addFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
         }
     }
 
@@ -182,7 +183,7 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0]->getDataType();
@@ -246,10 +247,10 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
             ASSERT_EQ(
                 testSchema->getSchemaSizeInBytes(),
-                defaultPhysicalTypeFactory.getPhysicalType(DataTypeFactory::createType(basicTypeVal))->size());
+                defaultPhysicalTypeFactory.getPhysicalType(DataTypeProvider::provideBasicType(basicTypeVal))->size());
         }
     }
 

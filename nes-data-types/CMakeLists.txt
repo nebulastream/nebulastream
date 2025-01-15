@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# include registrar generation functions
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
 # Set Sources and Headers
 add_subdirectory(src)
 
@@ -26,3 +29,9 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_tests_if_enabled(tests)
+
+# # Create library for the registries, and privately link it against nes-data-types so that nes-data-types can access its registries
+create_plugin_registry_library(nes-data-types-registry nes-data-types)
+target_link_libraries(nes-data-types PRIVATE nes-data-types-registry)
+# Generate a registrar for every registry in nes-data-types
+generate_plugin_registrars(nes-data-types DataType)
