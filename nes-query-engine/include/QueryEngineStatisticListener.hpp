@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <chrono>
 #include <cstddef>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
