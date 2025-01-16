@@ -227,7 +227,7 @@ public:
         onComplete complete,
         onFailure failure) override
     {
-        auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
+        [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         taskQueue.blockingWrite(WorkTask(
             qid,

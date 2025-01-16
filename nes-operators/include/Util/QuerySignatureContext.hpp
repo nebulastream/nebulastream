@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <Operators/Operator.hpp>
 
 namespace z3
 {
