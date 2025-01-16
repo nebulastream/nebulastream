@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES::Optimizer
