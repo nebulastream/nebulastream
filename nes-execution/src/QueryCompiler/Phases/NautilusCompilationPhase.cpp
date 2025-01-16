@@ -77,7 +77,7 @@ std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_pt
     nautilus::engine::Options options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",
-        pipeline->getDecomposedQueryPlan()->getWorkerId(),
+        pipeline->getDecomposedQueryPlan()->getGRPC(),
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getPipelineId());
 

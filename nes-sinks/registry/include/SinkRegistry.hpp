@@ -25,6 +25,7 @@ namespace NES::Sinks
 using SinkRegistryReturnType = Sink;
 struct SinkRegistryArguments
 {
+    Valve valve;
     SinkDescriptor sinkDescriptor;
 };
 

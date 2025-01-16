@@ -23,6 +23,7 @@
 #include <regex>
 #include <string>
 #include <utility>
+
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -41,145 +42,23 @@
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Distributed/Placement.hpp"
+#include "Distributed/Topology.hpp"
+#include "YAMLConfigLoader.hpp"
 
-namespace YAML
+namespace NES::Catalogs
 {
-using namespace NES::CLI;
-
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
-{
-    if (fieldNodeType == "VARSIZED")
-    {
-        return NES::DataTypeFactory::createVariableSizedData();
-    }
-
-    if (fieldNodeType == "BOOLEAN")
-    {
-        return NES::DataTypeFactory::createBoolean();
-    }
-
-    if (fieldNodeType == "INT8")
-    {
-        return NES::DataTypeFactory::createInt8();
-    }
-
-    if (fieldNodeType == "UINT8")
-    {
-        return NES::DataTypeFactory::createUInt8();
-    }
-
-    if (fieldNodeType == "INT16")
-    {
-        return NES::DataTypeFactory::createInt16();
-    }
-
-    if (fieldNodeType == "UINT16")
-    {
-        return NES::DataTypeFactory::createUInt16();
-    }
-
-    if (fieldNodeType == "INT32")
-    {
-        return NES::DataTypeFactory::createInt32();
-    }
-
-    if (fieldNodeType == "UINT32")
-    {
-        return NES::DataTypeFactory::createUInt32();
-    }
-
-    if (fieldNodeType == "INT64")
-    {
-        return NES::DataTypeFactory::createInt64();
-    }
-
-    if (fieldNodeType == "UINT64")
-    {
-        return NES::DataTypeFactory::createUInt64();
-    }
-
-    if (fieldNodeType == "FLOAT32")
-    {
-        return NES::DataTypeFactory::createFloat();
-    }
-
-    if (fieldNodeType == "FLOAT64")
-    {
-        return NES::DataTypeFactory::createDouble();
-    }
-
-    if (fieldNodeType == "CHAR")
-    {
-        return NES::DataTypeFactory::createChar();
-    }
-
-    throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
+using SinkCatalog = std::unordered_map<std::string, std::pair<NES::CLI::Sink, Distributed::Topology::Node>>;
 }
-
-template <>
-struct convert<SchemaField>
-{
-    static bool decode(const Node& node, SchemaField& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::Sink>
-{
-    static bool decode(const Node& node, NES::CLI::Sink& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = node["type"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::LogicalSource>
-{
-    static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.schema = node["schema"].as<std::vector<SchemaField>>();
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::PhysicalSource>
-{
-    static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
-    {
-        rhs.logical = node["logical"].as<std::string>();
-        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
-        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::QueryConfig>
-{
-    static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
-    {
-        const auto sink = node["sink"].as<NES::CLI::Sink>();
-        rhs.sinks.emplace(sink.name, sink);
-        rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
-        rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.query = node["query"].as<std::string>();
-        return true;
-    }
-};
-}
-
 namespace NES::CLI
 {
+
 
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
 {
@@ -228,38 +107,93 @@ Sources::SourceDescriptor createSourceDescriptor(
     auto validParserConfig = validateAndFormatParserConfig(parserConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
     return Sources::SourceDescriptor(
-        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
+        std::move(schema), std::move(logicalSourceName), "", sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(const QueryPlan& query, const Catalogs::SinkCatalog& sinks)
 {
     PRECONDITION(
         query.getSinkOperators().size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
         query.getSinkOperators().size());
-    PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
-    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
+    PRECONDITION(not sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
+    if (const auto sink = sinks.find(query.getSinkOperators().at(0)->sinkName); sink != sinks.end())
     {
-        auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
+        auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.first.type, sink->second.first.config);
         query.getSinkOperators().at(0)->sinkDescriptor
-            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+            = std::make_shared<Sinks::SinkDescriptor>(sink->second.first.type, std::move(validatedSinkConfig), false);
     }
     else
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
             query.getSinkOperators().front()->sinkName,
-            fmt::join(std::views::keys(config.sinks), ","));
+            fmt::join(std::views::keys(sinks), ","));
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::tuple<
+    Distributed::Topology,
+    std::unordered_map<Distributed::Topology::Node, Distributed::PhysicalNodeConfig>,
+    std::unordered_map<Distributed::Topology::Node, size_t>,
+    Catalogs::SinkCatalog>
+buildTopologyFromConfiguration(const NES::Distributed::Config::Topology& config, Catalogs::Source::SourceCatalog& sourceCatalog)
+{
+    Distributed::Topology topology;
+    Catalogs::SinkCatalog sinks;
+    std::unordered_map<Distributed::Topology::Node, Distributed::PhysicalNodeConfig> physicalTopology;
+    std::unordered_map<Distributed::Topology::Node, size_t> capacities;
+    auto nodesByConnection
+        = std::views::transform(
+              config.nodes,
+              [&](const auto& nodeConfig) { return std::make_pair(nodeConfig.connection, std::make_pair(nodeConfig, topology.addNode())); })
+        | ranges::to<std::unordered_map>();
+
+    for (const auto& [nodeConnection, pair] : nodesByConnection)
+    {
+        auto [nodeConfig, node] = pair;
+        /// Capacties
+        capacities[node] = nodeConfig.capacity;
+        physicalTopology[node] = Distributed::PhysicalNodeConfig{.connection = nodeConnection, .grpc = nodeConfig.grpc};
+
+        /// Topology Links
+        for (auto downstreamConnection : nodeConfig.links.downstreams)
+        {
+            topology.addDownstreams(node, nodesByConnection.at(downstreamConnection).second);
+        }
+        for (auto downstreamConnection : nodeConfig.links.upstreams)
+        {
+            topology.addUpstreams(node, nodesByConnection.at(downstreamConnection).second);
+        }
+
+        /// Register Sources
+        for (auto [logicalSourceName, parserConfig, sourceConfig] : nodeConfig.physical)
+        {
+            auto sourceDescriptor = createSourceDescriptor(
+                logicalSourceName, sourceCatalog.getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
+            sourceCatalog.addPhysicalSource(
+                logicalSourceName,
+                Catalogs::Source::SourceCatalogEntry::create(
+                    NES::PhysicalSource::create(std::move(sourceDescriptor)), sourceCatalog.getLogicalSource(logicalSourceName), node));
+        }
+
+        /// Register Sinks
+        for (auto sink : nodeConfig.sinks)
+        {
+            sinks.try_emplace(sink.name, sink, node);
+        }
+    }
+
+    return {topology, physicalTopology, capacities, sinks};
+}
+
+std::vector<std::shared_ptr<DecomposedQueryPlan>>
+createFullySpecifiedQueryPlan(std::string_view queryText, const NES::Distributed::Config::Topology& topologyConfiguration)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
-
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (const auto& [logicalSourceName, schemaFields] : config.logical)
+    for (const auto& [logicalSourceName, schemaFields] : topologyConfiguration.logical)
     {
         auto schema = Schema::create();
         NES_INFO("Adding logical source: {}", logicalSourceName);
@@ -270,18 +204,8 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
 
-    /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
-    {
-        auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
-        sourceCatalog->addPhysicalSource(
-            logicalSourceName,
-            Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
-                INITIAL<WorkerId>));
-    }
+    auto [topology, physicalTopology, capacity, sinks] = buildTopologyFromConfiguration(topologyConfiguration, *sourceCatalog);
+
 
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
@@ -289,9 +213,9 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
 
-    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
+    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryText);
 
-    validateAndSetSinkDescriptors(*query, config);
+    validateAndSetSinkDescriptors(*query, sinks);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
     logicalSourceExpansionRule->apply(query);
@@ -301,40 +225,23 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     queryRewritePhase->execute(query);
     typeInference->performTypeInferenceQuery(query);
 
-    NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
-}
-
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
-{
-    std::ifstream file(filePath);
-    if (!file)
+    if (topology.size() == 1)
     {
-        throw QueryDescriptionNotReadable(std::strerror(errno));
+        return {std::make_shared<DecomposedQueryPlan>(query->getQueryId(), "", query->getRootOperators())};
     }
 
-    return loadFrom(file);
+    /// Distributed
+    NES::Distributed::BottomUpPlacement placement;
+    placement.capacity = std::move(capacity);
+
+    Distributed::pinSourcesAndSinks(
+        *query,
+        *sourceCatalog,
+        std::views::transform(sinks, [](const auto& pair) { return std::make_pair(pair.first, pair.second.second); })
+            | ranges::to<std::unordered_map>());
+    placement.doPlacement(topology, *query);
+    auto dag = NES::Distributed::decompose(topology, *query);
+    return NES::Distributed::connect(dag, physicalTopology);
 }
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
-{
-}
-
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
-{
-}
-
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
-{
-    try
-    {
-        auto config = YAML::Load(inputStream).as<QueryConfig>();
-        return createFullySpecifiedQueryPlan(config);
-    }
-    catch (const YAML::ParserException& pex)
-    {
-        throw QueryDescriptionNotParsable("{}", pex.what());
-    }
-}
 }

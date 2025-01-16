@@ -19,16 +19,21 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
+extern void enable_logging();
+extern void init_receiver_server_string(std::string connection);
+
 int main(const int argc, const char* argv[])
 {
     try
     {
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        enable_logging();
         auto configuration = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {
             return 0;
         }
+        init_receiver_server_string(configuration->dataUri.getValue());
 
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 

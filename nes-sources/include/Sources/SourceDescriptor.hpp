@@ -38,6 +38,7 @@ struct SourceDescriptor : public Configurations::Descriptor
     explicit SourceDescriptor(
         std::shared_ptr<Schema> schema,
         std::string logicalSourceName,
+        std::string physicalSourceName,
         std::string sourceType,
         ParserConfig parserConfig,
         Configurations::DescriptorConfig::Config&& config);
@@ -45,6 +46,7 @@ struct SourceDescriptor : public Configurations::Descriptor
     ~SourceDescriptor() = default;
     const std::shared_ptr<Schema> schema;
     const std::string logicalSourceName;
+    const std::string physicalSourceName;
     const std::string sourceType;
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
     const ParserConfig parserConfig;

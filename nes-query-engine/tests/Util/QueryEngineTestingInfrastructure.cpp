@@ -122,9 +122,9 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, Valve valve, std::shared_ptr<Memory::AbstractBufferProvider> bm)
 {
-    auto sinkController = std::make_shared<TestSinkController>();
+    auto sinkController = std::make_shared<TestSinkController>(std::move(valve));
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
     auto pipeline = Runtime::Execution::ExecutablePipeline::create(id, std::move(stage), {});
     return {pipeline, sinkController};
@@ -186,6 +186,8 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     std::unordered_map<identifier_t, std::shared_ptr<TestSinkController>> sinkCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<Runtime::Execution::ExecutablePipeline>> cache{};
+
+    auto [valve, ingestion] = Backpressure();
     std::function<std::shared_ptr<Runtime::Execution::ExecutablePipeline>(identifier_t)> getOrCreatePipeline = [&](identifier_t identifier)
     {
         if (auto it = cache.find(identifier); it != cache.end())
@@ -202,7 +204,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
                 },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 {
-                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, bm);
+                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, std::move(valve), bm);
                     pipelines.push_back(sink);
                     stages[identifier] = sink->stage.get();
                     sinkCtrls[identifier] = ctrl;
@@ -230,7 +232,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     {
         std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
-        auto [s, ctrl] = Sources::getTestSource(std::get<SourceDescriptor>(source.second).sourceId, bm);
+        auto [s, ctrl] = Sources::getTestSource(ingestion, std::get<SourceDescriptor>(source.second).sourceId, bm);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;

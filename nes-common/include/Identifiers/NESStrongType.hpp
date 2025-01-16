@@ -54,6 +54,8 @@ public:
      */
     [[nodiscard]] constexpr T getRawValue() const { return v; }
 
+    explicit operator bool() const { return v != invalid; }
+
 private:
     T v;
 };

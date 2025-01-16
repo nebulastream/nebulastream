@@ -21,6 +21,6 @@ namespace NES::Sinks::SinkProvider
 {
 
 /// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
-std::unique_ptr<NES::Sinks::Sink> lower(const SinkDescriptor& sinkDescriptor);
+std::unique_ptr<NES::Sinks::Sink> lower(Valve valve, const SinkDescriptor& sinkDescriptor);
 
 }

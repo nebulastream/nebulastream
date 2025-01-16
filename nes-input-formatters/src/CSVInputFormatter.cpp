@@ -335,7 +335,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(const Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
     /// Reset all values that are tied to a specific tbRaw.
@@ -381,7 +381,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         {
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
-            NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+            NES_DEBUG("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
             emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
             progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;

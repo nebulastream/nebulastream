@@ -120,7 +120,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
 }
 
 bool SourceCatalog::removePhysicalSource(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId)
+    const std::string& logicalSourceName, const std::string& physicalSourceName, Distributed::Topology::Node topologyNodeId)
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removePhysicalSource() {}", logicalSourceName);
@@ -165,7 +165,7 @@ bool SourceCatalog::removePhysicalSource(
     return false;
 }
 
-size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId)
+size_t SourceCatalog::removeAllPhysicalSourcesByWorker(Distributed::Topology::Node topologyNodeId)
 {
     std::unique_lock lock(catalogMutex);
     size_t removedElements = 0;
@@ -224,10 +224,10 @@ bool SourceCatalog::testIfLogicalSourceExistsInLogicalToPhysicalMapping(const st
     return logicalToPhysicalSourceMapping.contains(logicalSourceName);
 }
 
-std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName)
+std::vector<Distributed::Topology::Node> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
-    std::vector<WorkerId> listOfSourceNodes;
+    std::vector<Distributed::Topology::Node> listOfSourceNodes;
 
     /// get current physical source for this logical source
     const std::vector<std::shared_ptr<SourceCatalogEntry>> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];

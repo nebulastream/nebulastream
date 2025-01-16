@@ -263,6 +263,8 @@ protected:
 
 struct TestSinkController
 {
+    explicit TestSinkController(Valve valve) : valve(std::move(valve)) { }
+
     testing::AssertionResult waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers);
 
     void insertBuffer(Memory::TupleBuffer&& buffer);
@@ -277,6 +279,8 @@ struct TestSinkController
     testing::AssertionResult waitForShutdown(std::chrono::milliseconds timeout) const { return waitForFuture(shutdown_future, timeout); }
 
     std::atomic<size_t> invocations = 0;
+
+    Valve valve;
 
 private:
     folly::Synchronized<std::vector<Memory::TupleBuffer>, std::mutex> receivedBuffers;
@@ -321,7 +325,7 @@ private:
 };
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, Valve valve, std::shared_ptr<Memory::AbstractBufferProvider> bm);
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors);

@@ -63,7 +63,7 @@ std::shared_ptr<QueryPlan> FilterPushDownRule::apply(std::shared_ptr<QueryPlan> 
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
     std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
-    NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
+    NES_TRACE("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
@@ -72,7 +72,7 @@ std::shared_ptr<QueryPlan> FilterPushDownRule::apply(std::shared_ptr<QueryPlan> 
     auto originalQueryPlan = queryPlan->copy();
     try
     {
-        NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
+        NES_TRACE("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
         for (const std::shared_ptr<LogicalSelectionOperator>& filterOperator : filterOperators)
         {
             /// method calls itself recursively until it can not push the filter further down(upstream).
@@ -148,7 +148,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
         bool rightBranchPossible = true;
 
         /// if any field that is used by the filter is not part of the branches schema, we can't push the filter to that branch.
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Checking if filter can be pushed below left or right branch of join");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoin: Checking if filter can be pushed below left or right branch of join");
         for (const std::string& fieldUsedByFilter : predicateFields)
         {
             if (!leftSchema->contains(fieldUsedByFilter))
@@ -163,13 +163,13 @@ void FilterPushDownRule::pushFilterBelowJoin(
 
         if (leftBranchPossible)
         {
-            NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below left branch of join");
+            NES_TRACE("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below left branch of join");
             pushed = true;
             pushDownFilter(filterOperator, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
         }
         else if (rightBranchPossible)
         {
-            NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below right branch of join");
+            NES_TRACE("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below right branch of join");
             pushed = true;
             pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0], joinOperator);
         }
@@ -177,7 +177,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
 
     if (!pushed)
     {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Filter was not pushed, we insert filter at this position");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoin: Filter was not pushed, we insert filter at this position");
         insertFilterIntoNewPosition(filterOperator, joinOperator, parentOperator);
     }
 }
@@ -187,47 +187,47 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
 {
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     const std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition = joinOperator->getJoinDefinition();
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
     /// returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
     auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinFunction());
 
     if (equiJoinKeyNames.first == predicateFields[0])
     {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
         auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         const std::shared_ptr<NodeFunction> newPredicate = filterOperator->getPredicate()->deepCopy();
 
         renameNodeFunctionFieldAccesss(newPredicate, equiJoinKeyNames.first, equiJoinKeyNames.second);
 
         copyOfFilter->setPredicate(newPredicate);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
 
         pushDownFilter(filterOperator, joinOperator->getLeftOperators()[0], joinOperator);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
         pushDownFilter(copyOfFilter, joinOperator->getRightOperators()[0], joinOperator);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     }
     else if (equiJoinKeyNames.second == predicateFields[0])
     {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
         auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         const std::shared_ptr<NodeFunction> newPredicate = filterOperator->getPredicate()->deepCopy();
         renameNodeFunctionFieldAccesss(newPredicate, equiJoinKeyNames.second, equiJoinKeyNames.first);
         copyOfFilter->setPredicate(newPredicate);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 
         pushDownFilter(filterOperator, joinOperator->getRightOperators()[0], joinOperator);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
         pushDownFilter(copyOfFilter, joinOperator->getLeftOperators()[0], joinOperator);
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     }
     return false;
@@ -249,13 +249,13 @@ void FilterPushDownRule::pushFilterBelowUnion(
     auto copyOfFilterOperator = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
     copyOfFilterOperator->setId(getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->deepCopy());
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
 
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...");
     pushDownFilter(filterOperator, grandChildren[0], unionOperator);
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushed original filter to one branch");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowUnion: Pushed original filter to one branch");
     pushDownFilter(copyOfFilterOperator, grandChildren[1], unionOperator);
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushed copy of the filter to other branch");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowUnion: Pushed copy of the filter to other branch");
 }
 
 void FilterPushDownRule::pushFilterBelowWindowAggregation(
@@ -267,7 +267,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
     const std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByKeys
         = NES::Util::as<LogicalWindowOperator>(windowOperator)->getWindowDefinition()->getKeys();
     std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
+    NES_TRACE("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
     bool areAllFilterAttributesInGroupByKeys = true;
     for (const auto& filterAttribute : fieldNamesUsedByFilter)
@@ -277,19 +277,19 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
             areAllFilterAttributesInGroupByKeys = false;
         }
     }
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Checked if all attributes used by the filter are also used "
+    NES_TRACE("FilterPushDownRule.pushFilterBelowWindowAggregation: Checked if all attributes used by the filter are also used "
               "in the group by keys the group by keys of the window operator");
 
     if (areAllFilterAttributesInGroupByKeys)
     {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: All attributes used by the filter are also used in the"
+        NES_TRACE("FilterPushDownRule.pushFilterBelowWindowAggregation: All attributes used by the filter are also used in the"
                   " group by keys, we can push the filter below the window operator")
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Pushing filter below window operator...");
+        NES_TRACE("FilterPushDownRule.pushFilterBelowWindowAggregation: Pushing filter below window operator...");
         pushDownFilter(filterOperator, windowOperator->getChildren()[0], windowOperator);
     }
     else
     {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Attributes used by filter are not all used in "
+        NES_TRACE("FilterPushDownRule.pushFilterBelowWindowAggregation: Attributes used by filter are not all used in "
                   "group by keys, inserting the filter into a new position...");
         insertFilterIntoNewPosition(filterOperator, windowOperator, parOperator);
     }

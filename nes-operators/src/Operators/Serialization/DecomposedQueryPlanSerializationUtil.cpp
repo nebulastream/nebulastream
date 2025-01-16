@@ -26,9 +26,9 @@ namespace NES
 void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     const DecomposedQueryPlan& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
 {
-    NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan.toString());
+    NES_TRACE("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan.toString());
     std::vector<std::shared_ptr<Operator>> rootOperators = decomposedQueryPlan.getRootOperators();
-    NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
+    NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     ///Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableDecomposedQueryPlan->mutable_operatormap();
@@ -93,7 +93,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlanSerializationUtil::deser
     ///set properties of the query plan
     auto queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
-    auto decomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, INVALID_WORKER_NODE_ID, rootOperators);
+    auto decomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, "", rootOperators);
     return decomposedQueryPlan;
 }
 }

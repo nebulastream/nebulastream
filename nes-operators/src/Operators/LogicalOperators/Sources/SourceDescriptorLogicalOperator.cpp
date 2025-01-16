@@ -52,8 +52,9 @@ bool SourceDescriptorLogicalOperator::equal(const std::shared_ptr<Node>& rhs) co
 std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
-
+    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", ";
+    sourceDescriptor ? ss << *sourceDescriptor : ss << "(null))";
+    ss << ")";
     return ss.str();
 }
 

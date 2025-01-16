@@ -15,56 +15,15 @@
 #pragma once
 
 #include <filesystem>
-#include <istream>
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Configuration.hpp>
 
 namespace NES::CLI
 {
 
-struct SchemaField
-{
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
-    SchemaField() = default;
 
-    std::string name;
-    std::shared_ptr<NES::DataType> type;
-};
-
-struct Sink
-{
-    std::string name;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
-};
-
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
-
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
-};
-
-struct QueryConfig
-{
-    std::string query;
-    std::unordered_map<std::string, Sink> sinks;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
+std::vector<std::shared_ptr<DecomposedQueryPlan>>
+createFullySpecifiedQueryPlan(std::string_view queryString, const Distributed::Config::Topology& topologyConfiguration);
 }

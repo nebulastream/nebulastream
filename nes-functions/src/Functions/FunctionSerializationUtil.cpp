@@ -55,7 +55,7 @@ namespace NES
 SerializableFunction*
 FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize function {}", *function);
+    NES_TRACE("FunctionSerializationUtil:: serialize function {}", *function);
     /// serialize function node depending on its type.
     if (Util::instanceOf<LogicalNodeFunction>(function))
     {
@@ -150,13 +150,13 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
     }
 
     DataTypeSerializationUtil::serializeDataType(function->getStamp(), serializedFunction->mutable_stamp());
-    NES_DEBUG("FunctionSerializationUtil:: serialize function node to {}", serializedFunction->mutable_details()->type_url());
+    NES_TRACE("FunctionSerializationUtil:: serialize function node to {}", serializedFunction->mutable_details()->type_url());
     return serializedFunction;
 }
 
 std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: deserialize function {}", serializedFunction.details().type_url());
+    NES_TRACE("FunctionSerializationUtil:: deserialize function {}", serializedFunction.details().type_url());
     /// de-serialize function
     /// 1. check if the serialized function is a logical function
     auto nodeFunction = deserializeLogicalFunctions(serializedFunction);
@@ -267,14 +267,14 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
     /// deserialize function stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
     nodeFunction->setStamp(stamp);
-    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", *nodeFunction);
+    NES_TRACE("FunctionSerializationUtil:: deserialized function node to the following node: {}", *nodeFunction);
     return nodeFunction;
 }
 
 void FunctionSerializationUtil::serializeArithmeticalFunctions(
     const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", *function);
+    NES_TRACE("FunctionSerializationUtil:: serialize arithmetical function {}", *function);
     if (Util::instanceOf<NodeFunctionAdd>(function))
     {
         /// serialize add function node.
@@ -401,7 +401,7 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(
 void FunctionSerializationUtil::serializeLogicalFunctions(
     const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", *function);
+    NES_TRACE("FunctionSerializationUtil:: serialize logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
     {
         /// serialize and function node.
@@ -611,7 +611,7 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeArithmetical
 
 std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeLogicalFunctions(const SerializableFunction& serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: de-serialize logical function {}", serializedFunction.details().type_url());
+    NES_TRACE("FunctionSerializationUtil:: de-serialize logical function {}", serializedFunction.details().type_url());
     if (serializedFunction.details().Is<SerializableFunction_FunctionAnd>())
     {
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as AND function node.");

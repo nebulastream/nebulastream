@@ -1075,6 +1075,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     return std::make_unique<Sources::SourceDescriptor>(
         std::move(schema),
         std::move(logicalSourceName),
+        "", ///TODO
         std::move(sourceType),
         std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));

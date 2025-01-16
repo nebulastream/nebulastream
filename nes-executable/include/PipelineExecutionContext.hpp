@@ -30,6 +30,7 @@ public:
     /// needs to be dispatched as a new Task.
     enum class ContinuationPolicy : uint8_t
     {
+        RETRY, /// The emitted task will be rescheduled for the current pipeline at a later point in time.
         POSSIBLE, /// It is possible for the emitted tuple buffer to be processed immediately. This is not a guarantee that that will happen
         NEVER /// The tuple buffer should never be processed immediately
     };

@@ -303,7 +303,7 @@ private:
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask pendingPipelineStop) const;
-        bool operator()(const StopPipelineTask& stopPipeline) const;
+        bool operator()(StopPipelineTask& stopPipeline) const;
         bool operator()(const StopSourceTask& stopSource) const;
         bool operator()(const FailSourceTask& failSource) const;
 
@@ -345,15 +345,26 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             this->threadId,
             pipeline->id,
             pool.bufferProvider,
-            [&](const Memory::TupleBuffer& tupleBuffer, auto)
+            [&](const Memory::TupleBuffer& tupleBuffer, auto policy)
             {
-                ENGINE_LOG_DEBUG(
-                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
-                for (const auto& successor : pipeline->successors)
+                if (policy == Execution::PipelineExecutionContext::ContinuationPolicy::RETRY)
                 {
+                    ENGINE_LOG_DEBUG(
+                        "Task emitted a retry {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                     pool.statistic->onEvent(
-                        TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
+                        TaskEmit{threadId, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                    pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {});
+                }
+                else
+                {
+                    ENGINE_LOG_DEBUG(
+                        "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                    for (const auto& successor : pipeline->successors)
+                    {
+                        pool.statistic->onEvent(
+                            TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
+                    }
                 }
             });
         pool.statistic->onEvent(TaskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
@@ -417,7 +428,7 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelin
     return true;
 }
 
-bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) const
+bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipeline) const
 {
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     DefaultPEC pec(
@@ -425,7 +436,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
         this->threadId,
         stopPipeline.pipeline->id,
         pool.bufferProvider,
-        [&](const Memory::TupleBuffer& tupleBuffer, auto)
+        [&](const Memory::TupleBuffer& tupleBuffer, auto policy)
         {
             if (terminating)
             {
@@ -433,18 +444,37 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
                 return;
             }
 
-            for (const auto& successor : stopPipeline.pipeline->successors)
+            if (policy == Execution::PipelineExecutionContext::ContinuationPolicy::RETRY)
             {
-                /// The Termination Exceution Context appends a strong reference to the successer into the Task.
-                /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
-                /// pipeline termination.
-                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
+                ENGINE_LOG_DEBUG(
+                    "Pipeline Stop emitted a retry {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                pool.statistic->onEvent(TaskEmit{
+                    threadId,
+                    stopPipeline.queryId,
+                    stopPipeline.pipeline->id,
+                    stopPipeline.pipeline->id,
+                    INVALID<TaskId>,
+                    tupleBuffer.getNumberOfTuples()});
+                pool.taskQueue.blockingWrite(std::move(stopPipeline));
+            }
+            else
+            {
+                for (const auto& successor : stopPipeline.pipeline->successors)
+                {
+                    /// The Termination Exceution Context appends a strong reference to the successer into the Task.
+                    /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
+                    /// pipeline termination.
+                    pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
+                }
             }
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     stopPipeline.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.queryId, stopPipeline.pipeline->id});
+    if (stopPipeline.pipeline)
+    {
+        pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.queryId, stopPipeline.pipeline->id});
+    }
     return true;
 }
 

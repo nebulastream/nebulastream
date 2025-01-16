@@ -36,7 +36,7 @@
 namespace NES::Sinks
 {
 
-PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
+PrintSink::PrintSink(Valve valve, const SinkDescriptor& sinkDescriptor) : Sink(std::move(valve)), outputStream(&std::cout)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
@@ -83,7 +83,7 @@ SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegi
 
 std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.valve), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

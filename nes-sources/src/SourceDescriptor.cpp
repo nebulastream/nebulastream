@@ -23,12 +23,14 @@ namespace NES::Sources
 SourceDescriptor::SourceDescriptor(
     std::shared_ptr<Schema> schema,
     std::string logicalSourceName,
+    std::string physicalSourceName,
     std::string sourceType,
     ParserConfig parserConfig,
     Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config))
     , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
+    , physicalSourceName(std::move(physicalSourceName))
     , sourceType(std::move(sourceType))
     , parserConfig(std::move(parserConfig))
 {
@@ -43,8 +45,9 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
     return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+               "SourceDescriptor( logicalSourceName: {}, physicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
                sourceDescriptor.logicalSourceName,
+               sourceDescriptor.physicalSourceName,
                sourceDescriptor.sourceType,
                schemaString,
                parserConfigString,

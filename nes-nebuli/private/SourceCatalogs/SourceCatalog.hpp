@@ -58,12 +58,13 @@ public:
     /// @param physicalSourceName name of the physical source
     /// @param topologyNodeId id of the topology node
     /// @return bool indicating success of remove source
-    bool removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
+    bool removePhysicalSource(
+        const std::string& logicalSourceName, const std::string& physicalSourceName, Distributed::Topology::Node topologyNodeId);
 
     /// @brief method to remove all physical sources of a single worker
     /// @param topologyNodeId worker node identifier
     /// @return number of sucessfully removed physical sources
-    size_t removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId);
+    size_t removeAllPhysicalSourcesByWorker(Distributed::Topology::Node topologyNodeId);
 
     /// @brief method to get the schema from the given logical source
     /// @param logicalSourceName name of the logical source name
@@ -91,7 +92,7 @@ public:
     /// @brief return all topology node ids that host physical sources that contribute to this logical source
     /// @param logicalSourceName name of logical source
     /// @return list of topology nodes ids
-    std::vector<WorkerId> getSourceNodesForLogicalSource(const std::string& logicalSourceName);
+    std::vector<Distributed::Topology::Node> getSourceNodesForLogicalSource(const std::string& logicalSourceName);
 
     /// @brief reset the catalog and recreate the default_logical source
     /// @return bool indicating success

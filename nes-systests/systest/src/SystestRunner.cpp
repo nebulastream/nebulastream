@@ -190,10 +190,9 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 sinkForQuery,
                 "File",
                 {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-            config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+            config.sinks.emplace_back(std::move(sinkCLI));
 
-            config.query = query;
-            auto plan = createFullySpecifiedQueryPlan(config);
+            auto plan = CLI::createFullySpecifiedQueryPlan(query, NES::Distributed::Config::Topology::from(config, "localhost:9090"))[0];
             plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
         });
     try

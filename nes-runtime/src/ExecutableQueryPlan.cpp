@@ -68,25 +68,29 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     std::unordered_map<OriginId, std::vector<std::shared_ptr<Execution::ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
     PipelineId::Underlying pipelineIdGenerator = compiledQueryPlan.pipelines.size() + PipelineId::INITIAL;
 
-    for (auto& [descriptor, predecessors] : compiledQueryPlan.sinks)
+    INVARIANT(compiledQueryPlan.sinks.size() == 1, "Currently we only support a single sink");
+    auto [valve, ingestion] = Backpressure();
+
+    auto& [descriptor, predecessors] = compiledQueryPlan.sinks[0];
+    auto sink = Execution::ExecutablePipeline::create(
+        PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(std::move(valve), *descriptor), {});
+    compiledQueryPlan.pipelines.push_back(sink);
+    for (const auto& predecessor : predecessors)
     {
-        auto sink = Execution::ExecutablePipeline::create(PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(*descriptor), {});
-        compiledQueryPlan.pipelines.push_back(sink);
-        for (const auto& predecessor : predecessors)
-        {
-            std::visit(
-                Overloaded{
-                    [&](const OriginId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
-                    [&](const std::weak_ptr<Execution::ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
-                },
-                predecessor);
-        }
+        std::visit(
+            Overloaded{
+                [&](const OriginId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
+                [&](const std::weak_ptr<Execution::ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
+            },
+            predecessor);
     }
+
 
     for (auto [id, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
-        instantiatedSources.emplace_back(NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider), std::move(successors));
+        instantiatedSources.emplace_back(
+            NES::Sources::SourceProvider::lower(id, ingestion, *descriptor, poolProvider), std::move(successors));
     }
 
 

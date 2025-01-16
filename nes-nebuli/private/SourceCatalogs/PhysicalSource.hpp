@@ -31,6 +31,7 @@ public:
     std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(std::shared_ptr<Schema> schema);
 
     std::string toString();
+    const std::string& getName() const { return sourceDescriptor.physicalSourceName; }
 
 private:
     explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor);

@@ -38,7 +38,7 @@ class PrintSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;

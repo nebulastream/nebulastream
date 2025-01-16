@@ -1,0 +1,28 @@
+logical:
+  - name: csv_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: id2
+        type: UINT64
+nodes:
+  - connection: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 10
+    sinks:
+      - name: csv_sink
+        type: Print
+        config:
+          inputFormat: CSV
+  - connection: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 0
+    links:
+      downstreams: [ 127.0.0.1:9091 ]
+    physical:
+      - logical: csv_source
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: /home/ls/dima/nebulastream-public/nes-single-node-worker/tests/testdata/inputCSVFiles/oneToThirtyOneDoubleColumn.csv

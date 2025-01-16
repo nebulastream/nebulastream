@@ -21,13 +21,17 @@ namespace NES::Catalogs::Source
 {
 
 SourceCatalogEntry::SourceCatalogEntry(
-    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
+    std::shared_ptr<PhysicalSource> physicalSource,
+    std::shared_ptr<LogicalSource> logicalSource,
+    Distributed::Topology::Node topologyNodeId)
     : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId)
 {
 }
 
 std::shared_ptr<SourceCatalogEntry> SourceCatalogEntry::create(
-    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
+    std::shared_ptr<PhysicalSource> physicalSource,
+    std::shared_ptr<LogicalSource> logicalSource,
+    Distributed::Topology::Node topologyNodeId)
 {
     return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(std::move(physicalSource), std::move(logicalSource), topologyNodeId));
 }
@@ -42,7 +46,7 @@ const std::shared_ptr<LogicalSource>& SourceCatalogEntry::getLogicalSource() con
     return logicalSource;
 }
 
-WorkerId SourceCatalogEntry::getTopologyNodeId() const
+Distributed::Topology::Node SourceCatalogEntry::getTopologyNodeId() const
 {
     return topologyNodeId;
 }

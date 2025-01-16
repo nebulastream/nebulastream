@@ -26,6 +26,7 @@
 namespace NES::Sources
 {
 SourceHandle::SourceHandle(
+    Ingestion ingestion,
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     size_t numSourceLocalBuffers,
@@ -33,7 +34,12 @@ SourceHandle::SourceHandle(
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation), std::move(inputFormatter));
+        std::move(ingestion),
+        std::move(originId),
+        std::move(bufferPool),
+        numSourceLocalBuffers,
+        std::move(sourceImplementation),
+        std::move(inputFormatter));
 }
 SourceHandle::~SourceHandle() = default;
 

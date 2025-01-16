@@ -41,6 +41,7 @@
     "nlohmann-json",
     "nautilus",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "libuuid"
   ]
 }

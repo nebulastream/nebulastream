@@ -50,6 +50,7 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
     return std::make_unique<Sources::SourceDescriptor>(
         std::move(schema),
         sourceDescriptor.logicalSourceName,
+        sourceDescriptor.physicalSourceName,
         sourceDescriptor.sourceType,
         sourceDescriptor.parserConfig,
         std::move(copyOfConfig));
