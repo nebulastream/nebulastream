@@ -20,3 +20,5 @@ function(add_nes_execution_test)
 endfunction()
 
 add_subdirectory(UnitTests)
+
+add_nes_execution_test(micro-benchmarks-tests "MicroBenchmarks.cpp")
