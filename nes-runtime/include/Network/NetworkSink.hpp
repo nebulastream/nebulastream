@@ -62,6 +62,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @return true if no error occurred
     */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
+    bool unbufferData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext);
 
   protected:
     /**
@@ -153,6 +154,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool applyNextSinkDescriptor();
 
+    void setShouldBuffer(uint64_t numberOfBuffersToProduce);
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
@@ -198,6 +201,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+
+    bool shouldBuffer;
+     uint64_t numberOfBuffersToBuffer;
+    std::atomic<uint64_t> numberOfBufferedBuffers{0};
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

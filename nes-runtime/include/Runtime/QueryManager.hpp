@@ -282,6 +282,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     SharedQueryId getSharedQueryId(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const;
 
+    bool addStopBuffering(DataSourcePtr source);
     /**
      * @brief introduces end of stream to all QEPs connected to this source
      * @param source the source

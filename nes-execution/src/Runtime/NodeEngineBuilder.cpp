@@ -170,7 +170,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
 
-        auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
+        auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler, workerConfiguration->numberOfBuffersInSourceLocalBufferPool / 2 + 50);
+        queryCompilationOptions->numOfBuffersToProduce = workerConfiguration->numberOfBuffersToProduce;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         auto operatorHandlerStore = OperatorHandlerStore::create();
 
@@ -218,6 +219,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue(),
             workerConfiguration->enableSourceSharing.getValue());
+        engine->setNumberOfBuffersToProduce(workerConfiguration->numberOfBuffersToProduce.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -227,7 +229,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 }
 
 QueryCompilation::QueryCompilerOptionsPtr
-NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration) {
+NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration, uint64_t numOfBuffers) {
     auto queryCompilerType = queryCompilerConfiguration.queryCompilerType;
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
@@ -239,6 +241,8 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     // set output buffer optimization level
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
+
+    queryCompilationOptions->setNumSourceLocalBuffers(numOfBuffers);
 
     if (queryCompilerType == QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER
         && queryCompilerConfiguration.windowingStrategy == QueryCompilation::WindowingStrategy::LEGACY) {

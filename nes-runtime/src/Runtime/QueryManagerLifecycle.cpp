@@ -443,6 +443,35 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
     return ret;
 }
 
+bool AbstractQueryManager::addStopBuffering(DataSourcePtr source) {
+    auto sourceId = source->getOperatorId();
+    auto pipelineSuccessors = source->getExecutableSuccessors();
+
+    for (auto successor : pipelineSuccessors) {
+        if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
+                                                            sink->get()->getParentPlanId(),
+                                                            sink->get()->getParentPlanVersion(),
+                                                            ReconfigurationType::ShouldStopBuffering,
+                                                            (*sink));
+            addReconfigurationMessage(sink->get()->getSharedQueryId(),
+                                      sink->get()->getParentPlanId(),
+                                      sink->get()->getParentPlanVersion(),
+                                      reconfMessageSink,
+                                      false);
+            NES_DEBUG(
+                "soft end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
+                sourceId,
+                magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
+                sink->get()->getParentPlanId(),
+                threadPool->getNumberOfThreads(),
+                sink->get()->getSharedQueryId());
+        }
+    }
+
+    return true;
+}
+
 bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
     auto sourceId = source->getOperatorId();
     auto pipelineSuccessors = source->getExecutableSuccessors();

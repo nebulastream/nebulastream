@@ -86,7 +86,7 @@ void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, u
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
+    // NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
     switch (joinBuildSide) {
         case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerThreadId);
         case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerThreadId);

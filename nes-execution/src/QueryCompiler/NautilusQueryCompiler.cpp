@@ -87,7 +87,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         timer.snapshot("AfterAddScanAndEmitPhase");
         auto nodeEngine = request->getNodeEngine();
         auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
-        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
+        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize, request->getNodeEngine());
         timer.snapshot("AfterToNautilusPlanPhase");
 
         pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);

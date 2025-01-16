@@ -867,4 +867,12 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
     return false;
 }
 
+void NodeEngine::setNumberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
+    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+}
+
+uint64_t NodeEngine::getNumberOfBuffersToProduce() {
+    return numberOfBuffersToProduce;
+}
+
 }// namespace NES::Runtime

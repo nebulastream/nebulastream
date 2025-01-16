@@ -133,16 +133,16 @@ std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperato
 LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options)
     : options(options), expressionProvider(std::make_unique<ExpressionProvider>()) {}
 
-PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize) {
+PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize, Runtime::NodeEnginePtr nodeEngine) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
-            apply(pipeline, bufferSize);
+            apply(pipeline, bufferSize, nodeEngine);
         }
     }
     return pipelinedQueryPlan;
 }
 
-OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize) {
+OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize, Runtime::NodeEnginePtr nodeEngine) {
     auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
     auto nodes = PlanIterator(decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
@@ -152,7 +152,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     for (const auto& node : nodes) {
         NES_INFO("Lowering node: {}", node->toString());
         parentOperator =
-            lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
+            lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers, nodeEngine);
         parentOperator->setStatisticId(node->as<PhysicalOperators::PhysicalOperator>()->getStatisticId());
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
@@ -169,7 +169,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
-                                        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+                                        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                        Runtime::NodeEnginePtr nodeEngine) {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
@@ -437,7 +438,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 switch (buildOperator->getWindowingStrategy()) {
                     case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
                     case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
+                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction), nodeEngine);
                         break;
                     case WindowingStrategy::BUCKETING:
                         joinBuildNautilus =
@@ -618,14 +619,19 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
     uint64_t operatorHandlerIndex,
-    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-    return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+    Runtime::NodeEnginePtr nodeEngine) {
+    auto build = std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
         operatorHandlerIndex,
         buildOperator->getInputSchema(),
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
         buildOperator->getJoinStrategy());
+    if (nodeEngine != nullptr) {
+        // build->numberOfBuffersToRecreate = nodeEngine->getNumberOfBuffersToProduce();
+    }
+    return build;
 }
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,

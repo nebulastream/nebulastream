@@ -355,6 +355,12 @@ void DataSource::open() {
     storePersistedProperties();
 }
 
+void DataSource::propagateShouldUnbufferMarker() {
+    NES_DEBUG("Should unbuffer marker is propagated");
+    queryManager->addStopBuffering(shared_from_base<DataSource>());
+
+}
+
 void DataSource::close() {
     NES_WARNING("Close Called")
     Runtime::QueryTerminationType queryTerminationType;
@@ -572,6 +578,8 @@ void DataSource::runningRoutineWithGatheringInterval() {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
+    propagateShouldUnbufferMarker();
+    sleep(10);
     NES_WARNING("DataSource {} call close", operatorId);
     close();
     NES_WARNING("DataSource {} end running", operatorId);

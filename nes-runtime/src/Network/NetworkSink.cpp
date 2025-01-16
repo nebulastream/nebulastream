@@ -79,6 +79,59 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //todo #4210: decrease amount of hashmap lookups
     if (!channel) {
         //todo #4311: check why sometimes buffers arrive after a channel has been closed
+        NES_ERROR("{} channel closed {} on node {} for originId {} and seqNumber {}",
+                  workerContext.getId(),
+                  getUniqueNetworkSinkDescriptorId(),
+                  nodeEngine->getNodeId(),
+                  inputBuffer.getOriginId(),
+                  inputBuffer.getSequenceNumber());
+        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
+                        "Trying to write to invalid channel while no connection is in progress " << getUniqueNetworkSinkDescriptorId() << " on node "<<nodeEngine->getNodeId());
+
+        //check if connection was established and buffer it has not yest been established
+        if (!retrieveNewChannelAndUnbuffer(workerContext)) {
+            NES_TRACE("context {} buffering data", workerContext.getId());
+            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+            return true;
+        }
+
+        //if a connection was established, retrieve the channel
+        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
+    }
+
+    if (shouldBuffer) {
+        workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+//        if (numberOfBufferedBuffers.fetch_add(1, std::memory_order_relaxed) == numberOfBuffersToBuffer - 1) {
+//            unbuffer(workerContext);
+//        }
+        return true;
+    }
+    NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
+    //todo 4228: check if buffers are actually sent and not only inserted into to send queue
+    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
+}
+
+bool NetworkSink::unbufferData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+    NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
+              workerContext.getId(),
+              getUniqueNetworkSinkDescriptorId(),
+              nodeEngine->getNodeId(),
+              inputBuffer.getOriginId(),
+              inputBuffer.getSequenceNumber());
+
+    auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
+
+    //if async establishing of connection is in process, do not attempt to send data but buffer it instead
+    //todo #4210: decrease amount of hashmap lookups
+
+    if (!channel) {
+        //todo #4311: check why sometimes buffers arrive after a channel has been closed
+        NES_ERROR("{} channel closed {} on node {} for originId {} and seqNumber {}",
+                  workerContext.getId(),
+                  getUniqueNetworkSinkDescriptorId(),
+                  nodeEngine->getNodeId(),
+                  inputBuffer.getOriginId(),
+                  inputBuffer.getSequenceNumber());
         NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
                         "Trying to write to invalid channel while no connection is in progress");
 
@@ -93,7 +146,12 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
     }
 
-    NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
+    NES_DEBUG("context {} sucessfully written data at sink {} on node {} for originId {} and seqNumber {}",
+              workerContext.getId(),
+              getUniqueNetworkSinkDescriptorId(),
+              nodeEngine->getNodeId(),
+              inputBuffer.getOriginId(),
+              inputBuffer.getSequenceNumber());
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
@@ -230,6 +288,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             break;
         }
+        case Runtime::ReconfigurationType::ShouldStopBuffering: {
+            unbuffer(workerContext);
+        }
         default: {
             break;
         }
@@ -261,6 +322,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 }
             }
             unbuffer(workerContext);
+            NES_DEBUG("unregistering subpartition {}", messageSequenceNumber);
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                                 decomposedQueryVersion,
@@ -457,20 +519,29 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
+    // auto buffersCount = 0;
+    if (shouldBuffer) {
+        auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("thread {} started unbuffering from {}", workerContext.getId(), startTime)
+    }
     auto topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     NES_INFO("sending buffered data");
     while (topBuffer) {
+        // buffersCount++;
         if (!topBuffer.value().getBuffer()) {
             NES_WARNING("buffer does not exist");
             break;
         }
-        if (!writeData(topBuffer.value(), workerContext)) {
+        if (!unbufferData(topBuffer.value(), workerContext)) {
             NES_WARNING("could not send all data from buffer");
             break;
         }
-        NES_TRACE("buffer sent");
+        // NES_DEBUG("buffer {} sent", buffersCount);
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     }
+//    if (shouldBuffer) {
+//        NES_ERROR("thread {} sent {}", workerContext.getId(), buffersCount);
+//    }
 }
 
 bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext) {
@@ -520,5 +591,10 @@ bool NetworkSink::applyNextSinkDescriptor() {
     }
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
+}
+
+void NetworkSink::setShouldBuffer(uint64_t numberOfBuffersToProduce) {
+    shouldBuffer = true;
+    this->numberOfBuffersToBuffer = numberOfBuffersToProduce;
 }
 }// namespace NES::Network

@@ -189,6 +189,8 @@ class QueryCompilerOptions {
      */
     const std::string getCUDASdkPath() const;
 
+    uint64_t numOfBuffersToProduce;
+
   protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;

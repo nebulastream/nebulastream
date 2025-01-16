@@ -504,6 +504,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             } else {
                 // create new operator handler and store it
                 joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+                dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())->numberOfBuffersToRecreate = options->numOfBuffersToProduce;
                 operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, joinOperatorHandler);
             }
 

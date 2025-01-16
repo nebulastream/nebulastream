@@ -301,6 +301,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     // Key to identify the source when loading persisted properties
     const std::string persistentSourceKey;
 
+    void propagateShouldUnbufferMarker();
+
   protected:
     void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
 

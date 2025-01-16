@@ -241,21 +241,26 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
                               DecomposedQueryPlanVersion version,
+                              uint64_t numOfBuffersToProduce,
                               uint64_t numberOfOrigins,
                               uint8_t retryTimes) {
-    return std::make_shared<Network::NetworkSink>(schema,
-                                                  uniqueNetworkSinkDescriptorId,
-                                                  sharedQueryId,
-                                                  decomposedQueryId,
-                                                  decomposedQueryVersion,
-                                                  nodeLocation,
-                                                  nesPartition,
-                                                  nodeEngine,
-                                                  numOfProducers,
-                                                  waitTime,
-                                                  retryTimes,
-                                                  numberOfOrigins,
-                                                  version);
+    auto sink = std::make_shared<Network::NetworkSink>(schema,
+                                                       uniqueNetworkSinkDescriptorId,
+                                                       sharedQueryId,
+                                                       decomposedQueryId,
+                                                       decomposedQueryVersion,
+                                                       nodeLocation,
+                                                       nesPartition,
+                                                       nodeEngine,
+                                                       numOfProducers,
+                                                       waitTime,
+                                                       retryTimes,
+                                                       numberOfOrigins,
+                                                       version);
+    if (numOfBuffersToProduce > 0) {
+        sink->setShouldBuffer(numOfBuffersToProduce);
+    }
+    return sink;
 }
 
 DataSinkPtr createStatisticSink(const SchemaPtr& schema,

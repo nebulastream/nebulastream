@@ -22,6 +22,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -37,9 +38,15 @@ void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinS
     return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
+void checkAndLogTimestamp(void* ptrOpHandler, uint64_t joinBuildSideInt, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->checkAndLogTimestamp(joinBuildSideInt);
+};
+
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     // Get the local state
-    NES_DEBUG("Printing record: {}", record.toString());
+    // NES_DEBUG("Printing record: {}", record.toString());
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
@@ -105,6 +112,12 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
 
     // Storing the local state
     ctx.setLocalOperatorState(this, std::move(localJoinState));
+    Nautilus::FunctionCall("checkAndLogTimestamp",
+                           checkAndLogTimestamp,
+                           opHandlerMemRef,
+                           Value<UInt64>(to_underlying(joinBuildSide)),
+                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 }
 
 NLJBuildSlicing::NLJBuildSlicing(const uint64_t operatorHandlerIndex,

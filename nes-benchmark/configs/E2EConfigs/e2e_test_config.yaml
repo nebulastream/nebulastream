@@ -8,18 +8,3 @@ numberOfPreAllocatedBuffer: 1000
 
 # ~~~ Benchmark parameter for the entire run ~~~
 numberOfBuffersToProduce: 500
-logLevel: LOG_INFO
-experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 0
-numberOfMeasurementsToCollect: 1
-
-logicalSources:
-  - name: ysb
-    type: YSB
-    numberOfPhysicalSources: 1
-
-dataProviderMode: ZeroCopy
-outputFile: YSBQuery.csv
-benchmarkName: YSBQuery
-#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'

@@ -85,7 +85,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
 
             // dummy buffer size to create the nautilus operators
             size_t bufferSize = 1024 * 1024;
-            pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
+            pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize, nullptr);
             timer.snapshot("AfterToNautilusPlanPhase");
 
             pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);

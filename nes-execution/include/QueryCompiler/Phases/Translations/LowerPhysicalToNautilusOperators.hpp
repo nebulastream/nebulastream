@@ -58,14 +58,14 @@ class LowerPhysicalToNautilusOperators {
      * @param pipelined query plan
      * @return PipelineQueryPlanPtr
      */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
      * @param pipeline
      * @return OperatorPipelinePtr
      */
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Deconstructor for this class
@@ -78,7 +78,8 @@ class LowerPhysicalToNautilusOperators {
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
           size_t bufferSize,
-          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+          Runtime::NodeEnginePtr nodeEngine);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
@@ -221,7 +222,8 @@ class LowerPhysicalToNautilusOperators {
     Runtime::Execution::Operators::ExecutableOperatorPtr
     lowerNLJSlicing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
                     uint64_t operatorHandlerIndex,
-                    Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+                    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+                    Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Lowers a hash join slicing build operator

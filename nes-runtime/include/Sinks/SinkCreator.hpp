@@ -251,6 +251,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
                               DecomposedQueryPlanVersion version,
+                              uint64_t numOfBuffersToProduce,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5);
 

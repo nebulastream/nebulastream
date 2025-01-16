@@ -40,6 +40,7 @@ enum class ReconfigurationType : uint8_t {
     UpdateVersion,
     /// reconfiguration marker
     ReconfigurationMarker,
+    ShouldStopBuffering
 };
 
 QueryTerminationType reconfigurationTypeToTerminationType(ReconfigurationType reconfigurationType);
