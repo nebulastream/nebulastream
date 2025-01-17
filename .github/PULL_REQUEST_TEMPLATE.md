@@ -17,7 +17,7 @@ This change is tested by
 - Dependencies (does it add or upgrade a dependency)
 - ExecutionEngine
 - QueryCompiler
-- QueryManager
+- QueryEngine
 - RestAPI
 
 ## Documentation
