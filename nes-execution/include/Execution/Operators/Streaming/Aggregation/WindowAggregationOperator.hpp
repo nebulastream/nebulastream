@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES::Runtime::Execution::Operators
@@ -43,7 +48,8 @@ public:
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
         PRECONDITION(
-            aggregationFunctions.size() == fieldValues.size(), "The number of aggregation functions must match the number of field values");
+            this->aggregationFunctions.size() == this->fieldValues.size(),
+            "The number of aggregation functions must match the number of field values");
     }
 
     WindowAggregationOperator(WindowAggregationOperator&& other) noexcept

@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -63,8 +63,6 @@ void Operator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-Operator::~Operator()
-{
-}
+Operator::~Operator() = default;
 
 }

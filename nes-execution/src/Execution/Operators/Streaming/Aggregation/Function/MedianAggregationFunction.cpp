@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
+#include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>

@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
@@ -38,7 +39,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
     const std::vector<std::string>& joinFieldNamesLeft,
     const std::vector<std::string>& joinFieldNamesRight,
-    const WindowMetaData& windowMetaData,
+    WindowMetaData windowMetaData,
     const OperatorId id)
     : Operator(id)
     , PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
@@ -47,7 +48,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     , joinFunction(std::move(joinFunction))
     , joinFieldNamesLeft(joinFieldNamesLeft)
     , joinFieldNamesRight(joinFieldNamesRight)
-    , windowMetaData(windowMetaData)
+    , windowMetaData(std::move(windowMetaData))
 {
 }
 

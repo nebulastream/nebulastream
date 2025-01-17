@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <API/Schema.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 namespace NES

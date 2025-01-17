@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
 namespace NES
 {

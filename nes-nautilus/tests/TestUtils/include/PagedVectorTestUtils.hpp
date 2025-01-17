@@ -13,9 +13,14 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <nautilus/Engine.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -24,7 +29,7 @@ namespace NES::Nautilus::TestUtils
 void runStoreTest(
     Interface::PagedVector& pagedVector,
     const SchemaPtr& testSchema,
-    const uint64_t pageSize,
+    uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
@@ -33,7 +38,7 @@ void runStoreTest(
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
     const SchemaPtr& testSchema,
-    const uint64_t pageSize,
+    uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
@@ -42,8 +47,8 @@ void runRetrieveTest(
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const SchemaPtr& schema,
-    const uint64_t entrySize,
-    const uint64_t pageSize,
+    uint64_t entrySize,
+    uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,
     const std::vector<Memory::TupleBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,

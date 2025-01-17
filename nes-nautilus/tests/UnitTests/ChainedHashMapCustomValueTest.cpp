@@ -12,17 +12,34 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <iterator>
+#include <map>
+#include <memory>
 #include <random>
 #include <ranges>
+#include <sstream>
+#include <tuple>
+#include <vector>
 #include <Configurations/Enums/NautilusBackend.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Util/Ranges.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ChainedHashMapCustomValueTestUtils.hpp>
+#include <ChainedHashMapTestUtils.hpp>
+#include <NautilusTestUtils.hpp>
 #include <magic_enum.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES::Nautilus::Interface
 {
 class ChainedHashMapCustomValueTest
@@ -128,7 +145,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         allKeyPositions.emplace_back(keyPositionInBuffer);
 
         /// Logging the progress of the test
-        if (allKeyPositions.size() % 5 == 0)
+        if (constexpr auto logInterval = 5; allKeyPositions.size() % logInterval == 0)
         {
             NES_DEBUG("Processed {} of {} buffers", allKeyPositions.size(), inputBuffers.size());
         }

@@ -13,6 +13,7 @@
 */
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferRecycler.hpp>

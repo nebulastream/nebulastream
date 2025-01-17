@@ -18,7 +18,6 @@
 #include <Execution/Operators/Operator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Util/Execution.hpp>
 
 
 namespace NES::Runtime::Execution::Operators
@@ -43,8 +42,8 @@ public:
     void terminate(ExecutionContext& executionCtx) const override;
 
 protected:
-    const uint64_t operatorHandlerIndex;
-    const WindowMetaData windowMetaData;
+    uint64_t operatorHandlerIndex;
+    WindowMetaData windowMetaData;
 };
 
 }

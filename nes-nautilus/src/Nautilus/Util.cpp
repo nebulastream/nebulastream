@@ -12,9 +12,17 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Util.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Util
 {

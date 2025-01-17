@@ -13,6 +13,7 @@
 */
 
 #include "LocalBufferPool.hpp"
+#include <chrono>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
