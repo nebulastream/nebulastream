@@ -38,19 +38,19 @@
 
 namespace NES::Testing
 {
-class QueryManagerTest : public Testing::BaseUnitTest
+class QueryEngineTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("QueryManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup QueryManagerTest test class.");
+        NES::Logger::setupLogging("QueryEngineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup QueryEngineTest test class.");
     }
 
     void SetUp() override { BaseUnitTest::SetUp(); }
 };
 
-TEST_F(QueryManagerTest, simpleTest)
+TEST_F(QueryEngineTest, simpleTest)
 {
     TestingHarness test;
     test.start();
@@ -58,7 +58,7 @@ TEST_F(QueryManagerTest, simpleTest)
 }
 
 /// The Query consists of just a source without any successor pipelines
-TEST_F(QueryManagerTest, singleQueryWithShutdown)
+TEST_F(QueryEngineTest, singleQueryWithShutdown)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -96,7 +96,7 @@ TEST_F(QueryManagerTest, singleQueryWithShutdown)
 }
 
 /// The Query is stopped via shutdown of the system
-TEST_F(QueryManagerTest, singleQueryWithSystemShutdown)
+TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -142,7 +142,7 @@ TEST_F(QueryManagerTest, singleQueryWithSystemShutdown)
 }
 
 /// Source stop: The Query was stopped by the source
-TEST_F(QueryManagerTest, singleQueryWithExternalStop)
+TEST_F(QueryEngineTest, singleQueryWithExternalStop)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -194,7 +194,7 @@ TEST_F(QueryManagerTest, singleQueryWithExternalStop)
 }
 
 /// System Stop: Meaning the Query was stopped internally from the query manager via the stop query
-TEST_F(QueryManagerTest, singleQueryWithSystemStop)
+TEST_F(QueryEngineTest, singleQueryWithSystemStop)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -248,7 +248,7 @@ TEST_F(QueryManagerTest, singleQueryWithSystemStop)
     EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
 }
 
-TEST_F(QueryManagerTest, singleQueryWithSourceFailure)
+TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -290,7 +290,7 @@ TEST_F(QueryManagerTest, singleQueryWithSourceFailure)
 }
 
 /// Shutdown of the Query Engine will `HardStop` all query plans.
-TEST_F(QueryManagerTest, singleQueryWithTwoSourcesShutdown)
+TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -341,7 +341,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesShutdown)
     EXPECT_TRUE(ctrl2->waitUntilDestroyed());
 }
 
-TEST_F(QueryManagerTest, failureDuringPipelineStop)
+TEST_F(QueryEngineTest, failureDuringPipelineStop)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -369,7 +369,7 @@ TEST_F(QueryManagerTest, failureDuringPipelineStop)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, failureDuringPipelineStopMultipleSources)
+TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSources)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -409,7 +409,7 @@ TEST_F(QueryManagerTest, failureDuringPipelineStopMultipleSources)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, failureDuringPipelineStartWithMultipleSources)
+TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -434,7 +434,7 @@ TEST_F(QueryManagerTest, failureDuringPipelineStartWithMultipleSources)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, singleQueryWithTwoSourcesWaitingForTwoStops)
+TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -483,7 +483,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesWaitingForTwoStops)
     EXPECT_TRUE(ctrl2->waitUntilDestroyed());
 }
 
-TEST_F(QueryManagerTest, singleQueryWithManySources)
+TEST_F(QueryEngineTest, singleQueryWithManySources)
 {
     constexpr size_t numberOfSources = 100;
     constexpr size_t numberOfBuffersBeforeTermination = 1000;
@@ -528,7 +528,7 @@ TEST_F(QueryManagerTest, singleQueryWithManySources)
 
 /// Apparently Sources are not notified if on of the sources fails
 /// The Mocked QueryStatusListener does not receive source termination for all sources except the failed source
-TEST_F(QueryManagerTest, singleQueryWithManySourcesOneOfThemFails)
+TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
 {
     constexpr size_t numberOfSources = 10;
     constexpr size_t numberOfBuffersBeforeFailure = 5;
@@ -572,7 +572,7 @@ TEST_F(QueryManagerTest, singleQueryWithManySourcesOneOfThemFails)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, ManyQueriesWithTwoSources)
+TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
 {
     constexpr size_t numberOfSources = 2;
     constexpr size_t numberOfQueries = 10;
@@ -648,7 +648,7 @@ TEST_F(QueryManagerTest, ManyQueriesWithTwoSources)
 /// All other queries should be uneffected, which is verified by them not terminating and still receiving data
 /// We expect QueryId 2 to be terminated by an internal stop (qm->stop(2)).
 /// Lastly all other queries are terminated via EoS
-TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesOneSourceFails)
+TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 {
     constexpr size_t numberOfSources = 2;
     constexpr size_t numberOfQueries = 10;
@@ -741,7 +741,7 @@ TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesOneSourceFails)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, singleQueryWithTwoSourceExternalStop)
+TEST_F(QueryEngineTest, singleQueryWithTwoSourceExternalStop)
 {
     constexpr size_t numberOfSources = 2;
 
@@ -773,7 +773,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourceExternalStop)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTermination)
+TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringEngineTermination)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -807,7 +807,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminati
     test.stop();
 }
 
-TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermination)
+TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermination)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -848,7 +848,7 @@ auto IsInInclusiveRange(T lo, T hi)
     return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
 }
 
-TEST_F(QueryManagerTest, singleQueryWithPipelineFailure)
+TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -883,7 +883,7 @@ TEST_F(QueryManagerTest, singleQueryWithPipelineFailure)
 }
 
 
-TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessors)
+TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -919,7 +919,7 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessors)
     test.stop();
 }
 
-TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
+TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
 {
     TestingHarness test;
     auto builder = test.buildNewQuery();
@@ -989,7 +989,7 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
     EXPECT_EQ(pipelinesCompletedOrExpired.load(), 3 * 4) << "Expected 4 Buffers for each of 3 pipeline to be either processed or expire";
 }
 
-TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
+TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
 {
     constexpr size_t numberOfSources = 2;
     constexpr size_t numberOfQueries = 10;

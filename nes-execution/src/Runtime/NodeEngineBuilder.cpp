@@ -48,10 +48,10 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     auto queryLog = std::make_shared<QueryLog>();
 
 
-    auto queryManager
+    auto queryEngine
         = std::make_unique<QueryEngine>(workerConfiguration.queryEngineConfiguration, statisticEventListener, queryLog, bufferManager);
 
-    return std::make_unique<NodeEngine>(std::move(bufferManager), systemEventListener, std::move(queryLog), std::move(queryManager));
+    return std::make_unique<NodeEngine>(std::move(bufferManager), systemEventListener, std::move(queryLog), std::move(queryEngine));
 }
 
 }

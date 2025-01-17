@@ -20,6 +20,6 @@ The non-technical checklist includes items related to the PR itself, such as iss
 # Technical Checklist
 - The changes in this PR are related to the linked issue(s).
 - The purpose of the change is clearly described in the PR description, such that it is clear what the change does and why it is necessary.
-- All affected components have been added to the PR text, e.g., `QueryManager: Added a new function x` or `Network Stack: Replaced XYZ`. 
+- All affected components have been added to the PR text, e.g., `QueryEngine: Added a new function x` or `Network Stack: Replaced XYZ`. 
 - The changes are covered by tests, either Unittests, Integrationtests, End-to-endtest or via a script that is part of this PR.
 - The code aims for high-quality C++ code, e.g., RAII, operator overloading, the STL, and appropriate use of smart-pointers, as described in our coding guidelines.
