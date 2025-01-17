@@ -12,29 +12,10 @@
     limitations under the License.
 */
 
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <memory>
-#include <sstream>
-#include <vector>
-#include <API/Schema.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Common.hpp>
 #include <Util/Core.hpp>
-#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -42,7 +23,7 @@ namespace NES
 class MicroBenchmarksTest : public Testing::BaseUnitTest
 {
 public:
-    static constexpr uint64_t MEM_CONSUMPTION = 1048576; /// 256KB //8388608; /// 2MB //268435456; /// 256MB //2147483648; /// 2GB //17179869184; /// 16GB
+    static constexpr uint64_t MEM_CONSUMPTION = 268435456; /// 256MB //2147483648; /// 2GB //17179869184; /// 16GB
 
     static void SetUpTestSuite()
     {
@@ -52,121 +33,109 @@ public:
 
     static void TearDownTestSuite() { NES_INFO("Tear down MicroBenchmarksTest class."); }
 
-    static void fillPagedVector(Nautilus::Interface::PagedVector pagedVector, const uint64_t numTuples)
+    static void addSchemaFields(const SchemaPtr& schema)
     {
-        const auto memoryLayout = pagedVector.getMemoryLayout();
-        for (auto tupleIdx = 0UL; tupleIdx < numTuples; ++tupleIdx)
+        schema->addField("f0", BasicType::UINT64)
+            ->addField("f1", BasicType::UINT64)
+            ->addField("f2", BasicType::UINT64)
+            ->addField("f3", BasicType::UINT64)
+            ->addField("f4", BasicType::UINT64)
+            ->addField("f5", BasicType::UINT64)
+            ->addField("f6", BasicType::UINT64)
+            ->addField("f7", BasicType::UINT64)
+            ->addField("f8", BasicType::UINT64)
+            ->addField("f9", BasicType::UINT64);
+    }
+
+    static void fillPagedVector(Nautilus::Interface::PagedVector& pagedVector, const uint64_t numBuffers)
+    {
+        NES_INFO("PagedVector now filling");
+
+        const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
+        const auto bufCapacity = pagedVector.getMemoryLayout()->getCapacity();
+
+        auto tupleCnt = 0UL;
+        for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
         {
             pagedVector.appendPageIfFull();
             auto tupleBuffer = pagedVector.getLastPage();
-            auto numTuplesOnPage = tupleBuffer.getNumberOfTuples();
+            tupleBuffer.setNumberOfTuples(bufCapacity);
+            auto* const tupleBufferAddr = tupleBuffer.getBuffer<uint64_t>();
 
-            auto fieldCnt = 0UL;
-            for (size_t fieldIdx = 0; fieldIdx < memoryLayout->getSchema()->getFieldNames().size(); ++fieldIdx)
+            for (auto tupleIdx = 0UL; tupleIdx < bufCapacity; ++tupleIdx)
             {
-                const auto entryVal = (memoryLayout->getSchema()->getSchemaSizeInBytes() * tupleIdx) + fieldCnt++;
-                int8_t* fieldAddr;
-
-                if (Util::instanceOf<Memory::MemoryLayouts::RowLayout>(memoryLayout))
-                {
-                    auto rowMemoryLayoutPtr = Util::as<Memory::MemoryLayouts::RowLayout>(memoryLayout);
-
-                    const auto rowOffset = tupleBuffer.getBuffer() + (rowMemoryLayoutPtr->getTupleSize() * numTuplesOnPage);
-                    const auto fieldOffset = rowMemoryLayoutPtr->getFieldOffSets()[fieldIdx];
-
-                    fieldAddr = rowOffset + fieldOffset;
-                }
-                else if (Util::instanceOf<Memory::MemoryLayouts::ColumnLayout>(memoryLayout))
-                {
-                    auto columnMemoryLayoutPtr = Util::as<Memory::MemoryLayouts::ColumnLayout>(memoryLayout);
-
-                    const auto columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[fieldIdx];
-                    const auto fieldOffset = tupleBuffer.getBuffer() + (columnMemoryLayoutPtr->getFieldSizes()[fieldIdx] * numTuplesOnPage);
-
-                    fieldAddr = columnOffset + fieldOffset;
-                }
-                else
-                {
-                    NES_THROW_RUNTIME_ERROR("Unknown memory layout");
-                }
-
-                std::memcpy(fieldAddr, std::addressof(entryVal), sizeof(uint64_t));
-                if (auto percentageFilled = static_cast<uint64_t>(100 * static_cast<double>(tupleIdx) / numTuples);
-                    percentageFilled % 10 == 0)
-                {
-                    NES_INFO("PagedVector {}% filled", percentageFilled);
-                }
+                tupleBufferAddr[tupleIdx] = tupleCnt++;
             }
 
-            tupleBuffer.setNumberOfTuples(numTuplesOnPage + 1);
-        }
-    }
-    /*
-    static void runStoreTest(
-        PagedVector& pagedVector,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        const std::vector<Record>& allRecords)
-    {
-        const uint64_t expectedNumberOfEntries = allRecords.size();
-        const uint64_t capacityPerPage = memoryProvider->getMemoryLayoutPtr()->getCapacity();
-        const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
-        auto pagedVectorRef = PagedVectorRef(nautilus::val<PagedVector*>(&pagedVector), memoryProvider);
-
-        for (const auto& record : allRecords)
-        {
-            pagedVectorRef.writeRecord(record);
+            if (bufferIdx % tenPercentOfNumBuffers == 0)
+            {
+                NES_INFO("PagedVector {}% filled", std::round(100 * static_cast<double>(bufferIdx) / numBuffers));
+            }
         }
 
-        ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
-        ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
-
-        /// As we do lazy allocation, we do not create a new page if the last tuple fit on the page
-        const bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
-        const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
-        ASSERT_EQ(pagedVector.getLastPage().getNumberOfTuples(), numTuplesLastPage);
+        NES_INFO("PagedVector done filling");
     }
 
-    static void runRetrieveTest(
-        PagedVector& pagedVector,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        const std::vector<Record>& allRecords)
+    static void writePagedVectorToFile(const Nautilus::Interface::PagedVector& pagedVector, const std::string& fileName)
     {
-        auto pagedVectorRef = PagedVectorRef(nautilus::val<PagedVector*>(&pagedVector), memoryProvider);
-        ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), allRecords.size());
+        NES_INFO("File now filling");
 
-        auto itemPos = 0UL;
-        const auto projections = memoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames();
-        for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
+        std::ofstream outFile(fileName, std::ios::out | std::ios::trunc | std::ios::binary);
+        if (!outFile)
         {
-            ASSERT_EQ(*it, allRecords[itemPos++]);
+            throw std::runtime_error("Failed to open file for writing");
         }
-        ASSERT_EQ(itemPos, allRecords.size());
-    }*/
+
+        const auto numPages = pagedVector.getNumberOfPages();
+        const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
+
+        for (size_t pageIndex = 0; pageIndex < numPages; ++pageIndex)
+        {
+            const auto tupleBuffer = pagedVector.getPages()[pageIndex];
+            outFile.write(reinterpret_cast<const char*>(tupleBuffer.getBuffer()), tupleBuffer.getBufferSize());
+
+            if (pageIndex % tenPercentOfNumPages == 0)
+            {
+                NES_INFO("File {}% filled", std::round(100 * static_cast<double>(pageIndex) / numPages));
+            }
+        }
+
+        outFile.close();
+
+        NES_INFO("File done filling");
+    }
 };
 
 TEST_F(MicroBenchmarksTest, benchmark1)
 {
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f0", BasicType::UINT64)
-                                ->addField("f1", BasicType::UINT64)
-                                ->addField("f2", BasicType::UINT64)
-                                ->addField("f3", BasicType::UINT64)
-                                ->addField("f4", BasicType::UINT64)
-                                ->addField("f5", BasicType::UINT64)
-                                ->addField("f6", BasicType::UINT64)
-                                ->addField("f7", BasicType::UINT64)
-                                ->addField("f8", BasicType::UINT64)
-                                ->addField("f9", BasicType::UINT64);
+    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    addSchemaFields(testSchema);
 
     const auto pageSize = 4 * 1024;
     const auto numBuffers = MEM_CONSUMPTION / pageSize;
 
     const auto bufferManager = Memory::BufferManager::create(pageSize, numBuffers);
     const auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
-    const Nautilus::Interface::PagedVector pagedVector(bufferManager, memoryLayout);
+    Nautilus::Interface::PagedVector pagedVector(bufferManager, memoryLayout);
 
-    const auto numItems = memoryLayout->getTupleSize() * memoryLayout->getCapacity() * numBuffers;
-    fillPagedVector(pagedVector, numItems);
+    fillPagedVector(pagedVector, numBuffers);
+    writePagedVectorToFile(pagedVector, "../../../benchmark1_output.dat");
+}
+
+TEST_F(MicroBenchmarksTest, benchmark2)
+{
+    const auto testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+    addSchemaFields(testSchema);
+
+    const auto pageSize = 4 * 1024;
+    const auto numBuffers = MEM_CONSUMPTION / pageSize;
+
+    const auto bufferManager = Memory::BufferManager::create(pageSize, numBuffers);
+    const auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    Nautilus::Interface::PagedVector pagedVector(bufferManager, memoryLayout);
+
+    fillPagedVector(pagedVector, numBuffers);
+    writePagedVectorToFile(pagedVector, "../../../benchmark2_output.dat");
 }
 
 }

@@ -49,6 +49,7 @@ public:
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
     [[nodiscard]] uint64_t getNumberOfPages() const;
+    [[nodiscard]] std::vector<Memory::TupleBuffer> getPages() const;
     [[nodiscard]] Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayout() const;
 
 private:
