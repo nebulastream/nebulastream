@@ -11,21 +11,21 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        FileSource.cpp
+        Async/AsyncSourceCoroutineWrapper.cpp
+        Async/AsyncSourceExecutor.cpp
+        Async/AsyncSourceRunner.cpp
+        Async/Sources/AsyncSource.cpp
+        Async/Sources/FileSource.cpp
+        Async/Sources/TCPSource.cpp
+        Blocking/BlockingSource.cpp
+        Blocking/BlockingSourceRunner.cpp
         SourceDescriptor.cpp
-        AsyncSource.cpp
-        BlockingSource.cpp
-        SourceExecutionContext.cpp
-        SourceHandle.cpp
         SourceProvider.cpp
-        BlockingSourceRunner.cpp
         SourceValidationProvider.cpp
-        AsyncSourceRunner.cpp
-        AsyncSourceExecutor.cpp
 )
 
 # Register plugins
-add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
-add_plugin(TCP Source nes-sources TCPSource.cpp)
-add_plugin(TCP SourceValidation nes-sources TCPSource.cpp)
+add_plugin(File Source nes-sources Async/Sources/FileSource.cpp)
+add_plugin(File SourceValidation nes-sources Async/Sources/FileSource.cpp)
+add_plugin(TCP Source nes-sources Async/Sources/TCPSource.cpp)
+add_plugin(TCP SourceValidation nes-sources Async/Sources/TCPSource.cpp)

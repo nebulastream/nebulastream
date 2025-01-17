@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <memory>
+#include <mutex>
 #include <thread>
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -28,14 +30,24 @@ namespace asio = boost::asio;
 class AsyncSourceExecutor
 {
 public:
-    AsyncSourceExecutor();
-    ~AsyncSourceExecutor();
+    friend class std::shared_ptr<AsyncSourceExecutor>;
 
     AsyncSourceExecutor(const AsyncSourceExecutor&) = delete;
     AsyncSourceExecutor& operator=(const AsyncSourceExecutor&) = delete;
     AsyncSourceExecutor(AsyncSourceExecutor&&) = delete;
     AsyncSourceExecutor& operator=(AsyncSourceExecutor&&) = delete;
 
+    static std::shared_ptr<AsyncSourceExecutor> getOrCreate()
+    {
+        const std::lock_guard lock(instanceMutex);
+        if (auto shared = instance.lock())
+        {
+            return shared;
+        }
+        auto sharedInstance = createInstance();
+        instance = sharedInstance;
+        return sharedInstance;
+    }
 
     template <typename Callable>
     void execute(Callable&& task);
@@ -43,9 +55,23 @@ public:
     asio::io_context& ioContext() { return ioc; }
 
 private:
+    AsyncSourceExecutor();
+    ~AsyncSourceExecutor();
+
+    static std::shared_ptr<AsyncSourceExecutor> createInstance()
+    {
+        return std::shared_ptr<AsyncSourceExecutor>(new AsyncSourceExecutor(), [](AsyncSourceExecutor* p) { delete p; });
+    }
+
+    static std::weak_ptr<AsyncSourceExecutor> instance;
+    static std::mutex instanceMutex;
+
     asio::io_context ioc;
     asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
     std::jthread thread;
 };
+
+std::weak_ptr<AsyncSourceExecutor> AsyncSourceExecutor::instance;
+std::mutex AsyncSourceExecutor::instanceMutex;
 
 }

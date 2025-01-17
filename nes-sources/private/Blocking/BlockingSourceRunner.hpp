@@ -22,83 +22,75 @@
 #include <ostream>
 #include <stop_token>
 #include <thread>
+#include <magic_enum.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
-struct SourceImplementationTermination
+
+struct BlockingSourceTermination
 {
     enum : uint8_t
     {
         StopRequested,
         EndOfStream
     } result;
-    friend std::ostream& operator<<(std::ostream& os, const SourceImplementationTermination& obj)
+
+    friend std::ostream& operator<<(std::ostream& os, const BlockingSourceTermination& obj)
     {
         return os << magic_enum::enum_name(obj.result);
     }
 };
+
 /// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class BlockingSourceRunner
+class BlockingSourceRunner : public SourceRunner
 {
     static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
     static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
 
 public:
     explicit BlockingSourceRunner(
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-        std::unique_ptr<BlockingSource> sourceImplementation,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
+        SourceExecutionContext executionContext
+    );
 
     BlockingSourceRunner() = delete;
+    ~BlockingSourceRunner() override = default;
     BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
     BlockingSourceRunner(BlockingSourceRunner&& other) noexcept = delete;
     BlockingSourceRunner& operator=(const BlockingSourceRunner& other) = delete;
     BlockingSourceRunner& operator=(BlockingSourceRunner&& other) noexcept = delete;
 
-    /// clean up thread-local state for the source.
-    void close();
-
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
-    [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
+    bool start(SourceReturnType::EmitFunction&& emitFunction) override;
 
     /// Attempts to stop the DataSource. If the data source is not running (maybe it never ran) this function return false.
     /// If this function returns true the thread has been stopped.
-    [[nodiscard]] bool stop();
+    bool stop() override;
 
-    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getOriginId() const;
-
-    friend std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& sourceThread);
-
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 protected:
-    OriginId originId;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::unique_ptr<BlockingSource> sourceImplementation;
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
     std::atomic_bool started;
-
     std::jthread thread;
-    std::future<SourceImplementationTermination> terminationFuture;
+    std::future<BlockingSourceTermination> terminationFuture;
 
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
-    void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
-    void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
-    friend std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& sourceThread);
+    void runningRoutine(const std::stop_token& stopToken, std::promise<BlockingSourceTermination>&);
+    void emitWork(IOBuffer& buffer);
 };
 
 }
 
-FMT_OSTREAM(NES::Sources::SourceImplementationTermination);
+FMT_OSTREAM(NES::Sources::BlockingSourceTermination);

@@ -11,16 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-
 #include <memory>
+#include <utility>
+#include <variant>
 
+#include <Async/AsyncSourceRunner.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -32,7 +34,7 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
     return std::make_unique<SourceProvider>();
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
+std::unique_ptr<SourceRunner> SourceProvider::lower(
     OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider)
 {
     auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
@@ -46,7 +48,16 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     {
         if (auto bufferProvider = poolProvider->createFixedSizeBufferPool(NUM_SOURCE_LOCAL_BUFFERS); bufferProvider)
         {
-            return std::make_unique<SourceHandle>(originId, *bufferProvider, std::move(*source), std::move(inputFormatter));
+            auto sourceContext = SourceExecutionContext{originId, *bufferProvider, std::move(inputFormatter)};
+            if (std::holds_alternative<std::unique_ptr<AsyncSource>>(*source))
+            {
+                auto asyncContext = AsyncSourceExecutionContext{(std::move(std::get<std::unique_ptr<AsyncSource>>(*source)))};
+                return std::make_unique<AsyncSourceRunner>(std::move(sourceContext), std::move(asyncContext));
+            }
+            else /// if (std::holds_alternative<BlockingSource>(*source))
+            {
+                return nullptr;
+            }
         }
         throw CannotAllocateBuffer();
     }

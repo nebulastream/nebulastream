@@ -12,22 +12,28 @@
     limitations under the License.
 */
 
-#include <AsyncSourceRunner.hpp>
+#include <Async/AsyncSourceExecutor.hpp>
 
-#include <optional>
-#include <variant>
-#include <memory>
-
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/post.hpp>
 
 namespace NES::Sources
 {
 
-void AsyncSourceRunner::dispatch(const Event& event)
+AsyncSourceExecutor::AsyncSourceExecutor() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
 {
-    if (std::optional<State> newState = std::visit(Transitions{}, currentState, event))
-    {
-        currentState = *std::move(newState);
-    }
+}
+
+AsyncSourceExecutor::~AsyncSourceExecutor()
+{
+    workGuard.reset();
+    ioc.stop();
+}
+
+template<typename Callable>
+void AsyncSourceExecutor::execute(Callable&& task)
+{
+    asio::post(ioc, std::forward<Callable>(task));
 }
 
 }

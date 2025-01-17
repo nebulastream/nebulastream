@@ -35,6 +35,7 @@
 #include <gtest/gtest.h>
 
 #include <API/Schema.hpp>
+#include <Async/Sources/TCPSource.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -42,7 +43,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
-#include <TCPSource.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES

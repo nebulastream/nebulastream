@@ -14,42 +14,62 @@
 
 #pragma once
 
-#include <cstdint>
+#include <chrono>
+#include <future>
 #include <memory>
 
+#include <Async/AsyncSourceExecutor.hpp>
+#include <Blocking/BlockingSourceRunner.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 
 namespace NES::Sources
 {
 
-class AsyncSourceExecutor;
-
-struct AsyncSourceExecutionContext
+struct SourceExecutionContext
 {
-    AsyncSourceExecutionContext() = delete;
-    AsyncSourceExecutionContext(
-        OriginId originId,
-        std::unique_ptr<AsyncSource> sourceImpl,
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
+    SourceExecutionContext() = delete;
 
-    void setEmitFunction(SourceReturnType::EmitFunction emit)
+    SourceExecutionContext(
+        const OriginId originId,
+        std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>> sourceImpl,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
+        : originId(originId)
+        , sourceImpl(std::move(sourceImpl))
+        , bufferProvider(std::move(bufferProvider))
+        , inputFormatter(std::move(inputFormatter))
+        , currSequenceNumber(SequenceNumber::INITIAL)
     {
-        emitFn = emit;
     }
 
-    OriginId originId;
-    std::unique_ptr<AsyncSource> sourceImpl;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    uint64_t maxSequenceNumber;
-    std::shared_ptr<AsyncSourceExecutor> executor;
-    SourceReturnType::EmitFunction emitFn;
+    void addBufferMetadata(IOBuffer& buffer)
+    {
+        buffer.setOriginId(originId);
+        buffer.setCreationTimestampInMS(
+            Runtime::Timestamp(
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                    .count()));
+        buffer.setSequenceNumber(SequenceNumber{currSequenceNumber++});
+        buffer.setChunkNumber(ChunkNumber{1});
+        buffer.setLastChunk(true);
 
-private:
-    /// If the shared_ptr is nullptr (does not manage an underlying pointer to an executor, create one in a thread-safe way and return it
-    /// This makes sure that the I/O thread(s) within the executor are only running when at least one source is active
-    static std::shared_ptr<AsyncSourceExecutor> getExecutor();
+        NES_TRACE(
+            "Setting buffer metadata with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
+            buffer.getOriginId(),
+            buffer.getSequenceNumber(),
+            buffer.getChunkNumber(),
+            buffer.isLastChunk());
+    }
+
+    const OriginId originId;
+    std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>> sourceImpl;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
+    size_t currSequenceNumber;
 };
 
 }

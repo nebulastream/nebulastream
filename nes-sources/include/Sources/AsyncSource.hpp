@@ -22,13 +22,15 @@
 #include <boost/system/system_error.hpp>
 #include <fmt/ostream.h>
 
-#include <Sources/SourceReturnType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Sources
 {
 
 using IOBuffer = Memory::TupleBuffer;
+
 namespace asio = boost::asio;
 
 /// AsyncSource is the interface for all sources that read data into buffers asynchronously.
@@ -37,11 +39,12 @@ class AsyncSource
 public:
     struct EndOfStream
     {
-        bool dataAvailable;
+        size_t bytesRead;
     };
 
     struct Continue
     {
+        size_t bytesRead;
     };
 
     struct Error
@@ -51,7 +54,7 @@ public:
 
     struct Cancelled
     {
-        bool dataAvailable;
+        size_t bytesRead;
     };
 
     using InternalSourceResult = std::variant<Continue, Cancelled, EndOfStream, Error>;
@@ -85,10 +88,4 @@ protected:
 
 }
 
-namespace fmt
-{
-template <>
-struct formatter<NES::Sources::AsyncSource> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Sources::AsyncSource);

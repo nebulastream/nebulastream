@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BlockingSourceRunner.hpp>
+#include <Blocking/BlockingSourceRunner.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -46,7 +46,7 @@ BlockingSourceRunner::BlockingSourceRunner(
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
     : originId(originId)
     , bufferProvider(bufferProvider)
-    , sourceImplementation(std::move(sourceImplementation))
+    , sourceImpl(std::move(sourceImplementation))
     , inputFormatter(std::move(inputFormatter))
 {
     NES_ASSERT(this->bufferProvider, "Invalid buffer manager");
@@ -76,7 +76,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Memory::TupleBuffer)>;
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -106,7 +106,7 @@ struct SourceHandle
     BlockingSource& source; ///NOLINT Source handle should never outlive the source
 };
 
-SourceImplementationTermination dataSourceThreadRoutine(
+BlockingSourceTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
     BlockingSource& source,
     Memory::AbstractBufferProvider& bufferProvider,
@@ -135,20 +135,20 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
         if (stopToken.stop_requested())
         {
-            return {SourceImplementationTermination::StopRequested};
+            return {BlockingSourceTermination::StopRequested};
         }
 
         if (numReadBytes == 0)
         {
-            return {SourceImplementationTermination::EndOfStream};
+            return {BlockingSourceTermination::EndOfStream};
         }
     }
-    return {SourceImplementationTermination::StopRequested};
+    return {BlockingSourceTermination::StopRequested};
 }
 
 void dataSourceThread(
     const std::stop_token& stopToken,
-    std::promise<SourceImplementationTermination> result,
+    std::promise<BlockingSourceTermination> result,
     BlockingSource* source,
     SourceReturnType::EmitFunction emit,
     OriginId originId,
@@ -158,12 +158,9 @@ void dataSourceThread(
     threadSetup(originId);
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    EmitFn const dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
+    EmitFn const dataEmit = [&](Memory::TupleBuffer&& buffer)
     {
-        if (shouldAddMetadata)
-        {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
-        }
+        addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         emit(originId, SourceReturnType::Data{std::move(buffer)});
     };
 
@@ -193,13 +190,13 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
     }
 
     NES_DEBUG("BlockingSourceThread  {} : start source", originId);
-    std::promise<SourceImplementationTermination> terminationPromise;
+    std::promise<BlockingSourceTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
     std::jthread sourceThread(
         detail::dataSourceThread,
         std::move(terminationPromise),
-        sourceImplementation.get(),
+        sourceImpl.get(),
         std::move(emitFunction),
         originId,
         std::move(inputFormatter),
@@ -210,7 +207,7 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
 
 bool BlockingSourceRunner::stop()
 {
-    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "BlockingSourceThread should never request the source termination");
+    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "BlockingSourceRunner should never request the source termination");
     if (!started.exchange(false))
     {
         return false;
@@ -232,19 +229,14 @@ bool BlockingSourceRunner::stop()
     return true;
 }
 
-OriginId BlockingSourceRunner::getOriginId() const
+std::ostream& BlockingSourceRunner::toString(std::ostream& str) const override
 {
-    return this->originId;
-}
-
-std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& sourceThread)
-{
-    out << "\nBlockingSourceThread(";
-    out << "\n  originId: " << sourceThread.originId;
-    out << "\n  bufferProvider: " << sourceThread.bufferProvider;
-    out << "\n  sourceImplementation:" << *sourceThread.sourceImplementation;
-    out << ")\n";
-    return out;
+    str << "\nBlockingSourceThread(";
+    str << "\n  originId: " << originId;
+    str << "\n  bufferProvider: " << bufferProvider;
+    str << "\n  sourceImplementation:" << sourceImpl;
+    str << ")\n";
+    return str;
 }
 
 }

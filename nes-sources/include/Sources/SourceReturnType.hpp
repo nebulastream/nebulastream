@@ -17,9 +17,9 @@
 #include <functional>
 #include <variant>
 
-#include "ErrorHandling.hpp"
-#include "Identifiers/Identifiers.hpp"
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources::SourceReturnType
 {

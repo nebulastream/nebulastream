@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "TCPSource.hpp"
+#include <Async/Sources/TCPSource.hpp>
 
 #include <cstring>
 #include <memory>
@@ -24,9 +24,9 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
 #include <Configurations/Descriptor.hpp>
@@ -80,11 +80,11 @@ asio::awaitable<AsyncSource::InternalSourceResult> TCPSource::fillBuffer(IOBuffe
     {
         if (errorCode == asio::error::eof)
         {
-            co_return EndOfStream{.dataAvailable = bytesRead != 0};
+            co_return EndOfStream{.bytesRead = bytesRead};
         }
         if (errorCode == asio::error::operation_aborted)
         {
-            co_return Cancelled{};
+            co_return Cancelled{.bytesRead = bytesRead};
         }
         co_return Error{boost::system::system_error{errorCode}};
     }

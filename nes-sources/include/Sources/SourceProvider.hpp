@@ -17,9 +17,8 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceRunner.hpp>
 
 namespace NES::Sources
 {
@@ -36,10 +35,8 @@ public:
     SourceProvider() = default;
     static std::unique_ptr<SourceProvider> create();
 
-    static std::unique_ptr<SourceHandle> lower(
-        OriginId originId,
-        const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider);
+    static std::unique_ptr<SourceRunner>
+    lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider);
 
     ~SourceProvider() = default;
 };

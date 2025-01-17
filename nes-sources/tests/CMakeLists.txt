@@ -23,7 +23,6 @@ endfunction()
 
 add_nes_source_test(blocking-source-runner-test Unit/BlockingSourceRunnerTest.cpp)
 
-
 add_nes_unit_test(source-unit-tests
         "Unit/FileSourceTest.cpp"
         "Unit/TCPSourceTest.cpp"

@@ -30,20 +30,20 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
 namespace NES::Sources
 {
 
-struct NoOpInputFormatter : InputFormatters::InputFormatter
+struct NoOpInputFormatter : NES::InputFormatters::InputFormatter
 {
     void parseTupleBufferRaw(
-        const Memory::TupleBuffer& tbRaw,
-        Memory::AbstractBufferProvider& bufferProvider,
+        const NES::Memory::TupleBuffer& tbRaw,
+        NES::Memory::AbstractBufferProvider& bufferProvider,
         size_t,
-        const std::function<void(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        const std::function<void(NES::Memory::TupleBuffer& buffer)>& emitFunction) override;
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << "NoOpInputFormatter"; }
@@ -102,7 +102,7 @@ private:
 class TestSource : public BlockingSource
 {
 public:
-    size_t fillBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
 
@@ -118,7 +118,7 @@ private:
     std::shared_ptr<TestSourceControl> control;
 };
 
-std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+std::pair<std::unique_ptr<SourceRunner>, std::shared_ptr<TestSourceControl>>
 getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
 
 }

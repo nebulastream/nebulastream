@@ -48,12 +48,12 @@ public:
 
     asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) override;
 
-    /// Open file socket.
+    /// Open file descriptor.
     asio::awaitable<void> open(asio::io_context& ioc) override;
-    /// Close file socket.
+    /// Close file descriptor.
     void close() override;
 
-    /// Cancel operations on the file stream
+    /// Cancel ongoing operations on the file stream
     void cancel() override;
 
     /// validates and formats a string to string configuration

@@ -29,12 +29,8 @@
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-
 namespace NES::Sources
 {
-
-namespace asio = boost::asio;
-
 
 class TCPSource final : public AsyncSource
 {

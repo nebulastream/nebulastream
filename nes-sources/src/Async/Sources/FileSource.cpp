@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "FileSource.hpp"
+#include <Async/Sources/FileSource.hpp>
 
 #include <fcntl.h>
 
@@ -77,11 +77,11 @@ asio::awaitable<AsyncSource::InternalSourceResult> FileSource::fillBuffer(IOBuff
     {
         if (errorCode == asio::error::eof)
         {
-            co_return EndOfStream{.dataAvailable = bytesRead != 0};
+            co_return EndOfStream{.bytesRead = bytesRead};
         }
         if (errorCode == asio::error::operation_aborted)
         {
-            co_return Cancelled{.dataAvailable = bytesRead != 0};
+            co_return Cancelled{.bytesRead = bytesRead};
         }
         co_return Error{boost::system::system_error{errorCode}};
     }

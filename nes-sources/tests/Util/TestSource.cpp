@@ -12,113 +12,222 @@
     limitations under the License.
 */
 
-#include <atomic>
+#include "TestSource.hpp"
+#include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <stdexcept>
 #include <stop_token>
 #include <string>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/BlockingSource.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
-namespace NES::Sources
+#include <Blocking/BlockingSourceRunner.hpp>
+#include <ErrorHandling.hpp>
+#include <MemoryTestUtils.hpp>
+
+namespace
 {
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(100);
+constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
+constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
+}
 
-struct NoOpInputFormatter : NES::InputFormatters::InputFormatter
+template <typename QueueType, typename Args>
+bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> condition)
 {
-    void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
-        NES::Memory::AbstractBufferProvider& bufferProvider,
-        size_t,
-        const std::function<void(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
-
-protected:
-    [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << "NoOpInputFormatter"; }
-};
-
-class TestSourceControl
-{
-public:
-    bool injectEoS();
-    bool injectData(std::vector<std::byte> data, size_t numberOfTuples);
-    bool injectError(std::string error);
-
-    ::testing::AssertionResult waitUntilOpened();
-    ::testing::AssertionResult waitUntilClosed();
-    ::testing::AssertionResult waitUntilDestroyed();
-
-    [[nodiscard]] bool wasClosed() const;
-    [[nodiscard]] bool wasOpened() const;
-    [[nodiscard]] bool wasDestroyed() const;
-
-    void failDuringOpen(std::chrono::milliseconds blockFor);
-    void failDuringClose(std::chrono::milliseconds blockFor);
-
-private:
-    friend class TestSource;
-    std::promise<void> open;
-    std::promise<void> close;
-    std::promise<void> destroyed;
-    std::atomic_bool failed;
-
-    std::shared_future<void> openFuture = open.get_future().share();
-    std::shared_future<void> closeFuture = close.get_future().share();
-    std::shared_future<void> destroyedFuture = destroyed.get_future().share();
-
-    bool fail_during_open = false;
-    bool fail_during_close = false;
-    std::atomic<std::chrono::milliseconds> fail_during_open_duration;
-    std::atomic<std::chrono::milliseconds> fail_during_close_duration;
-
-    struct EoS
+    for (size_t i = 0; i < 10; ++i)
     {
-    };
-    struct Data
-    {
-        std::vector<std::byte> data;
-        size_t numberOfTuples;
-    };
-    struct Error
-    {
-        std::string error;
-    };
-    using ControlData = std::variant<EoS, Data, Error>;
-    folly::MPMCQueue<ControlData> queue{10};
-};
+        if (condition())
+        {
+            return true;
+        }
+        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), std::forward<Args>(args)))
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
-class TestSource : public BlockingSource
+void NES::Sources::NoOpInputFormatter::parseTupleBufferRaw(
+    const Memory::TupleBuffer& tbRaw,
+    Memory::AbstractBufferProvider& bufferProvider,
+    size_t,
+    const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
 {
-public:
-    size_t fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-    void open() override;
-    void close() override;
+    auto newBuffer = Testing::copyBuffer(tbRaw, bufferProvider);
+    emitFunction(newBuffer);
+}
 
-protected:
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+bool NES::Sources::TestSourceControl::injectEoS()
+{
+    PRECONDITION(!failed, "Should not be called on a failed source");
+    return tryIngestionUntil(queue, EoS{}, [this] { return wasClosed(); });
+}
+bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
+{
+    PRECONDITION(!failed, "Should not be called on a failed source");
+    return tryIngestionUntil(queue, Data{std::move(data), numberOfTuples}, [this] { return wasClosed(); });
+}
+bool NES::Sources::TestSourceControl::injectError(std::string error)
+{
+    failed = true;
+    return tryIngestionUntil(queue, Error{std::move(error)}, [this] { return wasClosed(); });
+}
 
-public:
-    explicit TestSource(OriginId sourceId, const std::shared_ptr<TestSourceControl>& control);
-    ~TestSource() override;
+testing::AssertionResult assertFutureStatus(std::future_status status)
+{
+    switch (status)
+    {
+        case std::future_status::ready:
+            return testing::AssertionSuccess();
+        case std::future_status::timeout:
+        case std::future_status::deferred:
+            return testing::AssertionFailure();
+    }
+}
 
-private:
-    OriginId sourceId;
-    std::shared_ptr<TestSourceControl> control;
-};
+testing::AssertionResult NES::Sources::TestSourceControl::waitUntilOpened()
+{
+    return assertFutureStatus(this->openFuture.wait_for(DEFAULT_AWAIT_TIME));
+}
 
-std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
+testing::AssertionResult NES::Sources::TestSourceControl::waitUntilClosed()
+{
+    return assertFutureStatus(this->closeFuture.wait_for(DEFAULT_AWAIT_TIME));
+}
 
+testing::AssertionResult NES::Sources::TestSourceControl::waitUntilDestroyed()
+{
+    return assertFutureStatus(this->destroyedFuture.wait_for(DEFAULT_AWAIT_TIME));
+}
+
+bool NES::Sources::TestSourceControl::wasClosed() const
+{
+    return assertFutureStatus(closeFuture.wait_for(IMMEDIATELY));
+}
+bool NES::Sources::TestSourceControl::wasOpened() const
+{
+    return assertFutureStatus(openFuture.wait_for(IMMEDIATELY));
+}
+bool NES::Sources::TestSourceControl::wasDestroyed() const
+{
+    return assertFutureStatus(destroyedFuture.wait_for(IMMEDIATELY));
+}
+void NES::Sources::TestSourceControl::failDuringOpen(std::chrono::milliseconds blockFor)
+{
+    assert(!wasOpened() && "open was already called. failedDuringOpen should be called during the test setup not during runtime");
+    fail_during_open_duration = blockFor;
+    fail_during_open = true;
+}
+void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
+{
+    assert(!wasOpened() && "open was already called. failedDuringClose should be called during the test setup not during runtime");
+    fail_during_close_duration = blockFor;
+    fail_during_close = true;
+}
+size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken)
+{
+    TestSourceControl::ControlData controlData;
+    /// poll from the queue as long as stop was not requested.
+    while (!stopToken.stop_requested()
+           && !control->queue.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1), controlData))
+    {
+    }
+
+    if (stopToken.stop_requested())
+    {
+        NES_DEBUG("Test Source {} was requested to shutdown", this->sourceId);
+        return 0;
+    }
+
+    auto data = std::visit(
+        Overloaded{
+            [](const TestSourceControl::Error& error) -> std::optional<TestSourceControl::Data>
+            {
+                NES_DEBUG("Test Source is injecting error");
+                throw std::runtime_error(error.error);
+            },
+            [](TestSourceControl::Data data)
+            {
+                NES_DEBUG("Test Source is injecting data");
+                return std::optional(data);
+            },
+            [](TestSourceControl::EoS) -> std::optional<TestSourceControl::Data>
+            {
+                NES_DEBUG("Test Source is injecting end of stream");
+                return std::nullopt;
+            }},
+        controlData);
+
+    if (!data)
+    {
+        return 0;
+    }
+    NES_ASSERT(data->data.size() <= buffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
+    buffer.setNumberOfTuples(data->numberOfTuples);
+    std::ranges::copy(data->data, buffer.getBuffer<std::byte>());
+    return data->data.size();
+}
+void NES::Sources::TestSource::open()
+{
+    control->open.set_value();
+    if (control->fail_during_open)
+    {
+        std::this_thread::sleep_for(control->fail_during_open_duration.load());
+        throw std::runtime_error("I should throw here");
+    }
+}
+void NES::Sources::TestSource::close()
+{
+    control->close.set_value();
+    if (control->fail_during_close)
+    {
+        std::this_thread::sleep_for(control->fail_during_close_duration.load());
+        throw std::runtime_error("I should throw here");
+    }
+}
+std::ostream& NES::Sources::TestSource::toString(std::ostream& str) const
+{
+    return str << "Test Source";
+}
+
+NES::Sources::TestSource::TestSource(OriginId sourceId, const std::shared_ptr<TestSourceControl>& control)
+    : sourceId(sourceId), control(control)
+{
+}
+NES::Sources::TestSource::~TestSource()
+{
+    control->destroyed.set_value();
+}
+
+std::pair<std::unique_ptr<NES::Sources::SourceRunner>, std::shared_ptr<NES::Sources::TestSourceControl>>
+NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider)
+{
+    auto ctrl = std::make_shared<TestSourceControl>();
+    auto testSource = std::make_unique<TestSource>(originId, ctrl);
+
+    auto sourceRunner = std::make_unique<BlockingSourceRunner>(
+        SourceExecutionContext{
+        INITIAL<OriginId>,
+        std::make_unique<TestSource>(INITIAL<OriginId>, ctrl),
+        *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
+        std::make_unique<NoOpInputFormatter>()});
+    return {std::move(sourceRunner), ctrl};
 }

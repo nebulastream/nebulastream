@@ -26,16 +26,16 @@
 #include <gtest/gtest.h>
 
 #include <API/Schema.hpp>
+#include <Async/Sources/FileSource.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <FileSource.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include "Sources/AsyncSource.hpp"
-#include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/Logger/LogLevel.hpp>
 
 namespace NES
 {
