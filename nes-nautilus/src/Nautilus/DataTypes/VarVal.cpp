@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <type_traits>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
@@ -207,7 +207,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             {
                 return os.operator<<(static_cast<nautilus::val<int>>(value));
             }
-            else if constexpr (requires(typename T::basic_type t) { os << (nautilus::val<typename T::basic_type>(t)); })
+            else if constexpr (requires(typename T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
             {
                 return os.operator<<(nautilus::val<typename T::basic_type>(value));
             }

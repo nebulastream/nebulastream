@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES

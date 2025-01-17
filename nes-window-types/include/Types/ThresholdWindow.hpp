@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>

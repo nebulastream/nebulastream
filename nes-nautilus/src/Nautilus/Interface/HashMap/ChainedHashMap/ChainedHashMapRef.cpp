@@ -130,6 +130,13 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(const ChainedEntryRef& other) = default;
 ChainedHashMapRef::ChainedEntryRef& ChainedHashMapRef::ChainedEntryRef::operator=(const ChainedEntryRef& other) = default;
 
+ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noexcept
+    : entryRef(other.entryRef)
+    , memoryProviderKeys(std::move(other.memoryProviderKeys))
+    , memoryProviderValues(std::move(other.memoryProviderValues))
+{
+}
+
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::Record& recordKey, const HashFunction::HashValue& hash) const
 {
     auto entry = findChain(hash);
@@ -272,8 +279,8 @@ ChainedHashMapRef::ChainedHashMapRef(
     const nautilus::val<HashMap*>& hashMapRef,
     std::vector<MemoryProvider::FieldOffsets> fieldsKey,
     std::vector<MemoryProvider::FieldOffsets> fieldsValue,
-    const uint64_t entriesPerPage,
-    const uint64_t entrySize)
+    const nautilus::val<uint64_t>& entriesPerPage,
+    const nautilus::val<uint64_t>& entrySize)
     : HashMapRef(hashMapRef)
     , fieldKeys(std::move(fieldsKey))
     , fieldValues(std::move(fieldsValue))
@@ -293,6 +300,21 @@ ChainedHashMapRef::ChainedHashMapRef(
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
         }
     }
+}
+
+ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
+    : ChainedHashMapRef(other.hashMapRef, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize)
+{
+}
+
+ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
+{
+    hashMapRef = other.hashMapRef;
+    fieldKeys = other.fieldKeys;
+    fieldValues = other.fieldValues;
+    entriesPerPage = other.entriesPerPage;
+    entrySize = other.entrySize;
+    return *this;
 }
 
 

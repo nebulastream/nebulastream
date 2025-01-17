@@ -14,10 +14,9 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
-#include <functional>
 #include <memory>
-#include <numeric>
 #include <random>
 #include <sstream>
 #include <vector>
@@ -30,8 +29,6 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
@@ -64,8 +61,8 @@ public:
     static constexpr uint64_t PAGE_SIZE = 4096;
     Memory::BufferManagerPtr bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    QueryCompilation::NautilusBackend backend;
-    uint64_t numberOfItems;
+    QueryCompilation::NautilusBackend backend = QueryCompilation::NautilusBackend::INTERPRETER;
+    uint64_t numberOfItems{};
     static constexpr auto minNumberOfItems = 50;
     static constexpr auto maxNumberOfItems = 2000;
 

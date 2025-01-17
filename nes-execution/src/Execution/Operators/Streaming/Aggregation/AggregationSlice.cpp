@@ -15,10 +15,12 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution
 {

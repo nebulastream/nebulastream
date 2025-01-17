@@ -21,10 +21,9 @@
 #include <utility>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Sequencing/SequenceData.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 
 namespace NES::QueryCompilation

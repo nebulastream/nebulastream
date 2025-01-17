@@ -45,7 +45,7 @@ public:
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
         const std::vector<std::string>& joinFieldNamesLeft,
         const std::vector<std::string>& joinFieldNamesRight,
-        const WindowMetaData& windowMetaData,
+        WindowMetaData windowMetaData,
         OperatorId id = getNextOperatorId());
 
     /// Performs a deep copy of this physical operator

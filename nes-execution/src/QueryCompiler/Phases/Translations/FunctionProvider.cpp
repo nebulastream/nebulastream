@@ -17,7 +17,6 @@
 #include <vector>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>

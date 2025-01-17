@@ -62,10 +62,10 @@ protected:
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
 
-    uint64_t keySize;
-    uint64_t valueSize;
-    uint64_t pageSize;
-    uint64_t numberOfBuckets;
+    uint64_t keySize{};
+    uint64_t valueSize{};
+    uint64_t pageSize{};
+    uint64_t numberOfBuckets{};
 };
 
 }

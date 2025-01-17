@@ -14,6 +14,7 @@
 
 #include <utility>
 
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

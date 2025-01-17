@@ -27,6 +27,7 @@
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
+#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
@@ -115,7 +116,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-    std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
+    const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
@@ -184,7 +185,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             fieldValues,
             entriesPerPage,
             entrySize);
-        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
+        std::unique_ptr<Nautilus::Interface::HashFunction> const hashFunction
+            = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
         const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
             handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
         parentOperator->setChild(executableAggregationBuild);
@@ -232,9 +234,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             fieldValues,
             entriesPerPage,
             entrySize);
-        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
-        const auto executableAggregationProbe
-            = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(std::move(windowAggregationOperator), handlerIndex, windowMetaData);
+        std::unique_ptr<Nautilus::Interface::HashFunction> const hashFunction
+            = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
+        const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(
+            std::move(windowAggregationOperator), handlerIndex, windowMetaData);
         pipeline.setRootOperator(executableAggregationProbe);
         return executableAggregationProbe;
     }

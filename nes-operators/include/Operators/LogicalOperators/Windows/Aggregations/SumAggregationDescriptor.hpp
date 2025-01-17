@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing

@@ -15,12 +15,13 @@
 #pragma once
 
 
+#include <cstdint>
+#include <memory>
+#include <vector>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -29,7 +30,7 @@ class AggregationBuild final : public WindowAggregationOperator, public WindowOp
 {
 public:
     AggregationBuild(
-        const uint64_t operatorHandlerIndex,
+        uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
         WindowAggregationOperator windowAggregationOperator);

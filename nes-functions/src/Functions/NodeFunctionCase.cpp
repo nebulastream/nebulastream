@@ -12,13 +12,14 @@
     limitations under the License.
 */
 #include <utility>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
-#include "ErrorHandling.hpp"
 namespace NES
 {
 NodeFunctionCase::NodeFunctionCase(DataTypePtr stamp) : NodeFunction(std::move(stamp), "Case")

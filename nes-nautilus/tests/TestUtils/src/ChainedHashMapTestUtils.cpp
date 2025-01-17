@@ -12,16 +12,42 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <map>
+#include <memory>
 #include <numeric>
 #include <random>
-#include <ranges>
+#include <sstream>
+#include <tuple>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Util/Ranges.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <ChainedHashMapTestUtils.hpp>
+#include <Engine.hpp>
+#include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
 #include <magic_enum.hpp>
+#include <options.hpp>
+#include <static.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -152,6 +178,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this](
             nautilus::val<Memory::TupleBuffer*> keyBufferRef,
@@ -182,6 +209,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Interface::HashMap*>
@@ -189,6 +217,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this](nautilus::val<Memory::TupleBuffer*> bufferOutput, nautilus::val<Interface::HashMap*> hashMapVal)
         {
@@ -209,12 +238,14 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, Interface::HashMap*>
 ChainedHashMapTestUtils::compileFindAndInsert() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         /// ReSharper disable once CppPassValueParameterByConstReference
         [this](
@@ -240,6 +271,7 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
                     bufferManagerVal);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, Interface::HashMap*>
@@ -248,6 +280,7 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
     /// Compiling a function that finds the entry and updates the value.
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this](
             nautilus::val<Memory::TupleBuffer*> keyBufferRef,
@@ -283,6 +316,7 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                     bufferManagerVal);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const ExactMapInsert exactMapInsert)

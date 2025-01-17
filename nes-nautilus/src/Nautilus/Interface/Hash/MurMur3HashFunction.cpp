@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
@@ -27,13 +29,18 @@ HashFunction::HashValue MurMur3HashFunction::init() const
 /// https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
 VarVal hashVarVal(const VarVal& input)
 {
+    /// Define the constants for the hash function.
+    constexpr auto murmurHashXorShift = 33;
+    constexpr auto murmurHashMultiplier1 = UINT64_C(0xff51afd7ed558ccd);
+    constexpr auto murmurHashMultiplier2 = UINT64_C(0xc4ceb9fe1a85ec53);
+
     /// We are not using the input variable here but rather are creating a new one, as otherwise, the underlying value of the input could change.
-    auto x = input ^ (input >> VarVal(HashFunction::HashValue(33)));
-    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
-    x = x ^ (x >> VarVal(HashFunction::HashValue(33)));
-    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xc4ceb9fe1a85ec53)));
-    x = x ^ (x >> VarVal(HashFunction::HashValue(33)));
-    return x;
+    auto hash = input ^ (input >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
+    hash = hash * VarVal(nautilus::val<uint64_t>(murmurHashMultiplier1));
+    hash = hash ^ (hash >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
+    hash = hash * VarVal(nautilus::val<uint64_t>(murmurHashMultiplier2));
+    hash = hash ^ (hash >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
+    return hash;
 }
 
 /**

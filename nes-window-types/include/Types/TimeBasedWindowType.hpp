@@ -15,6 +15,7 @@
 #pragma once
 
 #include <vector>
+#include <API/Schema.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/WindowType.hpp>
