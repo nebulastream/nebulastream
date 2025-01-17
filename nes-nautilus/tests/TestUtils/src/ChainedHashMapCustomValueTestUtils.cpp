@@ -12,11 +12,23 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <functional>
+#include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <gtest/gtest.h>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <ChainedHashMapCustomValueTestUtils.hpp>
+#include <ChainedHashMapTestUtils.hpp>
+#include <Engine.hpp>
+#include <function.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -74,6 +86,7 @@ nautilus::engine::
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this, projectionAllFields](
             nautilus::val<Memory::TupleBuffer*> keyBufferRef,
@@ -100,6 +113,7 @@ nautilus::engine::
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 }

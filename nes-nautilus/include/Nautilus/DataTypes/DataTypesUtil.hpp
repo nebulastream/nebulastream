@@ -32,7 +32,7 @@ template <typename T, typename U>
 nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::*member)
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr));
+    return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
 }
 
 template <typename T>

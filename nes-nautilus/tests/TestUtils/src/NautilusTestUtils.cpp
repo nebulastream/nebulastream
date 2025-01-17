@@ -39,8 +39,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
-#include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/options.hpp>
@@ -148,6 +148,12 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return buffers;
 }
 
+std::shared_ptr<Schema> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
+{
+    constexpr auto typeIdxOffset = 0;
+    return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
+}
+
 std::shared_ptr<Schema>
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset)
 {
@@ -168,7 +174,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function tmp = [=](nautilus::val<Memory::TupleBuffer*> buffer,
                                   nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,
@@ -201,8 +207,8 @@ void NautilusTestUtils::compileFillBufferFunction(
                             /// Creating a random string of the given size
                             auto randchar = []() -> char
                             {
-                                constexpr char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-                                constexpr size_t maxIndex = (sizeof(charset) - 1);
+                                const std::string charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                                const size_t maxIndex = (charset.size() - 1);
                                 return charset[rand() % maxIndex];
                             };
                             std::string randomString(size, 0);
@@ -230,6 +236,8 @@ void NautilusTestUtils::compileFillBufferFunction(
             recordBuffer.setNumRecords(i + 1);
         }
     };
+    /// NOLINTEND(performance-unnecessary-value-param)
+
     const bool compilation = (backend == QueryCompilation::NautilusBackend::COMPILER);
     options.setOption("engine.Compilation", compilation);
     auto engine = nautilus::engine::NautilusEngine(options);

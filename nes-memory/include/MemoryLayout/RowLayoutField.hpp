@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <utility>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -75,8 +76,8 @@ private:
     RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, uint64_t fieldIndex, uint64_t recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) {};
 
-    const uint64_t fieldIndex;
-    const uint64_t recordSize;
+    uint64_t fieldIndex;
+    uint64_t recordSize;
     uint8_t* basePointer;
     std::shared_ptr<RowLayout> layout;
 };

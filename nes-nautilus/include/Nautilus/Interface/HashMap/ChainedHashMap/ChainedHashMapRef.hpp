@@ -64,6 +64,9 @@ public:
 
         ChainedEntryRef(const ChainedEntryRef& other);
         ChainedEntryRef& operator=(const ChainedEntryRef& other);
+        ChainedEntryRef(ChainedEntryRef&& other) noexcept;
+        ~ChainedEntryRef() = default;
+
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
         MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys;
@@ -98,8 +101,12 @@ public:
         const nautilus::val<HashMap*>& hashMapRef,
         std::vector<MemoryProvider::FieldOffsets> fieldsKey,
         std::vector<MemoryProvider::FieldOffsets> fieldsValue,
-        uint64_t entriesPerPage,
-        uint64_t entrySize);
+        const nautilus::val<uint64_t>& entriesPerPage,
+        const nautilus::val<uint64_t>& entrySize);
+    ChainedHashMapRef(const ChainedHashMapRef& other);
+    ChainedHashMapRef& operator=(const ChainedHashMapRef& other);
+    ~ChainedHashMapRef() override = default;
+
     nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
         const Nautilus::Record& recordKey,
         const HashFunction& hashFunction,

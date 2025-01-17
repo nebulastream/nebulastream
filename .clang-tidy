@@ -303,6 +303,6 @@ CheckOptions:
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
   # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
-  readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|lhs|rhs|ts'
-  readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|lhs|rhs|ts'
+  readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts'
+  readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts'
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

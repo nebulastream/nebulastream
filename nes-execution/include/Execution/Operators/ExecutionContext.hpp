@@ -62,8 +62,8 @@ struct ExecutionContext final
     void emitBuffer(const RecordBuffer& buffer) const;
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    const nautilus::val<PipelineExecutionContext*> pipelineContext;
-    const nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
+    nautilus::val<PipelineExecutionContext*> pipelineContext;
+    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -33,7 +34,7 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     PRECONDITION(numberOfKeys > 0, "Number of keys {} has to be greater than 0", numberOfKeys);
     PRECONDITION(loadFactor > 0, "Load factor {} has to be greater than 0", loadFactor);
 
-    const auto numberOfZeroBits = std::countl_zero(numberOfKeys);
+    const uint64_t numberOfZeroBits = std::countl_zero(numberOfKeys);
     INVARIANT(
         numberOfZeroBits < 64,
         "Number of keys {} is too large for the hash map. The number of keys has to be smaller than 2^64 with numberOfZeroBits {}",
@@ -41,11 +42,11 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
         numberOfZeroBits);
 
     constexpr uint64_t oneAsUint64 = 1;
-    const auto exp = 64 - numberOfZeroBits;
+    const uint64_t exp = 64 - numberOfZeroBits;
     const auto capacity = (oneAsUint64 << exp);
-    if (capacity * loadFactor < numberOfKeys)
+    if (static_cast<uint64_t>(capacity * loadFactor) < numberOfKeys)
     {
-        return capacity << 1;
+        return capacity << 1UL;
     }
     return capacity;
 }
@@ -114,7 +115,7 @@ ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory
         }
         entrySpace = entryBuffer.value();
         entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getBuffer());
-        std::memset(entries, 0, entryBuffer->getBufferSize());
+        std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
 
         /// Pointing the end of the entries to itself
         entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
@@ -174,10 +175,10 @@ uint64_t ChainedHashMap::getNumberOfChains() const
     return numberOfChains;
 }
 
-void ChainedHashMap::clear()
+void ChainedHashMap::clear() noexcept
 {
     /// Deleting all entries in the hash map
-    if (entries)
+    if (entries != nullptr)
     {
         /// Calling for every value in the hash map the destructor callback
         /// We start here by iterating over all entries while starting in the entry space

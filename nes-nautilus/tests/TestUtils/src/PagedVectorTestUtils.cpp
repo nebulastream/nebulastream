@@ -12,13 +12,26 @@
     limitations under the License.
 */
 
+#include <cmath>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <numeric>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
 #include <PagedVectorTestUtils.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -41,6 +54,7 @@ void runStoreTest(
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
         [=](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
@@ -54,6 +68,7 @@ void runStoreTest(
                 pagedVectorRef.writeRecord(record);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 
     /// Inserting each tuple by iterating over all tuple buffers
     for (auto buf : allRecords)
@@ -101,6 +116,7 @@ void runRetrieveTest(
     const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto readFromPagedVectorIntoTupleBuffer = nautilusEngine.registerFunction(std::function(
         [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
@@ -117,6 +133,7 @@ void runRetrieveTest(
                 recordBuffer.setNumRecords(numberOfTuples);
             }
         }));
+    /// NOLINTEND(performance-unnecessary-value-param)
 
     /// Retrieving the records from the PagedVector, by calling the compiled function
     readFromPagedVectorIntoTupleBuffer(std::addressof(outputBuffer), std::addressof(bufferManager), std::addressof(pagedVector));

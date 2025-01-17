@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>

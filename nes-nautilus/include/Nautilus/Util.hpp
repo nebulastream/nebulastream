@@ -14,8 +14,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>

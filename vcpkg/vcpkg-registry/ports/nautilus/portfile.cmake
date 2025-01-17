@@ -4,6 +4,7 @@ vcpkg_from_github(
 		REF 364c89c184430e1ccd0d9422fc73b1cc54c33ca8
         SHA512 e152ecd75fc881bf12622fd443890d7a33c86ce1f31ce3b59ecce5878ac03bb75210048af53dbf714095332c9d6acd86434ea1ef7e59a20c2fd97fd5e8023b08
 		PATCHES
+		0001_fixes_clang_tidy.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

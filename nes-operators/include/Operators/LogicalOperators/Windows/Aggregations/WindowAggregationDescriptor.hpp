@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 

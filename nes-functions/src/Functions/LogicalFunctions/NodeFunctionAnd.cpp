@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

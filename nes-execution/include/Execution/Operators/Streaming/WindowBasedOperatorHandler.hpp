@@ -18,7 +18,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <optional>
 #include <vector>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -30,7 +29,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <ostream>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -74,7 +74,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfChains() const;
 
     /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
-    void clear();
+    void clear() noexcept;
 
     /// The passed method is being executed, once the destructor is called. This is necessary as the value type of this hash map
     /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
@@ -86,12 +86,12 @@ private:
     Memory::TupleBuffer entrySpace;
     std::vector<Memory::TupleBuffer> storageSpace;
     uint64_t numberOfTuples; /// Number of entries in the hash map
-    const uint64_t pageSize; /// Size of one storage page in bytes
-    const uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
-    const uint64_t entriesPerPage; /// Number of entries per page
-    const uint64_t numberOfChains; /// Number of buckets in the hash map
+    uint64_t pageSize; /// Size of one storage page in bytes
+    uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
+    uint64_t entriesPerPage; /// Number of entries per page
+    uint64_t numberOfChains; /// Number of buckets in the hash map
     ChainedHashMapEntry** entries; /// Stores the pointers to the first entry in each chain
-    const HashFunction::HashValue::raw_type mask; /// Mask to calculate the bucket position from the hash value. Always a (power of 2)-1
+    HashFunction::HashValue::raw_type mask; /// Mask to calculate the bucket position from the hash value. Always a (power of 2)-1
     std::function<void(ChainedHashMapEntry*)> destructorCallBack; /// Callback function to be executed, once the destructor is called
 };
 }

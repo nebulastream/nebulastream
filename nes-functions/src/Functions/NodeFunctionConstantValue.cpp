@@ -14,6 +14,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <fmt/format.h>

@@ -15,16 +15,11 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
-#include <vector>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Util/Execution.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

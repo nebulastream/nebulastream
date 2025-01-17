@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 namespace NES
