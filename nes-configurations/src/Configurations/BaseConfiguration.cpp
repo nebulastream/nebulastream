@@ -34,6 +34,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
     if (!config.IsMap())
     {
         throw ConfigurationException("Malformed YAML configuration file");
+
     }
     for (auto entry : config)
     {
