@@ -233,8 +233,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             entriesPerPage,
             entrySize);
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
-        const auto executableAggregationProbe
-            = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(std::move(windowAggregationOperator), handlerIndex, windowMetaData);
+        const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(
+            std::move(windowAggregationOperator), handlerIndex, windowMetaData);
         pipeline.setRootOperator(executableAggregationProbe);
         return executableAggregationProbe;
     }
