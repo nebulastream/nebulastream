@@ -32,7 +32,7 @@ class SourceThread;
 /// Interface class to handle sources.
 /// Created from a source descriptor via the SourceProvider.
 /// start(): The underlying source starts consuming data. All queries using the source start processing.
-/// stop(): The underlying source stops consuming data, notifying the QueryManager,
+/// stop(): The underlying source stops consuming data, notifying the QueryEngine,
 /// that decides whether to keep queries, which used the particular source, alive.
 class SourceHandle
 {

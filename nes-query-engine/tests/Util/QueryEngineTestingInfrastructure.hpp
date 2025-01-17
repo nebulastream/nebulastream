@@ -444,7 +444,7 @@ struct TestingHarness
     testing::AssertionResult waitForQepRunning(QueryId id, std::chrono::milliseconds timeout);
 };
 
-/// Data Generator used within the QueryManagerTest
+/// Data Generator used within the QueryEngineTest
 /// Data Generator inserts data into the test queues which would be cumbersome to do manually. The DataGenerator runs on a different
 /// thread and injects EndOfStream into all sources once stopped.
 /// Different Policies can be used to inject failures into specific sources.
