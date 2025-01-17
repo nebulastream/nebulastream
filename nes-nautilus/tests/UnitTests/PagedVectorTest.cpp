@@ -101,9 +101,7 @@ public:
         /// ReSharper disable once CppPassValueParameterByConstReference
         auto insertIntoPagedVector = nautilusEngine->registerFunction(std::function(
             [=](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<PagedVector*> pagedVectorVal)
             {
                 const RecordBuffer recordBuffer(inputBufferRef);
@@ -168,9 +166,7 @@ public:
         /// ReSharper disable once CppPassValueParameterByConstReference
         auto readFromPagedVectorIntoTupleBuffer = nautilusEngine->registerFunction(std::function(
             [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<PagedVector*> pagedVectorVal)
             {
                 RecordBuffer recordBuffer(outputBufferRef);

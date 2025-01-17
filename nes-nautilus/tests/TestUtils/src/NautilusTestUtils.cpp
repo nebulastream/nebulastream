@@ -66,6 +66,27 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicIncreasingVal
     const uint64_t numberOfTuples,
     const QueryCompilation::NautilusBackend& backend,
     Memory::BufferManager& bufferManager,
+    const uint64_t minSizeVarSizedData)
+{
+    constexpr auto maxSizeVarSizedData = 20;
+    return createMonotonicIncreasingValues(schema, numberOfTuples, backend, bufferManager, minSizeVarSizedData, maxSizeVarSizedData);
+}
+
+std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicIncreasingValues(
+    const SchemaPtr& schema,
+    const uint64_t numberOfTuples,
+    const QueryCompilation::NautilusBackend& backend,
+    Memory::BufferManager& bufferManager)
+{
+    constexpr auto minSizeVarSizedData = 10;
+    return createMonotonicIncreasingValues(schema, numberOfTuples, backend, bufferManager, minSizeVarSizedData);
+}
+
+std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicIncreasingValues(
+    const SchemaPtr& schema,
+    const uint64_t numberOfTuples,
+    const QueryCompilation::NautilusBackend& backend,
+    Memory::BufferManager& bufferManager,
     const uint64_t minSizeVarSizedData,
     const uint64_t maxSizeVarSizedData)
 {
@@ -114,6 +135,12 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicIncreasingVal
     return buffers;
 }
 
+std::shared_ptr<Schema> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
+{
+    constexpr auto typeIdxOffset = 0;
+    return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
+}
+
 std::shared_ptr<Schema>
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset)
 {
@@ -134,7 +161,6 @@ void NautilusTestUtils::compileFillBufferFunction(
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
     const std::function tmp = [=](nautilus::val<Memory::TupleBuffer*> buffer,
                                   nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,

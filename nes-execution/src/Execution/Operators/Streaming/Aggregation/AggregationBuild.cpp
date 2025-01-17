@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <utility>
 #include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>

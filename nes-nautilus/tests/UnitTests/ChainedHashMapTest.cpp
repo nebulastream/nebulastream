@@ -304,9 +304,7 @@ public:
             /// ReSharper disable once CppPassValueParameterByConstReference
             [this](
                 nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-                /// ReSharper disable once CppPassValueParameterByConstReference
                 nautilus::val<HashMapInterface*> hashMapVal)
             {
                 ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);

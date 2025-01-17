@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include "Execution/Operators/ExecutableOperator.hpp"
 
 namespace NES::Runtime::Execution
 {

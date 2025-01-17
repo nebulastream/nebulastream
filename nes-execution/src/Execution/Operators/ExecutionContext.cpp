@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>

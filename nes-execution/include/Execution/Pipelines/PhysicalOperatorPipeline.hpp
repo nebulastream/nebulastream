@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution
 {
@@ -32,7 +33,7 @@ public:
      * @brief Returns the root operator of an pipeline
      * @return operator
      */
-    std::shared_ptr<Operators::ExecutableOperator> getRootOperator() const;
+    [[nodiscard]] std::shared_ptr<Operators::ExecutableOperator> getRootOperator() const;
 
 private:
     std::shared_ptr<Operators::ExecutableOperator> rootOperator;
