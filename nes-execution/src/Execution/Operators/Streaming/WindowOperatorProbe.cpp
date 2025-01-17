@@ -71,7 +71,7 @@ WindowOperatorProbe::WindowOperatorProbe(const uint64_t operatorHandlerIndex, Wi
 void WindowOperatorProbe::setup(ExecutionContext& executionCtx) const
 {
     /// Giving child operators the change to setup
-    Operator::setup(executionCtx);
+    ExecutableOperator::setup(executionCtx);
     nautilus::invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
 }
 
@@ -89,7 +89,7 @@ void WindowOperatorProbe::close(ExecutionContext& executionCtx, RecordBuffer& re
         executionCtx.originId);
 
     /// Now close for all children
-    Operator::close(executionCtx, recordBuffer);
+    ExecutableOperator::close(executionCtx, recordBuffer);
 }
 
 void WindowOperatorProbe::terminate(ExecutionContext& executionCtx) const
@@ -99,6 +99,6 @@ void WindowOperatorProbe::terminate(ExecutionContext& executionCtx) const
     invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
 
     /// Now terminate for all children
-    Operator::terminate(executionCtx);
+    ExecutableOperator::terminate(executionCtx);
 }
 }

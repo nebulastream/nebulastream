@@ -18,7 +18,7 @@
 #include <vector>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -49,14 +49,14 @@ public:
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
 private:
-    std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
+        std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> parentOperator,
         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
         size_t bufferSize,
         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(

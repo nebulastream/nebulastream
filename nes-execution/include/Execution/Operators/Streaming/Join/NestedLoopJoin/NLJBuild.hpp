@@ -16,7 +16,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>

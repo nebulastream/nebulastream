@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>

@@ -90,7 +90,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     auto nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
-    std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> parentOperator;
 
     for (const auto& node : nodes)
     {
@@ -113,9 +113,9 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     return operatorPipeline;
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-    std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
@@ -280,7 +280,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             options->windowOperatorOptions.pageSize, probeOperator->getRightInputSchema());
         rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
 
-        std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;
+        std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> joinProbeNautilus;
         switch (probeOperator->getJoinStrategy())
         {
             case StreamJoinStrategy::NESTED_LOOP_JOIN:
@@ -324,7 +324,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", *operatorNode));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator>
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();

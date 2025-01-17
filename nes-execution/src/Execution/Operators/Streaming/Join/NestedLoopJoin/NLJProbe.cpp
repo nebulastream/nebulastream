@@ -100,7 +100,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    Operator::open(executionCtx, recordBuffer);
+    ExecutableOperator::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());

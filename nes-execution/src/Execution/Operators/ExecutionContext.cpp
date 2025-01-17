@@ -94,7 +94,7 @@ nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
     return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
 }
 
-Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
+Operators::OperatorState* ExecutionContext::getLocalState(const Operators::ExecutableOperator* op)
 {
     const auto stateEntry = localStateMap.find(op);
     if (stateEntry == localStateMap.end())
@@ -104,7 +104,7 @@ Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Opera
     return stateEntry->second.get();
 }
 
-void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state)
+void ExecutionContext::setLocalOperatorState(const Operators::ExecutableOperator* op, std::unique_ptr<Operators::OperatorState> state)
 {
     if (localStateMap.contains(op))
     {

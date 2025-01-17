@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 
 
@@ -34,7 +33,7 @@ public:
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
     /// Therefore, any setup to the operator handler should happen in the WindowOperatorProbe.
-    void setup(ExecutionContext& executionCtx) const override { Operator::setup(executionCtx); };
+    void setup(ExecutionContext& executionCtx) const override { ExecutableOperator::setup(executionCtx); };
 
     /// Initializes the time function
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

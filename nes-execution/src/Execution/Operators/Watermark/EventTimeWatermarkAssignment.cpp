@@ -35,7 +35,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    Operator::open(executionCtx, recordBuffer);
+    ExecutableOperator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
@@ -59,7 +59,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
     executionCtx.watermarkTs = state->currentWatermark;
-    Operator::close(executionCtx, recordBuffer);
+    ExecutableOperator::close(executionCtx, recordBuffer);
 }
 
 }
