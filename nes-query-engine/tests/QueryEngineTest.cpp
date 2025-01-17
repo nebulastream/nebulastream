@@ -392,12 +392,15 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSources)
     {
         test.startQuery(std::move(query));
         EXPECT_TRUE(test.waitForQepRunning(id, DEFAULT_AWAIT_TIMEOUT));
-        test.sourceControls[source1]->injectEoS();
         test.sourceControls[source2]->injectEoS();
-        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStop())
+            << "Pipeline should be stopped after its predecessor source has been stopped";
+        EXPECT_FALSE(test.sinkControls[sink]->waitForShutdown(DEFAULT_AWAIT_TIMEOUT))
+            << "Sink should not have been stopped as it is kept alive by the other predecessor";
 
+        test.sourceControls[source1]->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
         EXPECT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStop()) << "Pipeline should be stopped";
         EXPECT_FALSE(test.pipelineControls[failingPipelineSuccessor]->waitForStop())
             << "Successors of failing pipelines should not be stopped";
         EXPECT_FALSE(test.sinkControls[sink]->waitForShutdown(DEFAULT_AWAIT_TIMEOUT))

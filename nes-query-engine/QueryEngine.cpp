@@ -634,7 +634,10 @@ void QueryCatalog::start(
 
                 /// It should be impossible for a query in the `Terminated` state to emit a failure as the `RunningQueryPlan` which called
                 /// the `onFailure()` method should have been destroyed, once transitioned into the `Terminated` state.
-                INVARIANT(successfulTermination, "Query emitted Failure while in the Terminated state. This should never happen!");
+                INVARIANT(
+                    successfulTermination,
+                    "Query emitted Failure while in the Terminated state. This should never happen! Error: {}",
+                    exception.what());
 
                 exception.what() += fmt::format(" In Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());

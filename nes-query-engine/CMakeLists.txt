@@ -16,7 +16,7 @@ target_include_directories(nes-query-engine
         PRIVATE .
 )
 
-target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_ERROR)
+target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_TRACE)
 
 find_package(folly CONFIG REQUIRED)
 target_link_libraries(nes-query-engine
