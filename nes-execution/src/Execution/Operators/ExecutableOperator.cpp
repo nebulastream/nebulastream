@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Nautilus/Interface/Record.hpp"
+#include "Nautilus/Interface/RecordBuffer.hpp"
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -73,8 +76,6 @@ void ExecutableOperator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-ExecutableOperator::~ExecutableOperator()
-{
-}
+ExecutableOperator::~ExecutableOperator() = default;
 
 }

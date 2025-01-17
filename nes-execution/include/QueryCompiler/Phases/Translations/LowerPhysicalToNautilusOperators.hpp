@@ -18,7 +18,6 @@
 #include <vector>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -51,7 +50,7 @@ public:
 private:
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> parentOperator,
+        const std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>& parentOperator,
         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
         size_t bufferSize,
         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);

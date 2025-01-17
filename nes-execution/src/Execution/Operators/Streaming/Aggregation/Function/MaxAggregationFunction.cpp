@@ -21,7 +21,11 @@
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationValue.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Execution.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {

@@ -12,17 +12,11 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <limits>
 #include <memory>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Util/Common.hpp>
-#include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation

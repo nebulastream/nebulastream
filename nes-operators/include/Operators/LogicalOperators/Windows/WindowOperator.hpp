@@ -34,7 +34,8 @@ using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id, OriginId originId);
+    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDescriptorPtr

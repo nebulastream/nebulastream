@@ -15,10 +15,14 @@
 #pragma once
 
 
+#include <cstdint>
+#include <memory>
+#include <vector>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 
@@ -29,15 +33,15 @@ class AggregationBuild final : public WindowAggregationOperator, public WindowOp
 {
 public:
     AggregationBuild(
-        const uint64_t operatorHandlerIndex,
+        uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
         std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
-        const uint64_t entriesPerPage,
-        const uint64_t entrySize);
+        uint64_t entriesPerPage,
+        uint64_t entrySize);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

@@ -14,10 +14,17 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/Execution.hpp>
+#include "Execution/Operators/ExecutableOperator.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -30,9 +37,9 @@ public:
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
-        const uint64_t entriesPerPage,
-        const uint64_t entrySize,
-        const uint64_t operatorHandlerIndex,
+        uint64_t entriesPerPage,
+        uint64_t entrySize,
+        uint64_t operatorHandlerIndex,
         WindowMetaData windowMetaData);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

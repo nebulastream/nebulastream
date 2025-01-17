@@ -14,8 +14,15 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <map>
+#include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -23,7 +30,10 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
-#include <magic_enum.hpp>
+#include <ErrorHandling.hpp>
+#include <options.hpp>
+#include <static.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES::Nautilus
 {
 
@@ -55,8 +65,8 @@ struct RecordWithFields
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view function_name, const QueryCompilation::NautilusBackend backend)
-        : functionName(std::move(function_name)), backend(backend)
+    NameAndNautilusBackend(std::string_view functionName, const QueryCompilation::NautilusBackend backend)
+        : functionName(std::move(functionName)), backend(backend)
     {
     }
 
@@ -71,7 +81,7 @@ struct NameAndNautilusBackend
         return functionName < other.functionName;
     }
 
-    std::size_t hash() const
+    [[nodiscard]] std::size_t hash() const
     {
         std::size_t hashValue = std::hash<int>{}(static_cast<int>(backend)); /// Hash the enum
         hashValue ^= std::hash<std::string>{}(functionName) << 1; /// Hash the string and combine with the enum hash
@@ -96,7 +106,8 @@ template <typename R, typename... FunctionArguments>
 class FunctionWrapper final : public FunctionWrapperBase
 {
 public:
-    FunctionWrapper(nautilus::engine::CallableFunction<R, FunctionArguments...>&& f) : FunctionWrapperBase(), func(std::move(f)) { }
+    explicit FunctionWrapper(nautilus::engine::CallableFunction<R, FunctionArguments...>&& f)
+        : FunctionWrapperBase(), func(std::move(f)) { }
     ~FunctionWrapper() override = default;
     nautilus::engine::CallableFunction<R, FunctionArguments...> func;
 };
@@ -114,16 +125,28 @@ public:
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
     /// For example, the call createSchemaFromBasicTypes({BasicType::INT_32, BasicType::FLOAT}, 1) will create a schema with the fields field1 and field2
-    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset = 0);
+    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes);
+    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<Memory::TupleBuffer> createMonotonicIncreasingValues(
         const SchemaPtr& schema,
-        const uint64_t numberOfTuples,
+        uint64_t numberOfTuples,
         const QueryCompilation::NautilusBackend& backend,
         Memory::BufferManager& bufferManager,
-        const uint64_t minSizeVarSizedData = 10,
-        const uint64_t maxSizeVarSizedData = 20);
+        uint64_t minSizeVarSizedData,
+        uint64_t maxSizeVarSizedData);
+    std::vector<Memory::TupleBuffer> createMonotonicIncreasingValues(
+        const SchemaPtr& schema,
+        uint64_t numberOfTuples,
+        const QueryCompilation::NautilusBackend& backend,
+        Memory::BufferManager& bufferManager,
+        uint64_t minSizeVarSizedData);
+    std::vector<Memory::TupleBuffer> createMonotonicIncreasingValues(
+        const SchemaPtr& schema,
+        uint64_t numberOfTuples,
+        const QueryCompilation::NautilusBackend& backend,
+        Memory::BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,
