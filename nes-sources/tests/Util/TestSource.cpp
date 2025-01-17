@@ -41,7 +41,7 @@
 
 namespace
 {
-constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(100);
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
 }
