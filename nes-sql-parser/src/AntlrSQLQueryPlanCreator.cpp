@@ -820,10 +820,10 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    std::shared_ptr<DataType> dataType;
     if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
+        std::shared_ptr<DataType> dataType = nullptr;
         /// Signed Integers
         if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
@@ -873,12 +873,22 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         {
             throw InvalidQuerySyntax("Unknown data type: {}", concreteValue->getText());
         }
+        /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
+        const auto constantText = context->getText();
+        auto constFunctionItem
+            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
+        helper.functionBuilder.push_back(constFunctionItem);
+    }
+    else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()))
+    {
+        const auto constantText = context->getText();
+
+        const auto dataType = DataTypeFactory::createVariableSizedData();
+        auto constFunctionItem
+            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
+        helper.functionBuilder.push_back(constFunctionItem);
     }
 
-    /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
-    const auto constantText = context->getText();
-    auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
-    helper.functionBuilder.push_back(constFunctionItem);
     poppush(helper);
 }
 

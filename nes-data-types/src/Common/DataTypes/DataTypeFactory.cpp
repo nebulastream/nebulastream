@@ -153,8 +153,8 @@ DataTypePtr DataTypeFactory::createType(BasicType type)
             return DataTypeFactory::createFloat();
         case FLOAT64:
             return DataTypeFactory::createDouble();
-        default:
-            return nullptr;
+        case TEXT:
+            return DataTypeFactory::createVariableSizedData();
     }
 }
 

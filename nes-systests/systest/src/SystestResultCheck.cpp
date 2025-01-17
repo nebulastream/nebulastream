@@ -348,6 +348,8 @@ bool operator!=(const FieldResult& left, const FieldResult& right)
         case BasicType::FLOAT32:
         case BasicType::FLOAT64:
             return not compareStringAsTypeWithError<double>(left.valueAsString, right.valueAsString);
+        case BasicType::TEXT:
+            return left.valueAsString != right.valueAsString;
     }
 }
 bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)

@@ -33,6 +33,7 @@ enum class BasicType : uint8_t
     FLOAT64,
     BOOLEAN,
     CHAR,
+    TEXT,
 };
 
 }
