@@ -27,20 +27,18 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionP
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    Operator::open(executionCtx, recordBuffer);
+    ExecutableOperator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
-    const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    const auto currentWatermark = executionCtx.watermarkTs;
-    if (tsField > currentWatermark)
+    if (const auto tsField = timeFunction->getTs(executionCtx, emptyRecord); tsField > executionCtx.watermarkTs)
     {
         executionCtx.watermarkTs = tsField;
     }
 }
 
-void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const
+void IngestionTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const
 {
-    child->execute(executionCtx, record);
+    child->execute(ctx, record);
 }
 
 }

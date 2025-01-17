@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>

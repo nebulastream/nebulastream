@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/Execution.hpp>
 
@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators
 
 /// Is the general probe operator for window operators. It is responsible for the garbage collection of slices and windows.
 /// It is part of the second phase (probe) that processes the build up state of the first phase (build).
-class WindowOperatorProbe : public Operator
+class WindowOperatorProbe : public ExecutableOperator
 {
 public:
     explicit WindowOperatorProbe(uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);

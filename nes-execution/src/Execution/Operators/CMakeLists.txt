@@ -13,7 +13,7 @@
 add_source_files(nes-execution
         Map.cpp
         Selection.cpp
-        Operator.cpp
+        ExecutableOperator.cpp
         Emit.cpp
         EmitOperatorHandler.cpp
         Scan.cpp

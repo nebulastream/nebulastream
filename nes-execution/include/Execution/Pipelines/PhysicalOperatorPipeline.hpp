@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution
 {
 
@@ -23,19 +23,19 @@ class PhysicalOperatorPipeline
 {
 public:
     /**
-     * @brief Sets the root operator of an pipeline.
+     * @brief Sets the root operator of a pipeline.
      * @param rootOperator
      */
-    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
+    void setRootOperator(std::shared_ptr<Operators::ExecutableOperator> rootOperator);
 
     /**
      * @brief Returns the root operator of an pipeline
      * @return operator
      */
-    std::shared_ptr<Operators::Operator> getRootOperator() const;
+    std::shared_ptr<Operators::ExecutableOperator> getRootOperator() const;
 
 private:
-    std::shared_ptr<Operators::Operator> rootOperator;
+    std::shared_ptr<Operators::ExecutableOperator> rootOperator;
 };
 
 }

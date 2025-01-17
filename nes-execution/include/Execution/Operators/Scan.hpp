@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <vector>
-#include <Execution/Operators/Operator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -27,7 +26,7 @@ namespace NES::Runtime::Execution::Operators
  * @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
  * Furthermore, it supports projection pushdown to eliminate unneeded reads.
  */
-class Scan : public Operator
+class Scan : public ExecutableOperator
 {
 public:
     /**

@@ -14,12 +14,11 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
-void Operator::setup(ExecutionContext& executionCtx) const
+void ExecutableOperator::setup(ExecutionContext& executionCtx) const
 {
     if (hasChild())
     {
@@ -27,7 +26,7 @@ void Operator::setup(ExecutionContext& executionCtx) const
     }
 }
 
-void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void ExecutableOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (hasChild())
     {
@@ -35,7 +34,16 @@ void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
     }
 }
 
-void Operator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void ExecutableOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    /// As a default, we are calling the child operator to execute the record.
+    if (hasChild())
+    {
+        child->execute(ctx, record);
+    }
+}
+
+void ExecutableOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (hasChild())
     {
@@ -43,21 +51,21 @@ void Operator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
     }
 }
 
-bool Operator::hasChild() const
+bool ExecutableOperator::hasChild() const
 {
     return child != nullptr;
 }
 
-void Operator::setChild(Operators::ExecuteOperatorPtr child)
+void ExecutableOperator::setChild(std::shared_ptr<ExecutableOperator> child) const
 {
     if (hasChild())
     {
-        NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
+        NES_THROW_RUNTIME_ERROR("This ExecutableOperator already has a child ExecutableOperator");
     }
     this->child = std::move(child);
 }
 
-void Operator::terminate(ExecutionContext& executionCtx) const
+void ExecutableOperator::terminate(ExecutionContext& executionCtx) const
 {
     if (hasChild())
     {
@@ -65,7 +73,7 @@ void Operator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-Operator::~Operator()
+ExecutableOperator::~ExecutableOperator()
 {
 }
 

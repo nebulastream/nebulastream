@@ -11,28 +11,77 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-#include <Execution/Operators/Operator.hpp>
 
+#pragma once
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+
+namespace NES::Runtime::Execution
+{
+struct ExecutionContext;
+}
 namespace NES::Runtime::Execution::Operators
 {
+using namespace Nautilus;
 
-class ExecutableOperator;
-using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
 /**
- * @brief Base class of executable operators, which receive tuple by tuple.
- * Within a pipeline all operators except the initial scan are executable operators.
+ * @brief Base operator for all specific operators.
+ * Each operator can implement setup, open, execute, close, and terminate.
  */
-class ExecutableOperator : public Operator
+class ExecutableOperator
 {
 public:
+    /**
+     * @brief Setup initializes this operator for execution.
+     * Operators can implement this class to initialize some state that exists over the whole life time of this operator.
+     * @param executionCtx the RuntimeExecutionContext
+     */
+    virtual void setup(ExecutionContext& executionCtx) const;
+
+    /**
+     * @brief Open is called for each record buffer and is used to initializes execution local state.
+     * @param ctx the execution context that allows accesses to local and global state.
+     * @param recordBuffer
+     */
+    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
     /**
      * @brief This method is called by the upstream operator (parent) and passes one record for execution.
      * @param ctx the execution context that allows accesses to local and global state.
      * @param record the record that should be processed.
      */
-    virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
-    ~ExecutableOperator() override = default;
+    virtual void execute(ExecutionContext& ctx, Record& record) const;
+
+    /**
+     * @brief Close is called for each record buffer and clears execution local state.
+     * @param executionCtx
+     * @param recordBuffer
+     */
+    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    /**
+     * @brief Terminates the operator and clears all operator state.
+     * @param executionCtx the RuntimeExecutionContext
+     */
+    virtual void terminate(ExecutionContext& executionCtx) const;
+
+    /**
+     * @return Returns true if the operator has a child.
+     */
+    bool hasChild() const;
+
+    /**
+     * @brief Sets a child operator to this operator.
+     * @param child
+     */
+    void setChild(std::shared_ptr<ExecutableOperator> child) const;
+
+    virtual ~ExecutableOperator();
+
+protected:
+    mutable std::shared_ptr<ExecutableOperator> child;
 };
 
 }

@@ -34,7 +34,7 @@ using namespace Nautilus;
 
 namespace Operators
 {
-class Operator;
+class ExecutableOperator;
 class OperatorState;
 }
 
@@ -50,8 +50,8 @@ struct ExecutionContext final
 {
     explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext);
 
-    void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
-    Operators::OperatorState* getLocalState(const Operators::Operator* op);
+    void setLocalOperatorState(const Operators::ExecutableOperator* op, std::unique_ptr<Operators::OperatorState> state);
+    Operators::OperatorState* getLocalState(const Operators::ExecutableOperator* op);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
@@ -61,7 +61,7 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
-    std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
+    std::unordered_map<const Operators::ExecutableOperator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     const nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.

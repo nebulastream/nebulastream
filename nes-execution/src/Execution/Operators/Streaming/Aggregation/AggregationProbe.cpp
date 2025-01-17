@@ -51,7 +51,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    Operator::open(executionCtx, recordBuffer);
+    ExecutableOperator::open(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
