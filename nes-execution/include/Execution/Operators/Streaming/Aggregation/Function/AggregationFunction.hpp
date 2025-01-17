@@ -15,16 +15,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/Common.hpp>
-#include <ErrorHandling.hpp>
-#include <val.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation

@@ -12,16 +12,22 @@
     limitations under the License.
 */
 
+#include <limits>
 #include <tuple>
 
 #include <API/AttributeField.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Execution.hpp>
 #include <nautilus/std/string.h>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 
 namespace NES::QueryCompilation::Util

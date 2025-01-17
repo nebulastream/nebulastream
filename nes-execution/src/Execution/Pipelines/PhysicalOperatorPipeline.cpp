@@ -15,6 +15,7 @@
 #include <memory>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include "Execution/Operators/ExecutableOperator.hpp"
 
 namespace NES::Runtime::Execution
 {

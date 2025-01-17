@@ -15,16 +15,19 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 
 namespace NES::QueryCompilation

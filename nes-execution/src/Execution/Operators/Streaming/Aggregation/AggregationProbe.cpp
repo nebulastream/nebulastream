@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -27,6 +28,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>

@@ -115,7 +115,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-    std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
+    const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)

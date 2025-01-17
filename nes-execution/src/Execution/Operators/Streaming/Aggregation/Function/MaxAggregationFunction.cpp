@@ -23,6 +23,9 @@
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Execution.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
