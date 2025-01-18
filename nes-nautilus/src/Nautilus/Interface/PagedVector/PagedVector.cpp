@@ -117,13 +117,13 @@ uint64_t PagedVector::getNumberOfPages() const
     return pages.size();
 }
 
-std::vector<Memory::TupleBuffer> PagedVector::getPages() const
-{
-    return pages;
-}
-
 Memory::MemoryLayouts::MemoryLayoutPtr PagedVector::getMemoryLayout() const
 {
     return memoryLayout;
+}
+
+std::vector<Memory::TupleBuffer>& PagedVector::getPages()
+{
+    return pages;
 }
 }
