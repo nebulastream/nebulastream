@@ -80,6 +80,9 @@ void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer&) c
 
 void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    /// Giving the chance for any child operator to initialize its state
+    ExecutableOperator::open(executionCtx, recordBuffer);
+
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
 }

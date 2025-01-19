@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os
+import shutil
+import subprocess
+import time
+import random
+import yaml
+import BenchmarkConfig
+import pathlib
+
+# Configuration for compilation
+BUILD_DIR = "build_dir"
+SOURCE_DIR = "/home/nils/remote_server/nebulastream-public"
+LOG_LEVEL = "LEVEL_NONE"  # "-DNES_LOG_LEVEL=LEVEL_NONE/DEBUG",
+CMAKE_BUILD_TYPE = "Release"  # Release or Debug
+USE_LIBCXX_IF_AVAILABLE = "False"  # False for using libstdcxx, true for libcxx
+CMAKE_TOOLCHAIN_FILE = "/home/nils/remote_server/vcpkg/scripts/buildsystems/vcpkg.cmake"
+NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
+SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/nes-single-node-worker")
+TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
+
+# Configuration for benchmark run
+WAIT_BEFORE_SIGKILL = 5
+MEASURE_INTERVAL = 5
+WAIT_BETWEEN_COMMANDS = 2
+
+# Compilation for misc.
+WORKER_CONFIG = "worker"
+QUERY_CONFIG = "query"
+WORKER_CONFIG_FILE_NAME = "worker_config.yaml"
+QUERY_CONFIG_FILE_NAME = "query.yaml"
+CONFIG_FILES = {
+    WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
+    QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
+}
+
+
+# Helper functions
+def clear_build_dir():
+    if os.path.exists(BUILD_DIR):
+        shutil.rmtree(BUILD_DIR)
+    os.mkdir(BUILD_DIR)
+
+
+def compile_project():
+    cmd_cmake = ["cmake",
+                 f"-DCMAKE_BUILD_TYPE={CMAKE_BUILD_TYPE}",
+                 f"-DNES_LOG_LEVEL={LOG_LEVEL}",
+                 f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_FILE}",
+                 f"-DUSE_LIBCXX_IF_AVAILABLE:BOOL={USE_LIBCXX_IF_AVAILABLE}",
+                 f"-S {SOURCE_DIR}",
+                 f"-B {BUILD_DIR}",
+                 "-G Ninja"]
+    cmd_build = f"cmake --build {BUILD_DIR} -j -- -k 0".split(" ")
+    subprocess.run(cmd_cmake, check=True)
+    subprocess.run(cmd_build, check=True)
+
+
+def create_output_folder():
+    timestamp = int(time.time())
+    folder_name = f"WindowManagementBM_{timestamp}"
+    os.mkdir(folder_name)
+    print(f"Created folder {folder_name}...")
+    return folder_name
+
+
+def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports):
+    # Creating a dest path for the worker and query config yaml file
+    dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
+    dest_path_query = os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)
+
+    # Worker Configuration
+    with open(CONFIG_FILES[WORKER_CONFIG], 'r') as input_file:
+        worker_config_yaml = yaml.safe_load(input_file)
+    worker_config_yaml["worker"][
+        "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
+    worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
+    worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
+    worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
+
+    # Query Compiler Configuration
+    worker_config_yaml["worker"]["queryCompiler"]["nautilusBackend"] = current_benchmark_config.nautilus_backend
+    worker_config_yaml["worker"]["queryCompiler"]["sliceStoreType"] = current_benchmark_config.slice_store_type
+    worker_config_yaml["worker"]["queryCompiler"]["sliceCacheType"] = current_benchmark_config.slice_cache_type
+    worker_config_yaml["worker"]["queryCompiler"]["sliceCacheSize"] = current_benchmark_config.slice_cache_size
+    worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
+
+    # Query Engine Configuration
+    worker_config_yaml["worker"]["queryEngine"][
+        "numberOfWorkerThreads"] = current_benchmark_config.number_of_worker_threads
+    worker_config_yaml["worker"]["queryEngine"]["taskQueueSize"] = current_benchmark_config.task_queue_size
+    worker_config_yaml["worker"]["queryEngine"]["statisticsDir"] = os.path.abspath(output_folder)
+
+    # Dumping the updated worker config yaml to the dest path
+    with open(dest_path_worker, 'w') as output_file:
+        yaml.dump(worker_config_yaml, output_file)
+
+    # Changing the query
+    with open(CONFIG_FILES[QUERY_CONFIG], 'r') as input_file:
+        query_config_yaml = yaml.safe_load(input_file)
+    query_config_yaml["query"] = current_benchmark_config.query
+    for idx, port in enumerate(tcp_server_ports):
+        query_config_yaml["physical"][idx]["sourceConfig"]["socketPort"] = int(port)
+
+    # Dumping the changed query config yaml to the dest path
+    with open(dest_path_query, 'w') as output_file:
+        yaml.dump(query_config_yaml, output_file)
+
+
+def start_tcp_servers(starting_ports, current_benchmark_config):
+    processes = []
+    ports = []
+    max_retries = 10
+    for port in starting_ports:
+        for attempt in range(max_retries):
+            # -n 0 means unlimited number of tuples
+            cmd = f"{TCP_SERVER} -p {port} -n 0 -t {current_benchmark_config.timestamp_increment}"
+            print(f"Trying to start tcp server with {cmd}")
+            process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+            time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
+            if process.poll() is not None and process.poll() != 0:
+                print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
+                port = str(int(port) + random.randint(1,10))
+                terminate_process_if_exists(process)
+                time.sleep(1)
+            else:
+                print(f"Started tcp server with PID: {process.pid} and port: {port}")
+                processes.append(process)
+                ports.append(port)
+                break
+        else:
+            raise Exception(f"Failed to start the TCP server after {max_retries} attempts.")
+    return [processes, ports]
+
+
+def submitting_query(query_file):
+    cmd = f"cat {query_file} | {NEBULI_PATH} register -x -s localhost:8080"
+    print(f"Submitting the query via {cmd}...")
+    # shell=True is needed to pipe the output of cat to the register command
+    result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE,  # Capture standard output
+                            stderr=subprocess.PIPE,  # Capture standard error
+                            text=True  # Decode output to a string
+                            )
+    query_id = result.stdout.strip()
+    print(f"Submitted the query with id {query_id}")
+    return query_id
+
+
+def start_single_node_worker(worker_config_file):
+    cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
+    print(f"Starting the single node worker with {cmd}")
+    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    pid = process.pid
+    print(f"Started single node worker with pid {pid}")
+    return process
+
+
+def stop_query(query_id):
+    cmd = f"{NEBULI_PATH} stop {query_id} -s localhost:8080"
+    print(f"Stopping the query via {cmd}...")
+    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    return process
+
+
+def terminate_process_if_exists(process):
+    try:
+        process.terminate()
+        process.wait(timeout=5)
+        print(f"Process with PID {process.pid} terminated.")
+    except subprocess.TimeoutExpired:
+        print(f"Process with PID {process.pid} did not terminate within timeout. Sending SIGKILL.")
+        process.kill()
+        process.wait()
+        print(f"Process with PID {process.pid} forcefully killed.")
+
+
+def get_start_ports():
+    # Extract all socketPort values
+    with open(CONFIG_FILES[QUERY_CONFIG], 'r') as input_file:
+        query_config_yaml = yaml.safe_load(input_file)
+    source_ports = [
+        item['sourceConfig']['socketPort']
+        for item in query_config_yaml['physical']
+        if 'sourceConfig' in item and 'socketPort' in item['sourceConfig']
+    ]
+    source_ports = [str(port) for port in source_ports]
+    print(f"Got the following start source ports: {' '.join(source_ports)}")
+    return source_ports
+
+
+# Benchmark loop
+def run_benchmark(current_benchmark_config):
+    # Defining here two empty lists so that we can use it in the finally
+    source_processes = []
+    single_node_process = []
+    stop_process = []
+    try:
+
+        start_ports = get_start_ports()
+
+        # Starting the TCP servers
+        [source_processes, tcp_server_ports] = start_tcp_servers(start_ports, current_benchmark_config)
+
+        # Creating a new output folder and updating the configs with the current benchmark configs
+        output_folder = create_output_folder()
+        copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports)
+
+        # Waiting before starting the single node worker
+        time.sleep(WAIT_BETWEEN_COMMANDS)
+
+        # Starting the single node worker
+        single_node_process = start_single_node_worker(
+            os.path.abspath(os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)))
+
+        # Waiting before submitting the query
+        time.sleep(WAIT_BETWEEN_COMMANDS)
+
+        # Submitting the query and waiting couple of seconds before stopping the query
+        query_id = submitting_query(os.path.abspath(os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)))
+
+        print(f"Waiting for {MEASURE_INTERVAL}s before stopping the query...")
+        time.sleep(MEASURE_INTERVAL)  # Allow query engine stats to be printed
+        stop_process = stop_query(query_id)
+    finally:
+        time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
+        all_processes = source_processes + [single_node_process] + [stop_process]
+        for proc in all_processes:
+            terminate_process_if_exists(proc)
+
+
+if __name__ == "__main__":
+    # Removing the build folder and compiling the project
+    # clear_build_dir()
+    compile_project()
+
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
+    # For now, we are running a single experiment to check if the script works
+    ALL_BENCHMARK_CONFIGS = ALL_BENCHMARK_CONFIGS[:3]
+    for benchmark_config in ALL_BENCHMARK_CONFIGS:
+        run_benchmark(benchmark_config)
+        time.sleep(1) # Sleep for a second to allow the system to cleanup

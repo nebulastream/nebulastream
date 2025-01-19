@@ -19,32 +19,30 @@
 #include <thread>
 #include <type_traits>
 #include <variant>
+#include <vector>
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
 
-template <typename Var1, typename Var2>
-struct FlattenVariant;
-template <typename... Ts1, typename... Ts2>
-struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
-{
-    using type = std::variant<Ts1..., Ts2...>;
+#include "../../nes-configurations/include/Configurations/ScalarOption.hpp"
+
+template<typename Var1, typename Var2> struct FlattenVariant;
+template<typename... Ts1, typename... Ts2> struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...> > {
+  using type = std::variant<Ts1..., Ts2...>;
 };
 
-namespace NES::Runtime
-{
-struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener
-{
-    using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
-    void onEvent(Event event) override;
-    void onEvent(SystemEvent event) override;
+namespace NES::Runtime {
+struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener {
+  using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
+  void onEvent(Event event) override;
+  void onEvent(SystemEvent event) override;
 
-    explicit PrintingStatisticListener(const std::filesystem::path& path);
-    static_assert(std::is_default_constructible_v<CombinedEventType>);
+  explicit PrintingStatisticListener(const Configurations::StringOption& statisticDir, const Configurations::UIntOption& numberOfWorkerThreads);
+  static_assert(std::is_default_constructible_v<CombinedEventType>);
 
 private:
-    std::ofstream file;
-    folly::MPMCQueue<CombinedEventType> events{100};
-    std::jthread printThread;
+  /// Each worker thread writes to its own file
+  std::vector<std::ofstream> files;
+  std::ofstream systemEventFile;
 };
 }

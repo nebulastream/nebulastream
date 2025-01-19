@@ -270,6 +270,9 @@ foreach (NES_DIR ${NES_DIRECTORIES})
     add_subdirectory(${NES_DIR})
 endforeach ()
 
+# Add all targets in window_management
+add_subdirectory(window_management)
+
 # Other configurations
 project_enable_format()
 

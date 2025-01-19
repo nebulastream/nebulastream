@@ -1,0 +1,16 @@
+worker:
+  numberOfBuffersInGlobalBufferManager: 1000
+  numberOfBuffersPerWorker: 1000
+  bufferSizeInBytes: 4096
+  queryCompiler:
+    nautilusBackend: COMPILER
+    pageSize: 10240
+    sliceStoreType: TBA
+    sliceCacheType: TBA
+    sliceCacheSize: TBA
+    lockSliceCache: TBA
+
+  queryEngine:
+    numberOfWorkerThreads: 1
+    taskQueueSize: 1000
+    statisticsDir: TBA
