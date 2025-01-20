@@ -65,7 +65,7 @@ void StreamJoinOperatorHandler::triggerSlices(
         {
             for (const auto& sliceRight : allSlices)
             {
-                const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size() - 1);
+                const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
                 emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, ChunkNumber(chunkNumber), isLastChunk, pipelineCtx);
                 ++chunkNumber;
             }

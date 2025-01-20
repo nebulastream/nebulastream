@@ -41,11 +41,11 @@ struct SequenceNumberForOriginId
 };
 
 /// Container for storing information, related to the state of a sequence number
-/// the SequenceState is only used inside of 'folly::Synchronized' so its members do not need to be atomic themselves
+/// the SequenceState is only used inside 'folly::Synchronized' so its members do not need to be atomic themselves
 struct SequenceState
 {
-    uint64_t lastChunkNumber = 0;
-    uint64_t seenChunks = 0;
+    uint64_t lastChunkNumber = INVALID_CHUNK_NUMBER.getRawValue();
+    uint64_t seenChunks = INVALID_CHUNK_NUMBER.getRawValue();
 };
 
 class EmitOperatorHandler final : public OperatorHandler
@@ -56,7 +56,7 @@ public:
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
     uint64_t getNextChunkNumber(SequenceNumberForOriginId seqNumberOriginId);
 
-    /// Sets provided chunkNumber as lastChunkNumber if 'isLastChunk' flag is true. Otherwise lastChunkNumber is 0, which is an invalid chunkNumber.
+    /// Sets provided chunkNumber as lastChunkNumber if 'isLastChunk' flag is true. Otherwise, lastChunkNumber is set to an invalid chunkNumber.
     /// Checks if the number of seen chunks matches the lastChunkNumber.
     /// @return true, if the number of seenChunks matches the lastChunkNumber.
     bool processChunkNumber(SequenceNumberForOriginId seqNumberOriginId, ChunkNumber chunkNumber, bool isLastChunk);

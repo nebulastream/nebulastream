@@ -401,4 +401,38 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     ASSERT_EQ(watermarkProcessor.getCurrentValue(), noSeqNumbers);
 }
 
+struct BufferMetaDataTest
+{
+    SequenceData sequenceData;
+    Runtime::Timestamp timestamp;
+};
+
+TEST_F(NonBlockingMonotonicSeqQueueTest, simpleInsertionsWithSingleChunks)
+{
+    std::vector<BufferMetaDataTest> sequenceData = {
+        BufferMetaDataTest{{SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(31)},
+        BufferMetaDataTest{{SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(63)},
+        BufferMetaDataTest{{SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(80)},
+        BufferMetaDataTest{{SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(99)},
+    };
+
+    auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
+
+    /// Inserting the first sequence ---> current value should be the timestamp of the first sequence
+    watermarkProcessor.emplace(sequenceData[0].sequenceData, sequenceData[0].timestamp.getRawValue());
+    EXPECT_EQ(watermarkProcessor.getCurrentValue(), sequenceData[0].timestamp.getRawValue());
+
+    /// Inserting the second sequence ---> current value should be the timestamp of the second sequence
+    watermarkProcessor.emplace(sequenceData[1].sequenceData, sequenceData[1].timestamp.getRawValue());
+    EXPECT_EQ(watermarkProcessor.getCurrentValue(), sequenceData[1].timestamp.getRawValue());
+
+    /// Inserting the fourth sequence ---> current value should be the timestamp of the second sequence, as we have not inserted the third sequence
+    watermarkProcessor.emplace(sequenceData[3].sequenceData, sequenceData[3].timestamp.getRawValue());
+    EXPECT_EQ(watermarkProcessor.getCurrentValue(), sequenceData[1].timestamp.getRawValue());
+
+    /// Inserting the third sequence ---> current value should be the timestamp of the fourth sequence, as we have inserted all four sequences
+    watermarkProcessor.emplace(sequenceData[2].sequenceData, sequenceData[2].timestamp.getRawValue());
+    EXPECT_EQ(watermarkProcessor.getCurrentValue(), sequenceData[3].timestamp.getRawValue());
+}
+
 }

@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <functional>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
