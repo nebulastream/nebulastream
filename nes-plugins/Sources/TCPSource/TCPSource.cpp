@@ -209,13 +209,12 @@ void TCPSource::close()
 }
 
 std::unique_ptr<SourceValidationRegistryReturnType>
-SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(const SourceValidationRegistryArguments& sourceConfig)
+SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return TCPSource::validateAndFormat(sourceConfig.config);
 }
 
-std::unique_ptr<SourceRegistryReturnType>
-SourceGeneratedRegistrar::RegisterTCPSource(const SourceRegistryArguments& sourceRegistryArguments)
+std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }

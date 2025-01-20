@@ -74,13 +74,12 @@ std::ostream& FileSource::toString(std::ostream& str) const
 }
 
 std::unique_ptr<SourceValidationRegistryReturnType>
-SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(const SourceValidationRegistryArguments& sourceConfig)
+SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return FileSource::validateAndFormat(sourceConfig.config);
 }
 
-std::unique_ptr<SourceRegistryReturnType>
-SourceGeneratedRegistrar::RegisterFileSource(const SourceRegistryArguments& sourceRegistryArguments)
+std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }

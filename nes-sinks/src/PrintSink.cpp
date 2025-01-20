@@ -76,12 +76,12 @@ PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>&& conf
 }
 
 std::unique_ptr<SinkValidationRegistryReturnType>
-SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(const SinkValidationRegistryArguments& sinkConfig)
+SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
-    return PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>(sinkConfig.config));
+    return PrintSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterPrintSink(const SinkRegistryArguments& sinkRegistryArguments)
+std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
 }
