@@ -760,7 +760,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->connectSourceEventChannelsAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
-    //    wrkConf1->numberOfSlots.setValue(1);
 
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
@@ -802,7 +801,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
     wrkConf2->connectSinksAsync.setValue(true);
     wrkConf2->connectSourceEventChannelsAsync.setValue(true);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
-    //    wrkConf2->numberOfSlots.setValue(1);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart2);
@@ -813,7 +811,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-//        R"(Query::from("seq").map(Attribute("value") = Attribute("value")).sink(FileSinkDescriptor::create(")"
                     R"(Query::from("seq").map(Attribute("value") = Attribute("value")).map(Attribute("value") = Attribute("value")).sink(FileSinkDescriptor::create(")"
             + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
@@ -849,8 +846,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
     auto coordinatorSources = crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources();
     auto mobileWorkerParentSrcCrdIt =
         crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().cbegin();
-    //    auto mobileCoordinatorSource =
-    //        crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
 
     while (std::static_pointer_cast<Network::NetworkSource>(*mobileWorkerParentSrcCrdIt)->getSenderLocation().getNodeId()
            != wrk2->getWorkerId()) {
@@ -877,7 +872,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                                                    mobileCoordinatorSource->getOperatorId(),
                                                    PartitionId(0),
                                                    SubpartitionId(0));
-    //    Network::NesPartition mobileSourceCrdPartition =
     auto oldWorker = wrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
@@ -911,7 +905,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
         wrkConf3->connectSinksAsync.setValue(true);
         wrkConf3->connectSourceEventChannelsAsync.setValue(true);
         wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
-        //        wrkConf3->numberOfSlots.setValue(1);
         NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
         ASSERT_TRUE(retStart3);
@@ -942,8 +935,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
 
             auto worker3Location = NES::Network::NodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
 
-            //todo deploy new plan to coordinator
-            //auto oldDecomposedId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
             auto oldDecomposedId =
                 crd->getNesWorker()
                     ->getNodeEngine()
@@ -983,7 +974,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                 fixedNetworkSrcDescriptor2,
                 OperatorId(fixedCoordinatorSource2->getOperatorId()));//todo: check if we need a new operator id
             newPlanCrd->addRootOperator(fixedSourceOpCrdNew);
-            //todo: add updated source for moving
             auto mobileNetworkSource = std::static_pointer_cast<Network::NetworkSource>(mobileCoordinatorSource);
             auto mobileNetworkSourceDescriptor =
                 Network::NetworkSourceDescriptor::create(mobileCoordinatorSource->getSchema(),
@@ -998,10 +988,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                 OperatorId(mobileSourceCrdPartition.getOperatorId())//todo: check if we need to adjust htis
             );
             newPlanCrd->addRootOperator(mobileSourceOpCrdNew);
-            //todo: add unchanged sink
-            //auto fileSink = crd->getGlobalExecutionPlan()->getCopyOfDecomposedQueryPlan(crd->getNesWorker()->getWorkerId(), sharedQueryId, oldPlanCrd->getDecomposedQueryId())->getSinkOperators().front();
             auto fileSink = oldPlanCrd->getSinks().front();
-            //            auto fileSinkDescriptor = fileSink->getSinkDescriptor();
             auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, fileSink->getSinkFormat(), "APPEND");
             auto newFileSink = std::make_shared<SinkLogicalOperator>(fileSinkDescriptor, OperatorId(fileSinkId++));
             newPlanCrd->appendOperatorAsNewRoot(newFileSink);
@@ -1084,11 +1071,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
             auto networkSinkToReconfigure = std::dynamic_pointer_cast<Network::NetworkSink>(sinkToReconfigure);
             networkSinkToReconfigure->configureNewSinkDescriptor(*newNetworkSinkDescriptor, reconfigMarker);
 
-            //todo: activate for copy of test
-            //            auto addLinkEvent = std::make_shared<RequestProcessor::ISQPAddLinkEvent>(wrk3->getWorkerId(), wrk1->getWorkerId());
-            //            auto removeLinkEvent =
-            //                std::make_shared<RequestProcessor::ISQPRemoveLinkEvent>(oldWorker->getWorkerId(), wrk1->getWorkerId());
-            //            crd->getRequestHandlerService()->queueISQPRequest({addLinkEvent, removeLinkEvent});
         }
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
@@ -1113,25 +1095,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
             ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
                       Network::PartitionRegistrationStatus::Registered);
 
-            //coordinator side checks
-            //todo: activate in copy of test
-            //            auto lockedExecutionNode = crd->getGlobalExecutionPlan()->getLockedExecutionNode(wrk3->getWorkerId());
-            //            auto updatedPartition =
-            //                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
-            //                                                                                ->getAllDecomposedQueryPlans(sharedQueryId)
-            //                                                                                .front()
-            //                                                                                ->getSourceOperators()
-            //                                                                                .front()
-            //                                                                                ->getSourceDescriptor())
-            //                    ->getNesPartition();
-
-            //            ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(updatedPartition),
-            //                      Network::PartitionRegistrationStatus::Registered);
-            //            EXPECT_NE(
-            //                oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
-            //                Network::PartitionRegistrationStatus::Registered);
-            //            currentWrk1TargetPartition = updatedPartition;
-
             ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(
                           newNetworkSinkDescriptor->getNesPartition()),
                       Network::PartitionRegistrationStatus::Registered);
@@ -1153,8 +1116,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                       Runtime::Execution::ExecutableQueryPlanStatus::Finished);
 
             //verify that query has been undeployed from coordinator
-            //todo: how to check this for a single decomposed plan
-            //while (crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size() != 1) {
             auto runningPlans =
                 crd->getNodeEngine()
                     ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
@@ -1176,7 +1137,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                         ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
                         .size();
             }
-            //            ASSERT_EQ(crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
             ASSERT_EQ(crd->getNodeEngine()
                           ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
                           .size(),
@@ -1188,11 +1148,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                 Network::PartitionRegistrationStatus::Registered);
             oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
 
-            //check that query has left migrating state and is running again
-            //todo #5133: reactivate this check once the logic in the query catalog has been updated
-            // ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));
-            // auto entries = crd->getQueryCatalog()->getQueryEntriesWithStatus("MIGRATING");
-            // ASSERT_TRUE(entries.empty());
         }
 
         //check that all tuples arrived
@@ -1805,7 +1760,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testsourceReuseFromCrd) {
     wrkConf4->numberOfSlots.setValue(4);
 
     wrkConf4->physicalSourceTypes.add(lambdaSourceType2);
-//    wrkConf4->physicalSourceTypes.add(lambdaSourceType3);
 
     auto wrk4DataPort = getAvailablePort();
     wrkConf4->dataPort = *wrk4DataPort;
@@ -1881,7 +1835,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testsourceReuseFromCrd) {
              ++i) {
             oss << std::to_string(i) << std::endl;
             oss << std::to_string(i + addToSrcTwo) << std::endl;
-//            oss << std::to_string(i + addToSrcThree) << std::endl;
         }
         compareStringBefore = oss.str();
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
@@ -1912,7 +1865,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testsourceReuseFromCrd) {
              ++i) {
             ossAfter << std::to_string(i) << std::endl;
             ossAfter << std::to_string(i + addToSrcTwo) << std::endl;
-//            ossAfter << std::to_string(i + addToSrcThree) << std::endl;
         }
         compareStringAfter = ossAfter.str();
 
@@ -1996,7 +1948,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testsourceReuseFromCrd) {
                     ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
                     .size();
         }
-        //            ASSERT_EQ(crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
         ASSERT_EQ(crd->getNodeEngine()
                       ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
                       .size(),
