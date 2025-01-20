@@ -75,7 +75,7 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const
     return qSize > 0 ? qSize : 0;
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;

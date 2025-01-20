@@ -24,7 +24,7 @@ namespace NES
 static constexpr uintptr_t TAG_SHIFT = 48;
 
 template <typename T>
-TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag)
+TaggedPointer<T>::TaggedPointer(T* ptr, const uint16_t tag)
 {
     reset(ptr, tag);
 }

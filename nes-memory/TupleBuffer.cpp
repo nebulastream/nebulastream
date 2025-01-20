@@ -35,7 +35,7 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
     return tb;
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent)
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, BufferRecycler* parent)
 {
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler)
     {
@@ -46,7 +46,8 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback)
+TupleBuffer
+TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback)
 {
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
@@ -132,7 +133,7 @@ uint64_t TupleBuffer::getBufferSize() const noexcept
 {
     return size;
 }
-void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
+void TupleBuffer::setNumberOfTuples(const uint64_t numberOfTuples) const noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
@@ -140,7 +141,7 @@ Runtime::Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(Runtime::Timestamp value) noexcept
+void TupleBuffer::setWatermark(const Runtime::Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
@@ -148,7 +149,7 @@ Runtime::Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
-void TupleBuffer::setSequenceNumber(SequenceNumber sequenceNumber) noexcept
+void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
@@ -162,11 +163,11 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
 }
-void TupleBuffer::setChunkNumber(ChunkNumber chunkNumber) noexcept
+void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
-void TupleBuffer::setLastChunk(bool isLastChunk) noexcept
+void TupleBuffer::setLastChunk(const bool isLastChunk) noexcept
 {
     controlBlock->setLastChunk(isLastChunk);
 }
@@ -174,11 +175,11 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(Runtime::Timestamp value) noexcept
+void TupleBuffer::setCreationTimestampInMS(const Runtime::Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
-void TupleBuffer::setOriginId(OriginId id) noexcept
+void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
 }
@@ -215,7 +216,7 @@ bool recycleTupleBuffer(void* bufferPointer)
     return block->release();
 }
 
-bool TupleBuffer::hasSpaceLeft(uint64_t used, uint64_t needed) const
+bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
 {
     if (used + needed <= this->size)
     {
