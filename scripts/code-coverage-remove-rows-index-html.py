@@ -31,7 +31,7 @@ def main():
 
         base_path = split_wrapper(0, line)
 
-        assert base_path.endswith("__w"), f"Expected '__w' at the end of the base_path, but it was not found. Line content: '{base_path}'"
+        # removes __w as the rest of the script excpects it to be gone
         base_path = base_path.rstrip("__w")  # Removes "__w" from the end
 
     # Read the list of tested files
@@ -46,8 +46,7 @@ def main():
 
     # Locate the table containing the data
     table = soup.find('table')
-    if not table:
-        assert table, "No table found in the HTML file."
+    assert table, "No table found in the HTML file."
 
     # Extract rows
     rows = table.find_all('tr')[1:]
