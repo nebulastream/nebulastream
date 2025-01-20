@@ -26,7 +26,8 @@ using SeparateKeys = enum { NO_SEPARATION, SAME_FILE, SEPARATE_FILES };
 class MicroBenchmarksTest : public Testing::BaseUnitTest
 {
 public:
-    static constexpr uint64_t MEM_CONSUMPTION = 2147483648; /// 2GB //17179869184; /// 16GB
+    static constexpr uint64_t MEM_CONSUMPTION = 12884901888; /// 12GB //17179869184; /// 16GB
+    std::vector<double> execTimes;
 
     static void SetUpTestSuite()
     {
@@ -52,7 +53,7 @@ public:
 
     static Nautilus::Interface::PagedVector copyPagedVector(Nautilus::Interface::PagedVector pagedVector) { return pagedVector; }
 
-    static void clearPagedVector(Nautilus::Interface::PagedVector& pagedVector, const SeparateKeys separateKeys)
+    void clearPagedVector(Nautilus::Interface::PagedVector& pagedVector, const SeparateKeys separateKeys)
     {
         NES_INFO("PagedVector clearing...");
         Timer<> timer("clearTimer");
@@ -70,16 +71,17 @@ public:
         timer.snapshot("done clearing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
+        execTimes.emplace_back(timeInMs);
         NES_INFO("PagedVector cleared in {} ms", timeInMs);
     }
 
-    static void generateData(Nautilus::Interface::PagedVector& pagedVector, const uint64_t numBuffers)
+    void generateData(Nautilus::Interface::PagedVector& pagedVector, const uint64_t numBuffers)
     {
         NES_INFO("Data generating...");
         Timer<> timer("generateDataTimer");
         timer.start();
 
-        /// TODO does this enhance performance?
+        // TODO does this enhance performance?
         pagedVector.appendPageIfFull();
         pagedVector.getPages().reserve(numBuffers + pagedVector.getNumberOfPages() - 1);
 
@@ -110,11 +112,15 @@ public:
         timer.snapshot("done generating");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
+        execTimes.emplace_back(timeInMs);
         NES_INFO("Data generated in {} ms", timeInMs);
     }
 
-    static void writePagedVectorToFile(
-        Nautilus::Interface::PagedVector& pagedVector, const std::vector<std::string>& fileNames, const SeparateKeys separateKeys)
+    void writePagedVectorToFile(
+        Nautilus::Interface::PagedVector& pagedVector,
+        const std::vector<std::string>& fileNames,
+        const uint64_t fileBufferSize,
+        const SeparateKeys separateKeys)
     {
         NES_INFO("File writing...");
         Timer<> timer("writeFileTimer");
@@ -131,15 +137,17 @@ public:
             ASSERT_TRUE(keyFile);
         }
 
+        // TODO remove?
         const auto& pages = pagedVector.getPages();
         const auto numPages = pagedVector.getNumberOfPages();
         const auto memoryLayout = pagedVector.getMemoryLayout();
         const auto bufferSize = memoryLayout->getBufferSize();
 
-        //std::vector<char> fileBuffer(bufferSize * numPages);
+        auto pageCnt = 0UL;
+        std::vector<char> fileBuffer(fileBufferSize);
         const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
 
-        for (auto pageIndex = 0UL; pageIndex < numPages; ++pageIndex)
+        for (const auto& page : pages)
         {
             const auto& tupleBuffer = pages[pageIndex];
 
@@ -172,85 +180,89 @@ public:
         timer.snapshot("done writing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
+        execTimes.emplace_back(timeInMs);
         NES_INFO("File written in {} ms", timeInMs);
     }
 
-    static void writeFileToPagedVector(
+    void writeFileToPagedVector(
         Nautilus::Interface::PagedVector& pagedVector,
         const std::vector<std::string>& fileNames,
         const uint64_t expectedNumPages,
+        const uint64_t fileBufferSize,
         const SeparateKeys separateKeys)
     {
         NES_INFO("PagedVector writing...");
         Timer<> timer("writePagedVectorTimer");
         timer.start();
 
-        std::ifstream inFile(fileNames.front(), std::ios::in | std::ios::binary);
-        ASSERT_TRUE(inFile);
+        std::ifstream payloadFile;
+        std::ifstream keyFile;
 
-        /// TODO does this enhance performance?
+        payloadFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
+        ASSERT_TRUE(payloadFile);
+        if (fileNames.size() > 1)
+        {
+            keyFile = std::ifstream(fileNames.at(2), std::ios::in | std::ios::binary);
+            ASSERT_TRUE(keyFile);
+        }
+
+        // TODO does this enhance performance?
         pagedVector.appendPageIfFull();
         pagedVector.getPages().reserve(expectedNumPages);
 
+        // TODO remove?
+        auto& pages = pagedVector.getPages();
         const auto memoryLayout = pagedVector.getMemoryLayout();
-        const auto bufferSize = memoryLayout->getBufferSize();
+        const auto pageSize = memoryLayout->getBufferSize();
+        ASSERT_EQ(fileBufferSize % pageSize, 0);
 
         auto pageCnt = 0UL;
-        std::vector<char> fileBuffer(bufferSize * expectedNumPages);
+        std::vector<char> fileBuffer(fileBufferSize);
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
 
-        inFile.read(fileBuffer.data(), bufferSize * expectedNumPages);
-
-        for (auto pageIndex = 0UL; pageIndex < expectedNumPages; ++pageIndex)
+        while (payloadFile.read(fileBuffer.data(), fileBufferSize) || payloadFile.gcount() > 0)
         {
-            pagedVector.appendPageIfFull();
-            auto& tupleBuffer = pagedVector.getPages().back();
-            tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
-            std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data() + pageIndex * bufferSize, bufferSize);
-
-            if (pageCnt++ % tenPercentOfNumPages == 0)
+            for (auto pageIndex = 0UL; pageIndex < pageSize / fileBufferSize; ++pageIndex)
             {
-                NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
+                pagedVector.appendPageIfFull();
+                auto& tupleBuffer = pages.back();
+                tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
+
+                if (separateKeys != NO_SEPARATION)
+                {
+                    if (separateKeys == SAME_FILE)
+                    {
+                    }
+                    else if (separateKeys == SEPARATE_FILES)
+                    {
+                    }
+                }
+                else
+                {
+                    std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data() + pageIndex * pageSize, pageSize);
+                }
+
+                if (pageCnt++ % tenPercentOfNumPages == 0)
+                {
+                    NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
+                }
             }
         }
-        (void)separateKeys;
-        /*
-        while (inFile.read(fileBuffer.data(), bufferSize) || inFile.gcount() > 0)
+
+        payloadFile.close();
+        if (fileNames.size() > 1)
         {
-            pagedVector.appendPageIfFull();
-            auto& tupleBuffer = pagedVector.getPages().back();
-            tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
-
-            if (separateKeys != NO_SEPARATION)
-            {
-                if (separateKeys == SAME_FILE)
-                {
-                }
-                else if (separateKeys == SEPARATE_FILES)
-                {
-                }
-            }
-            else
-            {
-                std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data(), inFile.gcount());
-            }
-
-            if (pageCnt++ % tenPercentOfNumPages == 0)
-            {
-                NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
-            }
-        }*/
-
-        inFile.close();
+            keyFile.close();
+        }
 
         timer.snapshot("done writing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
+        execTimes.emplace_back(timeInMs);
         NES_INFO("PagedVector written in {} ms", timeInMs);
     }
 
-    static void
-    comparePagedVectors(Nautilus::Interface::PagedVector& expectedPagedVector, Nautilus::Interface::PagedVector& actualPagedVector)
+    void comparePagedVectors(Nautilus::Interface::PagedVector& expectedPagedVector, Nautilus::Interface::PagedVector& actualPagedVector)
     {
         NES_INFO("PagedVectors comparing...");
         Timer<> timer("compareTimer");
@@ -283,12 +295,14 @@ public:
         timer.snapshot("done comparing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
+        execTimes.emplace_back(timeInMs);
         NES_INFO("PagedVectors compared in {} ms", timeInMs);
     }
 };
 
 TEST_F(MicroBenchmarksTest, benchmark1)
 {
+    execTimes.clear();
     const auto pageSize = 4 * 1024;
     const auto numBuffers = MEM_CONSUMPTION / pageSize;
 
@@ -306,11 +320,13 @@ TEST_F(MicroBenchmarksTest, benchmark1)
     Nautilus::Interface::PagedVector expectedPagedVector = copyPagedVector(pagedVector);
     NES_INFO("PagedVector copied");
 
-    writePagedVectorToFile(pagedVector, fileNames, NO_SEPARATION);
+    writePagedVectorToFile(pagedVector, fileNames, pageSize, NO_SEPARATION);
     clearPagedVector(pagedVector, NO_SEPARATION);
 
-    writeFileToPagedVector(pagedVector, fileNames, expectedPagedVector.getNumberOfPages(), NO_SEPARATION);
+    writeFileToPagedVector(pagedVector, fileNames, numBuffers, pageSize, NO_SEPARATION);
     comparePagedVectors(expectedPagedVector, pagedVector);
+
+    //createMeasurementsCSV("fileName.csv");
 }
 
 }

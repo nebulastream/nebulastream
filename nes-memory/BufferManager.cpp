@@ -308,7 +308,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
     }
     UnpooledBufferHolder probe(segment->getSize());
-    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
+    /*auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())
     {
         for (auto it = candidate; it != unpooledBuffers.end(); ++it)
@@ -326,7 +326,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
                 break;
             }
         }
-    }
+    }*/
 }
 
 size_t BufferManager::getBufferSize() const
