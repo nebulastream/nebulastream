@@ -38,8 +38,8 @@ ExecutableFunctionAnd::ExecutableFunctionAnd(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(
-    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
+std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionAnd>(

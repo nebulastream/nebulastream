@@ -39,7 +39,7 @@ ExecutableFunctionGreaterEquals::ExecutableFunctionGreaterEquals(
 }
 
 std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterGreaterEqualsExecutableFunction(
-    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(
         executableFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");

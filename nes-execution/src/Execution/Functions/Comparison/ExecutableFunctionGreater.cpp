@@ -39,7 +39,7 @@ ExecutableFunctionGreater::ExecutableFunctionGreater(
 }
 
 std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterGreaterExecutableFunction(
-    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionGreater>(
