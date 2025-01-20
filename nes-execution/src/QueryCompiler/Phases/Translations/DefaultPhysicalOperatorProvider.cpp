@@ -285,7 +285,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr
     const auto& windowSlide = windowType->getSlide().getTime();
     INVARIANT(
         NES::Util::instanceOf<Windowing::TumblingWindow>(windowType) || NES::Util::instanceOf<Windowing::SlidingWindow>(windowType),
-        "Only a tumbling or sliding window is currently supported for StreamJoin");
+        "Only a tumbling or sliding window is currently supported for StreamJoin, but got: {}",
+        windowType->toString());
 
     const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
     const auto leftInputOperator

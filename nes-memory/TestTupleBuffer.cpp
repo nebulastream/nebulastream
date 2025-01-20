@@ -22,6 +22,7 @@
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -79,7 +80,8 @@ void DynamicTuple::writeVarSized(
                 }
                 else
                 {
-                    PRECONDITION(false, "We expect either a uint64_t or a std::string to access a DynamicField!");
+                    PRECONDITION(
+                        false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
                 }
             },
             field);
@@ -104,7 +106,8 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
             }
             else
             {
-                PRECONDITION(false, "We expect either a uint64_t or a std::string to access a DynamicField!");
+                PRECONDITION(
+                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
             }
         },
         field);
@@ -232,7 +235,11 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
-    PRECONDITION(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
+    PRECONDITION(
+        memoryLayout->getBufferSize() == buffer.getBufferSize(),
+        "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
+        memoryLayout->getBufferSize(),
+        buffer.getBufferSize());
 }
 
 Memory::TupleBuffer TestTupleBuffer::getBuffer()
@@ -361,7 +368,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        throw NotImplemented("Schema MemoryLayoutType not supported");
+        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema->getLayoutType()));
     }
 }
 

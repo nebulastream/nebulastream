@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Join
 {
@@ -44,9 +45,12 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
     , originId(originId)
 {
     PRECONDITION(this->windowType, "Invalid window type");
-    PRECONDITION(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
-    PRECONDITION(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
-    PRECONDITION((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
+    PRECONDITION(this->numberOfInputEdgesLeft > 0, "Number of left edges was 0, which is invalid.");
+    PRECONDITION(this->numberOfInputEdgesRight > 0, "Number of right edges was 0, which is invalid.");
+    PRECONDITION(
+        (this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT),
+        "Invalid join type expected Inner join or cartesian product, but got: {}",
+        magic_enum::enum_name(this->joinType));
 }
 
 LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(

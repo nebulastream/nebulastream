@@ -26,7 +26,11 @@ namespace NES::Testing
 Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
 {
     auto copiedBuffer = provider.getBufferBlocking();
-    PRECONDITION(copiedBuffer.getBufferSize() >= buffer.getBufferSize(), "Attempt to copy buffer into smaller buffer");
+    PRECONDITION(
+        copiedBuffer.getBufferSize() >= buffer.getBufferSize(),
+        "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
+        copiedBuffer.getBufferSize(),
+        buffer.getBufferSize());
     auto bufferData = std::span(buffer.getBuffer(), buffer.getBufferSize());
     std::ranges::copy(bufferData, copiedBuffer.getBuffer());
     copiedBuffer.setWatermark(buffer.getWatermark());
@@ -44,7 +48,9 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
     {
         auto childBuffer = buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
-        INVARIANT(copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx, "Child buffer index does not match");
+        INVARIANT(
+            copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx,
+            "Child buffer index: {}, does not match index: {}, childIdx, copiedBuffer.storeChildBuffer(copiedChildBuffer)");
     }
 
     return copiedBuffer;

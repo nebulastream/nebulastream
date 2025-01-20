@@ -54,7 +54,7 @@ void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr& binaryOperato
 {
     /// Extract the children operators
     auto children = binaryOperator->getChildren();
-    INVARIANT(children.size() == 2, "Binary operator should have only 2 children");
+    INVARIANT(children.size() == 2, "Binary operator should have only 2 children, but had: {}", children.size());
 
     /// Extract left and right children
     auto leftChild = children[0];

@@ -74,7 +74,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
     }
     uint64_t cnt = logicalSourceNameToSchemaMapping.erase(logicalSourceName);
     NES_DEBUG("SourceCatalog: removed {} copies of the source", cnt);
-    INVARIANT(!containsLogicalSource(logicalSourceName), "log source should not exist");
+    INVARIANT(!containsLogicalSource(logicalSourceName), "log source: '{}' should not exist.", logicalSourceName);
     return true;
 }
 

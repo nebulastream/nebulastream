@@ -16,6 +16,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -46,15 +47,12 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
             found = true;
         }
     }
-    if (!found)
-    {
-        std::stringstream ss;
-        for (auto& id : origins)
-        {
-            ss << id << ",";
-        }
-        INVARIANT(false, "update watermark for non existing origin={} number of origins size={} ids={}", origin, origins.size(), ss.str());
-    }
+    INVARIANT(
+        found,
+        "update watermark for non existing origin={} number of origins size={} ids={}",
+        origin,
+        origins.size(),
+        fmt::join(origins, ","));
     return getCurrentWatermark();
 }
 

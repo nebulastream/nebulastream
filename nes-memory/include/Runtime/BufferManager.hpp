@@ -14,9 +14,6 @@
 
 #pragma once
 
-#include "Allocator/NesDefaultMemoryAllocator.hpp"
-
-
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -27,6 +24,7 @@
 #include <optional>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <folly/MPMCQueue.h>
 

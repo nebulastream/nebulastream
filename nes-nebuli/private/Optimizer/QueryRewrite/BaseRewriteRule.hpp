@@ -49,20 +49,5 @@ public:
         };
         return false;
     };
-
-    /**
-    * @brief Dynamically casts the node to a RuleType
-    * @tparam RefinementType
-    * @return returns a shared pointer of the RuleType
-    */
-    template <class RefinementType>
-    std::shared_ptr<RefinementType> as()
-    {
-        if (instanceOf<RefinementType>())
-        {
-            return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
-        }
-        INVARIANT(false, "invalid cast");
-    }
 };
 }

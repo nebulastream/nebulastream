@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <StatisticPrinter.hpp>
+
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -22,12 +25,9 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <fmt/chrono.h>
 #include <fmt/format.h>
-#include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
-#include <StatisticPrinter.hpp>
 
 namespace NES::Runtime
 {
@@ -47,17 +47,16 @@ void threadRoutine(
         }
         std::visit(
             Overloaded{
-                [&](SubmitQuerySystemEvent startQuery)
-                {
+                [&](SubmitQuerySystemEvent startQuery) {
                     file << fmt::format(
-                        "{} Submit Query {}:\n{}\n", startQuery.timestamp.time_since_epoch().count(), startQuery.queryId, startQuery.query);
+                        "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
                 },
                 [&](StartQuerySystemEvent startQuery)
-                { file << fmt::format("{} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
+                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
                 [&](TaskExecutionStart taskStartEvent)
                 {
                     file << fmt::format(
-                        "{} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
+                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
                         taskStartEvent.timestamp,
                         taskStartEvent.taskId,
                         taskStartEvent.pipelineId,
@@ -67,7 +66,7 @@ void threadRoutine(
                 [&](TaskExecutionComplete taskStopEvent)
                 {
                     file << fmt::format(
-                        "{} Task {} for Pipeline {} of Query {} Completed\n",
+                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
                         taskStopEvent.timestamp,
                         taskStopEvent.taskId,
                         taskStopEvent.pipelineId,

@@ -69,14 +69,14 @@ std::shared_ptr<Operator> Operator::duplicate()
     for (const auto& parent : getParents())
     {
         auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
-        INVARIANT(success, "Unable to add parent to copy");
+        INVARIANT(success, "Unable to add parent ({}) to copy ({})", NES::Util::as<Operator>(parent)->toString(), copyOperator->toString());
     }
 
     NES_DEBUG("Operator: copy all children");
     for (const auto& child : getChildren())
     {
         auto success = copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate()));
-        INVARIANT(success, "Unable to add child to copy");
+        INVARIANT(success, "Unable to add child ({}) to copy ({})", NES::Util::as<Operator>(child)->toString(), copyOperator->toString());
     }
     return copyOperator;
 }

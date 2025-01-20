@@ -50,7 +50,7 @@ MemorySegment::MemorySegment(
     this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
     this->ptr = ptr;
     INVARIANT(this->ptr, "invalid pointer");
-    INVARIANT(this->size, "invalid size");
+    INVARIANT(this->size, "invalid size={}", this->size);
 }
 
 MemorySegment::MemorySegment(
@@ -58,7 +58,7 @@ MemorySegment::MemorySegment(
     : ptr(ptr), size(size)
 {
     INVARIANT(this->ptr, "invalid pointer");
-    INVARIANT(this->size, "invalid size");
+    INVARIANT(this->size, "invalid size={}", this->size);
     controlBlock.reset(
         new BufferControlBlock(this, recycler, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
     controlBlock->prepare();
@@ -352,7 +352,7 @@ uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 
 bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index < children.size(), "Invalid index");
+    PRECONDITION(index < children.size(), "Index={} is out of range={}", index, children.size());
 
     auto* child = children[index];
     control = child->controlBlock->retain();

@@ -36,7 +36,7 @@ size_t GRPCClient::registerQuery(const NES::DecomposedQueryPlan& queryPlan) cons
     }
     else
     {
-        throw NES::QueryRegistrationFailedGRPC(
+        throw NES::QueryRegistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -58,7 +58,7 @@ void GRPCClient::start(size_t queryId) const
     }
     else
     {
-        throw NES::QueryStartFailedGRPC(
+        throw NES::QueryStartFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -79,7 +79,7 @@ QuerySummaryReply GRPCClient::status(size_t queryId) const
     }
     else
     {
-        throw NES::QueryStopFailedGRPC(
+        throw NES::QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -101,7 +101,7 @@ void GRPCClient::unregister(size_t queryId) const
     }
     else
     {
-        throw NES::QueryUnregistrationFailedGRPC(
+        throw NES::QueryUnregistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
