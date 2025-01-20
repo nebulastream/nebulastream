@@ -39,7 +39,7 @@ ExecutableFunctionLessEquals::ExecutableFunctionLessEquals(
 }
 
 std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterLessEqualsExecutableFunction(
-    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionLessEquals>(

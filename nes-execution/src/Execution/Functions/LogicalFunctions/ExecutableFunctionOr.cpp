@@ -37,8 +37,8 @@ ExecutableFunctionOr::ExecutableFunctionOr(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterOrExecutableFunction(
-    const ExecutableFunctionRegistryArguments& executableFunctionRegistryArguments)
+std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionGeneratedRegistrar::RegisterOrExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Or function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionOr>(
