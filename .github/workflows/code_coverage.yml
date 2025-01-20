@@ -162,7 +162,7 @@ jobs:
           index_html_file=$(find build -name "index.html" -print)
           output_file="/tmp/cache/code-coverage-${{ matrix.platform }}/index.html"
           echo "Index html file: ${index_html_file} Output file: ${output_file}"
-          code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py "${index_html_file}" "${output_file}" "${changed_file_name}"
+          /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py "${index_html_file}" "${output_file}" "${changed_file_name}"
 
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
