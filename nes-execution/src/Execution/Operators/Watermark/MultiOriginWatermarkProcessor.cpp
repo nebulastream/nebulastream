@@ -36,7 +36,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 }
 
 /// TODO use here the BufferMetaData class for the params #4177
-Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin)
+Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
 {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
@@ -66,7 +66,7 @@ std::string MultiOriginWatermarkProcessor::getCurrentStatus()
     return ss.str();
 }
 
-Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark()
+Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
 {
     auto minimalWatermark = UINT64_MAX;
     for (const auto& wt : watermarkProcessors)

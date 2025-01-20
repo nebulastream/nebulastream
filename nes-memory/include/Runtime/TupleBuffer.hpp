@@ -176,7 +176,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
 
     /// @brief set the number of tuples stored.
-    void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
+    void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
 
     /// @brief get the watermark as a timestamp
     [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;

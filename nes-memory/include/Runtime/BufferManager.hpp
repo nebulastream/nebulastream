@@ -136,11 +136,11 @@ public:
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
-     * timeout_ms.
-     * @param timeout_ms the amount of time to wait for a new buffer to be retuned
+     * timeoutMs.
+     * @param timeoutMs the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) override;
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
     /**
      * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error

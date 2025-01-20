@@ -35,7 +35,11 @@ namespace NES::Memory
 {
 
 BufferManager::BufferManager(
-    Private, uint32_t bufferSize, uint32_t numOfBuffers, std::shared_ptr<std::pmr::memory_resource> memoryResource, uint32_t withAlignment)
+    Private,
+    const uint32_t bufferSize,
+    const uint32_t numOfBuffers,
+    std::shared_ptr<std::pmr::memory_resource> memoryResource,
+    const uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
     , numOfAvailableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
@@ -210,10 +214,10 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(std::chrono::milliseconds timeout_ms)
+std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment;
-    auto deadline = std::chrono::steady_clock::now() + timeout_ms;
+    auto deadline = std::chrono::steady_clock::now() + timeoutMs;
     if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
         return std::nullopt;
@@ -362,12 +366,12 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder()
     segment.reset();
 }
 
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(uint32_t bufferSize) : size(bufferSize), free(false)
+BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(const uint32_t bufferSize) : size(bufferSize), free(false)
 {
     segment.reset();
 }
 
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, uint32_t size)
+BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, const uint32_t size)
     : segment(std::move(mem)), size(size), free(false)
 {
     /// nop
