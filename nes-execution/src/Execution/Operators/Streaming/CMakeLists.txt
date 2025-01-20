@@ -16,5 +16,6 @@ add_subdirectory(Join)
 add_source_files(nes-execution
         WindowBasedOperatorHandler.cpp
         WindowOperatorBuild.cpp
+        WindowOperatorTriggerProbe.cpp
         WindowOperatorProbe.cpp
 )

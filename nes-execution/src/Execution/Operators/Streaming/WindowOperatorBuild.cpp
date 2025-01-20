@@ -19,63 +19,16 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
-#include <ErrorHandling.hpp>
-#include <function.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-/// Updates the sliceState of all slices and emits buffers, if the slices can be emitted
-void checkWindowsTriggerProxy(
-    OperatorHandler* ptrOpHandler,
-    PipelineExecutionContext* pipelineCtx,
-    const Timestamp watermarkTs,
-    const SequenceNumber sequenceNumber,
-    const ChunkNumber chunkNumber,
-    const bool lastChunk,
-    const OriginId originId)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
-
-    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
-    opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
-}
-
-void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null");
-
-    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->triggerAllWindows(piplineContext);
-}
 
 
 WindowOperatorBuild::WindowOperatorBuild(const uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction))
 {
-}
-
-void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
-{
-    /// Update the watermark for the nlj operator and trigger slices
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    invoke(
-        checkWindowsTriggerProxy,
-        operatorHandlerMemRef,
-        executionCtx.pipelineContext,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
 }
 
 void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -87,9 +40,20 @@ void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& rec
     timeFunction->open(executionCtx, recordBuffer);
 }
 
-void WindowOperatorBuild::terminate(ExecutionContext& executionCtx) const
+void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
+    /// Giving the chance for any child operator to close its state
+    ExecutableOperator::close(executionCtx, recordBuffer);
+
+    /// Passing the record buffer to the trigger operator
+    auto newBuffer = executionCtx.allocateBuffer();
+    RecordBuffer recordBufferCopy(newBuffer);
+    recordBufferCopy.setChunkNumber(recordBuffer.getChunkNumber());
+    recordBufferCopy.setSequenceNumber(recordBuffer.getSequenceNumber());
+    recordBufferCopy.setOriginId(recordBuffer.getOriginId());
+    recordBufferCopy.setWatermarkTs(recordBuffer.getWatermarkTs());
+    recordBufferCopy.setLastChunk(recordBuffer.isLastChunk());
+    recordBufferCopy.setCreationTs(recordBuffer.getCreatingTs());
+    executionCtx.emitBuffer(recordBufferCopy);
 }
 }

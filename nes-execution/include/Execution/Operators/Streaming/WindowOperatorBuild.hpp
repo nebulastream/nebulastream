@@ -39,11 +39,8 @@ public:
     /// Initializes the time function, e.g., method that extracts the timestamp from a record
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-    /// Passes emits slices that are ready to the second join phase (probe) for further processing
+    /// Passes the record buffer to the trigger operator
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-    /// Emits/Flushes all slices and windows, as the query will be terminated
-    void terminate(ExecutionContext& executionCtx) const override;
 
 protected:
     const uint64_t operatorHandlerIndex;
