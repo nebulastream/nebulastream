@@ -18,7 +18,7 @@ RUN apt-get update && \
         apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils -y
 
 # Installing the bs4 library to remove the rows from the index.html file
-RUN apt update && apt install -y python3-pip && python3.12 -m venv code-cov-venv &&   code-cov-venv/bin/pip install beautifulsoup4 bs4
+RUN python3.11 -m venv code-cov-venv &&   code-cov-venv/bin/pip install beautifulsoup4 bs4
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487 --chmod=744 \
