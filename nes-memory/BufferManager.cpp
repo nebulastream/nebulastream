@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <deque>
 #include <iostream>
+#include <memory>
+#include <memory_resource>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
