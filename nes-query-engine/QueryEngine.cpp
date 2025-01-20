@@ -401,8 +401,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
     INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
-    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop should always have pedining tasks");
-
+    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {
         ENGINE_LOG_TRACE(

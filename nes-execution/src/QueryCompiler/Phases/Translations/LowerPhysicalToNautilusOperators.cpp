@@ -220,7 +220,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();
-    INVARIANT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+    INVARIANT(
+        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+        "Currently only row layout is supported, current layout={}",
+        magic_enum::enum_name(schema->getLayoutType()));
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
@@ -234,7 +237,10 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     auto schema = operatorNode->getOutputSchema();
-    INVARIANT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+    INVARIANT(
+        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+        "Currently only row layout is supported, current layout={}",
+        magic_enum::enum_name(schema->getLayoutType()));
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider

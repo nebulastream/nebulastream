@@ -127,7 +127,7 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported");
 }
 size_t LocalBufferPool::getBufferSize() const
 {
@@ -146,7 +146,7 @@ size_t LocalBufferPool::getNumOfUnpooledBuffers() const
 
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
 {

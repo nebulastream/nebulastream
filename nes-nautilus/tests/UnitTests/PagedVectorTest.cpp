@@ -77,21 +77,19 @@ public:
                     std::stringstream ss;
                     ss << "testing TextValue" << tupleNo;
                     auto buffer = bufferManager->getUnpooledBuffer(ss.str().length());
-                    if (buffer.has_value())
-                    {
-                        const VarVal varSizedData(VariableSizedData(buffer.value().getBuffer(), ss.str().length()));
-                        auto* sizeRef = reinterpret_cast<uint32_t*>(varSizedData.cast<VariableSizedData>().getReference().value);
-                        *sizeRef = ss.str().length();
-                        std::memcpy(varSizedData.cast<VariableSizedData>().getContent().value, ss.str().c_str(), ss.str().length());
-                        newRecord.write(field, varSizedData);
+                    INVARIANT(buffer.has_value(), "No unpooled TupleBuffer available!");
+                    const VarVal varSizedData(VariableSizedData(buffer.value().getBuffer(), ss.str().length()));
+                    auto* sizeRef = reinterpret_cast<uint32_t*>(varSizedData.cast<VariableSizedData>().getReference().value);
+                    *sizeRef = ss.str().length();
+                    std::memcpy(varSizedData.cast<VariableSizedData>().getContent().value, ss.str().c_str(), ss.str().length());
+                    newRecord.write(field, varSizedData);
 
-                        INVARIANT(ss.str().length() > minTextLength, "Length of the generated text is not long enough!");
-                        testStrings.emplace_back(buffer.value());
-                    }
-                    else
-                    {
-                        INVARIANT(false, "No unpooled TupleBuffer available!");
-                    }
+                    INVARIANT(
+                        ss.str().length() > minTextLength,
+                        "Length of the generated text: {} is smaller or equal to the minimal text length: {}",
+                        ss.str().length(),
+                        minTextLength);
+                    testStrings.emplace_back(buffer.value());
                 }
                 else if (NES::Util::instanceOf<Integer>(fieldType))
                 {

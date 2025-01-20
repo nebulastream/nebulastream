@@ -22,7 +22,10 @@ OriginIdAssignmentOperator::OriginIdAssignmentOperator(OperatorId operatorId, Or
 
 std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() const
 {
-    INVARIANT(originId != INVALID_ORIGIN_ID, "The origin id should not be invalid. Maybe the OriginIdInference rule was not executed.");
+    INVARIANT(
+        originId != INVALID_ORIGIN_ID,
+        "The origin id should not be invalid, but was {}. Maybe the OriginIdInference rule was not executed.",
+        originId.getRawValue());
     return {originId};
 }
 

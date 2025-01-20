@@ -21,14 +21,11 @@ namespace NES
 SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
 {
     auto it = testSchemaCatalog.find(name);
-    if (it != testSchemaCatalog.end())
-    {
-        auto newSchema = std::make_shared<Schema>();
-        /// Use copyFields() to create a deep copy of the fields
-        newSchema->copyFields(it->second);
-        return newSchema;
-    }
-    PRECONDITION(false, "Schema not found");
+    PRECONDITION(it != testSchemaCatalog.end(), "Schema with name: {} not found", name);
+    auto newSchema = std::make_shared<Schema>();
+    /// Use copyFields() to create a deep copy of the fields
+    newSchema->copyFields(it->second);
+    return newSchema;
 }
 
 std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {

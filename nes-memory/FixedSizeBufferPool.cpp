@@ -100,7 +100,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
     }
     else
     {
-        throw BufferAllocationFailure("FixedSizeBufferPool could not allocate buffer before timeout");
+        throw BufferAllocationFailure("FixedSizeBufferPool could not allocate buffer before timeout: {}", GET_BUFFER_TIMEOUT);
     }
 }
 
@@ -127,7 +127,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 size_t FixedSizeBufferPool::getBufferSize() const
 {
@@ -139,14 +139,14 @@ size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 }
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
 {
-    throw UnsupportedOperation("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 }

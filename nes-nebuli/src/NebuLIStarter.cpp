@@ -45,7 +45,7 @@ public:
         }
         else
         {
-            throw NES::QueryRegistrationFailedGRPC(
+            throw NES::QueryRegistrationFailed(
                 "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
@@ -68,7 +68,7 @@ public:
         }
         else
         {
-            throw NES::QueryStopFailedGRPC(
+            throw NES::QueryStopFailed(
                 "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
@@ -89,7 +89,7 @@ public:
         }
         else
         {
-            throw NES::QueryStatusFailedGRPC(
+            throw NES::QueryStatusFailed(
                 "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
@@ -110,7 +110,7 @@ public:
         }
         else
         {
-            throw NES::QueryStartFailedGRPC(
+            throw NES::QueryStartFailed(
                 "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
@@ -131,7 +131,7 @@ public:
         }
         else
         {
-            throw NES::QueryUnregistrationFailedGRPC(
+            throw NES::QueryUnregistrationFailed(
                 "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),

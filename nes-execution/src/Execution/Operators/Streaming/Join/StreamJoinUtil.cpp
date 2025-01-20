@@ -17,14 +17,18 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-
 
 namespace NES::Runtime::Execution::Util
 {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema)
 {
-    PRECONDITION(leftSchema->getLayoutType() == rightSchema->getLayoutType(), "Left and right schema do not have the same layout type");
+    PRECONDITION(
+        leftSchema->getLayoutType() == rightSchema->getLayoutType(),
+        "Left and right schema do not have the same layout type (left: {} and right: {})",
+        magic_enum::enum_name(leftSchema->getLayoutType()),
+        magic_enum::enum_name(rightSchema->getLayoutType()));
     auto retSchema = Schema::create(leftSchema->getLayoutType());
     auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
 

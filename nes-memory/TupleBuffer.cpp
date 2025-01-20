@@ -199,7 +199,8 @@ TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const
     TupleBuffer childBuffer;
     INVARIANT(
         controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
-        "Cannot load tuple buffer");
+        "Cannot load tuple buffer with index={}",
+        bufferIndex);
     return childBuffer;
 }
 

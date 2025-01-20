@@ -88,7 +88,7 @@ PlanIterator::Iterator& PlanIterator::Iterator::operator++()
         for (int64_t i = children.size() - 1; i >= 0; i--)
         {
             auto child = children[i];
-            INVARIANT(!child->getParents().empty(), "A child node should have a parent");
+            INVARIANT(!child->getParents().empty(), "A child node must have a parent");
 
             /// check if current node is last parent of child.
             if (child->getParents().back() == current)
