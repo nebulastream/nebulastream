@@ -15,15 +15,18 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES
 {
 
+using SeparateKeys = enum { NO_SEPARATION, SAME_FILE, SEPARATE_FILES };
+
 class MicroBenchmarksTest : public Testing::BaseUnitTest
 {
 public:
-    static constexpr uint64_t MEM_CONSUMPTION = 268435456; /// 256MB //2147483648; /// 2GB //17179869184; /// 16GB
+    static constexpr uint64_t MEM_CONSUMPTION = 2147483648; /// 2GB //17179869184; /// 16GB
 
     static void SetUpTestSuite()
     {
@@ -49,9 +52,36 @@ public:
 
     static Nautilus::Interface::PagedVector copyPagedVector(Nautilus::Interface::PagedVector pagedVector) { return pagedVector; }
 
+    static void clearPagedVector(Nautilus::Interface::PagedVector& pagedVector, const SeparateKeys separateKeys)
+    {
+        NES_INFO("PagedVector clearing...");
+        Timer<> timer("clearTimer");
+        timer.start();
+
+        if (separateKeys != NO_SEPARATION)
+        {
+        }
+        else
+        {
+            pagedVector.getPages().clear();
+            ASSERT_EQ(pagedVector.getNumberOfPages(), 0);
+        }
+
+        timer.snapshot("done clearing");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        NES_INFO("PagedVector cleared in {} ms", timeInMs);
+    }
+
     static void generateData(Nautilus::Interface::PagedVector& pagedVector, const uint64_t numBuffers)
     {
         NES_INFO("Data generating...");
+        Timer<> timer("generateDataTimer");
+        timer.start();
+
+        /// TODO does this enhance performance?
+        pagedVector.appendPageIfFull();
+        pagedVector.getPages().reserve(numBuffers + pagedVector.getNumberOfPages() - 1);
 
         const auto memoryLayout = pagedVector.getMemoryLayout();
         const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
@@ -77,36 +107,55 @@ public:
             }
         }
 
-        NES_INFO("Data generated");
+        timer.snapshot("done generating");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        NES_INFO("Data generated in {} ms", timeInMs);
     }
 
-    static void clearPagedVector(Nautilus::Interface::PagedVector& pagedVector)
-    {
-        NES_INFO("PagedVector clearing...");
-
-        pagedVector.getPages().clear();
-        ASSERT_EQ(pagedVector.getNumberOfPages(), 0);
-
-        NES_INFO("PagedVector cleared");
-    }
-
-    static void writePagedVectorToFile(Nautilus::Interface::PagedVector& pagedVector, const std::string& fileName)
+    static void writePagedVectorToFile(
+        Nautilus::Interface::PagedVector& pagedVector, const std::vector<std::string>& fileNames, const SeparateKeys separateKeys)
     {
         NES_INFO("File writing...");
+        Timer<> timer("writeFileTimer");
+        timer.start();
 
-        std::ofstream outFile(fileName, std::ios::out | std::ios::trunc | std::ios::binary);
-        ASSERT_TRUE(outFile);
+        std::ofstream payloadFile;
+        std::ofstream keyFile;
+
+        payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
+        ASSERT_TRUE(payloadFile);
+        if (fileNames.size() > 1)
+        {
+            keyFile = std::ofstream(fileNames.at(2), std::ios::out | std::ios::trunc | std::ios::binary);
+            ASSERT_TRUE(keyFile);
+        }
 
         const auto& pages = pagedVector.getPages();
         const auto numPages = pagedVector.getNumberOfPages();
-        const auto bufferSize = pagedVector.getMemoryLayout()->getBufferSize();
+        const auto memoryLayout = pagedVector.getMemoryLayout();
+        const auto bufferSize = memoryLayout->getBufferSize();
 
+        //std::vector<char> fileBuffer(bufferSize * numPages);
         const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
 
         for (auto pageIndex = 0UL; pageIndex < numPages; ++pageIndex)
         {
             const auto& tupleBuffer = pages[pageIndex];
-            outFile.write(tupleBuffer.getBuffer<char>(), bufferSize);
+
+            if (separateKeys != NO_SEPARATION)
+            {
+                if (separateKeys == SAME_FILE)
+                {
+                }
+                else if (separateKeys == SEPARATE_FILES)
+                {
+                }
+            }
+            else
+            {
+                payloadFile.write(tupleBuffer.getBuffer<char>(), bufferSize);
+            }
 
             if (pageIndex % tenPercentOfNumPages == 0)
             {
@@ -114,51 +163,98 @@ public:
             }
         }
 
-        outFile.close();
+        payloadFile.close();
+        if (fileNames.size() > 1)
+        {
+            keyFile.close();
+        }
 
-        NES_INFO("File written");
+        timer.snapshot("done writing");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        NES_INFO("File written in {} ms", timeInMs);
     }
 
-    static void
-    writeFileToPagedVector(Nautilus::Interface::PagedVector& pagedVector, const std::string& fileName, const uint64_t expectedNumPages)
+    static void writeFileToPagedVector(
+        Nautilus::Interface::PagedVector& pagedVector,
+        const std::vector<std::string>& fileNames,
+        const uint64_t expectedNumPages,
+        const SeparateKeys separateKeys)
     {
         NES_INFO("PagedVector writing...");
+        Timer<> timer("writePagedVectorTimer");
+        timer.start();
 
-        std::ifstream inFile(fileName, std::ios::in | std::ios::binary);
+        std::ifstream inFile(fileNames.front(), std::ios::in | std::ios::binary);
         ASSERT_TRUE(inFile);
 
         /// TODO does this enhance performance?
+        pagedVector.appendPageIfFull();
         pagedVector.getPages().reserve(expectedNumPages);
 
         const auto memoryLayout = pagedVector.getMemoryLayout();
         const auto bufferSize = memoryLayout->getBufferSize();
 
         auto pageCnt = 0UL;
-        std::vector<char> fileBuffer(bufferSize);
+        std::vector<char> fileBuffer(bufferSize * expectedNumPages);
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
 
-        while (inFile.read(fileBuffer.data(), bufferSize) || inFile.gcount() > 0)
+        inFile.read(fileBuffer.data(), bufferSize * expectedNumPages);
+
+        for (auto pageIndex = 0UL; pageIndex < expectedNumPages; ++pageIndex)
         {
             pagedVector.appendPageIfFull();
             auto& tupleBuffer = pagedVector.getPages().back();
             tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
-            std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data(), inFile.gcount());
+            std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data() + pageIndex * bufferSize, bufferSize);
 
             if (pageCnt++ % tenPercentOfNumPages == 0)
             {
                 NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
             }
         }
+        (void)separateKeys;
+        /*
+        while (inFile.read(fileBuffer.data(), bufferSize) || inFile.gcount() > 0)
+        {
+            pagedVector.appendPageIfFull();
+            auto& tupleBuffer = pagedVector.getPages().back();
+            tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
+
+            if (separateKeys != NO_SEPARATION)
+            {
+                if (separateKeys == SAME_FILE)
+                {
+                }
+                else if (separateKeys == SEPARATE_FILES)
+                {
+                }
+            }
+            else
+            {
+                std::memcpy(tupleBuffer.getBuffer(), fileBuffer.data(), inFile.gcount());
+            }
+
+            if (pageCnt++ % tenPercentOfNumPages == 0)
+            {
+                NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
+            }
+        }*/
 
         inFile.close();
 
-        NES_INFO("PagedVector written");
+        timer.snapshot("done writing");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        NES_INFO("PagedVector written in {} ms", timeInMs);
     }
 
     static void
     comparePagedVectors(Nautilus::Interface::PagedVector& expectedPagedVector, Nautilus::Interface::PagedVector& actualPagedVector)
     {
         NES_INFO("PagedVectors comparing...");
+        Timer<> timer("compareTimer");
+        timer.start();
 
         const auto expectedNumPages = expectedPagedVector.getNumberOfPages();
         const auto actualNumPages = actualPagedVector.getNumberOfPages();
@@ -184,65 +280,25 @@ public:
             }
         }
 
-        NES_INFO("PagedVectors compared");
+        timer.snapshot("done comparing");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        NES_INFO("PagedVectors compared in {} ms", timeInMs);
     }
-
-    /*
-    static void compareFileToExpectedPagedVector(Nautilus::Interface::PagedVector& expectedPagedVector, const std::string& fileName)
-    {
-        NES_INFO("File and PagedVector comparing...");
-
-        std::ifstream inFile(fileName, std::ios::in | std::ios::binary);
-        ASSERT_TRUE(inFile);
-
-        const auto pages = expectedPagedVector.getPages();
-        const auto numPages = expectedPagedVector.getNumberOfPages();
-        const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
-
-        const auto memoryLayout = expectedPagedVector.getMemoryLayout();
-        const auto bufferSize = memoryLayout->getBufferSize();
-        const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
-
-        auto valueCnt = 0UL;
-        std::vector<char> fileBuffer(bufferSize);
-
-        for (auto pageIndex = 0UL; pageIndex < numPages; ++pageIndex)
-        {
-            const auto& tupleBuffer = pages[pageIndex];
-            inFile.read(fileBuffer.data(), bufferSize);
-
-            ASSERT_EQ(inFile.gcount(), static_cast<long>(bufferSize));
-            ASSERT_EQ(std::memcmp(tupleBuffer.getBuffer(), fileBuffer.data(), bufferSize), 0);
-
-            for (auto fieldIdx = 0UL; fieldIdx < numFields; ++fieldIdx)
-            {
-                ASSERT_EQ(reinterpret_cast<uint64_t*>(fileBuffer.data())[fieldIdx], valueCnt++);
-            }
-
-            if (pageIndex % tenPercentOfNumPages == 0)
-            {
-                NES_INFO("File and PagedVector {}% compared", std::round(100 * static_cast<double>(pageIndex) / numPages));
-            }
-        }
-
-        inFile.close();
-
-        NES_INFO("File and PagedVector compared");
-    }
-    */
 };
 
 TEST_F(MicroBenchmarksTest, benchmark1)
 {
-    const auto fileName = "../../../benchmark1_output.dat";
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    addSchemaFields(testSchema);
-
     const auto pageSize = 4 * 1024;
     const auto numBuffers = MEM_CONSUMPTION / pageSize;
 
+    const std::vector<std::string> fileNames = {"../../../benchmark1_payload.dat"};
+    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    addSchemaFields(testSchema);
+
     const auto bufferManager = Memory::BufferManager::create(pageSize, numBuffers);
     const auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    memoryLayout->setKeyFieldNames({"f0", "f1"});
 
     Nautilus::Interface::PagedVector pagedVector(bufferManager, memoryLayout);
     generateData(pagedVector, numBuffers);
@@ -250,29 +306,11 @@ TEST_F(MicroBenchmarksTest, benchmark1)
     Nautilus::Interface::PagedVector expectedPagedVector = copyPagedVector(pagedVector);
     NES_INFO("PagedVector copied");
 
-    writePagedVectorToFile(pagedVector, fileName);
-    clearPagedVector(pagedVector);
+    writePagedVectorToFile(pagedVector, fileNames, NO_SEPARATION);
+    clearPagedVector(pagedVector, NO_SEPARATION);
 
-    writeFileToPagedVector(pagedVector, fileName, expectedPagedVector.getNumberOfPages());
+    writeFileToPagedVector(pagedVector, fileNames, expectedPagedVector.getNumberOfPages(), NO_SEPARATION);
     comparePagedVectors(expectedPagedVector, pagedVector);
-}
-
-TEST_F(MicroBenchmarksTest, DISABLED_benchmark2)
-{
-    const auto fileName = "../../../benchmark2_output.dat";
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-    addSchemaFields(testSchema);
-
-    const auto pageSize = 4 * 1024;
-    const auto numBuffers = MEM_CONSUMPTION / pageSize;
-
-    const auto bufferManager = Memory::BufferManager::create(pageSize, numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
-    Nautilus::Interface::PagedVector pagedVector(bufferManager, memoryLayout);
-
-    generateData(pagedVector, numBuffers);
-    writePagedVectorToFile(pagedVector, fileName);
-    //compareFileToExpectedPagedVector(pagedVector, fileName);
 }
 
 }
