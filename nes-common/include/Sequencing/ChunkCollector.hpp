@@ -56,7 +56,7 @@ private:
         std::atomic<T> value = {InitialValue};
 
     public:
-        std::optional<T> update(SequenceData sequence, T newWatermark)
+        std::optional<T> update(const SequenceData& sequence, T newWatermark)
         {
             const auto chunk = sequence.chunkNumber - ChunkNumber::INITIAL;
             auto current = value.load();
@@ -64,8 +64,9 @@ private:
             {
             }
 
-            auto updatedCounter = sequence.lastChunk ? counter.fetch_add(chunk) + chunk : counter.fetch_sub(1) - 1;
-
+            /// If the chunk is the last chunk, we update the counter with the current chunk number, otherwise we decrease the counter
+            /// This way, we can release the chunk number once all chunks have been collected ---> counter == 0
+            const auto updatedCounter = sequence.lastChunk ? counter.fetch_add(chunk) + chunk : counter.fetch_sub(1) - 1;
             if (updatedCounter == 0)
             {
                 return {value.load()};

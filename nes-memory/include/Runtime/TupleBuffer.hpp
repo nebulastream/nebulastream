@@ -195,7 +195,7 @@ public:
     /// @brief get the sequence number
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
-    /// @brief set the sequence number
+    /// @brief set the chunk number
     void setChunkNumber(ChunkNumber chunkNumber) noexcept;
 
     /// @brief get the chunk number
