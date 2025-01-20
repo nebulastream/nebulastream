@@ -31,7 +31,7 @@ def main():
 
         base_path = split_wrapper(0, line)
 
-        # removes __w as the rest of the script excpects it to be gone
+        # removes __w as the rest of the script expects it to be gone
         base_path = base_path.rstrip("__w")  # Removes "__w" from the end
 
     # Read the list of tested files
