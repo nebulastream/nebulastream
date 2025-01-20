@@ -34,7 +34,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
     auto optionMap = getOptionMap();
     if (!config.IsMap())
     {
-        throw InvalidConfigParameter("Malformed YAML configuration file");
+        throw InvalidConfigParameter("Malformed YAML configuration: {}", name);
     }
     for (auto entry : config)
     {
@@ -42,7 +42,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         auto node = entry.second;
         if (!optionMap.contains(identifier))
         {
-            throw InvalidConfigParameter("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
+            throw InvalidConfigParameter("Identifier: {} is not known. Check if it exposed in the getOptions function.", identifier);
         }
         /// check if config is empty
         if (node.IsScalar())
@@ -50,13 +50,13 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
             std::string value = node.as<std::string>();
             if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
             {
-                throw InvalidConfigParameter("Value for " + identifier + " is empty.");
+                throw InvalidConfigParameter("Value for: {} is empty.", identifier);
             }
         }
         else if ((node.IsSequence() || node.IsMap()) && node.size() == 0)
         {
             /// if the node is a sequence or map and has no elements
-            throw InvalidConfigParameter("Value for " + identifier + " is empty.");
+            throw InvalidConfigParameter("Value for: {} is empty.", identifier);
         }
         try
         {
@@ -76,7 +76,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
 
     if (!optionMap.contains(identifier))
     {
-        throw InvalidConfigParameter("Identifier " + identifier + " is not known.");
+        throw InvalidConfigParameter("Identifier for: {} is not known.", identifier);
     }
     auto option = optionMap[identifier];
     if (dynamic_cast<BaseConfiguration*>(option))
@@ -110,7 +110,7 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
     }
     catch (const std::exception& ex)
     {
-        throw CannotLoadConfig("Exception while loading configurations from " + filePath + ". Exception: " + ex.what());
+        throw CannotLoadConfig("Exception while loading configurations from: {}. Exception: {}", filePath, ex.what());
     }
 }
 

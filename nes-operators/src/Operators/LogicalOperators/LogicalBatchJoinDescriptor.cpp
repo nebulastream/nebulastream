@@ -29,11 +29,11 @@ LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(
     , numberOfInputEdgesBuild(numberOfInputEdgesLeft)
     , numberOfInputEdgesProbe(numberOfInputEdgesRight)
 {
-    PRECONDITION(this->keyTypeBuild, "Invalid left join key type");
-    PRECONDITION(this->keyTypeProbe, "Invalid right join key type");
+    PRECONDITION(this->keyTypeBuild, "Invalid build join key type. key type is nullptr.");
+    PRECONDITION(this->keyTypeProbe, "Invalid probe join key type. key type is nullptr.");
 
-    PRECONDITION(this->numberOfInputEdgesBuild > 0, "Invalid number of left edges");
-    PRECONDITION(this->numberOfInputEdgesProbe > 0, "Invalid number of right edges");
+    PRECONDITION(this->numberOfInputEdgesBuild > 0, "Number of build edges was 0, which is not valid.");
+    PRECONDITION(this->numberOfInputEdgesProbe > 0, "Number of probe edges was 0, which is not valid.");
 }
 
 LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(

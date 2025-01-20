@@ -201,7 +201,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
         }
     }
 
-    INVARIANT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
+    INVARIANT(rightQueryPlan, "invalid rightQueryPlan query plan, it is a nullptr");
+    INVARIANT(!rightQueryPlan->getRootOperators().empty(), "RootOperators of rightQueryPlan are empty");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();

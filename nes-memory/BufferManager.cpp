@@ -72,14 +72,11 @@ void BufferManager::destroy()
                 success = false;
             }
         }
-        if (!success)
-        {
-            INVARIANT(
-                false,
-                "Requested buffer manager shutdown but a buffer is still used allBuffers={} available={}",
-                allBuffers.size(),
-                numOfAvailableBuffers);
-        }
+        INVARIANT(
+            success,
+            "Requested buffer manager shutdown but a buffer is still used allBuffers={} available={}",
+            allBuffers.size(),
+            numOfAvailableBuffers);
         /// RAII takes care of deallocating memory here
         allBuffers.clear();
 
@@ -138,15 +135,10 @@ void BufferManager::initialize(uint32_t withAlignment)
         memorySizeInBytes);
     if (withAlignment > 0)
     {
-        if ((withAlignment & (withAlignment - 1)))
-        { /// not a pow of two
-            PRECONDITION(false, "NES tries to align memory but alignment is not a pow of two");
-        }
+        PRECONDITION(
+            !(withAlignment & (withAlignment - 1)), "NES tries to align memory but alignment={} is not a pow of two", withAlignment);
     }
-    else if (withAlignment > page_size)
-    {
-        PRECONDITION(false, "NES tries to align memory but alignment is invalid");
-    }
+    PRECONDITION(withAlignment <= page_size, "NES tries to align memory but alignment is invalid: {} <= {}", withAlignment, page_size);
 
     PRECONDITION(
         alignof(detail::BufferControlBlock) <= withAlignment,
@@ -168,8 +160,7 @@ void BufferManager::initialize(uint32_t withAlignment)
         numOfBuffers,
         controlBlockSize,
         alignof(detail::BufferControlBlock));
-    INVARIANT(basePointer, "memory allocation failed");
-
+    INVARIANT(basePointer, "memory allocation failed, because 'basePointer' was a nullptr");
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i)
     {
@@ -197,7 +188,7 @@ TupleBuffer BufferManager::getBufferBlocking()
         return buffer.value();
     }
     /// Throw exception if no buffer was returned allocated after timeout.
-    throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout");
+    throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout({})", GET_BUFFER_TIMEOUT);
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()

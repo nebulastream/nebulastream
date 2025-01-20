@@ -166,7 +166,7 @@ void LogicalBatchJoinOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", *operatorNode);
-    PRECONDITION(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
+    PRECONDITION(children.size() == 2, "Join should have 2 children but got: {}", children.size());
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {

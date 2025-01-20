@@ -82,11 +82,6 @@ public:
         return *this;
     }
 
-    /// @brief Emplace a new element to the queue.
-    /// This method can be called concurrently.
-    /// However, only one element with a given sequence number and chunk number can be inserted.
-    /// @param sequenceData of the new element.
-    /// @param newValue
     void emplace(SequenceData sequenceData, T newValue)
     {
         if (auto opt = chunks.collect(sequenceData, Runtime::Timestamp(newValue)))
@@ -158,7 +153,15 @@ private:
         }
 
         /// check if we really found the correct block
-        INVARIANT(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize, "Incorrect block");
+        const auto sequenceNumberIsNotInPriorBlock = seq >= (currentBlock->blockIndex * BlockSize);
+        INVARIANT(
+            sequenceNumberIsNotInPriorBlock, "sequence number: {} was in prior block: {}", seq, (currentBlock->blockIndex * BlockSize));
+        const auto sequenceNumberIsNotInSubsequentBlock = seq < ((currentBlock->blockIndex * BlockSize) + BlockSize);
+        INVARIANT(
+            sequenceNumberIsNotInSubsequentBlock,
+            "sequence number: {} was in subsequent block: {}",
+            seq,
+            ((currentBlock->blockIndex * BlockSize) + BlockSize));
 
         /// Emplace value in block
         /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
@@ -172,7 +175,7 @@ private:
     /// @brief This method shifts tries to shift the current value.
     /// To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
     /// If the next sequence number is available it replaces the currentSeq with the next one.
-    // If the next sequence number is in a new block this method also replaces the pointer to the next block.
+    /// If the next sequence number is in a new block this method also replaces the pointer to the next block.
     void shiftCurrentValue()
     {
         auto checkForUpdate = true;
@@ -233,7 +236,7 @@ private:
         {
             /// append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
-            PRECONDITION(nextBlock, "Number of blocks in queue is smaller than targetBlockIndex");
+            PRECONDITION(nextBlock, "Number of blocks in queue is smaller than targetBlockIndex: {}", targetBlockIndex);
             /// move to the next block
             currentBlock = nextBlock;
         }

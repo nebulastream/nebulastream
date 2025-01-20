@@ -143,7 +143,7 @@ void LogicalInferModelOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "LogicalInferModelOperator: InferModel should have children");
+    INVARIANT(!children.empty(), "InferModel must have children, but had none");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
