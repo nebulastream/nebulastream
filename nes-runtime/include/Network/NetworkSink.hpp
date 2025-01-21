@@ -202,7 +202,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     NodeLocation receiverLocation;
-    std::optional<NetworkSinkDescriptor> nextSinkDescriptor;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     std::atomic<uint64_t> messageSequenceNumber;

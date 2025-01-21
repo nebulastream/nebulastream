@@ -32,6 +32,7 @@
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
 #include <QueryCompiler/QueryCompiler.hpp>          // member variable (QueryCompilation::QueryCompilerPtr queryCompiler)
 
+#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -628,6 +629,7 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
 std::vector<DecomposedQueryIdWithVersion> NodeEngine::getDecomposedQueryIds(SharedQueryId sharedQueryId) {
+    std::unique_lock lock(engineMutex);
     auto iterator = sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId);
     if (iterator != sharedQueryIdToDecomposedQueryPlanIds.end()) {
         return iterator->second;
@@ -640,13 +642,32 @@ std::vector<DecomposedQueryId> NodeEngine::getDecomposedQueryIdsWithStatus(Share
                                                                            Execution::ExecutableQueryPlanStatus status) {
     auto idVector = getDecomposedQueryIds(sharedQueryId);
     std::vector<DecomposedQueryId> resultVector;
-    for (auto& id : idVector) {
-        auto plan = getExecutableQueryPlan(id);
+    for (auto& idAndVersion : idVector) {
+        auto plan = getExecutableQueryPlan(idAndVersion.id, idAndVersion.version);
         if (plan->getStatus() == status) {
-            resultVector.push_back(id);
+            resultVector.push_back(idAndVersion.id);
         }
     }
     return resultVector;
+}
+
+bool NodeEngine::updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndVersion, DecomposedQueryPlanVersion newVersion) {
+    std::unique_lock lock(engineMutex);
+
+    auto planIterator = deployedExecutableQueryPlans.find(idAndVersion);
+    if (planIterator == deployedExecutableQueryPlans.end()) {
+        return false;
+    }
+
+    DecomposedQueryIdWithVersion newIdWithVersion(idAndVersion.id, newVersion);
+    auto planToUpdate = planIterator->second;
+    planToUpdate->updateDecomposedQueryVersion(newVersion);
+    deployedExecutableQueryPlans[newIdWithVersion] = planToUpdate;
+    auto& vecRef = sharedQueryIdToDecomposedQueryPlanIds[planIterator->second->getSharedQueryId()];
+    std::ranges::replace(vecRef.begin(), vecRef.end(), idAndVersion, newIdWithVersion);
+    deployedExecutableQueryPlans.erase(planIterator);
+    queryManager->updatePlanVersion(idAndVersion, newVersion);
+    return true;
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
@@ -770,65 +791,8 @@ bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
     }
 }
 
-bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
-    std::unique_lock lock(engineMutex);
-    NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
-              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
-              reconfiguredDecomposedQueryPlan->getDecomposedQueryId());
-    auto executablePlanId = DecomposedQueryIdWithVersion(reconfiguredDecomposedQueryPlan->getDecomposedQueryId(),
-                                                         reconfiguredDecomposedQueryPlan->getVersion());
-    auto deployedPlanIterator = deployedExecutableQueryPlans.find(executablePlanId);
-
-    //if not running sub query plan with the given id exists, return false
-    if (deployedPlanIterator == deployedExecutableQueryPlans.end()) {
-        return false;
-    }
-    auto deployedPlan = deployedPlanIterator->second;
-
-    /* iterator over all network sinks of the running plan and apply the new descriptors. If the version number
-     * of the new descriptor is the same as the running version, nothing will be changed */
-    for (auto& sink : deployedPlan->getSinks()) {
-        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-        if (networkSink != nullptr) {
-            for (auto& reconfiguredSink : reconfiguredDecomposedQueryPlan->getSinkOperators()) {
-                auto reconfiguredNetworkSinkDescriptor =
-                    std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
-                if (reconfiguredNetworkSinkDescriptor
-                    && reconfiguredNetworkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    NES_DEBUG("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
-                              "query plan {}.{}.",
-                              reconfiguredNetworkSinkDescriptor->getUniqueId(),
-                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
-                              reconfiguredDecomposedQueryPlan->getDecomposedQueryId(),
-                              reconfiguredDecomposedQueryPlan->getVersion());
-                    networkSink->scheduleNewDescriptor(*reconfiguredNetworkSinkDescriptor);
-                }
-            }
-        }
-    }
-    // iterate over all network sources and apply the reconfigurations
-    for (auto& source : deployedPlan->getSources()) {
-        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
-        if (networkSource != nullptr) {
-            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
-                auto reconfiguredNetworkSourceDescriptor =
-                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
-                              "decomposed query plan {}.{}.",
-                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
-                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
-                              reconfiguredDecomposedQueryPlan->getDecomposedQueryId(),
-                              reconfiguredDecomposedQueryPlan->getVersion());
-                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
-                }
-            }
-        }
-    }
-    return true;
-}
-
 Monitoring::MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
+
 void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
     NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
     this->metricStore = metricStore;
@@ -849,15 +813,53 @@ const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { r
 bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                       DecomposedQueryId decomposedQueryid,
                                       ReconfigurationMarkerPtr reconfigurationMarker) {
-    auto qep = deployedExecutableQueryPlans.find(decomposedQueryid);
-    NES_ASSERT2_FMT(qep != deployedExecutableQueryPlans.end(), "Trying to insert reconfiguration marker but plan was not found");
-    for (const auto& sink : qep->second->getSinks()) {
-        const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-        if (networkSink) {
-            networkSink->applyNextSinkDescriptor(std::move(reconfigurationMarker));
+    auto addedMarker = false;
+    for (const auto& [idAndVersion, event] : reconfigurationMarker->getAllReconfigurationMarkerEvents()) {
+        if (idAndVersion.id == decomposedQueryid) {
+            auto version = idAndVersion.version;
+            auto qep = getExecutableQueryPlan(decomposedQueryid, version);
+            if (qep) {
+                if (event->reconfigurationMetadata->instanceOf<UpdateQueryMetadata>()) {
+                    auto updateEvent = std::dynamic_pointer_cast<UpdateQueryMetadata>(event->reconfigurationMetadata);
+                    auto sinkUpdates = updateEvent->networkSinkUpdates;
+
+                    for (const auto& sink : qep->getSinks()) {
+                        const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+                        if (networkSink) {
+                            for (const auto& sinkUpdateInfo : sinkUpdates) {
+                                auto locationUpdateInfo = sinkUpdateInfo.nodeLocation;
+                                auto nodeLocation = Network::NodeLocation(locationUpdateInfo.workerId,
+                                                                          locationUpdateInfo.hostname,
+                                                                          locationUpdateInfo.port);
+
+                                auto partitionUpdateInfo = sinkUpdateInfo.nesPartition;
+                                auto partition = Network::NesPartition(partitionUpdateInfo.sharedQueryId,
+                                                                       partitionUpdateInfo.operatorId,
+                                                                       partitionUpdateInfo.partitionId,
+                                                                       partitionUpdateInfo.subpartitionId);
+
+                                auto networkSinkDescriptor =
+                                    Network::NetworkSinkDescriptor::create(nodeLocation,
+                                                                           partition,
+                                                                           sinkUpdateInfo.waitTime,
+                                                                           sinkUpdateInfo.retryTimes,
+                                                                           sinkUpdateInfo.version,
+                                                                           sinkUpdateInfo.numberOfOrigins,
+                                                                           sinkUpdateInfo.uniqueNetworkSinkId)
+                                        ->as<Network::NetworkSinkDescriptor>();
+                                if (networkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                                    updateExecutablePlanVersion(idAndVersion, updateEvent->decomposedQueryPlanVersion);
+                                    networkSink->configureNewSinkDescriptor(*networkSinkDescriptor,std::move(reconfigurationMarker));
+                                    addedMarker = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-    return false;
+    return addedMarker;
 }
 
 bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
@@ -899,4 +901,8 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
     return false;
 }
 
+std::shared_ptr<const Execution::ExecutableQueryPlan>
+NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
+    return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
+}
 }// namespace NES::Runtime

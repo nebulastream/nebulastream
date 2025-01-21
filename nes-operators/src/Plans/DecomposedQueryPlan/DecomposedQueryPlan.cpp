@@ -279,6 +279,9 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() {
         DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, workerId, duplicateRootOperators);
     copiedDecomposedQueryPlan->setState(currentState);
     copiedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
+    if (oldVersion) {
+        copiedDecomposedQueryPlan->setOldVersion(oldVersion.value());
+    }
     return copiedDecomposedQueryPlan;
 }
 
@@ -290,6 +293,9 @@ std::string DecomposedQueryPlan::toString() const {
     }
     return ss.str();
 }
+void DecomposedQueryPlan::setOldVersion(DecomposedQueryPlanVersion oldVersion) { this->oldVersion = oldVersion; }
+
+std::optional<DecomposedQueryPlanVersion> DecomposedQueryPlan::getOldVersion() const { return oldVersion; }
 
 WorkerId DecomposedQueryPlan::getWorkerId() const { return workerId; }
 }// namespace NES

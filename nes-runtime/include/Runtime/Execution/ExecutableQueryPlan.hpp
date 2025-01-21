@@ -195,6 +195,12 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     DecomposedQueryPlanVersion getDecomposedQueryVersion() const;
 
+  /**
+   * @brief Update the version of this executable query plan
+   * @param newVersion the new version of the executable plan
+   */
+  void updateDecomposedQueryVersion(DecomposedQueryPlanVersion newVersion);
+
     /**
      * @brief final reconfigure callback called upon a reconfiguration
      * @param task the reconfig descriptor
@@ -277,7 +283,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
   private:
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
-    const DecomposedQueryPlanVersion decomposedQueryVersion;
+    std::atomic<DecomposedQueryPlanVersion> decomposedQueryVersion;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;

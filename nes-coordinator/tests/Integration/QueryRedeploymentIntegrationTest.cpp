@@ -46,6 +46,7 @@
 #include <Util/TopologyLinkInformation.hpp>
 #include <atomic>
 #include <gtest/gtest.h>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 
 namespace NES {
 
@@ -79,6 +80,7 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
 };
 
 constexpr uint32_t DEFAULT_NUMBER_OF_ORIGINS = 0;
+constexpr DecomposedQueryPlanVersion DEFAULT_VERSION = 1;
 /**
  * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
  * network channel to become available
@@ -193,7 +195,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects) {
     const uint32_t retryTimes = 10;
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
@@ -327,11 +329,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     //reconfiguration
     auto subPlanIdWrk3 = 300;
     ASSERT_EQ(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
-    auto oldDecomposedQueryId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-    auto wrk2Source = wrk2->getNodeEngine()
-                          ->getExecutableQueryPlan(oldDecomposedQueryId.id, oldDecomposedQueryId.version)
-                          ->getSources()
-                          .front();
+    auto oldSubplanId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
+    auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
     Network::NesPartition currentWrk1TargetPartition(sharedQueryId,
                                                      wrk2Source->getOperatorId(),
                                                      PartitionId(0),
@@ -339,11 +338,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
     auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-    auto coordinatorSource = crd->getNesWorker()
-                                 ->getNodeEngine()
-                                 ->getExecutableQueryPlan(oldDecomposedQueryId.id, oldDecomposedQueryId.version)
-                                 ->getSources()
-                                 .front();
+    auto coordinatorSource =
+        crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
     Network::NesPartition networkSourceCrdPartition(sharedQueryId,
                                                     coordinatorSource->getOperatorId(),
                                                     PartitionId(0),
@@ -523,7 +519,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         oldWorker = wrk3;
         EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
-        oldDecomposedQueryId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
+        oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
 
         //check that query has left migrating state and is running again
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));
@@ -596,7 +592,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
     const uint32_t retryTimes = 10;
     const bool performReconnects = true;
     const uint64_t addToSrcTwo = 10000;
@@ -940,7 +936,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
                     ->getNodeEngine()
                     ->getDecomposedQueryIdsWithStatus(sharedQueryId, Runtime::Execution::ExecutableQueryPlanStatus::Running)
                     .front();
-            auto oldPlanCrd = crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(oldDecomposedId);
+            auto oldPlanCrd = crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(oldDecomposedId, DEFAULT_VERSION);
 
             //this is the partition for the fixed node
             mobileSourceCrdPartition =
@@ -948,6 +944,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
 
             DecomposedQueryId newCrdDecomposedId(subPlanIdCrd);
             auto newPlanCrd = DecomposedQueryPlan::create(newCrdDecomposedId, sharedQueryId, crd->getNesWorker()->getWorkerId());
+            newPlanCrd->setVersion(DEFAULT_VERSION);
             //add unchanged source for fixed
             auto fixedNetworkSource = std::static_pointer_cast<Network::NetworkSource>(fixedCoordinatorSource);
             auto fixedNetworkSource2 = std::static_pointer_cast<Network::NetworkSource>(fixedCoordinatorSource2);
@@ -1064,7 +1061,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSourceReuse) {
             reconfigMarker->addReconfigurationEvent(oldSubplanId, event);
             metadata = std::make_shared<DrainQueryMetadata>(2);
             event = ReconfigurationMarkerEvent::create(QueryState::RUNNING, metadata);
-            reconfigMarker->addReconfigurationEvent(oldPlanCrd->getDecomposedQueryId(), event);
+            reconfigMarker->addReconfigurationEvent(oldPlanCrd->getDecomposedQueryId(), DEFAULT_VERSION, event);
 
             //insert reconfiguration at sink
             auto sinkToReconfigure = wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front();

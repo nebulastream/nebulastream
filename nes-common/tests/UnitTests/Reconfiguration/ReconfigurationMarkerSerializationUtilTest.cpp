@@ -40,8 +40,31 @@ TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerializ
 
     auto originalReconfigurationMarker = ReconfigurationMarker::create();
 
+    NodeLocationUpdateInfo locationUpdate{
+        WorkerId(3),
+        "127.0.0.1",
+        1234,
+    };
+
+    NesPartitionUpdateInfo partitionUpdate{
+        SharedQueryId(4),
+        OperatorId(5),
+        PartitionId(6),
+        SubpartitionId(7),
+    };
+
+    NetworkSinkUpdateInfo sinkUpdate{locationUpdate,
+                                     partitionUpdate,
+                                     std::chrono::milliseconds(8),
+                                     9,
+                                     DecomposedQueryPlanVersion(10),
+                                     OperatorId(11),
+                                     12};
+
+    std::vector<NetworkSinkUpdateInfo> sinkUpdates = {sinkUpdate};
     // reconfiguration metadata 1
-    auto reconfigurationMetaData1 = std::make_shared<UpdateQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1);
+    auto reconfigurationMetaData1 =
+        std::make_shared<UpdateQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1, sinkUpdates);
     auto reconfigurationMarkerEvent1 =
         ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_REDEPLOYMENT, reconfigurationMetaData1);
     DecomposedQueryIdWithVersion idWithVersion1(DecomposedQueryId(1), DecomposedQueryPlanVersion(0));
@@ -97,6 +120,24 @@ TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerializ
     EXPECT_EQ(
         reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryPlanVersion,
         deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryPlanVersion);
+    auto deserializedSinkUpdate =
+        deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->networkSinkUpdates.front();
+    auto deserializedLocationUpdate = deserializedSinkUpdate.nodeLocation;
+    EXPECT_EQ(deserializedLocationUpdate.workerId, locationUpdate.workerId);
+    EXPECT_EQ(deserializedLocationUpdate.hostname, locationUpdate.hostname);
+    EXPECT_EQ(deserializedLocationUpdate.port, locationUpdate.port);
+
+    auto deserializedPartitionUpdate = deserializedSinkUpdate.nesPartition;
+    EXPECT_EQ(deserializedPartitionUpdate.sharedQueryId, partitionUpdate.sharedQueryId);
+    EXPECT_EQ(deserializedPartitionUpdate.operatorId, partitionUpdate.operatorId);
+    EXPECT_EQ(deserializedPartitionUpdate.partitionId, partitionUpdate.partitionId);
+    EXPECT_EQ(deserializedPartitionUpdate.subpartitionId, partitionUpdate.subpartitionId);
+
+    EXPECT_EQ(deserializedSinkUpdate.waitTime, sinkUpdate.waitTime);
+    EXPECT_EQ(deserializedSinkUpdate.retryTimes, sinkUpdate.retryTimes);
+    EXPECT_EQ(deserializedSinkUpdate.version, sinkUpdate.version);
+    EXPECT_EQ(deserializedSinkUpdate.uniqueNetworkSinkId, sinkUpdate.uniqueNetworkSinkId);
+    EXPECT_EQ(deserializedSinkUpdate.numberOfOrigins, sinkUpdate.numberOfOrigins);
 
     // Validate if reconfiguration event for key 2 got properly serialized and deserialized
     const auto& deserializedReconfigurationEvent1Optional2 =

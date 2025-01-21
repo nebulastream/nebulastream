@@ -192,21 +192,45 @@ void AbstractQueryManager::notifySinkCompletion(DecomposedQueryId decomposedQuer
     qep->notifySinkCompletion(sink, terminationType);
 }
 
-void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlanIds) {
-    if (newPlanIds.size() > 1) {
+bool AbstractQueryManager::updatePlanVersion(DecomposedQueryIdWithVersion idWithVersion, DecomposedQueryPlanVersion newVersion) {
+    std::unique_lock lock(queryMutex);
+
+    auto planIterator = decomposeQueryToSourceIdMapping.find(idWithVersion);
+    if (planIterator == decomposeQueryToSourceIdMapping.end()) {
+        return false;
+    }
+
+    DecomposedQueryIdWithVersion newIdWithVersion(idWithVersion.id, newVersion);
+    auto sourceIds = planIterator->second;
+    decomposeQueryToSourceIdMapping[newIdWithVersion] = sourceIds;
+    decomposeQueryToSourceIdMapping.erase(idWithVersion);
+
+    auto runningPlanIteator = runningQEPs.find(idWithVersion);
+    runningQEPs[newIdWithVersion] =  runningPlanIteator->second;
+    runningQEPs.erase(runningPlanIteator);
+
+    return true;
+}
+
+void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
+                                                    std::vector<Execution::ExecutableQueryPlanPtr> newPlans) {
+    if (newPlans.size() > 1) {
         NES_ERROR("Source reuse is currently not supported in combination with source sharing");
         NES_NOT_IMPLEMENTED();
     }
     std::unique_lock lock(queryMutex);
 
-    auto oldPlanids = sourceToQEPMapping[sourceid];
-    for (const auto &id : oldPlanids ) {
-        decomposeQueryToSourceIdMapping.erase(id->getDecomposedQueryId());
+    auto oldPlans = sourceToQEPMapping[sourceid];
+    for (const auto& oldPlan : oldPlans) {
+        decomposeQueryToSourceIdMapping.erase(
+            DecomposedQueryIdWithVersion(oldPlan->getDecomposedQueryId(), oldPlan->getDecomposedQueryVersion()));
     }
 
-    for (const auto &plan : newPlanIds ) {
-        decomposeQueryToSourceIdMapping[plan->getDecomposedQueryId()].push_back(sourceid);
+    for (const auto& plan : newPlans) {
+        decomposeQueryToSourceIdMapping[DecomposedQueryIdWithVersion(plan->getDecomposedQueryId(),
+                                                                     plan->getDecomposedQueryVersion())]
+            .push_back(sourceid);
     }
-    sourceToQEPMapping[sourceid] = std::move(newPlanIds);
+    sourceToQEPMapping[sourceid] = std::move(newPlans);
 }
 }// namespace NES::Runtime

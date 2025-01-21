@@ -93,6 +93,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
                 SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
                 DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
                 DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+                std::vector<NetworkSinkUpdateInfo> sinkUpdates;
 
                 auto metadata = msg->reconfigurationMetadata;
                 if (metadata->instanceOf<DrainQueryMetadata>()) {
@@ -107,6 +108,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
                     sharedQueryId = update->sharedQueryId;
                     decomposedQueryId = update->decomposedQueryId;
                     decomposedQueryPlanVersion = update->decomposedQueryPlanVersion;
+                    sinkUpdates = update->networkSinkUpdates;
                 }
                 if (metadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
                     auto updateAndDrain = metadata->as<UpdateAndDrainQueryMetadata>();
@@ -129,18 +131,47 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                              workerId,
                                                                                              sharedQueryId,
                                                                                              decomposedQueryId,
-                                                                                             decomposedQueryPlanVersion);
+                                                                                             decomposedQueryPlanVersion,
+                                                                                             sinkUpdates.size());
+
+                    for (auto& update : sinkUpdates) {
+                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
+                    }
                 } else {
-                    //send the last element without send more flag
-                    sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
-                                                                               key,
-                                                                               queryState,
-                                                                               metadataType,
-                                                                               numberOfSources,
-                                                                               workerId,
-                                                                               sharedQueryId,
-                                                                               decomposedQueryId,
-                                                                               decomposedQueryPlanVersion);
+                    if (sinkUpdates.empty()) {
+                        //send the last element without send more flag
+                        sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
+                                                                                   key,
+                                                                                   queryState,
+                                                                                   metadataType,
+                                                                                   numberOfSources,
+                                                                                   workerId,
+                                                                                   sharedQueryId,
+                                                                                   decomposedQueryId,
+                                                                                   decomposedQueryPlanVersion,
+                                                                                   sinkUpdates.size());
+                    } else {
+                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
+                                                                                                 key,
+                                                                                                 queryState,
+                                                                                                 metadataType,
+                                                                                                 numberOfSources,
+                                                                                                 workerId,
+                                                                                                 sharedQueryId,
+                                                                                                 decomposedQueryId,
+                                                                                                 decomposedQueryPlanVersion,
+                                                                                                 sinkUpdates.size());
+
+                        auto updateCount = 0;
+                        for (auto& update : sinkUpdates) {
+                            if (count < events - 1) {
+                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
+                            } else {
+                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket, update);
+                            }
+                            updateCount++;
+                        }
+                    }
                 }
                 ++count;
             }

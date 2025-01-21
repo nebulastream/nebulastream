@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_RECONFIGURATION_RECONFIGURATIONMARKER_HPP_
 
 #include <Identifiers/DecomposedQueryIdWithVersion.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Reconfiguration/ReconfigurationMarkerEvent.hpp>
 #include <optional>
 #include <unordered_map>
@@ -55,6 +56,14 @@ class ReconfigurationMarker {
      */
     std::optional<ReconfigurationMarkerEventPtr>
     getReconfigurationEvent(DecomposedQueryIdWithVersion decomposedQueryIdWithVersion) const;
+
+    /**
+     * @brief Get the reconfiguration events for all versions of the plan with the supplied id
+     * @param decomposedQueryId : the id for which the reconfiguration events are to be retrieved
+     * @return optional immutable reconfiguration marker event
+     */
+  std::vector<ReconfigurationMarkerEventPtr>
+    getReconfigurationEventsForPlanId(DecomposedQueryId decomposedQueryId) const;
 
     /**
      * @brief Add a reconfiguration marker event

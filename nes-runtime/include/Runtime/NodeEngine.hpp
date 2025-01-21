@@ -294,6 +294,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     getExecutableQueryPlan(DecomposedQueryId decomposedQueryId, DecomposedQueryPlanVersion decomposedQueryVersion) const;
 
     /**
+     * @brief finds executable query plan for a given sub query id and version
+     * @param idWithVersion the id and version of the plan
+     * @return executable query plan
+     */
+    std::shared_ptr<const Execution::ExecutableQueryPlan>
+    getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const;
+
+    /**
      * @brief finds sub query ids for a given query id
      * @param sharedQueryId query id
      * @return vector of subQuery id and version pair
@@ -335,17 +343,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
-     * @brief applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
-     * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
-     * to which they send their data.
-     * @param reconfiguredDecomposedQueryPlan A query plan containing source or sink descriptors which contain the updated
-     * sender/receiver date.
-     * @return true if a running sub query with a matching id was found and reconfigured. False if the id of the supplied
-     * plan did not match any running sub query
-     */
-    bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
-
-    /**
      * @brief add reconfiguration marker to the decomposed query plan
      * @param sharedQueryId shared query id
      * @param decomposedQueryid Decomposed query id
@@ -361,6 +358,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::vector<DecomposedQueryId> getDecomposedQueryIdsWithStatus(SharedQueryId sharedQueryId,
                                                                    Execution::ExecutableQueryPlanStatus status);
+  /**
+   * @brief udpate the version of a running executable query plan
+   * @param idAndVersion the id of the plan and its current version
+   * @param newVersion the new version to set for the plan
+   * @return true if the plan was successfully updated
+   */
+  bool updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndVersion, DecomposedQueryPlanVersion newVersion);
 
   public:
     /**

@@ -15,6 +15,7 @@
 syntax = "proto3";
 
 import "SerializableDecomposedQueryPlan.proto";
+import "SerializableOperator.proto";
 import "google/protobuf/any.proto";
 
 package NES;
@@ -29,6 +30,16 @@ message SerializableReconfigurationMarker {
 message SerializableReconfigurationMarkerEvent {
     SerializableQueryState queryState = 1;
     SerializableReconfigurationMetadata reconfigurationMetadata = 2;
+}
+
+message SerializableNetworkSinkDescriptorUpdate {
+    NodeLocation nodeLocation = 1;
+    NesPartition nesPartition = 2;
+    uint64 waitTime = 3;
+    uint32 retryTimes = 4;
+    uint64 uniqueNetworkSinkDescriptorId = 5;
+    uint64 version = 6;
+    uint64 numberOfOrigins = 7;
 }
 
 message SerializableReconfigurationMetadata {
@@ -50,6 +61,7 @@ message SerializableReconfigurationMetadata {
         uint64 sharedQueryId = 2;
         uint64 decomposedQueryId = 3;
         uint64 decomposedQueryPlanVersion = 4;
+        repeated SerializableNetworkSinkDescriptorUpdate sinkUpdates = 5;
     }
 
     google.protobuf.Any details = 1;

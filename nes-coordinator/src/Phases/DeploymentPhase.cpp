@@ -80,12 +80,6 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                     && sharedQueryState != QueryState::MIGRATING) {
                     sharedQueryState = QueryState::RUNNING;
                 }
-            }
-            case QueryState::MARKED_FOR_REDEPLOYMENT: {
-                if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
-                    && decomposedQueryPlanState == QueryState::MARKED_FOR_REDEPLOYMENT) {
-                    sharedQueryState = QueryState::MIGRATING;
-                }
                 // Register the decomposed query plan
                 workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext);
                 // Update decomposed query plan status
@@ -95,6 +89,18 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                                                               decomposedQueryPlanState,
                                                               workerId);
                 asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
+                break;
+            }
+            case QueryState::MARKED_FOR_REDEPLOYMENT: {
+                if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED) {
+                    sharedQueryState = QueryState::MIGRATING;
+                }
+                // Update decomposed query plan status
+                queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                              decomposedQueryId,
+                                                              decomposedQueryPlanVersion,
+                                                              decomposedQueryPlanState,
+                                                              workerId);
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {

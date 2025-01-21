@@ -768,11 +768,13 @@ void AbstractQueryManager::propagateReconfigurationMarkerToSuccessorList(
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
             auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
                                                         executablePipeline->get()->getDecomposedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryVersion(),
                                                         ReconfigurationType::ReconfigurationMarker,
                                                         (*executablePipeline),
                                                         marker);
             addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
                                       executablePipeline->get()->getDecomposedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryVersion(),
                                       reconfMessage,
                                       false);
             NES_DEBUG(
@@ -788,10 +790,11 @@ void AbstractQueryManager::propagateReconfigurationMarkerToSuccessorList(
             // Depending on the kind of reconfiguration event the sink will propagate the to the next worker if necessary.
             auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
                                                             sink->get()->getParentPlanId(),
+                                                            sink->get()->getParentPlanVersion(),
                                                             ReconfigurationType::ReconfigurationMarker,
                                                             (*sink),
                                                             marker);
-            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), sink->get()->getParentPlanVersion(), reconfMessageSink, false);
             NES_DEBUG(
                 "Inserted reconfiguration to propagate reconfiguration marker to Sink from list of successors reconfType={} "
                 "queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",

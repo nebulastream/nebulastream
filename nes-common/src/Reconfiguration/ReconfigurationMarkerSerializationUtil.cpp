@@ -50,6 +50,28 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 auto updateQueryMetadata = value->reconfigurationMetadata->as<UpdateQueryMetadata>();
                 auto serializableReconfigurationMetadata = SerializableReconfigurationMarkerEvent();
                 auto serializableUpdateQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata();
+
+                auto mutableSinkUpdates = serializableUpdateQueryMetadata.mutable_sinkupdates();
+                for (auto update : updateQueryMetadata->networkSinkUpdates) {
+                    auto serializableUpdate = mutableSinkUpdates->Add();
+                    auto nodeLocation = serializableUpdate->mutable_nodelocation();
+                    nodeLocation->set_hostname(update.nodeLocation.hostname);
+                    nodeLocation->set_nodeid(update.nodeLocation.workerId.getRawValue());
+                    nodeLocation->set_port(update.nodeLocation.port);
+
+                    auto nesPartition = serializableUpdate->mutable_nespartition();
+                    nesPartition->set_operatorid(update.nesPartition.operatorId.getRawValue());
+                    nesPartition->set_partitionid(update.nesPartition.partitionId.getRawValue());
+                    nesPartition->set_subpartitionid(update.nesPartition.subpartitionId.getRawValue());
+                    nesPartition->set_queryid(update.nesPartition.sharedQueryId.getRawValue());
+
+                    serializableUpdate->set_waittime(update.waitTime.count());
+                    serializableUpdate->set_retrytimes(update.retryTimes);
+                    serializableUpdate->set_version(update.version);
+                    serializableUpdate->set_uniquenetworksinkdescriptorid(update.uniqueNetworkSinkId.getRawValue());
+                    serializableUpdate->set_numberoforigins(update.numberOfOrigins);
+                }
+
                 serializableUpdateQueryMetadata.set_sharedqueryid(updateQueryMetadata->sharedQueryId.getRawValue());
                 serializableUpdateQueryMetadata.set_decomposedqueryid(updateQueryMetadata->decomposedQueryId.getRawValue());
                 serializableUpdateQueryMetadata.set_workerid(updateQueryMetadata->workerId.getRawValue());
@@ -120,11 +142,36 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
         } else if (reconfigurationMetaData.details().Is<SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata>()) {
             auto serializedUpdateQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata();
             reconfigurationMetaData.details().UnpackTo(&serializedUpdateQueryMetadata);
+            std::vector<NetworkSinkUpdateInfo> sinkUpdates;
+            for (auto update : serializedUpdateQueryMetadata.sinkupdates()) {
+                auto serializableNodeLocation = update.nodelocation();
+                NodeLocationUpdateInfo nodeLocationUpdate{
+                    WorkerId(serializableNodeLocation.nodeid()),
+                    serializableNodeLocation.hostname(),
+                    serializableNodeLocation.port(),
+                };
+                auto serializablePartition = update.nespartition();
+                NesPartitionUpdateInfo partitionUpdate{SharedQueryId(serializablePartition.queryid()),
+                                                       OperatorId(serializablePartition.operatorid()),
+                                                       PartitionId(serializablePartition.partitionid()),
+                                                       SubpartitionId(serializablePartition.subpartitionid())};
+
+                NetworkSinkUpdateInfo updateInfo{nodeLocationUpdate,
+                                                 partitionUpdate,
+                                                 std::chrono::milliseconds(update.waittime()),
+                                                 update.retrytimes(),
+                                                 DecomposedQueryPlanVersion(update.version()),
+                                                 OperatorId(update.uniquenetworksinkdescriptorid()),
+                                                 update.numberoforigins()};
+
+                sinkUpdates.push_back(updateInfo);
+            }
             auto reConfMetaData =
                 std::make_shared<UpdateQueryMetadata>(WorkerId(serializedUpdateQueryMetadata.workerid()),
                                                       SharedQueryId(serializedUpdateQueryMetadata.sharedqueryid()),
                                                       DecomposedQueryId(serializedUpdateQueryMetadata.decomposedqueryid()),
-                                                      serializedUpdateQueryMetadata.decomposedqueryplanversion());
+                                                      serializedUpdateQueryMetadata.decomposedqueryplanversion(),
+                                                      sinkUpdates);
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
             auto planWithVersion = unpackDecomposedPlanFromString(key);
             reconfigurationMarker->addReconfigurationEvent(planWithVersion.id, planWithVersion.version, markerEvent);
