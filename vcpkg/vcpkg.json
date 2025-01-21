@@ -33,6 +33,7 @@
     "nautilus",
     "spdlog",
     "yaml-cpp",
+    "cppzmq",
     "liburing"
   ]
 }
