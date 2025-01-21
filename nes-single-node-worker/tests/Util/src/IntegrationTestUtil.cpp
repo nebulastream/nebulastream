@@ -32,6 +32,7 @@
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
+#include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
 #include <ErrorHandling.hpp>

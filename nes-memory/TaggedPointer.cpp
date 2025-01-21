@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <TaggedPointer.hpp>

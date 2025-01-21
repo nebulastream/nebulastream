@@ -17,6 +17,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
