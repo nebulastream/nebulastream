@@ -18,6 +18,7 @@
 #include <regex>
 #include <string>
 #include <AntlrSQLParser.h>
+#include <AntlrSQLLexer.h>
 #include <ParserRuleContext.h>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
@@ -72,57 +73,62 @@ std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
     return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
 
-Windowing::TimeMeasure buildTimeMeasure(const int size, const std::string& timebase)
+Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 {
-    if (timebase == "MS" || timebase == "ms")
-    {
-        return API::Milliseconds(size);
+    //antlr4::ANTLRInputStream input(timebase);
+    //AntlrSQLLexer lexer(&input);
+    //AntlrSQLLexer lexer(&timebase);
+    //antlr4::CommonTokenStream tokens(&lexer);
+    //tokens.fill();
+    //AntlrSQLLexer::DAY;
+    //auto token = tokens.get(0);
+
+
+    //switch (token->getType()) {
+    switch (timebase) {
+        case AntlrSQLLexer::MS:
+            return API::Milliseconds(size);
+        case AntlrSQLLexer::SEC:
+            return API::Seconds(size);
+        case AntlrSQLLexer::MIN:
+            return API::Minutes(size);
+        case AntlrSQLLexer::HOUR:
+            return API::Hours(size);
+        case AntlrSQLLexer::DAY:
+            return API::Days(size);
+        default:
+            throw InvalidQuerySyntax("Unknown time unit wtih type enum: ", std::to_string(timebase));//+ lexer.getVocabulary().getSymbolicName(timebase));
     }
-    if (timebase == "SEC" || timebase == "sec")
-    {
-        return API::Seconds(size);
-    }
-    if (timebase == "MIN" || timebase == "min")
-    {
-        return API::Minutes(size);
-    }
-    if (timebase == "HOUR" || timebase == "hour" || timebase == "HOURS" || timebase == "hours")
-    {
-        return API::Hours(size);
-    }
-    if (timebase == "DAY" || timebase == "day" || timebase == "DAYS" || timebase == "days")
-    {
-        return API::Days(size);
-    }
+
 
     throw InvalidQuerySyntax("Unknown time unit: {}", timebase);
 }
 
 std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const std::string& opStr)
+    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
 {
-    if (opStr == "==" || opStr == "=")
+    if (tokenType == AntlrSQLLexer::EQ)
     {
         return NodeFunctionEquals::create(leftFunction, rightFunction);
     }
-    if (opStr == "!=")
+    if (tokenType == AntlrSQLLexer::NEQJ)
     {
         const auto equalsFunction = NodeFunctionEquals::create(leftFunction, rightFunction);
         return NodeFunctionNegate::create(equalsFunction);
     }
-    if (opStr == "<")
+    if (tokenType == AntlrSQLLexer::LT)
     {
         return NodeFunctionLess::create(leftFunction, rightFunction);
     }
-    if (opStr == ">")
+    if (tokenType == AntlrSQLLexer::GT)
     {
         return NodeFunctionGreater::create(leftFunction, rightFunction);
     }
-    if (opStr == ">=")
+    if (tokenType == AntlrSQLLexer::GTE)
     {
         return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
     }
-    if (opStr == "<=")
+    if (tokenType == AntlrSQLLexer::LTE)
     {
         return NodeFunctionLessEquals::create(leftFunction, rightFunction);
     }
@@ -131,13 +137,13 @@ std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
 }
 
 std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const std::string& opStr)
+    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType )
 {
-    if (opStr == "AND" or opStr == "and")
+    if (tokenType == AntlrSQLLexer::AND)
     {
         return NodeFunctionAnd::create(leftFunction, rightFunction);
     }
-    if (opStr == "OR" or opStr == "or")
+    if (tokenType == AntlrSQLLexer::OR)
     {
         return NodeFunctionOr::create(leftFunction, rightFunction);
     }
@@ -188,7 +194,6 @@ void AntlrSQLQueryPlanCreator::enterNamedExpressionSeq(AntlrSQLParser::NamedExpr
 void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-
     /// If we are exiting a logical binary operator in a join relation, we need to build the binary function for the joinKey and
     /// not for the general function
     if (helper.isJoinRelation)
@@ -198,8 +203,8 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         const auto leftFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
 
-        const std::string opText = context->op->getText();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opText);
+        const auto opTokenType = context->op->getType();
+        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helper.joinKeyRelationHelper.push_back(function);
         helper.joinFunction = function;
     }
@@ -210,8 +215,8 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         const auto leftFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
 
-        const std::string opText = context->op->getText();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opText);
+        const auto opTokenType = context->op->getType();
+        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helper.functionBuilder.push_back(function);
     }
 
@@ -262,7 +267,8 @@ void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContex
 void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::ComparisonOperatorContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.opBoolean = context->getText();
+    auto opTokenType = context->getStart()->getType();
+    helper.opBoolean = opTokenType;
     poppush(helper);
     AntlrSQLBaseListener::enterComparisonOperator(context);
 }
@@ -275,24 +281,24 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     helper.functionBuilder.pop_back();
     const auto leftFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
-
-    if (const std::string opText = context->op->getText(); opText == "*")
+    auto opTokenType = context->op->getType();
+    if ( opTokenType == AntlrSQLLexer::ASTERISK)
     {
         function = leftFunction * rightFunction;
     }
-    else if (opText == "/")
+    else if (opTokenType == AntlrSQLLexer::SLASH)
     {
         function = leftFunction / rightFunction;
     }
-    else if (opText == "+")
+    else if (opTokenType == AntlrSQLLexer::PLUS)
     {
         function = leftFunction + rightFunction;
     }
-    else if (opText == "-")
+    else if (opTokenType == AntlrSQLLexer::MINUS)
     {
         function = leftFunction - rightFunction;
     }
-    else if (opText == "%")
+    else if (opTokenType == AntlrSQLLexer::PERCENT)
     {
         function = leftFunction % rightFunction;
     }
@@ -311,12 +317,12 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
 
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
-
-    if (const std::string opText = context->op->getText(); opText == "+")
+    auto opTokenType= context->op->getType();
+    if (opTokenType == AntlrSQLLexer::PLUS)
     {
         function = innerFunction;
     }
-    else if (opText == "-")
+    else if (opTokenType == AntlrSQLLexer::MINUS)
     {
         function = -1 * innerFunction;
     }
@@ -543,13 +549,15 @@ void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* co
         parentRuleIndex = parentContext->getRuleIndex();
     }
 
+    auto token= context->getStop();
+    auto timeunit = token->getType();
     if (parentRuleIndex == AntlrSQLParser::RuleAdvancebyParameter)
     {
-        helper.timeUnitAdvanceBy = context->getText();
+        helper.timeUnitAdvanceBy = timeunit;
     }
     else
     {
-        helper.timeUnit = context->getText();
+        helper.timeUnit = timeunit;
     }
 
     poppush(helper);
@@ -763,7 +771,10 @@ void AntlrSQLQueryPlanCreator::enterJoinType(AntlrSQLParser::JoinTypeContext* co
 void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* context)
 {
     auto helper = helpers.top();
-    if (const auto joinType = context->getText(); joinType == "INNER" || joinType == "inner" || joinType.empty())
+    const auto joinType = context->getText();
+    auto tokenType = context->getStop()->getType();
+
+    if (joinType.empty() || tokenType == AntlrSQLLexer::INNER)
     {
         helper.joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
     }
@@ -914,27 +925,29 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     AntlrSQLHelper& parentHelper = helpers.top();
 
     const auto funcName = Util::toLowerCase(context->children[0]->getText());
-    if (funcName == "count")
+    auto tokenType = context->getStart()->getType();
+
+    if (tokenType == AntlrSQLLexer::COUNT)
     {
         parentHelper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
     }
-    else if (funcName == "avg")
+    else if (tokenType== AntlrSQLLexer::AVG)
     {
         parentHelper.windowAggs.push_back(API::Avg(helper.functionBuilder.back())->aggregation);
     }
-    else if (funcName == "max")
+    else if (tokenType== AntlrSQLLexer::MAX)
     {
         parentHelper.windowAggs.push_back(API::Max(helper.functionBuilder.back())->aggregation);
     }
-    else if (funcName == "min")
+    else if (tokenType== AntlrSQLLexer::MIN)
     {
         parentHelper.windowAggs.push_back(API::Min(helper.functionBuilder.back())->aggregation);
     }
-    else if (funcName == "sum")
+    else if (tokenType== AntlrSQLLexer::SUM)
     {
         parentHelper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
     }
-    else if (funcName == "median")
+    else if (tokenType== AntlrSQLLexer::MEDIAN)
     {
         parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
     }
