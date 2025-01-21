@@ -1,10 +1,11 @@
 # Watermarking and Progress
-In any streaming system, it is crucial to reason about the progress of the stream to trigger windows and to ensure correctness, c.f., https://www.oreilly.com/radar/the-world-beyond-batch-streaming-102/.
+
 NebulaStream uses a task-based execution engine that is designed to cope with data skew and load imbalances dynamically.
 Therefore, our operators are executed in parallel on different worker threads, and each worker thread processes one tuple buffer at a time.
 This introduces out-of-orderness among tasks and a non-deterministic order of execution. 
 To ensure correctness, stateful operators need to reason about the progress of tasks to progress deterministically.
-NebulaStream uses the general idea of punctuations [1] and rely on four identifiers to reason about progress that are attached to a tuple buffer:
+NebulaStream relies on four identifiers to reason about progress that are attached to a tuple buffer:
+
 - `OriginId`
 - `SequenceNumber`
 - `ChunkNumber`
@@ -13,6 +14,7 @@ NebulaStream uses the general idea of punctuations [1] and rely on four identifi
 In the following, we will discuss each identifier in detail and then show how they are used to reason about progress.
 The following mermaid diagram shows an example flow of tuple buffers through our engine with the four identifiers attached to each tuple buffer.
 Each pipeline is a task. NebulaStream executes tasks in parallel on different worker threads.
+
 ```mermaid
 graph LR
 %% Query 1
@@ -66,19 +68,35 @@ During the query registration, NebulaStream iterates over all sources and assign
 
 
 ## Watermark Timestamp
-Typically streaming systems use watermark timestamps to reason about progress, especially for event time [2].
-A user can use two different types of timestamps for watermarks. 
-First, `event time`, which means that the user chooses a field (that represents time) from the input schema of the stream as the `event time`. 
-NebulaStream then uses the values of that field to reason about progress concerning time. 
-Second, `ingestion time`, which is useful if a schema does not contain a field that represents time and/or that is well suited to reason about progress concerning time. 
-In this case sources set the timestamps when receiving data, i.e., NebulaStream generates timestamps during data ingestion.
 
-Watermarks are timestamps that ensure all data with a timestamp smaller than the watermark has arrived.
-As NebulaStream assumes that the data arrives in-order at the source, the largest timestamp in the tuple buffer becomes the watermark timestamp.
+Typically, streaming systems use watermarks to cope with event time processing of data that might arrive out-of-order.
+For background on watermarks, event time and out-of-order processing see [Streaming 102](https://www.oreilly.com/radar/the-world-beyond-batch-streaming-102/) for an introduction,
+[Akidau et al. on Watermarking](https://dl.acm.org/doi/abs/10.14778/3476311.3476389) for a more in-depth discussion,
+and the [Flink docs on Generating Watermarks](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/event-time/generating_watermarks/)
+to get a glimpse of a concrete implementation of Watermarks and out-of-order processing.
+
+In NebulaStream, out-of-order processing of disordered inputs, i.e. graceful handling of unexpectedly _late_ data at the source, isn't supported.
+But since the execution engine processes tasks concurrently and disorder can be introduced by distributed processing (e.g. processing data from two upstream nodes), watermarks are still used to reason about order.
+A watermark is a...
+
+> quantitative markers associated with a stream that indicate no future events within a stream will have a timestamp earlier than their timestamp.
+
+So, Watermarks are timestamps that guarantee that all data with a timestamp smaller than the watermark has arrived.
+Thus, a watermark can be used to trigger a window: When watermark with timestamp `21` arrives at a window that currently aggregates values with timestamps ranging from `10` to `20`,
+the window knows that no more data is to be expected for the window, and thus the result can be sent downstream.
+
+A user can use two different types of timestamps for watermarks:
+- First the user can supply the timestamp explicitely as `event time`,
+  which means that the user chooses a field (that represents time) from the input schema of the stream as the `event time`.
+  NebulaStream then uses the values of that field to reason about progress concerning time.
+- Second, NebulaStream can assign the `ingestion time`, i.e. the time the tuple enters the system.
+  This is useful if a schema does not contain a field that represents event time and/or that is well suited to reason about progress concerning time.
+  In this case sources set the timestamps when receiving data, i.e., NebulaStream generates timestamps during data ingestion.
+
+NebulaStream associates the watermark with the buffer containing the tuples:
 For ingestion time, this is the buffer creation time, i.e., the time set by the source when the first data is received.
-For event time, NebulaStream has to iterate over all tuples in the tuple buffer to find the largest timestamp.
+For event time, NebulaStream iterates over all tuples in the tuple buffer to find the largest timestamp.
 NebulaStream sets the `Watermark timestamp` in each tuple buffer, as shown in the diagram above.
-
 
 ## SequenceNumber
 Most sources receive continuous data and fill new tuple buffers with the incoming data.
@@ -142,7 +160,3 @@ Since NebulaStream knows that the `SequenceNumbers` are strongly monotonically i
 Let us assume that `Seq_i` is the `SequenceNumber` of the i-th tuple buffer of a source.
 NebulaStream infers the `local watermark` by yielding the `watermark timestamp` of maximum `Seq_i`, for which it saw all `ChunkNumbers` of all `Seq_i-1`.
 Couple examples of seen sequence numbers and what the longest consecutive sequence of `SequenceNumbers` is:
-
-# Appendix
-- [1] P.A. Tucker, D. Maier, T. Sheard, and L. Fegaras. 2003. Exploiting punctuation semantics in continuous data streams. IEEE Transactions on Knowledge and Data Engineering 15, 3 (May 2003), 555–568. https://doi.org/10.1109/TKDE.2003.1198390
-- [2] https://nightlies.apache.org/flink/flink-docs-release-1.13/docs/dev/datastream/event-time/generating_watermarks/
