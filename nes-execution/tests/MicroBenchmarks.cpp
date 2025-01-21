@@ -22,7 +22,7 @@ namespace NES
 {
 
 using FieldType = enum : uint8_t { KEY, PAYLOAD };
-using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE, SEPARATE_FILES };
+using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES };
 
 class MicroBenchmarksTest : public Testing::BaseUnitTest
 {
@@ -80,7 +80,7 @@ public:
         return fieldTypeSizes;
     }
 
-    static std::tuple<uint64_t, uint64_t> getKeyAndPayloadSizes(const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
+    static std::tuple<uint64_t, uint64_t> getKeyAndPayloadSize(const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
     {
         auto keySize = 0UL;
         auto payloadSize = 0UL;
@@ -182,49 +182,83 @@ public:
         std::ofstream payloadFile;
         std::ofstream keyFile;
 
-        payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
-        ASSERT_TRUE(payloadFile);
-        if (fileNames.size() > 1)
+        if (separateKeys == SAME_FILE_KEYS)
         {
-            keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
-            ASSERT_TRUE(keyFile);
+            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::binary);
+            ASSERT_EQ(payloadFile.tellp(), 0);
         }
         else
         {
-            ASSERT_NE(separateKeys, SEPARATE_FILES);
+            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
+        }
+        ASSERT_TRUE(payloadFile);
+        if (fileNames.size() > 1)
+        {
+            ASSERT_EQ(separateKeys, SEPARATE_FILES);
+            keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
+            ASSERT_TRUE(keyFile);
         }
 
         // TODO remove?
         const auto& pages = pagedVector.getPages();
         const auto numPages = pagedVector.getNumberOfPages();
         const auto memoryLayout = pagedVector.getMemoryLayout();
+        const auto tupleSize = memoryLayout->getTupleSize();
         const auto bufferSize = memoryLayout->getBufferSize();
+        const auto capacity = memoryLayout->getCapacity();
         ASSERT_EQ(fileBufferSize % bufferSize, 0);
 
         auto pageIdx = 0UL;
         std::vector<char> keyBuffer(fileBufferSize);
         std::vector<char> payloadBuffer(fileBufferSize);
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
-        const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
+        const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
 
+        const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
         for (auto bufferIdx = 0UL; bufferIdx < std::ceil(bufferSize * numPages / fileBufferSize); ++bufferIdx)
         {
+            auto tuplesWritten = 0UL;
             for (auto pageNum = 0UL; pageNum < fileBufferSize / bufferSize && pageIdx < numPages; ++pageNum, ++pageIdx)
             {
-                const auto& tupleBuffer = pages[pageIdx];
+                const auto& page = pages[pageIdx];
 
                 if (separateKeys != NO_SEPARATION)
                 {
-                    if (separateKeys == SAME_FILE)
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
                     {
-                    }
-                    else if (separateKeys == SEPARATE_FILES)
-                    {
+                        ++tuplesWritten;
+                        auto fieldAddrPage = tupleIdx * tupleSize;
+                        auto* fieldAddrBuffer = payloadBuffer.data() + (pageNum * bufferSize + tupleIdx) * tupleSize;
+                        for (const auto [fieldType, fieldSize] : fieldTypeSizes)
+                        {
+                            const auto* fieldAddrPagedVector = fieldAddrPage + page.getBuffer();
+                            if (separateKeys == SEPARATE_FILES)
+                            {
+                                if (fieldType == KEY)
+                                {
+                                    fieldAddrBuffer = keyBuffer.data() + (pageNum * capacity + tupleIdx) * keySize;
+                                }
+                                else
+                                {
+                                    fieldAddrBuffer = payloadBuffer.data() + (pageNum * capacity + tupleIdx) * payloadSize;
+                                }
+                            }
+
+                            // TODO change SAME_FILE_ logic
+                            if (separateKeys == SEPARATE_FILES || (separateKeys == SAME_FILE_KEYS && fieldType == KEY)
+                                || (separateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD))
+                            {
+                                std::memcpy(fieldAddrBuffer, fieldAddrPagedVector, fieldSize);
+                            }
+
+                            fieldAddrPage += fieldSize;
+                            fieldAddrBuffer += fieldSize;
+                        }
                     }
                 }
                 else
                 {
-                    std::memcpy(payloadBuffer.data(), tupleBuffer.getBuffer(), bufferSize);
+                    std::memcpy(payloadBuffer.data() + pageNum * bufferSize, page.getBuffer(), bufferSize);
                 }
 
                 if (pageIdx % tenPercentOfNumPages == 0)
@@ -233,7 +267,16 @@ public:
                 }
             }
 
-            payloadFile.write(payloadBuffer.data(), fileBufferSize); // TODO fileBufferSize for last fileBuffer
+            // TODO SAME_FILE_KEYS
+            if (separateKeys == SEPARATE_FILES)
+            {
+                keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
+                payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
+            }
+            else
+            {
+                payloadFile.write(payloadBuffer.data(), fileBufferSize);
+            }
         }
 
         payloadFile.close();
@@ -290,6 +333,7 @@ public:
         std::vector<char> fileBuffer(fileBufferSize);
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
+        const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
 
         while (payloadFile.read(fileBuffer.data(), fileBufferSize) || payloadFile.gcount() > 0)
         {
