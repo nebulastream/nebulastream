@@ -69,6 +69,10 @@ DecomposedQueryId ExecutableQueryPlan::getDecomposedQueryId() const { return dec
 
 DecomposedQueryPlanVersion ExecutableQueryPlan::getDecomposedQueryVersion() const { return decomposedQueryVersion; }
 
+void ExecutableQueryPlan::updateDecomposedQueryVersion(DecomposedQueryPlanVersion newVersion) {
+    decomposedQueryVersion = newVersion;
+};
+
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep {} {}", sharedQueryId, decomposedQueryId);
     NES_ASSERT(qepStatus.load() == Execution::ExecutableQueryPlanStatus::Created

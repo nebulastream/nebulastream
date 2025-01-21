@@ -14,6 +14,9 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Network/NetworkSink.hpp>
+#include <Network/detail/BaseNetworkChannel.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -196,10 +199,49 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
                 const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
                 const auto& decomposedQueryPlanVersion = deploymentAdditionContext->getDecomposedQueryPlanVersion();
-                auto reConfMetaData =
-                    std::make_shared<UpdateQueryMetadata>(workerId, sharedQueryId, decomposedQueryId, decomposedQueryPlanVersion);
+                const auto& newDecomposedQueryPlan = deploymentAdditionContext->getDecomposedQueryPlan();
+
+                std::vector<NetworkSinkUpdateInfo> sinkUpdates;
+                for (auto sink : newDecomposedQueryPlan->getSinkOperators()) {
+                    auto sinkDescriptor = sink->getSinkDescriptor();
+                    if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+                        auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
+
+                        //check if the sink was updated as part of this version change
+                        if (networkSinkDescriptor->getVersion() == decomposedQueryPlanVersion) {
+                            auto nodeLocation = networkSinkDescriptor->getNodeLocation();
+                            NodeLocationUpdateInfo locationUpdate{nodeLocation.getNodeId(),
+                                                                  nodeLocation.getHostname(),
+                                                                  nodeLocation.getPort()};
+
+                            auto partition = networkSinkDescriptor->getNesPartition();
+                            NesPartitionUpdateInfo partitionUpdate{partition.getQueryId(),
+                                                                   partition.getOperatorId(),
+                                                                   partition.getPartitionId(),
+                                                                   partition.getSubpartitionId()};
+
+                            NetworkSinkUpdateInfo updateInfo{locationUpdate,
+                                                             partitionUpdate,
+                                                             networkSinkDescriptor->getWaitTime(),
+                                                             networkSinkDescriptor->getRetryTimes(),
+                                                             networkSinkDescriptor->getVersion(),
+                                                             networkSinkDescriptor->getUniqueId(),
+                                                             networkSinkDescriptor->getNumberOfOrigins()};
+
+                            sinkUpdates.push_back(updateInfo);
+                        }
+                    }
+                }
+                auto reConfMetaData = std::make_shared<UpdateQueryMetadata>(workerId,
+                                                                            sharedQueryId,
+                                                                            decomposedQueryId,
+                                                                            decomposedQueryPlanVersion,
+                                                                            sinkUpdates);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, decomposedQueryPlanVersion, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(
+                    decomposedQueryId,
+                    newDecomposedQueryPlan->getOldVersion().value(),
+                    markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
@@ -215,7 +257,10 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 auto numOfSourceOperators = deployedDecomposedQueryPlan->getSourceOperators().size();
                 auto reConfMetaData = std::make_shared<DrainQueryMetadata>(numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, decomposedQueryPlanVersion, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(
+                    decomposedQueryId,
+                    deployedDecomposedQueryPlan->getOldVersion().value(),
+                    markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
@@ -235,7 +280,10 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                                                                                     decomposedQueryVersion,
                                                                                     numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, decomposedQueryVersion, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(
+                    decomposedQueryId,
+                    deployedDecomposedQueryPlan->getOldVersion().value(),
+                    markerEvent);
                 break;
             }
 

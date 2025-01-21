@@ -20,6 +20,7 @@
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
+#include <optional>
 #include <set>
 #include <unordered_set>
 #include <vector>
@@ -226,6 +227,17 @@ class DecomposedQueryPlan {
     std::string toString() const;
 
     /**
+     * @brief Record the previous version of this plan that can be used to identfify the running instance on the worker side
+     */
+    void setOldVersion(DecomposedQueryPlanVersion oldVersion);
+
+    /**
+     * @brief Get the previous version of this plan that can be used to identfify the running instance on the worker side
+     * @return an optional either containing the old version or nullopt if not old version was set
+     */
+    std::optional<DecomposedQueryPlanVersion> getOldVersion() const;
+
+    /**
      * @brief Get all the operators of a specific type
      * @return returns a vector of operators
      */
@@ -256,6 +268,7 @@ class DecomposedQueryPlan {
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+    std::optional<DecomposedQueryPlanVersion> oldVersion;
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;

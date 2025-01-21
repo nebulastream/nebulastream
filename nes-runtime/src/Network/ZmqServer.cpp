@@ -478,6 +478,16 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                                                                           reconfigMsg.numberOfSources)));
                                     break;
                                 case ReconfigurationMetadataType::UpdateQuery:
+                                    auto sinkUpdateCount = reconfigMsg.sinkReconfigurationCount;
+                                    std::vector<NetworkSinkUpdateInfo> updateInfos;
+                                    for (auto j = 0; j < sinkUpdateCount; ++j) {
+                                        zmq::message_t reconfigEnvelope;
+                                        optRetSize = dispatcherSocket.recv(reconfigEnvelope, kZmqRecvDefault);
+                                        NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                                        auto sinkUpdate = *reconfigEnvelope.data<NetworkSinkUpdateInfo>();
+                                        updateInfos.push_back(sinkUpdate);
+                                    }
+
                                     marker.value()->addReconfigurationEvent(
                                         reconfigMsg.decomposedQueryIdWithVersion.id,
                                         reconfigMsg.decomposedQueryIdWithVersion.version,
@@ -486,7 +496,8 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                             std::make_shared<UpdateQueryMetadata>(reconfigMsg.workerId,
                                                                                   reconfigMsg.sharedQueryId,
                                                                                   reconfigMsg.decomposedQueryId,
-                                                                                  reconfigMsg.decomposedQueryPlanVersion)));
+                                                                                  reconfigMsg.decomposedQueryPlanVersion,
+                                                                                  updateInfos)));
                                     break;
                             }
                         }

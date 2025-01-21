@@ -46,4 +46,14 @@ ReconfigurationMarker::getAllReconfigurationMarkerEvents() const {
     return reconfigurationEvents;
 }
 
+std::vector<ReconfigurationMarkerEventPtr>
+ReconfigurationMarker::getReconfigurationEventsForPlanId(DecomposedQueryId decomposedQueryId) const {
+    std::vector<ReconfigurationMarkerEventPtr> result;
+    for (auto [idAndVerion, event]: reconfigurationEvents) {
+        if (idAndVerion.id == decomposedQueryId) {
+            result.push_back(event);
+        }
+    }
+    return result;
+}
 }// namespace NES

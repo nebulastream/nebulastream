@@ -74,7 +74,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
               inputBuffer.getOriginId(),
               inputBuffer.getSequenceNumber());
 
-    auto channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    auto channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
 
     //if async establishing of connection is in process, do not attempt to send data
     if (channel == nullptr) {
@@ -315,6 +315,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             receiverLocation = versionUpdate.nodeLocation;
             nesPartition = versionUpdate.partition;
             version = versionUpdate.version;
+            decomposedQueryVersion = versionUpdate.version;
             messageSequenceNumber = 0;
 
             break;
@@ -527,22 +528,6 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 
     NES_INFO("stop buffering data for context {}", workerContext.getId());
     unbuffer(workerContext);
-    return true;
-}
-
-bool NetworkSink::scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor) {
-    if (version != networkSinkDescriptor.getVersion()) {
-        nextSinkDescriptor = networkSinkDescriptor;
-        return true;
-    }
-    return false;
-}
-
-bool NetworkSink::applyNextSinkDescriptor(ReconfigurationMarkerPtr marker) {
-    if (!nextSinkDescriptor.has_value()) {
-        return false;
-    }
-    configureNewSinkDescriptor(nextSinkDescriptor.value(), std::move(marker));
     return true;
 }
 }// namespace NES::Network

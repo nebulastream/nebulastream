@@ -17,8 +17,42 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Reconfiguration/Metadata/ReconfigurationMetadata.hpp>
+#include <vector>
+#include <chrono>
 
 namespace NES {
+
+/**
+ * @brief This struct contains  information used to update network sinks
+ */
+struct NodeLocationUpdateInfo {
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
+    std::string hostname;
+    uint32_t port;
+};
+
+/**
+ * @brief This struct contains partition information used to update network sinks
+ */
+struct NesPartitionUpdateInfo {
+    SharedQueryId sharedQueryId;
+    OperatorId operatorId;
+    PartitionId partitionId;
+    SubpartitionId subpartitionId;
+};
+
+/**
+ * @brief This struct contains updated sink information to be used to reconfigure a sink and point it to a new downstream source
+ */
+struct NetworkSinkUpdateInfo {
+    NodeLocationUpdateInfo nodeLocation;
+    NesPartitionUpdateInfo nesPartition;
+    std::chrono::milliseconds waitTime;
+    uint32_t retryTimes;
+    DecomposedQueryPlanVersion version;
+    OperatorId uniqueNetworkSinkId;
+    uint64_t numberOfOrigins;
+};
 
 /**
  * @brief Metadata defining the information about the new decomposed plan that needs to be started instead of the current one. This
@@ -30,14 +64,16 @@ class UpdateQueryMetadata : public ReconfigurationMetadata {
     UpdateQueryMetadata(WorkerId workerId,
                         SharedQueryId sharedQueryId,
                         DecomposedQueryId decomposedQueryId,
-                        DecomposedQueryPlanVersion decomposedQueryPlanVersion)
+                        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                        std::vector<NetworkSinkUpdateInfo> networkSinkUpdates)
         : ReconfigurationMetadata(ReconfigurationMetadataType::UpdateQuery), workerId(workerId), sharedQueryId(sharedQueryId),
-          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion){};
+          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion), networkSinkUpdates(networkSinkUpdates) {};
 
     const WorkerId workerId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
     const DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+    const std::vector<NetworkSinkUpdateInfo> networkSinkUpdates;
 };
 }// namespace NES
 

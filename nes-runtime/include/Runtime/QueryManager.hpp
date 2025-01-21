@@ -236,16 +236,16 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param pipelineSuccessors the pipelines of the old plan to the the marker should be propagated
     */
     void propagateReconfigurationMarkerToSuccessorList(const ReconfigurationMarkerPtr& marker,
-                                                      std::vector<Execution::SuccessorExecutablePipeline> pipelineSuccessors);
+                                                       std::vector<Execution::SuccessorExecutablePipeline> pipelineSuccessors);
 
     /**
      * @brief updated the mapping that relates a source to an executable query plan. The reverse mapping from decomposed query
      * plan id to source id will be updated as well.
      * @param sourceid the source id to be mapped to a new decomposed plan
-     * @param newPlanIds a vactor of decomposed executable plan ids. Currently only vectors of size 1 are supported because source
+     * @param newPlans a vactor of decomposed executable plan ids. Currently only vectors of size 1 are supported because source
      * reuse is not yet compatible with source sharing
      */
-    void updateSourceToQepMapping(OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlanIds);
+    void updateSourceToQepMapping(OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlans);
 
   private:
     /**
@@ -375,6 +375,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                               DecomposedQueryPlanVersion decomposedQueryVersion,
                               DataSinkPtr sink,
                               QueryTerminationType terminationType);
+
+    /**
+     * @brief update the version of a running executable query plan
+     * @param idWithVersion the id of the plan and its current version
+     * @param newVersion the new version to set for the plan
+     * @return true if the plan was successfully updated
+     */
+    bool updatePlanVersion(DecomposedQueryIdWithVersion idWithVersion, DecomposedQueryPlanVersion newVersion);
 
     std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(Network::NetworkSourcePtr networkSource,
                                                                          SharedQueryId sharedQueryId,

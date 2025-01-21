@@ -320,6 +320,11 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
             auto decomposedQueryPlanToUpdate =
                 globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryId);
 
+            //TODO #5178: proper fix for this
+            if (!decomposedQueryPlanToUpdate) {
+                continue;
+            }
+
             // 4. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
             if (decomposedQueryPlanToUpdate->getRootOperators().size() == 1) {
@@ -479,6 +484,7 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 }
 
                 // 4. Set the new version to the updated query sub plan
+                updatedDecomposedQueryPlan->setOldVersion(updatedDecomposedQueryPlan->getVersion());
                 updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
             }
 
