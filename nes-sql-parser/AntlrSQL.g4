@@ -243,7 +243,7 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-functionName:  IDENTIFIER;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
 sinkClause: INTO sink (',' sink)*;
 
