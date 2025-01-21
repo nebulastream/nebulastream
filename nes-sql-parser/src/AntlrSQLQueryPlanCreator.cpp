@@ -620,9 +620,9 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
 void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    if (helper.minimumCount != -1)
+    if (helper.minimumCount.has_value())
     {
-        helper.windowType = Windowing::ThresholdWindow::of(helper.functionBuilder.back(), helper.minimumCount);
+        helper.windowType = Windowing::ThresholdWindow::of(helper.functionBuilder.back(), helper.minimumCount.value());
     }
     else
     {
