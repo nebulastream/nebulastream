@@ -14,8 +14,6 @@ add_source_files(nes-configurations
         BaseConfiguration.cpp
         BaseOption.cpp
         Descriptor.cpp
-        ScalarOption.cpp
-        TypedBaseOption.cpp
 )
 
 add_subdirectory(Validation)
