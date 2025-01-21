@@ -14,6 +14,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
@@ -21,9 +22,8 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-
-#include <vector>
 
 namespace NES::Memory::MemoryLayouts
 {

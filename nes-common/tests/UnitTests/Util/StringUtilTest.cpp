@@ -264,8 +264,8 @@ TEST(StringCaseConversionTest, ToLowerCaseSpecialCharacters)
 
 TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
 {
-    EXPECT_DEATH(auto _ = toLowerCase("ÉÇÀÔ"), "Precondition violated:.*");
-    EXPECT_DEATH(auto _ = toUpperCase("éçàô"), "Precondition violated:*");
+    EXPECT_DEATH([[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"), "Precondition violated:.*");
+    EXPECT_DEATH([[maybe_unused]] auto testString = toUpperCase("éçàô"), "Precondition violated:*");
 }
 
 TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
