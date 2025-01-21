@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 #include <API/Query.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -92,7 +93,7 @@ public:
     int advanceBy;
     std::string timeUnit;
     std::string timeUnitAdvanceBy;
-    int minimumCount = -1;
+    std::optional<int> minimumCount;
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
