@@ -131,6 +131,7 @@ std::vector<std::string> MemoryLayout::getKeyFieldNames() const
 
 void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
 {
+    keyFieldNames.clear();
     for (const auto& field : keyFields)
     {
         keyFieldNames.emplace_back(field);
