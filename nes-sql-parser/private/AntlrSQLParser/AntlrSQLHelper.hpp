@@ -42,7 +42,7 @@ enum class AntlrSQLWindowType : uint8_t
 };
 class AntlrSQLHelper
 {
-    std::vector<std::shared_ptr<NodeFunction>> projectionFields;
+    std::vector<std::shared_ptr<NodeFunction>> projectionFields;//vector needed for logicalProjectionOperator constructor
     std::list<std::shared_ptr<NodeFunction>> whereClauses;
     std::list<std::shared_ptr<NodeFunction>> havingClauses;
     std::string source;
@@ -83,7 +83,7 @@ public:
     Join::LogicalJoinDescriptor::JoinType joinType;
 
     /// Utility variables to keep state between enter/exit parser function calls.
-    std::string opBoolean;
+    size_t opBoolean; //anonymous token enum in AntlrSQLLexer.h
     std::string opValue;
     std::string newSourceName;
     std::string timestamp;
@@ -91,8 +91,8 @@ public:
     /// Utility variables used to keep track of the parsing state.
     int size;
     int advanceBy;
-    std::string timeUnit;
-    std::string timeUnitAdvanceBy;
+    size_t timeUnit; //anonymous token enum in AntlrSQLLexer.h
+    size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
