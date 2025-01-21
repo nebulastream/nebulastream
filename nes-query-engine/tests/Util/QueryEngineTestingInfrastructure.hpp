@@ -45,7 +45,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <Util/Overloaded.hpp>
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
@@ -399,7 +399,7 @@ struct TestingHarness
     std::unordered_map<QueryId, std::shared_future<void>> queryTerminationFutures;
     std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryRunning;
     std::unordered_map<QueryId, std::shared_future<void>> queryRunningFutures;
-    std::unordered_map<std::shared_ptr<Sources::SourceDescriptor>, std::unique_ptr<Sources::SourceHandle>> unusedSources;
+    std::unordered_map<std::shared_ptr<Sources::SourceDescriptor>, std::unique_ptr<Sources::SourceRunner>> unusedSources;
 
     std::unordered_map<QueryPlanBuilder::identifier_t, OriginId> sourceIds;
     std::unordered_map<QueryPlanBuilder::identifier_t, PipelineId> pipelineIds;

@@ -14,70 +14,77 @@
 
 #include <Async/AsyncSourceRunner.hpp>
 
-#include <format>
+#include <functional>
+#include <future>
 #include <memory>
 #include <ostream>
+#include <utility>
 
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 
 #include <Async/AsyncSourceCoroutineWrapper.hpp>
+#include <Async/AsyncTaskExecutor.hpp>
 #include <Sources/SourceExecutionContext.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Sources/SourceRunner.hpp>
-#include "Async/AsyncSourceExecutor.hpp"
 
 namespace NES::Sources
 {
 
 AsyncSourceRunner::AsyncSourceRunner(SourceExecutionContext sourceExecutionContext)
     : SourceRunner(sourceExecutionContext.originId)
-    , state(std::make_unique<SourceRunnerState>(Initial{.sourceContext = std::move(sourceExecutionContext)}))
+    , executor(AsyncTaskExecutor::getOrCreate())
+    , state(std::make_unique<AsyncSourceRunnerState>(Initial{.sourceContext = std::move(sourceExecutionContext)}))
 {
 }
 
-bool AsyncSourceRunner::start(SourceReturnType::EmitFunction&& emitFn)
+bool AsyncSourceRunner::start(EmitFunction&& emitFn)
 {
     return state->transition(
-        [emitFn](Initial&& initialState) -> Running
+        [this, &emitFn](Initial&& initialState) -> Running
         {
-            /// Instantiate or retrieve a pointer to the executor
-            const auto executor = AsyncSourceExecutor::getOrCreate();
-            /// We create a shared_ptr to the coroutine wrapper to keep it alive for long enough.
-            /// We have two possible scenarios with regards to lifetime:
-            /// 1. The source finishes execution with an EoS or an error.
-            /// In this case, the runner (and therefore data such as the execution context) outlives the coroutine wrapper.
-            /// After propagating this information to the query engine, we just wait to be destroyed.
-            /// 2. The source is stopped from the query engine (via the stop() member function).
-            /// In this case, there might be asynchronous handlers (the coroutines in the wrapper or asios internal coroutines) queued or even running.
-            /// The stop() member function on this runner does an asynchronous stop.
-            /// Internally, the coroutine will invoke the cancel() method on the underlying async source, which in turn will cancel its I/O object.
-            /// After this, stop returns and the runner might be destroyed.
-            /// To ensure that all queued or running handlers can finish gracefully and emit final EoS and data events to the query engine,
-            /// the coroutine wrapper must be kept alive until all handlers have finished, which we do by passing a copy of the shared pointer
-            /// into the coroutine.
-            auto coroutineWrapper = std::make_shared<AsyncSourceCoroutineWrapper>(std::move(initialState.sourceContext), executor, std::move(emitFn));
-            executor->execute(
-                [&executor, coroutineWrapper]() -> void
-                { asio::co_spawn(executor->ioContext(), coroutineWrapper->start(), asio::detached); });
-            return Running{.coroutineWrapper = coroutineWrapper};
+            NES_DEBUG("AsyncSourceRunner: Initial -> Running");
+            std::promise<void> terminationPromise;
+            std::future<void> terminationFuture = terminationPromise.get_future();
+
+            /// Create wrapper around the root coroutine that drives the source to completion
+            auto coro = std::make_shared<AsyncSourceCoroutineWrapper>(
+                std::move(initialState.sourceContext), std::move(terminationPromise), std::move(emitFn)
+            );
+
+            /// Dispatch the rootCoroutine member function to the executor where it runs on an internal I/O thread
+            /// asio::detached indicates that we are not interested in the return value of the root coroutine.
+            /// co_spawn tells asio to execute the given function as a coroutine on the io_context inside the executor.
+            executor.dispatch<std::function<void()>>(
+                [this, coro]() -> void
+                { asio::co_spawn(executor.ioContext(), coro->runningRoutine(), asio::detached); });
+            /// Finally: transition to the running state and store a pointer to the coroutine wrapper in the state.
+            return Running{.coroutineWrapper = coro, .terminationFuture = std::move(terminationFuture)};
         });
 }
 
 bool AsyncSourceRunner::stop()
 {
+    NES_DEBUG("AsyncSourceRunner: Running -> Stopped");
+    /// After calling stop once atomically, this runner can not be used anymore (no further transitions possible)
+    /// Any attempt will fail and return false
     return state->transition(
-        [](Running&& runningState) -> Stopped
+        [this](Running&& runningState) -> Stopped
         {
-            /// Stop coroutine
-            runningState.coroutineWrapper->stop();
+            /// Stop coroutine and block until it is finished
+            executor.dispatch<std::function<void()>>([coro = runningState.coroutineWrapper]() -> void
+            {
+                coro->cancel();
+            });
+            /// Block on the future to wait for the coroutine to finish
+            runningState.terminationFuture.get();
             return Stopped{};
         });
 }
 
 std::ostream& AsyncSourceRunner::toString(std::ostream& str) const
 {
-    str << std::format("\nAsyncSourceRunner(state: {})", *this->state);
     return str;
 }
 

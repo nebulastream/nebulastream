@@ -12,7 +12,7 @@
 
 add_source_files(nes-sources
         Async/AsyncSourceCoroutineWrapper.cpp
-        Async/AsyncSourceExecutor.cpp
+        Async/AsyncTaskExecutor.cpp
         Async/AsyncSourceRunner.cpp
         Async/Sources/AsyncSource.cpp
         Async/Sources/FileSource.cpp

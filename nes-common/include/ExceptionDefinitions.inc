@@ -88,8 +88,8 @@ EXCEPTION(QueryRuntimeError, 3009, "general query runtime error")
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
 EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
-EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
-EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
+EXCEPTION(DataIngestionFailure, 4002, "error during data ingestion of source")
+EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started")
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(CSVParsingError, 4005, "error during csv parsing")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")

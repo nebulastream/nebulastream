@@ -67,6 +67,7 @@ TEST_F(QueryManagerTest, singleQueryWithShutdown)
     auto query = test.addNewQuery(std::move(builder));
     auto ctrl = test.sourceControls[source];
 
+
     /// Statistics. Note: No Pipeline Terminate and no QueryStop because engine shutdown does not gracefully terminate any query.
     test.stats.expect(
         ExpectStats::QueryStart(1),

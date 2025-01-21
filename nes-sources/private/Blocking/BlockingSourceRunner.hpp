@@ -14,56 +14,23 @@
 
 #pragma once
 
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
 #include <future>
 #include <memory>
 #include <ostream>
-#include <stop_token>
 #include <thread>
-#include <magic_enum.hpp>
 
-#include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceExecutionContext.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Sources/SourceRunner.hpp>
-#include <Util/Logger/Formatter.hpp>
+#include <Util/AtomicState.hpp>
 
 namespace NES::Sources
 {
 
-struct BlockingSourceTermination
-{
-    enum : uint8_t
-    {
-        StopRequested,
-        EndOfStream
-    } result;
-
-    friend std::ostream& operator<<(std::ostream& os, const BlockingSourceTermination& obj)
-    {
-        return os << magic_enum::enum_name(obj.result);
-    }
-};
-
-/// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
-/// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
-/// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
-/// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
 class BlockingSourceRunner : public SourceRunner
 {
-    static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
-    static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
-
 public:
-    explicit BlockingSourceRunner(
-        SourceExecutionContext executionContext
-    );
+    explicit BlockingSourceRunner(SourceExecutionContext executionContext);
 
     BlockingSourceRunner() = delete;
     ~BlockingSourceRunner() override = default;
@@ -72,25 +39,31 @@ public:
     BlockingSourceRunner& operator=(const BlockingSourceRunner& other) = delete;
     BlockingSourceRunner& operator=(BlockingSourceRunner&& other) noexcept = delete;
 
-    /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
-    bool start(SourceReturnType::EmitFunction&& emitFunction) override;
-
-    /// Attempts to stop the DataSource. If the data source is not running (maybe it never ran) this function return false.
-    /// If this function returns true the thread has been stopped.
+    bool start(EmitFunction&& emitFn) override;
     bool stop() override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-protected:
-    std::atomic_bool started;
-    std::jthread thread;
-    std::future<BlockingSourceTermination> terminationFuture;
 
-    /// Runs in detached thread and kills thread when finishing.
-    /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
-    void runningRoutine(const std::stop_token& stopToken, std::promise<BlockingSourceTermination>&);
-    void emitWork(IOBuffer& buffer);
+private:
+    struct Initial
+    {
+        SourceExecutionContext sourceContext;
+
+        explicit Initial(SourceExecutionContext&& context) : sourceContext(std::move(context)) {}
+    };
+
+    struct Running
+    {
+        std::future<void> terminationFuture;
+        std::jthread thread;
+    };
+
+    struct Stopped
+    {
+    };
+
+    using BlockingSourceRunnerState = AtomicState<Initial, Running, Stopped>;
+    std::unique_ptr<BlockingSourceRunnerState> state;
 };
 
 }
-
-FMT_OSTREAM(NES::Sources::BlockingSourceTermination);

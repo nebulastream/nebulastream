@@ -35,7 +35,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <Util/Overloaded.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -175,7 +175,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
 {
     auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
                                                { return std::holds_alternative<SourceDescriptor>(kv.second); });
-    std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>>>>
+    std::vector<std::pair<std::unique_ptr<Sources::SourceRunner>, std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>>>>
         sources;
 
     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> pipelines;

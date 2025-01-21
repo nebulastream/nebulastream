@@ -16,6 +16,7 @@
 #include <variant>
 
 #include <Async/AsyncSourceRunner.hpp>
+#include <Blocking/BlockingSourceRunner.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -48,20 +49,19 @@ std::unique_ptr<SourceRunner> SourceProvider::lower(
     {
         if (auto bufferProvider = poolProvider->createFixedSizeBufferPool(NUM_SOURCE_LOCAL_BUFFERS); bufferProvider)
         {
-            auto sourceContext = SourceExecutionContext{originId, *bufferProvider, std::move(inputFormatter)};
+            auto sourceContext = SourceExecutionContext{originId, std::move(*source), *bufferProvider, std::move(inputFormatter)};
             if (std::holds_alternative<std::unique_ptr<AsyncSource>>(*source))
             {
-                auto asyncContext = AsyncSourceExecutionContext{(std::move(std::get<std::unique_ptr<AsyncSource>>(*source)))};
-                return std::make_unique<AsyncSourceRunner>(std::move(sourceContext), std::move(asyncContext));
+                return std::make_unique<AsyncSourceRunner>(std::move(sourceContext));
             }
             else /// if (std::holds_alternative<BlockingSource>(*source))
             {
-                return nullptr;
+                return std::make_unique<BlockingSourceRunner>(std::move(sourceContext));
             }
         }
         throw CannotAllocateBuffer();
     }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
+    throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }
 
 }

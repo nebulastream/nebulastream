@@ -31,7 +31,9 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/posix/stream_descriptor.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/system/system_error.hpp>
 
 #include <Configurations/Descriptor.hpp>
 #include <Sources/AsyncSource.hpp>
@@ -50,28 +52,27 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sour
 {
 }
 
-asio::awaitable<void> FileSource::open(asio::io_context& ioc)
+asio::awaitable<void> FileSource::open()
 {
+    PRECONDITION(!fileDescriptor.has_value() && !fileStream.has_value(), "FileSource: open() may not be called twice on the same instance.");
     fileDescriptor.emplace(::open(filePath.c_str(), O_RDONLY));
-
-    NES_DEBUG("FileSource: Opened file: {}", filePath);
-    NES_DEBUG("FileSource: File descriptor: {}", fileDescriptor.value());
 
     if (fileDescriptor == -1)
     {
         throw CannotOpenSource("FileSource: Failed to open file: {}", filePath);
     }
 
-    fileStream.emplace(asio::posix::stream_descriptor{ioc, fileDescriptor.value()});
-    co_return;
+    fileStream.emplace(asio::posix::stream_descriptor{co_await asio::this_coro::executor, fileDescriptor.value()});
+    NES_DEBUG("FileSource: Opened file: {}", filePath);
 }
 
 asio::awaitable<AsyncSource::InternalSourceResult> FileSource::fillBuffer(IOBuffer& buffer)
 {
-    INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
+    PRECONDITION(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
     auto [errorCode, bytesRead] = co_await asio::async_read(
         fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
+    NES_DEBUG("FileSource: Read {} bytes into buffer with errorCode '{}'.", bytesRead, errorCode.message());
 
     if (errorCode)
     {
@@ -81,27 +82,29 @@ asio::awaitable<AsyncSource::InternalSourceResult> FileSource::fillBuffer(IOBuff
         }
         if (errorCode == asio::error::operation_aborted)
         {
-            co_return Cancelled{.bytesRead = bytesRead};
+            co_return Cancelled{};
         }
-        co_return Error{boost::system::system_error{errorCode}};
+        const auto message = std::format("FileSource: Failed to read from file {} with errorCode: '{}'", filePath, errorCode.message());
+        co_return Error{.exception = DataIngestionFailure(message)};
     }
-    co_return Continue{};
+    co_return Continue{.bytesRead = bytesRead};
 }
 
 void FileSource::cancel()
 {
-    fileStream->cancel();
+    if (fileStream->is_open())
+    {
+        fileStream->cancel();
+        NES_DEBUG("FileSource: Cancelled file stream.");
+    }
 }
 
 void FileSource::close()
 {
-    try
+    if (fileStream->is_open())
     {
         fileStream->close();
-    }
-    catch (const boost::system::system_error& e)
-    {
-        NES_DEBUG("FileSource: Failed to close file: {} with error: {}", filePath, e.what());
+        NES_DEBUG("FileSource: Closed file stream.");
     }
 }
 

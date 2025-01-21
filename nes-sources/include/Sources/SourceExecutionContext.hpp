@@ -14,17 +14,17 @@
 
 #pragma once
 
-#include <chrono>
-#include <future>
 #include <memory>
+#include <variant>
+#include <utility>
 
-#include <Async/AsyncSourceExecutor.hpp>
-#include <Blocking/BlockingSourceRunner.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/BlockingSource.hpp>
+#include <ErrorHandling.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
 {
@@ -32,6 +32,13 @@ namespace NES::Sources
 struct SourceExecutionContext
 {
     SourceExecutionContext() = delete;
+    ~SourceExecutionContext() = default;
+
+    SourceExecutionContext(SourceExecutionContext&&) = default;
+    SourceExecutionContext& operator=(SourceExecutionContext&&) = default;
+
+    SourceExecutionContext(const SourceExecutionContext&) = delete;
+    SourceExecutionContext& operator=(const SourceExecutionContext&) = delete;
 
     SourceExecutionContext(
         const OriginId originId,
@@ -40,36 +47,17 @@ struct SourceExecutionContext
         std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
         : originId(originId)
         , sourceImpl(std::move(sourceImpl))
-        , bufferProvider(std::move(bufferProvider))
+        , bufferProvider(bufferProvider)
         , inputFormatter(std::move(inputFormatter))
-        , currSequenceNumber(SequenceNumber::INITIAL)
     {
+        PRECONDITION(this->bufferProvider, "BufferProvider must not be null.");
+        PRECONDITION(this->inputFormatter, "InputFormatter must not be null.");
     }
 
-    void addBufferMetadata(IOBuffer& buffer)
-    {
-        buffer.setOriginId(originId);
-        buffer.setCreationTimestampInMS(
-            Runtime::Timestamp(
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                    .count()));
-        buffer.setSequenceNumber(SequenceNumber{currSequenceNumber++});
-        buffer.setChunkNumber(ChunkNumber{1});
-        buffer.setLastChunk(true);
-
-        NES_TRACE(
-            "Setting buffer metadata with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
-            buffer.getOriginId(),
-            buffer.getSequenceNumber(),
-            buffer.getChunkNumber(),
-            buffer.isLastChunk());
-    }
-
-    const OriginId originId;
+    OriginId originId;
     std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>> sourceImpl;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
-    size_t currSequenceNumber;
 };
 
 }

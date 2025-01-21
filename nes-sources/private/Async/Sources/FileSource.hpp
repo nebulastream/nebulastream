@@ -17,18 +17,15 @@
 #include <cstdint>
 #include <optional>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <unordered_map>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/posix/stream_descriptor.hpp>
-#include <boost/asio/io_context.hpp>
 
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Sources/AsyncSource.hpp>
 
 namespace NES::Sources
 {
@@ -49,7 +46,7 @@ public:
     asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) override;
 
     /// Open file descriptor.
-    asio::awaitable<void> open(asio::io_context& ioc) override;
+    asio::awaitable<void> open() override;
     /// Close file descriptor.
     void close() override;
 

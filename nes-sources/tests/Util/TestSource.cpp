@@ -144,6 +144,7 @@ void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds 
 }
 size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken)
 {
+    NES_DEBUG("TestSource::fillBuffer(), sourceId: {}", this->sourceId);
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
     while (!stopToken.stop_requested()
@@ -187,6 +188,7 @@ size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_to
 }
 void NES::Sources::TestSource::open()
 {
+    NES_DEBUG("Opening source {}", sourceId);
     control->open.set_value();
     if (control->fail_during_open)
     {
@@ -196,6 +198,7 @@ void NES::Sources::TestSource::open()
 }
 void NES::Sources::TestSource::close()
 {
+    NES_DEBUG("Closing Source {}", sourceId);
     control->close.set_value();
     if (control->fail_during_close)
     {
@@ -221,12 +224,11 @@ std::pair<std::unique_ptr<NES::Sources::SourceRunner>, std::shared_ptr<NES::Sour
 NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
-    auto testSource = std::make_unique<TestSource>(originId, ctrl);
 
     auto sourceRunner = std::make_unique<BlockingSourceRunner>(
         SourceExecutionContext{
-        INITIAL<OriginId>,
-        std::make_unique<TestSource>(INITIAL<OriginId>, ctrl),
+        originId,
+        std::make_unique<TestSource>(originId, ctrl),
         *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
         std::make_unique<NoOpInputFormatter>()});
     return {std::move(sourceRunner), ctrl};

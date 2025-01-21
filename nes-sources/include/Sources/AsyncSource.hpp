@@ -15,16 +15,16 @@
 #pragma once
 
 
+#include <cstddef>
 #include <variant>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/system/system_error.hpp>
 #include <fmt/ostream.h>
 
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
@@ -49,12 +49,11 @@ public:
 
     struct Error
     {
-        boost::system::system_error error;
+        Exception exception;
     };
 
     struct Cancelled
     {
-        size_t bytesRead;
     };
 
     using InternalSourceResult = std::variant<Continue, Cancelled, EndOfStream, Error>;
@@ -67,10 +66,11 @@ public:
     AsyncSource(AsyncSource&&) = delete;
     AsyncSource& operator=(AsyncSource&&) = delete;
 
-    virtual asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
-    virtual asio::awaitable<void> open(asio::io_context& ioc) = 0;
+    virtual asio::awaitable<void> open() = 0;
+    /// Read data from a source into a buffer, until it is full or an EoS/Error occurs.
+    virtual asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 

@@ -335,9 +335,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
+    NES_DEBUG("Formatting raw bytes into tuple buffer...");
     /// Reset all values that are tied to a specific tbRaw.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     progressTracker->resetForNewTBRaw(numBytesInTBRaw, tbRaw.getBuffer<const char>());
@@ -381,8 +382,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
         {
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
-            NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
+            NES_DEBUG("Emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+            emitFunction(progressTracker->getTupleBufferFormatted()); /// true triggers adding sequence number, etc.
             progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
@@ -395,10 +396,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
 
     progressTracker->setNumberOfTuplesInTBFormatted();
-    NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+    NES_DEBUG("Emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
+    emitFunction(progressTracker->getTupleBufferFormatted());
     progressTracker->handleResidualBytes(tbRaw);
 }
 

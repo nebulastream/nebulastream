@@ -16,6 +16,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <variant>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -92,7 +93,7 @@ TEST_F(FileSourceTest, FillBuffer)
         ioc,
         [&]() -> asio::awaitable<Sources::AsyncSource::InternalSourceResult>
         {
-            co_await fileSource.open(ioc);
+            co_await fileSource.open();
             auto result = co_await fileSource.fillBuffer(buf);
             fileSource.close();
             co_return result;
@@ -124,7 +125,7 @@ TEST_F(FileSourceTest, FileNotPresent)
     {
         auto future = asio::co_spawn(
             ioc,
-            [&]() -> asio::awaitable<void> { co_await fileSource.open(ioc); },
+            [&]() -> asio::awaitable<void> { co_await fileSource.open(); },
             asio::use_future); // Use future to capture any exceptions
 
         ioc.run();
@@ -153,7 +154,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
         ioc,
         [&]() -> asio::awaitable<void>
         {
-            co_await fileSource.open(ioc);
+            co_await fileSource.open();
             resultAfterFirstBuffer.set_value(co_await fileSource.fillBuffer(buf1));
             resultAfterSecondBuffer.set_value(co_await fileSource.fillBuffer(buf2));
             fileSource.close();
@@ -179,5 +180,45 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
     const auto actual2 = std::string{buf2.getBuffer<const char>(), expected2.size()};
 
     EXPECT_EQ(expected2, actual2);
+}
+
+
+TEST_F(FileSourceTest, ReadSameFileTwice)
+{
+    auto config = FileSourceTestConfig{"fileSourceTestSimple.csv"};
+
+    auto descriptor = Sources::SourceDescriptor{config.schema, "fileSource", "File", config.parserConfig, {{"filePath", config.filePath}}};
+
+    auto fileSource1 = Sources::FileSource{descriptor};
+    auto fileSource2 = Sources::FileSource{descriptor};
+
+    auto processFileSource
+        = [&](Sources::FileSource& fileSource, auto& buffer) -> asio::awaitable<Sources::AsyncSource::InternalSourceResult>
+    {
+        co_await fileSource.open();
+        auto result = co_await fileSource.fillBuffer(buffer);
+        fileSource.close();
+        co_return result;
+    };
+
+    auto buf1 = bufferManager->getBufferBlocking();
+    auto buf2 = bufferManager->getBufferBlocking();
+
+    auto future1 = asio::co_spawn(ioc, processFileSource(fileSource1, buf1), asio::use_future);
+    auto future2 = asio::co_spawn(ioc, processFileSource(fileSource2, buf2), asio::use_future);
+
+    ioc.run();
+
+    auto result1 = future1.get();
+    auto result2 = future2.get();
+
+    EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::EndOfStream>(result1));
+    EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::EndOfStream>(result2));
+
+    const std::string expected = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
+    const auto actual1 = std::string{buf1.getBuffer<const char>(), expected.size()};
+    const auto actual2 = std::string{buf2.getBuffer<const char>(), expected.size()};
+    EXPECT_EQ(expected, actual1);
+    EXPECT_EQ(actual1, actual2);
 }
 }

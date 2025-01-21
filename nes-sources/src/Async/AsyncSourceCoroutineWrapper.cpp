@@ -14,7 +14,10 @@
 
 #include <Async/AsyncSourceCoroutineWrapper.hpp>
 
+#include <cstdint>
+#include <exception>
 #include <functional>
+#include <future>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -22,25 +25,28 @@
 #include <variant>
 
 #include <boost/asio/awaitable.hpp>
-#include <boost/system/system_error.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceExecutionContext.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
 
 AsyncSourceCoroutineWrapper::AsyncSourceCoroutineWrapper(
-    SourceExecutionContext sourceExecutionContext, std::shared_ptr<AsyncSourceExecutor> executor, SourceReturnType::EmitFunction&& emitFn)
-    : sourceExecutionContext(std::move(sourceExecutionContext)), executor(std::move(executor)), emitFn(std::move(emitFn))
+    SourceExecutionContext&& sourceExecutionContext, std::promise<void> terminationPromise, EmitFunction&& emitFn)
+    : sourceExecutionContext(std::move(sourceExecutionContext))
+    , terminationPromise(std::move(terminationPromise))
+    , emitFn(std::move(emitFn))
 {
 }
 
 asio::awaitable<void> AsyncSourceCoroutineWrapper::open() const
 {
-    co_await std::get<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl)->open(executor->ioContext());
+    co_await std::get<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl)->open();
 }
 
 asio::awaitable<AsyncSource::InternalSourceResult> AsyncSourceCoroutineWrapper::fillBuffer(IOBuffer& buffer) const
@@ -55,77 +61,107 @@ void AsyncSourceCoroutineWrapper::close() const
 }
 
 
-asio::awaitable<void> AsyncSourceCoroutineWrapper::start()
+asio::awaitable<void> AsyncSourceCoroutineWrapper::runningRoutine()
 {
-    INVARIANT(std::holds_alternative<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl));
+    PRECONDITION(
+        std::holds_alternative<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl),
+        "Coroutine wrapper must hold an async source");
+
+    /// Helper lambda that we forward to the input formatter to emit data events on our behalf
+    uint64_t sequenceNumberGenerator{SequenceNumber::INITIAL};
+    const std::function<void(IOBuffer&)> dataEmit = [&](IOBuffer& buf) -> void
+    {
+        addBufferMetadata(sourceExecutionContext.originId, buf, sequenceNumberGenerator++);
+        emitFn(sourceExecutionContext.originId, Data{std::move(buf)});
+    };
+
     try
     {
         /// Try to open the source. On failure, propagate the error to the query engine via the emitFn.
         co_await open();
-    }
-    catch (const Exception& e)
-    {
-        emitFn(sourceExecutionContext.originId, SourceReturnType::Error{.ex = e});
-    }
 
-    bool shouldContinue = true;
-    /// Run forever, or until either:
-    /// a) Cancellation is requested from the query engine (query stop)
-    /// b) An error occurs within the source
-    while (shouldContinue)
-    {
-        /// TODO(yschroeder97): write `getBufferAsync()` machinery, this will slow down all sources when the system is running at capacity
-        /// 1. Acquire buffer
-        auto buffer = sourceExecutionContext.bufferProvider->getBufferBlocking();
-        /// 2. Add buffer metadata
-        sourceExecutionContext.addBufferMetadata(buffer);
-        /// 3. Let source ingest raw bytes into buffer
-        const auto result = co_await fillBuffer(buffer);
-        /// 4. Handle the result and communicate it to the query engine via the emitFn
-        shouldContinue = handleSourceResult(buffer, result);
+        /// Run forever, or until either:
+        /// a) Cancellation is requested from the query engine (query stop)
+        /// b) An error occurs within the source
+        AsyncSource::InternalSourceResult internalSourceResult = AsyncSource::Continue{};
+        while (std::holds_alternative<AsyncSource::Continue>(internalSourceResult))
+        {
+            /// 1. Acquire buffer
+            /// In the future, we might replace this with an async call: when the system is running at capacity, blocking here can slow down all other sources.
+            auto buffer = sourceExecutionContext.bufferProvider->getBufferBlocking();
+            /// 2. Let source ingest raw bytes into buffer
+            internalSourceResult = co_await fillBuffer(buffer);
+            /// 3. Handle the result and communicate it to the query engine via the emitFn
+            /// The returned value decides whether we should continue to ingest data.
+            handleSourceResult(buffer, internalSourceResult, dataEmit);
+        }
+
+        /// Close the underlying source.
+        close();
+
+        if (std::holds_alternative<AsyncSource::Error>(internalSourceResult))
+        {
+            auto exception = std::get<AsyncSource::Error>(internalSourceResult).exception;
+            NES_ERROR("Source encountered an error: {}", exception.what());
+
+            terminationPromise.set_exception(std::make_exception_ptr(std::move(exception)));
+        }
+        else
+        {
+            terminationPromise.set_value();
+        }
     }
-    close();
+    catch (const Exception& exception)
+    {
+        NES_ERROR("Source encountered an error: {}", exception.what());
+        emitFn(sourceExecutionContext.originId, Error{.ex = exception});
+        terminationPromise.set_exception(std::make_exception_ptr(exception));
+    }
 }
 
-void AsyncSourceCoroutineWrapper::stop() const
+void AsyncSourceCoroutineWrapper::cancel() const
 {
-    INVARIANT(std::holds_alternative<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl));
     std::get<std::unique_ptr<AsyncSource>>(sourceExecutionContext.sourceImpl)->cancel();
 }
 
-bool AsyncSourceCoroutineWrapper::handleSourceResult(IOBuffer& buffer, AsyncSource::InternalSourceResult result)
-{
-    const std::function dataEmit
-        = [this](IOBuffer& buf) -> void { emitFn(sourceExecutionContext.originId, SourceReturnType::Data{std::move(buf)}); };
 
-    return std::visit(
-        [this, buffer, &dataEmit](auto&& result) -> bool
+void AsyncSourceCoroutineWrapper::handleSourceResult(
+    IOBuffer& buffer, AsyncSource::InternalSourceResult result, const std::function<void(IOBuffer&)>& dataEmit)
+{
+    std::visit(
+        [&](auto&& sourceResult) -> void
         {
-            using T = std::decay_t<decltype(result)>;
+            using T = std::decay_t<decltype(sourceResult)>;
             if constexpr (std::is_same_v<T, AsyncSource::Continue>)
             {
                 /// Usual case, the source is ready to continue to ingest more data
+                NES_DEBUG("Emitting Buffer to formatter...");
                 sourceExecutionContext.inputFormatter->parseTupleBufferRaw(
-                    buffer, *sourceExecutionContext.bufferProvider, result.bytesRead, dataEmit);
-                return true;
+                    buffer, *sourceExecutionContext.bufferProvider, sourceResult.bytesRead, dataEmit);
             }
-            else if constexpr (std::is_same_v<T, AsyncSource::EndOfStream> || std::is_same_v<T, AsyncSource::Cancelled>)
+            else if constexpr (std::is_same_v<T, AsyncSource::EndOfStream>)
             {
                 /// The source signalled the end of the stream, i.e., because the external system closed the connection.
                 /// Check for a partially filled buffer before signalling EoS and exiting
-                if (result.bytesRead)
+                if (sourceResult.bytesRead)
                 {
                     sourceExecutionContext.inputFormatter->parseTupleBufferRaw(
-                        buffer, *sourceExecutionContext.bufferProvider, result.bytesRead, dataEmit);
+                        buffer, *sourceExecutionContext.bufferProvider, sourceResult.bytesRead, dataEmit);
                 }
-                emitFn(sourceExecutionContext.originId, SourceReturnType::EoS{});
-                return false;
+                emitFn(sourceExecutionContext.originId, EoS{});
             }
-            else // if constexpr (std::is_same_v<T, AsyncSource::Error>)
+            else if constexpr (std::is_same_v<T, AsyncSource::Error>)
             {
-                const boost::system::system_error error = result.error;
-                emitFn(sourceExecutionContext.originId, SourceReturnType::Error{Exception{std::string(error.what()), 0}});
-                return false;
+                /// The source returned an error that it is not able to recover from.
+                /// Therefore, we propagate the error to the query engine via the emitFn.
+                emitFn(sourceExecutionContext.originId, Error{sourceResult.exception});
+            }
+            else // if (std::is_same_v<T, AsyncSource::Cancelled>)
+            {
+                /// Cancellation was requested by the query engine.
+                /// At this point, we can be sure that there are no more internal handlers for asio I/O requests queued or running.
+                /// We can exit the coroutine gracefully.
+                /// We do not emit any event here, as the query engine will handle the termination of the pipeline.
             }
         },
         result);

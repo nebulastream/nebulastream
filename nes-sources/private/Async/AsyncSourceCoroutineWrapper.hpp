@@ -14,13 +14,14 @@
 
 #pragma once
 
-#include <memory>
+
+#include <future>
 
 #include <boost/asio/awaitable.hpp>
 
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceExecutionContext.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 
 namespace NES::Sources
 {
@@ -28,31 +29,38 @@ namespace NES::Sources
 class AsyncSourceCoroutineWrapper
 {
 public:
+    AsyncSourceCoroutineWrapper() = delete;
     explicit AsyncSourceCoroutineWrapper(
-        SourceExecutionContext sourceExecutionContext,
-        std::shared_ptr<AsyncSourceExecutor> executor,
-        SourceReturnType::EmitFunction&& emitFn);
+        SourceExecutionContext&& sourceExecutionContext,
+        std::promise<void> terminationPromise,
+        EmitFunction&& emitFn);
 
     ~AsyncSourceCoroutineWrapper() = default;
 
     AsyncSourceCoroutineWrapper(const AsyncSourceCoroutineWrapper&) = delete;
-    AsyncSourceCoroutineWrapper(AsyncSourceCoroutineWrapper&&) = delete;
+    AsyncSourceCoroutineWrapper(AsyncSourceCoroutineWrapper&&) = default;
+
     AsyncSourceCoroutineWrapper& operator=(const AsyncSourceCoroutineWrapper&) = delete;
-    AsyncSourceCoroutineWrapper& operator=(AsyncSourceCoroutineWrapper&&) = delete;
+    AsyncSourceCoroutineWrapper& operator=(AsyncSourceCoroutineWrapper&&) = default;
 
-    asio::awaitable<void> start();
-    void stop() const;
+    /// The root coroutine orchestrating the control flow in a source-agnostic way.
+    /// This function is only called once, from an asio-internal I/O thread.
+    asio::awaitable<void> runningRoutine();
 
-    asio::awaitable<void> open() const;
-    asio::awaitable<AsyncSource::InternalSourceResult> AsyncSourceCoroutineWrapper::fillBuffer(IOBuffer& buffer) const;
-    void close() const;
+    /// Request stop of the rootCoroutine and blocks until it is finished (block on the future).
+    /// Called from one of the query engine's worker threads upon a stopQuery() request.
+    void cancel() const;
 
 private:
     SourceExecutionContext sourceExecutionContext;
-    std::shared_ptr<AsyncSourceExecutor> executor;
-    SourceReturnType::EmitFunction emitFn;
+    std::promise<void> terminationPromise;
+    EmitFunction emitFn;
 
-    bool handleSourceResult(IOBuffer& buffer, AsyncSource::InternalSourceResult result);
+    [[nodiscard]] asio::awaitable<void> open() const;
+    asio::awaitable<AsyncSource::InternalSourceResult> fillBuffer(IOBuffer& buffer) const;
+    void handleSourceResult(IOBuffer& buffer, AsyncSource::InternalSourceResult result, const std::function<void(IOBuffer&)>& dataEmit);
+    void close() const;
+
 };
 
 }

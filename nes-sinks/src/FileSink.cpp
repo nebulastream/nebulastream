@@ -105,7 +105,7 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
 
     {
         auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
+        NES_DEBUG("Writing tuples to file sink; filePathOutput={}", outputFilePath);
         {
             auto wlocked = outputFileStream.wlock();
             wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));

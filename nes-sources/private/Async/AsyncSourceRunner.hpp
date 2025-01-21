@@ -14,11 +14,14 @@
 
 #pragma once
 
+#include "AsyncTaskExecutor.hpp"
+
+
 #include <memory>
 
 #include <Async/AsyncSourceCoroutineWrapper.hpp>
 #include <Sources/SourceExecutionContext.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Sources/SourceRunner.hpp>
 #include <Util/AtomicState.hpp>
 
@@ -36,7 +39,7 @@ public:
     AsyncSourceRunner(AsyncSourceRunner&&) = delete;
     AsyncSourceRunner& operator=(AsyncSourceRunner&&) = delete;
 
-    bool start(SourceReturnType::EmitFunction&& emitFn) override;
+    bool start(EmitFunction&& emitFn) override;
     bool stop() override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
@@ -49,14 +52,16 @@ private:
     struct Running
     {
         std::shared_ptr<AsyncSourceCoroutineWrapper> coroutineWrapper;
+        std::future<void> terminationFuture;
     };
 
     struct Stopped
     {
     };
+    using AsyncSourceRunnerState = AtomicState<Initial, Running, Stopped>;
 
-    using SourceRunnerState = AtomicState<Initial, Running, Stopped>;
-    std::unique_ptr<SourceRunnerState> state;
+    AsyncTaskExecutor& executor;
+    std::unique_ptr<AsyncSourceRunnerState> state;
 };
 
 }

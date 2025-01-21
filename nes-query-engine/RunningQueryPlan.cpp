@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <absl/functional/any_invocable.h>
@@ -198,7 +198,7 @@ void RunningQueryPlanNode::fail(Exception exception) const
 }
 
 std::
-    pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
+    pair<std::vector<std::pair<std::unique_ptr<Sources::SourceRunner>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
         QueryId queryId,
         InstantiatedQueryPlan& queryPlan,
         std::function<void(Exception)> unregisterWithError,
@@ -206,7 +206,7 @@ std::
         const CallbackRef& pipelineSetupCallbackRef,
         WorkEmitter& emitter)
 {
-    std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
+    std::vector<std::pair<std::unique_ptr<Sources::SourceRunner>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
     std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
     std::unordered_map<Execution::ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
     std::function<std::shared_ptr<RunningQueryPlanNode>(Execution::ExecutablePipeline*)> getOrCreate

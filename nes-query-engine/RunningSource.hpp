@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
 
@@ -38,7 +38,7 @@ class RunningSource
 public:
     static std::shared_ptr<RunningSource> create(
         QueryId queryId,
-        std::unique_ptr<Sources::SourceHandle> source,
+        std::unique_ptr<Sources::SourceRunner> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
         std::function<void(Exception)> unregisterWithError,
@@ -59,12 +59,12 @@ public:
 private:
     RunningSource(
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::unique_ptr<Sources::SourceHandle> source,
+        std::unique_ptr<Sources::SourceRunner> source,
         std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
         std::function<void(Exception)> unregisterWithError);
 
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
-    std::unique_ptr<Sources::SourceHandle> source;
+    std::unique_ptr<Sources::SourceRunner> source;
     std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister;
     std::function<void(Exception)> unregisterWithError;
 };

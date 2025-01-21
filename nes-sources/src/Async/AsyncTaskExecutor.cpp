@@ -12,28 +12,25 @@
     limitations under the License.
 */
 
-#include <Async/AsyncSourceExecutor.hpp>
+#include <Async/AsyncTaskExecutor.hpp>
 
 #include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/post.hpp>
+
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
 {
 
-AsyncSourceExecutor::AsyncSourceExecutor() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
+AsyncTaskExecutor::AsyncTaskExecutor() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
 {
+    NES_DEBUG("AsyncTaskExecutor: started internal I/O thread [{}]", thread.get_id());
 }
 
-AsyncSourceExecutor::~AsyncSourceExecutor()
+AsyncTaskExecutor::~AsyncTaskExecutor()
 {
     workGuard.reset();
     ioc.stop();
-}
-
-template<typename Callable>
-void AsyncSourceExecutor::execute(Callable&& task)
-{
-    asio::post(ioc, std::forward<Callable>(task));
+    NES_DEBUG("AsyncTaskExecutor: stopped internal I/O thread [{}]", thread.get_id());
 }
 
 }

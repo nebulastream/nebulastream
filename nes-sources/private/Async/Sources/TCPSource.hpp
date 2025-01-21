@@ -48,7 +48,7 @@ public:
     asio::awaitable<InternalSourceResult> fillBuffer(IOBuffer& buffer) override;
 
     /// Open TCP connection.
-    asio::awaitable<void> open(asio::io_context& ioc) override;
+    asio::awaitable<void> open() override;
     /// Close TCP connection.
     void close() override;
 

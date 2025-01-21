@@ -138,7 +138,7 @@ TEST_F(TCPSourceTest, FillBuffer)
         [&]() -> asio::awaitable<Sources::AsyncSource::InternalSourceResult>
         {
             /// Open the connection to our mock server
-            co_await tcpSource.open(ioc);
+            co_await tcpSource.open();
             auto result = co_await tcpSource.fillBuffer(buf);
             tcpSource.close();
             co_return result;

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 
 namespace NES::Sources
 {
@@ -26,7 +26,7 @@ public:
     explicit SourceRunner(const OriginId originId) : originId(originId) { }
     virtual ~SourceRunner() = default;
 
-    virtual bool start(SourceReturnType::EmitFunction&& emitFn) = 0;
+    virtual bool start(EmitFunction&& emitFn) = 0;
     virtual bool stop() = 0;
 
     virtual OriginId getSourceId() { return originId; }
@@ -37,7 +37,6 @@ protected:
     /// Implemented by children of SourceRunner. Called by '<<'. Allows to use '<<' on abstract SourceRunner.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 
-private:
     const OriginId originId;
 };
 

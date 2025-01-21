@@ -25,7 +25,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sinks/SinkProvider.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <ExecutablePipelineStage.hpp>

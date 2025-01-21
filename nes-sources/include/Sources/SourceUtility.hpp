@@ -20,16 +20,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES::Sources::SourceReturnType
+namespace NES::Sources
 {
 
 using IOBuffer = Memory::TupleBuffer;
 
-struct Error
-{
-    Exception ex;
-};
 
 struct Data
 {
@@ -40,7 +37,31 @@ struct EoS
 {
 };
 
+struct Error
+{
+    Exception ex;
+};
+
 using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<void(OriginId, SourceReturnType)>;
 
+
+inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const uint64_t sequenceNumber)
+{
+        buffer.setOriginId(originId);
+        buffer.setCreationTimestampInMS(
+            Runtime::Timestamp(
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                    .count()));
+        buffer.setSequenceNumber(SequenceNumber{sequenceNumber});
+        buffer.setChunkNumber(ChunkNumber{1});
+        buffer.setLastChunk(true);
+
+        NES_TRACE(
+            "Setting buffer metadata with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
+            buffer.getOriginId(),
+            buffer.getSequenceNumber(),
+            buffer.getChunkNumber(),
+            buffer.isLastChunk());
+}
 }

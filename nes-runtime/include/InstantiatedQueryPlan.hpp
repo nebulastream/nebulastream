@@ -19,7 +19,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceRunner.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ExecutableQueryPlan.hpp>
 
@@ -31,7 +31,7 @@ namespace NES::Runtime
 struct InstantiatedQueryPlan
 {
     using SourceWithSuccessor
-        = std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>;
+        = std::pair<std::unique_ptr<Sources::SourceRunner>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>;
     static std::unique_ptr<InstantiatedQueryPlan> instantiate(
         std::unique_ptr<Execution::ExecutableQueryPlan>&& executableQueryPlan,
         const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider);

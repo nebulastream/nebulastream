@@ -18,7 +18,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
@@ -31,7 +31,7 @@ namespace NES::Runtime
 
 namespace
 {
-Sources::SourceReturnType::EmitFunction emitFunction(
+Sources::EmitFunction emitFunction(
     QueryId queryId,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -39,19 +39,19 @@ Sources::SourceReturnType::EmitFunction emitFunction(
     WorkEmitter& emitter)
 {
     return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               OriginId sourceId, Sources::SourceReturnType::SourceReturnType event)
+               OriginId sourceId, Sources::SourceReturnType event)
     {
         std::visit(
             Overloaded{
-                [&](Sources::SourceReturnType::Data data)
+                [&](Sources::Data data)
                 {
                     for (const auto& successor : successors)
                     {
                         emitter.emitWork(queryId, successor, data.buffer, {}, {});
                     }
                 },
-                [&](Sources::SourceReturnType::EoS) { controller.initializeSourceStop(queryId, sourceId, source); },
-                [&](Sources::SourceReturnType::Error error)
+                [&](Sources::EoS) { controller.initializeSourceStop(queryId, sourceId, source); },
+                [&](Sources::Error error)
                 { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
             std::move(event));
     };
@@ -64,7 +64,7 @@ OriginId RunningSource::getOriginId() const
 }
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::unique_ptr<Sources::SourceHandle> source,
+    std::unique_ptr<Sources::SourceRunner> source,
     std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
     std::function<void(Exception)> unregisterWithError)
     : successors(std::move(successors))
@@ -76,7 +76,7 @@ RunningSource::RunningSource(
 
 std::shared_ptr<RunningSource> RunningSource::create(
     QueryId queryId,
-    std::unique_ptr<Sources::SourceHandle> source,
+    std::unique_ptr<Sources::SourceRunner> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
     std::function<void(Exception)> unregisterWithError,
