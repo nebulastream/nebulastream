@@ -229,7 +229,8 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(
     auto probeKeyFieldAccess = asNodeFunctionFieldAccess(onProbeKey, "onProbeKey");
     auto buildKeyFieldAccess = asNodeFunctionFieldAccess(onBuildKey, "onBuildKey");
 
-    INVARIANT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
+    INVARIANT(rightQueryPlan, "rightQueryPlan is null");
+    INVARIANT(!rightQueryPlan->getRootOperators().empty(), "rightQueryPlan has no root operators");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();

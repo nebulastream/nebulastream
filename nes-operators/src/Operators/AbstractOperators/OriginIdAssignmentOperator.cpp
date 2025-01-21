@@ -11,7 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
