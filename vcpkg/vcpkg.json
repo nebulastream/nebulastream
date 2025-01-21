@@ -3,7 +3,7 @@
   "version-string": "latest",
   "homepage": "https://nebula.stream",
   "description": "Data Management for the Internet of Things.",
-  "builtin-baseline": "b2cb0da531c2f1f740045bfe7c4dac59f0b2b69c",
+  "builtin-baseline": "f04dfe440cf94fed029a729b5c9fc65575408001",
   "features": {
     "mlir": {
       "description": "nautilus mlir backend",
@@ -33,7 +33,6 @@
     "nautilus",
     "spdlog",
     "yaml-cpp",
-    "cppzmq",
     "liburing"
   ]
 }
