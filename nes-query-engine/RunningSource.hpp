@@ -42,8 +42,8 @@ public:
         QueryId queryId,
         std::unique_ptr<Sources::SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryDeregister,
-        std::function<void(Exception)> deregisterWithError,
+        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
+        std::function<void(Exception)> unregisterWithError,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
 
@@ -55,12 +55,11 @@ public:
     ~RunningSource();
     [[nodiscard]] OriginId getOriginId() const;
 
-    /// attempts UnRegistration
-    bool attemptDeregister();
+    bool attemptUnregister();
     void fail(Exception exception) const;
 
     /// Calls the underlying `tryStop`
-    bool tryStop();
+    [[nodiscard]] Sources::SourceReturnType::TryStopResult tryStop() const;
 
 private:
     RunningSource(
@@ -71,8 +70,8 @@ private:
 
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<Sources::SourceHandle> source;
-    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryDeregister;
-    std::function<void(Exception)> deregisterWithError;
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister;
+    std::function<void(Exception)> unregisterWithError;
 };
 
 }

@@ -221,14 +221,9 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     return true;
 }
 
-bool SourceThread::stop()
+void SourceThread::stop()
 {
     PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
-    if (!started.exchange(false))
-    {
-        return false;
-    }
-
     NES_DEBUG("SourceThread  {} : stop source", originId);
     thread.request_stop();
 
@@ -244,7 +239,7 @@ bool SourceThread::stop()
     NES_DEBUG("SourceThread  {} : stopped", originId);
 }
 
-SourceThread::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
+SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
     PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
     NES_DEBUG("SourceThread  {} : attempting to stop source", originId);
@@ -256,7 +251,7 @@ SourceThread::TryStopResult SourceThread::tryStop(std::chrono::milliseconds time
         if (result == std::future_status::timeout)
         {
             NES_DEBUG("SourceThread  {} : source was not stopped during timeout", originId);
-            return TryStopResult::TIMEOUT;
+            return SourceReturnType::TryStopResult::TIMEOUT;
         }
         auto deletedOnScopeExit = std::move(thread);
     }
@@ -266,7 +261,7 @@ SourceThread::TryStopResult SourceThread::tryStop(std::chrono::milliseconds time
     }
 
     NES_DEBUG("SourceThread  {} : stopped", originId);
-    return TryStopResult::SUCCESS;
+    return SourceReturnType::TryStopResult::SUCCESS;
 }
 
 OriginId SourceThread::getOriginId() const

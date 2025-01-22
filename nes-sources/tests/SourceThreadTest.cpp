@@ -110,7 +110,7 @@ void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_l
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_stop");
     auto calledStop = std::chrono::high_resolution_clock::now();
-    EXPECT_TRUE(sourceThread.stop());
+    sourceThread.stop();
     auto stopDone = std::chrono::high_resolution_clock::now();
     EXPECT_LT(stopDone - calledStop, DEFAULT_TIMEOUT)
         << "Stopping a SourceThread should be non blocking. We estimate a block with around 100 ms";
