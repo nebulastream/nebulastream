@@ -37,6 +37,12 @@ struct EoS
 {
 };
 
+enum class TryStopResult : uint8_t
+{
+    SUCCESS,
+    TIMEOUT
+};
+
 using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 

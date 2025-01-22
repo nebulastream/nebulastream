@@ -47,7 +47,10 @@ public:
     ~SourceHandle();
 
     bool start(SourceReturnType::EmitFunction&& emitFunction) const;
-    [[nodiscard]] bool stop() const;
+    void stop() const;
+
+    /// Tries to stop the source within a given timeout.
+    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 
