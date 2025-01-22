@@ -50,6 +50,13 @@ struct AtomicState
         return tryTransitionLocked(transitionFunction);
     }
 
+    template <typename State>
+    bool is()
+    {
+        std::scoped_lock lock(mutex);
+        return std::holds_alternative<State>(state);
+    }
+
 private:
     template <typename FromState, typename ToState>
     bool tryTransitionLocked(const std::function<ToState(FromState&&)>& transitionFunction)
