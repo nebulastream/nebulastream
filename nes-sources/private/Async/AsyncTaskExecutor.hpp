@@ -46,7 +46,6 @@ public:
     template <typename Callable>
     void dispatch(Callable&& task)
     {
-        NES_DEBUG("AsyncTaskExecutor: callable {} received by executor.",  task);
         asio::post(ioc, std::forward<Callable>(task));
     }
 

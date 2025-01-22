@@ -54,12 +54,10 @@ std::unique_ptr<SourceRunner> SourceProvider::lower(
             {
                 return std::make_unique<AsyncSourceRunner>(std::move(sourceContext));
             }
-            else /// if (std::holds_alternative<BlockingSource>(*source))
-            {
-                return std::make_unique<BlockingSourceRunner>(std::move(sourceContext));
-            }
+            /// if (std::holds_alternative<BlockingSource>(*source))
+            return std::make_unique<BlockingSourceRunner>(std::move(sourceContext));
         }
-        throw CannotAllocateBuffer();
+        throw BufferAllocationFailure();
     }
     throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

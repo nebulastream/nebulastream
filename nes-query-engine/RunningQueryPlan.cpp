@@ -108,7 +108,7 @@ void CallbackOwner::addCallback(absl::AnyInvocable<void()> callbackFunction) con
 ///NOLINTNEXTLINE
 CallbackRef CallbackOwner::addCallbackAssumeNonShared(CallbackRef&& ref, absl::AnyInvocable<void()> callbackFunction)
 {
-    PRECONDITION(ref.ref.use_count() == 1, "This function can only be called if there is no other user of the Callback.")
+    PRECONDITION(ref.ref.use_count() == 1, "This function can only be called if there is no other user of the Callback.");
     ref.ref->callbacks.emplace_back(std::move(callbackFunction));
     return ref;
 }
