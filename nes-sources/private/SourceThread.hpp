@@ -74,9 +74,12 @@ public:
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
     [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
 
-    /// Attempts to stop the DataSource. If the data source is not running (maybe it never ran) this function return false.
-    /// If this function returns true the thread has been stopped.
-    [[nodiscard]] bool stop();
+    /// Blocks the current thread until the source is terminated
+    void stop();
+
+
+    /// Attempts to terminate the source within the timeout
+    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout);
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
