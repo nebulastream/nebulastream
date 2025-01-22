@@ -217,7 +217,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     };
     if (workerConfig->lambdaSource) {
         auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                          "A" + workerId.toString(),
+                                                          "A" + workerConfig->lambdaSource,
                                                           std::move(func1),
                                                           workerConfig->numberOfBuffersToProduce,
                                                           workerConfig->sourceGatheringInterval,
