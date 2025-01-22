@@ -54,9 +54,11 @@ std::optional<T> loadConfiguration(const int argc, const char** argv)
     T config;
 
     /// Read options from the YAML file.
-    if (const auto configPath = commandLineParams.find("--" + CONFIG_PATH); configPath != commandLineParams.end())
+    const auto configPathCLIParam = "--" + CONFIG_PATH;
+    if (const auto configPath = commandLineParams.find(configPathCLIParam); configPath != commandLineParams.end())
     {
         config.overwriteConfigWithYAMLFileInput(configPath->second);
+        commandLineParams.erase(configPathCLIParam);
     }
 
     /// Options specified on the command line have the highest precedence.
