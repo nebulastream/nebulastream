@@ -153,7 +153,7 @@ bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           uint64_t currentMessageSequenceNumber,
                                           bool shouldPropagateMarker,
                                           const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
-    NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
+    // NES_ERROR("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
             channel->close(terminationType,

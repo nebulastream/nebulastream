@@ -27,6 +27,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <filesystem>
 
 namespace NES {
 
@@ -60,6 +61,44 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
+    NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+              this->tupleSize,
+              this->gatheringInterval.count(),
+              this->numberOfBuffersToProduce,
+              this->numberOfTuplesToProducePerBuffer);
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
+
+    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+}
+
+std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
+    openFile();
+    NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
+    auto buffer = allocateBuffer();
+    fillBuffer(buffer);
+    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
+
+    if (buffer.getNumberOfTuples() == 0) {
+        return std::nullopt;
+    }
+    return buffer.getBuffer();
+}
+
+void CSVSource::openFile() {
+    while (!std::filesystem::exists(filePath)) {
+        NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
+    }
+
+    if (currentPositionInFile > 0) {
+        return;
+    }
+
     struct Deleter {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
@@ -80,32 +119,6 @@ CSVSource::CSVSource(SchemaPtr schema,
     } else {
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
-
-    NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-              this->tupleSize,
-              this->gatheringInterval.count(),
-              this->numberOfBuffersToProduce,
-              this->numberOfTuplesToProducePerBuffer);
-
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : schema->fields) {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-    }
-
-    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
-}
-
-std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
-    auto buffer = allocateBuffer();
-    fillBuffer(buffer);
-    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
-
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
-    }
-    return buffer.getBuffer();
 }
 
 std::string CSVSource::toString() const {
@@ -167,6 +180,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     buffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
+    // NES_ERROR("csv buffers generated: {}", generatedBuffers)
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
     NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }

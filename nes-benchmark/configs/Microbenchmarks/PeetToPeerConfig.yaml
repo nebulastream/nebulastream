@@ -1,0 +1,5 @@
+DefaultBufferSize: 1024
+DefaultNumberOfBuffersToProduce: 1024
+MinNUmberOfIntermediateNodes: 8
+MaxNUmberOfIntermediateNodes: 8
+

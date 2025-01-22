@@ -285,9 +285,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             return;
         }
         workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);*/
-        NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
-                  nesPartition.toString(),
-                  Runtime::NesThread::getId());
+        // NES_ERROR("NetworkSource: reconfigure() released channel on {} Thread {}",
+                  //nesPartition.toString(),
+                  //Runtime::NesThread::getId());
     }
 }
 

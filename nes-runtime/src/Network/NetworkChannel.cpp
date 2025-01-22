@@ -59,7 +59,14 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
         // until more space is available
         if (highWaterMark > 0) {
-            zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
+//            int snd_hwm = 1000;
+//            int rcv_hwm = 1000;
+            int rcvbuf_size = 100 * 1024 * 1024;  // 100MB
+//            zmqSocket.set(zmq::sockopt::sndhwm, snd_hwm);
+//            zmqSocket.set(zmq::sockopt::rcvhwm, rcv_hwm);
+            zmqSocket.set(zmq::sockopt::rcvbuf, rcvbuf_size);
+            zmqSocket.set(zmq::sockopt::sndbuf, rcvbuf_size);
+
         }
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);

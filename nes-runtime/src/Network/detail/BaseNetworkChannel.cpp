@@ -66,6 +66,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
 
             //todo #4313: pass number of threads on client announcement instead of on closing
             NES_ASSERT(events == 0, "There should be 0 events in this case, as reconfiguration marker is null");
+            // NES_ERROR("sent eof for {}", channelId);
             sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
                                                       channelId,
                                                       Messages::ChannelType::DataChannel,
@@ -146,7 +147,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
             }
         }
     }
-
+    // sleep(1);
     zmqSocket.close();
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;

@@ -356,6 +356,7 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
                                                        getDecomposedQueryVersion(),
                                                        reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        // NES_ERROR("reconf added for {}", getDecomposedQueryId());
         queryManager->addReconfigurationMessage(getSharedQueryId(),
                                                 getDecomposedQueryId(),
                                                 getDecomposedQueryVersion(),

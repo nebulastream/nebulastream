@@ -113,6 +113,7 @@ const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
+const std::string BUFFERS_TO_PRODUCE = "buffersToProduce";
 
 // CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";

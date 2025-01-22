@@ -70,6 +70,11 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
 
     void addQueryToSharedJoinApproachDeleting(QueryId queryId, uint64_t deploymentTime) override;
 
+    void checkAndLogTimestamp(uint64_t joinBuildSideInt);
+
+    uint64_t numberOfBuffersToRecreate = -1;
+    std::array<std::atomic<uint64_t>, 2> numberOfRecreatedBuffers{0, 0};
+
     ~NLJOperatorHandlerSlicing() override = default;
 
   private:

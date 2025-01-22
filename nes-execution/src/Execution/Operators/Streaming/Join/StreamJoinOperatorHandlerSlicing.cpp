@@ -230,7 +230,7 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateItLo
     auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
     auto slice = getSliceByStartEnd(slicesWriteLocked, sliceStart, sliceEnd);
     if (slice.has_value()) {
-        NES_DEBUG("Slice had value for: slice start {}, slice end {}, slice {}", sliceStart, sliceEnd, slice.value()->toString())
+        // NES_DEBUG("Slice had value for: slice start {}, slice end {}, slice {}", sliceStart, sliceEnd, slice.value()->toString())
         return slice.value();
     }
 

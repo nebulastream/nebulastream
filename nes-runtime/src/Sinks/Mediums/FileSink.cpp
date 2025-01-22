@@ -91,8 +91,19 @@ void FileSink::setup() {
 }
 
 void FileSink::shutdown() {
-    NES_WARNING("Closing file sink, filePath={}", filePath);
+    NES_DEBUG("Closing file sink, filePath={}", filePath);
+    if (isClosed) {
+        return;
+    }
+    // rename file after dumping completed
+    auto dotPosition = filePath.find_last_of('.');
+    auto completedPath = filePath.substr(0, dotPosition) + "_finished" + filePath.substr(dotPosition);
     outputFile.close();
+    if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
+        NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
+    } else {
+        NES_ERROR("Can't rename file after dumping");
+    }
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
@@ -126,7 +137,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
+    numberOfProcessedBuffers++;
     outputFile.flush();
+
+    if (numberOfProcessedBuffers == 1024) {
+        shutdown();
+        isClosed = true;
+    }
     return true;
 }
 

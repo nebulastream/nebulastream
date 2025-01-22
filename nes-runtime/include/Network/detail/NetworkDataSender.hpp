@@ -54,6 +54,7 @@ class NetworkDataSender : public BaseChannelType {
         auto payloadSize = tupleSize * numOfTuples;
         auto* ptr = buffer.getBuffer<uint8_t>();
         auto numOfChildren = buffer.getNumberOfChildrenBuffer();
+        // NES_ERROR("buffer sent {}", messageSequenceNumber);
         sendMessage<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
                                                                payloadSize,
                                                                numOfTuples,

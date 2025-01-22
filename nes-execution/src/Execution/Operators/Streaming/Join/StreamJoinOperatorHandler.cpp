@@ -51,7 +51,7 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
 
     while (!std::filesystem::exists(filePath)) {
         NES_DEBUG("File {} does not exist yet", filePath);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
@@ -428,7 +428,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
     // The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark =
         watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
+    // NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {

@@ -90,6 +90,7 @@ class CSVSource : public DataSource {
      * @return csvSourceType1
      */
     const CSVSourceTypePtr& getSourceConfig() const;
+    void openFile();
 
   protected:
     std::ifstream input;

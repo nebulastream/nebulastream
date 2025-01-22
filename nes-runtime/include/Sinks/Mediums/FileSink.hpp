@@ -94,6 +94,9 @@ class FileSink : public SinkMedium {
 
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
+
+    std::atomic<uint64_t> numberOfProcessedBuffers{0};
+    std::atomic<uint64_t> isClosed{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

@@ -147,7 +147,7 @@ class NodeEngineBuilder {
      * @return QueryCompilerOptionsPtr
      */
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration);
+    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration, uint64_t numOfBuffers);
 
     /**
      * @brief Returns the next free node id

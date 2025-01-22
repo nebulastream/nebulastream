@@ -82,7 +82,7 @@ bool ZmqServer::start() {
     NES_DEBUG("ZmqServer({}:{}): Starting server..", this->hostname, this->currentPort);
     std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
-    uint16_t numHandlerThreads = numNetworkThreads / 2;
+    uint16_t numHandlerThreads = numNetworkThreads;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     // NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, startPromise]() {
@@ -388,6 +388,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestampInMS(bufferHeader->creationTimestamp);
                     buffer.setSequenceData(bufferHeader->sequenceData);
+                    // NES_ERROR("zmq received tuple {}", bufferHeader->sequenceData.sequenceNumber);
 
                     for (auto&& childBuffer : children) {
                         auto idx = buffer.storeChildBuffer(childBuffer);
@@ -491,10 +492,10 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                             }
                         }
                     }
-                    NES_WARNING("ZmqServer({}:{}): EndOfStream received for channel ",
-                                this->hostname,
-                                this->currentPort,
-                                eosMsg.getChannelId());
+//                    NES_ERROR("ZmqServer({}:{}): EndOfStream received for channel ",
+//                                this->hostname,
+//                                this->currentPort,
+//                                eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg, marker);
                     break;
                 }

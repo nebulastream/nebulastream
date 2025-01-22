@@ -66,11 +66,11 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, 
 
 void ConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void ConsoleDumpHandler::dump(std::string, std::string, DecomposedQueryPlanPtr decomposedQueryPlan) {
-    out << "Dumping pipelineQueryPlan: " << decomposedQueryPlan->toString() << std::endl;
+void ConsoleDumpHandler::dump(std::string, std::string, DecomposedQueryPlanPtr) {
+    // out << "Dumping pipelineQueryPlan: " << decomposedQueryPlan->toString() << std::endl;
 }
 
-void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) {
-    out << "Dumping pipelineQueryPlan: " << pipelineQueryPlan->toString() << std::endl;
+void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr) {
+    // out << "Dumping pipelineQueryPlan: " << pipelineQueryPlan->toString() << std::endl;
 }
 }// namespace NES

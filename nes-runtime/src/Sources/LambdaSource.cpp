@@ -76,6 +76,10 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     auto rawBuffer = buffer.getBuffer();
     generationFunction(rawBuffer, numberOfTuplesToProduce);
+    if (generatedBuffers == 0) {
+        auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("started sending from {}", startTime)
+    }
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
@@ -84,7 +88,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
               buffer.getNumberOfTuples(),
               rawBuffer.getOriginId());
-
+    // NES_ERROR("lambda buffers generated: {}", generatedBuffers)
     return rawBuffer;
 }
 
