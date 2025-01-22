@@ -77,7 +77,7 @@ faultToleranceType,
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
             // workerContext.createCheckpoint(nesPartition, inputBuffer);  // uses HDFS
-            if (this->bufferCount == 50) {
+            if ((this->bufferCount % 50) == 0) {
                 std::vector<char> binaryStorage = workerContext.getBinaryStorage(this->nesPartition);
                 this->nodeEngine->offloadCheckpoint(this->nesPartition.getPartitionId().getRawValue(), binaryStorage);
             }
