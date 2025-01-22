@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <list>
+#include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 #include <API/Query.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -42,9 +43,9 @@ enum class AntlrSQLWindowType : uint8_t
 };
 class AntlrSQLHelper
 {
-    std::vector<std::shared_ptr<NodeFunction>> projectionFields;//vector needed for logicalProjectionOperator constructor
-    std::list<std::shared_ptr<NodeFunction>> whereClauses;
-    std::list<std::shared_ptr<NodeFunction>> havingClauses;
+    std::vector<std::shared_ptr<NodeFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
+    std::vector<std::shared_ptr<NodeFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
+    std::vector<std::shared_ptr<NodeFunction>> havingClauses;
     std::string source;
 
 public:
@@ -83,7 +84,7 @@ public:
     Join::LogicalJoinDescriptor::JoinType joinType;
 
     /// Utility variables to keep state between enter/exit parser function calls.
-    size_t opBoolean; //anonymous token enum in AntlrSQLLexer.h
+    size_t opBoolean; ///anonymous token enum in AntlrSQLLexer.h
     std::string opValue;
     std::string newSourceName;
     std::string timestamp;
@@ -91,14 +92,14 @@ public:
     /// Utility variables used to keep track of the parsing state.
     int size;
     int advanceBy;
-    size_t timeUnit; //anonymous token enum in AntlrSQLLexer.h
+    size_t timeUnit; ///anonymous token enum in AntlrSQLLexer.h
     size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
-    [[nodiscard]] const std::list<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
-    [[nodiscard]] const std::list<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
     [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
     void addWhereClause(const std::shared_ptr<NodeFunction>& expressionNode);
     void addHavingClause(const std::shared_ptr<NodeFunction>& expressionNode);
