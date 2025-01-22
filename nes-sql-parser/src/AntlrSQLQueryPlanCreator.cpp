@@ -483,9 +483,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
     }
 
-    for (auto& whereExpr : helper.getWhereClauses())
+    for (auto whereExpr = helper.getWhereClauses().rbegin(); whereExpr != helper.getWhereClauses().rend(); ++whereExpr)
     {
-        queryPlan = QueryPlanBuilder::addSelection(whereExpr, queryPlan);
+        queryPlan = QueryPlanBuilder::addSelection(*whereExpr, queryPlan);
     }
 
     for (const auto& mapExpr : helper.mapBuilder)
@@ -506,9 +506,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
 
     if (helper.windowType != nullptr)
     {
-        for (auto& havingExpr : helper.getHavingClauses())
+        for (auto havingExpr = helper.getHavingClauses().rbegin(); havingExpr != helper.getHavingClauses().rend(); ++havingExpr)
         {
-            queryPlan = QueryPlanBuilder::addSelection(havingExpr, queryPlan);
+            queryPlan = QueryPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
     }
     helpers.pop();
