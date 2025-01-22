@@ -22,7 +22,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <val.hpp>
+#include <nautilus/val.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

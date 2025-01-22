@@ -70,10 +70,7 @@ bool ThresholdWindow::inferStamp(const SchemaPtr& schema)
 {
     NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(schema);
-    if (!predicate->isPredicate())
-    {
-        NES_THROW_RUNTIME_ERROR("the threshold function is not a valid predicate");
-    }
+    INVARIANT(predicate->isPredicate(), "the threshold function is not a valid predicate");
     return true;
 }
 

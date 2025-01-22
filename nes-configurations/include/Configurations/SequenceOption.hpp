@@ -15,9 +15,9 @@
 
 #include <vector>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
@@ -84,7 +84,7 @@ void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
     }
     else
     {
-        throw ConfigurationException("YAML node should be a sequence but it was a " + node.as<std::string>());
+        throw InvalidConfigParameter("YAML node should be a sequence but it was a " + node.as<std::string>());
     }
 }
 template <DerivedBaseOption T>

@@ -170,7 +170,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
     PRECONDITION(
         NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode),
         "{} is no binaryOperator",
-        *operatorNode)
+        *operatorNode);
     if (NES::Util::instanceOf<LogicalUnionOperator>(operatorNode))
     {
         lowerUnionOperator(operatorNode);
@@ -283,9 +283,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr
     const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
-    NES_ASSERT(
+    INVARIANT(
         NES::Util::instanceOf<Windowing::TumblingWindow>(windowType) || NES::Util::instanceOf<Windowing::SlidingWindow>(windowType),
-        "Only a tumbling or sliding window is currently supported for StreamJoin");
+        "Only a tumbling or sliding window is currently supported for StreamJoin, but got: {}",
+        windowType->toString());
 
     const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
     const auto leftInputOperator
@@ -391,9 +392,10 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
         auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
 
-        NES_ASSERT(
+        INVARIANT(
             !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-            "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+            "Could not find timestampfieldname {} in both streams!",
+            timeStampFieldNameWithoutSourceName);
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
         return {

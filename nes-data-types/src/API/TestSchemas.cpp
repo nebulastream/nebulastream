@@ -12,26 +12,21 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
 {
     auto it = testSchemaCatalog.find(name);
-    if (it != testSchemaCatalog.end())
-    {
-        auto newSchema = std::make_shared<Schema>();
-        /// Use copyFields() to create a deep copy of the fields
-        newSchema->copyFields(it->second);
-        return newSchema;
-    }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("Schema not found");
-    }
+    PRECONDITION(it != testSchemaCatalog.end(), "Schema with name: {} not found", name);
+    auto newSchema = std::make_shared<Schema>();
+    /// Use copyFields() to create a deep copy of the fields
+    newSchema->copyFields(it->second);
+    return newSchema;
 }
 
 std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {

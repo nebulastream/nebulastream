@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <Util/FileMutex.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #if defined(linux) || defined(__APPLE__)
 #    include <fcntl.h>
 #else
@@ -33,7 +34,7 @@ FileMutex::FileMutex(const std::string filePath) : fileName(filePath)
     {
         fd = open(filePath.c_str(), O_RDWR);
     }
-    NES_ASSERT2_FMT(fd != -1, "Invalid file " << filePath << " " << strerror(errno));
+    INVARIANT(fd != -1, "Invalid file {} {}", filePath, strerror(errno));
 }
 
 FileMutex::~FileMutex()
@@ -49,7 +50,7 @@ void FileMutex::lock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    NES_ASSERT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
+    INVARIANT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
 }
 
 bool FileMutex::try_lock()
@@ -74,7 +75,7 @@ void FileMutex::unlock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    NES_ASSERT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
+    INVARIANT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
 }
 
 }

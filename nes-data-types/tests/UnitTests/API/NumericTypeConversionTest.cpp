@@ -54,8 +54,8 @@ TEST_P(NumericTypeConversionTest, SimpleTest)
     const auto rightLeft = join(right, left);
     NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(left), magic_enum::enum_name(right), leftRight->toString());
     NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(right), magic_enum::enum_name(left), rightLeft->toString());
-    EXPECT_TRUE(leftRight->equals(result));
-    EXPECT_TRUE(rightLeft->equals(result));
+    EXPECT_TRUE(*leftRight == *result);
+    EXPECT_TRUE(*rightLeft == *result);
 }
 
 /// This tests the join operation for all possible combinations of basic types

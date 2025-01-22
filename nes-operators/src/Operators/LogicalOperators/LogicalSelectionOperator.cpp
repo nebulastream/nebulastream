@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -73,7 +74,7 @@ bool LogicalSelectionOperator::inferSchema()
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter function is not a valid predicate");
+        throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
     return true;
 }
@@ -98,7 +99,7 @@ void LogicalSelectionOperator::inferStringSignature()
 {
     std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", *operatorNode);
-    NES_ASSERT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
+    INVARIANT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)

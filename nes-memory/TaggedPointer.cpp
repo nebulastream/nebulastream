@@ -12,15 +12,19 @@
     limitations under the License.
 */
 
-#include "TaggedPointer.hpp"
+#include <cstdint>
 #include <Util/Logger/Logger.hpp>
-#include "TupleBufferImpl.hpp"
+#include <ErrorHandling.hpp>
+#include <TaggedPointer.hpp>
+#include <TupleBufferImpl.hpp>
 
 namespace NES
 {
 
+static constexpr uintptr_t TAG_SHIFT = 48;
+
 template <typename T>
-TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag)
+TaggedPointer<T>::TaggedPointer(T* ptr, const uint16_t tag)
 {
     reset(ptr, tag);
 }
@@ -42,8 +46,8 @@ template <typename T>
 void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
 {
     uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
-    NES_ASSERT(!(pointer >> 48), "invalid pointer");
-    pointer |= static_cast<uintptr_t>(tag) << 48;
+    PRECONDITION(!(pointer >> TAG_SHIFT), "tag out of range");
+    pointer |= static_cast<uintptr_t>(tag) << TAG_SHIFT;
     data = pointer;
 }
 

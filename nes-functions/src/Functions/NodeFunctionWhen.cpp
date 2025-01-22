@@ -16,6 +16,7 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -45,10 +46,9 @@ void NodeFunctionWhen::inferStamp(SchemaPtr schema)
     ///left function has to be boolean
     if (!NES::Util::instanceOf<Boolean>(left->getStamp()))
     {
-        NES_THROW_RUNTIME_ERROR(
-            "Error during stamp inference. Left type needs to be Boolean, but Left was: {} Right was: {}",
-            left->getStamp()->toString(),
-            right->getStamp()->toString());
+        CannotInferStamp(
+            "Error during stamp inference. Left type needs to be Boolean, but Left was: " + left->getStamp()->toString()
+            + "Right was: " + right->getStamp()->toString());
     }
 
     ///set stamp to right stamp, as only the left function will be returned

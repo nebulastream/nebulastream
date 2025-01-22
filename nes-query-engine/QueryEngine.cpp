@@ -383,7 +383,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
             pool.bufferProvider,
             [](const auto&, auto)
             {
-                /// Catch Emits, that are currently not supported during pipeline stage initilialization.
+                /// Catch Emits, that are currently not supported during pipeline stage initialization.
                 INVARIANT(
                     false,
                     "Currently we assume that a pipeline cannot emit data during setup. All pipeline initializations happen "
@@ -401,8 +401,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
     INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
-    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0);
-
+    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {
         ENGINE_LOG_TRACE(
@@ -634,7 +633,10 @@ void QueryCatalog::start(
 
                 /// It should be impossible for a query in the `Terminated` state to emit a failure as the `RunningQueryPlan` which called
                 /// the `onFailure()` method should have been destroyed, once transitioned into the `Terminated` state.
-                INVARIANT(successfulTermination, "Query emitted Failure while in the Terminated state. This should never happen!");
+                INVARIANT(
+                    successfulTermination,
+                    "Query emitted Failure while in the Terminated state. This should never happen! Error: {}",
+                    exception.what());
 
                 exception.what() += fmt::format(" In Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());

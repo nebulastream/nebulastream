@@ -68,7 +68,7 @@ inline Runtime::Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const 
 
 inline void NES_Memory_TupleBuffer_setSequenceNumber(Memory::TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
 {
-    tupleBuffer->setSequenceNumber(SequenceNumber(sequenceNumber));
+    tupleBuffer->setSequenceNumber(sequenceNumber);
 };
 
 inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::TupleBuffer* tupleBuffer)

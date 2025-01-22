@@ -28,6 +28,7 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
@@ -217,10 +218,7 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const
     else
     {
         /// if user passed 0 occurrences which is not wanted
-        if ((minOccurrences == 0) && (maxOccurrences == 0))
-        {
-            NES_THROW_RUNTIME_ERROR("Number of occurrences must be at least 1.");
-        }
+        PRECONDITION(!(minOccurrences == 0 && maxOccurrences == 0), "Number of occurrences must be at least 1.");
         /// if min and/or max occurrence are defined, apply count without filter
         if (maxOccurrences == 0)
         {
@@ -293,7 +291,7 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<Node
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("Query:joinFunction has to be a NodeFunctionEquals");
+        throw UnsupportedQuery("Query::joinFunction has to be a NodeFunctionEquals");
     }
     return *this;
 }

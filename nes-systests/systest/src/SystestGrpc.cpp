@@ -36,11 +36,11 @@ size_t GRPCClient::registerQuery(const NES::DecomposedQueryPlan& queryPlan) cons
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR(fmt::format(
-            "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+        throw NES::QueryRegistrationFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details()));
+            status.error_details());
     }
     return reply.queryid();
 }
@@ -58,11 +58,11 @@ void GRPCClient::start(size_t queryId) const
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR(fmt::format(
-            "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+        throw NES::QueryStartFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details()));
+            status.error_details());
     }
 }
 
@@ -79,11 +79,11 @@ QuerySummaryReply GRPCClient::status(size_t queryId) const
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR(fmt::format(
-            "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+        throw NES::QueryStopFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details()));
+            status.error_details());
     }
     return response;
 }
@@ -101,10 +101,10 @@ void GRPCClient::unregister(size_t queryId) const
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR(fmt::format(
-            "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+        throw NES::QueryUnregistrationFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details()));
+            status.error_details());
     }
 }

@@ -80,10 +80,11 @@ template <class T, bool boundaryChecks>
 inline ColumnLayoutField<T, boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
 {
-    if (boundaryChecks && fieldIndex >= layout->getFieldSizes().size())
-    {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldSizes().size() << " >= " << fieldIndex);
-    }
+    INVARIANT(
+        boundaryChecks && fieldIndex < layout->getFieldSizes().size(),
+        "fieldIndex out of bounds {} >= {}",
+        layout->getFieldSizes().size(),
+        fieldIndex);
 
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
     auto fieldOffset = layout->getFieldOffset(0, fieldIndex);
@@ -101,16 +102,14 @@ ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::creat
     {
         return ColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
     }
-    NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
+    INVARIANT(false, "Could not find fieldIndex for {}", fieldName);
 }
 
 template <class T, bool boundaryChecks>
 inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
-    if (boundaryChecks && recordIndex >= layout->getCapacity())
-    {
-        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << layout->getCapacity() << " >= " << recordIndex);
-    }
+    INVARIANT(
+        boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds {} >= {}", layout->getCapacity(), recordIndex);
     return *(basePointer + recordIndex);
 }
 

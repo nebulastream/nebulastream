@@ -11,8 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -23,10 +24,10 @@ OriginIdAssignmentOperator::OriginIdAssignmentOperator(OperatorId operatorId, Or
 
 std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() const
 {
-    if (originId == INVALID_ORIGIN_ID)
-    {
-        throw Exceptions::RuntimeException("The origin id should not be invalid. Maybe the OriginIdInference rule was not executed.");
-    }
+    INVARIANT(
+        originId != INVALID_ORIGIN_ID,
+        "The origin id should not be invalid, but was {}. Maybe the OriginIdInference rule was not executed.",
+        originId.getRawValue());
     return {originId};
 }
 

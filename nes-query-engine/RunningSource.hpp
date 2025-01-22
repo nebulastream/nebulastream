@@ -36,6 +36,8 @@ class QueryEngine;
 class RunningSource
 {
 public:
+    /// Creates and starts the underlying source implementation. As long as the RunningSource is kept alive the source will run,
+    /// once the last reference to the RunningSource is destroyed the source is stopped.
     static std::shared_ptr<RunningSource> create(
         QueryId queryId,
         std::unique_ptr<Sources::SourceRunner> source,

@@ -17,8 +17,6 @@
 #include <ranges>
 #include <regex>
 #include <utility>
-
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -143,10 +141,9 @@ Sources::SourceDescriptor createSourceDescriptor(
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
-    if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
-    {
-        NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
-    }
+    PRECONDITION(
+        sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
+        "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 

@@ -26,12 +26,7 @@ class Boolean final : public DataType
 public:
     ~Boolean() override = default;
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
-    bool equals(DataTypePtr otherDataType) override;
+    bool operator==(const DataType& other) const override;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.
@@ -41,10 +36,6 @@ public:
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
     std::string toString() override;
 };
 

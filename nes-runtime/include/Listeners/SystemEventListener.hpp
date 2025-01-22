@@ -24,10 +24,12 @@
 
 namespace NES::Runtime
 {
+using ChronoClock = std::chrono::system_clock;
+
 struct BaseSystemEvent
 {
     BaseSystemEvent() = default;
-    std::chrono::high_resolution_clock::time_point timestamp = std::chrono::high_resolution_clock::now();
+    ChronoClock::time_point timestamp = ChronoClock::now();
 };
 
 struct SubmitQuerySystemEvent : BaseSystemEvent

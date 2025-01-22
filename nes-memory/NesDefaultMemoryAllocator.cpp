@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <stdlib.h>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory
 {
@@ -21,7 +23,7 @@ namespace NES::Memory
 void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment)
 {
     void* tmp = nullptr;
-    NES_ASSERT2_FMT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
+    INVARIANT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
     return tmp;
 }
 

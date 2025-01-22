@@ -22,10 +22,11 @@
 namespace NES
 {
 
-bool Boolean::equals(DataTypePtr otherDataType)
+bool Boolean::operator==(const NES::DataType& other) const
 {
-    return NES::Util::instanceOf<Boolean>(otherDataType);
+    return dynamic_cast<const Boolean*>(&other) != nullptr;
 }
+
 
 DataTypePtr Boolean::join(DataTypePtr otherDataType)
 {

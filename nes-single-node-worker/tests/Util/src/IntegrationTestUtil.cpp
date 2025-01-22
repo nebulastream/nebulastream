@@ -32,6 +32,7 @@
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
+#include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -51,7 +52,7 @@ namespace NES::IntegrationTestUtil
     bool skipFirstLine)
 {
     std::vector<Memory::TupleBuffer> recordBuffers;
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
+    INVARIANT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile {} does not exist", csvFile);
 
     /// Creating everything for the csv parser
     std::ifstream file(csvFile);
@@ -138,10 +139,7 @@ void writeFieldValueToTupleBuffer(
     auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
-    if (inputString.empty())
-    {
-        throw Exceptions::RuntimeException("Input string for parsing is empty");
-    }
+    INVARIANT(!inputString.empty(), "Input string for parsing is empty");
     /// TODO #371 replace with csv parsing library
     try
     {

@@ -98,7 +98,7 @@ TEST_F(SchemaTest, addFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
         }
     }
 
@@ -156,7 +156,7 @@ TEST_F(SchemaTest, removeFieldsTest)
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
         if (testSchema->getFieldCount() < 1)
         {
-            EXPECT_ANY_THROW(testSchema->getFieldByName(fieldToRemove->getName()));
+            EXPECT_DEATH(testSchema->getFieldByName(fieldToRemove->getName()), "Precondition violated:.*");
         }
         else
         {
@@ -179,12 +179,12 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0]->getDataType();
             ASSERT_NO_THROW(testSchema->replaceField("field", newDataType));
-            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(newDataType));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *newDataType);
         }
     }
 
@@ -243,7 +243,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeFactory::createType(basicTypeVal));
             ASSERT_EQ(
                 testSchema->getSchemaSizeInBytes(),
                 defaultPhysicalTypeFactory.getPhysicalType(DataTypeFactory::createType(basicTypeVal))->size());

@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
@@ -33,7 +34,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
     auto optionMap = getOptionMap();
     if (!config.IsMap())
     {
-        throw ConfigurationException("Malformed YAML configuration file");
+        throw InvalidConfigParameter("Malformed YAML configuration: {}", name);
     }
     for (auto entry : config)
     {
@@ -41,7 +42,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         auto node = entry.second;
         if (!optionMap.contains(identifier))
         {
-            throw ConfigurationException("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
+            throw InvalidConfigParameter("Identifier: {} is not known. Check if it exposed in the getOptions function.", identifier);
         }
         /// check if config is empty
         if (node.IsScalar())
@@ -49,19 +50,19 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
             std::string value = node.as<std::string>();
             if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
             {
-                throw ConfigurationException("Value for " + identifier + " is empty.");
+                throw InvalidConfigParameter("Value for: {} is empty.", identifier);
             }
         }
         else if ((node.IsSequence() || node.IsMap()) && node.size() == 0)
         {
             /// if the node is a sequence or map and has no elements
-            throw ConfigurationException("Value for " + identifier + " is empty.");
+            throw InvalidConfigParameter("Value for: {} is empty.", identifier);
         }
         try
         {
             optionMap[identifier]->parseFromYAMLNode(node);
         }
-        catch (const ConfigurationException& e)
+        catch (const Exception& e)
         {
             NES_ERROR("Configuration error: ", e.what());
             throw;
@@ -75,7 +76,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
 
     if (!optionMap.contains(identifier))
     {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw InvalidConfigParameter("Identifier for: {} is not known.", identifier);
     }
     auto option = optionMap[identifier];
     if (dynamic_cast<BaseConfiguration*>(option))
@@ -88,7 +89,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
         {
             optionMap[identifier]->parseFromString(identifier, inputParams);
         }
-        catch (const ConfigurationException& e)
+        catch (const Exception& e)
         {
             NES_ERROR("Configuration error: ", e.what());
             throw;
@@ -109,7 +110,7 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
     }
     catch (const std::exception& ex)
     {
-        throw ConfigurationException("Exception while loading configurations from " + filePath + ". Exception: " + ex.what());
+        throw CannotLoadConfig("Exception while loading configurations from: {}. Exception: {}", filePath, ex.what());
     }
 }
 
@@ -142,14 +143,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered
 
     for (auto [identifier, values] : groupedIdentifiers)
     {
-        try
-        {
-            parseFromString(identifier, values);
-        }
-        catch (const ConfigurationException& e)
-        {
-            throw;
-        }
+        parseFromString(identifier, values);
     }
 }
 
@@ -222,7 +216,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             }
             catch (const std::exception& e)
             {
-                throw ConfigurationException("Exception while persisting in yaml file", e.what());
+                throw InvalidConfigParameter("Exception while persisting in yaml file", e.what());
             }
         }
         else

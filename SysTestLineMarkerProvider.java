@@ -168,6 +168,9 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             testIndexSuffix = ":" + String.format("%02d", testIndex);
         }
 
+        /// Check whether to run with docker
+        String Parameters = "";
+
         try {
             /// Find the "systest" Run/Debug configuration
             RunManager runManager = RunManager.getInstance(project);
@@ -192,16 +195,26 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                     "systest_temp", configurationType.getFactory()
             );
 
-            /// Get the currently selected CMake profile
+            /// Get the currently selected CMake profile and Toolchain
             CMakeWorkspace cMakeWorkspace = CMakeWorkspace.getInstance(project);
             ExecutionTarget executionTarget = ExecutionTargetManager.getInstance(project).findTarget(cMakeAppRunConfigurationExisting);
             CMakeConfiguration cMakeConfiguration = cMakeAppRunConfigurationExisting.getBuildAndRunConfigurations(executionTarget).getRunConfiguration();
             CMakeProfileInfo activeProfile = cMakeWorkspace.getProfileInfoFor(cMakeConfiguration);
             CPPEnvironment cppEnvironment = activeProfile.getEnvironment();
+            CPPToolchains.Toolchain toolchain = cppEnvironment.getToolchain();
 
-            /// Get the correct path from the target/executable for Remote Host
-            String executablePath = cppEnvironment.toEnvPath(testPath);
-            String Parameters = "-t " + executablePath + testIndexSuffix;
+            if (toolchain.getToolSetKind() == CPPToolSet.Kind.DOCKER){
+                /// Modify test path to default /tmp/ docker mount
+                String replacementPrefix = "/tmp/nebulastream-public/";
+                int index = testPath.indexOf("/nebulastream-public/");
+                if (index != -1) {
+                    String relativePath = testPath.substring(index + "/nebulastream-public/".length());
+                    Parameters = "-t " + replacementPrefix + relativePath + testIndexSuffix;
+                }
+            }
+            else{
+                Parameters = "-t " + testPath + testIndexSuffix;
+            }
 
             /// change program parameters of temp configuration
             CMakeAppRunConfiguration cMakeAppRunConfigurationTemp = (CMakeAppRunConfiguration)  temporaryConfigSettings.getConfiguration();

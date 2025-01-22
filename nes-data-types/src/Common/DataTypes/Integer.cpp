@@ -29,11 +29,10 @@
 namespace NES
 {
 
-bool Integer::equals(DataTypePtr otherDataType)
+bool Integer::operator==(const NES::DataType& other) const
 {
-    if (NES::Util::instanceOf<Integer>(otherDataType))
+    if (const auto otherInteger = dynamic_cast<const Integer*>(&other))
     {
-        auto otherInteger = as<Integer>(otherDataType);
         return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
     }
     return false;

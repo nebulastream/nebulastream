@@ -32,7 +32,7 @@ using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MA
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
-using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
+using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
 
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;

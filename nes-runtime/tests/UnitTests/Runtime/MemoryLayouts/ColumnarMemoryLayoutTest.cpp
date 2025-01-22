@@ -14,6 +14,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
@@ -21,9 +22,8 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-
-#include <vector>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -207,9 +207,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
     auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
     auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
-    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
+    ASSERT_DEATH((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), "Invariant violated:.*");
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i)
@@ -219,13 +219,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
 
-    ASSERT_THROW(field0[i], NES::Exceptions::RuntimeException);
-    ASSERT_THROW(field1[i], NES::Exceptions::RuntimeException);
-    ASSERT_THROW(field2[i], NES::Exceptions::RuntimeException);
+    ASSERT_DEATH(field0[i], "Invariant violated:.*");
+    ASSERT_DEATH(field1[i], "Invariant violated:.*");
+    ASSERT_DEATH(field2[i], "Invariant violated:.*");
 
-    ASSERT_THROW(field0[++i], NES::Exceptions::RuntimeException);
-    ASSERT_THROW(field1[i], NES::Exceptions::RuntimeException);
-    ASSERT_THROW(field2[i], NES::Exceptions::RuntimeException);
+    ASSERT_DEATH(field0[++i], "Invariant violated:.*");
+    ASSERT_DEATH(field1[i], "Invariant violated:.*");
+    ASSERT_DEATH(field2[i], "Invariant violated:.*");
 }
 
 /**
@@ -248,9 +248,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
     ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
     ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", columnLayout, tupleBuffer)));
 
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
+    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), "Invariant violated:.*");
 }
 
 /**
@@ -316,7 +316,7 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        ASSERT_EXCEPTION_ERRORCODE(testBuffer->pushRecordToBuffer(writeRecord), ErrorCode::BufferAccessException);
+        ASSERT_EXCEPTION_ERRORCODE(testBuffer->pushRecordToBuffer(writeRecord), ErrorCode::CannotAccessBuffer);
     }
 
     for (size_t i = 0; i < NUM_TUPLES; i++)

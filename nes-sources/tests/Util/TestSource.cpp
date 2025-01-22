@@ -43,7 +43,7 @@
 
 namespace
 {
-constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(100);
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
 }
@@ -80,11 +80,13 @@ bool NES::Sources::TestSourceControl::injectEoS()
     PRECONDITION(!failed, "Should not be called on a failed source");
     return tryIngestionUntil(queue, EoS{}, [this] { return wasClosed(); });
 }
+
 bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
 {
     PRECONDITION(!failed, "Should not be called on a failed source");
     return tryIngestionUntil(queue, Data{std::move(data), numberOfTuples}, [this] { return wasClosed(); });
 }
+
 bool NES::Sources::TestSourceControl::injectError(std::string error)
 {
     failed = true;
@@ -122,26 +124,31 @@ bool NES::Sources::TestSourceControl::wasClosed() const
 {
     return assertFutureStatus(closeFuture.wait_for(IMMEDIATELY));
 }
+
 bool NES::Sources::TestSourceControl::wasOpened() const
 {
     return assertFutureStatus(openFuture.wait_for(IMMEDIATELY));
 }
+
 bool NES::Sources::TestSourceControl::wasDestroyed() const
 {
     return assertFutureStatus(destroyedFuture.wait_for(IMMEDIATELY));
 }
+
 void NES::Sources::TestSourceControl::failDuringOpen(std::chrono::milliseconds blockFor)
 {
     assert(!wasOpened() && "open was already called. failedDuringOpen should be called during the test setup not during runtime");
     fail_during_open_duration = blockFor;
     fail_during_open = true;
 }
+
 void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
 {
     assert(!wasOpened() && "open was already called. failedDuringClose should be called during the test setup not during runtime");
     fail_during_close_duration = blockFor;
     fail_during_close = true;
 }
+
 size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken)
 {
     NES_DEBUG("TestSource::fillBuffer(), sourceId: {}", this->sourceId);
@@ -181,14 +188,14 @@ size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_to
     {
         return 0;
     }
-    NES_ASSERT(data->data.size() <= buffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
+    INVARIANT(data->data.size() <= buffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
     buffer.setNumberOfTuples(data->numberOfTuples);
     std::ranges::copy(data->data, buffer.getBuffer<std::byte>());
     return data->data.size();
 }
+
 void NES::Sources::TestSource::open()
 {
-    NES_DEBUG("Opening source {}", sourceId);
     control->open.set_value();
     if (control->fail_during_open)
     {
@@ -196,9 +203,9 @@ void NES::Sources::TestSource::open()
         throw std::runtime_error("I should throw here");
     }
 }
+
 void NES::Sources::TestSource::close()
 {
-    NES_DEBUG("Closing Source {}", sourceId);
     control->close.set_value();
     if (control->fail_during_close)
     {
@@ -206,6 +213,7 @@ void NES::Sources::TestSource::close()
         throw std::runtime_error("I should throw here");
     }
 }
+
 std::ostream& NES::Sources::TestSource::toString(std::ostream& str) const
 {
     return str << "Test Source";
@@ -215,6 +223,7 @@ NES::Sources::TestSource::TestSource(OriginId sourceId, const std::shared_ptr<Te
     : sourceId(sourceId), control(control)
 {
 }
+
 NES::Sources::TestSource::~TestSource()
 {
     control->destroyed.set_value();

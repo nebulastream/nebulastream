@@ -59,6 +59,9 @@ TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputNonString)
 
     Runtime::QueryEngineConfiguration defaultConfig2;
     EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "XX"}, {"numberOfWorkerThreads", "XX"}}));
+
+    Runtime::QueryEngineConfiguration defaultConfig3;
+    EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "1.0"}, {"numberOfWorkerThreads", "1.5"}}));
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputBadNumberOfThreads)

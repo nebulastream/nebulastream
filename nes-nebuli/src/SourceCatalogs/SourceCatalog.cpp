@@ -36,11 +36,7 @@ void SourceCatalog::addDefaultSources()
     NES_DEBUG("Sourcecatalog addDefaultSources");
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     bool success = addLogicalSource("default_logical", schema);
-    if (!success)
-    {
-        NES_ERROR("SourceCatalog::addDefaultSources: error while add default_logical");
-        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
-    }
+    INVARIANT(success, "error while add default_logical");
 }
 
 bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, SchemaPtr schema)
@@ -78,7 +74,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
     }
     uint64_t cnt = logicalSourceNameToSchemaMapping.erase(logicalSourceName);
     NES_DEBUG("SourceCatalog: removed {} copies of the source", cnt);
-    NES_ASSERT(!containsLogicalSource(logicalSourceName), "log source should not exist");
+    INVARIANT(!containsLogicalSource(logicalSourceName), "log source: '{}' should not exist.", logicalSourceName);
     return true;
 }
 
@@ -207,8 +203,7 @@ LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::stri
     {
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
-    NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists {}", logicalSourceName);
-    throw Exceptions::RuntimeException("Required source does not exists " + logicalSourceName);
+    throw UnknownSourceType("Required source does not exists " + logicalSourceName);
 }
 
 bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName)

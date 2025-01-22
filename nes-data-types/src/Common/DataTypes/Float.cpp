@@ -29,11 +29,10 @@
 namespace NES
 {
 
-bool Float::equals(DataTypePtr otherDataType)
+bool Float::operator==(const NES::DataType& other) const
 {
-    if (NES::Util::instanceOf<Float>(otherDataType))
+    if (const auto otherFloat = dynamic_cast<const Float*>(&other))
     {
-        auto otherFloat = as<Float>(otherDataType);
         return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;
     }
     return false;

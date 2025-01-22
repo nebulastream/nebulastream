@@ -28,14 +28,14 @@ LocalBufferPool::LocalBufferPool(
     , exclusiveBufferCount(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)
 {
-    NES_ASSERT2_FMT(this->bufferManager, "Invalid buffer manager");
+    PRECONDITION(this->bufferManager, "Invalid buffer manager");
     while (!buffers.empty())
     {
         auto* memSegment = buffers.front();
         buffers.pop_front();
-        NES_VERIFY(memSegment, "null memory segment");
+        INVARIANT(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
-        NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
+        INVARIANT(memSegment->isAvailable(), "Buffer not available");
 
         exclusiveBuffers.write(memSegment);
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -73,9 +73,11 @@ void LocalBufferPool::destroy()
 #endif
     size_t exclusiveBufferCount = this->exclusiveBufferCount.load();
 
-    NES_ASSERT2_FMT(
+    INVARIANT(
         numberOfReservedBuffers == exclusiveBufferCount,
-        "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected " << numberOfReservedBuffers);
+        "one or more buffers were not returned to the pool: {} but expected {}",
+        exclusiveBufferCount,
+        numberOfReservedBuffers);
 
     NES_DEBUG("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 
@@ -114,19 +116,18 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
 
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
-    NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable())
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
-    }
+    PRECONDITION(memSegment, "null memory segment");
+    INVARIANT(
+        memSegment->isAvailable(),
+        "Recycling buffer callback invoked on used memory segment refcnt={}",
+        memSegment->controlBlock->getReferenceCount());
     exclusiveBuffers.write(memSegment);
     exclusiveBufferCount.fetch_add(1);
 }
 
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    NES_THROW_RUNTIME_ERROR("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported");
 }
 size_t LocalBufferPool::getBufferSize() const
 {
@@ -145,9 +146,9 @@ size_t LocalBufferPool::getNumOfUnpooledBuffers() const
 
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This function is not supported here");
 }
-std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
@@ -163,7 +164,7 @@ std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::mi
     return std::nullopt;
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(const size_t size)
 {
     return bufferManager->getUnpooledBuffer(size);
 }

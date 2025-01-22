@@ -33,9 +33,9 @@ FixedSizeBufferPool::FixedSizeBufferPool(
     {
         auto* memSegment = buffers.front();
         buffers.pop_front();
-        NES_VERIFY(memSegment, "null memory segment");
+        INVARIANT(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
-        NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
+        INVARIANT(memSegment->isAvailable(), "Buffer not available");
 
         exclusiveBuffers.write(memSegment);
     }
@@ -75,7 +75,7 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const
     return qSize > 0 ? qSize : 0;
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
@@ -100,15 +100,13 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
     }
     else
     {
-        auto exp = CannotAllocateBuffer();
-        exp.what() += "FixedSizeBufferPool could not allocate buffer before timeout";
-        throw exp;
+        throw BufferAllocationFailure("FixedSizeBufferPool could not allocate buffer before timeout: {}", GET_BUFFER_TIMEOUT);
     }
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
-    NES_VERIFY(memSegment, "null memory segment");
+    INVARIANT(memSegment, "null memory segment");
     if (isDestroyed)
     {
         /// return recycled buffer to the global pool
@@ -117,11 +115,10 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     }
     else
     {
-        if (!memSegment->isAvailable())
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
-        }
+        INVARIANT(
+            memSegment->isAvailable(),
+            "Recycling buffer callback invoked on used memory segment refcnt={}",
+            memSegment->controlBlock->getReferenceCount());
 
         /// add back an exclusive buffer to the local pool
         exclusiveBuffers.write(memSegment);
@@ -130,7 +127,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    NES_THROW_RUNTIME_ERROR("This feature is not supported here");
+    throw UnsupportedOperation("This function is not supported here");
 }
 size_t FixedSizeBufferPool::getBufferSize() const
 {
@@ -142,14 +139,14 @@ size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 }
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
+    throw UnsupportedOperation("This function is not supported here");
 }
 }

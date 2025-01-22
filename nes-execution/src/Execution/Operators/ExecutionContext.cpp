@@ -22,9 +22,9 @@
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <val_ptr.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -89,19 +89,13 @@ nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
 {
     const auto stateEntry = localStateMap.find(op);
-    if (stateEntry == localStateMap.end())
-    {
-        NES_THROW_RUNTIME_ERROR("No local state registered for operator: " << op);
-    }
+    INVARIANT(stateEntry != localStateMap.end(), "No local state registered for operator");
     return stateEntry->second.get();
 }
 
 void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state)
 {
-    if (localStateMap.contains(op))
-    {
-        NES_THROW_RUNTIME_ERROR("Operators state already registered for operator: " << op);
-    }
+    INVARIANT(not localStateMap.contains(op), "Operators state already registered for operator");
     localStateMap.emplace(op, std::move(state));
 }
 
@@ -109,10 +103,7 @@ OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelin
 {
     auto handlers = pipelineCtx->getOperatorHandlers();
     auto size = handlers.size();
-    if (index >= size)
-    {
-        NES_THROW_RUNTIME_ERROR("operator handler at index " + std::to_string(index) + " is not registered");
-    }
+    PRECONDITION(index < size, "operator handler at index {} is not registered", index);
     return handlers[index].get();
 }
 

@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -12,6 +12,17 @@
     limitations under the License.
 */
 
+<<<<<<<< HEAD:nes-sources/src/Blocking/BlockingSource.cpp
+#include <Sources/BlockingSource.hpp>
+
+#include <ostream>
+
+namespace NES::Sources
+{
+std::ostream& operator<<(std::ostream& out, const BlockingSource& source)
+{
+    return source.toString(out);
+========
 #pragma once
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -20,4 +31,7 @@ namespace NES::Testing
 {
 /// Used for testing to copy buffers from the pipeline execution context, so that we can both free the original TupleBuffer and keep the copy of the TupleBuffer for later checks.
 Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider);
+>>>>>>>> main:nes-memory/tests/TestUtils/MemoryTestUtils.hpp
+}
+
 }

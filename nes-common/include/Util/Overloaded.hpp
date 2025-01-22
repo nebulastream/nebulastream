@@ -16,7 +16,7 @@
 
 namespace NES
 {
-/// Utility class to make std::visit usable with std::variant without implementanting a dedicated class
+/// Utility class to make std::visit usable with std::variant without implementing a dedicated class
 ///   std::variant<A,B> v = A{};
 ///   auto r = std::visit(Overloaded{
 ///       [](A& a){return doTheThingForA(a);},

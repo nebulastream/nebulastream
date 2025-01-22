@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -22,6 +23,7 @@
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -33,7 +35,7 @@ DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType)
 {
 }
 
-DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const
+DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
@@ -47,7 +49,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
     {
-        throw BufferAccessException("field name {} does not exist in layout", fieldName);
+        throw CannotAccessBuffer("field name {} does not exist in layout", fieldName);
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
@@ -79,7 +81,8 @@ void DynamicTuple::writeVarSized(
                 }
                 else
                 {
-                    NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+                    PRECONDITION(
+                        false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
                 }
             },
             field);
@@ -104,13 +107,14 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
             }
             else
             {
-                NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+                PRECONDITION(
+                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
             }
         },
         field);
 }
 
-std::string DynamicTuple::toString(const SchemaPtr& schema)
+std::string DynamicTuple::toString(const SchemaPtr& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
@@ -181,9 +185,11 @@ std::string DynamicField::toString() const
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
-    NES_ASSERT(
+    PRECONDITION(
         *physicalType == *rhs.physicalType,
-        "Physical types have to be the same but are " + physicalType->toString() + " and " + rhs.physicalType->toString());
+        "Physical types have to be the same but are {} and {}",
+        physicalType->toString(),
+        rhs.physicalType->toString());
 
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
 };
@@ -213,7 +219,7 @@ uint64_t TestTupleBuffer::getNumberOfTuples() const
     return buffer.getNumberOfTuples();
 }
 
-void TestTupleBuffer::setNumberOfTuples(uint64_t value)
+void TestTupleBuffer::setNumberOfTuples(const uint64_t value)
 {
     buffer.setNumberOfTuples(value);
 }
@@ -222,7 +228,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 {
     if (tupleIndex >= getCapacity())
     {
-        throw BufferAccessException("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
+        throw CannotAccessBuffer("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
     }
     return {tupleIndex, memoryLayout, buffer};
 }
@@ -230,7 +236,11 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
-    NES_ASSERT(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
+    PRECONDITION(
+        memoryLayout->getBufferSize() == buffer.getBufferSize(),
+        "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
+        memoryLayout->getBufferSize(),
+        buffer.getBufferSize());
 }
 
 Memory::TupleBuffer TestTupleBuffer::getBuffer()
@@ -254,7 +264,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
+std::string TestTupleBuffer::toString(const SchemaPtr& schema, const bool showHeader)
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -359,7 +369,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
+        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema->getLayoutType()));
     }
 }
 

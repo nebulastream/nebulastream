@@ -22,13 +22,14 @@
 namespace NES::Runtime
 {
 using TaskId = NESStrongType<size_t, struct TaskId_, 0, 1>;
+using ChronoClock = std::chrono::system_clock;
 
 struct EventBase
 {
     EventBase(WorkerThreadId threadId, QueryId queryId) : threadId(threadId), queryId(queryId) { }
     EventBase() = default;
 
-    std::chrono::high_resolution_clock::time_point timestamp = std::chrono::high_resolution_clock::now();
+    ChronoClock::time_point timestamp = ChronoClock::now();
     WorkerThreadId threadId = INVALID<WorkerThreadId>;
     QueryId queryId = INVALID<QueryId>;
 };

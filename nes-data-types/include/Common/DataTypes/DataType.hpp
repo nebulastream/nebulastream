@@ -38,12 +38,9 @@ public:
         return std::dynamic_pointer_cast<DataType>(ptr);
     }
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
-    virtual bool equals(DataTypePtr otherDataType) = 0;
+    virtual bool operator==(const DataType& other) const = 0;
+
+    bool operator!=(const DataType& other) const { return !(*this == other); }
 
     /**
      * @brief Calculates the joined data type between this data type and the other.
@@ -53,10 +50,6 @@ public:
      */
     virtual DataTypePtr join(DataTypePtr otherDataType) = 0;
 
-    /**
-     * @brief Returns a string representation of the data type.
-     * @return string
-     */
     virtual std::string toString() = 0;
 };
 
