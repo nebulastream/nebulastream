@@ -390,7 +390,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             //std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
         const auto endTime = std::chrono::high_resolution_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
+        const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime);
         auto errorMessage = checkResult(runningQuery);
         printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
         if (errorMessage.has_value())
@@ -399,7 +399,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         }
         worker.unregisterQuery(queryId);
         queryFinishedCounter += 1;
-        const auto queryName = queryToRun.name + ":" + std::to_string(queryToRun.queryIdInFile + 1);
+        const auto queryName = queryToRun.name + "." + std::to_string(queryToRun.queryIdInFile + 1);
         resultArray.push_back({{"query name", queryName}, {"time", duration.count()}});
     }
 

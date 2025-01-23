@@ -351,7 +351,7 @@ int main(int argc, const char** argv)
             {
                 nlohmann::json benchmarkResults;
                 failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
-                std::cout << benchmarkResults.dump(4) << std::endl;
+                //std::cout << benchmarkResults.dump(4) << std::endl;
                 std::filesystem::path const outputPath(config.resultDir.getValue() + "BenchmarkResults.json");
                 if (std::filesystem::exists(outputPath))
                 {
