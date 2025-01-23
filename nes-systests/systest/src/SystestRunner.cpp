@@ -399,7 +399,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         }
         worker.unregisterQuery(queryId);
         queryFinishedCounter += 1;
-        const auto queryName = queryToRun.name + "." + std::to_string(queryToRun.queryIdInFile + 1);
+        const auto queryName = queryToRun.name + ":" + std::to_string(queryToRun.queryIdInFile + 1);
         resultArray.push_back({{"query name", queryName}, {"time", duration.count()}});
     }
 
