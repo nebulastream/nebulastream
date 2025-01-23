@@ -17,8 +17,8 @@
 #include <optional>
 #include <regex>
 #include <string>
-#include <AntlrSQLParser.h>
 #include <AntlrSQLLexer.h>
+#include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
@@ -75,7 +75,8 @@ std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 {
-    switch (timebase) {
+    switch (timebase) /// TODO #619: improve this switch case
+    {
         case AntlrSQLLexer::MS:
             return API::Milliseconds(size);
         case AntlrSQLLexer::SEC:
@@ -96,50 +97,45 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
     const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
 {
-    if (tokenType == AntlrSQLLexer::EQ)
+    switch (tokenType) /// TODO #619: improve this switch case
     {
-        return NodeFunctionEquals::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::EQ:
+            return NodeFunctionEquals::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::NEQJ:
+            return NodeFunctionNegate::create(NodeFunctionEquals::create(leftFunction, rightFunction));
+        case AntlrSQLLexer::LT:
+            return NodeFunctionLess::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::GT:
+            return NodeFunctionGreater::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::GTE:
+            return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::LTE:
+            return NodeFunctionLessEquals::create(leftFunction, rightFunction);
+        default:
+            auto lexer = AntlrSQLLexer(nullptr);
+            throw InvalidQuerySyntax(
+                "Unknown Comparison Operator: {} of type: {}", lexer.getVocabulary().getSymbolicName(tokenType), tokenType);
     }
-    if (tokenType == AntlrSQLLexer::NEQJ)
-    {
-        const auto equalsFunction = NodeFunctionEquals::create(leftFunction, rightFunction);
-        return NodeFunctionNegate::create(equalsFunction);
-    }
-    if (tokenType == AntlrSQLLexer::LT)
-    {
-        return NodeFunctionLess::create(leftFunction, rightFunction);
-    }
-    if (tokenType == AntlrSQLLexer::GT)
-    {
-        return NodeFunctionGreater::create(leftFunction, rightFunction);
-    }
-    if (tokenType == AntlrSQLLexer::GTE)
-    {
-        return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
-    }
-    if (tokenType == AntlrSQLLexer::LTE)
-    {
-        return NodeFunctionLessEquals::create(leftFunction, rightFunction);
-    }
-    auto lexer = AntlrSQLLexer(nullptr);
-    throw InvalidQuerySyntax(
-        "Unknown Comparison Operator: {} of type: {}", lexer.getVocabulary().getSymbolicName(tokenType), tokenType);
 }
 
 std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType )
+    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
 {
-    if (tokenType == AntlrSQLLexer::AND)
+    switch (tokenType) /// TODO #619: improve this switch case
     {
-        return NodeFunctionAnd::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::AND:
+            return NodeFunctionAnd::create(leftFunction, rightFunction);
+        case AntlrSQLLexer::OR:
+            return NodeFunctionOr::create(leftFunction, rightFunction);
+        default:
+            auto lexer = AntlrSQLLexer(nullptr);
+            throw InvalidQuerySyntax(
+                "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}",
+                lexer.getVocabulary().getSymbolicName(tokenType),
+                tokenType,
+                *leftFunction,
+                *rightFunction);
     }
-    if (tokenType == AntlrSQLLexer::OR)
-    {
-        return NodeFunctionOr::create(leftFunction, rightFunction);
-    }
-    auto lexer = AntlrSQLLexer(nullptr);
-    throw InvalidQuerySyntax(
-        "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}", lexer.getVocabulary().getSymbolicName(tokenType), tokenType, *leftFunction, *rightFunction);
 }
 
 void AntlrSQLQueryPlanCreator::poppush(const AntlrSQLHelper& helper)
@@ -272,29 +268,25 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     const auto leftFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
-    if ( opTokenType == AntlrSQLLexer::ASTERISK)
+    switch (opTokenType) /// TODO #619: improve this switch case
     {
-        function = leftFunction * rightFunction;
-    }
-    else if (opTokenType == AntlrSQLLexer::SLASH)
-    {
-        function = leftFunction / rightFunction;
-    }
-    else if (opTokenType == AntlrSQLLexer::PLUS)
-    {
-        function = leftFunction + rightFunction;
-    }
-    else if (opTokenType == AntlrSQLLexer::MINUS)
-    {
-        function = leftFunction - rightFunction;
-    }
-    else if (opTokenType == AntlrSQLLexer::PERCENT)
-    {
-        function = leftFunction % rightFunction;
-    }
-    else
-    {
-        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
+        case AntlrSQLLexer::ASTERISK:
+            function = leftFunction * rightFunction;
+            break;
+        case AntlrSQLLexer::SLASH:
+            function = leftFunction / rightFunction;
+            break;
+        case AntlrSQLLexer::PLUS:
+            function = leftFunction + rightFunction;
+            break;
+        case AntlrSQLLexer::MINUS:
+            function = leftFunction - rightFunction;
+            break;
+        case AntlrSQLLexer::PERCENT:
+            function = leftFunction % rightFunction;
+            break;
+        default:
+            throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
     helper.functionBuilder.push_back(function);
     poppush(helper);
@@ -307,18 +299,17 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
 
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
-    auto opTokenType= context->op->getType();
-    if (opTokenType == AntlrSQLLexer::PLUS)
+    auto opTokenType = context->op->getType();
+    switch (opTokenType) /// TODO #619: improve this switch case
     {
-        function = innerFunction;
-    }
-    else if (opTokenType == AntlrSQLLexer::MINUS)
-    {
-        function = -1 * innerFunction;
-    }
-    else
-    {
-        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
+        case AntlrSQLLexer::PLUS:
+            function = innerFunction;
+            break;
+        case AntlrSQLLexer::MINUS:
+            function = -1 * innerFunction;
+            break;
+        default:
+            throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
     helper.functionBuilder.push_back(function);
     poppush(helper);
@@ -539,7 +530,7 @@ void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* co
         parentRuleIndex = parentContext->getRuleIndex();
     }
 
-    auto token= context->getStop();
+    auto* token = context->getStop();
     auto timeunit = token->getType();
     if (parentRuleIndex == AntlrSQLParser::RuleAdvancebyParameter)
     {
@@ -917,43 +908,41 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = Util::toLowerCase(context->children[0]->getText());
     auto tokenType = context->getStart()->getType();
 
-    if (tokenType == AntlrSQLLexer::COUNT)
+    switch (tokenType) /// TODO #619: improve this switch case
     {
-        parentHelper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
-    }
-    else if (tokenType== AntlrSQLLexer::AVG)
-    {
-        parentHelper.windowAggs.push_back(API::Avg(helper.functionBuilder.back())->aggregation);
-    }
-    else if (tokenType== AntlrSQLLexer::MAX)
-    {
-        parentHelper.windowAggs.push_back(API::Max(helper.functionBuilder.back())->aggregation);
-    }
-    else if (tokenType== AntlrSQLLexer::MIN)
-    {
-        parentHelper.windowAggs.push_back(API::Min(helper.functionBuilder.back())->aggregation);
-    }
-    else if (tokenType== AntlrSQLLexer::SUM)
-    {
-        parentHelper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
-    }
-    else if (tokenType== AntlrSQLLexer::MEDIAN)
-    {
-        parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
-    }
-    else if (funcName == "concat")
-    {
-        INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
-        const auto rightFunction = helper.functionBuilder.back();
-        helper.functionBuilder.pop_back();
-        const auto leftFunction = helper.functionBuilder.back();
-        helper.functionBuilder.pop_back();
+        case AntlrSQLLexer::COUNT:
+            parentHelper.windowAggs.push_back(API::Count(helper.functionBuilder.back())->aggregation);
+            break;
+        case AntlrSQLLexer::AVG:
+            parentHelper.windowAggs.push_back(API::Avg(helper.functionBuilder.back())->aggregation);
+            break;
+        case AntlrSQLLexer::MAX:
+            parentHelper.windowAggs.push_back(API::Max(helper.functionBuilder.back())->aggregation);
+            break;
+        case AntlrSQLLexer::MIN:
+            parentHelper.windowAggs.push_back(API::Min(helper.functionBuilder.back())->aggregation);
+            break;
+        case AntlrSQLLexer::SUM:
+            parentHelper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
+            break;
+        case AntlrSQLLexer::MEDIAN:
+            parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
+            break;
+        default:
+            if (funcName == "concat")
+            {
+                INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
+                const auto rightFunction = helper.functionBuilder.back();
+                helper.functionBuilder.pop_back();
+                const auto leftFunction = helper.functionBuilder.back();
+                helper.functionBuilder.pop_back();
 
-        parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
-    }
-    else
-    {
-        throw InvalidQuerySyntax("Unknown aggregation function: {}, resolved to token type: {}", funcName, tokenType);
+                parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
+            }
+            else
+            {
+                throw InvalidQuerySyntax("Unknown aggregation function: {}, resolved to token type: {}", funcName, tokenType);
+            }
     }
 }
 
