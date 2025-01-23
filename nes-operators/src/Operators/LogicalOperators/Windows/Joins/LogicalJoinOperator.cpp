@@ -87,7 +87,7 @@ bool LogicalJoinOperator::inferSchema()
                 {
                     inputSchema->copyFields(distinctSchema);
                 }
-                joinKey.inferStamp(inputSchema);
+                joinKey.inferStamp(*inputSchema);
                 return true;
             }
         }
@@ -148,7 +148,7 @@ bool LogicalJoinOperator::inferSchema()
 
     ///Infer stamp of window definition
     const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
-    windowType->inferStamp(leftInputSchema);
+    windowType->inferStamp(*leftInputSchema);
 
     ///Reset output schema and add fields from left and right input schema
     outputSchema->clear();

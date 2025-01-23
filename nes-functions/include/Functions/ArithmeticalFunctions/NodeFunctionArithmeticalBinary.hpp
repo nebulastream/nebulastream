@@ -29,7 +29,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;

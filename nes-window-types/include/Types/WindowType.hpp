@@ -33,19 +33,9 @@ public:
 
     virtual std::string toString() const = 0;
 
-    /**
-     * @brief Check equality of this window type with the input window type
-     * @param otherWindowType : the other window type to compare with
-     * @return true if equal else false
-     */
     virtual bool equal(WindowTypePtr otherWindowType) = 0;
 
-    /**
-     * @brief Infer stamp of the window type
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    virtual bool inferStamp(const SchemaPtr& schema) = 0;
+    virtual bool inferStamp(const Schema& schema) = 0;
 
     /**
      * @brief Get the hash of the window type

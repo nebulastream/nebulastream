@@ -34,18 +34,9 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
-    /**
-     * @brief Infers the stamp of this logical negate function node.
-     * We assume that the children of this function is a predicate.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+    /// We assume that the children of this function is a predicate.
+    void inferStamp(const Schema& schema) override;
 
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
-    */
     NodeFunctionPtr deepCopy() override;
 
 protected:

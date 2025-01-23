@@ -56,7 +56,7 @@ std::string NodeFunctionConstantValue::getConstantValue() const
     return constantValue;
 }
 
-void NodeFunctionConstantValue::inferStamp(SchemaPtr)
+void NodeFunctionConstantValue::inferStamp(const Schema&)
 {
     /// the stamp of constant value functions is defined by the constant value type.
     /// thus ut is already assigned correctly when the function node is created.

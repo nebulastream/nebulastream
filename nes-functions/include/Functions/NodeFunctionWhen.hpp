@@ -16,27 +16,18 @@
 #include <Functions/NodeFunctionBinary.hpp>
 namespace NES
 {
-/**
- * @brief This node represents an When function.
- * It is used as part of a case function, if it evaluates the left child to true, the right child will be returned.
- */
+
+/// This node represents an When function.
+/// It is used as part of a case function, if it evaluates the left child to true, the right child will be returned.
 class NodeFunctionWhen final : public NodeFunctionBinary
 {
 public:
     explicit NodeFunctionWhen(DataTypePtr stamp);
     ~NodeFunctionWhen() noexcept override = default;
 
-    /**
-     * @brief Create a new When function.
-     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
 
-    /**
-     * @brief Infers the stamp of this function node.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 

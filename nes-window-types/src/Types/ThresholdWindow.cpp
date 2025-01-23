@@ -66,7 +66,7 @@ uint64_t ThresholdWindow::getMinimumCount() const
     return minimumCount;
 }
 
-bool ThresholdWindow::inferStamp(const SchemaPtr& schema)
+bool ThresholdWindow::inferStamp(const Schema& schema)
 {
     NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(schema);
