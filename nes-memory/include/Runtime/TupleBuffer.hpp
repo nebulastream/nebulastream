@@ -93,18 +93,6 @@ public:
      */
     [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
-    /**
-     * @brief Creates a TupleBuffer of length bytes starting at ptr address.
-     *
-     * @param ptr    resource's address.
-     * @param length the size of the allocated memory.
-     * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
-     *               which is the caller's responsibility.
-     *
-     */
-    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
-    [[nodiscard]] static TupleBuffer
-    wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
@@ -215,9 +203,6 @@ public:
 
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     void setOriginId(OriginId id) noexcept;
-
-    ///@brief set the buffer's recycle callback.
-    void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
     [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;

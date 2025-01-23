@@ -17,7 +17,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
-#include <sstream>
+#include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
@@ -73,19 +73,14 @@ class MemorySegment;
 class alignas(64) BufferControlBlock
 {
 public:
-    explicit BufferControlBlock(
-        MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
+    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
-    MemorySegment* getOwner() const;
-    void resetBufferRecycler(BufferRecycler* recycler);
-
-    /// Add recycle callback to be called upon reaching 0 as ref cnt
-    void addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept;
+    [[nodiscard]] MemorySegment* getOwner() const;
 
     /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
     /// reference counter is zero. If that's not the case, an exception is thrown.
     /// Returns true if the mem segment can be used to create a TupleBuffer.
-    bool prepare();
+    bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
 
     /// Increase the reference counter by one.
     BufferControlBlock* retain();
@@ -129,7 +124,7 @@ private:
 
 public:
     MemorySegment* owner;
-    std::atomic<BufferRecycler*> owningBufferRecycler{};
+    std::shared_ptr<BufferRecycler> owningBufferRecycler = nullptr;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -195,11 +190,7 @@ public:
     MemorySegment() noexcept = default;
 
     explicit MemorySegment(
-        uint8_t* ptr,
-        uint32_t size,
-        BufferRecycler* recycler,
-        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-        uint8_t* controlBlock);
+        uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, uint8_t* controlBlock);
 
     ~MemorySegment();
 
@@ -213,12 +204,7 @@ private:
      * @param recycler
      * @param recycleFunction
      */
-    explicit MemorySegment(
-        uint8_t* ptr,
-        uint32_t size,
-        BufferRecycler* recycler,
-        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-        bool);
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
 
     /**
      * @return true if the segment has a reference counter equals to zero

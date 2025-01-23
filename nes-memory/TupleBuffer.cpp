@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
-#include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferRecycler.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+
 namespace NES::Memory
 {
 
@@ -37,26 +35,9 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
     return tb;
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, BufferRecycler* parent)
-{
-    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler)
-    {
-        recycler->recyclePooledBuffer(segment);
-        delete segment;
-    };
-    auto* memSegment = new detail::MemorySegment(ptr, length, parent, std::move(callback), true);
-    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
-}
-
-TupleBuffer
-TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback)
-{
-    auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
-    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
-}
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
 {
-    if (controlBlock)
+    if (controlBlock != nullptr)
     {
         controlBlock->retain();
     }
@@ -184,10 +165,6 @@ void TupleBuffer::setCreationTimestampInMS(const Runtime::Timestamp value) noexc
 void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
-}
-void TupleBuffer::addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept
-{
-    controlBlock->addRecycleCallback(std::move(newCallback));
 }
 
 uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
