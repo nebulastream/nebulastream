@@ -44,7 +44,7 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlanIterator::snapshot()
 
 PipelineQueryPlanIterator::iterator::iterator(const PipelineQueryPlanPtr& current)
 {
-    auto rootOperators = current->getSourcePipelines();
+    const auto rootOperators = current->getSourcePipelines();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--)
     {
         workStack.push(rootOperators[i]);
@@ -75,9 +75,9 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
     }
     else
     {
-        auto current = workStack.top();
+        const auto current = workStack.top();
         workStack.pop();
-        auto children = current->getSuccessors();
+        const auto children = current->getSuccessors();
         for (int64_t i = children.size() - 1; i >= 0; i--)
         {
             auto child = children[i];

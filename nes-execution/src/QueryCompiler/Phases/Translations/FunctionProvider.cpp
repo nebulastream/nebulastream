@@ -73,9 +73,9 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
 
 std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
-    auto stringValue = constantFunction->getConstantValue();
-    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+    const auto stringValue = constantFunction->getConstantValue();
+    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
+    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
     {
         switch (basicType->nativeType)
         {

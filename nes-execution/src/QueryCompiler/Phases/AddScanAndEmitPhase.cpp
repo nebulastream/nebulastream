@@ -48,20 +48,20 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQue
 
 OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
 {
-    auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
-    auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
+    const auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
+    const auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
     PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
 
     /// insert buffer scan operator to the pipeline root if necessary
-    auto rootOperator = pipelineRootOperators[0];
+    const auto& rootOperator = pipelineRootOperators[0];
     if (!NES::Util::instanceOf<PhysicalOperators::AbstractScanOperator>(rootOperator))
     {
         PRECONDITION(
             NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
             "Pipeline root should be a unary operator but was: {}",
             *rootOperator);
-        auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
-        auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
+        const auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
+        const auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 

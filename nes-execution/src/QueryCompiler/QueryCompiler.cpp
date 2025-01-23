@@ -55,11 +55,11 @@ QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequest
 
     timer.start();
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
-    auto logicalQueryPlan = request->getDecomposedQueryPlan();
+    const auto logicalQueryPlan = request->getDecomposedQueryPlan();
     dumpHelper.dump("1. LogicalQueryPlan", logicalQueryPlan->toString());
     timer.snapshot("LogicalQueryPlan");
 
-    auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+    const auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
     dumpHelper.dump("2. PhysicalQueryPlan", physicalQueryPlan->toString());
     timer.snapshot("PhysicalQueryPlan");
 
@@ -70,7 +70,7 @@ QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequest
     addScanAndEmitPhase->apply(pipelinedQueryPlan);
     dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
     timer.snapshot("AfterAddScanAndEmitPhase");
-    auto bufferSize = request->getBufferSize();
+    const auto bufferSize = request->getBufferSize();
     pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
     timer.snapshot("AfterToNautilusPlanPhase");
 
