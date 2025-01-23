@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <TaggedPointer.hpp>
+
+#include <cstdint>
+#include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES
