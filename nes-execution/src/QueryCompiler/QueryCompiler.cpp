@@ -42,17 +42,16 @@ QueryCompiler::QueryCompiler(
 {
 }
 
-QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request)
+QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request) const
 {
     NES_INFO("Compile Query with Nautilus");
 
     Timer timer("QueryCompiler");
-    /// Uncomment these dumb informations for debugging purposes. They are be quite intrusive.
-    auto query = fmt::format("{}", request->getDecomposedQueryPlan()->getQueryId());
+    /// Uncomment these dump informations for debugging purposes. They can be quite intrusive.
     /// create new context for handling debug output
-    bool dumpToFile = options->dumpMode != DumpMode::CONSOLE;
-    bool dumpToConsole = options->dumpMode != DumpMode::FILE;
-    auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, options->dumpPath);
+    const bool dumpToFile = options->dumpMode == DumpMode::FILE || options->dumpMode == DumpMode::FILE_AND_CONSOLE;
+    const bool dumpToConsole = options->dumpMode == DumpMode::CONSOLE || options->dumpMode == DumpMode::FILE_AND_CONSOLE;
+    const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, options->dumpPath);
 
     timer.start();
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
