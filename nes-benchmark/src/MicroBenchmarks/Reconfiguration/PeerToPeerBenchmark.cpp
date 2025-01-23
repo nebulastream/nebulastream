@@ -462,7 +462,7 @@ using namespace NES;
         auto requestHandlerService = crd->getRequestHandlerService();
         auto topology = crd->getTopology();
         // std::cout << topology->toString();
-
+        std::cout << "start main query" << std::endl;
         // main query
         auto fileSinkDescriptor = FileSinkDescriptor::create("benchmark_output.csv", "CSV_FORMAT", "OVERWRITE");
         auto firstSourceName = intermediateSourceNames[1][intermediateSourceNames[1].size() - 1];
@@ -477,6 +477,7 @@ using namespace NES;
             requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
         waitForQueryStatus(mainQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
 
+        std::cout << "start intermediate queries" << std::endl;
         std::vector<QueryId> peerToPeerIds;
         for (uint64_t originId = 1; originId <= 2; originId++) {
             for (uint64_t interNodeId = numberOfIntermediateNodes; interNodeId > 1; interNodeId--) {
@@ -501,7 +502,7 @@ using namespace NES;
                 peerToPeerIds.push_back(addedQueryId);
             }
         }
-
+        std::cout << "start last intermediate query" << std::endl;
         // peer-to-peer queries
         for (auto originId = 1; originId <= 2; originId++) {
             auto sourceName = intermediateSourceNames[originId][0];
@@ -524,6 +525,7 @@ using namespace NES;
         auto interNodes = intermediateNodes;
         auto coord = crd;
 
+        std::cout << "start producing" << std::endl;
         shouldProduce.store(true);
 
         for (auto& id: peerToPeerIds) {

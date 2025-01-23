@@ -97,10 +97,10 @@ class NetworkDataSender : public BaseChannelType {
         // again, we need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
         // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
         buffer.retain();
-        auto const sentBytesOpt = this->zmqSocket.send(
+        zmq::send_result_t const sentBytesOpt = this->zmqSocket.send(
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, buffer.getControlBlock()),
             kZmqSendDefault);
-        if (!!sentBytesOpt) {
+        if (sentBytesOpt.has_value()) {
             NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
                       buffer.getNumberOfTuples(),
                       buffer.getBufferSize(),

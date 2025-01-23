@@ -100,6 +100,7 @@ void FileSink::shutdown() {
     auto completedPath = filePath.substr(0, dotPosition) + "_finished" + filePath.substr(dotPosition);
     outputFile.close();
     if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
+        std::cout<<"file " << filePath.c_str() << "renamed" << std::endl;
         NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
     } else {
         NES_ERROR("Can't rename file after dumping");
