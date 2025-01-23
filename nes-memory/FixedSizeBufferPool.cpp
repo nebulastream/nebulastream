@@ -12,14 +12,17 @@
     limitations under the License.
 */
 
+#include <FixedSizeBufferPool.hpp>
+
+#include <chrono>
 #include <cstddef>
 #include <deque>
 #include <memory>
+#include <optional>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <FixedSizeBufferPool.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES::Memory
@@ -37,8 +40,10 @@ FixedSizeBufferPool::FixedSizeBufferPool(
         auto* memSegment = buffers.front();
         buffers.pop_front();
         INVARIANT(memSegment, "null memory segment");
-        memSegment->controlBlock->resetBufferRecycler(this);
         INVARIANT(memSegment->isAvailable(), "Buffer not available");
+        INVARIANT(
+            memSegment->controlBlock->owningBufferRecycler == nullptr,
+            "Buffer should not retain a reference to its parent while not in use.");
 
         exclusiveBuffers.write(memSegment);
     }
@@ -46,7 +51,7 @@ FixedSizeBufferPool::FixedSizeBufferPool(
 
 FixedSizeBufferPool::~FixedSizeBufferPool()
 {
-    /// nop
+    FixedSizeBufferPool::destroy();
 }
 
 BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
@@ -56,18 +61,21 @@ BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
 
 void FixedSizeBufferPool::destroy()
 {
-    NES_DEBUG("Destroying LocalBufferPool");
-    bool expected = false;
-    if (!isDestroyed.compare_exchange_strong(expected, true))
+    if (isDestroyed.exchange(true))
     {
+        /// already destroyed
         return;
     }
 
     detail::MemorySegment* memSegment = nullptr;
+    /// Recycle all resident buffers immediatly.
+    /// In-flight buffers will keep the FixedSizeBufferPool alive and are returned to the global buffer provider
+    /// once they are no longer in use. Once all in-flight buffers are destroyed the FixedSizeBufferPool is truly destroyed.
     while (exclusiveBuffers.read(memSegment))
     {
-        /// return exclusive buffers to the global pool
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+        INVARIANT(
+            memSegment->controlBlock->owningBufferRecycler == nullptr,
+            "Buffer should not retain a reference to its parent while not in use");
         bufferManager->recyclePooledBuffer(memSegment);
     }
 }
@@ -81,10 +89,10 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
 {
     const auto now = std::chrono::steady_clock::now();
-    detail::MemorySegment* memSegment;
+    detail::MemorySegment* memSegment = nullptr;
     if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
     {
-        if (memSegment->controlBlock->prepare())
+        if (memSegment->controlBlock->prepare(shared_from_this()))
         {
             return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         }
@@ -95,9 +103,9 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::
 
 TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 {
-    detail::MemorySegment* memSegment;
+    detail::MemorySegment* memSegment = nullptr;
     exclusiveBuffers.blockingRead(memSegment);
-    if (memSegment->controlBlock->prepare())
+    if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
@@ -109,8 +117,6 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     INVARIANT(memSegment, "null memory segment");
     if (isDestroyed)
     {
-        /// return recycled buffer to the global pool
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
     else

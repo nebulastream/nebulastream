@@ -147,6 +147,12 @@ SourceImplementationTermination dataSourceThreadRoutine(
     return {SourceImplementationTermination::StopRequested};
 }
 
+struct DestroyOnExit
+{
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    ~DestroyOnExit() { bufferProvider->destroy(); }
+};
+
 void dataSourceThread(
     const std::stop_token& stopToken,
     std::promise<SourceImplementationTermination> result,
@@ -164,6 +170,7 @@ void dataSourceThread(
         return;
     }
 
+    const DestroyOnExit onExit{bufferProvider.value()};
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
     {
