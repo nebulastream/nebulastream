@@ -75,14 +75,8 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
         if (isSync && timestamp) {
-            //            auto t1 = std::chrono::high_resolution_clock::now();
             notifyEpochCallback(timestamp);
             isWaiting = false;
-            //            auto t2 = std::chrono::high_resolution_clock::now();
-            //            auto ts = std::chrono::system_clock::now();
-            //            auto timeNow = std::chrono::system_clock::to_time_t(ts);
-            //            statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-            //            statisticsFile << duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
         } else {
             isWaiting = true;
         }
