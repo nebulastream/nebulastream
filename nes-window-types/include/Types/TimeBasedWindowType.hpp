@@ -30,10 +30,7 @@ public:
     explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
     ~TimeBasedWindowType() override = default;
-    /**
-     * @brief Get the time characteristic of the window.
-     * @return
-     */
+
     [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
 
     /**
@@ -48,12 +45,7 @@ public:
      */
     virtual TimeMeasure getSlide() = 0;
 
-    /**
-     * @brief Infer stamp of time based window type
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    bool inferStamp(const SchemaPtr& schema) override;
+    bool inferStamp(const Schema& schema) override;
 
 protected:
     TimeCharacteristicPtr timeCharacteristic;

@@ -18,26 +18,14 @@
 namespace NES::Windowing
 {
 
-/**
- * @brief
- * The MinAggregationDescriptor aggregation calculates the minimum over the window.
- */
 class MinAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /**
-   * Factory method to creates a MinAggregationDescriptor aggregation on a particular field.
-   */
     static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
     static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
     WindowAggregationDescriptorPtr copy() override;
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;

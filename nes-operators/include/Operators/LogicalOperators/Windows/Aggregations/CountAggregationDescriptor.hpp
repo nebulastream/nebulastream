@@ -41,7 +41,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
 

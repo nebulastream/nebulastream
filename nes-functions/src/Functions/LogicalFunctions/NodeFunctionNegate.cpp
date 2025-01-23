@@ -51,7 +51,7 @@ NodeFunctionPtr NodeFunctionNegate::create(NodeFunctionPtr const& child)
     return equals;
 }
 
-void NodeFunctionNegate::inferStamp(SchemaPtr schema)
+void NodeFunctionNegate::inferStamp(const Schema& schema)
 {
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);

@@ -21,19 +21,9 @@ namespace NES
 class NodeFunctionFieldRename;
 using NodeFunctionFieldRenamePtr = std::shared_ptr<NodeFunctionFieldRename>;
 
-/**
- * @brief A NodeFunctionFieldRename allows us to rename an attribute value via .as in the query
- */
 class NodeFunctionFieldRename : public NodeFunction
 {
 public:
-    /**
-     * @brief Create FieldRename Function node
-     * @param fieldName : name of the field
-     * @param newFieldName : new name of the field
-     * @param datatype : the data type
-     * @return pointer to the NodeFunctionFieldRename
-     */
     static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -42,17 +32,8 @@ public:
 
     std::string getNewFieldName() const;
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
-    */
     NodeFunctionPtr deepCopy() override;
 
     NodeFunctionFieldAccessPtr getOriginalField() const;

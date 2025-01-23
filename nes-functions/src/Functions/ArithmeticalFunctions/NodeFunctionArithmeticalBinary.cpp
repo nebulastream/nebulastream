@@ -39,7 +39,7 @@ NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(NodeFunctionArith
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
+void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
 {
     /// infer the stamps of the left and right child
     const auto left = getLeft();

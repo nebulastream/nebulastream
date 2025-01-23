@@ -18,28 +18,17 @@
 
 namespace NES::Windowing
 {
-/**
- * @brief
- * The SumAggregationDescriptor aggregation calculates the running sum over the window.
- */
+
 class SumAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
     virtual ~SumAggregationDescriptor() = default;
 
-    /**
-    * Factory method to creates a sum aggregation on a particular field.
-    */
     static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
     static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
 

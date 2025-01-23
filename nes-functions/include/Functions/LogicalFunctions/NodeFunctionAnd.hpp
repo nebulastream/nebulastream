@@ -30,13 +30,10 @@ public:
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    /**
-     * @brief Infers the stamp of this logical AND function node.
-     * We assume that both children of an and function are predicates.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+
+    /// Infers the stamp of this logical AND function node.
+    /// We assume that both children of an and function are predicates.
+    void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 

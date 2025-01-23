@@ -110,7 +110,7 @@ bool LogicalInferModelOperator::inferSchema()
     {
         auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(inputField);
         updateToFullyQualifiedFieldName(inputFunction);
-        inputFunction->inferStamp(inputSchema);
+        inputFunction->inferStamp(*inputSchema);
         auto fieldName = inputFunction->getFieldName();
         inputSchema->replaceField(fieldName, inputFunction->getStamp());
     }

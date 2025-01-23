@@ -36,12 +36,7 @@ public:
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
     MaxAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);

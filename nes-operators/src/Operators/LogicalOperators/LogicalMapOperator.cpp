@@ -58,7 +58,7 @@ bool LogicalMapOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction->inferStamp(getInputSchema());
+    mapFunction->inferStamp(*getInputSchema());
 
     const auto assignedField = mapFunction->getField();
     if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))

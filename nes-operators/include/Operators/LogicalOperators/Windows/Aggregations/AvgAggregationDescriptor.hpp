@@ -17,26 +17,16 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 namespace NES::Windowing
 {
-/**
- * @brief
- * The AvgAggregationDescriptor aggregation calculates the avg over the window.
- */
+
 class AvgAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /**
-    * Factory method to creates a avg aggregation on a particular field.
-    */
+    /// Factory method to creates a avg aggregation on a particular field.
     static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
     static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
 

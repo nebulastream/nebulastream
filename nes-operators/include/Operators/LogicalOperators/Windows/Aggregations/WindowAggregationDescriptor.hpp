@@ -65,7 +65,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    virtual void inferStamp(SchemaPtr schema) = 0;
+    virtual void inferStamp(const Schema& schema) = 0;
 
     /**
     * @brief Creates a deep copy of the window aggregation

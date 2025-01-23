@@ -34,7 +34,7 @@ public:
 
     /// On a constant value function infer stamp has not to perform any action as its result type is always constant.
     /// @param schema
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;

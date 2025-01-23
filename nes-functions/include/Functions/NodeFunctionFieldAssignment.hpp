@@ -28,37 +28,18 @@ class NodeFunctionFieldAssignment : public NodeFunctionBinary
 public:
     explicit NodeFunctionFieldAssignment(DataTypePtr stamp);
 
-    /**
-     * @brief Create untyped field read.
-     */
     static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
-    /**
-     * @brief return the field to which a new value is assigned.
-     * @return NodeFunctionFieldAccessPtr
-     */
     NodeFunctionFieldAccessPtr getField() const;
 
-    /**
-     * @brief returns the functions, which calculates the new value.
-     * @return NodeFunctionPtr
-     */
+    /// returns the functions, which calculates the new value.
     NodeFunctionPtr getAssignment() const;
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
-    */
     NodeFunctionPtr deepCopy() override;
 
 protected:
