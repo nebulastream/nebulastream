@@ -144,7 +144,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 //
             const auto& eosMessageMaxSeqNumber = partitionManager->getMaxRegisteredSequenceNumber(eosNesPartition);
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
-                NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
+                NES_ERROR("Current message sequence number {} is less than expected max {} for partition {}",
                           (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
                           eosMessageMaxSeqNumber,
                           eosNesPartition);

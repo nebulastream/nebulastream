@@ -100,7 +100,7 @@ NES::Testing::BorrowedPortPtr rpcCoordinatorPort;
 NES::Testing::BorrowedPortPtr restPort;
 NES::NesCoordinatorPtr crd;
 
-void startCoordinator(uint64_t numberOfBuffersToProduce) {
+void startCoordinator(uint64_t numberOfBuffersToProduce, uint64_t bufferSize) {
     std::cout << "starting coordinator" << std::endl;
     auto coordinatorConfiguration = NES::Configurations::CoordinatorConfiguration::createDefault();
     restPort = NES::Testing::detail::getPortDispatcher().getNextPort();
@@ -120,6 +120,8 @@ void startCoordinator(uint64_t numberOfBuffersToProduce) {
         coordinatorConfiguration->worker.numberOfBuffersPerWorker = 1024 + 50;
     }
     coordinatorConfiguration->worker.numberOfBuffersToProduce = numberOfBuffersToProduce;
+    coordinatorConfiguration->worker.numWorkerThreads.setValue(4);
+    coordinatorConfiguration->worker.bufferSizeInBytes = bufferSize;
     // coordinatorConfiguration->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
 
     NES::Configurations::OptimizerConfiguration optimizerConfiguration;
@@ -187,7 +189,7 @@ NesWorkerPtr startSourceWorker(uint64_t bufferSize, uint64_t numberOfBuffersToPr
     auto lambdaSourceType = LambdaSourceType::create(logicalSourceName,
                                                      "phy_" + logicalSourceName,
                                                      std::move(func),
-                                                     numberOfBuffersToProduce,
+                                                     numberOfBuffersToProduce + 50,
                                                      /* gatheringValue */ 1,
                                                      GatheringMode::INTERVAL_MODE);
     wrkConf->physicalSourceTypes.add(lambdaSourceType);
@@ -236,7 +238,7 @@ NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t numberOfBuffe
     return wrk;
 }
 void setUp(uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t numberOfIntermediateNodes) {
-    startCoordinator(numberOfBuffersToProduce);
+    startCoordinator(numberOfBuffersToProduce, bufferSize);
     setupLogicalSources(2, crd->getRequestHandlerService());
 
     // start sources
@@ -392,7 +394,7 @@ bool checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogP
 }
 
 void runDataBenchmark(uint64_t defaultNumberOfIntermediateNodes, uint64_t minNUmberOfBuffersToProduce, uint64_t maxNumberOfBuffersToProduce, uint64_t bufferSize) {
-    for (uint64_t tries = 0, numberOfBuffersToProduce = minNUmberOfBuffersToProduce; numberOfBuffersToProduce <= maxNumberOfBuffersToProduce; numberOfBuffersToProduce *= (1 + (tries++ % 3 == 0))) {
+    for (uint64_t tries = 1, numberOfBuffersToProduce = minNUmberOfBuffersToProduce; numberOfBuffersToProduce <= maxNumberOfBuffersToProduce; numberOfBuffersToProduce *= (1 + (tries++ % 3 == 0))) {
         NES_ERROR("Next round numberOfBuffersToProduce = {}, numberOfIntermediateNodes = {}",
                   numberOfBuffersToProduce,
                   defaultNumberOfIntermediateNodes);
@@ -452,13 +454,73 @@ void runDataBenchmark(uint64_t defaultNumberOfIntermediateNodes, uint64_t minNUm
     }
 }
 
-void runNodesBenchmark(uint64_t defaultNumberOfBuffersToProduce, uint64_t numberOfIntermediateNodes, uint64_t bufferSize) {
+void runNodesBenchmark(uint64_t defaultNumberOfBuffersToProduce, uint64_t nmberOfIntermediateNodes, uint64_t bufferSize) {
     NES_ERROR("Next round numberOfBuffersToProduce = {}, numberOfIntermediateNodes = {}",
               defaultNumberOfBuffersToProduce,
-              numberOfIntermediateNodes);
+              nmberOfIntermediateNodes);
 
     std::cout << "Setting up nodes." << std::endl;
-    setUp(bufferSize, defaultNumberOfBuffersToProduce, numberOfIntermediateNodes);
+    setUp(bufferSize, defaultNumberOfBuffersToProduce, nmberOfIntermediateNodes);
+
+    auto requestHandlerService = crd->getRequestHandlerService();
+    auto topology = crd->getTopology();
+    // std::cout << topology->toString();
+
+    auto fileSinkDescriptor = FileSinkDescriptor::create("benchmark_output.csv", "CSV_FORMAT", "OVERWRITE");
+    auto query = Query::from("example1")
+                     .joinWith(Query::from("example2"))
+                     .where(Attribute("value1") == Attribute("value2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                     .sink(fileSinkDescriptor);
+
+    QueryId addedQueryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
+    for (auto& wrk : sourceNodes) {
+        auto decompPlanIds = wrk->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(addedQueryId.getRawValue()));
+        auto [decompPlanIdToCheck, decompPlanVersionToCheck] = decompPlanIds.front();
+        checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCheck, decompPlanVersionToCheck, wrk, std::chrono::seconds(120));
+    }
+    for (auto& wrk : intermediateNodes) {
+        auto decompPlanIds = wrk->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(addedQueryId.getRawValue()));
+        auto [decompPlanIdToCheck, decompPlanVersionToCheck] = decompPlanIds.front();
+        checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCheck, decompPlanVersionToCheck, wrk, std::chrono::seconds(120));
+    }
+
+    auto decompPlanIds = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(addedQueryId.getRawValue()));
+    auto [decompPlanIdToCheck, decompPlanVersionToCheck] = decompPlanIds.front();
+    auto reconfigMarker = ReconfigurationMarker::create();
+    auto metadata = std::make_shared<DrainQueryMetadata>(1);
+    auto event = ReconfigurationMarkerEvent::create(QueryState::RUNNING, metadata);
+    reconfigMarker->addReconfigurationEvent(decompPlanIds.front(), event);
+    auto wrkSource = crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(decompPlanIdToCheck, decompPlanVersionToCheck)->getSources().front();
+    wrkSource->handleReconfigurationMarker(reconfigMarker);
+    checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCheck, decompPlanVersionToCheck, crd->getNesWorker(), std::chrono::seconds(120));
+    sleep(5);
+
+    std::cout << "Stop source nodes" << std::endl;
+    for (auto& wrk : sourceNodes) {
+        wrk->stop(true);
+    }
+    std::cout << "Stop intermediate nodes" << std::endl;
+    for (auto& wrk : intermediateNodes) {
+        wrk->stop(true);
+    }
+    std::cout << "Stop coordinator" << std::endl;
+    crd->stopCoordinator(true);
+    sourceNodes.clear();
+    intermediateNodes.clear();
+    sleep(10);
+}
+
+void runBuffersBenchmark(uint64_t defaultNumberOfBuffersToProduce, uint64_t defaultNumberOfIntermediateNodes, uint64_t bufferSize) {
+    NES_ERROR("Next round numberOfBuffersToProduce = {}, numberOfIntermediateNodes = {}, bufferSize = {}",
+              defaultNumberOfBuffersToProduce,
+              defaultNumberOfIntermediateNodes,
+              bufferSize);
+
+    std::cout << "Setting up nodes." << std::endl;
+    setUp(bufferSize, defaultNumberOfBuffersToProduce, defaultNumberOfIntermediateNodes);
 
     auto requestHandlerService = crd->getRequestHandlerService();
     auto topology = crd->getTopology();
@@ -515,10 +577,6 @@ int main(int argc, const char* argv[]) {
     auto listener = std::make_shared<ErrorHandler>();
     Exceptions::installGlobalErrorListener(listener);
 
-    // errors + benchmark level
-    NES::Logger::setupLogging("/Users/danilaferentz/Desktop/nebulastream/state-recreation.log", magic_enum::enum_cast<LogLevel>(3).value());
-    std::cout << "Setup StateRecreationBenchmark test class." << std::endl;
-
     // Load all command line arguments
     std::map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i) {
@@ -543,24 +601,35 @@ int main(int argc, const char* argv[]) {
 
     auto defaultNumberOfIntermediateNodes = configs["DefaultNumOfIntermediateNodes"].As<uint64_t>();
     auto defaultNumberOfBuffersToProduce = configs["DefaultNumberOfBuffersToProduce"].As<uint64_t>();
-    auto bufferSize = configs["DefaultBufferSize"].As<uint64_t>();
+    auto defaultBufferSize = configs["DefaultBufferSize"].As<uint64_t>();
     //    auto numberOfIntermediateNodes = 1;
     //    auto numberOfBuffersToProduce = 500;
     //    auto bufferSize = 1024;
     if (benchmarkType != commandLineParams.end()) {
-        if (benchmarkType->second == "Data") {
-            auto minNUmberOfBuffersToProduce = configs["MinNUmberOfBuffersToProduce"].As<uint64_t>();
+        std::cout << "Setup StateRecreationBenchmark test class." << std::endl;
+        NES::Logger::setupLogging("state-recreation-" + benchmarkType->second + ".log", magic_enum::enum_cast<LogLevel>(3).value());
+        if (benchmarkType->second == "data") {
+            auto minNumberOfBuffersToProduce = configs["MinNumberOfBuffersToProduce"].As<uint64_t>();
             auto maxNumberOfBuffersToProduce = configs["MaxNumberOfBuffersToProduce"].As<uint64_t>();
 
-            runDataBenchmark(defaultNumberOfIntermediateNodes, minNUmberOfBuffersToProduce, maxNumberOfBuffersToProduce, bufferSize);
-        } else if (benchmarkType->second == "Nodes") {
-            auto minNUmberOfIntermediateNodes = configs["MinNUmberOfIntermediateNodes"].As<uint64_t>();
-            auto maxNUmberOfIntermediateNodes = configs["MaxNUmberOfIntermediateNodes"].As<uint64_t>();
+            runDataBenchmark(defaultNumberOfIntermediateNodes, minNumberOfBuffersToProduce, maxNumberOfBuffersToProduce, defaultBufferSize);
+        } else if (benchmarkType->second == "nodes") {
+            auto minNUmberOfIntermediateNodes = configs["MinNumberOfIntermediateNodes"].As<uint64_t>();
+            auto maxNUmberOfIntermediateNodes = configs["MaxNumberOfIntermediateNodes"].As<uint64_t>();
 
-            runNodesBenchmark(defaultNumberOfBuffersToProduce, 0, bufferSize);
+            for (auto i = 0; i < 3; i++) {
+                runNodesBenchmark(defaultNumberOfBuffersToProduce, 0, defaultBufferSize);
+            }
 
-            for (uint64_t numberOfIntermediateNodes = minNUmberOfIntermediateNodes, tries = 0; numberOfIntermediateNodes <= maxNUmberOfIntermediateNodes; numberOfIntermediateNodes *= (1 + (tries++ % 3 == 0))) {
-                runNodesBenchmark(defaultNumberOfBuffersToProduce, numberOfIntermediateNodes, bufferSize);
+            for (uint64_t numberOfIntermediateNodes = minNUmberOfIntermediateNodes, tries = 1; numberOfIntermediateNodes <= maxNUmberOfIntermediateNodes; numberOfIntermediateNodes *= (1 + (tries++ % 3 == 0))) {
+                runNodesBenchmark(defaultNumberOfBuffersToProduce, numberOfIntermediateNodes, defaultBufferSize);
+            }
+        } else if (benchmarkType->second == "buffer") {
+            auto minBufferSize = configs["MinBufferSize"].As<uint64_t>();
+            auto maxBufferSize = configs["MaxBufferSize"].As<uint64_t>();
+
+            for (uint64_t bufferSize = minBufferSize, tries = 1; bufferSize <= maxBufferSize; bufferSize *= (1 + (tries++ % 3 == 0))) {
+                runBuffersBenchmark(defaultNumberOfBuffersToProduce, defaultNumberOfIntermediateNodes, bufferSize);
             }
         }
     }

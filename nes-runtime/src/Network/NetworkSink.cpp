@@ -594,6 +594,7 @@ bool NetworkSink::applyNextSinkDescriptor() {
 }
 
 void NetworkSink::setShouldBuffer(uint64_t numberOfBuffersToProduce) {
+    NES_ERROR("should buffer {}", numberOfBuffersToProduce);
     shouldBuffer = true;
     this->numberOfBuffersToBuffer = numberOfBuffersToProduce;
 }

@@ -1,7 +1,9 @@
 DefaultNumOfIntermediateNodes: 1
 DefaultBufferSize: 1024
 DefaultNumberOfBuffersToProduce: 1024
-MinNUmberOfBuffersToProduce: 1
+MinNumberOfBuffersToProduce: 1
 MaxNumberOfBuffersToProduce: 8192
-MinNUmberOfIntermediateNodes: 1
-MaxNUmberOfIntermediateNodes: 32
+MinNumberOfIntermediateNodes: 1
+MaxNumberOfIntermediateNodes: 32
+MinBufferSize: 512
+MaxBufferSize: 8192

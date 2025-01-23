@@ -189,7 +189,7 @@ class QueryCompilerOptions {
      */
     const std::string getCUDASdkPath() const;
 
-    uint64_t numOfBuffersToProduce;
+    uint64_t numOfBuffersToProduce {0};
 
   protected:
     uint64_t numSourceLocalBuffers;

@@ -202,7 +202,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
 
-    bool shouldBuffer;
+    bool shouldBuffer{false};
      uint64_t numberOfBuffersToBuffer;
     std::atomic<uint64_t> numberOfBufferedBuffers{0};
 };
