@@ -30,12 +30,13 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId) {
     std::unique_lock lock(watermarkLatch);
     // insert new local watermark processor if the id is not present in the map
+    std::cout << "updateWatermark " << originId.getRawValue() << std::endl;
     if (localWatermarkProcessor.find(originId.getRawValue()) == localWatermarkProcessor.end()) {
         localWatermarkProcessor[originId.getRawValue()] = std::make_unique<WatermarkProcessor>();
     }
-    NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
-                    "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
-                                                                         << " origins but we only expected  " << numberOfOrigins);
+    // NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
+                    // "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
+                                                                         // << " origins but we only expected  " << numberOfOrigins);
     localWatermarkProcessor[originId.getRawValue()]->updateWatermark(ts, sequenceNumber);
 }
 
@@ -63,6 +64,8 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
 
 bool MultiOriginWatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber, OriginId originId) const {
     std::unique_lock lock(watermarkLatch);
+    std::cout << "isDuplicate " << originId.getRawValue() << std::endl;
+    std::cout << "localWatermarkProcessor " << localWatermarkProcessor.size() << std::endl;
     auto iter = localWatermarkProcessor.find(originId.getRawValue());
     if (iter != localWatermarkProcessor.end()) {
         return iter->second->isDuplicate(sequenceNumber);

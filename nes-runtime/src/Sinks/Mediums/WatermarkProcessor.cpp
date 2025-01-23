@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
+
 namespace NES::Windowing {
 
 WatermarkProcessor::WatermarkProcessor() = default;
