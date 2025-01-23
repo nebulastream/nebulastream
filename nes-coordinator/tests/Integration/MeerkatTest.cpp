@@ -214,7 +214,7 @@ public:
         auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
         QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                        Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::M);
+                                                                                       FaultToleranceType::AS);
 
         auto queryCatalog = crd->getQueryCatalog();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));

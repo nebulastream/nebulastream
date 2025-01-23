@@ -62,6 +62,11 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
 }
 
 bool MultiOriginWatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber, OriginId originId) const {
-    return localWatermarkProcessor.at(originId.getRawValue())->isDuplicate(sequenceNumber);
+    std::unique_lock lock(watermarkLatch);
+    auto iter = localWatermarkProcessor.find(originId.getRawValue());
+    if (iter != localWatermarkProcessor.end()) {
+        return iter->second->isDuplicate(sequenceNumber);
+    }
+    return false;
 }
 }// namespace NES::Windowing
