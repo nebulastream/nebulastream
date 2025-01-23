@@ -34,14 +34,14 @@ PhaseFactoryPtr DefaultPhaseFactory::create()
 PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase()
 {
     NES_DEBUG("Create pipelining phase with fuse policy");
-    auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
+    const auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
     return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
 LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
     NES_DEBUG("Create default lower logical plan phase");
-    auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(options);
+    const auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(options);
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 

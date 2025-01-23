@@ -45,7 +45,7 @@ struct QueryCompilerOptions
     CompilationStrategy compilationStrategy = CompilationStrategy::OPTIMIZE;
     FilterProcessingStrategy filterProcessingStrategy = FilterProcessingStrategy::BRANCHED;
     NautilusBackend nautilusBackend = NautilusBackend::COMPILER;
-    DumpMode dumpMode = DumpMode::FILE_AND_CONSOLE;
+    DumpMode dumpMode = DumpMode::CONSOLE;
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     StreamJoinOptions joinOptions;
