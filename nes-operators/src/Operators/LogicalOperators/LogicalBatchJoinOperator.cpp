@@ -73,7 +73,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         if ((*itr)->getFieldByName(buildJoinKeyName))
         {
             leftInputSchema->copyFields(*itr);
-            buildJoinKey->inferStamp(leftInputSchema);
+            buildJoinKey->inferStamp(*leftInputSchema);
             ///remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -89,7 +89,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         if (schema->getFieldByName(probeJoinKeyName))
         {
             rightInputSchema->copyFields(schema);
-            probeJoinKey->inferStamp(rightInputSchema);
+            probeJoinKey->inferStamp(*rightInputSchema);
         }
     }
 

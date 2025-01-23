@@ -14,36 +14,23 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing
 {
-/**
- * @brief
- * The MedianAggregationDescriptor aggregation calculates the median over the window.
- */
+
 class MedianAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /**
-    * @brief Factory method to creates a median aggregation on a particular field.
-    * @param onField field on which the aggregation should be performed
-    */
     static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
-    /**
-     * @brief Factory method to creates a median aggregation on a particular field.
-     * @param onField field on which the aggregation should be performed
-     * @param asField function describing how the aggregated field should be called
-     */
+    /// Creates a new MedianAggregationDescriptor
+    /// @param onField field on which the aggregation should be performed
+    /// @param asField function describing how the aggregated field should be called
     static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
 
@@ -54,17 +41,7 @@ public:
     virtual ~MedianAggregationDescriptor() = default;
 
 private:
-    /**
-     * @brief Creates a new MedianAggregationDescriptor
-     * @param onField field on which the aggregation should be performed
-     */
     explicit MedianAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
-
-    /**
-     * @brief Creates a new MedianAggregationDescriptor
-     * @param onField field on which the aggregation should be performed
-     * @param asField function describing how the aggregated field should be called
-     */
     MedianAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
 }

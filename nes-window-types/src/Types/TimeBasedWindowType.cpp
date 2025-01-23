@@ -28,12 +28,12 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristi
 {
 }
 
-bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
+bool TimeBasedWindowType::inferStamp(const Schema& schema)
 {
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->getFieldByName(fieldName);
+        auto existingField = schema.getFieldByName(fieldName);
         if (existingField)
         {
             if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))

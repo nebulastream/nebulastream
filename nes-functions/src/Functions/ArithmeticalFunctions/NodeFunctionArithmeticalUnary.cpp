@@ -38,7 +38,7 @@ NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithme
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
+void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
 {
     /// infer stamp of child
     auto child = this->child();

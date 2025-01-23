@@ -66,7 +66,7 @@ NodeFunctionPtr NodeFunctionFieldAssignment::getAssignment() const
     return getRight();
 }
 
-void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
+void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
 {
     /// infer stamp of assignment function
     getAssignment()->inferStamp(schema);
@@ -76,7 +76,7 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
 
     ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getFieldByName(fieldName);
+    auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
         const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
@@ -93,7 +93,7 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
         }
         else
         {
-            field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            field->updateFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 

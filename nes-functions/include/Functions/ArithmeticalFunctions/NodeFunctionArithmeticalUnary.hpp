@@ -21,13 +21,9 @@ namespace NES
 class NodeFunctionArithmeticalUnary : public NodeFunctionUnary, public NodeFunctionArithmetical
 {
 public:
-    /**
-     * @brief Infers the stamp of this arithmetical function node.
-     * Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+    /// Infers the stamp of this arithmetical function node.
+    /// Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
+    void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 

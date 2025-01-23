@@ -17,26 +17,19 @@
 namespace NES
 {
 
-/**
- * @brief This node represents an OR combination between the two children.
- */
+/// This node represents a logical OR combination between the two children.
 class NodeFunctionOr : public NodeFunctionLogicalBinary
 {
 public:
     NodeFunctionOr();
     ~NodeFunctionOr() override = default;
-    /**
-    * @brief Create a new OR function
-    */
+
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    /**
-     * @brief Infers the stamp of this logical OR function node.
-     * We assume that both children of an OR function are predicates.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+
+    /// Infers the stamp of this logical OR function node.
+    /// We assume that both children of an OR function are predicates.
+    void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 

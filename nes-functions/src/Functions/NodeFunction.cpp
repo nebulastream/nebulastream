@@ -14,10 +14,10 @@
 
 #include <string>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -45,7 +45,7 @@ const std::string& NodeFunction::getType() const
     return type;
 }
 
-void NodeFunction::inferStamp(SchemaPtr schema)
+void NodeFunction::inferStamp(const Schema& schema)
 {
     /// infer stamp on all children nodes
     for (const auto& node : children)

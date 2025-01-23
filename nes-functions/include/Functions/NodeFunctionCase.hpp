@@ -50,11 +50,7 @@ public:
      */
     NodeFunctionPtr getDefaultExp() const;
 
-    /**
-     * @brief Infers the stamp of this function node.
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(const Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
 

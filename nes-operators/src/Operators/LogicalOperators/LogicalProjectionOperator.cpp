@@ -103,7 +103,7 @@ bool LogicalProjectionOperator::inferSchema()
     for (const auto& function : functions)
     {
         ///Infer schema of the field function
-        function->inferStamp(inputSchema);
+        function->inferStamp(*inputSchema);
 
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {

@@ -49,7 +49,7 @@ WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const NodeFunctionPt
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(const SchemaPtr schema)
+void SumAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);

@@ -38,14 +38,10 @@ public:
 
     ~NodeFunction() override = default;
 
-    /**
-     * @brief Indicates if this function is a predicate -> if its result stamp is a boolean
-     * @return
-     */
     bool isPredicate() const;
 
     ///Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(SchemaPtr schema);
+    virtual void inferStamp(const Schema& schema);
 
     DataTypePtr getStamp() const;
     void setStamp(DataTypePtr stamp);

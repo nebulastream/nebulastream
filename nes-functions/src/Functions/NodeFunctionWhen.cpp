@@ -36,7 +36,7 @@ NodeFunctionPtr NodeFunctionWhen::create(const NodeFunctionPtr& left, const Node
     return whenNode;
 }
 
-void NodeFunctionWhen::inferStamp(SchemaPtr schema)
+void NodeFunctionWhen::inferStamp(const Schema& schema)
 {
     auto left = getLeft();
     auto right = getRight();
