@@ -75,16 +75,6 @@ std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 {
-    //antlr4::ANTLRInputStream input(timebase);
-    //AntlrSQLLexer lexer(&input);
-    //AntlrSQLLexer lexer(&timebase);
-    //antlr4::CommonTokenStream tokens(&lexer);
-    //tokens.fill();
-    //AntlrSQLLexer::DAY;
-    //auto token = tokens.get(0);
-
-
-    //switch (token->getType()) {
     switch (timebase) {
         case AntlrSQLLexer::MS:
             return API::Milliseconds(size);
@@ -97,11 +87,10 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
         case AntlrSQLLexer::DAY:
             return API::Days(size);
         default:
-            throw InvalidQuerySyntax("Unknown time unit wtih type enum: ", std::to_string(timebase));//+ lexer.getVocabulary().getSymbolicName(timebase));
+            const AntlrSQLLexer lexer(nullptr);
+            const std::string tokenName = std::string(lexer.getVocabulary().getSymbolicName(timebase));
+            throw InvalidQuerySyntax("Unknown time unit: {}", tokenName);
     }
-
-
-    throw InvalidQuerySyntax("Unknown time unit: {}", timebase);
 }
 
 std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
@@ -132,8 +121,9 @@ std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
     {
         return NodeFunctionLessEquals::create(leftFunction, rightFunction);
     }
-
-    throw InvalidQuerySyntax("Unknown Comparison Operator: {}", opStr);
+    auto lexer = AntlrSQLLexer(nullptr);
+    throw InvalidQuerySyntax(
+        "Unknown Comparison Operator: {} of type: {}", lexer.getVocabulary().getSymbolicName(tokenType), tokenType);
 }
 
 std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
@@ -147,9 +137,9 @@ std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
     {
         return NodeFunctionOr::create(leftFunction, rightFunction);
     }
-
+    auto lexer = AntlrSQLLexer(nullptr);
     throw InvalidQuerySyntax(
-        "Unknown binary function in SQL query for op {} and left {} and right {}", opStr, *leftFunction, *rightFunction);
+        "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}", lexer.getVocabulary().getSymbolicName(tokenType), tokenType, *leftFunction, *rightFunction);
 }
 
 void AntlrSQLQueryPlanCreator::poppush(const AntlrSQLHelper& helper)
@@ -304,7 +294,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {}", opText);
+        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
     helper.functionBuilder.push_back(function);
     poppush(helper);
@@ -328,7 +318,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {}", opText);
+        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
     helper.functionBuilder.push_back(function);
     poppush(helper);
@@ -780,7 +770,7 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown join type: {}", joinType);
+        throw InvalidQuerySyntax("Unknown join type: {}, resolved to token type: {}", joinType, tokenType);
     }
     poppush(helper);
     AntlrSQLBaseListener::exitJoinType(context);
@@ -963,7 +953,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown aggregation function: {}", funcName);
+        throw InvalidQuerySyntax("Unknown aggregation function: {}, resolved to token type: {}", funcName, tokenType);
     }
 }
 
