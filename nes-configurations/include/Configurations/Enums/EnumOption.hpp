@@ -16,8 +16,8 @@
 #include <type_traits>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ReadingVisitor.hpp>
-#include <Configurations/WritingVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <Configurations/WritingVisitor.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
@@ -53,26 +53,9 @@ public:
         return os.str();
     };
 
-    void accept(ReadingVisitor& visitor) override
-    {
-        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
-        visitor.visit(*this);
-        if (config)
-        {
-            config->accept(visitor);
-        }
-    }
+    void accept(ReadingVisitor& visitor) override { visitor.visit(*this); }
 
-    void accept(WritingVisitor& visitor) override
-    {
-        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
-        visitor.visit(*this);
-        if (config)
-        {
-            config->accept(visitor);
-        }
-    }
-
+    void accept(WritingVisitor& visitor) override { visitor.visit(*this); }
 
 protected:
     void parseFromYAMLNode(YAML::Node node) override

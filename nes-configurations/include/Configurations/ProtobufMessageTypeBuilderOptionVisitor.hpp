@@ -12,17 +12,21 @@
     limitations under the License.
 */
 #pragma once
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <memory>
 #include <stack>
+#include <string>
+#include <string_view>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/ISequenceOption.hpp>
 #include <Configurations/ReadingVisitor.hpp>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/dynamic_message.h>
-#include <gtest/internal/gtest-internal.h>
-
-#include "ScalarOption.hpp"
-#include "SequenceOption.hpp"
-
+#include <google/protobuf/util/json_util.h>
+#include <sys/types.h>
 
 namespace NES::Configurations
 {
@@ -32,22 +36,21 @@ namespace NES::Configurations
 class ProtobufMessageTypeBuilderOptionVisitor : public ReadingVisitor
 {
 public:
-    ProtobufMessageTypeBuilderOptionVisitor(google::protobuf::FileDescriptorProto& proto, std::string configName) : protoFile(proto)
+    ProtobufMessageTypeBuilderOptionVisitor(google::protobuf::FileDescriptorProto& proto, std::string configName) : protoFile(&proto)
     {
-        current.push(protoFile.add_message_type());
+        current.push(protoFile->add_message_type());
         current.top()->set_name(configName);
-        fieldNumber.push(1);
-        nameCounter = 1;
+        fieldNumber.push(INITIAL_FIELD_NUMBER);
     }
 
     void printFile()
     {
-        std::string json_format;
+        std::string jsonFormat;
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = false;
         options.always_print_primitive_fields = false;
-        auto _ = google::protobuf::util::MessageToJsonString(protoFile, &json_format, options);
-        std::cout << "=== Schema in JSON Format ===\n" << json_format << "\n\n";
+        auto status = google::protobuf::util::MessageToJsonString(*protoFile, &jsonFormat, options);
+        std::cout << "=== Schema in JSON Format ===\n" << jsonFormat << "\n\n";
     }
 
     void push(BaseOption& option) override
@@ -66,36 +69,9 @@ public:
 
         currentField.push(field);
         current.push(type);
-        fieldNumber.push(1);
+        fieldNumber.push(INITIAL_FIELD_NUMBER);
 
-        if (auto* sequenceOption = dynamic_cast<SequenceOption<StringOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<FloatOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<BoolOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<UIntOption>*>(&option))
+        if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
         {
             for (size_t i = 0; i < sequenceOption->size(); ++i)
             {
@@ -128,7 +104,7 @@ protected:
     }
     void visitUnsignedInteger(size_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_UINT64); }
     void visitSignedInteger(ssize_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_INT64); }
-    void visitFloat(double&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_DOUBLE); }
+    void visitDouble(double&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_DOUBLE); }
     void visitBool(bool&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_BOOL); }
     void visitString(std::string&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_STRING); }
 
@@ -136,12 +112,12 @@ protected:
 private:
     std::stack<google::protobuf::DescriptorProto*> current;
     std::stack<google::protobuf::FieldDescriptorProto*> currentField;
-    std::stack<size_t> fieldNumber;
+    std::stack<int32_t> fieldNumber;
     std::unique_ptr<google::protobuf::DescriptorPool> pool = std::make_unique<google::protobuf::DescriptorPool>();
     std::unique_ptr<google::protobuf::DynamicMessageFactory> factory
         = std::make_unique<google::protobuf::DynamicMessageFactory>(pool.get());
-    google::protobuf::FileDescriptorProto& protoFile;
-    size_t nameCounter;
+    google::protobuf::FileDescriptorProto* protoFile;
+    static constexpr int32_t INITIAL_FIELD_NUMBER = 1;
 };
 
 }

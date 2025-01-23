@@ -12,10 +12,12 @@
     limitations under the License.
 */
 #pragma once
-#include <iostream>
-
-
+#include <concepts>
+#include <cstddef>
+#include <string>
+#include <string_view>
 #include <Configurations/BaseOption.hpp>
+#include <sys/types.h>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -40,34 +42,34 @@ public:
         /// bool before 'unsigned integral', because bool would be treated as an unsigned integral otherwise
         if constexpr (std::same_as<bool, T>)
         {
-            bool v = option.getValue();
-            visitBool(v);
+            bool value = option.getValue();
+            visitBool(value);
         }
         else if constexpr (std::signed_integral<T>)
         {
-            ssize_t v = option.getValue();
-            visitSignedInteger(v);
+            ssize_t value = option.getValue();
+            visitSignedInteger(value);
         }
         else if constexpr (std::unsigned_integral<T>)
         {
-            size_t v = option.getValue();
-            visitUnsignedInteger(v);
+            size_t value = option.getValue();
+            visitUnsignedInteger(value);
         }
         else if constexpr (std::floating_point<T>)
         {
-            double v = option.getValue();
-            visitFloat(v);
+            double value = option.getValue();
+            visitDouble(value);
         }
         else if constexpr (std::convertible_to<std::string, T> && std::convertible_to<T, std::string>)
         {
-            std::string v = option.getValue();
-            visitString(v);
+            std::string value = option.getValue();
+            visitString(value);
         }
         else if constexpr (std::is_enum_v<T>)
         {
             static_assert(std::unsigned_integral<magic_enum::underlying_type_t<T>>, "This is only implemented for unsigned enums");
-            size_t v = static_cast<magic_enum::underlying_type_t<T>>(option.getValue());
-            visitEnum(magic_enum::enum_name(option.getValue()), v);
+            size_t value = static_cast<magic_enum::underlying_type_t<T>>(option.getValue());
+            visitEnum(magic_enum::enum_name(option.getValue()), value);
         }
         else
         {
@@ -89,22 +91,22 @@ public:
     /// pop(A)"
     ///
     /// Start working on a BaseOption. All subsequent visits are part of the BaseOption.
-    virtual void push(BaseOption& o) = 0;
+    virtual void push(BaseOption& option) = 0;
     /// When finishing a BaseOption.
-    virtual void pop(BaseOption& o) = 0;
+    virtual void pop(BaseOption& option) = 0;
 
 protected:
     /// Called for every leaf element. This is called before calling the typed visit functions
-    virtual void visitLeaf(BaseOption& o) = 0;
+    virtual void visitLeaf(BaseOption& option) = 0;
 
     /// Typed visit functions:
 
     /// we lose the concrete enum type, but sometimes we want to present the human-readable enum value,
     /// so the visitEnum provides both: string value and underlying value.
-    virtual void visitEnum(std::string_view enumName, size_t& underlying) = 0;
+    virtual void visitEnum(std::string_view enumName, size_t& value) = 0;
     virtual void visitUnsignedInteger(size_t&) = 0;
     virtual void visitSignedInteger(ssize_t&) = 0;
-    virtual void visitFloat(double&) = 0;
+    virtual void visitDouble(double&) = 0;
     virtual void visitBool(bool&) = 0;
     virtual void visitString(std::string&) = 0;
 };

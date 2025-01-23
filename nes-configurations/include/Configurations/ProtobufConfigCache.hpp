@@ -12,13 +12,15 @@
     limitations under the License.
 */
 #pragma once
+#include <iostream>
 #include <typeindex>
+#include <unordered_map>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/util/json_util.h>
 
-#include "ProtobufMessageTypeBuilderOptionVisitor.hpp"
+#include <Configurations/ProtobufMessageTypeBuilderOptionVisitor.hpp>
 
 /// We do not want rebuild every protobuf message type whenever we want to serialize a configuration.
 /// This class caches protobuf message types and provides a convenient way to create a new protobuf message based on a configuration class.
@@ -30,33 +32,34 @@ public:
     template <typename ConfigurationClass>
     google::protobuf::Message* getEmptyMessage()
     {
-        if (auto it = configNames.find(std::type_index(typeid(ConfigurationClass))); it != configNames.end())
+        if (const auto iterator = typeIndexToConfigClassTypeName.find(std::type_index(typeid(ConfigurationClass)));
+            iterator != typeIndexToConfigClassTypeName.end())
         {
-            auto fileDesc = pool.BuildFile(protoFile);
-            const google::protobuf::Descriptor* messageDesc = fileDesc->FindMessageTypeByName(it->second);
+            const auto* fileDesc = pool.BuildFile(protoFile);
+            const google::protobuf::Descriptor* messageDesc = fileDesc->FindMessageTypeByName(iterator->second);
             return factory.GetPrototype(messageDesc)->New();
         }
         /// Inserts names and types of options into protoFile
         NES::Configurations::ProtobufMessageTypeBuilderOptionVisitor visitor(protoFile, typeid(ConfigurationClass).name());
         ConfigurationClass configuration("root", "");
         configuration.accept(visitor);
-        configNames[std::type_index(typeid(ConfigurationClass))] = typeid(ConfigurationClass).name();
+        typeIndexToConfigClassTypeName[std::type_index(typeid(ConfigurationClass))] = typeid(ConfigurationClass).name();
         return getEmptyMessage<ConfigurationClass>();
     }
 
     void printFile()
     {
-        std::string json_format;
+        std::string jsonFormat;
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true;
         options.always_print_primitive_fields = true;
-        auto _ = google::protobuf::util::MessageToJsonString(protoFile, &json_format, options);
-        std::cout << "=== Schema in JSON Format ===\n" << json_format << "\n\n";
+        auto status = google::protobuf::util::MessageToJsonString(protoFile, &jsonFormat, options);
+        std::cout << "=== Schema in JSON Format ===\n" << jsonFormat << "\n\n";
     }
 
 private:
     google::protobuf::DescriptorPool pool;
     google::protobuf::DynamicMessageFactory factory;
     google::protobuf::FileDescriptorProto protoFile;
-    std::unordered_map<std::type_index, std::string> configNames;
+    std::unordered_map<std::type_index, std::string> typeIndexToConfigClassTypeName;
 };
