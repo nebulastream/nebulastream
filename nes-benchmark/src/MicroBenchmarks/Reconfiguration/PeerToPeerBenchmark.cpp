@@ -583,10 +583,15 @@ using namespace NES;
         // Location of the configuration file
         auto configPath = commandLineParams.find("--configPath");
         auto tryNumber = commandLineParams.find("--tryNumber");
+        auto numNodes = 1;
 
         // errors + benchmark level
         if (tryNumber != commandLineParams.end()) {
             NES::Logger::setupLogging(tryNumber->second + "state-recreation.log", magic_enum::enum_cast<LogLevel>(3).value());
+            size_t underscorePos = tryNumber->second.find('_');
+            if (underscorePos != std::string::npos) {
+                numNodes = std::stoi(tryNumber->second.substr(0, underscorePos));
+            }
         } else {
             NES::Logger::setupLogging("state-recreation.log", magic_enum::enum_cast<LogLevel>(3).value());
         }
@@ -611,9 +616,10 @@ using namespace NES;
         auto minNUmberOfIntermediateNodes = configs["MinNUmberOfIntermediateNodes"].As<uint64_t>();
         auto maxNUmberOfIntermediateNodes = configs["MaxNUmberOfIntermediateNodes"].As<uint64_t>();
 
-         for (uint64_t numberOfIntermediateNodes = minNUmberOfIntermediateNodes, tries = 1; numberOfIntermediateNodes <= maxNUmberOfIntermediateNodes; numberOfIntermediateNodes *= (1 + (tries++ % 3 == 0))) {
+        runNodesBenchmark(defaultNumberOfBuffersToProduce, numNodes, bufferSize);
+        for (uint64_t numberOfIntermediateNodes = minNUmberOfIntermediateNodes, tries = 1; numberOfIntermediateNodes <= maxNUmberOfIntermediateNodes; numberOfIntermediateNodes *= (1 + (tries++ % 3 == 0))) {
             runNodesBenchmark(defaultNumberOfBuffersToProduce, numberOfIntermediateNodes, bufferSize);
-         }
+        }
 
         sleep(5);
         std::cout << "-----------" << std::endl;
