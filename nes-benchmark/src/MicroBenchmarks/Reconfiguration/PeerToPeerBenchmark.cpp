@@ -128,7 +128,6 @@ using namespace NES;
         coordinatorConfiguration->worker.configPath = configPath;
         coordinatorConfiguration->worker.bufferSizeInBytes = bufferSize;
         coordinatorConfiguration->worker.numWorkerThreads.setValue(4);
-        coordinatorConfiguration->worker.numberOfQueues.setValue(2);
         if (numberOfBuffersToProduce > 1024) {
             coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 100 * numberOfBuffersToProduce + 50;
             // coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
@@ -259,7 +258,6 @@ using namespace NES;
         auto wrkDataPort = NES::Testing::detail::getPortDispatcher().getNextPort();
         wrkConf->dataPort = *wrkDataPort;
         wrkConf->numWorkerThreads.setValue(4);
-        wrkConf->numberOfQueues.setValue(2);
         // wrkConf->connectSinksAsync.setValue(true);
         // wrkConf->connectSourceEventChannelsAsync.setValue(true);
         wrkConf->bufferSizeInBytes.setValue(bufferSize);
