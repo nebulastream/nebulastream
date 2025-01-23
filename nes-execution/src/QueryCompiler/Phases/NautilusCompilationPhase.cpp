@@ -66,14 +66,14 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
 OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline)
 {
     auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
-    PRECONDITION(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
+    PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");
 
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = NES::Util::as<NautilusPipelineOperator>(rootOperator);
     nautilus::engine::Options options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",
-        pipeline->getDecomposedQueryPlan()->getQueryId(),
+        pipeline->getDecomposedQueryPlan()->getWorkerId(),
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getPipelineId());
 
@@ -83,7 +83,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setOption("toFile", compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
-    if (auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName))
+    if (const auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName))
     {
         auto pipelineStage
             = provider.value()->create(nautilusPipeline->getNautilusPipeline(), nautilusPipeline->getOperatorHandlers(), options);
