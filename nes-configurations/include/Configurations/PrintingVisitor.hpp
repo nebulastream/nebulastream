@@ -16,7 +16,10 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ISequenceOption.hpp>
 #include <Configurations/ReadingVisitor.hpp>
+#include <sys/types.h>
 
 namespace NES::Configurations
 {
@@ -54,24 +57,36 @@ public:
     ///         x: description (defaultValue, type)
     ///     d: description (defaultValue, type)
     ///
-    void push(BaseOption& o) override
+    void push(BaseOption& option) override
     {
-        os << '\n' << std::string(indentCount * 4, ' ') << o.getName() << ": " << o.getDescription();
+        os << '\n' << std::string(indentCount * TAB_WIDTH, ' ') << option.getName() << ": " << option.getDescription();
         indentCount++;
+        if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
+        {
+            os << " (Multiple)";
+            for (size_t i = 0; i < sequenceOption->size(); ++i)
+            {
+                push(sequenceOption->operator[](i));
+                sequenceOption->operator[](i).accept(*this);
+                pop(sequenceOption->operator[](i));
+            }
+        }
     }
     void pop(BaseOption&) override { indentCount--; }
 
+
 protected:
     void visitLeaf(BaseOption&) override { }
-    void visitEnum(std::string_view enumName, size_t&) override { os << " (" << enumName << ')'; }
+    void visitEnum(std::string_view enumName, size_t&) override { os << " (" << enumName << ", Enum)"; }
     void visitUnsignedInteger(size_t& value) override { os << " (" << value << ", Unsigned Integer)"; }
     void visitSignedInteger(ssize_t& value) override { os << " (" << value << ", Signed Integer)"; }
-    void visitFloat(double& value) override { os << " (" << value << ", Float)"; }
+    void visitDouble(double& value) override { os << " (" << value << ", Float)"; }
     void visitBool(bool& value) override { os << " (" << (value ? "True" : "False") << ", Bool)"; }
     void visitString(std::string& value) override { os << " (" << value << ", String)"; }
 
 private:
     std::ostream& os;
     size_t indentCount = 0;
+    static constexpr u_int TAB_WIDTH = 4;
 };
 }

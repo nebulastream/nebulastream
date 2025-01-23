@@ -13,6 +13,10 @@
 */
 #pragma once
 
+#include "ISequenceOption.hpp"
+
+
+#include <cstddef>
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/TypedBaseOption.hpp>
@@ -23,17 +27,17 @@ namespace NES::Configurations
 {
 /// This class implements sequential options of a type that has to be a subtype of the BaseOption.
 template <DerivedBaseOption T>
-class SequenceOption : public BaseOption
+class SequenceOption : public ISequenceOption
 {
 public:
     SequenceOption(const std::string& name, const std::string& description);
 
     void clear() override;
 
-    T& operator[](size_t index);
+    T& operator[](size_t index) override;
     const T& operator[](size_t index) const;
 
-    [[nodiscard]] size_t size() const;
+    [[nodiscard]] size_t size() const override;
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
 
@@ -45,10 +49,7 @@ public:
         options.push_back(option);
     };
 
-    void add(T option)
-    {
-        options.push_back(option);
-    };
+    void add(T option) { options.push_back(option); };
 
     std::string toString() override;
 
@@ -64,7 +65,9 @@ private:
 };
 
 template <DerivedBaseOption T>
-SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description) {}
+SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : ISequenceOption(name, description)
+{
+}
 
 template <DerivedBaseOption T>
 void SequenceOption<T>::clear()
@@ -83,23 +86,13 @@ void SequenceOption<T>::parseFromString(std::string, std::unordered_map<std::str
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(ReadingVisitor& visitor)
+void SequenceOption<T>::accept(ReadingVisitor&)
 {
-    if constexpr (std::is_base_of_v<BaseConfiguration, T>)
-    {
-        T inner{name, description + " (Multiple)"};
-        inner.accept(visitor);
-    }
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(WritingVisitor& visitor)
+void SequenceOption<T>::accept(WritingVisitor&)
 {
-    if constexpr (std::is_base_of_v<BaseConfiguration, T>)
-    {
-        T inner{name, description + " (Multiple)"};
-        inner.accept(visitor);
-    }
 }
 
 template <DerivedBaseOption T>

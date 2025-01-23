@@ -12,22 +12,24 @@
     limitations under the License.
 */
 #pragma once
-#include "ScalarOption.hpp"
-
-
+#include <cstddef>
 #include <stack>
+#include <string>
+#include <string_view>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/ISequenceOption.hpp>
 #include <Configurations/ReadingVisitor.hpp>
 #include <google/protobuf/descriptor.h>
-#include <google/protobuf/extension_set.h>
-#include <google/protobuf/text_format.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/reflection.h>
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
 
-/// Serializes all options of a configuration. The basic structure is always given by
-/// ProtobufMessageTypeBuilderOptionVisitor, the focus in this class is only on the config values.
+/// Serializes all options of a configuration. The basic structure (message) is always given by
+/// ProtobufMessageTypeBuilderOptionVisitor, the focus in this class is only on writing the config values into the message.
 /// Uses protobuf reflection util to dynamically fill a protobuf message with the contents of a configuration option.
 class ProtobufSerializeOptionVisitor : public NES::Configurations::ReadingVisitor
 {
@@ -43,7 +45,7 @@ public:
     void push(BaseOption& option) override
     {
         const auto* descriptor = descriptors.top()->FindFieldByName(option.getName());
-        if (!descriptor)
+        if (descriptor == nullptr)
         {
             throw InvalidConfigParameter("Field not found: {}", option.getName());
         }
@@ -53,34 +55,7 @@ public:
         messages.push(message);
         descriptors.push(message->GetDescriptor());
 
-        if (auto* sequenceOption = dynamic_cast<SequenceOption<StringOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<FloatOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<BoolOption>*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
-        else if (auto* sequenceOption = dynamic_cast<SequenceOption<UIntOption>*>(&option))
+        if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
         {
             for (size_t i = 0; i < sequenceOption->size(); ++i)
             {
@@ -100,13 +75,10 @@ public:
 
 protected:
     void visitLeaf(BaseOption& option) override { fieldDescriptor = descriptors.top()->FindFieldByName(option.getName()); }
-    void visitEnum(std::string_view, size_t& underlying) override
-    {
-        reflections.top()->SetUInt64(messages.top(), fieldDescriptor, underlying);
-    }
+    void visitEnum(std::string_view, size_t& value) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value); }
     void visitUnsignedInteger(size_t& value) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value); }
     void visitSignedInteger(ssize_t& value) override { reflections.top()->SetInt64(messages.top(), fieldDescriptor, value); }
-    void visitFloat(double& value) override { reflections.top()->SetDouble(messages.top(), fieldDescriptor, value); }
+    void visitDouble(double& value) override { reflections.top()->SetDouble(messages.top(), fieldDescriptor, value); }
     void visitBool(bool& value) override { reflections.top()->SetBool(messages.top(), fieldDescriptor, value); }
     void visitString(std::string& value) override { reflections.top()->SetString(messages.top(), fieldDescriptor, value); }
 

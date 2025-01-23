@@ -13,12 +13,14 @@
 */
 #pragma once
 
+#include <cstdint>
 #include <ostream>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include "Identifiers/NESStrongType.hpp"
 
 namespace NES::Configurations
 {
@@ -63,23 +65,19 @@ private:
     template <typename Type>
     static Type convertFromString(const std::string& strValue)
     {
-        if constexpr (std::is_same<Type, std::string>::value)
+        if constexpr (std::is_same_v<Type, std::string>)
         {
             return strValue; /// No conversion needed
         }
-        else if constexpr (std::is_same<Type, float>::value)
+        else if constexpr (std::is_same_v<Type, float>)
         {
             return std::stof(strValue);
         }
-        else if constexpr (std::is_same<Type, uint64_t>::value)
+        else if constexpr (std::is_same_v<Type, uint64_t> || std::is_same_v<Type, int64_t>)
         {
             return std::stoull(strValue);
         }
-        else if constexpr (std::is_same<Type, int64_t>::value)
-        {
-            return std::stoull(strValue);
-        }
-        else if constexpr (std::is_same<Type, bool>::value)
+        else if constexpr (std::is_same_v<Type, bool>)
         {
             /// Simple boolean conversion (true for "true", false otherwise)
             return strValue == "true";

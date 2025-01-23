@@ -14,11 +14,12 @@
 #pragma once
 #include <memory>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ReadingVisitor.hpp>
-#include <Configurations/WritingVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <Configurations/WritingVisitor.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
@@ -86,7 +87,7 @@ TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, con
     : BaseOption(name, description), defaultValue(defaultValue)
 {
     /// With clear() we avoid the case value == null, ProtobufDeserialize only works with value != null
-    clear();
+    TypedBaseOption<T>::clear();
 }
 
 template <class T>
@@ -95,9 +96,9 @@ TypedBaseOption<T>::TypedBaseOption(
     T defaultValue,
     const std::string& description,
     std::vector<std::shared_ptr<ConfigurationValidation>> validators)
-    : BaseOption(name, description), defaultValue(defaultValue), validators(validators)
+    : BaseOption(name, description), defaultValue(defaultValue), validators(std::move(validators))
 {
-    clear();
+    TypedBaseOption<T>::clear();
 }
 
 template <class T>

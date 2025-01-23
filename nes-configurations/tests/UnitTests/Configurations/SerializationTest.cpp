@@ -12,17 +12,29 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <iostream>
+#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
-#include <Configurations/PrintingVisitor.hpp>
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
 #include <Configurations/ProtobufConfigCache.hpp>
 #include <Configurations/ProtobufDeserializeVisitor.hpp>
+#include <Configurations/ProtobufMessageTypeBuilderOptionVisitor.hpp>
 #include <Configurations/ProtobufSerializeOptionVisitor.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <google/protobuf/extension_set.h>
-#include <nautilus/std/iostream.h>
-
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <google/protobuf/descriptor.pb.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -31,9 +43,9 @@ using namespace Configurations;
 class ConfigSerializationTest : public Testing::BaseIntegrationTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("ConfigSerialization.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ConfigSerialization test class.");
     }
 };
@@ -41,9 +53,129 @@ public:
 TEST_F(ConfigSerializationTest, EmptyMessageTest)
 {
     ProtobufConfigCache cache;
-    WorkerConfiguration configuration("root", "");
-    auto* message = cache.getEmptyMessage<WorkerConfiguration>();
+    const WorkerConfiguration configuration("root", "");
     cache.printFile();
+}
+
+TEST_F(ConfigSerializationTest, InvalidConfigParameterTest)
+{
+    class TestConfig : public BaseConfiguration
+    {
+    public:
+        TestConfig(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+
+        ScalarOption<ssize_t> a{"A", "-42", "This is Option A"};
+
+    protected:
+        std::vector<BaseOption*> getOptions() override { return {&a}; }
+    };
+
+    ProtobufConfigCache cache;
+    const TestConfig testConfiguration("test configuration", "");
+    ScalarOption<std::string> option("NonExistentField", "default", "description");
+
+    auto* message = cache.getEmptyMessage<TestConfig>();
+
+    ProtobufSerializeOptionVisitor serializer(message);
+    EXPECT_THROW(serializer.push(option), NES::Exception);
+    ProtobufDeserializeVisitor deserializer(message);
+    EXPECT_THROW(deserializer.push(option), NES::Exception);
+}
+
+TEST_F(ConfigSerializationTest, GetValuesTest)
+{
+    SequenceOption<UIntOption> sequence("testSequence", "a test sequence");
+    const UIntOption option1("option1", "1", "first option");
+
+    sequence.add(option1);
+
+    std::vector<UIntOption> values = sequence.getValues();
+    ASSERT_EQ(values.size(), 1);
+    EXPECT_EQ(values[0].getValue(), 1);
+}
+
+TEST_F(ConfigSerializationTest, ClearSequenceTest)
+{
+    SequenceOption<UIntOption> sequence("TestSequence", "A test sequence");
+    const UIntOption option1("Option1", "1", "First option");
+
+    sequence.add(option1);
+
+    EXPECT_FALSE(sequence.empty());
+    sequence.clear();
+    EXPECT_TRUE(sequence.empty());
+}
+
+
+TEST_F(ConfigSerializationTest, ClearBaseConfigTest)
+{
+    struct TestConfig : BaseConfiguration
+    {
+        TestConfig(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
+        TestConfig() = default;
+
+        std::vector<BaseOption*> getOptions() override { return {&string}; }
+
+        ScalarOption<std::string> string = {"String", "foo", "A string"};
+    };
+    TestConfig config("TestBaseConfig", "A test configuration");
+    config.string.setValue("bruh");
+    EXPECT_NE(config.string.getValue(), config.string.getDefaultValue());
+    config.clear();
+    EXPECT_EQ(config.string.getValue(), config.string.getDefaultValue());
+}
+
+TEST_F(ConfigSerializationTest, ScalarEqualityOperator)
+{
+    UIntOption option1("option1", "1", "first option");
+    const UIntOption option2("option2", "2", "second option");
+
+    EXPECT_TRUE(option1.operator==(option1));
+
+    EXPECT_FALSE(option1.operator==(option2));
+}
+
+TEST_F(ConfigSerializationTest, PrintFileTest)
+{
+    google::protobuf::FileDescriptorProto proto;
+    ProtobufMessageTypeBuilderOptionVisitor visitor{proto, "TestVisitor"};
+    visitor.printFile();
+}
+
+TEST_F(ConfigSerializationTest, SequenceAddTest)
+{
+    struct TestConfig : BaseConfiguration
+    {
+        TestConfig(const std::string& name, const std::string& description) : BaseConfiguration(name, description)
+        {
+            sequenceOfIntegers.add(UIntOption{"first", "6", "first int"});
+        }
+        TestConfig() = default;
+
+        std::vector<BaseOption*> getOptions() override { return {&sequenceOfIntegers}; }
+
+        SequenceOption<ScalarOption<uint64_t>> sequenceOfIntegers = {"Integers", "A sequence of integers."};
+    };
+
+    TestConfig config{"test configuration", "A test configuration"};
+    constexpr uint64_t integerValue = 7;
+
+    EXPECT_EQ(config.sequenceOfIntegers.size(), 1);
+    config.sequenceOfIntegers.add(integerValue);
+    EXPECT_EQ(config.sequenceOfIntegers.size(), 2);
+}
+
+TEST_F(ConfigSerializationTest, EmptySequenceTest)
+{
+    const SequenceOption<UIntOption> sequence("testSequence", "a test sequence");
+    EXPECT_TRUE(sequence.empty());
+}
+
+TEST_F(ConfigSerializationTest, SequenceToStringTest)
+{
+    SequenceOption<ScalarOption<int>> sequence("testSequence", "a test sequence");
+    const std::string expectedString = "Name: testSequence\nDescription: a test sequence\n";
+    EXPECT_EQ(sequence.toString(), expectedString);
 }
 
 TEST_F(ConfigSerializationTest, SequenceSerializationTest)
@@ -55,28 +187,19 @@ TEST_F(ConfigSerializationTest, SequenceSerializationTest)
             sequenceOfStrings.add(StringOption("first", "We", "first string"));
             sequenceOfStrings.add(StringOption{"second", "are", "second string"});
             sequenceOfStrings.add(StringOption{"third", "correctly", "third string"});
-            sequenceOfStrings.add(StringOption{"fourth", "testing", "fourth string"});
-            sequenceOfStrings.add(StringOption{"fifth", "!", "fifth string"});
 
             sequenceOfFloats.add(FloatOption{"first", "1.1", "first float"});
             sequenceOfFloats.add(FloatOption{"second", "1.2", "second float"});
             sequenceOfFloats.add(FloatOption{"third", "1.3", "third float"});
-            sequenceOfFloats.add(FloatOption{"fourth", "1.4", "fourth float"});
-            sequenceOfFloats.add(FloatOption{"fifth", "1.5", "fifth float"});
 
             sequenceOfBooleans.add(BoolOption{"first", "false", "first bool"});
             sequenceOfBooleans.add(BoolOption{"second", "true", "second bool"});
             sequenceOfBooleans.add(BoolOption{"third", "false", "third bool"});
-            sequenceOfBooleans.add(BoolOption{"fourth", "true", "fourth bool"});
-            sequenceOfBooleans.add(BoolOption{"fifth", "false", "fifth bool"});
 
             sequenceOfIntegers.add(UIntOption{"first", "6", "first int"});
             sequenceOfIntegers.add(UIntOption{"second", "7", "second int"});
             sequenceOfIntegers.add(UIntOption{"third", "8", "third int"});
-            sequenceOfIntegers.add(UIntOption{"fourth", "9", "fourth int"});
-            sequenceOfIntegers.add(UIntOption{"fifth", "10", "fifth int"});
         }
-        SourceConfig() = default;
 
         std::vector<BaseOption*> getOptions() override
         {
@@ -96,29 +219,19 @@ TEST_F(ConfigSerializationTest, SequenceSerializationTest)
             sequenceOfStrings.add(StringOption{"first", "Are", "first string"});
             sequenceOfStrings.add(StringOption{"second", "we", "second string"});
             sequenceOfStrings.add(StringOption{"third", "testing", "third string"});
-            sequenceOfStrings.add(StringOption{"fourth", "correctly", "fourth string"});
-            sequenceOfStrings.add(StringOption{"fifth", "?", "fifth string"});
 
             sequenceOfFloats.add(FloatOption{"first", "2.1", "first float"});
             sequenceOfFloats.add(FloatOption{"second", "2.2", "second float"});
             sequenceOfFloats.add(FloatOption{"third", "2.3", "third float"});
-            sequenceOfFloats.add(FloatOption{"fourth", "2.4", "fourth float"});
-            sequenceOfFloats.add(FloatOption{"fifth", "2.5", "fifth float"});
 
             sequenceOfBooleans.add(BoolOption{"first", "true", "first bool"});
             sequenceOfBooleans.add(BoolOption{"second", "false", "second bool"});
             sequenceOfBooleans.add(BoolOption{"third", "true", "third bool"});
-            sequenceOfBooleans.add(BoolOption{"fourth", "false", "fourth bool"});
-            sequenceOfBooleans.add(BoolOption{"fifth", "true", "fifth bool"});
 
             sequenceOfIntegers.add(UIntOption{"first", "1", "first int"});
             sequenceOfIntegers.add(UIntOption{"second", "2", "second int"});
             sequenceOfIntegers.add(UIntOption{"third", "3", "third int"});
-            sequenceOfIntegers.add(UIntOption{"fourth", "4", "fourth int"});
-            sequenceOfIntegers.add(UIntOption{"fifth", "5", "fifth int"});
         }
-        TargetConfig() = default;
-
         std::vector<BaseOption*> getOptions() override
         {
             return {&sequenceOfStrings, &sequenceOfFloats, &sequenceOfBooleans, &sequenceOfIntegers};
@@ -143,109 +256,83 @@ TEST_F(ConfigSerializationTest, SequenceSerializationTest)
     /// Deserialize message: overwrite target configuration with values from serialized source configuration
     TargetConfig targetConfig{"target configuration", "Values to be overwritten."};
     ProtobufDeserializeVisitor deserializer(message);
-    std::cout << "----- Before overwriting -----" << '\n' << std::endl;
     for (size_t i = 0; i < sourceConfig.getOptions().size(); ++i)
     {
-        if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(sourceConfig.getOptions()[i]))
+        if (auto* sourceStringSequence = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "String Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetStringSequence = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceStringSequence->size(), targetStringSequence->size());
+            for (size_t j = 0; j < sourceStringSequence->size(); ++j)
             {
-                std::cout << "Target String: '" << targetOption->operator[](j).getValue() << "' "
-                          << "Source String: '" << sourceOption->operator[](j).getValue() << "' "<< std::endl;
-                EXPECT_NE(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_NE(sourceStringSequence->operator[](j).getValue(), targetStringSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<float>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceFloatSequence = dynamic_cast<SequenceOption<ScalarOption<float>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Float Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<float>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetFloatSequence = dynamic_cast<SequenceOption<ScalarOption<float>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceFloatSequence->size(), targetFloatSequence->size());
+            for (size_t j = 0; j < sourceFloatSequence->size(); ++j)
             {
-                std::cout << "Target Float: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Float: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_NE(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_NE(sourceFloatSequence->operator[](j).getValue(), targetFloatSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceBoolSequence = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Bool Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetBoolSequence = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceBoolSequence->size(), targetBoolSequence->size());
+            for (size_t j = 0; j < sourceBoolSequence->size(); ++j)
             {
-                std::cout << "Target Bool: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Bool: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_NE(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_NE(sourceBoolSequence->operator[](j).getValue(), targetBoolSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceIntSequence = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Integer Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetIntSequence = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceIntSequence->size(), targetIntSequence->size());
+            for (size_t j = 0; j < sourceIntSequence->size(); ++j)
             {
-                std::cout << "Target Integer: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Integer: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_NE(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_NE(sourceIntSequence->operator[](j).getValue(), targetIntSequence->operator[](j).getValue());
             }
         }
     }
-
     targetConfig.accept(deserializer);
-    std::cout << '\n' << "----- After overwriting -----" << '\n' << std::endl;
+    /// After overwriting
     for (size_t i = 0; i < sourceConfig.getOptions().size(); ++i)
     {
-        if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(sourceConfig.getOptions()[i]))
+        if (auto* sourceStringSequence = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "String Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetStringSequence = dynamic_cast<SequenceOption<ScalarOption<std::string>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceStringSequence->size(), targetStringSequence->size());
+            for (size_t j = 0; j < sourceStringSequence->size(); ++j)
             {
-                std::cout << "Target String: '" << targetOption->operator[](j).getValue() << "' "
-                          << "Source String: '" << sourceOption->operator[](j).getValue() << "'" << std::endl;
-                EXPECT_EQ(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_EQ(sourceStringSequence->operator[](j).getValue(), targetStringSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<float>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceFloatSequence = dynamic_cast<SequenceOption<ScalarOption<float>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Float Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<float>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetFloatSequence = dynamic_cast<SequenceOption<ScalarOption<float>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceFloatSequence->size(), targetFloatSequence->size());
+            for (size_t j = 0; j < sourceFloatSequence->size(); ++j)
             {
-                std::cout << "Target Float: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Float: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_EQ(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_EQ(sourceFloatSequence->operator[](j).getValue(), targetFloatSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceBoolSequence = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Bool Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetBoolSequence = dynamic_cast<SequenceOption<ScalarOption<bool>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceBoolSequence->size(), targetBoolSequence->size());
+            for (size_t j = 0; j < sourceBoolSequence->size(); ++j)
             {
-                std::cout << "Target Bool: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Bool: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_EQ(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_EQ(sourceBoolSequence->operator[](j).getValue(), targetBoolSequence->operator[](j).getValue());
             }
         }
-        else if (auto* sourceOption = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(sourceConfig.getOptions()[i]))
+        else if (auto* sourceIntSequence = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(sourceConfig.getOptions()[i]))
         {
-            std::cout << "Integer Sequences" << std::endl;
-            auto* targetOption = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(targetConfig.getOptions()[i]);
-            EXPECT_EQ(sourceOption->size(), targetOption->size());
-            for (size_t j = 0; j < sourceOption->size(); ++j)
+            auto* targetIntSequence = dynamic_cast<SequenceOption<ScalarOption<uint64_t>>*>(targetConfig.getOptions()[i]);
+            EXPECT_EQ(sourceIntSequence->size(), targetIntSequence->size());
+            for (size_t j = 0; j < sourceIntSequence->size(); ++j)
             {
-                std::cout << "Target Integer: " << targetOption->operator[](j).getValue() << " "
-                          << "Source Integer: " << sourceOption->operator[](j).getValue() << std::endl;
-                EXPECT_EQ(sourceOption->operator[](j).getValue(), targetOption->operator[](j).getValue());
+                EXPECT_EQ(sourceIntSequence->operator[](j).getValue(), targetIntSequence->operator[](j).getValue());
             }
         }
     }
@@ -255,27 +342,37 @@ TEST_F(ConfigSerializationTest, SerializationTest)
 {
     ProtobufConfigCache cache;
 
+    /// Test values
+    constexpr uint32_t rpcValue = 10;
+    constexpr uint32_t numberOfBuffersInGlobalBufferManagerValue = 98765;
+    constexpr uint32_t numberOfBuffersInSourceLocalBufferPoolValue = 128;
+    constexpr uint32_t bufferSizeInBytesValue = 42;
+    constexpr uint32_t numberOfPartitionsValue = 3;
+    constexpr uint32_t pageSizeValue = 50;
+    constexpr uint32_t preAllocPageCntValue = 4;
+    constexpr uint32_t maxHasTableSizeValue = 7;
+
     /// Source configuration (before serialization)
     WorkerConfiguration sourceConfiguration("source configuration", "Values to be serialized.");
 
-    // Modify source configuration so it does not contain the default values
+    /// Modify source configuration so it does not contain the default values
     sourceConfiguration.localWorkerHost.setValue("0.0.0.0");
-    sourceConfiguration.rpcPort.setValue(10);
-    sourceConfiguration.numberOfBuffersInGlobalBufferManager.setValue(98765);
-    sourceConfiguration.numberOfBuffersInSourceLocalBufferPool.setValue(128);
-    sourceConfiguration.bufferSizeInBytes.setValue(42);
+    sourceConfiguration.rpcPort.setValue(rpcValue);
+    sourceConfiguration.numberOfBuffersInGlobalBufferManager.setValue(numberOfBuffersInGlobalBufferManagerValue);
+    sourceConfiguration.numberOfBuffersInSourceLocalBufferPool.setValue(numberOfBuffersInSourceLocalBufferPoolValue);
+    sourceConfiguration.bufferSizeInBytes.setValue(bufferSizeInBytesValue);
     sourceConfiguration.logLevel.setValue(LogLevel::LOG_NONE);
     sourceConfiguration.configPath.setValue("THE PATH");
 
     sourceConfiguration.queryCompiler.compilationStrategy.setValue(QueryCompilation::CompilationStrategy::FAST);
     sourceConfiguration.queryCompiler.nautilusBackend.setValue(QueryCompilation::NautilusBackend::INTERPRETER);
     sourceConfiguration.queryCompiler.useCompilationCache.setValue(true);
-    sourceConfiguration.queryCompiler.numberOfPartitions.setValue(3);
-    sourceConfiguration.queryCompiler.pageSize.setValue(50);
-    sourceConfiguration.queryCompiler.preAllocPageCnt.setValue(4);
-    sourceConfiguration.queryCompiler.maxHashTableSize.setValue(7);
+    sourceConfiguration.queryCompiler.numberOfPartitions.setValue(numberOfPartitionsValue);
+    sourceConfiguration.queryCompiler.pageSize.setValue(pageSizeValue);
+    sourceConfiguration.queryCompiler.preAllocPageCnt.setValue(preAllocPageCntValue);
+    sourceConfiguration.queryCompiler.maxHashTableSize.setValue(maxHasTableSizeValue);
 
-    // Serialize source worker configuration
+    /// Serialize source worker configuration
     auto* message = cache.getEmptyMessage<WorkerConfiguration>();
     cache.printFile();
     ProtobufSerializeOptionVisitor serializer(message);
@@ -289,7 +386,6 @@ TEST_F(ConfigSerializationTest, SerializationTest)
     EXPECT_NE(sourceConfiguration.toString(), targetConfiguration.toString());
     targetConfiguration.accept(deserializer);
     EXPECT_EQ(sourceConfiguration.toString(), targetConfiguration.toString());
-
 }
 
 TEST_F(ConfigSerializationTest, ScalarSerializationTest)
@@ -310,11 +406,14 @@ TEST_F(ConfigSerializationTest, ScalarSerializationTest)
 
     /// Source configuration
     TestConfig sourceConfig{"source configuration", "Values to be serialized."};
-    std::cout << sourceConfig.a.getName() << std::endl;
+    std::cout << sourceConfig.a.getName() << '\n';
 
     /// Modify configuration so it does not contain the default values
-    sourceConfig.a.setValue(-52);
-    sourceConfig.b.setValue(2.35);
+    constexpr int32_t valueA = -52;
+    constexpr float valueB = 2.35;
+
+    sourceConfig.a.setValue(valueA);
+    sourceConfig.b.setValue(valueB);
 
     /// Serialize configuration
     auto* message = cache.getEmptyMessage<TestConfig>();
@@ -329,7 +428,6 @@ TEST_F(ConfigSerializationTest, ScalarSerializationTest)
     EXPECT_NE(sourceConfig.toString(), targetConfig.toString());
     targetConfig.accept(deserializer);
     EXPECT_EQ(sourceConfig.toString(), targetConfig.toString());
-
 }
 
 }
