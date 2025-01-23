@@ -54,7 +54,7 @@ std::string NodeFunctionOr::toString() const
     return ss.str();
 }
 
-void NodeFunctionOr::inferStamp(SchemaPtr schema)
+void NodeFunctionOr::inferStamp(const Schema& schema)
 {
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);

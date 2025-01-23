@@ -95,7 +95,7 @@ bool LogicalWindowOperator::inferSchema()
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (const auto& agg : windowAggregation)
     {
-        agg->inferStamp(inputSchema);
+        agg->inferStamp(*inputSchema);
     }
 
     ///Construct output schema
@@ -107,7 +107,7 @@ bool LogicalWindowOperator::inferSchema()
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
     {
         /// typeInference
-        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(inputSchema))
+        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(*inputSchema))
         {
             return false;
         }
@@ -127,7 +127,7 @@ bool LogicalWindowOperator::inferSchema()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
             auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(inputSchema))
+            if (!thresholdWindow->inferStamp(*inputSchema))
             {
                 return false;
             }
@@ -144,7 +144,7 @@ bool LogicalWindowOperator::inferSchema()
         auto keyList = windowDefinition->getKeys();
         for (const auto& key : keyList)
         {
-            key->inferStamp(inputSchema);
+            key->inferStamp(*inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }

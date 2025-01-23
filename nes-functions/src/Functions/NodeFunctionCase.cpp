@@ -42,7 +42,7 @@ NodeFunctionPtr NodeFunctionCase::create(std::vector<NodeFunctionPtr> const& whe
     return caseNode;
 }
 
-void NodeFunctionCase::inferStamp(SchemaPtr schema)
+void NodeFunctionCase::inferStamp(const Schema& schema)
 {
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();

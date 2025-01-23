@@ -60,16 +60,16 @@ std::string NodeFunctionFieldRename::toString() const
     return "FieldRenameFunction(" + fmt::format("{}", *node) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
+void NodeFunctionFieldRename::inferStamp(const Schema& schema)
 {
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema->getFieldByName(fieldName);
+    auto fieldAttribute = schema.getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
     {
-        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
+        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema.toString());
     }
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -82,10 +82,10 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     }
     else
     {
-        auto newFieldAttribute = schema->getFieldByName(newFieldName);
+        auto newFieldAttribute = schema.getFieldByName(newFieldName);
         if (newFieldAttribute)
         {
-            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
+            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema.toString());
         }
     }
     /// assign the stamp of this field access with the type of this field.
