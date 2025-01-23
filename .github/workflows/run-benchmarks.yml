@@ -1,0 +1,42 @@
+name: Build, Run and Benchmark Systests
+on: push
+
+jobs:
+  build-and-benchmark:
+    runs-on: ubuntu-latest
+    container:
+      image: nebulastream/nes-development:latest
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+        CONBENCH_PROJECT_COMMIT: ${{ github.sha }}
+        CONBENCH_URL: "https://bench.nebula.stream"
+        CONBENCH_EMAIL: "user@example.com"
+        CONBENCH_PASSWORD: "password"
+        CONBENCH_PROJECT_REPOSITORY: "https://github.com/${{ github.repository}}"
+        CONBENCH_RUN_REASON: "Here we need to put the Reason. Ie Merging into main, Nightly Job, etc"
+      options: --user root
+    timeout-minutes: 40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: python setup
+        run: |
+          apt update
+          python3.11 --version
+          apt install -y python3-venv
+          python3 -m venv .benchmarking-venv
+          . .benchmarking-venv/bin/activate 
+          python3 -m pip install -r scripts/benchmarking/requirements.txt
+      - name: build systest
+        run: |
+          cmake -B build
+          cmake --build build --target systest -j -- -k 0
+      - name: run Benchmarks
+        run: |
+          ./build/nes-systests/systest/systest -b 
+          . .benchmarking-venv/bin/activate 
+          python3 ./scripts/benchmarking/benchmark.py 
+
