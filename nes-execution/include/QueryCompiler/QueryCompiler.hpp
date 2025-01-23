@@ -29,7 +29,7 @@ class QueryCompiler
 {
 public:
     QueryCompiler(const std::shared_ptr<QueryCompilerOptions>& options, const std::shared_ptr<Phases::PhaseFactory>& phaseFactory);
-    QueryCompilationResult compileQuery(const QueryCompilationRequestPtr& request);
+    [[nodiscard]] QueryCompilationResult compileQuery(const QueryCompilationRequestPtr& request) const;
 
 protected:
     std::shared_ptr<QueryCompilerOptions> options;
