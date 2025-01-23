@@ -110,7 +110,7 @@ void OperatorPipeline::clearPredecessors()
 {
     for (const auto& pre : predecessorPipelines)
     {
-        if (auto prePipeline = pre.lock())
+        if (const auto prePipeline = pre.lock())
         {
             prePipeline->removeSuccessor(shared_from_this());
         }

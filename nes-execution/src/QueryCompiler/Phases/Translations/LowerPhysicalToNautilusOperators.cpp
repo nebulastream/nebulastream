@@ -74,7 +74,7 @@ PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPt
 
 OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize)
 {
-    auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
+    const auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
     auto nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
@@ -96,7 +96,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     {
         decomposedQueryPlan->removeAsRootOperator(root->getId());
     }
-    auto nautilusPipelineWrapper = std::make_shared<NautilusPipelineOperator>(getNextOperatorId(), pipeline, operatorHandlers);
+    const auto nautilusPipelineWrapper = std::make_shared<NautilusPipelineOperator>(getNextOperatorId(), pipeline, operatorHandlers);
     decomposedQueryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
@@ -135,7 +135,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {
-        auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
+        const auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
 
         operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
@@ -191,7 +191,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(operatorNode))
     {
-        auto watermarkAssignment = NES::Util::as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(operatorNode);
+        const auto watermarkAssignment = NES::Util::as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(operatorNode);
         const auto watermarkDescriptor = watermarkAssignment->getWatermarkStrategyDescriptor();
 
         if (NES::Util::instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkDescriptor))
@@ -252,7 +252,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
-    auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalSelectionOperator>(operatorPtr);
+    const auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalSelectionOperator>(operatorPtr);
     auto function = FunctionProvider::lowerFunction(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
 }
@@ -260,9 +260,9 @@ LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalO
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMap(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
-    auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
-    auto assignmentField = mapOperator->getMapFunction()->getField();
-    auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
+    const auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
+    const auto assignmentField = mapOperator->getMapFunction()->getField();
+    const auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
     auto function = FunctionProvider::lowerFunction(assignmentFunction);
     auto writeField = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionWriteField>(
         assignmentField->getFieldName(), std::move(function));

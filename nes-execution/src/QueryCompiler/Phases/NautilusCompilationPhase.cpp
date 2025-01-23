@@ -65,11 +65,11 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
 
 OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline)
 {
-    auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
+    const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");
 
-    auto rootOperator = pipelineRoots[0];
-    auto nautilusPipeline = NES::Util::as<NautilusPipelineOperator>(rootOperator);
+    const auto& rootOperator = pipelineRoots[0];
+    const auto nautilusPipeline = NES::Util::as<NautilusPipelineOperator>(rootOperator);
     nautilus::engine::Options options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",
@@ -89,7 +89,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
             = provider.value()->create(nautilusPipeline->getNautilusPipeline(), nautilusPipeline->getOperatorHandlers(), options);
         /// we replace the current pipeline operators with an executable operator.
         /// this allows us to keep the pipeline structure.
-        auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
+        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
         pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
         return pipeline;
     }

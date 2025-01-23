@@ -65,7 +65,7 @@ void DefaultPipeliningPhase::processMultiplex(
     /// if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators())
     {
-        auto successorPipeline = currentPipeline->getSuccessors()[0];
+        const auto successorPipeline = currentPipeline->getSuccessors()[0];
         pipelinePlan->removePipeline(currentPipeline);
         currentPipeline = successorPipeline;
     }
@@ -88,7 +88,7 @@ void DefaultPipeliningPhase::processDemultiplex(
     /// if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators())
     {
-        auto successorPipeline = currentPipeline->getSuccessors()[0];
+        const auto successorPipeline = currentPipeline->getSuccessors()[0];
         pipelinePlan->removePipeline(currentPipeline);
         currentPipeline = successorPipeline;
     }
@@ -100,7 +100,7 @@ void DefaultPipeliningPhase::processDemultiplex(
     }
     else
     {
-        auto newPipeline = OperatorPipeline::create();
+        const auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         process(pipelinePlan, pipelineOperatorMap, newPipeline, NES::Util::as<Operator>(currentOperator->getChildren()[0]));
@@ -164,7 +164,7 @@ void DefaultPipeliningPhase::processSource(
     /// Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators())
     {
-        auto newPipeline = OperatorPipeline::create();
+        const auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         currentPipeline = newPipeline;

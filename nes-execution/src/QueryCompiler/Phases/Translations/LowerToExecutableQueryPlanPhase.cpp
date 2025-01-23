@@ -107,8 +107,8 @@ processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& p
 
 void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& loweringContext)
 {
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator)->getSinkDescriptor();
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator)->getSinkDescriptor();
     loweringContext.sinks[sinkOperator].emplace_back(predecessor);
 }
 
@@ -123,8 +123,8 @@ std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
     {
         return executable->second;
     }
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
     auto executablePipeline
         = Runtime::Execution::ExecutablePipeline::create(PipelineId(pipeline->getPipelineId()), executableOperator->takeStage(), {});
 
