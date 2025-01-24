@@ -13,8 +13,8 @@ that will run/debug a single specific test within that file or all tests within 
 
 ### How the plugin works
 - Adds gutter icons to lines containing "----", which marks an assert, and at the beginning of the file for "run all"
-- The plugin tries to find the "systest" configuration and creates a temporary copy of it
-- Program arguments are taken over from "systest" to "systest_temp", with the testLocation path being overridden
+- The plugin tries to find the "systest" configuration and creates a copy named "systest_plugin"
+- Program arguments are taken over from "systest" to "systest_plugin", with the testLocation path being overridden
 - The plugin accesses the CMake profile used for the "systest" configuration and construct the correct test path from the cppEnvironment
 
 ### Docker
@@ -29,3 +29,4 @@ that contains the end of a test query "----"
 - Click the icon to run/debug the system level test
 - Press Shift+F10 / Shift+F9 to rerun / debug the last test
 - To configure the program arguments, simply edit them in the "systest" configuration
+- NOTE: changes in "systest_plugin" are temporary and will be overwritten
