@@ -259,7 +259,7 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
-    EXPECT_CALL(*test.status, logQueryFailure(QueryId(1), ::testing::_));
+    EXPECT_CALL(*test.status, logQueryFailure(QueryId(1), ::testing::_, ::testing::_));
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
 
     test.start();

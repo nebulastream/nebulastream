@@ -257,7 +257,8 @@ public:
             id,
             std::move(source),
             std::move(exception),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
+            [id, sourceId, listener = listener]
+            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
             {}});
     }
 
@@ -266,7 +267,8 @@ public:
         taskQueue.blockingWrite(StopSourceTask{
             id,
             std::move(source),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
+            [id, sourceId, listener = listener]
+            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
             {}});
     }
 
@@ -602,19 +604,21 @@ void QueryCatalog::start(
         void onRunning() override
         {
             ENGINE_LOG_DEBUG("Query {} onRunning", queryId);
-            listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running);
-            if (auto locked = state.lock())
+            const auto timestamp = std::chrono::system_clock::now();
+            if (const auto locked = state.lock())
             {
                 locked->transition([](Starting&& starting) { return Running{std::move(starting.plan)}; });
+                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
             }
         }
         void onFailure(Exception exception) override
         {
             ENGINE_LOG_DEBUG("Query {} onFailure", queryId);
-            if (auto locked = state.lock())
+            const auto timestamp = std::chrono::system_clock::now();
+            if (const auto locked = state.lock())
             {
                 /// Regardless of its current state the query should move into the Terminated::Failed state.
-                auto successfulTermination = locked->transition(
+                locked->transition(
                     [](Starting&& starting)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -629,25 +633,20 @@ void QueryCatalog::start(
                     {
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Failed};
-                    });
-
-                /// It should be impossible for a query in the `Terminated` state to emit a failure as the `RunningQueryPlan` which called
-                /// the `onFailure()` method should have been destroyed, once transitioned into the `Terminated` state.
-                INVARIANT(
-                    successfulTermination,
-                    "Query emitted Failure while in the Terminated state. This should never happen! Error: {}",
-                    exception.what());
+                    },
+                    [](Terminated&&) { return Terminated{Terminated::Failed}; });
 
                 exception.what() += fmt::format(" In Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
-                listener->logQueryFailure(queryId, std::move(exception));
+                listener->logQueryFailure(queryId, std::move(exception), timestamp);
             }
         }
         /// OnDestruction is called when the entire query graph is terminated.
         void onDestruction() override
         {
             ENGINE_LOG_DEBUG("Query {} onDestruction", queryId);
-            if (auto locked = state.lock())
+            const auto timestamp = std::chrono::system_clock::now();
+            if (const auto locked = state.lock())
             {
                 locked->transition(
                     [](Starting&& starting)
@@ -665,12 +664,7 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                ENGINE_LOG_DEBUG("Query {} Stopped", queryId);
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped);
-            }
-            else
-            {
-                ENGINE_LOG_WARNING("QueryState {} is expired", queryId);
+                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped, timestamp);
             }
         }
 

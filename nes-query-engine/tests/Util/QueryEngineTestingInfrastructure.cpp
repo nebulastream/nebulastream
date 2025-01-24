@@ -287,33 +287,33 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
         switch (state)
         {
             case Runtime::Execution::QueryStatus::Registered:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Registered)).Times(1);
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Registered, ::testing::_)).Times(1);
                 break;
             case Runtime::Execution::QueryStatus::Running:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running))
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto)
+                        [this](auto id, auto, auto)
                         {
                             queryRunning.at(id)->set_value();
                             return true;
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Stopped:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Stopped))
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Stopped, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto)
+                        [this](auto id, auto, auto)
                         {
                             queryTermination.at(id)->set_value();
                             return true;
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Failed:
-                EXPECT_CALL(*status, logQueryFailure(id, ::testing::_))
+                EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](const auto& id, const auto&)
+                        [this](const auto& id, const auto&, auto)
                         {
                             queryTermination.at(id)->set_value();
                             return true;
@@ -325,7 +325,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
 
 void TestingHarness::expectSourceTermination(QueryId queryId, QueryPlanBuilder::identifier_t source, Runtime::QueryTerminationType type)
 {
-    EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type)).WillOnce(::testing::Return(true));
+    EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type, ::testing::_)).WillOnce(::testing::Return(true));
 }
 
 void TestingHarness::start()

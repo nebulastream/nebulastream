@@ -149,9 +149,10 @@ struct ExpectStats
 class QueryStatusListener final : public AbstractQueryStatusListener
 {
 public:
-    MOCK_METHOD(bool, logSourceTermination, (QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType), (override));
-    MOCK_METHOD(bool, logQueryFailure, (QueryId queryId, Exception exception), (override));
-    MOCK_METHOD(bool, logQueryStatusChange, (QueryId queryId, Runtime::Execution::QueryStatus Status), (override));
+    MOCK_METHOD(
+        bool, logSourceTermination, (QueryId, OriginId, Runtime::QueryTerminationType, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryFailure, (QueryId, Exception, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point), (override));
 };
 
 /// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal
