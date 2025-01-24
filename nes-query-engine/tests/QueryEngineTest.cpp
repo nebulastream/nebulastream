@@ -429,7 +429,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
     test.start();
     {
         test.startQuery(std::move(query));
-        test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT);
+        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
     }
     test.stop();
 }
