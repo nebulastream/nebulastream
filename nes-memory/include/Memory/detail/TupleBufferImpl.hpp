@@ -20,8 +20,8 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Memory/detail/TaggedPointer.hpp>
 #include <Time/Timestamp.hpp>
-#include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <deque>
     #include <mutex>
@@ -237,5 +237,9 @@ private:
     TaggedPointer<BufferControlBlock> controlBlock{nullptr};
 };
 
+inline uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
+{
+    return numberOfTuples;
+}
 }
 }

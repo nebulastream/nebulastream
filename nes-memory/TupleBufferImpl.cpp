@@ -20,7 +20,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 #include <magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -229,10 +228,6 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 /// ------------------ Utility functions for TupleBuffer ------------------------
 /// -----------------------------------------------------------------------------
 
-uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
-{
-    return numberOfTuples;
-}
 
 void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
 {
