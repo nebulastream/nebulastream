@@ -333,6 +333,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
 
     EXPECT_TRUE(crd->stopCoordinator(true));
 }
+}
 /*
 TEST_F(MeerkatTest, testDecisionTime) {
     auto topology = Topology::create();
