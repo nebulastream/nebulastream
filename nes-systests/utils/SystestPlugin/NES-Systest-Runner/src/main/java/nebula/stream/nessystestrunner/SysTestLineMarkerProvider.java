@@ -137,8 +137,8 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
     }
 
     /// This function is called when the systest Gutter Icon is clicked.
-    /// It finds the "systest" configuration, makes a temporary copy and modifies the program arguments
-    /// Then run/debug the temporary configuration
+    /// It finds the "systest" configuration, makes a "systest_plugin" copy and modifies the program arguments
+    /// Then run/debug the plugin configuration
     public static void runSysTest(Project project, boolean runDebugger, PsiFile file, int testIndex) {
 
         /// Save File to ensure recent changes apply to System Test run
@@ -186,21 +186,21 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             }
             CMakeAppRunConfiguration cMakeAppRunConfigurationExisting = (CMakeAppRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
 
-            /// Check if temporary configuration already exists and reuse
-            RunnerAndConfigurationSettings temporaryConfigSettings = runManager
+            /// Check if systest_plugin configuration already exists and reuse
+            RunnerAndConfigurationSettings pluginConfigSettings = runManager
                     .getAllSettings()
                     .stream()
-                    .filter(confsettings -> "systest_temp".equals(confsettings.getName()))
+                    .filter(confsettings -> "systest_plugin".equals(confsettings.getName()))
                     .findFirst()
                     .orElse(null);
 
-            if(temporaryConfigSettings == null){
-                /// Create a temporary configuration
+            if(pluginConfigSettings == null){
+                /// Create systest_plugin configuration
                 CMakeAppRunConfigurationType configurationType = CMakeAppRunConfigurationType.getInstance();
-                temporaryConfigSettings = runManager.createConfiguration(
-                        "systest_temp", configurationType.getFactory()
+                pluginConfigSettings = runManager.createConfiguration(
+                        "systest_plugin", configurationType.getFactory()
                 );
-                runManager.addConfiguration(temporaryConfigSettings);
+                runManager.addConfiguration(pluginConfigSettings);
             }
 
             /// Get the currently selected CMake profile and environment
@@ -224,25 +224,25 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                 cleanedOldParameters = cleanedOldParameters.replaceAll(tPattern, "").trim();
             }
 
-            /// Change program parameters of temp configuration
-            CMakeAppRunConfiguration cMakeAppRunConfigurationTemp = (CMakeAppRunConfiguration)  temporaryConfigSettings.getConfiguration();
-            cMakeAppRunConfigurationTemp.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
-            cMakeAppRunConfigurationTemp.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
-            cMakeAppRunConfigurationTemp.setProgramParameters(cleanedOldParameters + " " + Parameters);
-            temporaryConfigSettings.setTemporary(true);
-            cMakeAppRunConfigurationTemp.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
-            runManager.setSelectedConfiguration(temporaryConfigSettings);
+            /// Change program parameters of plugin configuration
+            CMakeAppRunConfiguration cMakeAppRunConfigurationPlugin = (CMakeAppRunConfiguration)  pluginConfigSettings.getConfiguration();
+            cMakeAppRunConfigurationPlugin.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
+            cMakeAppRunConfigurationPlugin.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
+            cMakeAppRunConfigurationPlugin.setProgramParameters(cleanedOldParameters + " " + Parameters);
+            pluginConfigSettings.setTemporary(false);
+            cMakeAppRunConfigurationPlugin.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
+            runManager.setSelectedConfiguration(pluginConfigSettings);
 
-            /// Run/Debug the temporary configuration
+            /// Run/Debug the plugin configuration
             if(runDebugger){
                 ProgramRunnerUtil.executeConfiguration(
-                        temporaryConfigSettings,
+                        pluginConfigSettings,
                         DefaultDebugExecutor.getDebugExecutorInstance()
                 );
             }
             else{
                 ProgramRunnerUtil.executeConfiguration(
-                        temporaryConfigSettings,
+                        pluginConfigSettings,
                         DefaultRunExecutor.getRunExecutorInstance()
                 );
             }
