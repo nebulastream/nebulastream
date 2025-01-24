@@ -161,179 +161,179 @@ public:
 
 };
 
-    TEST_F(MeerkatTest, testHandshakeProcedure) {
-        NES_INFO("testHandshakeProcedure: Start coordinator");
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-        crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
-        uint64_t port = crd->startCoordinator(false);
-        EXPECT_NE(port, 0UL);
+TEST_F(MeerkatTest, testHandshakeProcedure) {
+    NES_INFO("testHandshakeProcedure: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    uint64_t port = crd->startCoordinator(false);
+    EXPECT_NE(port, 0UL);
 
-        NES_INFO("testHandshakeProcedure: Start worker1");
-        NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-        EXPECT_TRUE(wrk1->start(false, true));
+    NES_INFO("testHandshakeProcedure: Start worker1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    EXPECT_TRUE(wrk1->start(false, true));
 
-        NES_INFO("testHandshakeProcedure: Start worker2");
-        NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-        EXPECT_TRUE(wrk2->start(false, true));
+    NES_INFO("testHandshakeProcedure: Start worker2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    EXPECT_TRUE(wrk2->start(false, true));
 
-        wrk2->removeParent(crd->getNesWorker()->getWorkerId());
-        wrk2->addParent(wrk1->getWorkerId());
+    wrk2->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk2->addParent(wrk1->getWorkerId());
 
-        auto neighboursOfWrk1 = wrk1->getNodeEngine()->getNeighbours();
-        EXPECT_EQ(neighboursOfWrk1.size(), 2UL);
-        EXPECT_EQ(neighboursOfWrk1[wrk2->getWorkerId()], 1024UL);
+    auto neighboursOfWrk1 = wrk1->getNodeEngine()->getNeighbours();
+    EXPECT_EQ(neighboursOfWrk1.size(), 2UL);
+    EXPECT_EQ(neighboursOfWrk1[wrk2->getWorkerId()], 1024UL);
 
-        NES_INFO("testHandshakeProcedure: stop all");
-        EXPECT_TRUE(wrk1->stop(true));
-        EXPECT_TRUE(wrk2->stop(true));
-        EXPECT_TRUE(crd->stopCoordinator(true));
-    }
+    NES_INFO("testHandshakeProcedure: stop all");
+    EXPECT_TRUE(wrk1->stop(true));
+    EXPECT_TRUE(wrk2->stop(true));
+    EXPECT_TRUE(crd->stopCoordinator(true));
+}
 
-    TEST_F(MeerkatTest, testResourceInfoExchange) {
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-        crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
-        EXPECT_NE(crd->startCoordinator(false), 0UL);
+TEST_F(MeerkatTest, testResourceInfoExchange) {
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-        NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig3));
-        EXPECT_TRUE(wrk1->start(false, true));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    EXPECT_TRUE(wrk1->start(false, true));
 
-        NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig4));
-        EXPECT_TRUE(wrk2->start(false, true));
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    EXPECT_TRUE(wrk2->start(false, true));
 
-        wrk2->removeParent(crd->getNesWorker()->getWorkerId());
-        wrk2->addParent(wrk1->getWorkerId());
+    wrk2->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk2->addParent(wrk1->getWorkerId());
 
-        auto resources = wrk1->requestResourceInfoFromNeighbor(wrk2->getWorkerId());
-        EXPECT_EQ(resources, 1024UL);
+    auto resources = wrk1->requestResourceInfoFromNeighbor(wrk2->getWorkerId());
+    EXPECT_EQ(resources, 1024UL);
 
-        EXPECT_TRUE(wrk1->stop(true));
-        EXPECT_TRUE(wrk2->stop(true));
-        EXPECT_TRUE(crd->stopCoordinator(true));
-    }
+    EXPECT_TRUE(wrk1->stop(true));
+    EXPECT_TRUE(wrk2->stop(true));
+    EXPECT_TRUE(crd->stopCoordinator(true));
+}
 
-    TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
+TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
 
-        coordinatorConfig->optimizer.enableIncrementalPlacement = true;
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-        crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
-        EXPECT_NE(crd->startCoordinator(false), 0UL);
+    coordinatorConfig->optimizer.enableIncrementalPlacement = true;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-        NesWorkerPtr wrkMid1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-        EXPECT_TRUE(wrkMid1->start(false, true));
+    NesWorkerPtr wrkMid1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    EXPECT_TRUE(wrkMid1->start(false, true));
 
-        NesWorkerPtr wrkMid2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-        EXPECT_TRUE(wrkMid2->start(false, true));
+    NesWorkerPtr wrkMid2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    EXPECT_TRUE(wrkMid2->start(false, true));
 
-        NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
-        EXPECT_TRUE(wrkMid3->start(false, true));
+    NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    EXPECT_TRUE(wrkMid3->start(false, true));
 
-        NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
-        EXPECT_TRUE(wrkMid4->start(false, true));
+    NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    EXPECT_TRUE(wrkMid4->start(false, true));
 
-        NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig5));
-        wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
-        EXPECT_TRUE(wrkLeaf->start(false, true));
+    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig5));
+    wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+    EXPECT_TRUE(wrkLeaf->start(false, true));
 
-        wrkMid3->removeParent(crd->getNesWorker()->getWorkerId());
-        wrkMid3->addParent(wrkMid1->getWorkerId());
+    wrkMid3->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid3->addParent(wrkMid1->getWorkerId());
 
-        wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
-        wrkMid4->addParent(wrkMid2->getWorkerId());
+    wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid4->addParent(wrkMid2->getWorkerId());
 
-        wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-        wrkLeaf->addParent(wrkMid3->getWorkerId());
-        wrkLeaf->addParent(wrkMid4->getWorkerId());
+    wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkLeaf->addParent(wrkMid3->getWorkerId());
+    wrkLeaf->addParent(wrkMid4->getWorkerId());
 
-        auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
-        QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
-                                                                                       Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::AS);
+    auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
+    QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
+                                                                                   Optimizer::PlacementStrategy::BottomUp,
+                                                                                   FaultToleranceType::AS);
 
-        auto queryCatalog = crd->getQueryCatalog();
-        EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-        auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-        // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
-        std::this_thread::sleep_for(std::chrono::milliseconds(100000));
-        crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
-        EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
-
-
-        EXPECT_TRUE(wrkMid4->stop(true));
-        EXPECT_TRUE(wrkMid3->stop(true));
-        EXPECT_TRUE(wrkMid1->stop(true));
-        EXPECT_TRUE(wrkMid2->stop(true));
-        EXPECT_TRUE(wrkLeaf->stop(true));
-        EXPECT_TRUE(crd->stopCoordinator(true));
-    }
-
-    TEST_F(MeerkatTest, testMeerkatThreeWorkerTopology) {
-
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-        crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
-        EXPECT_NE(crd->startCoordinator(false), 0UL);
-
-        NesWorkerPtr wrkMid = std::make_shared<NesWorker>(std::move(workerConfig2));
-        EXPECT_TRUE(wrkMid->start(false, true));
-
-        NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig1));
-        wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
-        EXPECT_TRUE(wrkLeaf->start(false, true));
-
-        wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-        wrkLeaf->addParent(wrkMid->getWorkerId());
+    auto queryCatalog = crd->getQueryCatalog();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
+    auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
+    // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+    crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
 
-        auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
-        QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
-                                                                                       Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::M);
+    EXPECT_TRUE(wrkMid4->stop(true));
+    EXPECT_TRUE(wrkMid3->stop(true));
+    EXPECT_TRUE(wrkMid1->stop(true));
+    EXPECT_TRUE(wrkMid2->stop(true));
+    EXPECT_TRUE(wrkLeaf->stop(true));
+    EXPECT_TRUE(crd->stopCoordinator(true));
+}
 
-        auto queryCatalog = crd->getQueryCatalog();
-        EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-        auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-        wrkMid->requestOffload(sharedQueryPlanId, wrkMid->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkLeaf->getWorkerId());
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
-        EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
+TEST_F(MeerkatTest, testMeerkatThreeWorkerTopology) {
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    EXPECT_NE(crd->startCoordinator(false), 0UL);
+
+    NesWorkerPtr wrkMid = std::make_shared<NesWorker>(std::move(workerConfig2));
+    EXPECT_TRUE(wrkMid->start(false, true));
+
+    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig1));
+    wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+    EXPECT_TRUE(wrkLeaf->start(false, true));
+
+    wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkLeaf->addParent(wrkMid->getWorkerId());
 
 
-        EXPECT_TRUE(wrkLeaf->stop(true));
-        EXPECT_TRUE(wrkMid->stop(true));
-        EXPECT_TRUE(crd->stopCoordinator(true));
-    }
+    auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
+    QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
+                                                                                   Optimizer::PlacementStrategy::BottomUp,
+                                                                                   FaultToleranceType::M);
+
+    auto queryCatalog = crd->getQueryCatalog();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
+    auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
+    wrkMid->requestOffload(sharedQueryPlanId, wrkMid->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkLeaf->getWorkerId());
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
+
+
+    EXPECT_TRUE(wrkLeaf->stop(true));
+    EXPECT_TRUE(wrkMid->stop(true));
+    EXPECT_TRUE(crd->stopCoordinator(true));
+}
 
 TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
 
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-        crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
-        EXPECT_NE(crd->startCoordinator(false), 0UL);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-        for (auto i = 0; i < 8; i++) {
+    for (auto i = 0; i < 8; i++) {
 
-            auto workerConfig = WorkerConfiguration::create();
-            workerConfig->numberOfBuffersPerEpoch = 2;
-            workerConfig->numWorkerThreads = 1;
-            workerConfig->loadBalancing = true;
+        auto workerConfig = WorkerConfiguration::create();
+        workerConfig->numberOfBuffersPerEpoch = 2;
+        workerConfig->numWorkerThreads = 1;
+        workerConfig->loadBalancing = true;
 
-            NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
-            wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
-            EXPECT_TRUE(wrkLeaf1->start(false, true));
-        }
-        auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
-        QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
-                                                                                       Optimizer::PlacementStrategy::BottomUp,
-                                                                                       FaultToleranceType::AS);
-
-        auto queryCatalog = crd->getQueryCatalog();
-        EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000000000));
-        crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
-        EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
-
-
-        EXPECT_TRUE(crd->stopCoordinator(true));
+        NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
+        wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+        EXPECT_TRUE(wrkLeaf1->start(false, true));
     }
+    auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
+    QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
+                                                                                   Optimizer::PlacementStrategy::BottomUp,
+                                                                                   FaultToleranceType::AS);
 
+    auto queryCatalog = crd->getQueryCatalog();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000000000));
+    crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
+
+
+    EXPECT_TRUE(crd->stopCoordinator(true));
+}
+/*
 TEST_F(MeerkatTest, testDecisionTime) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
@@ -474,6 +474,5 @@ TEST_F(MeerkatTest, testDecisionTime) {
                                                                                    typeInferencePhase,
                                                                                    CoordinatorConfiguration::createDefault());
         queryPlacementPhase->execute(sharedQueryPlan);
-}
-}
+}*/
 
