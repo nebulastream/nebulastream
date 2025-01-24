@@ -27,6 +27,8 @@
 #include <Time/Timestamp.hpp>
 #include "BufferRecycler.hpp"
 
+#include "Memory/detail/TupleBufferImpl.hpp"
+
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
 /// TODO: switch to std::ispow2 when we use C++2a.
@@ -251,5 +253,10 @@ T* allocateWithin(TupleBuffer& buffer)
     buffer.setNumberOfTuples(1);
     return ptr;
 };
+
+inline uint64_t TupleBuffer::getNumberOfTuples() const noexcept
+{
+    return controlBlock->getNumberOfTuples();
+}
 
 }
