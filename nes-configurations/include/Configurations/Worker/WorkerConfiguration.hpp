@@ -68,6 +68,11 @@ class WorkerConfiguration : public BaseConfiguration {
     StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
 
     /**
+     * @brief log path.
+     */
+    StringOption logPath = {LOG_PATH_CONFIG, "nesWorkerStarter.log", "Path to the log file."};
+
+    /**
      * @brief Port for the RPC server of the Worker.
      * This is used to receive control messages from the coordinator or other workers .
      */

@@ -44,6 +44,7 @@ const std::string NUMBER_OF_SLOTS_CONFIG = "numberOfSlots";
 const std::string BANDWIDTH_IN_MBPS = "bandwidthInMbps";
 const std::string LATENCY_IN_MS = "latencyInMs";
 const std::string LOG_LEVEL_CONFIG = "logLevel";
+const std::string LOG_PATH_CONFIG = "logPath";
 const std::string LOGICAL_SOURCES = "logicalSources";
 const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfBuffersInGlobalBufferManager";
 const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";

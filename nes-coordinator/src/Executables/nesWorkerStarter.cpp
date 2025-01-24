@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
+#include <filesystem>
 
 using namespace NES;
 using namespace Configurations;
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
     try {
         std::cout << logo << std::endl;
         std::cout << worker << "v" << NES_VERSION << std::endl;
-        NES::Logger::setupLogging("nesWorkerStarter.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging(std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorkerStarter.log", NES::LogLevel::LOG_DEBUG);
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
         std::map<std::string, std::string> commandLineParams;
@@ -67,7 +68,7 @@ int main(int argc, char** argv) {
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
 
-        Logger::getInstance()->changeLogLevel(workerConfiguration->logLevel.getValue());
+        NES::Logger::setupLogging(workerConfiguration->logPath.getValue(), workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with {}", workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));

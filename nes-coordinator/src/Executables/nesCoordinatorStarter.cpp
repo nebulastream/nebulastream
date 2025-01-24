@@ -18,6 +18,7 @@
 #include <Version/version.hpp>
 #include <iostream>
 #include <vector>
+#include <filesystem>
 
 using namespace NES;
 using namespace std;
@@ -39,11 +40,10 @@ int main(int argc, const char* argv[]) {
     try {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
-        NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging(std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create(argc, argv);
 
-        Logger::getInstance()->changeLogLevel(coordinatorConfig->logLevel.getValue());
-
+        NES::Logger::setupLogging(coordinatorConfig->logPath.getValue(), coordinatorConfig->logLevel.getValue());
         NES_INFO("start coordinator with {}", coordinatorConfig->toString());
 
         NES_INFO("creating coordinator");

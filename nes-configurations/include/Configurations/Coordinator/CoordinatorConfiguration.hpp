@@ -50,6 +50,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG, "127.0.0.1", "RPC IP address or hostname of NES Coordinator."};
 
     /**
+     * @brief log path.
+     */
+    StringOption logPath = {LOG_PATH_CONFIG, "nesCoordinatorStarter.log", "Path to the log file."};
+
+    /**
      * @brief Port for the RPC server of the Coordinator.
      * This is used to receive control messages.
      */
@@ -154,6 +159,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&restIp,
                 &coordinatorHost,
+                &logPath,
                 &rpcPort,
                 &restPort,
                 &logLevel,
