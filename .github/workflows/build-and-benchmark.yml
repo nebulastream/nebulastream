@@ -3,7 +3,7 @@ on: push
 
 jobs:
   build-and-benchmark:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
     container:
       image: nebulastream/nes-development:latest
       volumes:
@@ -15,7 +15,7 @@ jobs:
         CONBENCH_URL: "https://bench.nebula.stream"
         CONBENCH_EMAIL: "user@example.com"
         CONBENCH_PASSWORD: "password"
-        CONBENCH_PROJECT_REPOSITORY: "https://github.com/${{ github.repository}}"
+        CONBENCH_PROJECT_REPOSITORY: "https://github.com/${{ github.repository }}"
         CONBENCH_RUN_REASON: "Here we need to put the Reason. Ie Merging into main, Nightly Job, etc"
       options: --user root
     timeout-minutes: 40
@@ -38,5 +38,5 @@ jobs:
         run: |
           ./build/nes-systests/systest/systest -b 
           . .benchmarking-venv/bin/activate 
-          python3 ./scripts/benchmarking/benchmark.py 
+          python3 ./scripts/benchmarking/benchmark.py --systest
 
