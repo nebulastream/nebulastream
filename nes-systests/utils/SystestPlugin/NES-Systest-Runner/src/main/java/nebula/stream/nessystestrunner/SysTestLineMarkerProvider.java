@@ -63,14 +63,14 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             return;
         }
 
-        /// pattern match all occurrences of a test using "----", which indicates the end of the system test query
+        /// Pattern match all occurrences of a test using "----", which indicates the end of the system test query
         String fileText = file.getText();
         Pattern pattern = Pattern.compile("----");
         Matcher matcher = pattern.matcher(fileText);
 
         int systestIndex = 1;
 
-        /// general Gutter Icon that runs all test in current file
+        /// General Gutter Icon that runs all test in current file
         PsiElement firstElement = file.getFirstChild();
         if (firstElement != null) {
             /// Get the range of the first line
@@ -96,21 +96,21 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
 
             int startOffset = matcher.start();
 
-            /// calculate line start and end offsets manually
+            /// Calculate line start and end offsets manually
             int lineStartOffset = fileText.lastIndexOf('\n', startOffset - 1) + 1;
             int lineEndOffset = fileText.indexOf('\n', startOffset);
             if (lineEndOffset == -1) {
                 lineEndOffset = fileText.length();
             }
 
-            /// find the element that corresponds to the start of the line
+            /// Find the element that corresponds to the start of the line
             PsiElement lineElement = file.findElementAt(lineStartOffset);
             if (lineElement == null) continue;
 
             TextRange lineTextRange = new TextRange(lineStartOffset, lineEndOffset);
             int currentSystestIndex = systestIndex;
 
-            /// create the LineMarkerInfo for the gutter icon
+            /// Create the LineMarkerInfo for the gutter icon
             LineMarkerInfo<PsiElement> lineMarkerInfo = new LineMarkerInfo<>(
                     lineElement,
                     lineTextRange,
@@ -121,7 +121,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             );
             result.add(lineMarkerInfo);
 
-            /// create the LineMarkerInfo for the gutter icon, debugging variant
+            /// Create the LineMarkerInfo for the gutter icon, debugging variant
             LineMarkerInfo<PsiElement> lineMarkerInfoDebug = new LineMarkerInfo<>(
                     lineElement,
                     lineTextRange,
@@ -144,7 +144,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
         /// Save File to ensure recent changes apply to System Test run
         saveFile(file);
 
-        /// create Nes-Systest-Runner window or reuse existing one to show console output / potential errors
+        /// Create Nes-Systest-Runner window or reuse existing one to show console output / potential errors
         ConsoleView consoleView = new ConsoleViewImpl(project, false);
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("NES-Systest-Runner");
         if (toolWindow == null) {
@@ -156,12 +156,12 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
         var contentManager = toolWindow.getContentManager();
         contentManager.removeAllContents(true);
 
-        /// add console to the tool window content
+        /// Add console to the tool window content
         var contentFactory = ContentFactory.getInstance();
         var content = contentFactory.createContent(consoleView.getComponent(), "Command Output", false);
         toolWindow.getContentManager().addContent(content);
 
-        /// if index is specified, only run that single test
+        /// If index is specified, only run that single test
         String testPath = file.getVirtualFile().getPath();
         String testIndexSuffix = "";
         if(testIndex > 0){
@@ -186,30 +186,52 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             }
             CMakeAppRunConfiguration cMakeAppRunConfigurationExisting = (CMakeAppRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
 
-            /// create a temporary configuration
-            CMakeAppRunConfigurationType configurationType = CMakeAppRunConfigurationType.getInstance();
-            RunnerAndConfigurationSettings temporaryConfigSettings = runManager.createConfiguration(
-                    "systest_temp", configurationType.getFactory()
-            );
+            /// Check if temporary configuration already exists and reuse
+            RunnerAndConfigurationSettings temporaryConfigSettings = runManager
+                    .getAllSettings()
+                    .stream()
+                    .filter(confsettings -> "systest_temp".equals(confsettings.getName()))
+                    .findFirst()
+                    .orElse(null);
 
-            /// Get the currently selected CMake profile
+            if(temporaryConfigSettings == null){
+                /// Create a temporary configuration
+                CMakeAppRunConfigurationType configurationType = CMakeAppRunConfigurationType.getInstance();
+                temporaryConfigSettings = runManager.createConfiguration(
+                        "systest_temp", configurationType.getFactory()
+                );
+                runManager.addConfiguration(temporaryConfigSettings);
+            }
+
+            /// Get the currently selected CMake profile and environment
             CMakeWorkspace cMakeWorkspace = CMakeWorkspace.getInstance(project);
             ExecutionTarget executionTarget = ExecutionTargetManager.getInstance(project).findTarget(cMakeAppRunConfigurationExisting);
             CMakeConfiguration cMakeConfiguration = cMakeAppRunConfigurationExisting.getBuildAndRunConfigurations(executionTarget).getRunConfiguration();
             CMakeProfileInfo activeProfile = cMakeWorkspace.getProfileInfoFor(cMakeConfiguration);
             CPPEnvironment cppEnvironment = activeProfile.getEnvironment();
 
-            /// Get the correct path from the target/executable for Remote Host
+            /// Get the correct test path from the environment
             String executablePath = cppEnvironment.toEnvPath(testPath);
             String Parameters = "-t " + executablePath + testIndexSuffix;
 
-            /// change program parameters of temp configuration
+            /// Filter out old test path in parameters, if it exists; plugin path takes priority
+            String existingParameters = cMakeAppRunConfigurationExisting.getProgramParameters();
+            String cleanedOldParameters = "";
+            if(existingParameters != null){
+                String tPattern = "-t\\s+\\S+";
+                cleanedOldParameters = existingParameters.replaceAll(tPattern, "").trim();
+                tPattern = "--testLocation\\s+\\S+";
+                cleanedOldParameters = cleanedOldParameters.replaceAll(tPattern, "").trim();
+            }
+
+            /// Change program parameters of temp configuration
             CMakeAppRunConfiguration cMakeAppRunConfigurationTemp = (CMakeAppRunConfiguration)  temporaryConfigSettings.getConfiguration();
             cMakeAppRunConfigurationTemp.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
             cMakeAppRunConfigurationTemp.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
-            cMakeAppRunConfigurationTemp.setProgramParameters(Parameters);
+            cMakeAppRunConfigurationTemp.setProgramParameters(cleanedOldParameters + " " + Parameters);
             temporaryConfigSettings.setTemporary(true);
             cMakeAppRunConfigurationTemp.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
+            runManager.setSelectedConfiguration(temporaryConfigSettings);
 
             /// Run/Debug the temporary configuration
             if(runDebugger){
