@@ -166,9 +166,11 @@ bool WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         auto ts = std::chrono::system_clock::now();
         auto timeNow = std::chrono::system_clock::to_time_t(ts);
         // storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-        // NES_DEBUG("BufferStorage: Deleted old size {} tuples", oldStorageSize);
-        // NES_DEBUG("BufferStorage: Deleted new size {} tuples", pq.size());
-        // NES_DEBUG("BufferStorage: Deleted diff {} tuples", oldStorageSize - pq.size());
+        NES_DEBUG("BufferStorage: Timestamp {}", timestamp);
+        NES_DEBUG("BufferStorage: Deleted old size {} tuples", oldStorageSize);
+        NES_DEBUG("BufferStorage: Deleted new size {} tuples", pq.size());
+        NES_DEBUG("BufferStorage: New top {}", pq.top().getWatermark());
+        NES_DEBUG("BufferStorage: Deleted diff {} tuples", oldStorageSize - pq.size());
         // storageFile << oldStorageSize - pq.size() << "\n";
         // storageFile.flush();
     }
