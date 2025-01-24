@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -88,7 +89,7 @@ NodeEngine::NodeEngine(
 QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan)
 {
     auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
-    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered);
+    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered, std::chrono::system_clock::now());
     return queryId;
 }
 
