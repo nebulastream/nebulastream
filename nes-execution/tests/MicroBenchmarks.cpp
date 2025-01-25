@@ -218,47 +218,39 @@ public:
         for (auto bufferIdx = 0UL; bufferIdx < std::ceil(bufferSize * numPages / fileBufferSize); ++bufferIdx)
         {
             auto tuplesWritten = 0UL;
+            auto* fieldAddrKeyBuffer = keyBuffer.data();
+            auto* fieldAddrPayloadBuffer = payloadBuffer.data();
+
             for (auto pageNum = 0UL; pageNum < fileBufferSize / bufferSize && pageIdx < numPages; ++pageNum, ++pageIdx)
             {
                 const auto& page = pages[pageIdx];
+                const auto* fieldAddrPagedVector = page.getBuffer();
 
-                if (separateKeys != NO_SEPARATION)
+                if (separateKeys == NO_SEPARATION)
                 {
-                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
-                    {
-                        ++tuplesWritten;
-                        auto fieldAddrPage = tupleIdx * tupleSize;
-                        auto* fieldAddrBuffer = payloadBuffer.data() + (pageNum * bufferSize + tupleIdx) * tupleSize;
-                        for (const auto [fieldType, fieldSize] : fieldTypeSizes)
-                        {
-                            const auto* fieldAddrPagedVector = fieldAddrPage + page.getBuffer();
-                            if (separateKeys == SEPARATE_FILES)
-                            {
-                                if (fieldType == KEY)
-                                {
-                                    fieldAddrBuffer = keyBuffer.data() + (pageNum * capacity + tupleIdx) * keySize;
-                                }
-                                else
-                                {
-                                    fieldAddrBuffer = payloadBuffer.data() + (pageNum * capacity + tupleIdx) * payloadSize;
-                                }
-                            }
-
-                            // TODO change SAME_FILE_ logic
-                            if (separateKeys == SEPARATE_FILES || (separateKeys == SAME_FILE_KEYS && fieldType == KEY)
-                                || (separateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD))
-                            {
-                                std::memcpy(fieldAddrBuffer, fieldAddrPagedVector, fieldSize);
-                            }
-
-                            fieldAddrPage += fieldSize;
-                            fieldAddrBuffer += fieldSize;
-                        }
-                    }
+                    std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, bufferSize);
+                    fieldAddrPayloadBuffer += bufferSize;
                 }
                 else
                 {
-                    std::memcpy(payloadBuffer.data() + pageNum * bufferSize, page.getBuffer(), bufferSize);
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++tuplesWritten)
+                    {
+                        for (const auto [fieldType, fieldSize] : fieldTypeSizes)
+                        {
+                            if (fieldType == KEY && (separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_KEYS))
+                            {
+                                std::memcpy(fieldAddrKeyBuffer, fieldAddrPagedVector, fieldSize);
+                                fieldAddrKeyBuffer += fieldSize;
+                            }
+                            else if (fieldType == PAYLOAD && (separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_PAYLOAD))
+                            {
+                                std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, fieldSize);
+                                fieldAddrPayloadBuffer += fieldSize;
+                            }
+
+                            fieldAddrPagedVector += fieldSize;
+                        }
+                    }
                 }
 
                 if (pageIdx % tenPercentOfNumPages == 0)
@@ -267,15 +259,33 @@ public:
                 }
             }
 
-            // TODO SAME_FILE_KEYS
-            if (separateKeys == SEPARATE_FILES)
+            if (separateKeys == NO_SEPARATION)
+            {
+                payloadFile.write(payloadBuffer.data(), fileBufferSize);
+            }
+            else if (separateKeys == SEPARATE_FILES)
             {
                 keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
                 payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
             }
             else
             {
-                payloadFile.write(payloadBuffer.data(), fileBufferSize);
+                fieldAddrPayloadBuffer = payloadBuffer.data();
+                while (tuplesWritten--)
+                {
+                    for (const auto [fieldType, fieldSize] : fieldTypeSizes)
+                    {
+                        if (separateKeys == SAME_FILE_KEYS && fieldType == KEY || separateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD)
+                        {
+                            payloadFile.write(fieldAddrPayloadBuffer, fieldSize);
+                            fieldAddrPayloadBuffer += fieldSize;
+                        }
+                        else
+                        {
+                            payloadFile.seekp(fieldSize, std::ios::cur);
+                        }
+                    }
+                }
             }
         }
 
@@ -345,7 +355,7 @@ public:
 
                 if (separateKeys != NO_SEPARATION)
                 {
-                    if (separateKeys == SAME_FILE)
+                    if (separateKeys == SAME_FILE_KEYS)
                     {
                         // TODO remove case
                     }
