@@ -84,6 +84,19 @@ public:
     WorkerConfigurationPtr workerConfig3;
     WorkerConfigurationPtr workerConfig4;
     WorkerConfigurationPtr workerConfig5;
+    WorkerConfigurationPtr workerConfig6;
+    WorkerConfigurationPtr workerConfig7;
+    WorkerConfigurationPtr workerConfig8;
+    WorkerConfigurationPtr workerConfig9;
+    WorkerConfigurationPtr workerConfig10;
+    WorkerConfigurationPtr workerConfig11;
+    WorkerConfigurationPtr workerConfig12;
+    WorkerConfigurationPtr workerConfig13;
+    WorkerConfigurationPtr workerConfig14;
+    WorkerConfigurationPtr workerConfig15;
+    WorkerConfigurationPtr workerConfig16;
+    WorkerConfigurationPtr workerConfig17;
+    WorkerConfigurationPtr workerConfig18;
     std::shared_ptr<QueryParsingService> queryParsingService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
@@ -131,6 +144,71 @@ public:
         workerConfig5->numberOfBuffersPerEpoch = 2;
         workerConfig5->numWorkerThreads = 1;
         workerConfig5->loadBalancing = true;
+
+        workerConfig6 = WorkerConfiguration::create();
+        workerConfig6->numberOfBuffersPerEpoch = 2;
+        workerConfig6->numWorkerThreads = 1;
+        workerConfig6->loadBalancing = true;
+
+        workerConfig7 = WorkerConfiguration::create();
+        workerConfig7->numberOfBuffersPerEpoch = 2;
+        workerConfig7->numWorkerThreads = 1;
+        workerConfig7->loadBalancing = true;
+
+        workerConfig8 = WorkerConfiguration::create();
+        workerConfig8->numberOfBuffersPerEpoch = 2;
+        workerConfig8->numWorkerThreads = 1;
+        workerConfig8->loadBalancing = true;
+
+        workerConfig9 = WorkerConfiguration::create();
+        workerConfig9->numberOfBuffersPerEpoch = 2;
+        workerConfig9->numWorkerThreads = 1;
+        workerConfig9->loadBalancing = true;
+
+        workerConfig10 = WorkerConfiguration::create();
+        workerConfig10->numberOfBuffersPerEpoch = 2;
+        workerConfig10->numWorkerThreads = 1;
+        workerConfig10->loadBalancing = true;
+
+        workerConfig11 = WorkerConfiguration::create();
+        workerConfig11->numberOfBuffersPerEpoch = 2;
+        workerConfig11->numWorkerThreads = 1;
+        workerConfig11->loadBalancing = true;
+
+        workerConfig12 = WorkerConfiguration::create();
+        workerConfig12->numberOfBuffersPerEpoch = 2;
+        workerConfig12->numWorkerThreads = 1;
+        workerConfig12->loadBalancing = true;
+
+        workerConfig13 = WorkerConfiguration::create();
+        workerConfig13->numberOfBuffersPerEpoch = 2;
+        workerConfig13->numWorkerThreads = 1;
+        workerConfig13->loadBalancing = true;
+
+        workerConfig14 = WorkerConfiguration::create();
+        workerConfig14->numberOfBuffersPerEpoch = 2;
+        workerConfig14->numWorkerThreads = 1;
+        workerConfig14->loadBalancing = true;
+
+        workerConfig15 = WorkerConfiguration::create();
+        workerConfig15->numberOfBuffersPerEpoch = 2;
+        workerConfig15->numWorkerThreads = 1;
+        workerConfig15->loadBalancing = true;
+
+        workerConfig16 = WorkerConfiguration::create();
+        workerConfig16->numberOfBuffersPerEpoch = 2;
+        workerConfig16->numWorkerThreads = 1;
+        workerConfig16->loadBalancing = true;
+
+        workerConfig17 = WorkerConfiguration::create();
+        workerConfig17->numberOfBuffersPerEpoch = 2;
+        workerConfig17->numWorkerThreads = 1;
+        workerConfig17->loadBalancing = true;
+
+        workerConfig18 = WorkerConfiguration::create();
+        workerConfig18->numberOfBuffersPerEpoch = 2;
+        workerConfig18->numWorkerThreads = 1;
+        workerConfig18->loadBalancing = true;
 
         inputSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -230,7 +308,43 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     EXPECT_TRUE(wrkMid4->start(false, true));
 
-    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig5));
+    NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
+    EXPECT_TRUE(wrkMid5->start(false, true));
+
+    NesWorkerPtr wrkMid6 = std::make_shared<NesWorker>(std::move(workerConfig6));
+    EXPECT_TRUE(wrkMid6->start(false, true));
+
+    NesWorkerPtr wrkMid7 = std::make_shared<NesWorker>(std::move(workerConfig7));
+    EXPECT_TRUE(wrkMid7->start(false, true));
+
+    NesWorkerPtr wrkMid8 = std::make_shared<NesWorker>(std::move(workerConfig8));
+    EXPECT_TRUE(wrkMid8->start(false, true));
+
+    NesWorkerPtr wrkMid9 = std::make_shared<NesWorker>(std::move(workerConfig9));
+    EXPECT_TRUE(wrkMid9->start(false, true));
+
+    NesWorkerPtr wrkMid10 = std::make_shared<NesWorker>(std::move(workerConfig10));
+    EXPECT_TRUE(wrkMid10->start(false, true));
+
+    NesWorkerPtr wrkMid11 = std::make_shared<NesWorker>(std::move(workerConfig11));
+    EXPECT_TRUE(wrkMid11->start(false, true));
+
+    NesWorkerPtr wrkMid12 = std::make_shared<NesWorker>(std::move(workerConfig12));
+    EXPECT_TRUE(wrkMid12->start(false, true));
+
+    NesWorkerPtr wrkMid13 = std::make_shared<NesWorker>(std::move(workerConfig13));
+    EXPECT_TRUE(wrkMid13->start(false, true));
+
+    NesWorkerPtr wrkMid14 = std::make_shared<NesWorker>(std::move(workerConfig14));
+    EXPECT_TRUE(wrkMid14->start(false, true));
+
+    NesWorkerPtr wrkMid15 = std::make_shared<NesWorker>(std::move(workerConfig15));
+    EXPECT_TRUE(wrkMid15->start(false, true));
+
+    NesWorkerPtr wrkMid16 = std::make_shared<NesWorker>(std::move(workerConfig16));
+    EXPECT_TRUE(wrkMid16->start(false, true));
+
+    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig17));
     wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf->start(false, true));
 
@@ -240,9 +354,45 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
     wrkMid4->addParent(wrkMid2->getWorkerId());
 
+    wrkMid5->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid5->addParent(wrkMid3->getWorkerId());
+
+    wrkMid6->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid6->addParent(wrkMid4->getWorkerId());
+
+    wrkMid7->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid7->addParent(wrkMid5->getWorkerId());
+
+    wrkMid8->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid8->addParent(wrkMid6->getWorkerId());
+
+    wrkMid9->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid9->addParent(wrkMid7->getWorkerId());
+
+    wrkMid10->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid10->addParent(wrkMid8->getWorkerId());
+
+    wrkMid11->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid11->addParent(wrkMid9->getWorkerId());
+
+    wrkMid12->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid12->addParent(wrkMid10->getWorkerId());
+
+    wrkMid13->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid13->addParent(wrkMid11->getWorkerId());
+
+    wrkMid14->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid14->addParent(wrkMid12->getWorkerId());
+
+    wrkMid15->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid15->addParent(wrkMid13->getWorkerId());
+
+    wrkMid16->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkMid16->addParent(wrkMid14->getWorkerId());
+
     wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkLeaf->addParent(wrkMid3->getWorkerId());
-    wrkLeaf->addParent(wrkMid4->getWorkerId());
+    wrkLeaf->addParent(wrkMid15->getWorkerId());
+    wrkLeaf->addParent(wrkMid16->getWorkerId());
 
     auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
@@ -333,8 +483,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
 
     EXPECT_TRUE(crd->stopCoordinator(true));
 }
-}
-/*
+
 TEST_F(MeerkatTest, testDecisionTime) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
@@ -354,12 +503,12 @@ TEST_F(MeerkatTest, testDecisionTime) {
 
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+    LogicalSourcePtr logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(csvSourceType);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
 
     while (var < numberOfNodes) {
         TopologyNodePtr childNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 300, properties);
@@ -396,10 +545,9 @@ TEST_F(MeerkatTest, testDecisionTime) {
                     sourceNode->addLinkProperty(subSubChildNode->getId(), linkProperty);
                     sourceNode->addNodeProperty("slots", 100);
                     sourceNode->addNodeProperty("reliability", 100);
-                    var++;
                     Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-                        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode->getId());
-
+                        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode->getId());
+                    var++;
 
                     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
                 }
@@ -408,43 +556,6 @@ TEST_F(MeerkatTest, testDecisionTime) {
     }
     std::cout << "numberOfNodes" << var;
 
-//    TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    childNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(rootNode, childNode);
-//    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    childNode->addLinkProperty(rootNode, linkProperty);
-//    childNode->addNodeProperty("slots", 100);
-//    childNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    subChildNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(childNode, subChildNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    subChildNode->addLinkProperty(childNode, linkProperty);
-//    subChildNode->addNodeProperty("slots", 100);
-//    subChildNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    subSubChildNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    subSubChildNode->addLinkProperty(subChildNode, linkProperty);
-//    subSubChildNode->addNodeProperty("slots", 100);
-//    subSubChildNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    sourceNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
-//    sourceNode->addNodeProperty("slots", 100);
-//    sourceNode->addNodeProperty("reliability", 100);
-
-//    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-//        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
-
-
-//    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
@@ -453,10 +564,10 @@ TEST_F(MeerkatTest, testDecisionTime) {
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     queryPlan->setFaultTolerance(FaultToleranceType::M);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(CoordinatorConfiguration::createDefault());
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
+    //    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
 
     auto statisticRegistry = Statistic::StatisticRegistry::create();
     auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
@@ -468,12 +579,12 @@ TEST_F(MeerkatTest, testDecisionTime) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-        auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-        auto sharedQueryId = sharedQueryPlan->getId();
-        auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                   topology,
-                                                                                   typeInferencePhase,
-                                                                                   CoordinatorConfiguration::createDefault());
-        queryPlacementPhase->execute(sharedQueryPlan);
-}*/
-
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto sharedQueryId = sharedQueryPlan->getId();
+    auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                               topology,
+                                                                               typeInferencePhase,
+                                                                               CoordinatorConfiguration::createDefault());
+    queryPlacementPhase->execute(sharedQueryPlan);
+}
+}

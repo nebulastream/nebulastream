@@ -69,10 +69,10 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NU
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // workerContext.printStatistics(inputBuffer);
-    if(!duplicateDetectionCallback(inputBuffer)) {
-        updateWatermarkCallback(inputBuffer);
-        return true;
-    }
+    // if(!duplicateDetectionCallback(inputBuffer)) {
+    updateWatermarkCallback(inputBuffer);
+        // return true;
+    // }
     return true;
 }
 
