@@ -99,6 +99,11 @@ void CSVSource::openFile() {
         return;
     }
 
+    if (filePath.find("start_source") != std::string::npos) {
+        auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("started sending from {}", startTime)
+    }
+
     struct Deleter {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };

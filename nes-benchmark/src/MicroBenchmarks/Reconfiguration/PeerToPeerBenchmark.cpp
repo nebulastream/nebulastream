@@ -76,12 +76,12 @@ using namespace NES;
     void setupSourceNames(uint64_t numberOfSources, uint64_t numOfIntermediateNodes) {
         intermediateSourceNames.clear();
         intermediateSourceNames.emplace_back(std::vector<std::string>());
-        auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        // auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
             intermediateSourceNames.emplace_back(std::vector<std::string>());
-            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes; interNodeId++) {
-                const auto& logicalSourceName = std::to_string(time) + "example_source_" + std::to_string(sourceIdx) + "_node_" + std::to_string(interNodeId);
+            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes + 1; interNodeId++) {
+                const auto& logicalSourceName = "example_source_" + std::to_string(sourceIdx) + "_node_" + std::to_string(interNodeId);
                 intermediateSourceNames[sourceIdx].push_back(logicalSourceName);
             }
         }
@@ -102,7 +102,7 @@ using namespace NES;
                                      ->addField("timestamp", BasicType::UINT64);
 
         for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
-            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes; interNodeId++) {
+            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes + 1; interNodeId++) {
                 if (sourceIdx == 1) {
                     requestHandlerService->queueRegisterLogicalSourceRequest(intermediateSourceNames[sourceIdx][interNodeId], schema1);
                 } else {
@@ -128,44 +128,56 @@ using namespace NES;
         coordinatorConfiguration->worker.configPath = configPath;
         coordinatorConfiguration->worker.bufferSizeInBytes = bufferSize;
         coordinatorConfiguration->worker.numWorkerThreads.setValue(4);
-        if (numberOfBuffersToProduce > 1024) {
-            coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 100 * numberOfBuffersToProduce + 50;
-            // coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
-            coordinatorConfiguration->worker.numberOfBuffersPerWorker = 5 * numberOfBuffersToProduce + 50;
-        } else {
-            coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 100 * 1024 + 50;
-            // coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 10 * 1024 + 50;
-            coordinatorConfiguration->worker.numberOfBuffersPerWorker = 5 * 1024 + 50;
-        }
+//        if (numberOfBuffersToProduce > 1024) {
+            coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 200000;
+            coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 5000;
+            coordinatorConfiguration->worker.numberOfBuffersPerWorker = 10000;
+//        } else {
+//            coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 100 * 1024 + 50;
+//            // coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 10 * 1024 + 50;
+//            coordinatorConfiguration->worker.numberOfBuffersPerWorker = 5 * 1024 + 50;
+//        }
         coordinatorConfiguration->worker.numberOfBuffersToProduce = numberOfBuffersToProduce;
         // coordinatorConfiguration->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
 
-        if (numOfIntermediateNodes == 1) {
-            for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
-                const auto& logicalSourceName = intermediateSourceNames[originId][1];
-                const auto physicalSourceName = "phy_" + logicalSourceName;
-                std::map<std::string, std::string> sourceConfig {
-                    {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
-                    {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
-                    //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
-                };
-                auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-                coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
-            }
-        } else {
-            for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
-                for (uint64_t interNodeId = 2; interNodeId <= numOfIntermediateNodes; interNodeId += 2) {
-                    const auto& logicalSourceName = intermediateSourceNames[originId][interNodeId];
-                    const auto physicalSourceName = "phy_" + logicalSourceName;
-                    std::map<std::string, std::string> sourceConfig {
-                        {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
-                        {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
-                        // {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
-                    };
-                    auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-                    coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
-                }
-            }
+//        if (numOfIntermediateNodes == 1) {
+//            for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
+//                const auto& logicalSourceName = intermediateSourceNames[originId][1];
+//                const auto physicalSourceName = "phy_" + logicalSourceName;
+//                std::map<std::string, std::string> sourceConfig {
+//                    {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+//                    {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
+//                    //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+//                };
+//                auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+//                coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
+//            }
+//        } else {
+//            for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
+//                for (uint64_t interNodeId = 2; interNodeId <= numOfIntermediateNodes; interNodeId += 2) {
+//                    const auto& logicalSourceName = intermediateSourceNames[originId][interNodeId];
+//                    const auto physicalSourceName = "phy_" + logicalSourceName;
+//                    std::map<std::string, std::string> sourceConfig {
+//                        {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+//                        {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
+//                        // {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+//                    };
+//                    auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+//                    coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
+//                }
+//            }
+//        }
+
+        for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
+            const auto& logicalSourceName = intermediateSourceNames[originId][intermediateSourceNames[originId].size() - 1];
+            const auto physicalSourceName = "phy_" + logicalSourceName;
+            std::map<std::string, std::string> sourceConfig {
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+                {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
+                //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+            };
+            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
         }
 
         NES::Configurations::OptimizerConfiguration optimizerConfiguration;
@@ -182,7 +194,7 @@ using namespace NES;
 
     std::vector<NesWorkerPtr> sourceNodes;
 
-    NesWorkerPtr startSourceWorker(std::atomic<bool>& shouldProduce, uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t originId) {
+    NesWorkerPtr startSourceWorker(std::atomic<bool>&, uint64_t bufferSize, uint64_t, uint64_t originId) {
         std::cout << "start source node " << originId << std::endl;
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -195,49 +207,53 @@ using namespace NES;
         std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
         wrkConf->configPath = configPath;
 
-        if (numberOfBuffersToProduce > 1024) {
-            wrkConf->numberOfBuffersInGlobalBufferManager = 100 * numberOfBuffersToProduce + 50;
-            // wrkConf->numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
-            wrkConf->numberOfBuffersPerWorker = 5 * numberOfBuffersToProduce + 50;
-        } else {
-            wrkConf->numberOfBuffersInGlobalBufferManager = 100 * 1024 + 50;
-            // wrkConf->numberOfBuffersInSourceLocalBufferPool = 5 * 1024 + 50;
-            wrkConf->numberOfBuffersPerWorker = 5 * 1024 + 50;
-        }
+        wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
+        wrkConf->numberOfBuffersInSourceLocalBufferPool = 5000;
+        wrkConf->numberOfBuffersPerWorker = 10000;
 
-        auto func = [&shouldProduce, originId](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            struct Record {
-                uint64_t id;
-                uint64_t value;
-                uint64_t secretValue;
-                uint64_t timestamp;
-            };
-
-            while (!shouldProduce) {
-                std::this_thread::sleep_for(std::chrono::microseconds(500));
-            }
-
-            static std::vector<uint64_t> counters(3, 0);
-            auto& counter = counters[originId];
-
-            auto* records = buffer.getBuffer<Record>();
-            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                records[u].id = originId;
-                records[u].value = counter;
-                records[u].secretValue = counter;
-                records[u].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            }
-            counter++;
-        };
+//        auto func = [&shouldProduce, originId](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+//            struct Record {
+//                uint64_t id;
+//                uint64_t value;
+//                uint64_t secretValue;
+//                uint64_t timestamp;
+//            };
+//
+//            while (!shouldProduce) {
+//                std::this_thread::sleep_for(std::chrono::microseconds(500));
+//            }
+//
+//            static std::vector<uint64_t> counters(3, 0);
+//            auto& counter = counters[originId];
+//
+//            auto* records = buffer.getBuffer<Record>();
+//            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+//                records[u].id = originId;
+//                records[u].value = counter;
+//                records[u].secretValue = counter;
+//                records[u].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+//            }
+//            counter++;
+//        };
+//
+//        const auto& logicalSourceName = intermediateSourceNames[originId][0];
+//        auto lambdaSourceType = LambdaSourceType::create(logicalSourceName,
+//                                                         "phy_" + logicalSourceName,
+//                                                         std::move(func),
+//                                                         numberOfBuffersToProduce + 100,
+//                                                         /* gatheringValue */ 0,
+//                                                         GatheringMode::INTERVAL_MODE);
+//        wrkConf->physicalSourceTypes.add(lambdaSourceType);
 
         const auto& logicalSourceName = intermediateSourceNames[originId][0];
-        auto lambdaSourceType = LambdaSourceType::create(logicalSourceName,
-                                                         "phy_" + logicalSourceName,
-                                                         std::move(func),
-                                                         numberOfBuffersToProduce + 100,
-                                                         /* gatheringValue */ 0,
-                                                         GatheringMode::INTERVAL_MODE);
-        wrkConf->physicalSourceTypes.add(lambdaSourceType);
+        const auto physicalSourceName = "phy_" + logicalSourceName;
+        std::map<std::string, std::string> sourceConfig {
+            {Configurations::FILE_PATH_CONFIG, "start_source.csv"},
+            {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
+            //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+        };
+        auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+        wrkConf->physicalSourceTypes.add(csvSourceType);
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -251,8 +267,8 @@ using namespace NES;
 
     std::vector<NesWorkerPtr> intermediateNodes;
 
-    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t numOfOrigins, uint64_t numOfIntermediateNodes, uint64_t workerIdx) {
-        std::cout << "start intermediate node " << workerIdx << std::endl;
+    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t, uint64_t numOfOrigins, uint64_t interIndex) {
+        std::cout << "start intermediate node " << interIndex << std::endl;
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
         auto wrkDataPort = NES::Testing::detail::getPortDispatcher().getNextPort();
@@ -264,38 +280,28 @@ using namespace NES;
         std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
         wrkConf->configPath = configPath;
 
-        if (numberOfBuffersToProduce > 1024) {
-            wrkConf->numberOfBuffersInGlobalBufferManager = 100 * numberOfBuffersToProduce + 50;
-            // wrkConf->numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
-            wrkConf->numberOfBuffersPerWorker = 5 * numberOfBuffersToProduce + 50;
-        } else {
-            wrkConf->numberOfBuffersInGlobalBufferManager = 100 * 1024 + 50;
-            // wrkConf->numberOfBuffersInSourceLocalBufferPool = 10 * 1024 + 50;
-            wrkConf->numberOfBuffersPerWorker = 5 * 1024 + 50;
-        }
+        wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
+        wrkConf->numberOfBuffersInSourceLocalBufferPool = 5000;
+        wrkConf->numberOfBuffersPerWorker = 10000;
 
-        if (numOfIntermediateNodes > 1) {
-            for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
-                for (uint64_t interNodeId = 1; interNodeId <= numOfIntermediateNodes; interNodeId += 2) {
-                    const auto& logicalSourceName = intermediateSourceNames[originId][interNodeId];
-                    const auto physicalSourceName = "phy_" + logicalSourceName;
-                    std::map<std::string, std::string> sourceConfig {
-                        {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
-                        {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
-                        // {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numOfBuffersToProduce)},
-                        {Configurations::SKIP_HEADER_CONFIG, "true"}
-                    };
-                    auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-                    wrkConf->physicalSourceTypes.add(csvSourceType);
-                }
-            }
+        for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
+            const auto& logicalSourceName = intermediateSourceNames[originId][interIndex];
+            const auto physicalSourceName = "phy_" + logicalSourceName;
+            std::map<std::string, std::string> sourceConfig {
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+                {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
+                // {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numOfBuffersToProduce)},
+                {Configurations::SKIP_HEADER_CONFIG, "true"}
+            };
+            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            wrkConf->physicalSourceTypes.add(csvSourceType);
         }
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
 
         if (!resStart) {
-            NES_ERROR("intermediate worker {} failed to start", workerIdx);
+            NES_ERROR("intermediate worker {} failed to start", interIndex);
         }
         intermediateNodes.push_back(wrk);
         return wrk;
@@ -310,12 +316,21 @@ using namespace NES;
         sourceWorkers.push_back(startSourceWorker(shouldProduce, bufferSize, numberOfBuffersToProduce, 2));
 
         // start intermediate nodes
-        auto intermediateWorker = startIntermediateWorker(bufferSize, numberOfBuffersToProduce, 2, numberOfIntermediateNodes, 1);
+        std::vector<NesWorkerPtr> intermediateWorkers;
 
-        // replace parent for sources
-        if (numberOfIntermediateNodes >= 1) {
+        if (numberOfIntermediateNodes > 0) {
+            for (uint64_t interIndex = 1; interIndex <= numberOfIntermediateNodes; interIndex++) {
+                intermediateWorkers.push_back(startIntermediateWorker(bufferSize, numberOfBuffersToProduce, 2, interIndex));
+            }
+
+            // set intermediate nodes as a chain
+            for (uint64_t intermediateNodeIdx = 0; intermediateNodeIdx < numberOfIntermediateNodes - 1; intermediateNodeIdx++) {
+                intermediateWorkers[intermediateNodeIdx]->replaceParent(crd->getNesWorker()->getWorkerId(), intermediateWorkers[intermediateNodeIdx + 1]->getWorkerId());
+            }
+
+            // replace parent for sources
             for (const auto& wrk: sourceWorkers) {
-                wrk->replaceParent(crd->getNesWorker()->getWorkerId(), intermediateWorker->getWorkerId());
+                wrk->replaceParent(crd->getNesWorker()->getWorkerId(), intermediateWorkers[0]->getWorkerId());
             }
         }
     }
@@ -459,7 +474,7 @@ using namespace NES;
 
         auto requestHandlerService = crd->getRequestHandlerService();
         auto topology = crd->getTopology();
-        // std::cout << topology->toString();
+        std::cout << topology->toString();
         std::cout << "start main query" << std::endl;
         // main query
         auto fileSinkDescriptor = FileSinkDescriptor::create("benchmark_output.csv", "CSV_FORMAT", "OVERWRITE");
@@ -471,36 +486,42 @@ using namespace NES;
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                          .sink(fileSinkDescriptor);
 
+        std::string queryString = "Query::from(\"" + firstSourceName + "\").joinWith(Query::from(\"" + secondSourceName + "\")).where(Attribute(\"value1\") == Attribute(\"value2\"))"
+                                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000)))"
+                                   ".sink(FileSinkDescriptor::create(\"benchmark_output.csv\", \"CSV_FORMAT\", \"OVERWRITE\"));";
+
         QueryId mainQueryId =
-            requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+            requestHandlerService->validateAndQueueAddQueryRequest(queryString, Optimizer::PlacementStrategy::TopDown);
         waitForQueryStatus(mainQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
 
+        auto interNodes = intermediateNodes;
         std::cout << "start intermediate queries" << std::endl;
         std::vector<QueryId> peerToPeerIds;
         for (uint64_t originId = 1; originId <= 2; originId++) {
-            for (uint64_t interNodeId = numberOfIntermediateNodes; interNodeId > 1; interNodeId--) {
-                auto sourceName = intermediateSourceNames[originId][interNodeId - 1];
-                auto sinkName = intermediateSourceNames[originId][interNodeId];
+            for (uint64_t interNodeId = numberOfIntermediateNodes; interNodeId >= 1; interNodeId--) {
+                auto sourceName = intermediateSourceNames[originId][interNodeId];
+                auto sinkName = intermediateSourceNames[originId][interNodeId + 1];
                 auto destinationWorkerId = INVALID_WORKER_NODE_ID;
-                if (interNodeId % 2 == 1) {
-                    destinationWorkerId = intermediateNodes[0]->getWorkerId();
-                } else {
+                if (interNodeId == numberOfIntermediateNodes) {
                     destinationWorkerId = crd->getNesWorker()->getWorkerId();
+                } else {
+                    destinationWorkerId = intermediateNodes[interNodeId]->getWorkerId();
                 }
 
                 auto fileSinkDescriptor =
                     FileSinkDescriptor::create(sinkName + ".csv", "CSV_FORMAT", "OVERWRITE");
                 auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
                 auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
+                std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".csv" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
                 sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
                 QueryId addedQueryId =
-                    requestHandlerService->validateAndQueueAddQueryRequest(sourceQuery.getQueryPlan(),
+                    requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString,
                                                                            Optimizer::PlacementStrategy::TopDown);
                 waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
                 peerToPeerIds.push_back(addedQueryId);
             }
         }
-        std::cout << "start last intermediate query" << std::endl;
+        std::cout << "start last source query" << std::endl;
         // peer-to-peer queries
         for (auto originId = 1; originId <= 2; originId++) {
             auto sourceName = intermediateSourceNames[originId][0];
@@ -508,27 +529,28 @@ using namespace NES;
             auto fileSinkDescriptor = FileSinkDescriptor::create(sinkName + ".csv", "CSV_FORMAT", "OVERWRITE");
             auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
             auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
-            if (numberOfIntermediateNodes == 1) {
-                sink->addProperty(Optimizer::PINNED_WORKER_ID, crd->getNesWorker()->getWorkerId());
+            auto destinationWorkerId = INVALID_WORKER_NODE_ID;
+            if (numberOfIntermediateNodes == 0) {
+                destinationWorkerId = crd->getNesWorker()->getWorkerId();
             } else {
-                sink->addProperty(Optimizer::PINNED_WORKER_ID, intermediateNodes[0]->getWorkerId());
+                destinationWorkerId = intermediateNodes[0]->getWorkerId();
             }
+            sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
+            std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".csv" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
             QueryId addedQueryId =
-                requestHandlerService->validateAndQueueAddQueryRequest(sourceQuery.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+                requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString, Optimizer::PlacementStrategy::TopDown);
             waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
             peerToPeerIds.push_back(addedQueryId);
         }
 
-        auto sources = sourceNodes;
-        auto interNodes = intermediateNodes;
-        auto coord = crd;
-
         std::cout << "start producing" << std::endl;
-        shouldProduce.store(true);
+        // shouldProduce.store(true);
 
         for (auto& id: peerToPeerIds) {
              waitForQueryStatus(id, crd->getQueryCatalog(), NES::QueryState::STOPPED, std::chrono::seconds(120));
         }
+
+        // std::cout << crd->getGlobalQueryPlan()->get<< std::endl;
 
         sleep(10);
         auto decompPlanIds = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(mainQueryId.getRawValue()));
@@ -543,13 +565,15 @@ using namespace NES;
 //        }
         // requestHandlerService->validateAndQueueStopQueryRequest(mainQueryId);
         // checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCheck, decompPlanVersionToCheck, crd->getNesWorker(), std::chrono::seconds(60));
-
+        sleep(5);
         for (auto source: intermediateSourceNames) {
             for (auto name: source) {
                 std::string fileName = name + "_finished.csv";
                 remove(fileName.c_str());
             }
         }
+
+        remove("start_source.csv");
 
         std::cout << "Stop source nodes" << std::endl;
         for (auto& wrk : sourceNodes) {
@@ -581,7 +605,7 @@ using namespace NES;
         // Location of the configuration file
         auto configPath = commandLineParams.find("--configPath");
         auto tryNumber = commandLineParams.find("--tryNumber");
-        auto numNodes = 1;
+        auto numNodes = 2;
 
         // errors + benchmark level
         if (tryNumber != commandLineParams.end()) {

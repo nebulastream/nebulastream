@@ -371,6 +371,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfBuffersPerWorker,
                 &numberOfBuffersInSourceLocalBufferPool,
                 &bufferSizeInBytes,
+                &numberOfBuffersToProduce,
                 &parentId,
                 &logLevel,
                 &sourcePinList,
