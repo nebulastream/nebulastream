@@ -52,11 +52,6 @@ std::shared_ptr<OperatorPipeline> OperatorPipeline::createSinkPipeline()
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SinkPipelineType));
 }
 
-std::shared_ptr<OperatorPipeline> OperatorPipeline::createSourcePipeline()
-{
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SourcePipelineType));
-}
-
 void OperatorPipeline::setType(Type pipelineType)
 {
     this->pipelineType = pipelineType;

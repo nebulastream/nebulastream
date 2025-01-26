@@ -11,50 +11,52 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <cstddef>
-#include <functional>
+#include <memory>
 #include <ostream>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
+#include <PipelineExecutionContext.hpp>
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::InputFormatters
 {
+/// Forward referencing SequenceShredder to keep it as a private implementation detail of nes-input-formatters
+class SequenceShredder;
 
-/// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
 class InputFormatter
 {
 public:
     InputFormatter() = default;
     virtual ~InputFormatter() = default;
 
-    InputFormatter(const InputFormatter&) = delete;
+    InputFormatter(const InputFormatter&) = default;
     InputFormatter& operator=(const InputFormatter&) = delete;
     InputFormatter(InputFormatter&&) = delete;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
+    /// Must only manipulate the sequenceShredder and otherwise be free of side-effects
     virtual void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
-        NES::Memory::AbstractBufferProvider& bufferProvider,
-        size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+        const NES::Memory::TupleBuffer& rawTB,
+        NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        size_t numBytesInRawTB,
+        SequenceShredder& sequenceShredder)
         = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }
+    /// Since there is no symbol that represents EoF/EoS, the final buffer does not end in a tuple delimiter. We need to 'manually' flush
+    /// the final tuple, between the last tuple delimiter of the final buffer and (including) the last byte of the final buffer.
+    virtual void flushFinalTuple(
+        OriginId originId, NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+        = 0;
+
+    virtual size_t getSizeOfTupleDelimiter() = 0;
+    virtual size_t getSizeOfFieldDelimiter() = 0;
+
+    friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }
 
 protected:
-    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
-};
-
-}
-
-namespace fmt
-{
-template <>
-struct formatter<NES::InputFormatters::InputFormatter> : ostream_formatter
-{
+    virtual std::ostream& toString(std::ostream& os) const = 0;
 };
 }

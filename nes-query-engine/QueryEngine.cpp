@@ -452,19 +452,36 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
-            [&](const Memory::TupleBuffer& tupleBuffer, auto policy)
+            [&](const Memory::TupleBuffer& tupleBuffer, auto continuationPolicy)
             {
+                ENGINE_LOG_DEBUG(
+                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
+                if (continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT)
+                {
+                    pool.statistic->onEvent(
+                        TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                    pool.emitWork(
+                        task.queryId,
+                        pipeline,
+                        tupleBuffer,
+                        {},
+                        {},
+                        continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                    return true;
+                }
+                /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 for (const auto& successor : pipeline->successors)
                 {
                     pool.statistic->onEvent(
-                        TaskEmit{WorkerThread::id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                     pool.emitWork(
                         task.queryId,
                         successor,
                         tupleBuffer,
                         {},
                         {},
-                        policy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                        continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 }
                 return true;
             });
