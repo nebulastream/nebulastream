@@ -18,6 +18,7 @@
 #include <cstring>
 #include <format>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <ranges>
@@ -31,17 +32,17 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
+#include <SequenceShredder.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -52,84 +53,179 @@ namespace NES::InputFormatters
 struct PartialTuple
 {
     uint64_t offsetInBuffer;
-    Memory::TupleBuffer tbRaw;
+    Memory::TupleBuffer rawTB;
 
     [[nodiscard]] std::string_view getStringView() const
     {
-        return {tbRaw.getBuffer<const char>() + offsetInBuffer, tbRaw.getBufferSize() - offsetInBuffer};
+        return {rawTB.getBuffer<const char>() + offsetInBuffer, rawTB.getBufferSize() - offsetInBuffer};
     }
 };
 
 class ProgressTracker
 {
 public:
-    ProgressTracker(std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
+    ProgressTracker(
+        SequenceNumber sequenceNumber,
+        OriginId originId,
+        std::string tupleDelimiter,
+        const size_t tupleSizeInBytes,
+        const size_t numberOfSchemaFields)
+        : sequenceNumber(sequenceNumber)
+        , chunkNumber(ChunkNumber(1))
+        , originId(originId)
+        , tupleDelimiter(std::move(tupleDelimiter))
+        , tupleSizeInBytes(tupleSizeInBytes)
+        , numSchemaFields(numberOfSchemaFields) {};
 
     ~ProgressTracker() = default;
 
-    void resetForNewTBRaw(const size_t sizeOfNewTupleBufferRawInBytes, const char* newTupleBufferRaw)
+    void resetForNewRawTB(
+        const size_t sizeOfNewTupleBufferRawInBytes, const char* newTupleBufferRaw, const size_t startOffset, const size_t endOffset)
     {
-        this->numTotalBytesInTBRaw = sizeOfNewTupleBufferRawInBytes;
-        this->currentTupleStartTBRaw = 0;
-        this->currentFieldOffsetTBFormatted = 0;
-        this->tupleBufferRawSV = std::string_view(newTupleBufferRaw, numTotalBytesInTBRaw);
-        this->currentTupleEndTBRaw = findIndexOfNextTuple();
+        this->numTotalBytesInrawTB = sizeOfNewTupleBufferRawInBytes;
+        this->currentTupleStartrawTB = startOffset;
+        this->endOfTuplesInRawTB = (endOffset == 0) ? sizeOfNewTupleBufferRawInBytes : endOffset + tupleSizeInBytes;
+        this->tupleBufferRawSV = std::string_view(newTupleBufferRaw, numTotalBytesInrawTB);
+        this->currentTupleEndrawTB = findIndexOfNextTuple();
+    }
+
+    void resetForNewRawTB(
+        const size_t sizeOfNewTupleBufferRawInBytes,
+        const char* newTupleBufferRaw,
+        const size_t startOffset,
+        const size_t endOffset,
+        const size_t currentFieldOffsetTBFormatted)
+    {
+        this->numTotalBytesInrawTB = sizeOfNewTupleBufferRawInBytes;
+        this->currentTupleStartrawTB = startOffset;
+        this->endOfTuplesInRawTB = (endOffset == 0) ? sizeOfNewTupleBufferRawInBytes : endOffset + tupleSizeInBytes;
+        this->currentFieldOffsetTBFormatted = currentFieldOffsetTBFormatted;
+        this->tupleBufferRawSV = std::string_view(newTupleBufferRaw, numTotalBytesInrawTB);
+        this->currentTupleEndrawTB = findIndexOfNextTuple();
         this->numTuplesInTBFormatted = 0;
     }
 
     int8_t* getCurrentFieldPointer() { return (this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted); }
 
-    [[nodiscard]] bool hasOneMoreTupleInTBRaw() const { return this->currentTupleEndTBRaw != std::string::npos; }
+    [[nodiscard]] size_t getOffsetOfFirstTupleDelimiter() const { return currentTupleEndrawTB; }
+    [[nodiscard]] size_t getOffsetOfLastTupleDelimiter() const
+    {
+        return tupleBufferRawSV.rfind(tupleDelimiter, tupleBufferRawSV.size() - 1);
+    }
 
-    [[nodiscard]] size_t sizeOfCurrentTuple() const { return this->currentTupleEndTBRaw - this->currentTupleStartTBRaw; }
+
+    void processCurrentTuple(
+        std::string_view currentTuple,
+        const std::string& fieldDelimiter,
+        const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
+        const std::vector<size_t>& fieldSizes,
+        Memory::AbstractBufferProvider& bufferProvider)
+    {
+        const boost::char_separator sep{fieldDelimiter.c_str()};
+        const boost::tokenizer tupleTokenizer{currentTuple.begin(), currentTuple.end(), sep};
+        /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
+        for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
+        {
+            const auto fieldPointer = this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted;
+            parseFunction(token, fieldPointer, bufferProvider, getTupleBufferFormatted());
+            currentFieldOffsetTBFormatted += fieldSize;
+        }
+    }
+
+    void checkAndHandleFullBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+    {
+        const auto availableBytes = tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted;
+        if (const auto isFull = availableBytes < tupleSizeInBytes)
+        {
+            /// Emit TBF and get new TBF
+            setNumberOfTuplesInTBFormatted();
+            NES_TRACE("emitting TupleBuffer with {} tuples.", numTuplesInTBFormatted);
+            /// true triggers adding sequence number, etc.
+            pipelineExecutionContext.emitBuffer(
+                getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+            chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
+            setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+            currentFieldOffsetTBFormatted = 0;
+            numTuplesInTBFormatted = 0;
+        }
+    }
+
+    void processCurrentBuffer(
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        const std::string& fieldDelimiter,
+        const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
+        const std::vector<size_t>& fieldSizes)
+    {
+        auto& bufferProvider = *pipelineExecutionContext.getBufferManager();
+
+        while (hasOneMoreTupleInRawTB())
+        {
+            /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
+            /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
+            checkAndHandleFullBuffer(pipelineExecutionContext);
+
+            /// Get next tuple
+            const auto currentTuple = getNextTuple();
+            /// Parse fields of tuple
+            processCurrentTuple(currentTuple, fieldDelimiter, fieldParseFunctions, fieldSizes, bufferProvider);
+            /// Progress one tuple
+            progressOneTuple();
+        }
+    }
+    [[nodiscard]] bool hasOneMoreTupleInRawTB() const { return currentTupleEndrawTB != std::numeric_limits<uint64_t>::max(); }
+
+    [[nodiscard]] size_t sizeOfCurrentTuple() const { return this->currentTupleEndrawTB - this->currentTupleStartrawTB; }
 
     void progressOneTuple()
     {
         ++numTuplesInTBFormatted;
-        currentTupleStartTBRaw = currentTupleEndTBRaw + 1;
-        currentTupleEndTBRaw = findIndexOfNextTuple();
+        currentTupleStartrawTB = currentTupleEndrawTB + 1;
+        currentTupleEndrawTB = findIndexOfNextTuple();
     }
 
-    [[nodiscard]] bool hasSpaceForTupleInTBFormatted() const
+    [[nodiscard]] std::string_view getInitialPartialTuple(size_t sizeOfPartialTuple) const
     {
-        return tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted >= tupleSizeInBytes;
+        return this->tupleBufferRawSV.substr(0, sizeOfPartialTuple);
     }
-
-    [[nodiscard]] bool hasPartialTuple() const { return not stagingAreaTBRaw.empty(); }
 
     [[nodiscard]] std::string_view getNextTuple() const
     {
-        return this->tupleBufferRawSV.substr(currentTupleStartTBRaw, sizeOfCurrentTuple());
+        return this->tupleBufferRawSV.substr(currentTupleStartrawTB, sizeOfCurrentTuple());
     }
 
     void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
     {
+        tupleBufferFormatted.setSequenceNumber(sequenceNumber);
+        tupleBufferFormatted.setChunkNumber(chunkNumber);
+        tupleBufferFormatted.setOriginId(originId);
         this->tupleBufferFormatted = std::move(tupleBufferFormatted);
     }
 
-    void handleResidualBytes(NES::Memory::TupleBuffer tbRawEndingInPartialTuple)
+    std::string handlePriorPartialTuple()
     {
-        if (currentTupleStartTBRaw < numTotalBytesInTBRaw)
+        std::string partialTuple;
+        if (not(this->partialTuple.empty()))
         {
-            /// write TBR to staging area
-            stagingAreaTBRaw.emplace_back(
-                PartialTuple{.offsetInBuffer = currentTupleStartTBRaw, .tbRaw = std::move(tbRawEndingInPartialTuple)});
+            partialTuple.resize(this->partialTuple.size() + currentTupleEndrawTB);
+            partialTuple = std::string(this->partialTuple) + std::string(tupleBufferRawSV.substr(0, currentTupleEndrawTB));
         }
+        return partialTuple;
     }
+
+    std::string_view getEndingPartialTuple() const { return tupleBufferRawSV.substr(currentTupleStartrawTB, numTotalBytesInrawTB); }
 
     friend std::ostream& operator<<(std::ostream& out, const ProgressTracker& progressTracker)
     {
         return out << fmt::format(
-                   "tupleDelimiter: {}, size of tuples in bytes: {}, number of fields in schema: {}, tbRaw(total number of bytes: {}, "
+                   "tupleDelimiter: {}, size of tuples in bytes: {}, number of fields in schema: {}, rawTB(total number of bytes: {}, "
                    "start of "
                    "current tuple: {}, end of current tuple: {}), tbFormatted(number of tuples: {}, current field offset: {})",
                    (progressTracker.tupleDelimiter == "\n") ? "\\n" : progressTracker.tupleDelimiter,
                    progressTracker.tupleSizeInBytes,
                    progressTracker.numSchemaFields,
-                   progressTracker.numTotalBytesInTBRaw,
-                   progressTracker.currentTupleStartTBRaw,
-                   progressTracker.currentTupleEndTBRaw,
+                   progressTracker.numTotalBytesInrawTB,
+                   progressTracker.currentTupleStartrawTB,
+                   progressTracker.currentTupleEndrawTB,
                    progressTracker.numTuplesInTBFormatted,
                    progressTracker.currentFieldOffsetTBFormatted);
     }
@@ -137,39 +233,52 @@ public:
     /// Getter & Setter
     [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
+    void setCurrentTupleStartrawTB(const size_t newCurrentTupleStartrawTB) { this->currentTupleStartrawTB = newCurrentTupleStartrawTB; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+    uint64_t getNumTuplesInTBFormatted() { return numTuplesInTBFormatted; }
     const std::string& getTupleDelimiter() { return this->tupleDelimiter; }
 
-    size_t currentTupleStartTBRaw{0};
-    size_t currentTupleEndTBRaw{0};
-    uint64_t numTotalBytesInTBRaw{0};
-    std::vector<PartialTuple> stagingAreaTBRaw;
+    size_t currentTupleStartrawTB{0};
+    size_t endOfTuplesInRawTB{0};
+    size_t currentTupleEndrawTB{0};
+    uint64_t numTotalBytesInrawTB{0};
     size_t numTuplesInTBFormatted{0};
     size_t currentFieldOffsetTBFormatted{0};
 
 private:
+    SequenceNumber sequenceNumber;
+    ChunkNumber chunkNumber;
+    OriginId originId;
     std::string tupleDelimiter;
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
+    std::string_view partialTuple{};
     NES::Memory::TupleBuffer tupleBufferFormatted;
 
-    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartTBRaw); }
+    size_t findIndexOfNextTuple() const { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartrawTB); }
 };
 
 template <typename T>
 auto parseIntegerString()
 {
-    return [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
+    return [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
     {
-        if (auto integer = Util::from_chars<T>(fieldValueString))
+        const auto sizeOfString = fieldValueString.size();
+        T* value = reinterpret_cast<T*>(fieldPointer);
+        auto [_, ec] = std::from_chars(fieldValueString.data(), fieldValueString.data() + sizeOfString, *value);
+        if (ec == std::errc())
         {
-            *reinterpret_cast<T*>(fieldPointer) = *integer;
+            return;
         }
-        else
+        if (ec == std::errc::invalid_argument)
         {
             throw CannotFormatMalformedStringValue(
                 "Integer value '{}', is not a valid integer of type: {}.", fieldValueString, typeid(T).name());
+        }
+        if (ec == std::errc::result_out_of_range)
+        {
+            throw CannotFormatMalformedStringValue("Integer value '{}', is too large for type: {}.", fieldValueString, typeid(T).name());
         }
     };
 }
@@ -213,7 +322,7 @@ void addBasicTypeParseFunction(
         }
         case NES::BasicPhysicalType::NativeType::FLOAT: {
             const auto validateAndParseFloat
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
+                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
             {
                 if (fieldValueString.find(',') != std::string_view::npos)
                 {
@@ -227,7 +336,7 @@ void addBasicTypeParseFunction(
         }
         case NES::BasicPhysicalType::NativeType::DOUBLE: {
             const auto validateAndParseDouble
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
+                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
             {
                 if (fieldValueString.find(',') != std::string_view::npos)
                 {
@@ -242,7 +351,7 @@ void addBasicTypeParseFunction(
         case NES::BasicPhysicalType::NativeType::CHAR: {
             ///verify that only a single char was transmitted
             fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
+                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
                 {
                     PRECONDITION(inputString.size() == 1, "A char must not have a size bigger than 1.");
                     const auto value = inputString.front();
@@ -254,7 +363,7 @@ void addBasicTypeParseFunction(
         case NES::BasicPhysicalType::NativeType::BOOLEAN: {
             ///verify that a valid bool was transmitted (valid{true,false,0,1})
             fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
+                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
                 {
                     const bool value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
                     if (!value)
@@ -279,8 +388,7 @@ void addBasicTypeParseFunction(
 }
 
 CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
-    : fieldDelimiter(std::move(fieldDelimiter))
-    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getFieldCount()))
+    : schema(schema), fieldDelimiter(std::move(fieldDelimiter)), tupleDelimiter(std::move(tupleDelimiter))
 {
     this->fieldSizes.reserve(schema.getFieldCount());
     this->fieldParseFunctions.reserve(schema.getFieldCount());
@@ -307,7 +415,10 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
         else
         {
             this->fieldParseFunctions.emplace_back(
-                [this](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)
+                [](const std::string& inputString,
+                   int8_t* fieldPointer,
+                   Memory::AbstractBufferProvider& bufferProvider,
+                   const NES::Memory::TupleBuffer& tupleBufferFormatted)
                 {
                     NES_TRACE(
                         "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
@@ -320,10 +431,9 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                     auto& childBufferVal = childBuffer.value();
                     *childBufferVal.getBuffer<uint32_t>() = valueLength;
                     std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), inputString.data(), valueLength);
-                    const auto index = progressTracker->getTupleBufferFormatted().storeChildBuffer(childBufferVal);
+                    const auto index = tupleBufferFormatted.storeChildBuffer(childBufferVal);
                     auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
                     *childBufferIndexPointer = index;
-                    return sizeof(uint32_t);
                 });
         }
     }
@@ -332,95 +442,193 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
 CSVInputFormatter::~CSVInputFormatter() = default;
 
 void CSVInputFormatter::parseTupleBufferRaw(
-    const NES::Memory::TupleBuffer& tbRaw,
-    NES::Memory::AbstractBufferProvider& bufferProvider,
-    const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const NES::Memory::TupleBuffer& rawTB,
+    Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+    const size_t numBytesInRawTB,
+    SequenceShredder& sequenceShredder)
 {
-    PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
-    /// Reset all values that are tied to a specific tbRaw.
-    /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
-    progressTracker->resetForNewTBRaw(numBytesInTBRaw, tbRaw.getBuffer<const char>());
+    PRECONDITION(rawTB.getBufferSize() != 0, "A raw tuple buffer must not be of empty.");
 
-    /// Determine if the current TBR terminates at least one tuple.
-    if (not progressTracker->hasOneMoreTupleInTBRaw())
+    const auto isInRange = sequenceShredder.isInRangeOfRingBuffer(rawTB.getSequenceNumber().getRawValue());
+    if (not(isInRange))
     {
-        /// If there is not a single complete tuple in the buffer, write it to the staging area and wait for the next buffer(s).
-        progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
+        NES_WARNING("SequenceNumber {} out of range.", rawTB.getSequenceNumber().getRawValue());
+        pipelineExecutionContext.emitBuffer(rawTB, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT);
         return;
     }
-    /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
-    progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
 
-    /// A single partial tuple may have spanned over the prior N TBRs, ending in the current TBR. If so, construct the tuple using the prior TBRs.
-    /// The size of the partial tuple may reach from just the last byte of the prior TBR to all bytes of multiple prior TBRs.
-    if (progressTracker->hasPartialTuple())
+    /// Creating a ProgressTracker on each call makes the CSVInputFormatter stateless
+    auto progressTracker = ProgressTracker(
+        rawTB.getSequenceNumber(), rawTB.getOriginId(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    /// Reset all values that are tied to a specific rawTB.
+    /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
+    progressTracker.resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>(), 0, 0, 0);
+    const auto sequenceNumberOfBuffer = rawTB.getSequenceNumber().getRawValue();
+    constexpr auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
+    const auto hasTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter() != maxSequenceNumber;
+    const uint32_t offsetOfFirstTupleDelimiter = (hasTupleDelimiter) ? progressTracker.getOffsetOfFirstTupleDelimiter() : 0;
+    const uint32_t offsetOfLastTupleDelimiter = (hasTupleDelimiter) ? progressTracker.getOffsetOfLastTupleDelimiter() : numBytesInRawTB;
+
+    if (hasTupleDelimiter)
     {
-        /// Construct the full tuple from all prior tuple buffers that contain a part of the partial tuple.
-        std::stringstream completeTuple;
-        for (const auto& partialTuple : progressTracker->stagingAreaTBRaw)
+        const auto [indexOfBuffer, buffersToFormat] = sequenceShredder.processSequenceNumber<true>(
+            SequenceShredder::StagedBuffer{
+                .buffer = rawTB,
+                .sizeOfBufferInBytes = numBytesInRawTB,
+                .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
+                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter},
+            sequenceNumberOfBuffer);
+        /// Skip, if there is only a single buffer, with a single tuple delimiter, since there are no possible tuples to parse
+        if (buffersToFormat.size() == 1
+            and (buffersToFormat[0].offsetOfFirstTupleDelimiter == buffersToFormat[0].offsetOfLastTupleDelimiter))
         {
-            completeTuple << partialTuple.getStringView();
+            return;
         }
-        /// Add the final part of the partial tuple from the current TBR to the partial tuple to complete it.
-        completeTuple << progressTracker->getNextTuple();
-        parseStringIntoTupleBuffer(completeTuple.str(), bufferProvider);
-        /// Release all prior TBRs with partial tuples. Sources can now use these buffers again.
-        progressTracker->stagingAreaTBRaw.clear();
-        /// We parsed the first tuple terminated by the current TBR. If the current TBR does not terminate another tuple, we skip the below while loop.
-        progressTracker->progressOneTuple();
-    }
+        /// 0. Allocate formatted buffer to write formatted tuples into.
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
-    /// Parse the current TBR, while there is at least one more tuple in the tuple buffer (we use '\n' as a hardcoded separator for now).
-    /// We always parse at least one tuple if we enter the while loop.
-    while (progressTracker->hasOneMoreTupleInTBRaw())
+        /// 1. Process leading partial tuple if exists
+        const auto hasLeadingPartialTuple = (indexOfBuffer != 0);
+        if (hasLeadingPartialTuple)
+        {
+            processPartialTuple(0, indexOfBuffer, buffersToFormat, progressTracker, pipelineExecutionContext);
+        }
+        progressTracker.getTupleBufferFormatted().setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
+
+        /// 2. Process buffer itself
+        const auto& bufferOfSequenceNumber = buffersToFormat[indexOfBuffer];
+        progressTracker.resetForNewRawTB(
+            bufferOfSequenceNumber.sizeOfBufferInBytes,
+            bufferOfSequenceNumber.buffer.getBuffer<const char>(),
+            bufferOfSequenceNumber.offsetOfFirstTupleDelimiter + tupleDelimiter.size(),
+            bufferOfSequenceNumber.offsetOfLastTupleDelimiter);
+        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+
+        /// 3. Process trailing  partial tuple if exists
+        const auto hasTrailingPartialTuple = indexOfBuffer < buffersToFormat.size() - 1;
+        if (hasTrailingPartialTuple)
+        {
+            /// We first need to check if the tuple can fit into the current formatted buffer
+            progressTracker.checkAndHandleFullBuffer(pipelineExecutionContext);
+            processPartialTuple(indexOfBuffer, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
+        }
+        auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
+        finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
+        pipelineExecutionContext.emitBuffer(
+            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    }
+    else
     {
-        /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
-        /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-        if (not progressTracker->hasSpaceForTupleInTBFormatted())
+        const auto [_, buffersToFormat] = sequenceShredder.processSequenceNumber<false>(
+            SequenceShredder::StagedBuffer{
+                .buffer = rawTB,
+                .sizeOfBufferInBytes = numBytesInRawTB,
+                .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
+                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter},
+            sequenceNumberOfBuffer);
+        /// A buffer without a tuple delimiter can only find a spanning tuple, if it can reach a buffer with a spanning tuple to the left and right
+        /// [buffer with tuple delimiter (TD)][buffer without TD][buffer with TD] <-- minimal spanning tuple for a buffer without TD
+        if (buffersToFormat.size() < 3)
         {
-            /// Emit TBF and get new TBF
-            progressTracker->setNumberOfTuplesInTBFormatted();
-            NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
-            progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
-            progressTracker->currentFieldOffsetTBFormatted = 0;
-            progressTracker->numTuplesInTBFormatted = 0;
+            return;
         }
 
-        const auto currentTuple = progressTracker->getNextTuple();
-        parseStringIntoTupleBuffer(currentTuple, bufferProvider);
-
-        progressTracker->progressOneTuple();
+        /// Allocate formatted buffer to write formatted tuples into and process partial tuple.
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+        processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
+        auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
+        finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        pipelineExecutionContext.emitBuffer(
+            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
-
-    progressTracker->setNumberOfTuplesInTBFormatted();
-    NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-
-    /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
-    progressTracker->handleResidualBytes(tbRaw);
 }
 
-void CSVInputFormatter::parseStringIntoTupleBuffer(
-    const std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const
+CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
+    const size_t partialTupleStartIdx,
+    const size_t partialTupleEndIdx,
+    const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat,
+    ProgressTracker& progressTracker,
+    Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-    const boost::char_separator sep{this->fieldDelimiter.c_str()};
-    const boost::tokenizer tupleTokenizer{stringTuple.begin(), stringTuple.end(), sep};
-
-    /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
-    for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
+    /// If the buffers are not empty, there are at least three buffers
+    /// 1. Process the first buffer
+    const auto& firstBuffer = buffersToFormat[partialTupleStartIdx];
+    const auto sizeOfLeadingPartialTuple
+        = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + tupleDelimiter.size());
+    const std::string_view firstBytesOfPartialTuple = std::string_view(
+        firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
+    std::string partialTuple(firstBytesOfPartialTuple);
+    /// 2. Process all buffers in-between the first and the last
+    for (size_t bufferIndex = partialTupleStartIdx + 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
     {
-        parseFunction(token, progressTracker->getCurrentFieldPointer(), bufferProvider);
-        progressTracker->currentFieldOffsetTBFormatted += fieldSize;
+        const auto& currentBuffer = buffersToFormat[bufferIndex];
+        const std::string_view intermediatePartialTuple
+            = std::string_view(currentBuffer.buffer.getBuffer<const char>(), currentBuffer.sizeOfBufferInBytes);
+        partialTuple.append(intermediatePartialTuple);
     }
+
+    /// 3. Process the last buffer
+    const auto& lastBuffer = buffersToFormat[partialTupleEndIdx];
+    const std::string_view lastPartialTuple
+        = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
+    partialTuple.append(lastPartialTuple);
+    const auto stateOfPartialTuple = static_cast<FormattedTupleIs>(not(partialTuple.empty()));
+    progressTracker.processCurrentTuple(
+        std::move(partialTuple), fieldDelimiter, fieldParseFunctions, fieldSizes, *pipelineExecutionContext.getBufferManager());
+    progressTracker.progressOneTuple();
+    return stateOfPartialTuple;
 }
 
-std::ostream& CSVInputFormatter::toString(std::ostream& str) const
+void CSVInputFormatter::flushFinalTuple(
+    OriginId originId, NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
 {
-    str << std::format("CSVInputFormatter(fieldDelimiter: '{}'", this->fieldDelimiter);
-    str << ", progressTracker: " << *this->progressTracker;
-    return str;
+    const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder.flushFinalPartialTuple();
+    const auto flushedBuffers = std::move(resultBuffers.stagedBuffers);
+    /// The sequence shredder insert a dummy buffer with a delimiter in its flush call.
+    /// If it returns a single buffer, it is that dummy buffer and we can return.
+    if (flushedBuffers.size() == 1)
+    {
+        return;
+    }
+    /// Get the final buffer (size - 1 is dummy buffer that just contains tuple delimiter)
+    auto progressTracker = ProgressTracker(
+        SequenceNumber(sequenceNumberToUseForFlushedTuple),
+        originId,
+        tupleDelimiter,
+        schema.getSchemaSizeInBytes(),
+        schema.getFieldCount());
+    /// Allocate formatted buffer to write formatted tuples into.
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+    const auto formattedTupleIs
+        = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
+    /// Emit formatted buffer with single flushed tuple
+    if (formattedTupleIs == FormattedTupleIs::NOT_EMPTY)
+    {
+        auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
+        finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        pipelineExecutionContext.emitBuffer(
+            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    }
+}
+size_t CSVInputFormatter::getSizeOfTupleDelimiter()
+{
+    return this->tupleDelimiter.size();
+}
+size_t CSVInputFormatter::getSizeOfFieldDelimiter()
+{
+    return this->fieldDelimiter.size();
+}
+
+std::ostream& CSVInputFormatter::toString(std::ostream& os) const
+{
+    os << "CSVInputFormatter: {\n";
+    os << "  tuple delimiter: " << ((this->tupleDelimiter == "\n") ? "\\n" : this->tupleDelimiter) << ", \n";
+    os << "  field delimiter: " << this->fieldDelimiter << ", \n";
+    os << "  number of fields: " << this->fieldSizes.size() << ", \n";
+    os << "  schema: " << this->schema.toString();
+    os << "\n}\n";
+
+    return os;
 }
 
 std::unique_ptr<InputFormatterRegistryReturnType>

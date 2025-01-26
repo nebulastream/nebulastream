@@ -16,9 +16,7 @@
 #include <compare>
 #include <cstdint>
 #include <ostream>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
-
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Runtime
 {
@@ -53,8 +51,4 @@ private:
 
 }
 
-template <typename T>
-requires(std::is_base_of_v<NES::Runtime::Timestamp, T>)
-struct fmt::formatter<T> : fmt::ostream_formatter
-{
-};
+FMT_OSTREAM(NES::Runtime::Timestamp);

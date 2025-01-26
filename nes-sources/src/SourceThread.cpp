@@ -23,7 +23,6 @@
 #include <thread>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/Source.hpp>
@@ -43,13 +42,11 @@ SourceThread::SourceThread(
     OriginId originId,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
+    std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
-    , inputFormatter(std::move(inputFormatter))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -108,11 +105,7 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken,
-    Source& source,
-    Memory::AbstractBufferProvider& bufferProvider,
-    InputFormatters::InputFormatter& inputFormatter,
-    const EmitFn& emit)
+    const std::stop_token& stopToken, Source& source, Memory::AbstractBufferProvider& bufferProvider, const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source);
     while (!stopToken.stop_requested())
@@ -131,7 +124,8 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
         if (numReadBytes != 0)
         {
-            inputFormatter.parseTupleBufferRaw(emptyBuffer, bufferProvider, numReadBytes, emit);
+            emptyBuffer.setNumberOfTuples(numReadBytes);
+            emit(emptyBuffer, true);
         }
 
         if (stopToken.stop_requested())
@@ -159,7 +153,6 @@ void dataSourceThread(
     Source* source,
     SourceReturnType::EmitFunction emit,
     OriginId originId,
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
     std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
 {
     threadSetup(originId);
@@ -183,7 +176,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, *inputFormatter, dataEmit));
+        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -216,7 +209,6 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        std::move(inputFormatter),
         localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers));
     thread = std::move(sourceThread);
     return true;

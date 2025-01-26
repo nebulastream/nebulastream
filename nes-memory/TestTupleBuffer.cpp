@@ -21,12 +21,14 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <include/Runtime/BufferManager.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -123,17 +125,25 @@ std::string DynamicTuple::toString(const std::shared_ptr<Schema>& schema) const
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
     {
+        const auto fieldEnding = (i < schema->getFieldCount() - 1) ? "|" : "";
         const auto dataType = schema->getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
         if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
-            ss << string << "|";
+            ss << string << fieldEnding;
+        }
+        else if (NES::Util::instanceOf<Float>(dataType))
+        {
+            const auto numBits = NES::Util::as<Float>(dataType)->getBits();
+            const auto formattedFloatValue
+                = (numBits == 64) ? Util::formatFloat(currentField.read<double>()) : Util::formatFloat(currentField.read<float>());
+            ss << formattedFloatValue << fieldEnding;
         }
         else
         {
-            ss << currentField.toString() << "|";
+            ss << currentField.toString() << fieldEnding;
         }
     }
     return ss.str();
@@ -268,13 +278,14 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema)
+std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema) const
 {
     constexpr auto showHeader = true;
-    return toString(schema, showHeader);
+    constexpr auto endInNewline = true;
+    return toString(schema, showHeader, endInNewline);
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const bool showHeader)
+std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const bool showHeader, const bool endInNewline) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -305,11 +316,18 @@ std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, con
         str << "+----------------------------------------------------+" << std::endl;
     }
 
-    for (auto&& it : *this)
+    auto tupleIterator = this->begin();
+    str << (*tupleIterator).toString(schema);
+    ++tupleIterator;
+    while (tupleIterator != this->end())
     {
-        str << "|";
-        DynamicTuple dynamicTuple = (it);
+        str << std::endl;
+        auto dynamicTuple = *tupleIterator;
         str << dynamicTuple.toString(schema);
+        ++tupleIterator;
+    }
+    if (endInNewline)
+    {
         str << std::endl;
     }
     if (showHeader)

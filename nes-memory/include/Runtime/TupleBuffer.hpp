@@ -212,12 +212,6 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept;
 
-    /**
-     * @brief returns true if there is enought space to write
-     * @param used space
-     * @param needed space
-     * @return TupleBuffer
-     */
     bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
 private:

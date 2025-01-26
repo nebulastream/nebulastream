@@ -194,12 +194,14 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     }
     if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
     {
+        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
+        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
         validParserConfig.tupleDelimiter = tupleDelimiter->second;
     }
     else
     {
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = "\n";
+        validParserConfig.tupleDelimiter = '\n';
     }
     if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
     {

@@ -23,6 +23,8 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -30,6 +32,7 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Ranges.hpp>
@@ -94,20 +97,39 @@ Runtime::Execution::Source processSource(
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
-    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators().front();
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
-    std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+        sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
+        *sourceOperator->getSourceDescriptorRef().schema,
+        sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
+        sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
+    auto inputFormatterTask
+        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator->getOriginId(), std::move(inputFormatter));
+
+    auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
+        pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
+
     for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, loweringContext))
+        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor, pipelineQueryPlan, loweringContext))
         {
-            executableSuccessorPipelines.emplace_back(*executableSuccessor);
+            executableInputFormatterPipeline->successors.emplace_back(*executableSuccessor);
         }
     }
 
+    /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
+    pipelineQueryPlan->removePipeline(pipeline);
+
+    std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> inputFormatterTasks;
+
+    loweringContext.pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
+    inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
+
     loweringContext.sources.emplace_back(
-        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), executableSuccessorPipelines);
+        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), std::move(inputFormatterTasks));
     return loweringContext.sources.back();
 }
 
