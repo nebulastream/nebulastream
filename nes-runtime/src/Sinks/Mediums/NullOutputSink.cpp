@@ -51,7 +51,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {
         };
     }
-    if (faultToleranceType == FaultToleranceType::M || faultToleranceType == FaultToleranceType::AS) {
+    if (faultToleranceType == FaultToleranceType::M) {
         duplicateDetectionCallback = [this](Runtime::TupleBuffer& inputBuffer){
             return watermarkProcessor->isDuplicate(inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
         };
@@ -69,10 +69,10 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NU
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // workerContext.printStatistics(inputBuffer);
-    // if(!duplicateDetectionCallback(inputBuffer)) {
-    updateWatermarkCallback(inputBuffer);
-        // return true;
-    // }
+    if(!duplicateDetectionCallback(inputBuffer)) {
+        updateWatermarkCallback(inputBuffer);
+        return true;
+    }
     return true;
 }
 

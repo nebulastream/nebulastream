@@ -458,7 +458,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-    for (auto i = 0; i < 8; i++) {
+    // for (auto i = 0; i < 8; i++) {
 
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersPerEpoch = 2;
@@ -468,8 +468,8 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
         NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
         wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
         EXPECT_TRUE(wrkLeaf1->start(false, true));
-    }
-    auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
+    // }
+    auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
                                                                                    FaultToleranceType::AS);

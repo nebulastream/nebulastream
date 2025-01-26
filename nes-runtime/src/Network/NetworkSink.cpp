@@ -65,17 +65,8 @@ faultToleranceType,
       trimmingStarted(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::UB) {
+    if (faultToleranceType == FaultToleranceType::UB || faultToleranceType == FaultToleranceType::AS) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        };
-        deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
-            return workerContext.trimStorage(this->nesPartition, timestamp);
-        };
-    }
-    else if (faultToleranceType == FaultToleranceType::AS) {
-        insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-            inputBuffer.setOriginId(OriginId(this->getUniqueNetworkSinkDescriptorId().getRawValue()));
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
         deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
