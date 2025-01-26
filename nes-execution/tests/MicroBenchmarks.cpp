@@ -24,11 +24,11 @@ namespace NES
 using FieldType = enum : uint8_t { KEY, PAYLOAD };
 using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES };
 
-class MicroBenchmarksTest : public Testing::BaseUnitTest
+class MicroBenchmarksTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<uint64_t, uint64_t>>
 {
 public:
     // TODO NOTE: The test needs approximately
-    static constexpr uint64_t DATA_SIZE = 6442450944; /// 6GB //12884901888; /// 12GB //17179869184; /// 16GB
+    static constexpr uint64_t DATA_SIZE = 2147483648; /// 2GB //12884901888; /// 12GB //17179869184; /// 16GB
     std::vector<double> execTimes;
 
     static void SetUpTestSuite()
@@ -124,7 +124,7 @@ public:
     }
 
     void clearPagedVector(
-        std::shared_ptr<Nautilus::Interface::PagedVector> pagedVector,
+        std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::BufferManagerPtr& bufferManager,
         const SeparateKeys separateKeys)
     {
@@ -261,14 +261,14 @@ public:
             payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
         }
         ASSERT_TRUE(payloadFile);
+        ASSERT_EQ(payloadFile.tellp(), 0);
         if (fileNames.size() > 1)
         {
             ASSERT_EQ(separateKeys, SEPARATE_FILES);
             keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
             ASSERT_TRUE(keyFile);
+            ASSERT_EQ(keyFile.tellp(), 0);
         }
-        ASSERT_EQ(payloadFile.tellp(), 0);
-        ASSERT_EQ(keyFile.tellp(), 0);
 
         // TODO remove?
         const auto& pages = pagedVector->getPages();
@@ -395,7 +395,7 @@ public:
     }
 
     void writeFileToPagedVector(
-        std::shared_ptr<Nautilus::Interface::PagedVector> pagedVector,
+        std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
         const Memory::BufferManagerPtr& bufferManager,
         const std::vector<std::string>& fileNames,
@@ -412,14 +412,14 @@ public:
 
         payloadFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
         ASSERT_TRUE(payloadFile);
+        ASSERT_EQ(payloadFile.tellg(), 0);
         if (fileNames.size() > 1)
         {
             ASSERT_EQ(separateKeys, SEPARATE_FILES);
             keyFile = std::ifstream(fileNames.at(1), std::ios::in | std::ios::binary);
             ASSERT_TRUE(keyFile);
+            ASSERT_EQ(keyFile.tellg(), 0);
         }
-        ASSERT_EQ(payloadFile.tellg(), 0);
-        ASSERT_EQ(keyFile.tellg(), 0);
 
         // TODO does this enhance performance?
         auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
@@ -579,34 +579,42 @@ public:
     }
 };
 
-TEST_F(MicroBenchmarksTest, benchmark1)
+TEST_P(MicroBenchmarksTest, benchmark1)
 {
     execTimes.clear();
-    const auto pageSize = 4 * 1024;
-    const auto numBuffers = DATA_SIZE / pageSize;
+    const auto [bufferSize, fileBufferSizePercent] = GetParam();
+    const auto numBuffers = DATA_SIZE / bufferSize;
+    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+    NES_INFO("BufferSize: {}, NumBuffers: {}, FileBufferSize: {}", bufferSize, numBuffers, fileBufferSize / bufferSize);
     const auto seperateKeys = NO_SEPARATION;
 
     const std::vector<std::string> fileNames = {"../../../benchmark1_payload.dat"};
     const auto testSchema = Schema::create();
     addSchemaFields(testSchema);
 
-    const auto bufferManager = Memory::BufferManager::create(pageSize, numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
+    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
     memoryLayout->setKeyFieldNames({"f0", "f1"});
 
-    const auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
+    auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
     generateData(pagedVector, numBuffers);
     NES_INFO("PagedVector copying...");
     auto expectedPagedVector = copyPagedVector(*pagedVector);
     NES_INFO("PagedVector copied");
 
-    writePagedVectorToFile(pagedVector, fileNames, pageSize, seperateKeys);
+    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
     clearPagedVector(pagedVector, bufferManager, seperateKeys);
 
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, pageSize, seperateKeys);
+    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
     comparePagedVectors(expectedPagedVector, pagedVector);
 
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     //createMeasurementsCSV("fileName.csv");
 }
+
+INSTANTIATE_TEST_CASE_P(
+    Benchmarks,
+    MicroBenchmarksTest,
+    ::testing::Combine(::testing::Values(1024, 4096), ::testing::Values(0, 100)));
 
 }
