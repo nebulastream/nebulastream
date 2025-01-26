@@ -23,7 +23,6 @@
 #include <stop_token>
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -59,8 +58,7 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
+        std::unique_ptr<Source> sourceImplementation);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -88,7 +86,6 @@ protected:
     std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
     uint64_t numSourceLocalBuffers;
     std::unique_ptr<Source> sourceImplementation;
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
     std::atomic_bool started;
 
     std::jthread thread;

@@ -12,13 +12,4 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
-#include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
-
-namespace NES::InputFormatters::InputFormatterProvider
-{
-std::unique_ptr<InputFormatterTask>
-provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
-}
+// #include <InputFormatterOperatorHandler.hpp>

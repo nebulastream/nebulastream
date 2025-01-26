@@ -10,8 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-executable ExecutableQueryPlan.cpp)
-target_include_directories(nes-executable PUBLIC include PRIVATE .)
-target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)
+include(ExternalProject)
+include(GoogleTest)
 
-add_tests_if_enabled(tests)
+function(add_nes_input_formatter_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-input-formatters nes-executable-test-utils)
+endfunction()
+
+add_subdirectory(UnitTests)

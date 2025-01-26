@@ -10,8 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-executable ExecutableQueryPlan.cpp)
-target_include_directories(nes-executable PUBLIC include PRIVATE .)
-target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)
 
-add_tests_if_enabled(tests)
+add_nes_input_formatter_test(input-formatter-test "InputFormatterTest.cpp")

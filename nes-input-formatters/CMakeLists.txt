@@ -17,7 +17,7 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 # Add Library
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
-target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory)
+target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory nes-runtime)
 
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -28,3 +28,5 @@ target_include_directories(nes-input-formatters PUBLIC
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
+
+add_tests_if_enabled(tests)

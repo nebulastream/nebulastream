@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -22,13 +22,13 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 {
 
-std::unique_ptr<InputFormatter> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
+std::unique_ptr<InputFormatterTask> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
 
 }
 

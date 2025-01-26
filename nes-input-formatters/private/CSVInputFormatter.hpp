@@ -23,9 +23,9 @@
 #include <string_view>
 #include <vector>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
 {
@@ -33,7 +33,7 @@ namespace NES::InputFormatters
 /// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVInputFormatter : public InputFormatter
+class CSVInputFormatter : public InputFormatterTask
 {
 public:
     using CastFunctionSignature
@@ -49,13 +49,13 @@ public:
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,
-        Memory::AbstractBufferProvider& bufferProvider,
-        size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        size_t numBytesInTBRaw) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
+    SequenceShredder sequenceShredder;
     std::string fieldDelimiter;
     std::unique_ptr<ProgressTracker> progressTracker;
     std::vector<size_t> fieldSizes;
