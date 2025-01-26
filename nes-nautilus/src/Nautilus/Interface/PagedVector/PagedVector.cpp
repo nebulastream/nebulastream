@@ -34,6 +34,15 @@ PagedVector::PagedVector(
     appendPageIfFull();
 }
 
+ PagedVector::~PagedVector()
+{
+    for (auto page : pages)
+    {
+        page.release();
+    }
+}
+
+
 void PagedVector::appendPageIfFull()
 {
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())

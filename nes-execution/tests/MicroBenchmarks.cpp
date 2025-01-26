@@ -585,7 +585,6 @@ TEST_P(MicroBenchmarksTest, benchmark1)
     const auto [bufferSize, fileBufferSizePercent] = GetParam();
     const auto numBuffers = DATA_SIZE / bufferSize;
     const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-    NES_INFO("BufferSize: {}, NumBuffers: {}, FileBufferSize: {}", bufferSize, numBuffers, fileBufferSize / bufferSize);
     const auto seperateKeys = NO_SEPARATION;
 
     const std::vector<std::string> fileNames = {"../../../benchmark1_payload.dat"};
@@ -599,7 +598,7 @@ TEST_P(MicroBenchmarksTest, benchmark1)
     auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
     generateData(pagedVector, numBuffers);
     NES_INFO("PagedVector copying...");
-    auto expectedPagedVector = copyPagedVector(*pagedVector);
+    const auto expectedPagedVector = copyPagedVector(*pagedVector);
     NES_INFO("PagedVector copied");
 
     writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
@@ -608,7 +607,7 @@ TEST_P(MicroBenchmarksTest, benchmark1)
     writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
     comparePagedVectors(expectedPagedVector, pagedVector);
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    //std::this_thread::sleep_for(std::chrono::seconds(10));
     //createMeasurementsCSV("fileName.csv");
 }
 
