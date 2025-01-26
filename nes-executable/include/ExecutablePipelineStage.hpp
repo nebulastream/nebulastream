@@ -41,7 +41,7 @@ public:
     /// `stop` may throw to indicate an error.
     virtual void stop(PipelineExecutionContext& pipelineExecutionContext) = 0;
 
-    friend std::ostream& operator<<(std::ostream& os, const ExecutablePipelineStage& obj) { return obj.toString(os); }
+    friend std::ostream& operator<<(std::ostream& os, const ExecutablePipelineStage& eps) { return eps.toString(os); }
 
 protected:
     virtual std::ostream& toString(std::ostream& os) const = 0;

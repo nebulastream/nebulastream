@@ -17,7 +17,6 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -30,11 +29,10 @@ SourceHandle::SourceHandle(
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
+    std::unique_ptr<Source> sourceImplementation)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation), std::move(inputFormatter));
+        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));
 }
 SourceHandle::~SourceHandle() = default;
 

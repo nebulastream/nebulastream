@@ -20,7 +20,8 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 # Add Library
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
-target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory)
+# Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
+target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime)
 
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -37,3 +38,5 @@ create_plugin_registry_library(nes-input-formatters-registry nes-input-formatter
 target_link_libraries(nes-input-formatters PRIVATE nes-input-formatters-registry)
 # Generate a registrar for every registry in nes-input-formatters
 generate_plugin_registrars(nes-input-formatters InputFormatter)
+
+add_tests_if_enabled(tests)

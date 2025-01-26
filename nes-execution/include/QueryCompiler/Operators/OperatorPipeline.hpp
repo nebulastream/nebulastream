@@ -53,12 +53,6 @@ public:
     static std::shared_ptr<OperatorPipeline> create();
 
     /**
-     * @brief Creates a new source pipeline.
-     * @return std::shared_ptr<OperatorPipeline>
-     */
-    static std::shared_ptr<OperatorPipeline> createSourcePipeline();
-
-    /**
      * @brief Creates a new sink pipeline.
      * @return std::shared_ptr<OperatorPipeline>
      */

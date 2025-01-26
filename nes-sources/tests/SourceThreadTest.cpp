@@ -173,11 +173,7 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -196,11 +192,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
         const Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -219,11 +211,7 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
     control->injectError("I should fail");
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -246,11 +234,7 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -275,11 +259,7 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -305,11 +285,7 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     control->injectEoS();
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>,
-            bm,
-            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
-            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            std::make_unique<Sources::NoOpInputFormatter>());
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
