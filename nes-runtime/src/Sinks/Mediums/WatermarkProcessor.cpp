@@ -40,11 +40,18 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
     }
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() const { return currentWatermark; }
+WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
+    std::unique_lock lock(watermarkLatch);
+    return currentWatermark;
+}
 
-bool WatermarkProcessor::isWatermarkSynchronized() const { return transactionLog.empty(); }
+bool WatermarkProcessor::isWatermarkSynchronized() const {
+    std::unique_lock lock(watermarkLatch);
+    return transactionLog.empty();
+}
 
 bool WatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber) const {
+    std::unique_lock lock(watermarkLatch);
     return currentSequenceNumber >= sequenceNumber;
 }
 

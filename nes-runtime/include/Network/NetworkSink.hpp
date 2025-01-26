@@ -55,7 +55,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
                          DecomposedQueryPlanVersion version,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::UB);
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
     * @brief Writes data to the underlying output channel

@@ -472,11 +472,11 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
     auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                                   FaultToleranceType::AS);
+                                                                                   FaultToleranceType::UB);
 
     auto queryCatalog = crd->getQueryCatalog();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000000000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 

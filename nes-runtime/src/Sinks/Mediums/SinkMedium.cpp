@@ -51,11 +51,19 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
     bufferCount = 0;
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
-    currentTimestamp = 0;
     isWaiting = false;
     if (faultToleranceType == FaultToleranceType::AS || faultToleranceType == FaultToleranceType::UB || faultToleranceType == FaultToleranceType::CH) {
-        notifyEpochCallback = [this](uint64_t timestamp) {
-            notifyEpochTermination(timestamp);
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    }
+    else if (faultToleranceType == FaultToleranceType::M){
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            this->watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+        };
+    }
+    else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
         };
     }
 }
@@ -68,14 +76,14 @@ uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
 }
 
 void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
-    std::unique_lock lock(writeMutex);
+    //    std::unique_lock lock(writeMutex);
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
     if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
         if (isSync && timestamp) {
-            notifyEpochCallback(timestamp);
+            notifyEpochTermination(timestamp);
             isWaiting = false;
         } else {
             isWaiting = true;

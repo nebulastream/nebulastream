@@ -151,30 +151,61 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
 bool WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     bool isTrimmed = false;
+void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         auto& [nesPar, pq] = *iteratorPartitionId;
-        auto oldStorageSize = pq.size();
+//        auto oldStorageSize = pq.size();
         while (!pq.empty()) {
             auto topWatermark = pq.top().getWatermark();
             if (topWatermark <= timestamp) {
                 pq.pop();
-                isTrimmed = true;
             } else {
                 break;
             }
         }
-        auto ts = std::chrono::system_clock::now();
-        auto timeNow = std::chrono::system_clock::to_time_t(ts);
-        // storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-        NES_DEBUG("BufferStorage: Timestamp {}", timestamp);
-        NES_DEBUG("BufferStorage: Deleted old size {} tuples", oldStorageSize);
-        NES_DEBUG("BufferStorage: Deleted new size {} tuples", pq.size());
-        NES_DEBUG("BufferStorage: New top {}", pq.top().getWatermark());
-        NES_DEBUG("BufferStorage: Deleted diff {} tuples", oldStorageSize - pq.size());
-        // storageFile << oldStorageSize - pq.size() << "\n";
-        // storageFile.flush();
+//        auto now = std::chrono::system_clock::now();
+//        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+//        auto epoch = now_ms.time_since_epoch();
+//        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+//        auto ts = std::chrono::system_clock::now();
+//        auto timeNow = std::chrono::system_clock::to_time_t(ts);
+//        propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+//        propagationFile << propagationDelay << ",";
+//        propagationFile << value.count() - propagationDelay << "\n";
+//        timeval curTime;
+//        gettimeofday(&curTime, NULL);
+//        int milli = curTime.tv_usec / 1000;
+//        char buffer[26];
+//        int millisec;
+//        struct tm* tm_info;
+//        struct timeval tv;
+//
+//        gettimeofday(&tv, NULL);
+//
+//        millisec = lrint(tv.tv_usec / 1000.0);// Round to nearest millisec
+//        if (millisec >= 1000) {               // Allow for rounding up to nearest second
+//            millisec -= 1000;
+//            tv.tv_sec++;
+//        }
+//
+//        tm_info = localtime(&tv.tv_sec);
+//
+//        strftime(buffer, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+//        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ".";
+//        if (millisec < 10)
+//            storageFile << "00" << millisec << ",";
+//        else if (millisec < 100)
+//            storageFile << "0" << millisec << ",";
+//        else
+//            storageFile << millisec << ",";
+//        NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
+//        NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
+//        NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
+//        storageFile << oldStorageSize << ",";
+//        storageFile << pq.size() << "\n";
+//        storageFile.flush();
     }
-    return isTrimmed;
 }
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
