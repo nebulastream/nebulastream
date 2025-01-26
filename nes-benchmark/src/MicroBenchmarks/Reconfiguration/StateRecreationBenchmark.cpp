@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <BorrowedPort.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -160,39 +161,46 @@ NesWorkerPtr startSourceWorker(uint64_t bufferSize, uint64_t numberOfBuffersToPr
         wrkConf->numberOfBuffersPerWorker = 1024 + 50;
     }
 
-    auto func = [workerIdx](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
-            uint64_t id;
-            uint64_t value;
-            uint64_t secretValue;
-            uint64_t timestamp;
-        };
-
-        static std::vector<uint64_t> counters(3, 0);
-        auto& counter = counters[workerIdx];
-
-        auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-            records[u].id = workerIdx;
-            records[u].value = counter;
-            records[u].secretValue = counter;
-            records[u].timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        }
-        counter++;
-        // std::cout<<"Record " << counter << "produced by " << workerIdx << std::endl;
-//        if (counter >= numberOfBuffersToProduce + 1) {
-//            sleep(30);
+//    auto func = [workerIdx](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+//        struct Record {
+//            uint64_t id;
+//            uint64_t value;
+//            uint64_t secretValue;
+//            uint64_t timestamp;
+//        };
+//
+//        static std::vector<uint64_t> counters(3, 0);
+//        auto& counter = counters[workerIdx];
+//
+//        auto* records = buffer.getBuffer<Record>();
+//        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+//            records[u].id = workerIdx;
+//            records[u].value = counter;
+//            records[u].secretValue = counter;
+//            records[u].timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 //        }
-    };
+//        counter++;
+//        // std::cout<<"Record " << counter << "produced by " << workerIdx << std::endl;
+////        if (counter >= numberOfBuffersToProduce + 1) {
+////            sleep(30);
+////        }
+//    };
 
     const auto& logicalSourceName = "example" + std::to_string(workerIdx);
-    auto lambdaSourceType = LambdaSourceType::create(logicalSourceName,
-                                                     "phy_" + logicalSourceName,
-                                                     std::move(func),
-                                                     numberOfBuffersToProduce + 50,
-                                                     /* gatheringValue */ 1,
-                                                     GatheringMode::INTERVAL_MODE);
-    wrkConf->physicalSourceTypes.add(lambdaSourceType);
+//    auto lambdaSourceType = LambdaSourceType::create(logicalSourceName,
+//                                                     "phy_" + logicalSourceName,
+//                                                     std::move(func),
+//                                                     numberOfBuffersToProduce + 50,
+//                                                     /* gatheringValue */ 1,
+//                                                     GatheringMode::INTERVAL_MODE);
+    const auto physicalSourceName = "phy_" + logicalSourceName;
+    std::map<std::string, std::string> sourceConfig {
+        {Configurations::FILE_PATH_CONFIG, "/Users/danilaferentz/Desktop/nebulastream/cmake-build-debug/nes-benchmark/start_source.csv"},
+        {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
+        {Configurations::NUMBER_OF_BUFFER_TO_PRODUCE, std::to_string(numberOfBuffersToProduce)}
+    };
+    auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+    wrkConf->physicalSourceTypes.add(csvSourceType);
 
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
     bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -416,6 +424,7 @@ void runDataBenchmark(uint64_t defaultNumberOfIntermediateNodes, uint64_t minNUm
         QueryId addedQueryId =
             requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
         waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
+        std::cout<<"query is running"<<std::endl;
         for (auto& wrk : sourceNodes) {
             auto decompPlanIds = wrk->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(addedQueryId.getRawValue()));
             auto [decompPlanIdToCheck, decompPlanVersionToCheck] = decompPlanIds.front();

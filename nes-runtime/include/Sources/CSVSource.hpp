@@ -91,6 +91,8 @@ class CSVSource : public DataSource {
      */
     const CSVSourceTypePtr& getSourceConfig() const;
 
+    void openFile();
+
   protected:
     std::ifstream input;
     bool fileEnded;
