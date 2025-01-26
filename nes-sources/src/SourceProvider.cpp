@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -31,22 +30,18 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
     return std::make_unique<SourceProvider>();
 }
 
-std::unique_ptr<SourceHandle>
-SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
+std::unique_ptr<SourceHandle> SourceProvider::lower(
+    OriginId originId,
+    const SourceDescriptor& sourceDescriptor,
+    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
+    const int numberOfLocalBuffersInSource)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceDescriptor.parserConfig.parserType,
-        *sourceDescriptor.schema,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
-
-    auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
+    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
         return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), NUM_SOURCE_LOCAL_BUFFERS, std::move(source.value()), std::move(inputFormatter));
+            std::move(originId), std::move(bufferPool), numberOfLocalBuffersInSource, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

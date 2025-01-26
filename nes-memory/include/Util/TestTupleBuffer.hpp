@@ -288,8 +288,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(const std::shared_ptr<Schema>& schema);
-    std::string toString(const std::shared_ptr<Schema>& schema, bool showHeader);
+    std::string toString(const std::shared_ptr<Schema>& schema) const;
+    std::string toString(const std::shared_ptr<Schema>& schema, bool showHeader, bool endInNewline) const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
