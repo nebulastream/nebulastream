@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -33,12 +34,12 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(NodePtr const& rhs) const
+bool SourceNameLogicalOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
+bool SourceNameLogicalOperator::equal(const NodePtr& rhs) const
 {
     if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
     {

@@ -18,6 +18,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -29,14 +31,14 @@ NodeFunctionOr::NodeFunctionOr(NodeFunctionOr* other) : NodeFunctionLogicalBinar
 {
 }
 
-NodeFunctionPtr NodeFunctionOr::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
+NodeFunctionPtr NodeFunctionOr::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto orNode = std::make_shared<NodeFunctionOr>();
     orNode->setChildren(left, right);
     return orNode;
 }
 
-bool NodeFunctionOr::equal(NodePtr const& rhs) const
+bool NodeFunctionOr::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionOr>(rhs))
     {

@@ -223,7 +223,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    std::vector<SliceEnd> const slicesToDelete;
+    const std::vector<SliceEnd> slicesToDelete;
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;

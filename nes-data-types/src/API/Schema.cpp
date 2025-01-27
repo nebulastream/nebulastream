@@ -52,9 +52,9 @@ uint64_t Schema::getSchemaSizeInBytes() const
 {
     uint64_t size = 0;
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto const& field : fields)
+    for (const auto& field : fields)
     {
-        auto const type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        const auto type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         size += type->size();
     }
     return size;
@@ -153,7 +153,7 @@ bool Schema::operator==(const Schema& other) const
     {
         return false;
     }
-    for (auto const& fieldAttribute : fields)
+    for (const auto& fieldAttribute : fields)
     {
         auto otherFieldAttribute = other.getFieldByName(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute.has_value() && fieldAttribute->isEqual(otherFieldAttribute.value())))

@@ -114,7 +114,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
     InputFormatters::InputFormatter& inputFormatter,
     const EmitFn& emit)
 {
-    SourceHandle const sourceHandle(source);
+    const SourceHandle sourceHandle(source);
     while (!stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -165,7 +165,7 @@ void dataSourceThread(
     }
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    EmitFn const dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
+    const EmitFn dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
@@ -182,7 +182,7 @@ void dataSourceThread(
             emit(originId, SourceReturnType::EoS{});
         }
     }
-    catch (std::exception const& e)
+    catch (const std::exception& e)
     {
         auto ingestionException = RunningRoutineFailure(e.what());
         result.set_exception(std::make_exception_ptr(ingestionException));

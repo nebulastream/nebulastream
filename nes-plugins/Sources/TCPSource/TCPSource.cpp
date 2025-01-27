@@ -54,7 +54,7 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
 {
     /// init physical types
-    std::vector<std::string> const schemaKeys;
+    const std::vector<std::string> schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");

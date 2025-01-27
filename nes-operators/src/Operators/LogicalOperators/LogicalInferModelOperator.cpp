@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES::InferModel
@@ -58,7 +59,7 @@ std::shared_ptr<Operator> LogicalInferModelOperator::copy()
     }
     return copy;
 }
-bool LogicalInferModelOperator::equal(NodePtr const& rhs) const
+bool LogicalInferModelOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))
     {
@@ -68,7 +69,7 @@ bool LogicalInferModelOperator::equal(NodePtr const& rhs) const
     return false;
 }
 
-bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalInferModelOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalInferModelOperator>(rhs)->getId() == id;
 }

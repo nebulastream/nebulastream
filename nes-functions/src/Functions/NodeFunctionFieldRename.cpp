@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -34,7 +35,7 @@ NodeFunctionPtr NodeFunctionFieldRename::create(NodeFunctionFieldAccessPtr origi
     return std::make_shared<NodeFunctionFieldRename>(NodeFunctionFieldRename(originalField, std::move(newFieldName)));
 }
 
-bool NodeFunctionFieldRename::equal(NodePtr const& rhs) const
+bool NodeFunctionFieldRename::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldRename>(rhs))
     {

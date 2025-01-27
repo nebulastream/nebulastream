@@ -19,6 +19,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -32,7 +33,7 @@ NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* 
 {
 }
 
-bool NodeFunctionLogicalBinary::equal(NodePtr const& rhs) const
+bool NodeFunctionLogicalBinary::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLogicalBinary>(rhs))
     {

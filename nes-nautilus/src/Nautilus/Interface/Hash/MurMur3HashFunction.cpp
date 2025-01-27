@@ -55,11 +55,11 @@ uint64_t hashBytes(void* data, uint64_t length)
     static constexpr uint64_t seed = UINT64_C(0xe17a1465);
     static constexpr unsigned int r = 47;
 
-    auto const* const data64 = static_cast<const uint64_t*>(data);
+    const auto* const data64 = static_cast<const uint64_t*>(data);
     uint64_t h = seed ^ (length * m);
 
-    size_t const n_blocks = length / 8;
-    for (size_t i = 0; i < n_blocks; ++i)
+    const size_t nBlocks = length / 8;
+    for (size_t i = 0; i < nBlocks; ++i)
     {
         auto k = *(data64 + i);
 
@@ -71,7 +71,7 @@ uint64_t hashBytes(void* data, uint64_t length)
         h *= m;
     }
 
-    auto const* const data8 = reinterpret_cast<uint8_t const*>(data64 + n_blocks);
+    const auto* const data8 = reinterpret_cast<const uint8_t*>(data64 + nBlocks);
     switch (length & 7U)
     {
         case 7:

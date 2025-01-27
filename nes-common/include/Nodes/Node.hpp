@@ -40,7 +40,7 @@ public:
      * @note A newNode cannot be in its own child.
      * @param newNode
      */
-    bool addChildWithEqual(NodePtr const& newNode);
+    bool addChildWithEqual(const NodePtr& newNode);
 
     /**
      * @brief adds a newNode as a child to the current newNode.
@@ -54,7 +54,7 @@ public:
      * @brief remove a node from current children.
      * @param node
      */
-    bool removeChild(NodePtr const& node);
+    bool removeChild(const NodePtr& node);
 
     /**
      * @brief add a parent to vector of parents
@@ -68,7 +68,7 @@ public:
      * @brief remove a parent from vector of parents
      * @param node
      */
-    bool removeParent(NodePtr const& node);
+    bool removeParent(const NodePtr& node);
 
     /**
      * @brief Remove all parents
@@ -107,7 +107,7 @@ public:
      * @param oldNode the node to remove from graph
      * @return true if swapping successfully otherwise false
      */
-    bool swap(NodePtr const& newNode, NodePtr const& oldNode);
+    bool swap(const NodePtr& newNode, const NodePtr& oldNode);
 
     /**
      * @brief Swaps the left and right branch of binary nodes, by reversing the vector of children.
@@ -120,14 +120,14 @@ public:
      * @param node the given node to remove
      * @return bool true if successful
      */
-    bool remove(NodePtr const& node);
+    bool remove(const NodePtr& node);
 
     /**
      * @brief remove the given node and add its children to the children of the current node
      * @param node
      * @return bool true if successful
      */
-    bool removeAndLevelUpChildren(NodePtr const& node);
+    bool removeAndLevelUpChildren(const NodePtr& node);
 
     /**
      * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
@@ -146,28 +146,28 @@ public:
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllChildren(NodePtr const& node);
+    bool equalWithAllChildren(const NodePtr& node);
 
     /**
      * @brief checks if the current node and its parents are equal a other node and its parents
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllParents(NodePtr const& node);
+    bool equalWithAllParents(const NodePtr& node);
 
     /**
      * @brief check two node are equal.
      * @param rhs the node to compare
      * @return bool true if they are the same otherwise false
      */
-    virtual bool equal(NodePtr const& rhs) const { return this->isIdentical(rhs); };
+    virtual bool equal(const NodePtr& rhs) const { return this->isIdentical(rhs); };
 
     /**
      * @brief check two nodes whether are exactly the same object or not
      * @param rhs the node to check
      * @return bool true if they are the same object otherwise false
      */
-    [[nodiscard]] virtual bool isIdentical(NodePtr const& rhs) const { return rhs.get() == this; };
+    [[nodiscard]] virtual bool isIdentical(const NodePtr& rhs) const { return rhs.get() == this; };
 
     /**
      * @brief split graph into multiple sub-graphs. The graph starts at current splitNode.
@@ -175,7 +175,7 @@ public:
      * @params splitNode the given splitNode to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<NodePtr> split(NodePtr const& splitNode);
+    std::vector<NodePtr> split(const NodePtr& splitNode);
 
     /**
      * @brief validation of this node
@@ -265,13 +265,13 @@ public:
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
      */
-    bool insertBetweenThisAndParentNodes(NodePtr const& newNode);
+    bool insertBetweenThisAndParentNodes(const NodePtr& newNode);
 
     /**
     * @brief Add input node as child to the current node and add the input node as new parent to the old child
     * @return true if operation succeeded else false
     */
-    bool insertBetweenThisAndChildNodes(NodePtr const& newNode);
+    bool insertBetweenThisAndChildNodes(const NodePtr& newNode);
 
     /**
      * @brief check if a node is the child or grandchild of the given root node
@@ -279,7 +279,7 @@ public:
      * @param nodeToFind the node to find
      * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
-    static NodePtr findRecursively(NodePtr const& root, NodePtr const& nodeToFind);
+    static NodePtr findRecursively(const NodePtr& root, const NodePtr& nodeToFind);
 
     /**
      * @brief Get all nodes that are parents to this node.
@@ -331,7 +331,7 @@ private:
      * @param nodeToFind
      * @return return true if the given node is found, otherwise false
      */
-    bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, NodePtr const& nodeToFind);
+    static bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind);
 
     /**
      * @brief check if an node is in given vector and returns it
@@ -339,7 +339,7 @@ private:
      * @param nodeToFind
      * @return return node if the given node is found, otherwise nullpointer
      */
-    static NodePtr find(std::vector<NodePtr> const& nodes, NodePtr const& nodeToFind);
+    static NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *
@@ -347,17 +347,17 @@ private:
     /**
      * @brief helper function of equalWithAllParents() function
      */
-    bool equalWithAllParentsHelper(NodePtr const& node1, NodePtr const& node2);
+    bool equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2);
     /**
      * @brief helper function of equalWithAllChildren() function
      */
-    bool equalWithAllChildrenHelper(NodePtr const& node1, NodePtr const& node2);
+    bool equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2);
 
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
     void getAndFlattenAllChildrenHelper(
-        NodePtr const& node, std::vector<NodePtr>& allChildren, NodePtr const& excludedNode, bool allowDuplicate);
+        const NodePtr& node, std::vector<NodePtr>& allChildren, const NodePtr& excludedNode, bool allowDuplicate);
 
     /**
      * @brief helper function of cycle detector

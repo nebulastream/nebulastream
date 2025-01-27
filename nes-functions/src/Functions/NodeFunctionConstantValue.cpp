@@ -19,6 +19,7 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -32,7 +33,7 @@ NodeFunctionConstantValue::NodeFunctionConstantValue(const NodeFunctionConstantV
 {
 }
 
-bool NodeFunctionConstantValue::equal(NodePtr const& rhs) const
+bool NodeFunctionConstantValue::equal(const NodePtr& rhs) const
 {
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {

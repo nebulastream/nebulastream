@@ -71,7 +71,7 @@ bool Node::addChild(const NodePtr newNode)
     return true;
 }
 
-bool Node::removeChild(NodePtr const& node)
+bool Node::removeChild(const NodePtr& node)
 {
     if (!node)
     {
@@ -125,7 +125,7 @@ bool Node::addParent(const NodePtr newNode)
     return true;
 }
 
-bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode)
+bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode)
 {
     ///Perform sanity checks
     if (newNode.get() == this)
@@ -239,7 +239,7 @@ void Node::removeChildren()
     }
 }
 
-bool Node::removeParent(NodePtr const& node)
+bool Node::removeParent(const NodePtr& node)
 {
     if (!node)
     {
@@ -568,7 +568,7 @@ std::vector<NodePtr> Node::getAllLeafNodes()
     return leafNodes;
 }
 
-bool Node::vectorContainsTheNode(std::vector<NodePtr> const& nodes, NES::NodePtr const& nodeToFind)
+bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind)
 {
     return find(nodes, nodeToFind) != nullptr;
 }
@@ -591,7 +591,7 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
     return nullptr;
 }
 
-NodePtr Node::findRecursively(NodePtr const& root, NodePtr const& nodeToFind)
+NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind)
 {
     /// DFS
     NodePtr resultNode = nullptr;

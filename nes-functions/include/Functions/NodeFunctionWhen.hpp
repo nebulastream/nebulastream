@@ -15,6 +15,8 @@
 #pragma once
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -26,11 +28,11 @@ public:
     explicit NodeFunctionWhen(DataTypePtr stamp);
     ~NodeFunctionWhen() noexcept override = default;
 
-    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
 
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;

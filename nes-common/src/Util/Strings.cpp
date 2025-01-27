@@ -29,7 +29,7 @@ namespace NES::Util
 template <>
 std::optional<float> from_chars<float>(std::string_view input)
 {
-    std::string const str(trimWhiteSpaces(input));
+    const std::string str(trimWhiteSpaces(input));
     try
     {
         return std::stof(str);
@@ -58,7 +58,7 @@ std::optional<bool> from_chars<bool>(std::string_view input)
 template <>
 std::optional<double> from_chars<double>(std::string_view input)
 {
-    std::string const str(trimWhiteSpaces(input));
+    const std::string str(trimWhiteSpaces(input));
     try
     {
         return std::stod(str);

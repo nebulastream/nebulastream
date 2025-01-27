@@ -105,7 +105,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
                 NES_DEBUG("trying to read the variable length TEXT field: {} from the tuple buffer", field->toString());
 
                 /// read the child buffer index from the tuple buffer
-                auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                auto childIdx = *reinterpret_cast<const uint32_t*>(indexInBuffer);
                 str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
             }
             else

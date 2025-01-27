@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
@@ -36,7 +37,7 @@ NodeFunctionCase::NodeFunctionCase(NodeFunctionCase* other) : NodeFunction(other
     addChildWithEqual(getDefaultExp()->deepCopy());
 }
 
-NodeFunctionPtr NodeFunctionCase::create(std::vector<NodeFunctionPtr> const& whenExps, const NodeFunctionPtr& defaultExp)
+NodeFunctionPtr NodeFunctionCase::create(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp)
 {
     auto caseNode = std::make_shared<NodeFunctionCase>(defaultExp->getStamp());
     caseNode->setChildren(whenExps, defaultExp);
@@ -75,7 +76,7 @@ void NodeFunctionCase::inferStamp(const Schema& schema)
     NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp->toString());
 }
 
-void NodeFunctionCase::setChildren(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp)
+void NodeFunctionCase::setChildren(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp)
 {
     for (auto elem : whenExps)
     {
@@ -107,7 +108,7 @@ NodeFunctionPtr NodeFunctionCase::getDefaultExp() const
     return Util::as<NodeFunction>(*(children.end() - 1));
 }
 
-bool NodeFunctionCase::equal(NodePtr const& rhs) const
+bool NodeFunctionCase::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionCase>(rhs))
     {

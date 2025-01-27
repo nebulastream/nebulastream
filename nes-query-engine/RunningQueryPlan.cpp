@@ -48,7 +48,7 @@ std::pair<CallbackOwner, CallbackRef> Callback::create(std::string context)
         [=](Callback* ptr)
         {
             std::unique_ptr<Callback> callback(ptr);
-            std::scoped_lock const lock(ptr->mutex);
+            const std::scoped_lock lock(ptr->mutex);
             try
             {
                 if (!callback->callbacks.empty())
@@ -72,7 +72,7 @@ CallbackOwner& CallbackOwner::operator=(CallbackOwner&& other) noexcept
 {
     if (auto ptr = owner.lock())
     {
-        std::scoped_lock const lock(ptr->mutex);
+        const std::scoped_lock lock(ptr->mutex);
         if (!ptr->callbacks.empty())
         {
             ENGINE_LOG_DEBUG("Overwrite {} Callbacks", context);
@@ -90,7 +90,7 @@ CallbackOwner::~CallbackOwner()
     if (auto ptr = owner.lock())
     {
         ENGINE_LOG_DEBUG("Disabling {} Callbacks", context);
-        std::scoped_lock const lock(ptr->mutex);
+        const std::scoped_lock lock(ptr->mutex);
         ptr->callbacks.clear();
     }
 }
@@ -99,7 +99,7 @@ void CallbackOwner::addCallback(absl::AnyInvocable<void()> callbackFunction) con
 {
     if (auto ptr = owner.lock())
     {
-        std::scoped_lock const lock(ptr->mutex);
+        const std::scoped_lock lock(ptr->mutex);
         ptr->callbacks.emplace_back(std::move(callbackFunction));
     }
 }

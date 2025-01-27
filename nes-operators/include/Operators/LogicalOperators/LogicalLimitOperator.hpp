@@ -15,6 +15,7 @@
 #pragma once
 
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -39,8 +40,8 @@ public:
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
 
     /**
     * @brief Infers the input and output schema of this operator depending on its child.

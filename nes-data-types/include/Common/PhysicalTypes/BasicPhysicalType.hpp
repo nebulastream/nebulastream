@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES
 {
@@ -58,16 +59,16 @@ public:
 
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
-    std::string convertRawToString(void const* rawData) const noexcept override;
+    std::string convertRawToString(const void* rawData) const noexcept override;
 
 
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
+    std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
 
     [[nodiscard]] std::string toString() const noexcept override;
 
-    NativeType const nativeType;
+    const NativeType nativeType;
 };
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;

@@ -107,7 +107,7 @@ public:
     void stopQuery(QueryId queryId);
     void clear()
     {
-        std::scoped_lock const lock(mutex);
+        const std::scoped_lock lock(mutex);
         queryStates.clear();
     }
 
@@ -334,7 +334,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
         return false;
     }
 
-    auto const taskId = TaskId(pool.taskIdCounter++);
+    const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
@@ -591,7 +591,7 @@ void QueryCatalog::start(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    std::scoped_lock const lock(mutex);
+    const std::scoped_lock lock(mutex);
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
@@ -689,10 +689,10 @@ void QueryCatalog::start(
 
 void QueryCatalog::stopQuery(QueryId id)
 {
-    std::unique_ptr<RunningQueryPlan> const toBeDeleted;
+    const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {
         CallbackRef ref;
-        std::scoped_lock const lock(mutex);
+        const std::scoped_lock lock(mutex);
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;

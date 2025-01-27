@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -37,7 +38,7 @@ NodeFunctionPtr NodeFunctionAnd::create(const NodeFunctionPtr& left, const NodeF
     return andNode;
 }
 
-bool NodeFunctionAnd::equal(NodePtr const& rhs) const
+bool NodeFunctionAnd::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAnd>(rhs))
     {

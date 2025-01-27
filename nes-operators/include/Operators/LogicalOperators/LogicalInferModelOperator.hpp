@@ -16,6 +16,7 @@
 
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES::InferModel
 {
@@ -40,14 +41,14 @@ public:
      * @param rhs the other operator node
      * @return true if both are equal or false if both are not equal
      */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     /**
      * @brief checks if the operator node is equal and also has the same id, so it is the identical node
      * @param rhs the other operator node
      * @return true if identical, false otherwise
      */
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
 
     /**
      * @brief infers the schema of the this operator node

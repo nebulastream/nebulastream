@@ -32,8 +32,8 @@ public:
 
     const std::vector<std::shared_ptr<NodeFunction>>& getFunctions() const;
 
-    [[nodiscard]] bool equal(std::shared_ptr<Node> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Node> const& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     void inferStringSignature() override;
 
     bool inferSchema() override;

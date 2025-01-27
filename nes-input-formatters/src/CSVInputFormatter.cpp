@@ -256,7 +256,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
                 {
-                    bool const value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
+                    const bool value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
                     if (!value)
                     {
                         if ((static_cast<int>(strcasecmp(inputString.c_str(), "false") != 0) != 0)

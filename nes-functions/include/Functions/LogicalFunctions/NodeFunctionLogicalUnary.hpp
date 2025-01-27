@@ -15,6 +15,7 @@
 #pragma once
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 /**
@@ -26,7 +27,7 @@ protected:
     NodeFunctionLogicalUnary(std::string name);
 
 public:
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     /**
     * @brief Create a deep copy of this function node.

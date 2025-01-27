@@ -55,7 +55,7 @@ namespace NES::Testing
 std::vector<std::byte> identifiableData(size_t identifier)
 {
     std::vector<std::byte> data(DEFAULT_BUFFER_SIZE);
-    size_t const stepSize = sizeof(identifier) / sizeof(std::byte);
+    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
     for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
     {
         *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
@@ -71,7 +71,7 @@ bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
         return false;
     }
 
-    size_t const stepSize = sizeof(identifier) / sizeof(std::byte);
+    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
     bool allMatch = true;
     for (size_t index = 0; index < buffer.getBufferSize() / stepSize; index += stepSize)
     {
@@ -263,7 +263,7 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
 
 std::unique_ptr<Runtime::InstantiatedQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
-    auto const queryId = QueryId(queryIdCounter++);
+    const auto queryId = QueryId(queryIdCounter++);
     lastIdentifier = builder.nextIdentifier;
     lastOriginIdCounter = builder.originIdCounter;
     lastPipelineIdCounter = builder.pipelineIdCounter;

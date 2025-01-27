@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -26,7 +27,7 @@ public:
     /// Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
     void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
 protected:
     explicit NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name);

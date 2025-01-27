@@ -17,6 +17,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -27,14 +29,14 @@ NodeFunctionCeil::NodeFunctionCeil(NodeFunctionCeil* other) : NodeFunctionArithm
 {
 }
 
-NodeFunctionPtr NodeFunctionCeil::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionCeil::create(const NodeFunctionPtr& child)
 {
     auto ceilNode = std::make_shared<NodeFunctionCeil>(child->getStamp());
     ceilNode->setChild(child);
     return ceilNode;
 }
 
-bool NodeFunctionCeil::equal(NodePtr const& rhs) const
+bool NodeFunctionCeil::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionCeil>(rhs))
     {

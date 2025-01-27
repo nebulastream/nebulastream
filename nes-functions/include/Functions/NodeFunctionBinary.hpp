@@ -27,7 +27,7 @@ public:
     /**
      * @brief set the children node of this function.
      */
-    void setChildren(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    void setChildren(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
 
     /**
      * @brief gets the left children.

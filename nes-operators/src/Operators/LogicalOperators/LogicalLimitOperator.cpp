@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -31,12 +32,12 @@ uint64_t LogicalLimitOperator::getLimit() const
     return limit;
 }
 
-bool LogicalLimitOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalLimitOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalLimitOperator>(rhs)->getId() == id;
 }
 
-bool LogicalLimitOperator::equal(NodePtr const& rhs) const
+bool LogicalLimitOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalLimitOperator>(rhs))
     {

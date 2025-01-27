@@ -37,7 +37,7 @@ LogicalJoinOperator::LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefi
 {
 }
 
-bool LogicalJoinOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalJoinOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalJoinOperator>(rhs)->getId() == id;
 }
@@ -199,7 +199,7 @@ std::shared_ptr<Operator> LogicalJoinOperator::copy()
     return copy;
 }
 
-bool LogicalJoinOperator::equal(NodePtr const& rhs) const
+bool LogicalJoinOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalJoinOperator>(rhs))
     {

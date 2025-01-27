@@ -16,6 +16,8 @@
 
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -25,7 +27,7 @@ namespace NES
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id);
+    LogicalMapOperator(const NodeFunctionFieldAssignmentPtr& mapFunction, OperatorId id);
 
     /**
     * @brief Returns the function of this map operator
@@ -43,8 +45,8 @@ public:
      */
     bool inferSchema() override;
     void inferStringSignature() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
     std::shared_ptr<Operator> copy() override;
 
 protected:

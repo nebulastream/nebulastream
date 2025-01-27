@@ -19,6 +19,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -38,7 +39,7 @@ NodeFunctionPtr NodeFunctionEquals::create(const NodeFunctionPtr& left, const No
     return equals;
 }
 
-bool NodeFunctionEquals::equal(NodePtr const& rhs) const
+bool NodeFunctionEquals::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionEquals>(rhs))
     {

@@ -14,6 +14,8 @@
 
 #pragma once
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 class NodeFunctionRound final : public NodeFunctionArithmeticalUnary
@@ -21,8 +23,8 @@ class NodeFunctionRound final : public NodeFunctionArithmeticalUnary
 public:
     explicit NodeFunctionRound(DataTypePtr stamp);
     ~NodeFunctionRound() noexcept override = default;
-    [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] static NodeFunctionPtr create(const NodeFunctionPtr& child);
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     NodeFunctionPtr deepCopy() override;
 

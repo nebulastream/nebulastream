@@ -120,7 +120,7 @@ bool SystestParser::loadString(const std::string& str)
     while (std::getline(stream, line))
     {
         /// Remove commented code
-        size_t const commentPos = line.find('#');
+        const size_t commentPos = line.find('#');
         if (commentPos != std::string::npos)
         {
             line = line.substr(0, commentPos);

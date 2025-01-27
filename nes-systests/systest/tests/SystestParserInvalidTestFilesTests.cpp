@@ -35,7 +35,7 @@ public:
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
-    std::string const filename = TEST_DATA_DIR "invalid.dummy";
+    const std::string filename = TEST_DATA_DIR "invalid.dummy";
 
     SystestParser parser{};
     parser.registerOnCSVSourceCallback(

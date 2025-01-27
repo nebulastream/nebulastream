@@ -17,6 +17,8 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -27,17 +29,10 @@ namespace NES
 class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
-    /**
-    * @brief Returns the watermark strategy.
-    * @return  Windowing::WatermarkStrategyDescriptorPtr
-    */
+    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr, OperatorId id);
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
-
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
     std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;

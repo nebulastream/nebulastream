@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <Nodes/Node.hpp>
@@ -31,7 +32,7 @@ std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::os
     return std::make_shared<QueryConsoleDumpHandler>(out);
 }
 
-void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const
+void QueryConsoleDumpHandler::dumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
     out << std::string(indent * depth, ' ') << op << '\n';
     ++depth;

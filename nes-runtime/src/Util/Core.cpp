@@ -70,7 +70,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
                           "from the tuple buffer");
 
                 /// read the child buffer index from the tuple buffer
-                auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                auto childIdx = *reinterpret_cast<const uint32_t*>(indexInBuffer);
                 str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
             }
             else
@@ -129,7 +129,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
     /// iterate over all operators in the query
     for (auto&& node : queryPlanIterator)
     {
-        for (auto const& [key, val] : *propertyIterator)
+        for (const auto& [key, val] : *propertyIterator)
         {
             /// add the current property to the current operator
             NES::Util::as<LogicalOperator>(node)->addProperty(key, val);

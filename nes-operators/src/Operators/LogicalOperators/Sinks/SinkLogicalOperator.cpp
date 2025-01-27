@@ -21,17 +21,18 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
 {
 
-bool SinkLogicalOperator::isIdentical(NodePtr const& rhs) const
+bool SinkLogicalOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SinkLogicalOperator::equal(NodePtr const& rhs) const
+bool SinkLogicalOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {

@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <thread>
+#include <vector>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>
@@ -76,7 +77,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     EXPECT_EQ(reply.error_size(), 0);
 
     auto log = IntegrationTestUtil::queryLog(queryId, uut);
-    std::vector<QueryStatus> const expected = {Registered, Running, Stopped, Running, Stopped};
+    const std::vector<QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
 
     for (size_t i = 0; i < log.size(); ++i)
     {

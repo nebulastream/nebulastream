@@ -290,7 +290,7 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
     std::map<std::string, std::string> allLogicalSourceAsString;
     const std::map<std::string, SchemaPtr> allLogicalSource = getAllLogicalSource();
 
-    for (auto const& [name, schema] : allLogicalSource)
+    for (const auto& [name, schema] : allLogicalSource)
     {
         allLogicalSourceAsString[name] = schema->toString();
     }
