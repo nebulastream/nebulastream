@@ -142,45 +142,17 @@ namespace NES::InputFormatters {
 //  - iterates over all tuples between first and last tuple separator and writes the to tupleBuffer
 //  - emits TupleBuffer
 //  - initiates END_SYNCHRONIZATION
-//  BEGIN_SYNCHRONIZATION:
-//  if rawBuffer does not contain separator, do nothing (Task that processes prior rawBuffer puts its rawBuffer into slot, which is correct)
-//  else:
-//  - check area at SN
-//      - if contains StagedBuffer, find out which action to take (may mean to load many prior buffers to construct a tuple that spans multiple buffers)
-//      - else: retain lock, allocate buffer, and put into staging area (no need to calculate offset for formatting, is automatically correct
-//  END_SYNCHRONIZATION
-//  - check staging area at SN+1
-//      if slot is empty
-//          if rawBuffer does not contain separator, simply put rawBuffer into slot
-//          else: retain lock, allocate buffer and put allocated buffer into staging area
-//              - parse partial tuple
-//              if ends in partial field, lock slot
-//                  if other task wrote partial field data, construct partial field and write to tupleBuffer
-//                  else: write partial field data to slot
-//              else:
-//                  if other task wrote partial field data, then the partial field data actually is a complete field
-//                      - parse own complete field to tupleBuffer
-//                      - parse complete field of next rawBuffer to tupleBuffer
-//                  else:
-//                      - write data to slot that signalizes that there is no partial field data
-//                      - parse complete field to tupleBuffer
-//      else:
-//          (slot contains tupleBuffer)
-//          if rawBuffer does not contain separator, there MUST be a buffer in slot with a separator
-//              - (we KNOW that we can construct a tuple, otherwise we would have aborted during BEGIN_SYNCHRONIZATION)
-//              - (we KNOW that task that processes rawBuffer with SN+1 eventually writes its partial tuple to
-//              - using all required rawBuffers (potentially of tasks that processed rawBuffers with prior SNs), construct tuple
-
-// Todo: what about partial fields?
-//  - could have another synchronization at the end of each task that writes partial data for the other task
-
 
 // Todo: think about layouts
+// Todo: do we create a new InputFormatterTask everytime we execute the pipeline?
+// - if yes: then the InputFormatterTask should have a static SequenceShredder that all instances can use
+// - if no:  then the InputFormatterTask should have a non-static SequenceShredder that it passes to the CSVInputFormatter
+// - Most problematic: one InputFormatterTask <--- means synchronization is necessary!, probably best to construct the actual parser on each 'execute' call and pass the SequenceShredder to it
 void InputFormatterTask::execute(
     const Memory::TupleBuffer& inputTupleBuffer,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER);
+    // pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER);
     // pipelineExecutionContext.getOperatorHandler<NES::InputFormatters::InputFormatterTask>()
     parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples());
 }

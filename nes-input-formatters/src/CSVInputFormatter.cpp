@@ -348,7 +348,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
 CSVInputFormatter::~CSVInputFormatter() = default;
 
 void CSVInputFormatter::parseTupleBufferRaw(
-    const NES::Memory::TupleBuffer& rawTB,
+    const NES::Memory::TupleBuffer& rawTB, //Todo: pass by value and move? Who owns the buffer?
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
     const size_t numBytesInrawTB)
 {
@@ -365,12 +365,15 @@ void CSVInputFormatter::parseTupleBufferRaw(
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     progressTracker->resetForNewRawTB(numBytesInrawTB, rawTB.getBuffer<const char>());
 
-    const auto offsetOfFirstTupleDelimiter = progressTracker->getOffsetOfFirstTupleDelimiter();
+    /// The first buffer has an 'implicit' tuple delimiter
+    const auto offsetOfFirstTupleDelimiter = progressTracker->getOffsetOfFirstTupleDelimiter() | (rawTB.getSequenceNumber().getRawValue() == SequenceNumber::INITIAL);
     const auto offsetOfLastTupleDelimiter = progressTracker->getOffsetOfLastTupleDelimiter();
     // Todo: need to store buffersize
     const auto buffersToFormat = (offsetOfFirstTupleDelimiter != 0)
-        ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{std::move(rawTB), numBytesInrawTB, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, 2})
-        : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{std::move(rawTB), numBytesInrawTB, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, 1});
+        ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInrawTB,
+            .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=2})
+        : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInrawTB,
+            .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=1});
 
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
     progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());

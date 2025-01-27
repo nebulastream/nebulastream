@@ -87,26 +87,6 @@ Successor processSuccessor(
     return processOperatorPipeline(pipeline, pipelineQueryPlan, loweringContext);
 }
 
-std::shared_ptr<Runtime::Execution::ExecutablePipeline> processInputFormatter(
-    PipelineId pipelineId,
-    std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> successorPipelinesOfInputFormatter,
-    const Sources::SourceDescriptor& sourceDescriptor)
-{
-    // Todo: how does the input formatter task get access to its operator handler?
-    // - should be in the pipeline execution context
-    //      - setOperatorHandlers()
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers{std::make_shared<InputFormatters::InputFormatterProvider::InputFormatterOperatorHandler>()};
-
-    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.schema,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
-    auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
-        pipelineId, std::move(inputFormatterTask), successorPipelinesOfInputFormatter);
-    return executableInputFormatterPipeline;
-}
-
 Runtime::Execution::Source
 processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext)
 {
