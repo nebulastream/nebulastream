@@ -17,6 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -31,7 +32,7 @@ NodeFunctionLogicalUnary::NodeFunctionLogicalUnary(NodeFunctionLogicalUnary* oth
 {
 }
 
-bool NodeFunctionLogicalUnary::equal(NodePtr const& rhs) const
+bool NodeFunctionLogicalUnary::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLogicalUnary>(rhs))
     {

@@ -50,6 +50,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp"
 
 namespace NES
 {
@@ -66,12 +67,12 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string logicalSourceName)
 QueryPlanPtr QueryPlanBuilder::addProjection(const std::vector<NodeFunctionPtr>& functions, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add projection operator to query plan");
-    std::shared_ptr<Operator> const op = std::make_shared<LogicalProjectionOperator>(functions, getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalProjectionOperator>(functions, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addRename(const std::string& newSourceName, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add rename operator to query plan");
     auto op = std::make_shared<RenameSourceOperator>(newSourceName, getNextOperatorId());
@@ -79,14 +80,14 @@ QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, Query
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addSelection(const NodeFunctionPtr& selectionFunction, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
     if (!selectionFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
-    std::shared_ptr<Operator> const op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -94,19 +95,19 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
 QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add limit operator to query plan");
-    std::shared_ptr<Operator> const op = std::make_shared<LogicalLimitOperator>(limit, getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalLimitOperator>(limit, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addMap(const NodeFunctionFieldAssignmentPtr& mapFunction, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map operator to query plan");
     if (!mapFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
         throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
-    std::shared_ptr<Operator> const op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -157,7 +158,7 @@ QueryPlanPtr QueryPlanBuilder::addWindowAggregation(
 QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan)
 {
     NES_TRACE("QueryPlanBuilder: unionWith the subQuery to current query plan");
-    std::shared_ptr<Operator> const op = std::make_shared<LogicalUnionOperator>(getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalUnionOperator>(getNextOperatorId());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
@@ -249,15 +250,15 @@ QueryPlanPtr QueryPlanBuilder::addSink(std::string sinkName, QueryPlanPtr queryP
     {
         sinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, workerId);
     }
-    std::shared_ptr<Operator> const op = sinkOperator;
+    const std::shared_ptr<Operator> op = sinkOperator;
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
 QueryPlanPtr
-QueryPlanBuilder::assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor)
+QueryPlanBuilder::assignWatermark(QueryPlanPtr queryPlan, const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor)
 {
-    std::shared_ptr<Operator> const op
+    const std::shared_ptr<Operator> op
         = std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;

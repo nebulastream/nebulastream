@@ -45,7 +45,7 @@ class ErrorListener;
  * @brief make an error listener system-wide
  * @param listener the error listener to make system-wide
  */
-void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
+void installGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
 
 /**
  * @brief remove an error listener system-wide

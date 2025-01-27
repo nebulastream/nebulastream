@@ -21,6 +21,6 @@
 #    define NES_VERSION_MINOR 6
 #    define NES_VERSION_PATCH 161
 #    define NES_VERSION_POST_FIX -SNAPSHOT
-constexpr char const* NES_VERSION = "0.6.161-SNAPSHOT";
+constexpr const char* NES_VERSION = "0.6.161-SNAPSHOT";
 #endif /// NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 /// clang-format on

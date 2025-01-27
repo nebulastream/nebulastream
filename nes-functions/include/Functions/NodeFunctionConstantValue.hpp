@@ -19,6 +19,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -37,7 +38,7 @@ public:
     /// @param schema
     void inferStamp(const Schema& schema) override;
 
-    bool equal(NodePtr const& rhs) const override;
+    bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 

@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -27,7 +28,7 @@ class NodeFunctionFieldRename : public NodeFunction
 public:
     static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
 

@@ -21,6 +21,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -76,7 +77,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
     NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalBinary::equal(NodePtr const& rhs) const
+bool NodeFunctionArithmeticalBinary::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalBinary>(rhs))
     {

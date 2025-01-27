@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 /**
@@ -32,7 +33,7 @@ public:
      */
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
 protected:

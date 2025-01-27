@@ -14,6 +14,8 @@
 
 #pragma once
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 /**
@@ -24,8 +26,8 @@ class NodeFunctionAbs final : public NodeFunctionArithmeticalUnary
 public:
     explicit NodeFunctionAbs(DataTypePtr stamp);
     ~NodeFunctionAbs() noexcept override = default;
-    [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] static NodeFunctionPtr create(const NodeFunctionPtr& child);
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     NodeFunctionPtr deepCopy() override;
 

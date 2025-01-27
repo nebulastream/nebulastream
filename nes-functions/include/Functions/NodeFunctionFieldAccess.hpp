@@ -15,6 +15,7 @@
 #pragma once
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -38,7 +39,7 @@ public:
      */
     static NodeFunctionPtr create(std::string fieldName);
 
-    bool equal(NodePtr const& rhs) const override;
+    bool equal(const NodePtr& rhs) const override;
 
     /**
      * @brief Get field name

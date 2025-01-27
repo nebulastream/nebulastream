@@ -705,7 +705,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         dataGenerator.start(sourcesCtrls);
 
         /// start all queries
-        for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
+        for (const QueryId::Underlying qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));
@@ -1045,7 +1045,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         dataGenerator.start(sourcesCtrls);
 
         /// start all queries
-        for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
+        for (const QueryId::Underlying qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));

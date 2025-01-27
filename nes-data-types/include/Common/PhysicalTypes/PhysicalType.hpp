@@ -16,6 +16,7 @@
 #include <Common/DataTypes/DataType.hpp>
 
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace NES
@@ -39,19 +40,19 @@ public:
     /// Returns physical size of type in bytes.
     [[nodiscard]] virtual uint64_t size() const = 0;
 
-    virtual std::string convertRawToString(void const* rawData) const noexcept = 0;
+    virtual std::string convertRawToString(const void* rawData) const noexcept = 0;
 
     /// Converts the binary representation of this value to a string without filling
     /// up the difference between the length of the string and the end of the schema definition
     /// with unrelated characters.
-    virtual std::string convertRawToStringWithoutFill(void const* rawData) const noexcept = 0;
+    virtual std::string convertRawToStringWithoutFill(const void* rawData) const noexcept = 0;
 
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 
     /// Type that is contained by this PhysicalType container
-    DataTypePtr const type;
+    const DataTypePtr type;
 };
 
 }

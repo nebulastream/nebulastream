@@ -49,7 +49,7 @@ AttributeSortRulePtr AttributeSortRule::create()
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 {
     auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
-    for (auto const& selectionOperator : selectionOperators)
+    for (const auto& selectionOperator : selectionOperators)
     {
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
@@ -61,7 +61,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     }
 
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
-    for (auto const& mapOperator : mapOperators)
+    for (const auto& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));

@@ -17,6 +17,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 NodeFunctionMul::NodeFunctionMul(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") {};
@@ -32,7 +33,7 @@ NodeFunctionPtr NodeFunctionMul::create(const NodeFunctionPtr& left, const NodeF
     return mulNode;
 }
 
-bool NodeFunctionMul::equal(NodePtr const& rhs) const
+bool NodeFunctionMul::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionMul>(rhs))
     {

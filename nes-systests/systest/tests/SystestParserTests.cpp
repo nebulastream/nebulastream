@@ -181,8 +181,8 @@ TEST_F(SystestParserTest, testSubstitutionRule)
 {
     SystestParser parser{};
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
-    std::string const delim = "----";
-    std::string const result = "1 1 1";
+    const std::string delim = "----";
+    const std::string result = "1 1 1";
 
     std::string queryExpect = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO TestSink()";
 
@@ -190,10 +190,10 @@ TEST_F(SystestParserTest, testSubstitutionRule)
 
     const std::string str = queryIn + "\n" + delim + "\n" + result + "\n";
 
-    SystestParser::SubstitutionRule const rule{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
+    const SystestParser::SubstitutionRule rule{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
     parser.registerSubstitutionRule(rule);
 
-    SystestParser::QueryCallback const callback = [&queryExpect, &callbackCalled](std::string query)
+    const SystestParser::QueryCallback callback = [&queryExpect, &callbackCalled](const std::string& query)
     {
         ASSERT_EQ(queryExpect, query);
         callbackCalled = true;
@@ -207,8 +207,8 @@ TEST_F(SystestParserTest, testSubstitutionRule)
 
 TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
 {
-    SystestParser::SubstitutionRule const rule1{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
-    SystestParser::SubstitutionRule const rule2{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "AnotherTestSink()"; }};
+    const SystestParser::SubstitutionRule rule1{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
+    const SystestParser::SubstitutionRule rule2{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "AnotherTestSink()"; }};
 
     SystestParser parser{};
     parser.registerSubstitutionRule(rule1);

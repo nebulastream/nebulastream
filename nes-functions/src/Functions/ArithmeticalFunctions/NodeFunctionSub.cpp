@@ -18,6 +18,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -35,7 +36,7 @@ NodeFunctionPtr NodeFunctionSub::create(const NodeFunctionPtr& left, const NodeF
     return subNode;
 }
 
-bool NodeFunctionSub::equal(NodePtr const& rhs) const
+bool NodeFunctionSub::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSub>(rhs))
     {

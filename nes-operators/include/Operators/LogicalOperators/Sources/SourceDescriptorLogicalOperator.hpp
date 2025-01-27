@@ -17,6 +17,7 @@
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -40,8 +41,8 @@ public:
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
     void inferStringSignature() override;
     std::shared_ptr<Operator> copy() override;
     void inferInputOrigins() override;

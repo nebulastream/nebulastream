@@ -17,6 +17,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -33,7 +34,7 @@ NodeFunctionPtr NodeFunctionDiv::create(const NodeFunctionPtr& left, const NodeF
     return divNode;
 }
 
-bool NodeFunctionDiv::equal(NodePtr const& rhs) const
+bool NodeFunctionDiv::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionDiv>(rhs))
     {

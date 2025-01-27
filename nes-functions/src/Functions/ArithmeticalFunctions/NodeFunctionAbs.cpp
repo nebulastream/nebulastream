@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -35,7 +36,7 @@ NodeFunctionPtr NodeFunctionAbs::create(const NodeFunctionPtr& child)
     return absNode;
 }
 
-bool NodeFunctionAbs::equal(NodePtr const& rhs) const
+bool NodeFunctionAbs::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAbs>(rhs))
     {

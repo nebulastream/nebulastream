@@ -218,7 +218,7 @@ int main(int argc, char** argv)
     DecomposedQueryPlanPtr decomposedQueryPlan;
     try
     {
-        std::string const command = program.is_subcommand_used("register") ? "register" : "dump";
+        const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<ArgumentParser>(command).get("-i");
         if (input == "-")
         {

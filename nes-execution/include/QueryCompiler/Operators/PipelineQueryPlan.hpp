@@ -35,7 +35,7 @@ public:
 
     [[nodiscard]] std::vector<OperatorPipelinePtr> getSourcePipelines() const;
     [[nodiscard]] std::vector<OperatorPipelinePtr> getSinkPipelines() const;
-    [[nodiscard]] std::vector<OperatorPipelinePtr> const& getPipelines() const;
+    [[nodiscard]] const std::vector<OperatorPipelinePtr>& getPipelines() const;
 
     [[nodiscard]] QueryId getQueryId() const;
     [[nodiscard]] std::string toString() const;

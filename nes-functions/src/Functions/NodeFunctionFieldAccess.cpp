@@ -21,6 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName)
@@ -38,13 +39,13 @@ NodeFunctionPtr NodeFunctionFieldAccess::create(std::string fieldName)
     return create(DataTypeFactory::createUndefined(), std::move(fieldName));
 }
 
-bool NodeFunctionFieldAccess::equal(NodePtr const& rhs) const
+bool NodeFunctionFieldAccess::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldAccess>(rhs))
     {
         auto otherFieldRead = NES::Util::as<NodeFunctionFieldAccess>(rhs);
         bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
-        bool const stampsMatch = *otherFieldRead->stamp == *stamp;
+        const bool stampsMatch = *otherFieldRead->stamp == *stamp;
         return fieldNamesMatch and stampsMatch;
     }
     return false;

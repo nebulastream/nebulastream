@@ -54,8 +54,8 @@ public:
 
     std::string toString() override;
 
-    int64_t const lowerBound;
-    int64_t const upperBound;
+    const int64_t lowerBound;
+    const int64_t upperBound;
 };
 
 }

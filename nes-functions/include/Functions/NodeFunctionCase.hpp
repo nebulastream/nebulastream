@@ -13,8 +13,10 @@
 */
 
 #pragma once
+#include <vector>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 /**
@@ -32,14 +34,14 @@ public:
      * @param whenExps : a vector of when function nodes.
      * @param defaultExp : the function to select, if no when function evaluates to a value
      */
-    static NodeFunctionPtr create(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp);
+    static NodeFunctionPtr create(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp);
 
     /**
      * @brief set the children nodes of this function.
      * @param whenExps : a vector of when function nodes.
      * @param defaultExp : the function to select, if no when function evaluates to a value
      */
-    void setChildren(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp);
+    void setChildren(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp);
 
     /**
      * @brief gets the vector of when children.
@@ -53,7 +55,7 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const final;
 
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;

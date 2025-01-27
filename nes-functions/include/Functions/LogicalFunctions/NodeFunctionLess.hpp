@@ -14,6 +14,8 @@
 
 #pragma once
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -28,9 +30,9 @@ public:
     /**
     * @brief Create a new less function
     */
-    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
 
-    bool equal(NodePtr const& rhs) const override;
+    bool equal(const NodePtr& rhs) const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:

@@ -22,6 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES::Experimental
 {
@@ -31,7 +32,7 @@ LogicalBatchJoinOperator::LogicalBatchJoinOperator(Join::Experimental::LogicalBa
 {
 }
 
-bool LogicalBatchJoinOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalBatchJoinOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalBatchJoinOperator>(rhs)->getId() == id;
 }
@@ -157,7 +158,7 @@ std::shared_ptr<Operator> LogicalBatchJoinOperator::copy()
     return copy;
 }
 
-bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const
+bool LogicalBatchJoinOperator::equal(const NodePtr& rhs) const
 {
     return NES::Util::instanceOf<LogicalBatchJoinOperator>(rhs);
 } /// todo

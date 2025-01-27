@@ -21,6 +21,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -36,7 +37,7 @@ NodeFunctionFieldAssignment::create(const NodeFunctionFieldAccessPtr& fieldAcces
     return fieldAssignment;
 }
 
-bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
+bool NodeFunctionFieldAssignment::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(rhs))
     {

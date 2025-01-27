@@ -96,7 +96,7 @@ struct RecordingEmitFunction
 
 void wait_for_emits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "wait_for_emits");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "wait_for_emits");
     auto records = recorder.recordedEmits.lock();
     if (records->size() >= numberOfEmits)
     {
@@ -108,7 +108,7 @@ void wait_for_emits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::
 
 void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_stop");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_stop");
     auto calledStop = std::chrono::high_resolution_clock::now();
     EXPECT_TRUE(sourceThread.stop());
     auto stopDone = std::chrono::high_resolution_clock::now();
@@ -121,7 +121,7 @@ void verify_non_blocking_start(
     Sources::SourceReturnType::EmitFunction emitFn,
     std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_start");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_start");
     auto calledStart = std::chrono::high_resolution_clock::now();
     EXPECT_TRUE(sourceThread.start(std::move(emitFn)));
     auto startDone = std::chrono::high_resolution_clock::now();
@@ -131,13 +131,13 @@ void verify_non_blocking_start(
 
 void verify_no_events(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_no_events");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_no_events");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(0)) << "Expected no source events to be emitted";
 }
 template <typename T>
 void verify_last_event(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_last_event");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_last_event");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(::testing::Gt(0))) << "Expected source events to be emitted";
     auto& lastEvent = recorder.recordedEmits.lock()->back();
     EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << typeid(T).name() << "` event";
@@ -145,7 +145,7 @@ void verify_last_event(RecordingEmitFunction& recorder, std::source_location loc
 void verify_number_of_emits(
     RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {
-    testing::ScopedTrace const scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_number_of_emits");
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_number_of_emits");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(numberOfEmits))
         << "Expected " << numberOfEmits << " source events to be emitted";
 
@@ -195,7 +195,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
-        Sources::SourceThread const sourceThread(
+        const Sources::SourceThread sourceThread(
             INITIAL<OriginId>,
             bm,
             DEFAULT_NUMBER_OF_LOCAL_BUFFERS,

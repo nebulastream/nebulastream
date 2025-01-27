@@ -19,6 +19,8 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -28,7 +30,7 @@ NodeFunctionNegate::NodeFunctionNegate(NodeFunctionNegate* other) : NodeFunction
 {
 }
 
-bool NodeFunctionNegate::equal(NodePtr const& rhs) const
+bool NodeFunctionNegate::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionNegate>(rhs))
     {
@@ -45,7 +47,7 @@ std::string NodeFunctionNegate::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionNegate::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionNegate::create(const NodeFunctionPtr& child)
 {
     auto equals = std::make_shared<NodeFunctionNegate>();
     equals->setChild(child);

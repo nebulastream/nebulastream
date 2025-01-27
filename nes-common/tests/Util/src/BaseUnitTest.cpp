@@ -11,16 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
+#include "Exceptions/ErrorListener.hpp"
 
 namespace NES
 {
-namespace Exceptions
-{
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}
+
 
 namespace Testing
 {
@@ -116,7 +114,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
                             NES_FATAL_ERROR("Got error in test [{}]", testName);
                         }
                     }
-                    catch (std::exception const& exception)
+                    catch (const std::exception& exception)
                     {
                         NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
                         FAIL();

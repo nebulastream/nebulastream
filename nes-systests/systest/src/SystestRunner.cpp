@@ -325,7 +325,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
                     const auto queryId = client.registerQuery(*query.queryPlan);
                     client.start(queryId);
-                    RunningQuery const runningQuery = {query, QueryId(queryId)};
+                    const RunningQuery runningQuery = {query, QueryId(queryId)};
 
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.blockingWrite(std::move(runningQueryPtr));

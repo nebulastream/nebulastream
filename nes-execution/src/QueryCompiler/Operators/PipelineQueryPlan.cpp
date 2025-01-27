@@ -61,7 +61,7 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const
     return sources;
 }
 
-std::vector<OperatorPipelinePtr> const& PipelineQueryPlan::getPipelines() const
+const std::vector<OperatorPipelinePtr>& PipelineQueryPlan::getPipelines() const
 {
     return pipelines;
 }

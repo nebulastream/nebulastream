@@ -13,17 +13,21 @@
 */
 
 #include <memory>
+#include <utility>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Nodes/Node.hpp"
+#include "Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp"
 
 
 namespace NES
 {
 
 WatermarkAssignerLogicalOperator::WatermarkAssignerLogicalOperator(
-    Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor)
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor))
 {
 }
 
@@ -39,12 +43,12 @@ std::string WatermarkAssignerLogicalOperator::toString() const
     return ss.str();
 }
 
-bool WatermarkAssignerLogicalOperator::isIdentical(NodePtr const& rhs) const
+bool WatermarkAssignerLogicalOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<WatermarkAssignerLogicalOperator>(rhs)->getId() == id;
 }
 
-bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const
+bool WatermarkAssignerLogicalOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(rhs))
     {

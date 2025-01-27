@@ -73,7 +73,7 @@ MemorySegment::~MemorySegment()
         ///      (I also consider this to be consistent with our handeling of the referenceCount in
         ///      the release function in general. Do you agree?).
         {
-            auto const refCnt = controlBlock->getReferenceCount();
+            const auto refCnt = controlBlock->getReferenceCount();
             INVARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
         }
 
@@ -218,7 +218,7 @@ int32_t BufferControlBlock::getReferenceCount() const noexcept
 
 bool BufferControlBlock::release()
 {
-    if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
+    if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
     {
         numberOfTuples = 0;
         for (auto&& child : children)

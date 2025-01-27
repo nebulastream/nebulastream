@@ -20,6 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -31,14 +33,14 @@ NodeFunctionSqrt::NodeFunctionSqrt(NodeFunctionSqrt* other) : NodeFunctionArithm
 {
 }
 
-NodeFunctionPtr NodeFunctionSqrt::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionSqrt::create(const NodeFunctionPtr& child)
 {
     auto sqrtNode = std::make_shared<NodeFunctionSqrt>(child->getStamp());
     sqrtNode->setChild(child);
     return sqrtNode;
 }
 
-bool NodeFunctionSqrt::equal(NodePtr const& rhs) const
+bool NodeFunctionSqrt::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSqrt>(rhs))
     {

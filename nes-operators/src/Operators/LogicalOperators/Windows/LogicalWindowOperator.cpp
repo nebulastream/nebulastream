@@ -51,12 +51,12 @@ std::string LogicalWindowOperator::toString() const
     return ss.str();
 }
 
-bool LogicalWindowOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalWindowOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && (NES::Util::as<LogicalWindowOperator>(rhs)->getId() == id);
 }
 
-bool LogicalWindowOperator::equal(NodePtr const& rhs) const
+bool LogicalWindowOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalWindowOperator>(rhs))
     {

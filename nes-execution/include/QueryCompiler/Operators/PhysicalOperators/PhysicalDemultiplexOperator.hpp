@@ -13,6 +13,9 @@
 */
 #pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include "API/Schema.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp"
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -31,8 +34,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalDemultiplexOperator(OperatorId id, SchemaPtr const& inputSchema);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr const& inputSchema);
+    PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
     std::shared_ptr<Operator> copy() override;
 
