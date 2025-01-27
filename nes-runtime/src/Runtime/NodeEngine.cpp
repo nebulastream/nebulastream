@@ -38,7 +38,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ranges>
 #include <string>
 #include <utility>
 
@@ -664,7 +663,7 @@ bool NodeEngine::updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndV
     planToUpdate->updateDecomposedQueryVersion(newVersion);
     deployedExecutableQueryPlans[newIdWithVersion] = planToUpdate;
     auto& vecRef = sharedQueryIdToDecomposedQueryPlanIds[planIterator->second->getSharedQueryId()];
-    std::ranges::replace(vecRef.begin(), vecRef.end(), idAndVersion, newIdWithVersion);
+    std::replace(vecRef.begin(), vecRef.end(), idAndVersion, newIdWithVersion);
     deployedExecutableQueryPlans.erase(planIterator);
     queryManager->updatePlanVersion(idAndVersion, newVersion);
     return true;
