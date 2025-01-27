@@ -13,7 +13,7 @@ usage() {
 # If set we built rebuilt all docker images locally
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
-STDLIB=libcxx
+STDLIB=""
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -l|--local)
@@ -25,8 +25,13 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         --libstdcxx)
-            echo "Building with libstdc++"
+            echo "Set the standard library to libstdcxx"
             STDLIB=libstdcxx
+            shift
+            ;;
+        --libcxx)
+            echo "Set the standard library to libcxx"
+            STDLIB=libcxx
             shift
             ;;
         -*)
@@ -38,6 +43,30 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
+
+# Check if the standard library is set, otherwise prompt the user
+if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
+  echo "Please choose a standard library implementation:"
+    echo "1. libcxx (shipped with dependencies, likely to work, limited debug symbols in CLion)"
+    echo "2. libstdcxx (not shipped with dependencies, takes local version, might lead to conflicts, full debug symbols in CLion)"
+    read -p "Enter the number (1 or 2): " -r
+    case $REPLY in
+      1) STDLIB="libcxx" ;;
+      2) STDLIB="libstdcxx" ;;
+      *)
+        echo "Invalid option. Please re-run the script and select 1 or 2."
+        exit 1
+        ;;
+    esac
+  fi
+
+read -p "Building with ${STDLIB} standard library. Is this correct? [Y/n] " -r
+echo # Move to a new line after input
+input=${REPLY:-Y}
+if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo "Please re-run the script with the correct option."
+  exit 1
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
