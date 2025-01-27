@@ -199,7 +199,7 @@ void NLJOperatorHandlerSlicing::checkAndLogTimestamp(uint64_t joinBuildSideInt) 
     NES_DEBUG("got buffer {}", numberOfRecreatedBuffers[joinBuildSideInt].load());
     if (numberOfRecreatedBuffers[joinBuildSideInt].fetch_add(1, std::memory_order_relaxed) == numberOfBuffersToRecreate - 1) {
         auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_ERROR("thread finished recreating at {}", endTime);
+        NES_ERROR("thread finished recreating {} at {}", numberOfBuffersToRecreate, endTime);
     }
 }
 }// namespace NES::Runtime::Execution::Operators
