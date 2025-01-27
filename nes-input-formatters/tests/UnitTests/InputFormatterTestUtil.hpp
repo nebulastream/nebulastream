@@ -149,22 +149,15 @@ TestablePipelineTask createInputFormatterTask(
     const TestHandle<TupleSchemaTemplate>& testHandle,
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer)
+    Memory::TupleBuffer taskBuffer,
+    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        testHandle.testConfig.parserConfig.parserType,
-        testHandle.schema,
-        testHandle.testConfig.parserConfig.tupleDelimiter,
-        testHandle.testConfig.parserConfig.fieldDelimiter);
     return TestablePipelineTask(
-        sequenceNumber,
         workerThreadId,
+        sequenceNumber,
         taskBuffer,
-        std::move(inputFormatter),
-        testHandle.testBufferManager,
-        testHandle.resultBuffers,
+        std::move(inputFormatterTask),
         testHandle.operatorHandlers);
 }
 
@@ -224,11 +217,11 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
     std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
-        std::move(testBufferManager),
-        std::move(resultBuffers),
+        testBufferManager,
+        resultBuffers,
         std::move(operatorHandlers),
         std::move(schema),
-        TestTaskQueue(testConfig.numThreads),
+        TestTaskQueue(testConfig.numThreads, testBufferManager, resultBuffers),
         {},
         {}};
 }
@@ -236,13 +229,21 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
+
+    // Todo: can we move the testBufferManagerHere?
+    // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
+    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask = InputFormatters::InputFormatterProvider::provideInputFormatter(
+        testHandle.testConfig.parserConfig.parserType,
+        testHandle.schema,
+        testHandle.testConfig.parserConfig.tupleDelimiter,
+        testHandle.testConfig.parserConfig.fieldDelimiter);
     std::vector<TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
         // Todo: allow to configure sequence numbers
         tasks.emplace_back(
             createInputFormatterTask<TupleSchemaTemplate>(
-                testHandle, inputBuffer.sequenceNumber, inputBuffer.workerThreadId, inputBuffer.rawByteBuffer));
+                testHandle, inputBuffer.sequenceNumber, inputBuffer.workerThreadId, inputBuffer.rawByteBuffer, inputFormatterTask));
     }
     return tasks;
 }

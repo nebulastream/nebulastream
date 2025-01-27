@@ -35,24 +35,16 @@ class TestPipelineExecutionContext : public NES::Runtime::Execution::PipelineExe
 public:
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
-        std::shared_ptr<NES::Memory::BufferManager> bufferManager,
-        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-        : numberOfWorkerThreads(0)
-        , pipelineId(NES::PipelineId(0))
-        , workerThreadId(NES::WorkerThreadId(0))
+        std::shared_ptr<NES::Memory::BufferManager> bufferManager)
+        : workerThreadId(NES::WorkerThreadId(0)), pipelineId(NES::PipelineId(0))
         , bufferManager(std::move(bufferManager))
-        , resultBuffers(resultBuffers)
     {
     }
 
     void emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, ContinuationPolicy) override
     {
-        // Todo: add assert
-        // Fix workerThreadId handling
-        resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
+        temporaryResultBuffers.emplace_back(resultBuffer);
     }
-    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfWorkerThreads; };
-    [[nodiscard]] NES::WorkerThreadId getId() const override { return workerThreadId; }
     NES::Memory::TupleBuffer allocateTupleBuffer() override
     {
         if (auto buffer = bufferManager->getBufferNoBlocking())
@@ -61,6 +53,17 @@ public:
         }
         throw NES::BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
     }
+    void setTemporaryResultBuffers(std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers)
+    {
+        this->temporaryResultBuffers = std::move(temporaryResultBuffers);
+    }
+    std::vector<NES::Memory::TupleBuffer> takeTemporaryResultBuffers()
+    {
+        return std::move(temporaryResultBuffers);
+    }
+
+    [[nodiscard]] NES::WorkerThreadId getId() const override { return workerThreadId; };
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1;};
     std::shared_ptr<NES::Memory::AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
     [[nodiscard]] NES::PipelineId getPipelineId() const override { return  pipelineId; }
     std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; }
@@ -69,14 +72,13 @@ public:
         this->operatorHandlers = operatorHandlers;
     }
 
-    uint64_t numberOfWorkerThreads;
-    NES::PipelineId pipelineId;
     NES::WorkerThreadId workerThreadId;
+    NES::PipelineId pipelineId;
 
 private:
     std::shared_ptr<NES::Memory::BufferManager> bufferManager; //Sharing resource with TestTaskQueue
     std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers; //Todo: what to do with OperatorHandlers?
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
+    std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
 };
 
 class TestablePipelineStage : public NES::Runtime::Execution::ExecutablePipelineStage
@@ -109,41 +111,35 @@ class TestablePipelineTask
 {
 public:
     TestablePipelineTask(
-        NES::SequenceNumber sequenceNumber,
         NES::WorkerThreadId workerThreadId,
+        NES::SequenceNumber sequenceNumber,
         NES::Memory::TupleBuffer tupleBuffer,
-        std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps,
-        std::shared_ptr<NES::Memory::BufferManager> bufferManager,
-        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers,
-        std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers
-        )
-        : sequenceNumber(sequenceNumber), workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
-    {
-        this->pipelineExecutionContext = std::make_unique<TestPipelineExecutionContext>(std::move(bufferManager), resultBuffers);
-        this->pipelineExecutionContext->setOperatorHandlers(operatorHandlers);
-    }
+        std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps,
+        std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>>)
+        : workerThreadId(workerThreadId), sequenceNumber(sequenceNumber), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
+    {}
 
-    void execute() { eps->execute(tupleBuffer, *this->pipelineExecutionContext); }
+    void execute(TestPipelineExecutionContext& pipelineExecutionContext) { eps->execute(tupleBuffer, pipelineExecutionContext); }
 
-    void setWorkerThreadId(const uint64_t workerThreadId)
-    {
-        this->pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(workerThreadId);
-    }
-    void setPipelineId(const uint64_t pipelineId) { this->pipelineExecutionContext->pipelineId = NES::PipelineId(pipelineId); }
-
-    NES::SequenceNumber sequenceNumber;
     NES::WorkerThreadId workerThreadId;
-    std::unique_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
+    NES::SequenceNumber sequenceNumber;
+    std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
 
 private:
     NES::Memory::TupleBuffer tupleBuffer;
-    std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
+    std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
 };
 
 class TestWorkerThreadPool
 {
 public:
-    TestWorkerThreadPool(const size_t num_threads) : thread_data(num_threads)
+    struct WorkTask
+    {
+        TestablePipelineTask task;
+        std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
+    };
+
+    TestWorkerThreadPool(const size_t num_threads) : threadData(num_threads)
     {
         for (size_t i = 0; i < num_threads; ++i)
         {
@@ -152,14 +148,14 @@ public:
     }
 
     // Assign work to a specific thread
-    void assign_work(size_t thread_idx, TestablePipelineTask task)
+    void assign_work(size_t thread_idx, WorkTask task)
     {
-        if (thread_idx >= thread_data.size())
+        if (thread_idx >= threadData.size())
         {
             throw std::out_of_range("Thread index out of range");
         }
 
-        auto& data = thread_data[thread_idx];
+        auto& data = threadData[thread_idx];
         {
             std::lock_guard<std::mutex> lock(data.mtx);
             data.tasks.push(std::move(task));
@@ -178,7 +174,7 @@ public:
             all_done = true;
 
             // Check if any thread is still working
-            for (auto& data : thread_data)
+            for (auto& data : threadData)
             {
                 std::lock_guard<std::mutex> lock(data.mtx);
                 if (data.is_working || !data.tasks.empty())
@@ -199,7 +195,7 @@ public:
     ~TestWorkerThreadPool()
     {
         // Stop all threads
-        for (auto& data : thread_data)
+        for (auto& data : threadData)
         {
             {
                 std::lock_guard<std::mutex> lock(data.mtx);
@@ -214,12 +210,12 @@ private:
     {
         std::mutex mtx;
         std::condition_variable cv;
-        std::queue<TestablePipelineTask> tasks;
+        std::queue<WorkTask> tasks;
         bool stop = false;
         bool is_working = false;
     };
 
-    std::vector<ThreadData> thread_data;
+    std::vector<ThreadData> threadData;
     std::vector<std::jthread> threads;
 
     std::mutex wait_mtx;
@@ -228,7 +224,7 @@ private:
 private:
     void thread_function(size_t thread_idx)
     {
-        auto& data = thread_data[thread_idx];
+        auto& data = threadData[thread_idx];
 
         while (true)
         {
@@ -242,12 +238,12 @@ private:
 
             while (!data.tasks.empty())
             {
-                TestablePipelineTask task = std::move(data.tasks.front());
+                WorkTask task = std::move(data.tasks.front());
                 data.tasks.pop();
 
                 // Release lock while processing
                 lock.unlock();
-                task.execute();
+                task.task.execute(*task.pipelineExecutionContext);
                 lock.lock();
             }
             data.is_working = false;
@@ -261,34 +257,18 @@ private:
 class TestTaskQueue
 {
 public:
-    struct TestTask
-    {
-        NES::WorkerThreadId workerThreadId;
-        TestablePipelineTask task;
-    };
-    TestTaskQueue(const size_t numThreads)
-        : numberOfWorkerThreads(numThreads), numPipelines(0), workerThreads(TestWorkerThreadPool(numberOfWorkerThreads))
+    TestTaskQueue(const size_t numThreads, std::shared_ptr<NES::Memory::BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
+        : numberOfWorkerThreads(numThreads), numPipelines(0), workerThreads(TestWorkerThreadPool(numberOfWorkerThreads)), bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
     {
     }
 
     ~TestTaskQueue() = default;
 
-    void enqueueTask(const NES::WorkerThreadId workerThreadId, TestablePipelineTask pipelineTask)
-    {
-        pipelineTask.setWorkerThreadId(numPipelines);
-        pipelineTask.setPipelineId(numPipelines);
-        ++numPipelines;
-        testTasks.push({.workerThreadId = workerThreadId, .task = std::move(pipelineTask)});
-    }
     void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
-        for (size_t i = 0; auto& pipelineTask : pipelineTasks)
+        for (auto& pipelineTask : pipelineTasks)
         {
-            pipelineTask.setWorkerThreadId(numPipelines);
-            pipelineTask.setPipelineId(numPipelines);
-            ++numPipelines;
-            testTasks.push({.workerThreadId = pipelineTask.workerThreadId, .task = std::move(pipelineTask)});
-            ++i;
+            testTasks.push(std::move(pipelineTask));
         }
     }
 
@@ -296,10 +276,23 @@ public:
     {
         while (!testTasks.empty())
         {
-            auto [workerThreadId, task] = std::move(testTasks.front());
+            std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
+            auto currentTestTask = std::move(testTasks.front());
+            const auto responsibleWorkerThread = currentTestTask.workerThreadId;
             testTasks.pop();
-            workerThreads.assign_work(workerThreadId.getRawValue(), std::move(task));
+            auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
+            pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(responsibleWorkerThread);
+            pipelineExecutionContext->setTemporaryResultBuffers(temporaryResultBuffers);
+            pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
+
+            const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(currentTestTask), .pipelineExecutionContext = pipelineExecutionContext};
+            workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
             workerThreads.wait();
+            temporaryResultBuffers = pipelineExecutionContext->takeTemporaryResultBuffers();
+            if (not(temporaryResultBuffers.empty()))
+            {
+                resultBuffers->at(responsibleWorkerThread.getRawValue()) = std::move(temporaryResultBuffers);
+            }
         }
     }
 
@@ -309,9 +302,16 @@ public:
         startProcessing();
     }
 
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
+    {
+        return std::move(resultBuffers);
+    }
+
 private:
     uint64_t numberOfWorkerThreads;
     uint64_t numPipelines;
-    std::queue<TestTask> testTasks;
+    std::queue<TestablePipelineTask> testTasks;
     TestWorkerThreadPool workerThreads;
+    std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
 };

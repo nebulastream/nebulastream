@@ -29,28 +29,28 @@
 namespace NES::TestUtil
 {
 
-bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::TupleBuffer& buffer2, const uint64_t schemaSizeInByte)
+bool checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
 {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
-    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples())
+    if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
     {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
     std::set<uint64_t> sameTupleIndices;
-    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1)
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < leftBuffer.getNumberOfTuples(); ++idxBuffer1)
     {
         bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2)
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < rightBuffer.getNumberOfTuples(); ++idxBuffer2)
         {
             if (sameTupleIndices.contains(idxBuffer2))
             {
                 continue;
             }
 
-            const auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
-            const auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
+            const auto startPosBuffer1 = leftBuffer.getBuffer() + schemaSizeInByte * idxBuffer1;
+            const auto startPosBuffer2 = rightBuffer.getBuffer() + schemaSizeInByte * idxBuffer2;
             if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
             {
                 sameTupleIndices.insert(idxBuffer2);
@@ -66,7 +66,7 @@ bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::Tu
         }
     }
 
-    return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
+    return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
 }
 
 std::string dynamicTupleToString(
