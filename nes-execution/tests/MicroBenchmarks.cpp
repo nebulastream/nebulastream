@@ -68,11 +68,13 @@ public:
             }
 
             uint64_t fieldSize = memoryLayout->getFieldSizes()[fieldIdx];
-            if (const auto lastFieldTypeSize = fieldTypeSizes.back();
-                !fieldTypeSizes.empty() && std::get<uint8_t>(lastFieldTypeSize) == fieldType)
+            if (!fieldTypeSizes.empty())
             {
-                fieldSize += std::get<uint64_t>(lastFieldTypeSize);
-                fieldTypeSizes.pop_back();
+                if (const auto [lastFieldType, lastFieldSize] = fieldTypeSizes.back(); lastFieldType == fieldType)
+                {
+                    fieldSize += lastFieldSize;
+                    fieldTypeSizes.pop_back();
+                }
             }
 
             fieldTypeSizes.emplace_back(std::make_tuple(fieldType, fieldSize));
@@ -611,9 +613,6 @@ TEST_P(MicroBenchmarksTest, benchmark1)
     //createMeasurementsCSV("fileName.csv");
 }
 
-INSTANTIATE_TEST_CASE_P(
-    Benchmarks,
-    MicroBenchmarksTest,
-    ::testing::Combine(::testing::Values(1024, 4096), ::testing::Values(0, 100)));
+INSTANTIATE_TEST_CASE_P(Benchmarks, MicroBenchmarksTest, ::testing::Combine(::testing::Values(1024, 4096), ::testing::Values(0, 100)));
 
 }
