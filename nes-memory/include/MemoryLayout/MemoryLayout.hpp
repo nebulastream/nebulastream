@@ -48,7 +48,7 @@ public:
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, std::shared_ptr<Schema> schema);
+    MemoryLayout(uint64_t bufferSize, const std::shared_ptr<Schema>& schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
@@ -69,7 +69,7 @@ public:
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
-    [[nodiscard]] const SchemaPtr& getSchema() const;
+    [[nodiscard]] const std::shared_ptr<Schema>& getSchema() const;
     [[nodiscard]] std::shared_ptr<PhysicalType> getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
@@ -89,6 +89,5 @@ protected:
     std::vector<std::string> keyFieldNames;
 };
 
-using MemoryLayoutPtr = std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>;
 
 }

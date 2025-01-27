@@ -15,10 +15,10 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <Exceptions/ErrorListener.hpp>
 
 namespace NES::Exceptions
 {
-class ErrorListener;
 
 /**
  * @brief calls to this function will pass the signal to all system-wide error listeners

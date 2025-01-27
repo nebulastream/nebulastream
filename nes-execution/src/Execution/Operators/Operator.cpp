@@ -49,7 +49,7 @@ bool Operator::hasChild() const
     return child != nullptr;
 }
 
-void Operator::setChild(Operators::ExecuteOperatorPtr child)
+void Operator::setChild(std::shared_ptr<Operators::ExecutableOperator> child)
 {
     PRECONDITION(!hasChild(), "This operator already has a child operator");
     this->child = std::move(child);

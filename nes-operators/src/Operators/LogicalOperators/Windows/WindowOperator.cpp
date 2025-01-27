@@ -12,28 +12,26 @@
     limitations under the License.
 */
 
-#include <utility>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
 {
-
-WindowOperator::WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id)
+WindowOperator::WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id)
     : WindowOperator(std::move(windowDefinition), id, INVALID_ORIGIN_ID)
 {
 }
 
-WindowOperator::WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, const OperatorId id, const OriginId originId)
+WindowOperator::WindowOperator(
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(std::move(windowDefinition))
 {
 }
 
-Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const
+std::shared_ptr<Windowing::LogicalWindowDescriptor> WindowOperator::getWindowDefinition() const
 {
     return windowDefinition;
 }

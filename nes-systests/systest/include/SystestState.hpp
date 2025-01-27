@@ -16,12 +16,14 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -48,7 +50,7 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        DecomposedQueryPlanPtr queryPlan,
+        std::shared_ptr<DecomposedQueryPlan> queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path resultFileBaseDir,
         SystestParser::Schema sinkSchema)
@@ -67,7 +69,7 @@ struct Query
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    DecomposedQueryPlanPtr queryPlan;
+    std::shared_ptr<DecomposedQueryPlan> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path resultFileBaseDir;
     SystestParser::Schema expectedSinkSchema;

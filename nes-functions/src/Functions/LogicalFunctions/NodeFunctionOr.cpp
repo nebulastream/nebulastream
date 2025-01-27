@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -31,14 +32,14 @@ NodeFunctionOr::NodeFunctionOr(NodeFunctionOr* other) : NodeFunctionLogicalBinar
 {
 }
 
-NodeFunctionPtr NodeFunctionOr::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction> NodeFunctionOr::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto orNode = std::make_shared<NodeFunctionOr>();
     orNode->setChildren(left, right);
     return orNode;
 }
 
-bool NodeFunctionOr::equal(const NodePtr& rhs) const
+bool NodeFunctionOr::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionOr>(rhs))
     {
@@ -66,7 +67,7 @@ void NodeFunctionOr::inferStamp(const Schema& schema)
     INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
 }
 
-NodeFunctionPtr NodeFunctionOr::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionOr::deepCopy()
 {
     return NodeFunctionOr::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

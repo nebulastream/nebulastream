@@ -12,13 +12,17 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
 #include <Util/Common.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunctionUnary::NodeFunctionUnary(DataTypePtr stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
+NodeFunctionUnary::NodeFunctionUnary(std::shared_ptr<DataType> stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
 {
 }
 
@@ -26,11 +30,11 @@ NodeFunctionUnary::NodeFunctionUnary(NodeFunctionUnary* other) : NodeFunction(ot
 {
 }
 
-void NodeFunctionUnary::setChild(const NodeFunctionPtr& child)
+void NodeFunctionUnary::setChild(const std::shared_ptr<NodeFunction>& child)
 {
     addChildWithEqual(child);
 }
-NodeFunctionPtr NodeFunctionUnary::child() const
+std::shared_ptr<NodeFunction> NodeFunctionUnary::child() const
 {
     return Util::as<NodeFunction>(children[0]);
 }

@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES::InferModel
 {
@@ -28,7 +33,10 @@ class LogicalInferModelOperator : public LogicalUnaryOperator
 {
 public:
     LogicalInferModelOperator(
-        std::string model, std::vector<NodeFunctionPtr> inputFields, std::vector<NodeFunctionPtr> outputFields, OperatorId id);
+        std::string model,
+        std::vector<std::shared_ptr<NodeFunction>> inputFields,
+        std::vector<std::shared_ptr<NodeFunction>> outputFields,
+        OperatorId id);
 
     /**
      * @brief copies the current operator node
@@ -41,14 +49,14 @@ public:
      * @param rhs the other operator node
      * @return true if both are equal or false if both are not equal
      */
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
     /**
      * @brief checks if the operator node is equal and also has the same id, so it is the identical node
      * @param rhs the other operator node
      * @return true if identical, false otherwise
      */
-    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
 
     /**
      * @brief infers the schema of the this operator node
@@ -78,13 +86,13 @@ public:
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<NodeFunctionPtr>& getInputFields() const;
+    const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<NodeFunctionPtr>& getOutputFields() const;
+    const std::vector<std::shared_ptr<NodeFunction>>& getOutputFields() const;
 
 protected:
     std::string toString() const override;
@@ -94,11 +102,11 @@ private:
      * @brief updates the field to a fully qualified one.
      * @param field
      */
-    void updateToFullyQualifiedFieldName(NodeFunctionFieldAccessPtr field) const;
+    void updateToFullyQualifiedFieldName(const std::shared_ptr<NodeFunctionFieldAccess>& field) const;
 
     std::string model;
-    std::vector<NodeFunctionPtr> inputFields;
-    std::vector<NodeFunctionPtr> outputFields;
+    std::vector<std::shared_ptr<NodeFunction>> inputFields;
+    std::vector<std::shared_ptr<NodeFunction>> outputFields;
 };
 
 }

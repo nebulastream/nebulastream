@@ -20,13 +20,14 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -63,7 +64,7 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
-        auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
+        const auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
         return (*outputSchema == *projection->outputSchema);
     }
     return false;
@@ -108,12 +109,12 @@ bool LogicalProjectionOperator::inferSchema()
 
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {
-            auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
+            const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
         {
-            auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
+            const auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
             outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
@@ -138,7 +139,6 @@ std::shared_ptr<Operator> LogicalProjectionOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
@@ -150,13 +150,13 @@ std::shared_ptr<Operator> LogicalProjectionOperator::copy()
 
 void LogicalProjectionOperator::inferStringSignature()
 {
-    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
@@ -171,11 +171,11 @@ void LogicalProjectionOperator::inferStringSignature()
     {
         signatureStream << " " << field << " ";
     }
-    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
+    const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

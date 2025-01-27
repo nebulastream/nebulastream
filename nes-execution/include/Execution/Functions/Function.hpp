@@ -13,12 +13,7 @@
 */
 #pragma once
 #include <Nautilus/DataTypes/VarVal.hpp>
-
-namespace NES::Nautilus
-{
-class Record;
-using RecordPtr = std::shared_ptr<Record>;
-}
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {

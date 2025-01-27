@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <utility>
+#include <vector>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -20,21 +23,21 @@
 
 namespace NES::QueryCompilation
 {
-PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {};
+PipelineQueryPlanIterator::PipelineQueryPlanIterator(std::shared_ptr<PipelineQueryPlan> queryPlan) : queryPlan(std::move(queryPlan)) {};
 
-PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::begin()
+PipelineQueryPlanIterator::Iterator PipelineQueryPlanIterator::begin()
 {
-    return iterator(queryPlan);
+    return Iterator(queryPlan);
 }
 
-PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::end()
+PipelineQueryPlanIterator::Iterator PipelineQueryPlanIterator::end()
 {
-    return iterator();
+    return Iterator();
 }
 
-std::vector<OperatorPipelinePtr> PipelineQueryPlanIterator::snapshot()
+std::vector<std::shared_ptr<OperatorPipeline>> PipelineQueryPlanIterator::snapshot()
 {
-    std::vector<OperatorPipelinePtr> nodes;
+    std::vector<std::shared_ptr<OperatorPipeline>> nodes;
     for (auto node : *this)
     {
         nodes.emplace_back(node);
@@ -42,7 +45,7 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlanIterator::snapshot()
     return nodes;
 }
 
-PipelineQueryPlanIterator::iterator::iterator(const PipelineQueryPlanPtr& current)
+PipelineQueryPlanIterator::Iterator::Iterator(const std::shared_ptr<PipelineQueryPlan>& current)
 {
     const auto rootOperators = current->getSourcePipelines();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--)
@@ -51,9 +54,9 @@ PipelineQueryPlanIterator::iterator::iterator(const PipelineQueryPlanPtr& curren
     }
 }
 
-PipelineQueryPlanIterator::iterator::iterator() = default;
+PipelineQueryPlanIterator::Iterator::Iterator() = default;
 
-bool PipelineQueryPlanIterator::iterator::operator!=(const iterator& other) const
+bool PipelineQueryPlanIterator::Iterator::operator!=(const Iterator& other) const
 {
     if (workStack.empty() && other.workStack.empty())
     {
@@ -62,12 +65,12 @@ bool PipelineQueryPlanIterator::iterator::operator!=(const iterator& other) cons
     return true;
 };
 
-OperatorPipelinePtr PipelineQueryPlanIterator::iterator::operator*()
+std::shared_ptr<OperatorPipeline> PipelineQueryPlanIterator::Iterator::operator*()
 {
     return workStack.empty() ? nullptr : workStack.top();
 }
 
-PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operator++()
+PipelineQueryPlanIterator::Iterator& PipelineQueryPlanIterator::Iterator::operator++()
 {
     if (workStack.empty())
     {

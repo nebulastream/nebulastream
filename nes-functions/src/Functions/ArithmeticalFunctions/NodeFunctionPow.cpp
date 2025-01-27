@@ -12,33 +12,35 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
 namespace NES
 {
 
-NodeFunctionPow::NodeFunctionPow(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
+NodeFunctionPow::NodeFunctionPow(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
 
 NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeticalBinary(other)
 {
 }
 
-NodeFunctionPtr NodeFunctionPow::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction> NodeFunctionPow::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto powNode = std::make_shared<NodeFunctionPow>(DataTypeFactory::createFloat());
     powNode->setChildren(left, right);
     return powNode;
 }
 
-bool NodeFunctionPow::equal(const NodePtr& rhs) const
+bool NodeFunctionPow::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionPow>(rhs))
     {
@@ -55,7 +57,7 @@ std::string NodeFunctionPow::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionPow::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionPow::deepCopy()
 {
     return NodeFunctionPow::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

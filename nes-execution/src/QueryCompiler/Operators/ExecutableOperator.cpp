@@ -13,9 +13,11 @@
 */
 #include <memory>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 
@@ -25,7 +27,7 @@ namespace NES::QueryCompilation
 ExecutableOperator::ExecutableOperator(
     OperatorId id,
     std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers)
     : Operator(id)
     , UnaryOperator(id)
     , executablePipelineStage(std::move(executablePipelineStage))
@@ -35,7 +37,7 @@ ExecutableOperator::ExecutableOperator(
 
 std::shared_ptr<Operator> ExecutableOperator::create(
     std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers)
 {
     return std::make_shared<ExecutableOperator>(
         ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
@@ -50,7 +52,7 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> ExecutableOperator:
     return std::move(executablePipelineStage);
 }
 
-std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers()
+std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> ExecutableOperator::getOperatorHandlers()
 {
     return operatorHandlers;
 }

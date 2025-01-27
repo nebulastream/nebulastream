@@ -102,7 +102,7 @@ nautilus::engine::
             const auto foundEntry
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
-            Interface::ChainedHashMapRef::ChainedEntryRef const ref(foundEntry, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
             const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)

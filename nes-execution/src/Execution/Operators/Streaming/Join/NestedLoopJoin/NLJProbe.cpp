@@ -137,10 +137,10 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider, executionCtx.bufferProvider);
     const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider, executionCtx.bufferProvider);
 
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames();
+    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
+    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
+    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
+    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
 
     nautilus::val<uint64_t> leftItemPos = 0UL;
     for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)

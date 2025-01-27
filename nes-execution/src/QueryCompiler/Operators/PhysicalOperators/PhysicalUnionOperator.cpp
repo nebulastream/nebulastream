@@ -11,29 +11,39 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, const SchemaPtr& schema)
+std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(OperatorId id, const std::shared_ptr<Schema>& schema)
 {
     return create(id, schema, schema, schema);
 }
 
-PhysicalOperatorPtr
-PhysicalUnionOperator::create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(
+    OperatorId id,
+    const std::shared_ptr<Schema>& leftSchema,
+    const std::shared_ptr<Schema>& rightSchema,
+    const std::shared_ptr<Schema>& outputSchema)
 {
     return std::make_shared<PhysicalUnionOperator>(id, leftSchema, rightSchema, outputSchema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(const SchemaPtr& schema)
+std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(const std::shared_ptr<Schema>& schema)
 {
     return create(getNextOperatorId(), schema);
 }
 
 PhysicalUnionOperator::PhysicalUnionOperator(
-    OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
+    OperatorId id,
+    const std::shared_ptr<Schema>& leftSchema,
+    const std::shared_ptr<Schema>& rightSchema,
+    const std::shared_ptr<Schema>& outputSchema)
     : Operator(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
 {
 }

@@ -18,6 +18,8 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
@@ -32,7 +34,8 @@
 namespace NES
 {
 
-LogicalWindowOperator::LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, const OperatorId id)
+LogicalWindowOperator::LogicalWindowOperator(
+    const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition, const OperatorId id)
     : Operator(id), WindowOperator(windowDefinition, id)
 {
 }
@@ -41,9 +44,9 @@ std::string LogicalWindowOperator::toString() const
 {
     std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
+    const auto windowAggregation = windowDefinition->getWindowAggregation();
     ss << "WINDOW AGGREGATION(OP-" << id << ", ";
-    for (auto agg : windowAggregation)
+    for (const auto& agg : windowAggregation)
     {
         ss << agg->toString() << ";";
     }
@@ -51,16 +54,16 @@ std::string LogicalWindowOperator::toString() const
     return ss.str();
 }
 
-bool LogicalWindowOperator::isIdentical(const NodePtr& rhs) const
+bool LogicalWindowOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && (NES::Util::as<LogicalWindowOperator>(rhs)->getId() == id);
 }
 
-bool LogicalWindowOperator::equal(const NodePtr& rhs) const
+bool LogicalWindowOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalWindowOperator>(rhs))
     {
-        auto rhsWindow = NES::Util::as<LogicalWindowOperator>(rhs);
+        const auto rhsWindow = NES::Util::as<LogicalWindowOperator>(rhs);
         return windowDefinition->equal(rhsWindow->windowDefinition);
     }
     return false;
@@ -74,7 +77,6 @@ std::shared_ptr<Operator> LogicalWindowOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
@@ -103,7 +105,7 @@ bool LogicalWindowOperator::inferSchema()
     outputSchema->clear();
 
     /// Distinguish process between different window types (currently time-based and content-based)
-    auto windowType = windowDefinition->getWindowType();
+    const auto windowType = windowDefinition->getWindowType();
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
     {
         /// typeInference
@@ -122,11 +124,11 @@ bool LogicalWindowOperator::inferSchema()
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
         /// type Inference for Content-based Windows requires the typeInferencePhaseContext
-        auto contentBasedWindowType = Util::as<Windowing::ContentBasedWindowType>(windowType);
+        const auto contentBasedWindowType = Util::as<Windowing::ContentBasedWindowType>(windowType);
         if (contentBasedWindowType->getContentBasedSubWindowType()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
-            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+            const auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
             if (!thresholdWindow->inferStamp(*inputSchema))
             {
                 return false;
@@ -161,19 +163,19 @@ bool LogicalWindowOperator::inferSchema()
 
 void LogicalWindowOperator::inferStringSignature()
 {
-    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
+    const auto windowType = windowDefinition->getWindowType();
+    const auto windowAggregation = windowDefinition->getWindowAggregation();
     if (windowDefinition->isKeyed())
     {
         signatureStream << "WINDOW-BY-KEY(";
@@ -193,22 +195,22 @@ void LogicalWindowOperator::inferStringSignature()
         signatureStream << agg->toString() << ",";
     }
     signatureStream << ")";
-    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "." << *childSignature.begin()->second.begin();
 
     auto signature = signatureStream.str();
     ///Update the signature
-    auto hashCode = hashGenerator(signature);
+    const auto hashCode = hashGenerator(signature);
     hashBasedSignature[hashCode] = {signature};
 }
 
 std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
 {
     std::vector<std::string> groupByKeyNames = {};
-    auto windowDefinition = this->getWindowDefinition();
+    const auto windowDefinition = this->getWindowDefinition();
     if (windowDefinition->isKeyed())
     {
-        std::vector<NodeFunctionFieldAccessPtr> groupByKeys = windowDefinition->getKeys();
+        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByKeys = windowDefinition->getKeys();
         groupByKeyNames.reserve(groupByKeys.size());
         for (const auto& groupByKey : groupByKeys)
         {

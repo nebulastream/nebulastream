@@ -15,17 +15,16 @@
 #pragma once
 
 #include <any>
+#include <memory>
 #include <unordered_map>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 
 namespace NES
 {
 
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
 
-class Operator;
 using OperatorProperties = std::unordered_map<std::string, std::any>;
 
 
@@ -56,19 +55,19 @@ public:
 
     bool hasMultipleParents() const;
 
-    bool addChild(NodePtr newNode) override;
+    bool addChild(const std::shared_ptr<Node>& newNode) override;
 
-    bool addParent(NodePtr newNode) override;
+    bool addParent(const std::shared_ptr<Node>& newNode) override;
 
-    NodePtr getChildWithOperatorId(OperatorId operatorId) const;
+    std::shared_ptr<Node> getChildWithOperatorId(OperatorId operatorId) const;
 
-    bool containAsGrandChild(NodePtr operatorNode) override;
+    bool containAsGrandChild(const std::shared_ptr<Node>& operatorNode) override;
 
-    bool containAsGrandParent(NodePtr operatorNode) override;
+    bool containAsGrandParent(const std::shared_ptr<Node>& operatorNode) override;
 
-    virtual SchemaPtr getOutputSchema() const = 0;
+    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
 
-    virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
 
     void addProperty(const std::string& key, const std::any value);
 

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
 
@@ -33,27 +34,27 @@ public:
 
     /**
    * @brief get the input schema of this operator
-   * @return SchemaPtr
+   * @return std::shared_ptr<Schema>
    */
-    SchemaPtr getInputSchema() const;
+    std::shared_ptr<Schema> getInputSchema() const;
 
     /**
      * @brief set the input schema of this operator
      * @param inputSchema
     */
-    void setInputSchema(SchemaPtr inputSchema);
+    void setInputSchema(std::shared_ptr<Schema> inputSchema);
 
     /**
     * @brief get the result schema of this operator
-    * @return SchemaPtr
+    * @return std::shared_ptr<Schema>
     */
-    SchemaPtr getOutputSchema() const override;
+    std::shared_ptr<Schema> getOutputSchema() const override;
 
     /**
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-    void setOutputSchema(SchemaPtr outputSchema) override;
+    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override;
 
     /**
      * @brief Set the input origin ids from the input stream
@@ -76,8 +77,8 @@ public:
 protected:
     std::string toString() const override;
 
-    SchemaPtr inputSchema = Schema::create();
-    SchemaPtr outputSchema = Schema::create();
+    std::shared_ptr<Schema> inputSchema = Schema::create();
+    std::shared_ptr<Schema> outputSchema = Schema::create();
     std::vector<OriginId> inputOriginIds;
 };
 

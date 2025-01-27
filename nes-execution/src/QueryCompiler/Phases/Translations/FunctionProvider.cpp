@@ -17,6 +17,7 @@
 #include <vector>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -34,7 +35,7 @@ namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr& nodeFunction)
+std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
 {
     /// 1. Check if the function is valid.
     INVARIANT(nodeFunction->validateBeforeLowering(), "Function not valid: {}", *nodeFunction);

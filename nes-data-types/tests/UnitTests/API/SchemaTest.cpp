@@ -11,12 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <random>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -47,7 +50,7 @@ public:
         std::random_device rd;
         std::mt19937 mt(RND_SEED);
 
-        std::vector<AttributeFieldPtr> rndFields;
+        std::vector<std::shared_ptr<AttributeField>> rndFields;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
@@ -63,7 +66,7 @@ TEST_F(SchemaTest, createTest)
 {
     {
         /// Checking for default values
-        SchemaPtr testSchema;
+        std::shared_ptr<Schema> testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create());
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -71,7 +74,7 @@ TEST_F(SchemaTest, createTest)
 
     {
         /// Checking with row memory layout
-        SchemaPtr testSchema;
+        std::shared_ptr<Schema> testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT));
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -79,7 +82,7 @@ TEST_F(SchemaTest, createTest)
 
     {
         /// Checking with col memory layout
-        SchemaPtr testSchema;
+        std::shared_ptr<Schema> testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -92,7 +95,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            SchemaPtr testSchema;
+            std::shared_ptr<Schema> testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
@@ -156,7 +159,7 @@ TEST_F(SchemaTest, removeFieldsTest)
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
         if (testSchema->getFieldCount() < 1)
         {
-            EXPECT_DEATH(testSchema->getFieldByName(fieldToRemove->getName()), "Precondition violated:.*");
+            EXPECT_DEATH(auto field = testSchema->getFieldByName(fieldToRemove->getName()), "Precondition violated:.*");
         }
         else
         {
@@ -173,7 +176,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            SchemaPtr testSchema;
+            std::shared_ptr<Schema> testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
@@ -237,7 +240,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            SchemaPtr testSchema;
+            std::shared_ptr<Schema> testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));

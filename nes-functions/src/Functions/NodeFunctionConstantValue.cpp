@@ -17,9 +17,9 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
+#include <Nodes/Node.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -33,7 +33,7 @@ NodeFunctionConstantValue::NodeFunctionConstantValue(const NodeFunctionConstantV
 {
 }
 
-bool NodeFunctionConstantValue::equal(const NodePtr& rhs) const
+bool NodeFunctionConstantValue::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {
@@ -48,7 +48,7 @@ std::string NodeFunctionConstantValue::toString() const
     return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
-NodeFunctionPtr NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
+std::shared_ptr<NodeFunction> NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
 {
     return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
 }
@@ -64,7 +64,7 @@ void NodeFunctionConstantValue::inferStamp(const Schema&)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
-NodeFunctionPtr NodeFunctionConstantValue::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionConstantValue::deepCopy()
 {
     return std::make_shared<NodeFunctionConstantValue>(*this);
 }

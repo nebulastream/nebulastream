@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
 
@@ -23,9 +25,9 @@ namespace NES
 class TestSchemas
 {
 public:
-    static SchemaPtr getSchemaTemplate(const std::string& name);
+    static std::shared_ptr<Schema> getSchemaTemplate(const std::string& name);
 
 private:
-    static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
+    static std::unordered_map<std::string, std::shared_ptr<Schema>> testSchemaCatalog;
 };
 }

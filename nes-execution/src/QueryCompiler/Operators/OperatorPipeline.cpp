@@ -18,6 +18,7 @@
 #include <numeric>
 #include <sstream>
 #include <utility>
+#include <vector>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -41,17 +42,17 @@ OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
 {
 }
 
-OperatorPipelinePtr OperatorPipeline::create()
+std::shared_ptr<OperatorPipeline> OperatorPipeline::create()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
 }
 
-OperatorPipelinePtr OperatorPipeline::createSinkPipeline()
+std::shared_ptr<OperatorPipeline> OperatorPipeline::createSinkPipeline()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SinkPipelineType));
 }
 
-OperatorPipelinePtr OperatorPipeline::createSourcePipeline()
+std::shared_ptr<OperatorPipeline> OperatorPipeline::createSourcePipeline()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SourcePipelineType));
 }
@@ -76,13 +77,13 @@ bool OperatorPipeline::isSourcePipeline() const
     return pipelineType == Type::SourcePipelineType;
 }
 
-void OperatorPipeline::addPredecessor(const OperatorPipelinePtr& pipeline)
+void OperatorPipeline::addPredecessor(const std::shared_ptr<OperatorPipeline>& pipeline)
 {
     pipeline->successorPipelines.emplace_back(shared_from_this());
     this->predecessorPipelines.emplace_back(pipeline);
 }
 
-void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline)
+void OperatorPipeline::addSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline)
 {
     if (pipeline)
     {
@@ -91,9 +92,9 @@ void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline)
     }
 }
 
-std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const
+std::vector<std::shared_ptr<OperatorPipeline>> OperatorPipeline::getPredecessors() const
 {
-    std::vector<OperatorPipelinePtr> predecessors;
+    std::vector<std::shared_ptr<OperatorPipeline>> predecessors;
     for (const auto& predecessor : predecessorPipelines)
     {
         predecessors.emplace_back(predecessor.lock());
@@ -118,7 +119,7 @@ void OperatorPipeline::clearPredecessors()
     predecessorPipelines.clear();
 }
 
-void OperatorPipeline::removePredecessor(const OperatorPipelinePtr& pipeline)
+void OperatorPipeline::removePredecessor(const std::shared_ptr<OperatorPipeline>& pipeline)
 {
     for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter)
     {
@@ -129,7 +130,7 @@ void OperatorPipeline::removePredecessor(const OperatorPipelinePtr& pipeline)
         }
     }
 }
-void OperatorPipeline::removeSuccessor(const OperatorPipelinePtr& pipeline)
+void OperatorPipeline::removeSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline)
 {
     for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
     {
@@ -149,7 +150,7 @@ void OperatorPipeline::clearSuccessors()
     successorPipelines.clear();
 }
 
-const std::vector<OperatorPipelinePtr>& OperatorPipeline::getSuccessors() const
+const std::vector<std::shared_ptr<OperatorPipeline>>& OperatorPipeline::getSuccessors() const
 {
     return successorPipelines;
 }
@@ -169,7 +170,7 @@ PipelineId OperatorPipeline::getPipelineId() const
     return id;
 }
 
-DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan()
+std::shared_ptr<DecomposedQueryPlan> OperatorPipeline::getDecomposedQueryPlan()
 {
     return decomposedQueryPlan;
 }
@@ -193,7 +194,7 @@ std::string OperatorPipeline::toString() const
         successorPipelines.begin(),
         successorPipelines.end(),
         std::string(),
-        [](const std::string& result, const OperatorPipelinePtr& succPipeline)
+        [](const std::string& result, const std::shared_ptr<OperatorPipeline>& succPipeline)
         {
             auto succPipelineId = fmt::format("{}", succPipeline->id);
             return result.empty() ? succPipelineId : result + ", " + succPipelineId;

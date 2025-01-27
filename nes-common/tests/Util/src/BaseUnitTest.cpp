@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <memory>
+#include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
-#include "Exceptions/ErrorListener.hpp"
 
 namespace NES
 {

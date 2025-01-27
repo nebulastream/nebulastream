@@ -15,11 +15,13 @@
 #pragma once
 
 #include <memory>
+#include <Functions/NodeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-
 
 namespace NES
 {
@@ -30,24 +32,25 @@ namespace NES
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    explicit LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id);
+    explicit LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id, OriginId originId);
     ~LogicalJoinOperator() override = default;
 
     /**
     * @brief get join definition.
     * @return LogicalJoinDescriptor
     */
-    Join::LogicalJoinDescriptorPtr getJoinDefinition() const;
+    std::shared_ptr<Join::LogicalJoinDescriptor> getJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
-    const NodeFunctionPtr getJoinFunction() const;
+    std::shared_ptr<NodeFunction> getJoinFunction() const;
 
     WindowMetaData windowMetaData;
 
@@ -55,7 +58,6 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    const Join::LogicalJoinDescriptorPtr joinDefinition;
+    std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition;
 };
-using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 }

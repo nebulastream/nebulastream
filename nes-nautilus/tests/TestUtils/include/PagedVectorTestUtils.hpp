@@ -14,6 +14,7 @@
 
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -28,7 +29,7 @@ namespace NES::Nautilus::TestUtils
 
 void runStoreTest(
     Interface::PagedVector& pagedVector,
-    const SchemaPtr& testSchema,
+    const std::shared_ptr<Schema>& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -37,7 +38,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
-    const SchemaPtr& testSchema,
+    const std::shared_ptr<Schema>& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -46,7 +47,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     uint64_t entrySize,
     uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,

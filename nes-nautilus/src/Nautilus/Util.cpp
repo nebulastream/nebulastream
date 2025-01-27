@@ -54,7 +54,7 @@ void logProxy(const char* message, const LogLevel logLevel)
     }
 }
 
-VarVal createNautilusMinValue(const PhysicalTypePtr& physicalType)
+VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
     {
@@ -89,7 +89,7 @@ VarVal createNautilusMinValue(const PhysicalTypePtr& physicalType)
     throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
 }
 
-VarVal createNautilusMaxValue(const PhysicalTypePtr& physicalType)
+VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
     {

@@ -56,20 +56,24 @@ struct LoweringContext
 using Predecessor = std::variant<OriginId, std::weak_ptr<Runtime::Execution::ExecutablePipeline>>;
 using Successor = std::optional<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>;
 std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
-    const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext);
-void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& loweringContext);
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext);
+void processSink(const Predecessor& predecessor, const std::shared_ptr<OperatorPipeline>& pipeline, LoweringContext& loweringContext);
 Successor processSuccessor(
     const Predecessor& predecessor,
-    const OperatorPipelinePtr& pipeline,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext);
-Runtime::Execution::Source
-processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext);
+Runtime::Execution::Source processSource(
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext);
 
 Successor processSuccessor(
     const Predecessor& predecessor,
-    const OperatorPipelinePtr& pipeline,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
     PRECONDITION(pipeline->isSinkPipeline() || pipeline->isOperatorPipeline(), "expected a Sink or OperatorPipeline");
@@ -82,8 +86,10 @@ Successor processSuccessor(
     return processOperatorPipeline(pipeline, pipelineQueryPlan, loweringContext);
 }
 
-Runtime::Execution::Source
-processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext)
+Runtime::Execution::Source processSource(
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
 {
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
@@ -105,7 +111,7 @@ processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& p
     return loweringContext.sources.back();
 }
 
-void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& loweringContext)
+void processSink(const Predecessor& predecessor, const std::shared_ptr<OperatorPipeline>& pipeline, LoweringContext& loweringContext)
 {
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator)->getSinkDescriptor();
@@ -113,7 +119,9 @@ void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipe
 }
 
 std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
-    const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext)
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
 {
     PRECONDITION(!pipeline->getDecomposedQueryPlan()->getRootOperators().empty(), "A pipeline should have at least one root operator");
 
@@ -142,7 +150,7 @@ std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
 }
 
 std::unique_ptr<Runtime::Execution::ExecutableQueryPlan>
-LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan)
+LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan)
 {
     LoweringContext loweringContext;
     ///Process all pipelines recursively.

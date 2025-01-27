@@ -47,7 +47,6 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
-#include "QueryEngineConfiguration.hpp"
 
 namespace NES::Testing
 {

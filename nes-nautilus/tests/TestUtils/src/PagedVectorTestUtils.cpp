@@ -39,7 +39,7 @@ namespace NES::Nautilus::TestUtils
 
 void runStoreTest(
     Interface::PagedVector& pagedVector,
-    const SchemaPtr& testSchema,
+    const std::shared_ptr<Schema>& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -80,7 +80,7 @@ void runStoreTest(
     /// Calculating the expected number of entries and pages
     const uint64_t expectedNumberOfEntries = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    const uint64_t capacityPerPage = memoryProvider->getMemoryLayoutPtr()->getCapacity();
+    const uint64_t capacityPerPage = memoryProvider->getMemoryLayout()->getCapacity();
     const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
     ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
@@ -93,7 +93,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
-    const SchemaPtr& testSchema,
+    const std::shared_ptr<Schema>& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -123,7 +123,7 @@ void runRetrieveTest(
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             RecordBuffer recordBuffer(outputBufferRef);
-            Interface::PagedVectorRef const pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
             nautilus::val<uint64_t> numberOfTuples = 0;
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {
@@ -140,13 +140,13 @@ void runRetrieveTest(
 
 
     /// Checking for correctness of the retrieved records
-    RecordBuffer const recordBufferActual(nautilus::val<Memory::TupleBuffer*>(std::addressof(outputBuffer)));
+    const RecordBuffer recordBufferActual(nautilus::val<Memory::TupleBuffer*>(std::addressof(outputBuffer)));
     nautilus::val<uint64_t> recordBufferIndexActual = 0;
     const auto memoryProviderInputBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
     for (auto inputBuf : allRecords)
     {
-        RecordBuffer const recordBufferInput(nautilus::val<Memory::TupleBuffer*>(std::addressof(inputBuf)));
+        const RecordBuffer recordBufferInput(nautilus::val<Memory::TupleBuffer*>(std::addressof(inputBuf)));
         for (nautilus::val<uint64_t> i = 0; i < inputBuf.getNumberOfTuples(); ++i)
         {
             auto recordActual = memoryProviderActualBuffer->readRecord(projections, recordBufferActual, recordBufferIndexActual);
@@ -169,7 +169,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,

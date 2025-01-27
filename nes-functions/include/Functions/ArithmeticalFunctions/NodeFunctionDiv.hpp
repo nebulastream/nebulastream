@@ -13,20 +13,22 @@
 */
 
 #pragma once
+#include <memory>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
 class NodeFunctionDiv final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionDiv(DataTypePtr stamp);
+    explicit NodeFunctionDiv(std::shared_ptr<DataType> stamp);
     ~NodeFunctionDiv() noexcept override = default;
-    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
-    NodeFunctionPtr deepCopy() override;
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

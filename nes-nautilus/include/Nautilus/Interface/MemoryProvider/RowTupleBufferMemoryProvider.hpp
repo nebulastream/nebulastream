@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -29,7 +30,7 @@ public:
     RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

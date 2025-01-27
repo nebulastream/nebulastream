@@ -12,10 +12,11 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include "API/Schema.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp"
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -34,9 +35,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema);
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema);
+    PhysicalDemultiplexOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& inputSchema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

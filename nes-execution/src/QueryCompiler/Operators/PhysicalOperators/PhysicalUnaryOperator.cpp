@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
+PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema)
     : Operator(id), PhysicalOperator(id), UnaryOperator(id)
 {
     UnaryOperator::setInputSchema(std::move(inputSchema));

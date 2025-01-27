@@ -65,5 +65,4 @@ private:
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<QueryTracker> queryTracker;
 };
-using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 }

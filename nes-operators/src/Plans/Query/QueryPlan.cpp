@@ -13,14 +13,19 @@
 */
 
 #include <algorithm>
+#include <deque>
+#include <memory>
 #include <set>
 #include <stack>
 #include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,12 +36,12 @@
 namespace NES
 {
 
-QueryPlanPtr QueryPlan::create(std::shared_ptr<Operator> rootOperator)
+std::shared_ptr<QueryPlan> QueryPlan::create(std::shared_ptr<Operator> rootOperator)
 {
     return std::make_shared<QueryPlan>(std::move(rootOperator));
 }
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators)
+std::shared_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators)
 {
     return std::make_shared<QueryPlan>(std::move(queryId), std::move(rootOperators));
 }
@@ -230,12 +235,12 @@ void QueryPlan::removeAsRootOperator(std::shared_ptr<Operator> root)
     }
 }
 
-QueryPlanPtr QueryPlan::copy()
+std::shared_ptr<QueryPlan> QueryPlan::copy()
 {
     NES_INFO("QueryPlan: make copy of this query plan");
     /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
     std::map<OperatorId, std::shared_ptr<Operator>> operatorIdToOperatorMap;
-    std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
+    std::deque<std::shared_ptr<Node>> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty())
     {
         auto operatorNode = NES::Util::as<Operator>(operatorsToProcess.front());
@@ -350,7 +355,7 @@ std::set<std::shared_ptr<Operator>> QueryPlan::findAllOperatorsBetween(
     return operatorsBetween;
 }
 
-bool QueryPlan::compare(const QueryPlanPtr& otherPlan) const
+bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
     auto rightRootOperators = otherPlan->getRootOperators();

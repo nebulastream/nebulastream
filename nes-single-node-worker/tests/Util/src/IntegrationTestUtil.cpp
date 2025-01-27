@@ -35,9 +35,11 @@
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::IntegrationTestUtil
@@ -45,7 +47,7 @@ namespace NES::IntegrationTestUtil
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -63,9 +65,9 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](const SchemaPtr& schema)
+    auto getPhysicalTypes = [](const std::shared_ptr<Schema>& schema)
     {
-        std::vector<PhysicalTypePtr> retVector;
+        std::vector<std::shared_ptr<PhysicalType>> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& field : *schema)
         {
@@ -132,7 +134,7 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
@@ -229,7 +231,7 @@ void writeFieldValueToTupleBuffer(
     }
 }
 
-SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);

@@ -30,12 +30,12 @@ class PipelineQueryPlan
 public:
     static std::shared_ptr<PipelineQueryPlan> create(QueryId queryId = INVALID_QUERY_ID);
 
-    void addPipeline(const OperatorPipelinePtr& pipeline);
-    void removePipeline(const OperatorPipelinePtr& pipeline);
+    void addPipeline(const std::shared_ptr<OperatorPipeline>& pipeline);
+    void removePipeline(const std::shared_ptr<OperatorPipeline>& pipeline);
 
-    [[nodiscard]] std::vector<OperatorPipelinePtr> getSourcePipelines() const;
-    [[nodiscard]] std::vector<OperatorPipelinePtr> getSinkPipelines() const;
-    [[nodiscard]] const std::vector<OperatorPipelinePtr>& getPipelines() const;
+    [[nodiscard]] std::vector<std::shared_ptr<OperatorPipeline>> getSourcePipelines() const;
+    [[nodiscard]] std::vector<std::shared_ptr<OperatorPipeline>> getSinkPipelines() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<OperatorPipeline>>& getPipelines() const;
 
     [[nodiscard]] QueryId getQueryId() const;
     [[nodiscard]] std::string toString() const;
@@ -43,7 +43,6 @@ public:
 private:
     PipelineQueryPlan(QueryId queryId);
     const QueryId queryId;
-    std::vector<OperatorPipelinePtr> pipelines;
+    std::vector<std::shared_ptr<OperatorPipeline>> pipelines;
 };
-using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 }

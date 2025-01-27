@@ -85,6 +85,9 @@ namespace std
 template <typename T, typename Tag, T invalid, T initial>
 struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 {
-    size_t operator()(const NES::NESStrongType<T, Tag, invalid, initial>& x) const { return std::hash<T>()(x.getRawValue()); }
+    size_t operator()(const NES::NESStrongType<T, Tag, invalid, initial>& strongType) const
+    {
+        return std::hash<T>()(strongType.getRawValue());
+    }
 };
 }

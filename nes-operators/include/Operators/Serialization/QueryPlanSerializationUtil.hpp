@@ -15,16 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/QueryState.hpp>
 #include <SerializableQueryPlan.pb.h>
 
 namespace NES
 {
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
-class SerializableQueryPlan;
 
 class QueryPlanSerializationUtil
 {
@@ -40,10 +36,10 @@ public:
     serializeQueryPlan(const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
 
     /**
-     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
+     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a std::shared_ptr<QueryPlan>
      * @param serializedQueryPlan the serialized query plan.
      * @return the pointer to the deserialized query plan
      */
-    static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
+    static std::shared_ptr<QueryPlan> deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
 }

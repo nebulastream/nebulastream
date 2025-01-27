@@ -43,9 +43,9 @@ NLJOperatorHandler::NLJOperatorHandler(
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider)
 {
-    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayoutPtr()->getCapacity());
+    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayout()->getCapacity());
     averageNumberOfTuplesLeft.wlock()->second = 0;
-    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayoutPtr()->getCapacity());
+    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayout()->getCapacity());
     averageNumberOfTuplesRight.wlock()->second = 0;
 }
 
@@ -59,8 +59,8 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const Memory::AbstractBufferProvi
         {
             const auto [averageNumberOfTuplesLeft, _] = *this->averageNumberOfTuplesLeft.rlock();
             const auto [averageNumberOfTuplesRight, __] = *this->averageNumberOfTuplesLeft.rlock();
-            const auto memoryLayoutCopyLeft = leftMemoryProvider->getMemoryLayoutPtr()->deepCopy();
-            const auto memoryLayoutCopyRight = rightMemoryProvider->getMemoryLayoutPtr()->deepCopy();
+            const auto memoryLayoutCopyLeft = leftMemoryProvider->getMemoryLayout()->deepCopy();
+            const auto memoryLayoutCopyRight = rightMemoryProvider->getMemoryLayout()->deepCopy();
 
             auto newBufferSizeLeft = averageNumberOfTuplesLeft * memoryLayoutCopyLeft->getTupleSize();
             auto newBufferSizeRight = averageNumberOfTuplesRight * memoryLayoutCopyRight->getTupleSize();

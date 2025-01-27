@@ -64,7 +64,7 @@ PagedVectorRef::PagedVectorRef(
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
     : pagedVectorRef(pagedVectorRef)
     , memoryProvider(memoryProvider)
-    , memoryLayout(memoryProvider->getMemoryLayoutPtr().get())
+    , memoryLayout(memoryProvider->getMemoryLayout().get())
     , bufferProvider(bufferProvider)
 {
 }

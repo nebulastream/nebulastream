@@ -17,23 +17,16 @@
 #include <iostream>
 #include <memory>
 #include <string>
-
+#include <API/Schema.hpp>
 namespace NES
 {
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-
-class LogicalSource;
-using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
-
 /**
  * @brief The LogicalSource wraps the source name and the schema.
  */
 class LogicalSource
 {
 public:
-    static LogicalSourcePtr create(const std::string& logicalSourceName, const SchemaPtr& schema);
+    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, const std::shared_ptr<Schema>& schema);
 
     /**
      * @brief Gets the logical source name
@@ -43,12 +36,12 @@ public:
     /**
      * @brief Gets the schema
      */
-    SchemaPtr getSchema();
+    std::shared_ptr<Schema> getSchema();
 
 private:
-    LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema);
+    LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema);
 
     std::string logicalSourceName;
-    SchemaPtr schema;
+    std::shared_ptr<Schema> schema;
 };
 }

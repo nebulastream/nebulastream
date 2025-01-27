@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -30,7 +31,7 @@ struct TypeConversionTestInput
 {
     BasicType left;
     BasicType right;
-    DataTypePtr expectedResult;
+    std::shared_ptr<DataType> expectedResult;
 };
 
 class NumericTypeConversionTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<TypeConversionTestInput>

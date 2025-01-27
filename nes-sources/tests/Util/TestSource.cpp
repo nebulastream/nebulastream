@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "TestSource.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -38,6 +37,7 @@
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
+#include <TestSource.hpp>
 
 namespace
 {

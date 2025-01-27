@@ -13,14 +13,12 @@
 */
 
 #pragma once
+#include <iterator>
 #include <memory>
 #include <queue>
+#include <Nodes/Node.hpp>
 namespace NES
 {
-
-class Node;
-using NodePtr = std::shared_ptr<Node>;
-
 /**
  * @brief Breadth-First iterator for node trees.
  * We first iterate over all records at the same level and then go to the next level.
@@ -28,9 +26,14 @@ using NodePtr = std::shared_ptr<Node>;
 class BreadthFirstNodeIterator
 {
 public:
-    explicit BreadthFirstNodeIterator(NodePtr start);
+    explicit BreadthFirstNodeIterator(std::shared_ptr<Node> start);
 
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&>
+    class Iterator : public std::iterator<
+                         std::forward_iterator_tag,
+                         std::shared_ptr<Node>,
+                         std::shared_ptr<Node>,
+                         std::shared_ptr<Node>*,
+                         std::shared_ptr<Node>&>
     {
         friend class BreadthFirstNodeIterator;
 
@@ -40,38 +43,38 @@ public:
          * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
-        iterator& operator++();
+        Iterator& operator++();
 
         /**
          * @brief Checks if the iterators are not at the same position
          */
-        bool operator!=(const iterator& other) const;
+        bool operator!=(const Iterator& other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
          * @return
          */
-        NodePtr operator*();
+        std::shared_ptr<Node> operator*();
 
     private:
-        explicit iterator(const NodePtr& current);
-        explicit iterator();
-        std::queue<NodePtr> workQueue;
+        explicit Iterator(const std::shared_ptr<Node>& current);
+        explicit Iterator();
+        std::queue<std::shared_ptr<Node>> workQueue;
     };
 
     /**
      * @brief Starts a new iterator at the start node.
      * @return iterator
      */
-    iterator begin();
+    [[nodiscard]] Iterator begin() const;
 
     /**
     * @brief The end of this iterator has an empty work stack.
     * @return iterator
     */
-    static iterator end();
+    static Iterator end();
 
 private:
-    NodePtr start;
+    std::shared_ptr<Node> start;
 };
 }

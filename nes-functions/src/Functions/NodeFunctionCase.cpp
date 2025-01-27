@@ -11,11 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -23,7 +26,7 @@
 #include <Common/DataTypes/Undefined.hpp>
 namespace NES
 {
-NodeFunctionCase::NodeFunctionCase(DataTypePtr stamp) : NodeFunction(std::move(stamp), "Case")
+NodeFunctionCase::NodeFunctionCase(std::shared_ptr<DataType> stamp) : NodeFunction(std::move(stamp), "Case")
 {
 }
 
@@ -37,7 +40,8 @@ NodeFunctionCase::NodeFunctionCase(NodeFunctionCase* other) : NodeFunction(other
     addChildWithEqual(getDefaultExp()->deepCopy());
 }
 
-NodeFunctionPtr NodeFunctionCase::create(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp)
+std::shared_ptr<NodeFunction>
+NodeFunctionCase::create(const std::vector<std::shared_ptr<NodeFunction>>& whenExps, const std::shared_ptr<NodeFunction>& defaultExp)
 {
     auto caseNode = std::make_shared<NodeFunctionCase>(defaultExp->getStamp());
     caseNode->setChildren(whenExps, defaultExp);
@@ -76,7 +80,8 @@ void NodeFunctionCase::inferStamp(const Schema& schema)
     NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp->toString());
 }
 
-void NodeFunctionCase::setChildren(const std::vector<NodeFunctionPtr>& whenExps, const NodeFunctionPtr& defaultExp)
+void NodeFunctionCase::setChildren(
+    const std::vector<std::shared_ptr<NodeFunction>>& whenExps, const std::shared_ptr<NodeFunction>& defaultExp)
 {
     for (auto elem : whenExps)
     {
@@ -85,13 +90,13 @@ void NodeFunctionCase::setChildren(const std::vector<NodeFunctionPtr>& whenExps,
     addChildWithEqual(defaultExp);
 }
 
-std::vector<NodeFunctionPtr> NodeFunctionCase::getWhenChildren() const
+std::vector<std::shared_ptr<NodeFunction>> NodeFunctionCase::getWhenChildren() const
 {
     if (children.size() < 2)
     {
         NES_FATAL_ERROR("A case function always should have at least two children, but it had: {}", children.size());
     }
-    std::vector<NodeFunctionPtr> whenChildren;
+    std::vector<std::shared_ptr<NodeFunction>> whenChildren;
     for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter)
     {
         whenChildren.push_back(Util::as<NodeFunction>(*whenIter));
@@ -99,7 +104,7 @@ std::vector<NodeFunctionPtr> NodeFunctionCase::getWhenChildren() const
     return whenChildren;
 }
 
-NodeFunctionPtr NodeFunctionCase::getDefaultExp() const
+std::shared_ptr<NodeFunction> NodeFunctionCase::getDefaultExp() const
 {
     if (children.size() <= 1)
     {
@@ -108,7 +113,7 @@ NodeFunctionPtr NodeFunctionCase::getDefaultExp() const
     return Util::as<NodeFunction>(*(children.end() - 1));
 }
 
-bool NodeFunctionCase::equal(const NodePtr& rhs) const
+bool NodeFunctionCase::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionCase>(rhs))
     {
@@ -133,7 +138,7 @@ std::string NodeFunctionCase::toString() const
 {
     std::stringstream ss;
     ss << "CASE({";
-    std::vector<NodeFunctionPtr> left = getWhenChildren();
+    std::vector<std::shared_ptr<NodeFunction>> left = getWhenChildren();
     for (std::size_t i = 0; i < left.size() - 1; i++)
     {
         ss << *(left.at(i)) << ",";
@@ -143,9 +148,9 @@ std::string NodeFunctionCase::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionCase::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionCase::deepCopy()
 {
-    std::vector<NodeFunctionPtr> copyOfWhenFunctions;
+    std::vector<std::shared_ptr<NodeFunction>> copyOfWhenFunctions;
     for (auto whenFunction : getWhenChildren())
     {
         copyOfWhenFunctions.push_back(NES::Util::as<NodeFunction>(whenFunction)->deepCopy());

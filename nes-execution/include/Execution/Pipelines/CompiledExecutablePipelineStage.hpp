@@ -16,26 +16,15 @@
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
-namespace NES
-{
-class DumpHelper;
-}
-namespace NES::Nautilus::Backends
-{
-class Executable;
-}
-namespace NES::Nautilus::IR
-{
-class IRGraph;
-}
+
 namespace NES::Runtime::Execution
 {
-class PhysicalOperatorPipeline;
 
 /**
  * @brief A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
@@ -58,7 +47,7 @@ private:
     [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline() const;
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compiledPipelineFunction;
-    std::vector<OperatorHandlerPtr> operatorHandlers;
+    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 

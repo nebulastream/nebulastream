@@ -59,7 +59,7 @@ class PagedVectorTest : public Testing::BaseUnitTest,
 {
 public:
     static constexpr uint64_t PAGE_SIZE = 4096;
-    Memory::BufferManagerPtr bufferManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     QueryCompilation::NautilusBackend backend = QueryCompilation::NautilusBackend::INTERPRETER;
     uint64_t numberOfItems{};

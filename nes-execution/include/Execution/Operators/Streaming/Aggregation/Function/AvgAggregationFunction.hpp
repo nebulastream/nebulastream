@@ -30,11 +30,11 @@ class AvgAggregationFunction : public AggregationFunction
 {
 public:
     AvgAggregationFunction(
-        PhysicalTypePtr inputType,
-        PhysicalTypePtr resultType,
+        std::shared_ptr<PhysicalType> inputType,
+        std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        PhysicalTypePtr countType);
+        std::shared_ptr<PhysicalType> countType);
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
@@ -52,7 +52,7 @@ public:
     ~AvgAggregationFunction() override = default;
 
 private:
-    PhysicalTypePtr countType;
+    std::shared_ptr<PhysicalType> countType;
 };
 
 }

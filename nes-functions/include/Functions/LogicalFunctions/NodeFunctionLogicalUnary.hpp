@@ -13,9 +13,11 @@
 */
 
 #pragma once
+#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
-#include "Nodes/Node.hpp"
+#include <Nodes/Node.hpp>
 namespace NES
 {
 /**
@@ -27,13 +29,13 @@ protected:
     NodeFunctionLogicalUnary(std::string name);
 
 public:
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
     /**
     * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
+    * @return std::shared_ptr<NodeFunction>
     */
-    NodeFunctionPtr deepCopy() override = 0;
+    std::shared_ptr<NodeFunction> deepCopy() override = 0;
 
 protected:
     explicit NodeFunctionLogicalUnary(NodeFunctionLogicalUnary* other);

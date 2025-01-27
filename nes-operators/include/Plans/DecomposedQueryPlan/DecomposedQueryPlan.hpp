@@ -19,6 +19,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,18 +28,6 @@
 
 namespace NES
 {
-
-class Operator;
-
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
-class Node;
-using NodePtr = std::shared_ptr<Node>;
-
-class DecomposedQueryPlan;
-using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
-
 /**
  * @brief This represents the plan that need to be executed on the worker node
  */
@@ -79,7 +68,7 @@ public:
         std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
         return sourceOperators;
     }
-    [[nodiscard]] std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
+    [[nodiscard]] std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
     [[nodiscard]] std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
 
@@ -88,7 +77,7 @@ public:
 
     [[nodiscard]] WorkerId getWorkerId() const;
 
-    [[nodiscard]] DecomposedQueryPlanPtr copy() const;
+    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> copy() const;
     [[nodiscard]] std::string toString() const;
 
     template <class T>

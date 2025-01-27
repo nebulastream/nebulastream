@@ -215,7 +215,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    DecomposedQueryPlanPtr decomposedQueryPlan;
+    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
     try
     {
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";

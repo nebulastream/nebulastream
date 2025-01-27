@@ -12,13 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -31,14 +34,14 @@ NodeFunctionAnd::NodeFunctionAnd(NodeFunctionAnd* other) : NodeFunctionLogicalBi
 {
 }
 
-NodeFunctionPtr NodeFunctionAnd::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction> NodeFunctionAnd::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto andNode = std::make_shared<NodeFunctionAnd>();
     andNode->setChildren(left, right);
     return andNode;
 }
 
-bool NodeFunctionAnd::equal(const NodePtr& rhs) const
+bool NodeFunctionAnd::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAnd>(rhs))
     {
@@ -65,7 +68,7 @@ void NodeFunctionAnd::inferStamp(const Schema& schema)
     INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
     INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
 }
-NodeFunctionPtr NodeFunctionAnd::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionAnd::deepCopy()
 {
     return NodeFunctionAnd::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

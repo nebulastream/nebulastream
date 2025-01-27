@@ -17,9 +17,14 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -31,34 +36,34 @@ namespace NES::QueryCompilation
 struct WindowOperatorProperties
 {
     WindowOperatorProperties(
-        WindowOperatorPtr windowOperator,
-        SchemaPtr windowInputSchema,
-        SchemaPtr windowOutputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition)
+        std::shared_ptr<WindowOperator> windowOperator,
+        std::shared_ptr<Schema> windowInputSchema,
+        std::shared_ptr<Schema> windowOutputSchema,
+        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
         , windowOutputSchema(std::move(windowOutputSchema))
         , windowDefinition(std::move(windowDefinition)) {};
 
-    WindowOperatorPtr windowOperator;
-    SchemaPtr windowInputSchema;
-    SchemaPtr windowOutputSchema;
-    Windowing::LogicalWindowDescriptorPtr windowDefinition;
+    std::shared_ptr<WindowOperator> windowOperator;
+    std::shared_ptr<Schema> windowInputSchema;
+    std::shared_ptr<Schema> windowOutputSchema;
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
 };
 
 /// All operator nodes for lowering the stream joins
 struct StreamJoinOperators
 {
     StreamJoinOperators(
-        const LogicalOperatorPtr& operatorNode,
+        const std::shared_ptr<LogicalOperator>& operatorNode,
         const std::shared_ptr<Operator>& leftInputOperator,
         const std::shared_ptr<Operator>& rightInputOperator)
         : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator)
     {
     }
-    const LogicalOperatorPtr& operatorNode;
-    const std::shared_ptr<Operator>& leftInputOperator;
-    const std::shared_ptr<Operator>& rightInputOperator;
+    std::shared_ptr<LogicalOperator> operatorNode;
+    std::shared_ptr<Operator> leftInputOperator;
+    std::shared_ptr<Operator> rightInputOperator;
 };
 
 struct StreamJoinConfigs
@@ -96,51 +101,46 @@ public:
     explicit DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options);
     ~DefaultPhysicalOperatorProvider() noexcept override = default;
 
-    void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) override;
+    void lower(const DecomposedQueryPlan& decomposedQueryPlan, std::shared_ptr<LogicalOperator> operatorNode) override;
 
 protected:
-    void insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode);
-    void insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode);
+    static void insertDemultiplexOperatorsBefore(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void insertMultiplexOperatorsAfter(const std::shared_ptr<LogicalOperator>& operatorNode);
 
     /// Checks if the current operator is a demultiplexer, if it has multiple parents.
-    bool isDemultiplex(const LogicalOperatorPtr& operatorNode);
+    static bool isDemultiplex(const std::shared_ptr<LogicalOperator>& operatorNode);
 
-    void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
-    void lowerUnaryOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerBinaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerProjectOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerMapOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerWatermarkAssignmentOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
 
     /// Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
     /// using a Multiplex operation that connects two sources with one sink. The two sources then form one stream
-    /// that continuously sends TupleBuffers to the sink. This means a query that only contains an Union operator
+    /// that continuously sends TupleBuffersstatic  to the sink. This means a query that only contains an Union operator
     /// does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
-    void lowerUnionOperator(const LogicalOperatorPtr& operatorNode);
+    static void lowerUnionOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
 
-    void lowerProjectOperator(const LogicalOperatorPtr& operatorNode);
-
-    void lowerInferModelOperator(LogicalOperatorPtr operatorNode);
-
-    void lowerMapOperator(const LogicalOperatorPtr& operatorNode);
-
-    void lowerWindowOperator(const LogicalOperatorPtr& operatorNode);
-
-    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode);
-
-    void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
-
-    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
     std::shared_ptr<Operator> getJoinBuildInputOperator(
-        const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<std::shared_ptr<Operator>> children);
+        const std::shared_ptr<LogicalJoinOperator>& joinOperator,
+        const std::shared_ptr<Schema>& outputSchema,
+        std::vector<std::shared_ptr<Operator>> children);
 
 private:
     /// Lowers the stream nested loop join
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const;
 
     /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
-    [[nodiscard]] std::shared_ptr<Node>
-    replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties, const LogicalOperatorPtr& operatorNode);
+    [[nodiscard]] std::shared_ptr<Node> replaceOperatorTimeBasedWindow(
+        WindowOperatorProperties& windowOperatorProperties, const std::shared_ptr<LogicalOperator>& operatorNode);
 
-    [[nodiscard]] static std::tuple<TimestampField, TimestampField>
-    getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType);
+    [[nodiscard]] static std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
+        const std::shared_ptr<LogicalJoinOperator>& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType);
 };
 }

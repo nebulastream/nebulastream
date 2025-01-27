@@ -15,20 +15,17 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 #include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES
-{
-class NodeFunctionFieldAccess;
-class NodeFunctionConstantValue;
-}
 
 namespace NES::Optimizer
 {
 
-class AttributeSortRule;
-using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 
 /**
  * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule
@@ -53,7 +50,7 @@ using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 class AttributeSortRule : public BaseRewriteRule
 {
 public:
-    static AttributeSortRulePtr create();
+    static std::shared_ptr<AttributeSortRule> create();
     AttributeSortRule() = default;
     virtual ~AttributeSortRule() = default;
 
@@ -62,7 +59,7 @@ public:
      * @param queryPlan: the original query plan
      * @return updated logical query plan
      */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
 
 private:
     /**
@@ -70,21 +67,21 @@ private:
      * @param logicalOperator: the operator to be sorted
      * @return pointer to the updated function
      */
-    NodeFunctionPtr sortAttributesInFunction(NodeFunctionPtr function);
+    std::shared_ptr<NodeFunction> sortAttributesInFunction(std::shared_ptr<NodeFunction> function);
 
     /**
      * @brief Alphabetically sort the attributes within the arithmetic function
      * @param function: the input arithmetic function
      * @return pointer to the updated function
      */
-    NodeFunctionPtr sortAttributesInArithmeticalFunctions(NodeFunctionPtr function);
+    std::shared_ptr<NodeFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function);
 
     /**
      * @brief Alphabetically sort the attributes within the logical function
      * @param function: the input logical function
      * @return pointer to the updated function
      */
-    NodeFunctionPtr sortAttributesInLogicalFunctions(const NodeFunctionPtr& function);
+    std::shared_ptr<NodeFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function);
 
     /**
      * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
@@ -93,9 +90,9 @@ private:
      * @return: vector of function containing commutative field access or constant function type
      */
     template <class FunctionType>
-    std::vector<NodeFunctionPtr> fetchCommutativeFields(const NodeFunctionPtr& function)
+    std::vector<std::shared_ptr<NodeFunction>> fetchCommutativeFields(const std::shared_ptr<NodeFunction>& function)
     {
-        std::vector<NodeFunctionPtr> commutativeFields;
+        std::vector<std::shared_ptr<NodeFunction>> commutativeFields;
         if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
         {
             commutativeFields.push_back(function);
@@ -118,7 +115,9 @@ private:
      * @param updatedFunction: the updated function
      */
     bool replaceCommutativeFunctions(
-        const NodeFunctionPtr& parentFunction, const NodeFunctionPtr& originalFunction, const NodeFunctionPtr& updatedFunction);
+        const std::shared_ptr<NodeFunction>& parentFunction,
+        const std::shared_ptr<NodeFunction>& originalFunction,
+        const std::shared_ptr<NodeFunction>& updatedFunction);
 
     /**
      * @brief Fetch the value of the left most constant function or the name of the left most field access function within
@@ -126,6 +125,6 @@ private:
      * @param function: the input function
      * @return the name or value of field or constant function
      */
-    static std::string fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function);
+    static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function);
 };
 }

@@ -13,36 +13,34 @@
 */
 
 #pragma once
+#include <memory>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include "Nodes/Node.hpp"
+#include <Nodes/Node.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-class NodeFunctionFieldAssignment;
-using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
-/**
- * @brief A FieldAssignmentFunction represents the assignment of an function result to a specific field.
- */
+/// A FieldAssignmentFunction represents the assignment of an function result to a specific field.
 class NodeFunctionFieldAssignment : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionFieldAssignment(DataTypePtr stamp);
+    explicit NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp);
+    static std::shared_ptr<NodeFunctionFieldAssignment>
+    create(const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction);
 
-    static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
-
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     bool validateBeforeLowering() const override;
 
-    NodeFunctionFieldAccessPtr getField() const;
+    std::shared_ptr<NodeFunctionFieldAccess> getField() const;
 
-    /// returns the functions, which calculates the new value.
-    NodeFunctionPtr getAssignment() const;
+    std::shared_ptr<NodeFunction> getAssignment() const;
 
     void inferStamp(const Schema& schema) override;
 
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     explicit NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other);

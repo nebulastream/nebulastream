@@ -16,10 +16,10 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -29,21 +29,21 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, SchemaPtr schema, const OperatorId id)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(const NodePtr& rhs) const
+bool SourceNameLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SourceNameLogicalOperator::equal(const NodePtr& rhs) const
+bool SourceNameLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
     {
-        auto rhsAsSourceNameLogicalOperator = Util::as<SourceNameLogicalOperator>(rhs);
+        const auto rhsAsSourceNameLogicalOperator = Util::as<SourceNameLogicalOperator>(rhs);
         return this->getSchema() == rhsAsSourceNameLogicalOperator->getSchema()
             && this->getLogicalSourceName() == rhsAsSourceNameLogicalOperator->getLogicalSourceName();
     }
@@ -68,7 +68,6 @@ std::shared_ptr<Operator> SourceNameLogicalOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     for (const auto& pair : properties)
     {

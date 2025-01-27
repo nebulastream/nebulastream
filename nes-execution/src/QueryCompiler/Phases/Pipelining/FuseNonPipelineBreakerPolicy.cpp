@@ -11,22 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
 {
 
-OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create()
+std::shared_ptr<OperatorFusionPolicy> FuseNonPipelineBreakerPolicy::create()
 {
     return std::make_shared<FuseNonPipelineBreakerPolicy>();
 }
 
-bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator)
+bool FuseNonPipelineBreakerPolicy::isFusible(std::shared_ptr<PhysicalOperators::PhysicalOperator> physicalOperator)
 {
     return (
         NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(physicalOperator)

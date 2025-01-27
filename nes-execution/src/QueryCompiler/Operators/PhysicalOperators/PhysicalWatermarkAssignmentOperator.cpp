@@ -11,38 +11,47 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
+    OperatorId id,
+    std::shared_ptr<Schema> inputSchema,
+    std::shared_ptr<Schema> outputSchema,
+    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor))
 {
 }
 
-PhysicalOperatorPtr PhysicalWatermarkAssignmentOperator::create(
+std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
     OperatorId id,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor)
+    const std::shared_ptr<Schema>& inputSchema,
+    const std::shared_ptr<Schema>& outputSchema,
+    const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
-Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const
+std::shared_ptr<Windowing::WatermarkStrategyDescriptor> PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const
 {
     return watermarkStrategyDescriptor;
 }
 
-PhysicalOperatorPtr PhysicalWatermarkAssignmentOperator::create(
-    SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
+std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
+    const std::shared_ptr<Schema>& inputSchema,
+    const std::shared_ptr<Schema>& outputSchema,
+    const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }

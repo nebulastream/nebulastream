@@ -18,6 +18,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -30,7 +31,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
     : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) {};
 
-Memory::MemoryLayouts::MemoryLayoutPtr ColumnTupleBufferMemoryProvider::getMemoryLayoutPtr()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout()
 {
     return columnMemoryLayout;
 }

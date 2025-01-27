@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -28,7 +30,7 @@ public:
     ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
     ~ColumnTupleBufferMemoryProvider() override = default;
 
-    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

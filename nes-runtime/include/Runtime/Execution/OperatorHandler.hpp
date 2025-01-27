@@ -20,7 +20,6 @@ namespace NES::Runtime::Execution
 {
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
-using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 /**
  * @brief Interface to handle specific operator state.
  */
@@ -36,5 +35,4 @@ public:
     virtual void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };
 
-using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 }

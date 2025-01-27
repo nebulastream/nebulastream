@@ -32,8 +32,8 @@ namespace NES::Runtime::Execution::Aggregation
 {
 
 CountAggregationFunction::CountAggregationFunction(
-    PhysicalTypePtr inputType,
-    PhysicalTypePtr resultType,
+    std::shared_ptr<PhysicalType> inputType,
+    std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))

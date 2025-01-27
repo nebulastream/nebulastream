@@ -40,8 +40,8 @@ class AggregationFunction
 {
 public:
     AggregationFunction(
-        PhysicalTypePtr inputType,
-        PhysicalTypePtr resultType,
+        std::shared_ptr<PhysicalType> inputType,
+        std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
@@ -76,8 +76,8 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    const PhysicalTypePtr inputType;
-    const PhysicalTypePtr resultType;
+    const std::shared_ptr<PhysicalType> inputType;
+    const std::shared_ptr<PhysicalType> resultType;
     const std::unique_ptr<Functions::Function> inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };

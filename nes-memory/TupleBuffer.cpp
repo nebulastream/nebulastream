@@ -21,7 +21,7 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "TupleBufferImpl.hpp"
+#include <TupleBufferImpl.hpp>
 namespace NES::Memory
 {
 

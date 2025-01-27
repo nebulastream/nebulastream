@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
@@ -31,7 +33,8 @@ struct WatermarkState final : OperatorState
     nautilus::val<Timestamp> currentWatermark = Timestamp(Runtime::Timestamp::INITIAL_VALUE);
 };
 
-EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
+EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
+    : timeFunction(std::move(timeFunction)) {};
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

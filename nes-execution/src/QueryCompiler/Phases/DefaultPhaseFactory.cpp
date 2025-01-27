@@ -11,11 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -26,26 +29,27 @@
 namespace NES::QueryCompilation::Phases
 {
 
-PhaseFactoryPtr DefaultPhaseFactory::create()
+std::shared_ptr<PhaseFactory> DefaultPhaseFactory::create()
 {
     return std::make_shared<DefaultPhaseFactory>();
 }
 
-PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase()
+std::shared_ptr<PipeliningPhase> DefaultPhaseFactory::createPipeliningPhase()
 {
     NES_DEBUG("Create pipelining phase with fuse policy");
     const auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
     return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
-LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options)
+std::shared_ptr<LowerLogicalToPhysicalOperators>
+DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
     NES_DEBUG("Create default lower logical plan phase");
     const auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(options);
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
-AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions>)
+std::shared_ptr<AddScanAndEmitPhase> DefaultPhaseFactory::createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions>)
 {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();

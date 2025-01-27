@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <vector>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -25,12 +26,12 @@
 namespace NES::Optimizer
 {
 
-FilterMergeRulePtr FilterMergeRule::create()
+std::shared_ptr<FilterMergeRule> FilterMergeRule::create()
 {
     return std::make_shared<FilterMergeRule>();
 }
 
-QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan)
+std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_INFO("Applying FilterMergeRule to query {}", queryPlan->toString());
     std::set<OperatorId> visitedOperators;
@@ -41,7 +42,7 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan)
     {
         if (visitedOperators.find(filter->getId()) == visitedOperators.end())
         {
-            std::vector<LogicalSelectionOperatorPtr> consecutiveFilters = getConsecutiveFilters(filter);
+            std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = getConsecutiveFilters(filter);
             NES_DEBUG("FilterMergeRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2)
             {
@@ -95,9 +96,10 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan)
     return queryPlan;
 }
 
-std::vector<LogicalSelectionOperatorPtr> FilterMergeRule::getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& filter)
+std::vector<std::shared_ptr<LogicalSelectionOperator>>
+FilterMergeRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
 {
-    std::vector<LogicalSelectionOperatorPtr> consecutiveFilters = {};
+    std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);

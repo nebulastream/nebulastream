@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
@@ -31,7 +32,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 struct FieldOffsets
 {
     Record::RecordFieldIdentifier fieldIdentifier;
-    PhysicalTypePtr type;
+    std::shared_ptr<PhysicalType> type;
     uint64_t fieldOffset;
 };
 

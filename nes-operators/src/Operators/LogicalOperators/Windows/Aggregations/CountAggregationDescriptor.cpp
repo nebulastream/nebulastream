@@ -12,34 +12,41 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 
 namespace NES::Windowing
 {
 
-CountAggregationDescriptor::CountAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
+CountAggregationDescriptor::CountAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& field)
+    : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Count;
 }
-CountAggregationDescriptor::CountAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
+CountAggregationDescriptor::CountAggregationDescriptor(
+    const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Count;
 }
 
-WindowAggregationDescriptorPtr CountAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
+std::shared_ptr<WindowAggregationDescriptor>
+CountAggregationDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
 {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr CountAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
+std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::on(const std::shared_ptr<NodeFunction>& keyFunction)
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
     {
@@ -51,8 +58,8 @@ WindowAggregationDescriptorPtr CountAggregationDescriptor::on(const NodeFunction
 
 void CountAggregationDescriptor::inferStamp(const Schema& schema)
 {
-    auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
+    const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
@@ -61,7 +68,7 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     }
     else
     {
-        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
 
@@ -70,19 +77,19 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     asField->setStamp(onField->getStamp());
 }
 
-WindowAggregationDescriptorPtr CountAggregationDescriptor::copy()
+std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
-DataTypePtr CountAggregationDescriptor::getInputStamp()
+std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
 {
     return DataTypeFactory::createUInt64();
 }
-DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
 {
     return DataTypeFactory::createUInt64();
 }
-DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeFactory::createUInt64();
 }

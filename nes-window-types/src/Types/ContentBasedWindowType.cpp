@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,7 +22,8 @@ namespace NES::Windowing
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
 
-ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType)
+std::shared_ptr<ThresholdWindow>
+ContentBasedWindowType::asThresholdWindow(const std::shared_ptr<ContentBasedWindowType>& contentBasedWindowType)
 {
     if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType))
     {
