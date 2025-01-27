@@ -33,7 +33,7 @@ public:
         OperatorId id,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+        const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor);
     static PhysicalOperatorPtr
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     std::shared_ptr<Operator> copy() override;

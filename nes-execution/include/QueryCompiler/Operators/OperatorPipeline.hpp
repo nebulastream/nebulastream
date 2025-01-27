@@ -98,7 +98,7 @@ public:
      * @brief Gets list of all sucessors
      * @return std::vector<std::shared_ptr<OperatorPipeline>>
      */
-    std::vector<std::shared_ptr<OperatorPipeline>> const& getSuccessors() const;
+    const std::vector<std::shared_ptr<OperatorPipeline>>& getSuccessors() const;
 
     /**
      * @brief Removes all predecessors

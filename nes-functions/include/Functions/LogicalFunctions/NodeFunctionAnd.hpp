@@ -15,6 +15,8 @@
 #pragma once
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -29,8 +31,8 @@ public:
     /**
     * @brief Create a new AND function
     */
-    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
 
     /// Infers the stamp of this logical AND function node.
     /// We assume that both children of an and function are predicates.

@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -34,12 +35,12 @@ NodeFunctionFieldAssignmentPtr LogicalMapOperator::getMapFunction() const
     return mapFunction;
 }
 
-bool LogicalMapOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalMapOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalMapOperator>(rhs)->getId() == id;
 }
 
-bool LogicalMapOperator::equal(NodePtr const& rhs) const
+bool LogicalMapOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
     {

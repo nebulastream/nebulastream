@@ -51,7 +51,7 @@ public:
      * @param queryPlan the queryPlan to add the rename node
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addRename(const std::string& newSourceName, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
@@ -60,7 +60,7 @@ public:
      * @param queryPlanPtr the queryPlan the selection node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addSelection(const NodeFunctionPtr& selectionFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -77,7 +77,7 @@ public:
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMap(const NodeFunctionFieldAssignmentPtr& mapFunction, QueryPlanPtr queryPlan);
 
     static QueryPlanPtr addWindowAggregation(
         QueryPlanPtr queryPlan,

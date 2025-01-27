@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <utility>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -32,9 +33,9 @@ public:
 
     [[nodiscard]] uint64_t size() const override;
 
-    std::string convertRawToString(void const* rawData) const noexcept override;
+    std::string convertRawToString(const void* rawData) const noexcept override;
 
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
+    std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
 
     [[nodiscard]] std::string toString() const noexcept override;
 

@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -28,7 +29,7 @@ LogicalUnionOperator::LogicalUnionOperator(OperatorId id) : Operator(id), Logica
 {
 }
 
-bool LogicalUnionOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalUnionOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalUnionOperator>(rhs)->getId() == id;
 }
@@ -105,7 +106,7 @@ std::shared_ptr<Operator> LogicalUnionOperator::copy()
     return copy;
 }
 
-bool LogicalUnionOperator::equal(NodePtr const& rhs) const
+bool LogicalUnionOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {

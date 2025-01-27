@@ -14,6 +14,8 @@
 
 #pragma once
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -28,8 +30,8 @@ public:
     /**
     * @brief Create a new equals function
     */
-    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
     /**

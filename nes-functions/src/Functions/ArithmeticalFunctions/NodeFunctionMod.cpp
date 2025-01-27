@@ -20,6 +20,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -37,7 +38,7 @@ NodeFunctionPtr NodeFunctionMod::create(const NodeFunctionPtr& left, const NodeF
     return addNode;
 }
 
-bool NodeFunctionMod::equal(NodePtr const& rhs) const
+bool NodeFunctionMod::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionMod>(rhs))
     {

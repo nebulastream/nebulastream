@@ -46,7 +46,7 @@ public:
     FunctionItem(bool value); ///NOLINT(google-explicit-constructor)
     FunctionItem(NodeFunctionPtr exp);
 
-    FunctionItem(FunctionItem const&) = default;
+    FunctionItem(const FunctionItem&) = default;
     FunctionItem(FunctionItem&&) = default;
 
     NodeFunctionFieldAssignmentPtr operator=(FunctionItem assignItem);

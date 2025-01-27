@@ -149,7 +149,7 @@ void OperatorPipeline::clearSuccessors()
     successorPipelines.clear();
 }
 
-std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const
+const std::vector<OperatorPipelinePtr>& OperatorPipeline::getSuccessors() const
 {
     return successorPipelines;
 }

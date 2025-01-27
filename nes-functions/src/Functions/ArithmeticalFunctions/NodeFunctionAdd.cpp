@@ -19,6 +19,8 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -29,14 +31,14 @@ NodeFunctionAdd::NodeFunctionAdd(NodeFunctionAdd* other) : NodeFunctionArithmeti
 {
 }
 
-NodeFunctionPtr NodeFunctionAdd::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
+NodeFunctionPtr NodeFunctionAdd::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto addNode = std::make_shared<NodeFunctionAdd>(left->getStamp());
     addNode->setChildren(left, right);
     return addNode;
 }
 
-bool NodeFunctionAdd::equal(NodePtr const& rhs) const
+bool NodeFunctionAdd::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAdd>(rhs))
     {

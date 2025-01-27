@@ -17,6 +17,7 @@
 #include <memory>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES::Experimental
 {
@@ -36,11 +37,11 @@ public:
     */
     Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     void inferStringSignature() override;
 
 protected:

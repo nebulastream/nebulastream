@@ -168,13 +168,13 @@ struct EmittedTask
 
     bool empty() const
     {
-        std::unique_lock const lock(mutex);
+        const std::unique_lock lock(mutex);
         return arguments.empty();
     }
 
     size_t size() const
     {
-        std::unique_lock const lock(mutex);
+        const std::unique_lock lock(mutex);
         return arguments.size();
     }
 
@@ -182,7 +182,7 @@ struct EmittedTask
     {
         std::unordered_map<KeyT, Args> copy;
         {
-            std::unique_lock const lock(mutex);
+            const std::unique_lock lock(mutex);
             copy = std::move(arguments);
         }
 
@@ -240,7 +240,7 @@ private:
     void add(KeyT key, Arguments&&... args)
     {
         {
-            std::scoped_lock const lock(mutex);
+            const std::scoped_lock lock(mutex);
             arguments.try_emplace(key, std::forward<Arguments>(args)...);
         }
         addCondition.notify_all();

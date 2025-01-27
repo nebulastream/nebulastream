@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -35,7 +36,7 @@ NodeFunctionPtr NodeFunctionGreater::create(const NodeFunctionPtr& left, const N
     return greater;
 }
 
-bool NodeFunctionGreater::equal(NodePtr const& rhs) const
+bool NodeFunctionGreater::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionGreater>(rhs))
     {

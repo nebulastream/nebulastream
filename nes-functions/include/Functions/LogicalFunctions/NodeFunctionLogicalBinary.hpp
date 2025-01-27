@@ -16,6 +16,7 @@
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Util/Common.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -23,7 +24,7 @@ namespace NES
 class NodeFunctionLogicalBinary : public NodeFunctionBinary, public LogicalNodeFunction
 {
 public:
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
 protected:

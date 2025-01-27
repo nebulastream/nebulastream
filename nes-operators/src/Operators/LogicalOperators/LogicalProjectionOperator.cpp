@@ -26,6 +26,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -53,12 +54,12 @@ const std::vector<std::shared_ptr<NodeFunction>>& LogicalProjectionOperator::get
     return functions;
 }
 
-bool LogicalProjectionOperator::isIdentical(std::shared_ptr<Node> const& rhs) const
+bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
+bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
@@ -71,11 +72,11 @@ bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
 std::string getFieldName(const NodeFunction& function)
 {
     /// We assert that the projection operator only contains field access and assignment functions in the constructor.
-    if (const auto* nodeFunctionFieldAccess = dynamic_cast<NodeFunctionFieldAccess const*>(&function))
+    if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
     {
         return nodeFunctionFieldAccess->getFieldName();
     }
-    return dynamic_cast<NodeFunctionFieldAssignment const*>(&function)->getField()->getFieldName();
+    return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
 }
 
 std::string LogicalProjectionOperator::toString() const

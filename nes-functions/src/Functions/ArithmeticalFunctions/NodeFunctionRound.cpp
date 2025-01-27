@@ -20,6 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -31,14 +33,14 @@ NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionAri
 {
 }
 
-NodeFunctionPtr NodeFunctionRound::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionRound::create(const NodeFunctionPtr& child)
 {
     auto roundNode = std::make_shared<NodeFunctionRound>(child->getStamp());
     roundNode->setChild(child);
     return roundNode;
 }
 
-bool NodeFunctionRound::equal(NodePtr const& rhs) const
+bool NodeFunctionRound::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionRound>(rhs))
     {

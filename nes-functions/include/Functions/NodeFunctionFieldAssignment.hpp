@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -31,7 +32,7 @@ public:
 
     static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
     NodeFunctionFieldAccessPtr getField() const;

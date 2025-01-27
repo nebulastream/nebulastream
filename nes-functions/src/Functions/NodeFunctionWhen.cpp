@@ -20,6 +20,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -57,7 +58,7 @@ void NodeFunctionWhen::inferStamp(const Schema& schema)
     NES_TRACE("NodeFunctionWhen: we assigned the following stamp: {}", stamp->toString())
 }
 
-bool NodeFunctionWhen::equal(NodePtr const& rhs) const
+bool NodeFunctionWhen::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionWhen>(rhs))
     {

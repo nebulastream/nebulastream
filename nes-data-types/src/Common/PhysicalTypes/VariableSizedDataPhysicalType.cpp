@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/core.h>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -25,13 +26,13 @@ uint64_t VariableSizedDataPhysicalType::size() const
     return sizeVal;
 }
 
-std::string VariableSizedDataPhysicalType::convertRawToString(void const* data) const noexcept
+std::string VariableSizedDataPhysicalType::convertRawToString(const void* data) const noexcept
 {
     /// We always read the exact number of bytes contained by the VariableSizedDataType.
     return convertRawToStringWithoutFill(data);
 }
 
-std::string VariableSizedDataPhysicalType::convertRawToStringWithoutFill(void const* data) const noexcept
+std::string VariableSizedDataPhysicalType::convertRawToStringWithoutFill(const void* data) const noexcept
 {
     if (!data)
     {
@@ -41,8 +42,8 @@ std::string VariableSizedDataPhysicalType::convertRawToStringWithoutFill(void co
 
     /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
     using StringLengthType = uint32_t;
-    StringLengthType textLength = *static_cast<uint32_t const*>(data);
-    const auto* textPointer = static_cast<char const*>(data);
+    const StringLengthType textLength = *static_cast<const uint32_t*>(data);
+    const auto* textPointer = static_cast<const char*>(data);
     textPointer += sizeof(StringLengthType);
     if (!textPointer)
     {

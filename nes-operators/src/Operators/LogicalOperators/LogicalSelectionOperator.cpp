@@ -43,12 +43,12 @@ void LogicalSelectionOperator::setPredicate(NodeFunctionPtr newPredicate)
     predicate = std::move(newPredicate);
 }
 
-bool LogicalSelectionOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalSelectionOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalSelectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalSelectionOperator::equal(NodePtr const& rhs) const
+bool LogicalSelectionOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<LogicalSelectionOperator>(rhs))
     {

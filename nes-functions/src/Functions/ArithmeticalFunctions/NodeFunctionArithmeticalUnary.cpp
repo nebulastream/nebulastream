@@ -21,6 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -57,7 +58,7 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalUnary::equal(NodePtr const& rhs) const
+bool NodeFunctionArithmeticalUnary::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalUnary>(rhs))
     {

@@ -18,6 +18,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -29,14 +31,14 @@ NodeFunctionExp::NodeFunctionExp(NodeFunctionExp* other) : NodeFunctionArithmeti
 {
 }
 
-NodeFunctionPtr NodeFunctionExp::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionExp::create(const NodeFunctionPtr& child)
 {
     auto expNode = std::make_shared<NodeFunctionExp>(child->getStamp());
     expNode->setChild(child);
     return expNode;
 }
 
-bool NodeFunctionExp::equal(NodePtr const& rhs) const
+bool NodeFunctionExp::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionExp>(rhs))
     {

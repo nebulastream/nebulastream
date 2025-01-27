@@ -54,14 +54,14 @@ TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, std::function<void(de
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
-TupleBuffer::TupleBuffer(TupleBuffer const& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
 {
     if (controlBlock)
     {
         controlBlock->retain();
     }
 }
-TupleBuffer& TupleBuffer::operator=(TupleBuffer const& other) noexcept
+TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
 {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
     {

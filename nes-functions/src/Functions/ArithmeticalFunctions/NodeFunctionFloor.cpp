@@ -18,6 +18,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -28,14 +30,14 @@ NodeFunctionFloor::NodeFunctionFloor(NodeFunctionFloor* other) : NodeFunctionAri
 {
 }
 
-NodeFunctionPtr NodeFunctionFloor::create(NodeFunctionPtr const& child)
+NodeFunctionPtr NodeFunctionFloor::create(const NodeFunctionPtr& child)
 {
     auto floorNode = std::make_shared<NodeFunctionFloor>(child->getStamp());
     floorNode->setChild(child);
     return floorNode;
 }
 
-bool NodeFunctionFloor::equal(NodePtr const& rhs) const
+bool NodeFunctionFloor::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFloor>(rhs))
     {

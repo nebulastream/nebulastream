@@ -107,7 +107,7 @@ public:
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+    [[nodiscard]] Query& window(const Windowing::WindowTypePtr& windowType) const;
 
 private:
     const Query& subQueryRhs;
@@ -170,7 +170,7 @@ public:
      * @param windowType
      * @return the query with the result of the original andWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+    [[nodiscard]] Query& window(const Windowing::WindowTypePtr& windowType) const;
 
 private:
     Query& subQueryRhs;
@@ -193,7 +193,7 @@ public:
      * @param windowType
      * @return the query with the result of the original seqWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+    [[nodiscard]] Query& window(const Windowing::WindowTypePtr& windowType) const;
 
 private:
     Query& subQueryRhs;
@@ -242,7 +242,7 @@ public:
      * @param windowType
      * @return the query with the result of the original seqWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+    [[nodiscard]] Query& window(const Windowing::WindowTypePtr& windowType) const;
 
 private:
     Query& originalQuery;
@@ -279,7 +279,7 @@ public:
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
-    WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr const& windowType);
+    WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr& windowType);
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -340,7 +340,7 @@ public:
 
     /// Creates a query from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static Query from(std::string const& logicalSourceName);
+    static Query from(const std::string& logicalSourceName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -373,7 +373,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& selection(NodeFunctionPtr const& filterFunction);
+    Query& selection(const NodeFunctionPtr& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -387,7 +387,7 @@ public:
      * @param watermarkStrategyDescriptor
      * @return query.
      */
-    Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    Query& assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor);
 
     /**
      * @brief: Map records according to a map function. An
@@ -395,7 +395,7 @@ public:
      * @param map function
      * @return query
      */
-    Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
+    Query& map(const NodeFunctionFieldAssignmentPtr& mapFunction);
 
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
@@ -421,7 +421,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction, Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction, const Windowing::WindowTypePtr& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -444,7 +444,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, const Windowing::WindowTypePtr& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -456,7 +456,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, const Windowing::WindowTypePtr& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -465,7 +465,7 @@ private:
      * @param aggregations Window aggregation function.
      * @return query.
      */
-    Query& window(Windowing::WindowTypePtr const& windowType, std::vector<API::WindowAggregationPtr> aggregations);
+    Query& window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
 
     Query& windowByKey(

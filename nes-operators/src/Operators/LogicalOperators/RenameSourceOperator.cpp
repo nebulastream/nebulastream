@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -28,12 +29,12 @@ RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, Ope
 {
 }
 
-bool RenameSourceOperator::isIdentical(NodePtr const& rhs) const
+bool RenameSourceOperator::isIdentical(const NodePtr& rhs) const
 {
     return equal(rhs) && NES::Util::as<RenameSourceOperator>(rhs)->getId() == id;
 }
 
-bool RenameSourceOperator::equal(NodePtr const& rhs) const
+bool RenameSourceOperator::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<RenameSourceOperator>(rhs))
     {

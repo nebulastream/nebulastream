@@ -29,7 +29,7 @@ NodeFunctionBinary::NodeFunctionBinary(NodeFunctionBinary* other) : NodeFunction
     addChildWithEqual(getRight()->deepCopy());
 }
 
-void NodeFunctionBinary::setChildren(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
+void NodeFunctionBinary::setChildren(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     addChildWithEqual(left);
     addChildWithEqual(right);

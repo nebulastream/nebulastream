@@ -107,7 +107,7 @@ public:
     wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept;
+    [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
@@ -119,7 +119,7 @@ public:
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(TupleBuffer const& other) noexcept;
+    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     TupleBuffer& operator=(TupleBuffer&& other) noexcept;

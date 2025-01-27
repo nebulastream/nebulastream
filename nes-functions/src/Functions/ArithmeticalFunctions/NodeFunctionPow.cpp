@@ -20,6 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -29,14 +31,14 @@ NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeti
 {
 }
 
-NodeFunctionPtr NodeFunctionPow::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
+NodeFunctionPtr NodeFunctionPow::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto powNode = std::make_shared<NodeFunctionPow>(DataTypeFactory::createFloat());
     powNode->setChildren(left, right);
     return powNode;
 }
 
-bool NodeFunctionPow::equal(NodePtr const& rhs) const
+bool NodeFunctionPow::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionPow>(rhs))
     {

@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <string>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -25,7 +28,7 @@ namespace NES
 class RenameSourceOperator : public LogicalUnaryOperator
 {
 public:
-    explicit RenameSourceOperator(std::string const& newSourceName, OperatorId id);
+    explicit RenameSourceOperator(const std::string& newSourceName, OperatorId id);
     ~RenameSourceOperator() override = default;
 
     /**
@@ -33,8 +36,8 @@ public:
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -35,7 +36,7 @@ NodeFunctionPtr NodeFunctionLessEquals::create(const NodeFunctionPtr& left, cons
     return lessThen;
 }
 
-bool NodeFunctionLessEquals::equal(NodePtr const& rhs) const
+bool NodeFunctionLessEquals::equal(const NodePtr& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLessEquals>(rhs))
     {

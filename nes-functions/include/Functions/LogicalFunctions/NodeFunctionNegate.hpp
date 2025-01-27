@@ -15,6 +15,8 @@
 #pragma once
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -30,9 +32,9 @@ public:
     /**
      * @brief Create a new negate function
      */
-    static NodeFunctionPtr create(NodeFunctionPtr const& child);
+    static NodeFunctionPtr create(const NodeFunctionPtr& child);
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     bool validateBeforeLowering() const override;
 
     /// We assume that the children of this function is a predicate.

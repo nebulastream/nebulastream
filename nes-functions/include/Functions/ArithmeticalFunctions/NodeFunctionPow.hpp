@@ -14,6 +14,8 @@
 
 #pragma once
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
+#include "Functions/NodeFunction.hpp"
+#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -22,8 +24,8 @@ class NodeFunctionPow final : public NodeFunctionArithmeticalBinary
 public:
     explicit NodeFunctionPow(DataTypePtr stamp);
     ~NodeFunctionPow() noexcept override = default;
-    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
+    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
