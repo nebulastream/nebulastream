@@ -99,8 +99,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryId.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryId.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan->getRootOperators()[0]->toString()
@@ -165,8 +165,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-                + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -175,8 +175,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan2->getRootOperators()[0]->toString()
@@ -237,8 +237,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -247,8 +247,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan2->getRootOperators()[0]->toString()
@@ -329,8 +329,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId11.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId11.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan11->getRootOperators()[0]->toString()
@@ -339,8 +339,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan11->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId12.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId12.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan12->getRootOperators()[0]->toString()
@@ -349,8 +349,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan12->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId21.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId21.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan21->getRootOperators()[0]->toString()
@@ -359,8 +359,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan21->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId22.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId22.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan22->getRootOperators()[0]->toString()
@@ -430,8 +430,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -443,8 +443,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
         + plan2->getRootOperators()[0]->toString()
@@ -550,8 +550,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -563,8 +563,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
         + plan2->getRootOperators()[0]->toString()
@@ -576,8 +576,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node3Id.toString()
         + ")\n"
           "|  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId3.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId3.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId3.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId3.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  "
         + plan3->getRootOperators()[0]->toString()
@@ -589,8 +589,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node4Id.toString()
         + ")\n"
           "|  |  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId4.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId4.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId4.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId4.toString() + ", DecomposedQueryVersion:"
+        + std::to_string(version) + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  |  "
         + plan4->getRootOperators()[0]->toString()
