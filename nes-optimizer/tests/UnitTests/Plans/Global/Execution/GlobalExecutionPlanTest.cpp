@@ -80,9 +80,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan = query.getQueryPlan();
     SharedQueryId sharedQueryId = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryId decomposedQueryId = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryPlanVersion version = 1;
     auto decomposedQueryPlan =
         DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, topologyNodeId, plan->getRootOperators());
     decomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+    decomposedQueryPlan->setVersion(version);
     auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
     globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan);
@@ -97,7 +99,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryId.toString()
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryId.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -129,6 +131,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto topology = Topology::create();
     auto topologyNodeId = WorkerId(1);
     topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
+    DecomposedQueryPlanVersion version = 0;
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -162,8 +165,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
-        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
+                + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -172,7 +175,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -198,6 +201,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto topology = Topology::create();
     auto topologyNodeId = WorkerId(1);
     topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
+    DecomposedQueryPlanVersion version = 0;
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -233,7 +237,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -243,7 +247,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -269,6 +273,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto topology = Topology::create();
     auto topologyNodeId = WorkerId(1);
     topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
+    DecomposedQueryPlanVersion version = 0;
 
     //query sub plans for query 1
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -324,7 +329,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId11.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId11.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -334,7 +339,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan11->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId12.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId12.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -344,7 +349,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan12->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId21.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId21.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -354,7 +359,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan21->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId22.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId22.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -387,6 +392,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     topology->registerWorker(node2Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     //Add parent child relationship among topology nodes
     topology->addTopologyNodeAsChild(node1Id, node2Id);
+    DecomposedQueryPlanVersion version = 0;
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -424,7 +430,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -437,7 +443,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
@@ -470,6 +476,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     topology->registerWorker(node3Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     auto node4Id = WorkerId(4);
     topology->registerWorker(node4Id, "localhost", 3200, 3300, 10, properties, 0, 0);
+
+    DecomposedQueryPlanVersion version = 0;
 
     //Add parent child relationship
     topology->removeTopologyNodeAsChild(node1Id, node3Id);
@@ -542,7 +550,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -555,7 +563,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
@@ -568,7 +576,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node3Id.toString()
         + ")\n"
           "|  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId3.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId3.toString()
+        + sharedQueryId3.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId3.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  "
@@ -581,7 +589,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node4Id.toString()
         + ")\n"
           "|  |  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId4.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId4.toString()
+        + sharedQueryId4.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId4.toString() + ", DecomposedQueryVersion:" + std::to_string(version)
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  |  "
