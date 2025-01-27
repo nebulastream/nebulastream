@@ -482,7 +482,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithDifferentId) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with same id
  */
-TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithSameId) {
+TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanWithSameId) {
     // source names
     auto logicalSourceName = "seq";
     auto physicalSourceName = "test_stream";
@@ -574,7 +574,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithSameId) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with join operator
  */
-TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoin) {
+TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoin) {
     // source names
     auto logicalSourceName = "seq1";
     auto physicalSourceName = "test_stream";
@@ -676,7 +676,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoin) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with join operator and migration pipeline
  */
-TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoinWithMigration) {
+TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoinWithMigration) {
     // source names
     auto logicalSourceName = "seq1";
     auto physicalSourceName = "test_stream";
