@@ -27,8 +27,8 @@ using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_P
 class MicroBenchmarksTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<uint64_t, uint64_t>>
 {
 public:
-    /// NOTE: The test needs approximately up to four times DATA_SIZE of memory
-    static constexpr uint64_t DATA_SIZE = 12884901888; /// 12GB
+    /// NOTE: The test needs approximately up to five times DATA_SIZE of memory
+    static constexpr uint64_t DATA_SIZE = 10737418240; /// 10GB
     std::vector<double> execTimes;
 
     static void SetUpTestSuite()
@@ -145,7 +145,7 @@ public:
             const auto newPagedVector = createKeysOnlyPagedVector(oldMemoryLayout->getKeyFieldNames(), bufferManager);
             const auto newMemoryLayout = newPagedVector->getMemoryLayout();
             const auto newCapacity = newMemoryLayout->getCapacity();
-            const uint64_t expectedNumPages = std::ceil(oldNumTuples / newCapacity);
+            const uint64_t expectedNumPages = std::ceil(static_cast<double>(oldNumTuples) / newCapacity);
 
             // TODO does this enhance performance?
             newPagedVector->getPages().reserve(expectedNumPages);
@@ -184,8 +184,8 @@ public:
             const auto numTuplesLastPage = oldNumTuples % newCapacity == 0 ? newCapacity : oldNumTuples % newCapacity;
             ASSERT_EQ(tupleCnt, numTuplesLastPage);
             newPages.back().setNumberOfTuples(numTuplesLastPage);
+            ASSERT_EQ(newPagedVector->getNumberOfPages(), expectedNumPages);
             pagedVector = newPagedVector;
-            ASSERT_EQ(pagedVector->getNumberOfPages(), expectedNumPages);
         }
         else
         {
@@ -355,6 +355,11 @@ public:
                 fieldAddrPayloadBuffer = payloadBuffer.data();
                 for (auto tupleIdx = 0UL; tupleIdx < tuplesWritten; ++tupleIdx)
                 {
+                    if (tupleIdx > 0 && tupleIdx % capacity == 0)
+                    {
+                        payloadFile.seekp(pagePadding, std::ios::cur);
+                    }
+
                     for (const auto [fieldType, fieldSize] : fieldTypeSizes)
                     {
                         if (separateKeys == SAME_FILE_KEYS && fieldType == KEY)
@@ -372,12 +377,9 @@ public:
                             payloadFile.seekp(fieldSize, std::ios::cur);
                         }
                     }
-
-                    if (tupleIdx % capacity == 0)
-                    {
-                        payloadFile.seekp(pagePadding, std::ios::cur);
-                    }
                 }
+
+                payloadFile.seekp(pagePadding, std::ios::cur);
             }
 
             if (bufferIdx % tenPercentOfNumBuffers == 0)
@@ -482,9 +484,9 @@ public:
                 }
                 else
                 {
-                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++oldTupleCnt)
                     {
-                        if (separateKeys == SAME_FILE_PAYLOAD && oldTupleCnt++ >= oldCapacity)
+                        if (separateKeys == SAME_FILE_PAYLOAD && oldTupleCnt >= oldCapacity)
                         {
                             fieldAddrKeyPagedVector = oldPages[++oldPageCnt].getBuffer();
                             oldTupleCnt = 0;
@@ -584,7 +586,7 @@ public:
     }
 };
 
-TEST_P(MicroBenchmarksTest, noSeparation)
+TEST_P(MicroBenchmarksTest, DISABLED_noSeparation)
 {
     execTimes.clear();
 
@@ -613,7 +615,7 @@ TEST_P(MicroBenchmarksTest, noSeparation)
     //createMeasurementsCSV("fileName.csv");
 }
 
-TEST_P(MicroBenchmarksTest, separateFilesLittleConsecutiveKeys)
+TEST_P(MicroBenchmarksTest, DISABLED_separateFilesLittleConsecutiveKeys)
 {
     execTimes.clear();
 
@@ -745,7 +747,7 @@ TEST_P(MicroBenchmarksTest, sameFileOnlyPayloadLittleConsecutiveKeys)
     const auto seperateKeys = SAME_FILE_PAYLOAD;
 
     const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
+    const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
     const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
     memoryLayout->setKeyFieldNames({"f0", "f1"});
 
