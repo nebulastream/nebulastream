@@ -14,11 +14,11 @@
 
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Network/NetworkSource.hpp>
 #include <utility>
 
 namespace NES::Network {

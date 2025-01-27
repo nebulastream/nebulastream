@@ -621,7 +621,9 @@ void DataSource::storePersistedProperties() { NES_WARNING("No implementation fou
 
 void DataSource::clearPersistedProperties() { NES_WARNING("No implementation found to clear persistent source properties."); }
 
-bool DataSource::updateSuccessors(const ReconfigurationMarkerPtr& marker, OperatorId sourceId, std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans) {
+bool DataSource::updateSuccessors(const ReconfigurationMarkerPtr& marker,
+                                  OperatorId sourceId,
+                                  std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans) {
     /* maintain successors locked throughout the function, this also ensures that the source to qep mapping cannot be
     modified by the lockSuccessorsAndNotifySourceCompletion() function while this function executes */
     auto lockedSuccessors = executableSuccessors.wlock();

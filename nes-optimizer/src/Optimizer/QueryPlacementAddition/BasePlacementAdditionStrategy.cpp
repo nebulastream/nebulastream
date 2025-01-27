@@ -935,7 +935,6 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 continue;
                                             }
 
-
                                             matchingPinnedRootOperator->addChild(upstreamOperator);
                                         }
 

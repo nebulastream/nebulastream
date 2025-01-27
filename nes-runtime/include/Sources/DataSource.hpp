@@ -315,8 +315,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @param sourceId the id of the source to reuse
      * @param newPlans the new plans to which the source belongs after the data stream is redirected
      */
-    bool
-    updateSuccessors(const ReconfigurationMarkerPtr& marker, OperatorId sourceId, std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans);
+    bool updateSuccessors(const ReconfigurationMarkerPtr& marker,
+                          OperatorId sourceId,
+                          std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans);
 
     // bool indicating if the data source has to persist runtime properties
     // that can be loaded during the restart of the query.

@@ -13,8 +13,8 @@
 */
 
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>

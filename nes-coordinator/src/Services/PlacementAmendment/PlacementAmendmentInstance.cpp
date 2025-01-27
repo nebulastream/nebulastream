@@ -238,10 +238,9 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                                                                             decomposedQueryPlanVersion,
                                                                             sinkUpdates);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(
-                    decomposedQueryId,
-                    newDecomposedQueryPlan->getOldVersion().value(),
-                    markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
+                                                               newDecomposedQueryPlan->getOldVersion().value(),
+                                                               markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
@@ -257,10 +256,9 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 auto numOfSourceOperators = deployedDecomposedQueryPlan->getSourceOperators().size();
                 auto reConfMetaData = std::make_shared<DrainQueryMetadata>(numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(
-                    decomposedQueryId,
-                    deployedDecomposedQueryPlan->getOldVersion().value(),
-                    markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
+                                                               deployedDecomposedQueryPlan->getOldVersion().value(),
+                                                               markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
@@ -280,10 +278,9 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                                                                                     decomposedQueryVersion,
                                                                                     numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(
-                    decomposedQueryId,
-                    deployedDecomposedQueryPlan->getOldVersion().value(),
-                    markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
+                                                               deployedDecomposedQueryPlan->getOldVersion().value(),
+                                                               markerEvent);
                 break;
             }
 

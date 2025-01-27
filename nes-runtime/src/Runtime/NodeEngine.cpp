@@ -849,7 +849,8 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                         ->as<Network::NetworkSinkDescriptor>();
                                 if (networkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
                                     updateExecutablePlanVersion(idAndVersion, updateEvent->decomposedQueryPlanVersion);
-                                    networkSink->configureNewSinkDescriptor(*networkSinkDescriptor,std::move(reconfigurationMarker));
+                                    networkSink->configureNewSinkDescriptor(*networkSinkDescriptor,
+                                                                            std::move(reconfigurationMarker));
                                     addedMarker = true;
                                 }
                             }

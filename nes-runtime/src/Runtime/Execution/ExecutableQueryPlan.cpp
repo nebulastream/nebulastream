@@ -409,7 +409,8 @@ void ExecutableQueryPlan::transferSourcesToSuccessor(const ReconfigurationMarker
     for (auto successorSource : (*lockedSuccessor)->getSources()) {
         auto sourceId = successorSource->getOperatorId();
 
-        if (std::find(sourcesToReuseBySuccessorPlan.cbegin(), sourcesToReuseBySuccessorPlan.cend(), sourceId) != sourcesToReuseBySuccessorPlan.cend()) {
+        if (std::find(sourcesToReuseBySuccessorPlan.cbegin(), sourcesToReuseBySuccessorPlan.cend(), sourceId)
+            != sourcesToReuseBySuccessorPlan.cend()) {
             auto sources = getSources();
             auto predicate = [successorSource](auto src) {
                 return DataSource::compareId(successorSource, src);

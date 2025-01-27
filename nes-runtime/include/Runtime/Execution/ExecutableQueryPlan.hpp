@@ -23,8 +23,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
-#include <folly/Synchronized.h>
 #include <atomic>
+#include <folly/Synchronized.h>
 #include <future>
 #include <map>
 #include <vector>
@@ -39,7 +39,7 @@ class NetworkSink;
 namespace NES {
 class ReconfigurationMarker;
 using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
-}
+}// namespace NES
 
 namespace NES::Runtime::Execution {
 
@@ -195,11 +195,11 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     DecomposedQueryPlanVersion getDecomposedQueryVersion() const;
 
-  /**
+    /**
    * @brief Update the version of this executable query plan
    * @param newVersion the new version of the executable plan
    */
-  void updateDecomposedQueryVersion(DecomposedQueryPlanVersion newVersion);
+    void updateDecomposedQueryVersion(DecomposedQueryPlanVersion newVersion);
 
     /**
      * @brief final reconfigure callback called upon a reconfiguration

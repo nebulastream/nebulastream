@@ -49,7 +49,7 @@ ReconfigurationMarker::getAllReconfigurationMarkerEvents() const {
 std::vector<ReconfigurationMarkerEventPtr>
 ReconfigurationMarker::getReconfigurationEventsForPlanId(DecomposedQueryId decomposedQueryId) const {
     std::vector<ReconfigurationMarkerEventPtr> result;
-    for (auto [idAndVerion, event]: reconfigurationEvents) {
+    for (auto [idAndVerion, event] : reconfigurationEvents) {
         if (idAndVerion.id == decomposedQueryId) {
             result.push_back(event);
         }
