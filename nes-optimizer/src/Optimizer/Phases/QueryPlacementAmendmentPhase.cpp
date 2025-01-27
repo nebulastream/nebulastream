@@ -401,38 +401,42 @@ void QueryPlacementAmendmentPhase::computeReconfigurationMarkerDeploymentUnit(
             // Iterate over the upstream operators and identify the operators in the state Placed or ToBeRemoved
             for (const auto& node : upstreamOperator->getParents()) {
                 auto downstreamOperator = node->as<LogicalOperator>();
+                // Check the operator states
+                if (downstreamOperator->getOperatorState() == OperatorState::PLACED
+                    || downstreamOperator->getOperatorState() == OperatorState::TO_BE_REMOVED) {
 
-                // Fetch the worker id where downstream logical operator is placed
-                const auto& downstreamLogicalOperatorPinnedWorkerID =
-                    std::any_cast<WorkerId>(downstreamOperator->getProperty(PINNED_WORKER_ID));
+                    // Fetch the worker id where downstream logical operator is placed
+                    const auto& downstreamLogicalOperatorPinnedWorkerID =
+                        std::any_cast<WorkerId>(downstreamOperator->getProperty(PINNED_WORKER_ID));
 
-                // If the worker ids are not same then identify where connected "decomposed query plan" is placed.
-                if (downstreamLogicalOperatorPinnedWorkerID != upstreamLogicalOperatorPinnedWorkerId) {
+                    // If the worker ids are not same then identify where connected "decomposed query plan" is placed.
+                    if (downstreamLogicalOperatorPinnedWorkerID != upstreamLogicalOperatorPinnedWorkerId) {
 
-                    // Find the downstream worker where the connected "downstream decomposed query plan" is located.
-                    auto sysPlanMetaDataMap = std::any_cast<std::map<OperatorId, std::vector<SysPlanMetadata>>>(
-                        upstreamOperator->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
-                    for (auto [operatorId, sysPlanMetadataVec] : sysPlanMetaDataMap) {
-                        auto upstreamId = upstreamLogicalOperatorPinnedWorkerId;
-                        for (auto planIterator = sysPlanMetadataVec.begin(); planIterator != (sysPlanMetadataVec.end());
-                             ++planIterator) {
-                            auto downstreamPlanMetaData = *planIterator;
-                            auto downstreamId = downstreamPlanMetaData.workerId;
+                        // Find the downstream worker where the connected "downstream decomposed query plan" is located.
+                        auto sysPlanMetaDataMap = std::any_cast<std::map<OperatorId, std::vector<SysPlanMetadata>>>(
+                            upstreamOperator->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
+                        for (auto [operatorId, sysPlanMetadataVec] : sysPlanMetaDataMap) {
+                            auto upstreamId = upstreamLogicalOperatorPinnedWorkerId;
+                            for (auto planIterator = sysPlanMetadataVec.begin(); planIterator != (sysPlanMetadataVec.end());
+                                 ++planIterator) {
+                                auto downstreamPlanMetaData = *planIterator;
+                                auto downstreamId = downstreamPlanMetaData.workerId;
 
-                            if (!topology->getCopyOfTopologyNodeWithId(downstreamId)
-                                     ->containAsChild(topology->getCopyOfTopologyNodeWithId(upstreamId))) {
-                                auto downstreamGrpcAddress = topology->getGrpcAddress(downstreamId);
-                                if (!downstreamGrpcAddress.has_value()) {
-                                    NES_ERROR("Unable to find the grpc address for the downstream worker {} ", downstreamId)
-                                    throw std::runtime_error("Unable to find the grpc address for the downstream worker "
-                                                             + downstreamId.toString());
+                                if (!topology->getCopyOfTopologyNodeWithId(downstreamId)
+                                         ->containAsChild(topology->getCopyOfTopologyNodeWithId(upstreamId))) {
+                                    auto downstreamGrpcAddress = topology->getGrpcAddress(downstreamId);
+                                    if (!downstreamGrpcAddress.has_value()) {
+                                        NES_ERROR("Unable to find the grpc address for the downstream worker {} ", downstreamId)
+                                        throw std::runtime_error("Unable to find the grpc address for the downstream worker "
+                                                                 + downstreamId.toString());
+                                    }
+                                    reconfigurationMarkerUnitComparator.emplace(downstreamGrpcAddress.value(),
+                                                                                downstreamId,
+                                                                                sharedQueryId,
+                                                                                downstreamPlanMetaData.decomposedQueryId);
                                 }
-                                reconfigurationMarkerUnitComparator.emplace(downstreamGrpcAddress.value(),
-                                                                            downstreamId,
-                                                                            sharedQueryId,
-                                                                            downstreamPlanMetaData.decomposedQueryId);
+                                upstreamId = downstreamId;
                             }
-                            upstreamId = downstreamId;
                         }
                     }
                 }
