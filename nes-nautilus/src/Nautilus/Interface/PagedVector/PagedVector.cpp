@@ -28,26 +28,20 @@ PagedVector::PagedVector(
     const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
     : bufferProvider(bufferProvider), memoryLayout(std::move(memoryLayout))
 {
+    INVARIANT(
+        this->bufferProvider->getBufferSize() == this->memoryLayout->getBufferSize(),
+        "BufferSizes must be equal for BufferManager and MemoryLayout");
     INVARIANT(this->memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
     INVARIANT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
 
     appendPageIfFull();
 }
 
- PagedVector::~PagedVector()
-{
-    for (auto page : pages)
-    {
-        page.release();
-    }
-}
-
-
 void PagedVector::appendPageIfFull()
 {
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        if (auto page = bufferProvider->getBufferNoBlocking())
         {
             pages.emplace_back(page.value());
         }

@@ -19,7 +19,6 @@
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -32,7 +31,6 @@ class PagedVector
 {
 public:
     PagedVector(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
-    ~PagedVector(); // TODO remove
 
     /// Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull();

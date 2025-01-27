@@ -234,7 +234,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
 {
     std::unique_lock lock(unpooledBuffersMutex);
     UnpooledBufferHolder probe(bufferSize);
-    /*auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
+    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())
     {
         /// it points to a segment of size at least bufferSize;
@@ -258,7 +258,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
                 break;
             }
         }
-    }*/
+    }
     /// we could not find a buffer, allocate it
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
@@ -308,7 +308,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
     }
     UnpooledBufferHolder probe(segment->getSize());
-    /*auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
+    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())
     {
         for (auto it = candidate; it != unpooledBuffers.end(); ++it)
@@ -326,7 +326,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
                 break;
             }
         }
-    }*/
+    }
 }
 
 size_t BufferManager::getBufferSize() const

@@ -27,8 +27,8 @@ using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_P
 class MicroBenchmarksTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<uint64_t, uint64_t>>
 {
 public:
-    // TODO NOTE: The test needs approximately
-    static constexpr uint64_t DATA_SIZE = 2147483648; /// 2GB //12884901888; /// 12GB //17179869184; /// 16GB
+    /// NOTE: The test needs approximately up to four times DATA_SIZE of memory
+    static constexpr uint64_t DATA_SIZE = 12884901888; /// 12GB
     std::vector<double> execTimes;
 
     static void SetUpTestSuite()
@@ -39,9 +39,10 @@ public:
 
     static void TearDownTestSuite() { NES_INFO("Tear down MicroBenchmarksTest class."); }
 
-    static void addSchemaFields(const SchemaPtr& schema)
+    static SchemaPtr createSchema()
     {
-        schema->addField("f0", BasicType::UINT64)
+        return Schema::create()
+            ->addField("f0", BasicType::UINT64)
             ->addField("f1", BasicType::UINT64)
             ->addField("f2", BasicType::UINT64)
             ->addField("f3", BasicType::UINT64)
@@ -147,7 +148,6 @@ public:
             const uint64_t expectedNumPages = std::ceil(oldNumTuples / newCapacity);
 
             // TODO does this enhance performance?
-            newPagedVector->appendPageIfFull();
             newPagedVector->getPages().reserve(expectedNumPages);
 
             auto& newPages = newPagedVector->getPages();
@@ -200,20 +200,21 @@ public:
         NES_INFO("PagedVector cleared in {} ms", timeInMs);
     }
 
-    void generateData(const std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector, const uint64_t numBuffers)
+    std::shared_ptr<Nautilus::Interface::PagedVector> createPagedVector(
+        const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+        const Memory::BufferManagerPtr& bufferManager,
+        const uint64_t numBuffers)
     {
         NES_INFO("Data generating...");
         Timer<> timer("generateDataTimer");
         timer.start();
 
         // TODO does this enhance performance?
-        pagedVector->appendPageIfFull();
-        pagedVector->getPages().reserve(numBuffers + pagedVector->getNumberOfPages() - 1);
-
-        const auto memoryLayout = pagedVector->getMemoryLayout();
-        const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
+        const auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
+        pagedVector->getPages().reserve(numBuffers);
 
         auto valueCnt = 0UL;
+        const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
         const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
 
         for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
@@ -239,6 +240,8 @@ public:
         auto timeInMs = timer.getPrintTime();
         execTimes.emplace_back(timeInMs);
         NES_INFO("Data generated in {} ms", timeInMs);
+
+        return pagedVector;
     }
 
     void writePagedVectorToFile(
@@ -581,24 +584,22 @@ public:
     }
 };
 
-TEST_P(MicroBenchmarksTest, benchmark1)
+TEST_P(MicroBenchmarksTest, noSeparation)
 {
     execTimes.clear();
+
     const auto [bufferSize, fileBufferSizePercent] = GetParam();
     const auto numBuffers = DATA_SIZE / bufferSize;
     const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+
+    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
     const auto seperateKeys = NO_SEPARATION;
 
-    const std::vector<std::string> fileNames = {"../../../benchmark1_payload.dat"};
-    const auto testSchema = Schema::create();
-    addSchemaFields(testSchema);
-
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
+    const auto testSchema = createSchema();
+    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
     const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f1"});
 
-    auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
-    generateData(pagedVector, numBuffers);
+    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
     NES_INFO("PagedVector copying...");
     const auto expectedPagedVector = copyPagedVector(*pagedVector);
     NES_INFO("PagedVector copied");
@@ -609,10 +610,43 @@ TEST_P(MicroBenchmarksTest, benchmark1)
     writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
     comparePagedVectors(expectedPagedVector, pagedVector);
 
-    //std::this_thread::sleep_for(std::chrono::seconds(10));
     //createMeasurementsCSV("fileName.csv");
 }
 
-INSTANTIATE_TEST_CASE_P(Benchmarks, MicroBenchmarksTest, ::testing::Combine(::testing::Values(1024, 4096), ::testing::Values(0, 100)));
+TEST_P(MicroBenchmarksTest, separateFilesLittleConsecutiveKeys)
+{
+    execTimes.clear();
+
+    const auto [bufferSize, fileBufferSizePercent] = GetParam();
+    const auto numBuffers = DATA_SIZE / bufferSize;
+    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+
+    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat", "../../../micro_benchmarks_keys.dat"};
+    const auto seperateKeys = SEPARATE_FILES;
+
+    const auto testSchema = createSchema();
+    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
+    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+    memoryLayout->setKeyFieldNames({"f0", "f1"});
+
+    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
+    NES_INFO("PagedVector copying...");
+    const auto expectedPagedVector = copyPagedVector(*pagedVector);
+    NES_INFO("PagedVector copied");
+
+    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
+    clearPagedVector(pagedVector, bufferManager, seperateKeys);
+
+    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
+    comparePagedVectors(expectedPagedVector, pagedVector);
+
+    //createMeasurementsCSV("fileName.csv");
+}
+
+INSTANTIATE_TEST_CASE_P(
+    //Benchmarks, MicroBenchmarksTest, ::testing::Combine(::testing::Values(1024, 4096, 134217728, 268435456, 1073741824), ::testing::Values(0, 100)));
+    Benchmarks,
+    MicroBenchmarksTest,
+    ::testing::Combine(::testing::Values(4096), ::testing::Values(0, 100)));
 
 }
