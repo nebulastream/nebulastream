@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <type_traits>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -26,7 +27,7 @@ bool isSpecificBasicType(const PhysicalType& physicalType, BasicPhysicalType::Na
 
 bool isChar(const PhysicalType& physicalType);
 
-bool isVariableSizedData(PhysicalTypePtr physicalType);
+bool isVariableSizedData(const std::shared_ptr<PhysicalType>& physicalType);
 
 bool isBool(const PhysicalType& physicalType);
 
@@ -57,7 +58,7 @@ bool isDouble(const PhysicalType& physicalType);
 /// @param physicalType the physical type at runtime
 /// @return returns true if the type is correct.
 template <class Type>
-bool isSamePhysicalType(PhysicalTypePtr physicalType)
+bool isSamePhysicalType(const std::shared_ptr<PhysicalType>& physicalType)
 {
     if (isVariableSizedData(physicalType) && std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {

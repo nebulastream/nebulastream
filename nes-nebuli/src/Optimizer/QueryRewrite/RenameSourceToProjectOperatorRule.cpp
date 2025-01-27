@@ -12,8 +12,10 @@
     limitations under the License.
 */
 #include <memory>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -26,7 +28,7 @@
 namespace NES::Optimizer
 {
 
-QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan)
+std::shared_ptr<QueryPlan> RenameSourceToProjectOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
@@ -51,7 +53,7 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
     auto newSourceName = renameSourceOperator->getNewSourceName();
     auto inputSchema = renameSourceOperator->getInputSchema();
 
-    std::vector<NodeFunctionPtr> projectionAttributes;
+    std::vector<std::shared_ptr<NodeFunction>> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
     for (const auto& field : *inputSchema)
     {
@@ -69,7 +71,7 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
     return projectOperator;
 }
 
-RenameSourceToProjectOperatorRulePtr RenameSourceToProjectOperatorRule::create()
+std::shared_ptr<RenameSourceToProjectOperatorRule> RenameSourceToProjectOperatorRule::create()
 {
     return std::make_shared<RenameSourceToProjectOperatorRule>(RenameSourceToProjectOperatorRule());
 }

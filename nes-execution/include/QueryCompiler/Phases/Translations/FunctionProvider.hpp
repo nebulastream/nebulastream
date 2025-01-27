@@ -14,13 +14,12 @@
 
 #pragma once
 #include <memory>
+#include <Execution/Functions/Function.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 
 namespace NES
 {
-class NodeFunction;
-using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
-class FunctionFunction;
 
 namespace QueryCompilation
 {
@@ -29,7 +28,7 @@ class FunctionProvider
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
     ///NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
-    static std::unique_ptr<Runtime::Execution::Functions::Function> lowerFunction(const NodeFunctionPtr& nodeFunction);
+    static std::unique_ptr<Runtime::Execution::Functions::Function> lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction);
 
 
 private:

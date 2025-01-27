@@ -14,6 +14,8 @@
 
 #include <memory>
 #include <utility>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -21,18 +23,17 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "Nodes/Node.hpp"
 
 
 namespace NES
 {
 
-bool SinkLogicalOperator::isIdentical(const NodePtr& rhs) const
+bool SinkLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SinkLogicalOperator::equal(const NodePtr& rhs) const
+bool SinkLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
@@ -53,7 +54,7 @@ std::string SinkLogicalOperator::toString() const
 }
 bool SinkLogicalOperator::inferSchema()
 {
-    auto result = LogicalUnaryOperator::inferSchema();
+    const auto result = LogicalUnaryOperator::inferSchema();
 
     if (result && sinkDescriptor)
     {
@@ -85,7 +86,6 @@ std::shared_ptr<Operator> SinkLogicalOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& [propertyName, propertyValue] : properties)
@@ -103,15 +103,15 @@ void SinkLogicalOperator::inferStringSignature()
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "SINK()." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
+    const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

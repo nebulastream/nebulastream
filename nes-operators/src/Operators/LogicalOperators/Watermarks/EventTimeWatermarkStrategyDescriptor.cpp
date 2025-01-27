@@ -18,10 +18,12 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -29,30 +31,31 @@
 namespace NES::Windowing
 {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(NodeFunctionPtr onField, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(std::shared_ptr<NodeFunction> onField, TimeUnit unit)
     : onField(std::move(onField)), unit(std::move(unit))
 {
 }
 
-WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit)
+std::shared_ptr<WatermarkStrategyDescriptor>
+EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(unit)));
 }
 
-NodeFunctionPtr EventTimeWatermarkStrategyDescriptor::getOnField() const
+std::shared_ptr<NodeFunction> EventTimeWatermarkStrategyDescriptor::getOnField() const
 {
     return onField;
 }
 
-void EventTimeWatermarkStrategyDescriptor::setOnField(const NodeFunctionPtr& newField)
+void EventTimeWatermarkStrategyDescriptor::setOnField(const std::shared_ptr<NodeFunction>& newField)
 {
     this->onField = newField;
 }
 
-bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other)
+bool EventTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other)
 {
-    auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
+    const auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
     return eventTimeWatermarkStrategyDescriptor->onField->equal(onField);
 }
 
@@ -74,12 +77,12 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
+bool EventTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>& schema)
 {
     const auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
-    auto existingField = schema->getFieldByName(fieldName);
+    const auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         fieldAccessFunction->updateFieldName(existingField.value()->getName());

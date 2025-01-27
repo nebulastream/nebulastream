@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
@@ -26,6 +27,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -57,10 +59,10 @@ public:
     }
 
 protected:
-    SchemaPtr dummySchema;
-    NodeFunctionPtr nodeFunctionReadLeft;
-    NodeFunctionPtr nodeFunctionReadRight;
-    NodeFunctionPtr nodeFunctionReadBool;
+    std::shared_ptr<Schema> dummySchema;
+    std::shared_ptr<NodeFunction> nodeFunctionReadLeft;
+    std::shared_ptr<NodeFunction> nodeFunctionReadRight;
+    std::shared_ptr<NodeFunction> nodeFunctionReadBool;
 };
 
 TEST_F(FunctionProviderTest, testLoweringCurrentlyUnsupportedFunction)

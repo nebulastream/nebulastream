@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/Functions/Functions.hpp>
+#include <API/Functions/LogicalFunctions.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
@@ -22,55 +24,64 @@
 #include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunction.hpp>
 
 namespace NES
 {
 
-NodeFunctionPtr operator||(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator||(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionOr::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator&&(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator&&(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionAnd::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator==(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator==(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionEquals::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator!=(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator!=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionNegate::create(NodeFunctionEquals::create(std::move(functionLeft), std::move(functionRight)));
 }
 
-NodeFunctionPtr operator<=(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator<=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionLessEquals::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator<(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator<(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionLess::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator>=(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator>=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionGreaterEquals::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator>(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
+std::shared_ptr<NodeFunction>
+operator>(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
 {
     return NodeFunctionGreater::create(std::move(functionLeft), std::move(functionRight));
 }
 
-NodeFunctionPtr operator!(NodeFunctionPtr exp)
+std::shared_ptr<NodeFunction> operator!(const std::shared_ptr<NodeFunction>& exp)
 {
     return NodeFunctionNegate::create(std::move(exp));
 }
-NodeFunctionPtr operator!(FunctionItem exp)
+std::shared_ptr<NodeFunction> operator!(const FunctionItem& exp)
 {
     return !exp.getNodeFunction();
 }

@@ -13,10 +13,11 @@
 */
 
 #pragma once
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -32,15 +33,15 @@ public:
     /**
      * @brief Create a new negate function
      */
-    static NodeFunctionPtr create(const NodeFunctionPtr& child);
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& child);
 
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     bool validateBeforeLowering() const override;
 
     /// We assume that the children of this function is a predicate.
     void inferStamp(const Schema& schema) override;
 
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     explicit NodeFunctionNegate(NodeFunctionNegate* other);

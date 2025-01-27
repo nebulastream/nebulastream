@@ -14,22 +14,15 @@
 
 #pragma once
 
+#include <memory>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES
 {
-
-class Integer;
-using IntegerPtr = std::shared_ptr<Integer>;
-
-class Float;
-using FloatPtr = std::shared_ptr<Float>;
-
-class Char;
-using CharPtr = std::shared_ptr<Char>;
-
-class VariableSizedDataType;
-using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.
@@ -43,24 +36,24 @@ public:
     /**
      * @brief Translates a nes data type into a corresponding physical type.
      * @param dataType
-     * @return PhysicalTypePtr
+     * @return std::shared_ptr<PhysicalType>
      */
-    PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const override;
+    [[nodiscard]] std::shared_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const override;
 
 private:
     /**
     * @brief Translates an integer data type into a corresponding physical type.
     * @param integerType
-    * @return PhysicalTypePtr
+    * @return std::shared_ptr<PhysicalType>
     */
-    static PhysicalTypePtr getPhysicalType(const IntegerPtr& integerType);
+    static std::shared_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Integer>& integerType);
 
     /**
     * @brief Translates a float data type into a corresponding physical type.
     * @param floatType
-    * @return PhysicalTypePtr
+    * @return std::shared_ptr<PhysicalType>
     */
-    static PhysicalTypePtr getPhysicalType(const FloatPtr& floatType);
+    static std::shared_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Float>& floatType);
 };
 
 }

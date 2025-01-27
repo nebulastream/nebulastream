@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
@@ -27,7 +28,7 @@
 namespace NES::Optimizer
 {
 
-QueryRewritePhasePtr QueryRewritePhase::create()
+std::shared_ptr<QueryRewritePhase> QueryRewritePhase::create()
 {
     return std::make_shared<QueryRewritePhase>(QueryRewritePhase());
 }
@@ -44,7 +45,7 @@ QueryRewritePhase::QueryRewritePhase()
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
-void QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
+void QueryRewritePhase::execute(std::shared_ptr<QueryPlan>& queryPlan) const
 {
     /// Apply rules necessary for enabling query execution when stream alias or union operators are involved
     queryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);

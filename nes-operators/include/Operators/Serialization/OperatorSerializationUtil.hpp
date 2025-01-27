@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -32,19 +33,6 @@
 namespace NES
 {
 
-class SerializableOperator;
-class SerializableOperator_WindowDetails;
-class SerializableOperator_JoinDetails;
-class SerializableOperator_BatchJoinDetails;
-class SerializableOperator_WatermarkStrategyDetails;
-class SerializableOperator_LimitDetails;
-class SerializableOperator_MapDetails;
-class SerializableOperator_InferModelDetails;
-class SerializableOperator_CEPIterationDetails;
-class SerializableOperator_ProjectionDetails;
-class SerializableOperator_SelectionDetails;
-class SerializableOperator_UnionDetails;
-class SerializableOperator_BroadcastDetails;
 
 /// The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a corresponding protobuffer object.
 class OperatorSerializationUtil
@@ -59,11 +47,12 @@ public:
 
     static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
+    static std::shared_ptr<LogicalUnaryOperator>
+    deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
     static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
+    static std::shared_ptr<LogicalUnaryOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
 
     static void serializeSelectionOperator(const LogicalSelectionOperator& selectionOperator, SerializableOperator& serializedOperator);
 
@@ -99,12 +88,13 @@ public:
         const Windowing::WatermarkStrategyDescriptor& watermarkStrategyDescriptor,
         SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
 
-    static Windowing::WatermarkStrategyDescriptorPtr
+    static std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
     deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
 
     static void serializeInputSchema(const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator);
 
-    static void deserializeInputSchema(LogicalOperatorPtr operatorNode, const SerializableOperator& serializedOperator);
+    static void
+    deserializeInputSchema(const std::shared_ptr<LogicalOperator>& operatorNode, const SerializableOperator& serializedOperator);
 
     static void
     serializeInferModelOperator(const InferModel::LogicalInferModelOperator& inferModel, SerializableOperator& serializedOperator);

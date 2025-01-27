@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,6 +22,7 @@
 #include <val_ptr.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
@@ -267,7 +269,7 @@ TEST_F(VarValTest, writeToMemoryTest)
 
 TEST_F(VarValTest, readFromMemoryTest)
 {
-    auto testVarValReadFromMemory = []<typename T>(const T value, const PhysicalTypePtr type)
+    auto testVarValReadFromMemory = []<typename T>(const T value, const std::shared_ptr<PhysicalType>& type)
     {
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));

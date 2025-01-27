@@ -11,31 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
-NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
     : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
-NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other)
     : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
 
-NodeFunctionPtr NodeFunctionFieldRename::create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName)
+std::shared_ptr<NodeFunction>
+NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
 {
     return std::make_shared<NodeFunctionFieldRename>(NodeFunctionFieldRename(originalField, std::move(newFieldName)));
 }
 
-bool NodeFunctionFieldRename::equal(const NodePtr& rhs) const
+bool NodeFunctionFieldRename::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldRename>(rhs))
     {
@@ -45,7 +48,7 @@ bool NodeFunctionFieldRename::equal(const NodePtr& rhs) const
     return false;
 }
 
-NodeFunctionFieldAccessPtr NodeFunctionFieldRename::getOriginalField() const
+std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldRename::getOriginalField() const
 {
     return this->originalField;
 }
@@ -93,7 +96,7 @@ void NodeFunctionFieldRename::inferStamp(const Schema& schema)
     stamp = fieldAttribute.value()->getDataType();
 }
 
-NodeFunctionPtr NodeFunctionFieldRename::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionFieldRename::deepCopy()
 {
     return NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalField->deepCopy()), newFieldName);
 }

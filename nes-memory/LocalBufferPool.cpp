@@ -14,16 +14,19 @@
 
 #include "LocalBufferPool.hpp"
 #include <chrono>
+#include <cstddef>
+#include <deque>
+#include <memory>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "TupleBufferImpl.hpp"
+#include <TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
 LocalBufferPool::LocalBufferPool(
-    const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& buffers, size_t numberOfReservedBuffers)
+    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& buffers, const size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
     , exclusiveBuffers(numberOfReservedBuffers)
     , exclusiveBufferCount(numberOfReservedBuffers)

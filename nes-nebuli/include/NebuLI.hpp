@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <filesystem>
+#include <istream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -57,7 +60,7 @@ struct QueryConfig
     std::vector<PhysicalSource> physical;
 };
 
-DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
-DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
-DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config);
+std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
+std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

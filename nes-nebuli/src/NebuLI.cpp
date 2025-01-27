@@ -13,10 +13,14 @@
 */
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
+#include <istream>
+#include <memory>
 #include <ranges>
 #include <regex>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -137,7 +141,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    SchemaPtr schema,
+    std::shared_ptr<Schema> schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -175,7 +179,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -228,7 +232,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
-DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
+std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -239,7 +243,7 @@ DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
     return loadFrom(file);
 }
 
-DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
+std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
 {
     try
     {

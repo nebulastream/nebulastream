@@ -14,11 +14,13 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <Measures/TimeMeasure.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Parsers
 {
@@ -27,10 +29,10 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::string> sinkNames;
-    std::stack<QueryPlanPtr> queryPlans;
+    std::stack<std::shared_ptr<QueryPlan>> queryPlans;
 
 public:
-    QueryPlanPtr getQueryPlan() const;
+    [[nodiscard]] std::shared_ptr<QueryPlan> getQueryPlan() const;
     void poppush(const AntlrSQLHelper& helper);
 
     /// enter/exit parsing pairs

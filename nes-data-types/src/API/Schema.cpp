@@ -13,11 +13,16 @@
 */
 
 #include <iostream>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -25,9 +30,14 @@
 namespace NES
 {
 
-Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType) {};
+Schema::Schema() : layoutType(MemoryLayoutType::ROW_LAYOUT) {};
+Schema::Schema(const MemoryLayoutType layoutType) : layoutType(layoutType) {};
 
-SchemaPtr Schema::create(MemoryLayoutType layoutType)
+std::shared_ptr<Schema> Schema::create()
+{
+    return std::make_shared<Schema>();
+}
+std::shared_ptr<Schema> Schema::create(MemoryLayoutType layoutType)
 {
     return std::make_shared<Schema>(layoutType);
 }
@@ -37,12 +47,12 @@ size_t Schema::getFieldCount() const
     return fields.size();
 }
 
-Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType)
+Schema::Schema(const std::shared_ptr<Schema>& schema, const MemoryLayoutType layoutType) : layoutType(layoutType)
 {
     copyFields(schema);
 }
 
-SchemaPtr Schema::copy() const
+std::shared_ptr<Schema> Schema::copy() const
 {
     return std::make_shared<Schema>(*this);
 }
@@ -60,16 +70,16 @@ uint64_t Schema::getSchemaSizeInBytes() const
     return size;
 }
 
-SchemaPtr Schema::copyFields(const SchemaPtr& otherSchema)
+std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<Schema>& otherSchema)
 {
-    for (const AttributeFieldPtr& attribute : otherSchema->fields)
+    for (const std::shared_ptr<AttributeField>& attribute : otherSchema->fields)
     {
         fields.push_back(attribute->deepCopy());
     }
     return copy();
 }
 
-SchemaPtr Schema::addField(const AttributeFieldPtr& attribute)
+std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& attribute)
 {
     if (attribute)
     {
@@ -79,22 +89,22 @@ SchemaPtr Schema::addField(const AttributeFieldPtr& attribute)
 }
 
 ///TODO #473: investigate if we can remove this method
-SchemaPtr Schema::addField(const std::string& name, const BasicType& type)
+std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicType& type)
 {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-SchemaPtr Schema::addField(const std::string& name, DataTypePtr data)
+std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
 {
     return addField(AttributeField::create(name, data));
 }
 
-void Schema::removeField(const AttributeFieldPtr& field)
+void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 {
-    std::erase_if(fields, [&](const AttributeFieldPtr& f) { return f->getName() == field->getName(); });
+    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
 }
 
-void Schema::replaceField(const std::string& name, const DataTypePtr& type)
+void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
 {
     for (auto& field : fields)
     {
@@ -106,12 +116,12 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
     }
 }
 
-std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& fieldName) const
+std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std::string& fieldName) const
 {
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
 
     ///Iterate over all fields and look for field which fully qualified name
-    std::vector<AttributeFieldPtr> matchedFields;
+    std::vector<std::shared_ptr<AttributeField>> matchedFields;
     for (const auto& field : fields)
     {
         if (auto fullyQualifiedFieldName = field->getName(); fieldName.length() <= fullyQualifiedFieldName.length())
@@ -138,7 +148,7 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
     return std::nullopt;
 }
 
-AttributeFieldPtr Schema::getFieldByIndex(size_t index) const
+std::shared_ptr<AttributeField> Schema::getFieldByIndex(const size_t index) const
 {
     if (index < fields.size())
     {
@@ -232,7 +242,7 @@ Schema::MemoryLayoutType Schema::getLayoutType() const
     return layoutType;
 }
 
-void Schema::setLayoutType(Schema::MemoryLayoutType layoutType)
+void Schema::setLayoutType(const Schema::MemoryLayoutType layoutType)
 {
     Schema::layoutType = layoutType;
 }
@@ -254,7 +264,7 @@ bool Schema::empty() const
     return fields.empty();
 }
 
-SchemaPtr Schema::updateSourceName(const std::string& srcName) const
+std::shared_ptr<Schema> Schema::updateSourceName(const std::string& srcName) const
 {
     for (const auto& field : fields)
     {

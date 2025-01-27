@@ -13,7 +13,10 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <Functions/NodeFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -27,20 +30,20 @@ public:
     /**
      * @brief set the children node of this function.
      */
-    void setChildren(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
+    void setChildren(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
 
     /**
      * @brief gets the left children.
      */
-    NodeFunctionPtr getLeft() const;
+    std::shared_ptr<NodeFunction> getLeft() const;
 
     /**
      * @brief gets the right children.
      */
-    NodeFunctionPtr getRight() const;
+    std::shared_ptr<NodeFunction> getRight() const;
 
 protected:
-    explicit NodeFunctionBinary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionBinary(std::shared_ptr<DataType> stamp, std::string name);
     explicit NodeFunctionBinary(NodeFunctionBinary* other);
 };
 

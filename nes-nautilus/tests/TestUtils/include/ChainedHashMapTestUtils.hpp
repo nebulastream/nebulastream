@@ -55,13 +55,13 @@ struct TestParams
     TestParams() = default;
     TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue& minMaxNumberOfBuckets, const MinMaxValue& minMaxPageSize);
     uint64_t numberOfItems{}, numberOfBuckets{}, pageSize{};
-    std::vector<SchemaPtr> keyDataTypes, valueDataTypes;
+    std::vector<std::shared_ptr<Schema>> keyDataTypes, valueDataTypes;
 };
 
 class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
 {
 public:
-    Memory::BufferManagerPtr bufferManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     std::shared_ptr<Schema> inputSchema;
     std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;

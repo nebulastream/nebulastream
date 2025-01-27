@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <iostream>
 #include <utility>
-
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -81,7 +81,7 @@ std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer
     return bufferContent;
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

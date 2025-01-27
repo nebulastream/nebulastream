@@ -13,7 +13,12 @@
 */
 #pragma once
 
+#include <memory>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -25,22 +30,32 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalProjectOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions);
-    static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<NodeFunctionPtr>& functions);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions);
+    PhysicalProjectOperator(
+        OperatorId id,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
+        std::vector<std::shared_ptr<NodeFunction>> functions);
+    static std::shared_ptr<PhysicalOperator> create(
+        OperatorId id,
+        const std::shared_ptr<Schema>& inputSchema,
+        const std::shared_ptr<Schema>& outputSchema,
+        const std::vector<std::shared_ptr<NodeFunction>>& functions);
+    static std::shared_ptr<PhysicalOperator> create(
+        const std::shared_ptr<Schema>& inputSchema,
+        const std::shared_ptr<Schema>& outputSchema,
+        const std::vector<std::shared_ptr<NodeFunction>>& functions);
     /**
      * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<NodeFunctionPtr>
+     * @return  std::vector<std::shared_ptr<NodeFunction>>
      */
-    std::vector<NodeFunctionPtr> getFunctions();
+    std::vector<std::shared_ptr<NodeFunction>> getFunctions();
     std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;
 
 private:
-    std::vector<NodeFunctionPtr> functions;
+    std::vector<std::shared_ptr<NodeFunction>> functions;
 };
 
 }

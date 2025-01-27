@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,6 +34,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -45,7 +47,7 @@ const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, c
 }
 
 VarVal TupleBufferMemoryProvider::loadValue(
-    const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -67,7 +69,7 @@ uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, c
 }
 
 VarVal TupleBufferMemoryProvider::storeValue(
-    const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
+    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -101,7 +103,8 @@ bool TupleBufferMemoryProvider::includesField(
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
-std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const SchemaPtr& schema)
+std::shared_ptr<TupleBufferMemoryProvider>
+TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {

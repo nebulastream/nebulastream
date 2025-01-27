@@ -13,34 +13,37 @@
 */
 
 #include <cmath>
+#include <memory>
+#include <utility>
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
 
 
 namespace NES
 {
 
-NodeFunctionSqrt::NodeFunctionSqrt(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
+NodeFunctionSqrt::NodeFunctionSqrt(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
 
 NodeFunctionSqrt::NodeFunctionSqrt(NodeFunctionSqrt* other) : NodeFunctionArithmeticalUnary(other)
 {
 }
 
-NodeFunctionPtr NodeFunctionSqrt::create(const NodeFunctionPtr& child)
+std::shared_ptr<NodeFunction> NodeFunctionSqrt::create(const std::shared_ptr<NodeFunction>& child)
 {
     auto sqrtNode = std::make_shared<NodeFunctionSqrt>(child->getStamp());
     sqrtNode->setChild(child);
     return sqrtNode;
 }
 
-bool NodeFunctionSqrt::equal(const NodePtr& rhs) const
+bool NodeFunctionSqrt::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSqrt>(rhs))
     {
@@ -57,7 +60,7 @@ std::string NodeFunctionSqrt::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionSqrt::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionSqrt::deepCopy()
 {
     return NodeFunctionSqrt::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

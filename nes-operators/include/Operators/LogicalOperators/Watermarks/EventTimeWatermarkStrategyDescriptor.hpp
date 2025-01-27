@@ -15,40 +15,39 @@
 #pragma once
 
 #include <memory>
+#include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing
 {
 
-class EventTimeWatermarkStrategyDescriptor;
-using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWatermarkStrategyDescriptor>;
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
 {
 public:
-    static WatermarkStrategyDescriptorPtr create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit);
+    static std::shared_ptr<WatermarkStrategyDescriptor> create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit);
 
-    NodeFunctionPtr getOnField() const;
+    std::shared_ptr<NodeFunction> getOnField() const;
 
-    void setOnField(const NodeFunctionPtr& newField);
+    void setOnField(const std::shared_ptr<NodeFunction>& newField);
 
     TimeUnit getTimeUnit() const;
 
     void setTimeUnit(const TimeUnit& newUnit);
 
-    bool equal(WatermarkStrategyDescriptorPtr other) override;
+    bool equal(std::shared_ptr<WatermarkStrategyDescriptor> other) override;
 
     std::string toString() override;
 
-    bool inferStamp(SchemaPtr schema) override;
+    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
 
 private:
     /// Field where the watermark should be retrieved
-    NodeFunctionPtr onField;
+    std::shared_ptr<NodeFunction> onField;
     TimeUnit unit;
 
-    explicit EventTimeWatermarkStrategyDescriptor(NodeFunctionPtr onField, TimeUnit unit);
+    explicit EventTimeWatermarkStrategyDescriptor(std::shared_ptr<NodeFunction> onField, TimeUnit unit);
 };
 
 }

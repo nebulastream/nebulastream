@@ -20,10 +20,6 @@
 
 namespace NES::Windowing
 {
-
-class WindowType;
-using WindowTypePtr = std::shared_ptr<WindowType>;
-
 class WindowType : public std::enable_shared_from_this<WindowType>
 {
 public:
@@ -33,7 +29,7 @@ public:
 
     virtual std::string toString() const = 0;
 
-    virtual bool equal(WindowTypePtr otherWindowType) = 0;
+    virtual bool equal(std::shared_ptr<WindowType> otherWindowType) = 0;
 
     virtual bool inferStamp(const Schema& schema) = 0;
 

@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
@@ -45,6 +47,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -56,9 +59,11 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -73,7 +78,8 @@ LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(std::shared_p
 {
 }
 
-PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize)
+std::shared_ptr<PipelineQueryPlan>
+LowerPhysicalToNautilusOperators::apply(std::shared_ptr<PipelineQueryPlan> pipelinedQueryPlan, const size_t bufferSize)
 {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines())
     {
@@ -85,12 +91,13 @@ PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPt
     return pipelinedQueryPlan;
 }
 
-OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize)
+std::shared_ptr<OperatorPipeline>
+LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operatorPipeline, const size_t bufferSize)
 {
     const auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
     auto nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes)
@@ -117,9 +124,9 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
-    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-    size_t bufferSize,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+    const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+    const size_t bufferSize,
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers) const
 {
     NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
@@ -167,7 +174,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto keyFunctionLogical = windowDefinition->getKeys();
         for (const auto& nodeFunctionKey : keyFunctionLogical)
         {
-            DefaultPhysicalTypeFactory const typeFactory;
+            const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
             keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
@@ -185,7 +192,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             fieldValues,
             entriesPerPage,
             entrySize);
-        std::unique_ptr<Nautilus::Interface::HashFunction> const hashFunction
+        const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
         const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
             handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
@@ -212,7 +219,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         uint64_t keySize = 0;
         for (const auto& nodeFunctionKey : windowDefinition->getKeys())
         {
-            DefaultPhysicalTypeFactory const typeFactory;
+            const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
             keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
@@ -234,7 +241,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             fieldValues,
             entriesPerPage,
             entrySize);
-        std::unique_ptr<Nautilus::Interface::HashFunction> const hashFunction
+        const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
         const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(
             std::move(windowAggregationOperator), handlerIndex, windowMetaData);
@@ -276,10 +283,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
         auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             options->windowOperatorOptions.pageSize, probeOperator->getLeftInputSchema());
-        leftMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames({probeOperator->getJoinFieldNameLeft()});
+        leftMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameLeft()});
         auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             options->windowOperatorOptions.pageSize, probeOperator->getRightInputSchema());
-        rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
+        rightMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
 
         std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;
         switch (probeOperator->getJoinStrategy())
@@ -326,7 +333,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
-LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
+LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();
     INVARIANT(
@@ -341,9 +348,9 @@ LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOpe
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
-    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+    const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
     size_t bufferSize,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers)
 {
     auto schema = operatorNode->getOutputSchema();
     INVARIANT(
@@ -359,7 +366,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
+LowerPhysicalToNautilusOperators::lowerFilter(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorPtr)
 {
     const auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalSelectionOperator>(operatorPtr);
     auto function = FunctionProvider::lowerFunction(filterOperator->getPredicate());
@@ -367,7 +374,7 @@ LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalO
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerMap(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
+LowerPhysicalToNautilusOperators::lowerMap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorPtr)
 {
     const auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
     const auto assignmentField = mapOperator->getMapFunction()->getField();

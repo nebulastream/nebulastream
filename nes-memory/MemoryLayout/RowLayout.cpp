@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -24,7 +25,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(SchemaPtr schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
+RowLayout::RowLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -38,7 +39,7 @@ RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<RowLayout> RowLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
 {
     return std::make_shared<RowLayout>(schema, bufferSize);
 }

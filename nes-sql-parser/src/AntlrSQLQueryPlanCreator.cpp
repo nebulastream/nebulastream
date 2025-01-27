@@ -49,13 +49,14 @@
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Parsers
 {
-std::string queryPlanToString(const QueryPlanPtr& queryPlan)
+std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
 {
     const std::regex regex1("  ");
     const std::regex regex2("[0-9]");
@@ -64,7 +65,7 @@ std::string queryPlanToString(const QueryPlanPtr& queryPlan)
     return queryPlanStr;
 }
 
-QueryPlanPtr AntlrSQLQueryPlanCreator::getQueryPlan() const
+std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo #421: support multiple sinks
     return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
@@ -219,7 +220,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    for (const NodeFunctionPtr& selectFunction : helper.functionBuilder)
+    for (const std::shared_ptr<NodeFunction>& selectFunction : helper.functionBuilder)
     {
         helper.addProjectionField(selectFunction);
     }
@@ -267,7 +268,7 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     auto helper = helpers.top();
-    NodeFunctionPtr function;
+    std::shared_ptr<NodeFunction> function;
 
     const auto rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
@@ -305,7 +306,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    NodeFunctionPtr function;
+    std::shared_ptr<NodeFunction> function;
 
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
@@ -380,7 +381,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            const NodeFunctionPtr attr = helper.functionBuilder.back();
+            const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
@@ -449,7 +450,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    QueryPlanPtr queryPlan;
+    std::shared_ptr<QueryPlan> queryPlan;
 
     if (!helper.queryPlans.empty())
     {
@@ -636,14 +637,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         && context->children.size() == 1)
     {
         std::string implicitFieldName;
-        const NodeFunctionPtr mapFunction = helper.functionBuilder.back();
+        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
         /// there must be a field access function node in mapFunction.
         for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
         {
             if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
             {
-                const auto fieldAccessNodePtr = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fmt::format("{}_{}", fieldAccessNodePtr->getFieldName(), helper.implicitMapCountHelper);
+                const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
+                implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
                 INVARIANT(
                     ++countNodeFieldAccess < 2,
                     "The function of a named function must only have one child that is a field access function.");

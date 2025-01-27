@@ -21,11 +21,11 @@
 #include <vector>
 #include <Runtime/BufferManager.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
-#include "gtest/gtest.h"
 
 #include <boost/asio.hpp>
 

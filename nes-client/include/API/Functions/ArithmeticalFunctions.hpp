@@ -16,71 +16,74 @@
 
 #include <memory>
 #include <API/Functions/Functions.hpp>
+#include <Functions/NodeFunction.hpp>
 
 namespace NES
 {
 
-class FunctionItem;
-class NodeFunction;
-using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 /// Defines common arithmetical operations between function nodes.
-NodeFunctionPtr operator-(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator+(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator*(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator/(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator%(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr MOD(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr POWER(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr ABS(const NodeFunctionPtr& exp);
-NodeFunctionPtr SQRT(const NodeFunctionPtr& exp);
-NodeFunctionPtr EXP(const NodeFunctionPtr& exp);
-NodeFunctionPtr ROUND(const NodeFunctionPtr& exp);
-NodeFunctionPtr CEIL(const NodeFunctionPtr& exp);
-NodeFunctionPtr FLOOR(const NodeFunctionPtr& exp);
-NodeFunctionPtr operator++(NodeFunctionPtr exp);
-NodeFunctionPtr operator--(NodeFunctionPtr exp);
-NodeFunctionPtr operator++(NodeFunctionPtr exp, int value);
-NodeFunctionPtr operator--(NodeFunctionPtr exp, int value);
+std::shared_ptr<NodeFunction>
+operator-(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction>
+operator+(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction>
+operator*(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction>
+operator/(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction>
+operator%(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> MOD(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> POWER(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> ABS(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> SQRT(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> EXP(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> ROUND(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> CEIL(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> FLOOR(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction);
+std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction);
+const std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction, int value);
+const std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction, int value);
 
 /// Defines common binary arithmetical operations between a constant and an function node.
-NodeFunctionPtr operator+(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator-(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator*(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator/(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr operator%(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr MOD(FunctionItem leftExp, NodeFunctionPtr rightExp);
-NodeFunctionPtr POWER(FunctionItem leftExp, NodeFunctionPtr rightExp);
+std::shared_ptr<NodeFunction> operator+(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> operator-(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> operator*(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> operator/(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> operator%(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> MOD(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
+std::shared_ptr<NodeFunction> POWER(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight);
 
 /// Defines common binary arithmetical operations between an function node and a constant.
-NodeFunctionPtr operator+(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator-(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator*(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator/(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator%(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr MOD(NodeFunctionPtr leftExp, FunctionItem rightExp);
-NodeFunctionPtr POWER(NodeFunctionPtr leftExp, FunctionItem rightExp);
+std::shared_ptr<NodeFunction> operator+(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator-(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator*(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator/(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator%(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> MOD(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> POWER(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight);
 
 /// Defines common binary arithmetical operations between two function items
-NodeFunctionPtr operator+(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator-(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator*(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator/(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr operator%(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr MOD(FunctionItem leftExp, FunctionItem rightExp);
-NodeFunctionPtr POWER(FunctionItem leftExp, FunctionItem rightExp);
+std::shared_ptr<NodeFunction> operator+(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator-(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator*(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator/(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> operator%(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> MOD(const FunctionItem& functionLeft, const FunctionItem& functionRight);
+std::shared_ptr<NodeFunction> POWER(const FunctionItem& functionLeft, const FunctionItem& functionRight);
 
 
 /// Defines common unary arithmetical operations on an function items.
-NodeFunctionPtr ABS(FunctionItem exp);
-NodeFunctionPtr SQRT(FunctionItem exp);
-NodeFunctionPtr EXP(FunctionItem exp);
-NodeFunctionPtr ROUND(FunctionItem exp);
-NodeFunctionPtr CEIL(FunctionItem exp);
-NodeFunctionPtr FLOOR(FunctionItem exp);
-NodeFunctionPtr operator++(FunctionItem exp);
-NodeFunctionPtr operator--(FunctionItem exp);
-NodeFunctionPtr operator++(FunctionItem exp, int);
-NodeFunctionPtr operator--(FunctionItem exp, int);
+std::shared_ptr<NodeFunction> ABS(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> SQRT(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> EXP(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> ROUND(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> CEIL(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> FLOOR(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> operator++(const FunctionItem& otherFunction);
+std::shared_ptr<NodeFunction> operator--(const FunctionItem& otherFunction);
+const std::shared_ptr<NodeFunction> operator++(const FunctionItem& otherFunction, int);
+const std::shared_ptr<NodeFunction> operator--(const FunctionItem& otherFunction, int);
 
 }

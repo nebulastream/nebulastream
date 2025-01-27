@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <variant>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -110,7 +111,7 @@ class VarVal
 {
 public:
     /// Construct a VarVal object from memory
-    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type);
+    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type);
 
     /// Construct a VarVal object for example via VarVal(32)
     template <typename T>
@@ -172,7 +173,7 @@ public:
     }
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
-    [[nodiscard]] VarVal castToType(const PhysicalTypePtr& type) const;
+    [[nodiscard]] VarVal castToType(const std::shared_ptr<PhysicalType>& type) const;
 
     template <typename T>
     VarVal customVisit(T t) const

@@ -25,7 +25,6 @@
 
 namespace NES::Nautilus
 {
-class Record;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.

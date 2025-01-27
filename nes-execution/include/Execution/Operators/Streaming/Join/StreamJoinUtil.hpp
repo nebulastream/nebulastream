@@ -19,12 +19,6 @@
 
 namespace NES::Runtime::Execution
 {
-class OperatorHandler;
-
-namespace Operators
-{
-class StreamJoinOperatorHandler;
-}
 
 
 /// This stores the left, right and output schema for a binary join
@@ -44,6 +38,6 @@ struct JoinSchema
 namespace Util
 {
 /// Creates the join schema from the left and right schema
-SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema);
+std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema);
 }
 }

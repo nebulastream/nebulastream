@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <functional>
+#include <memory>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -27,10 +28,10 @@ public:
     explicit NautilusCompilationPhase(const std::shared_ptr<QueryCompilerOptions>& compilerOptions);
 
     /// Generates code for all pipelines in a pipelined query plan.
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr queryPlan);
+    std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
 
     /// Generates code for a particular pipeline.
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
+    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
 
 private:
     std::shared_ptr<QueryCompilerOptions> compilerOptions;

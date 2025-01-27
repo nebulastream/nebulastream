@@ -13,7 +13,10 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <Functions/NodeFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -22,25 +25,25 @@ namespace NES
 class NodeFunctionUnary : public NodeFunction
 {
 public:
-    explicit NodeFunctionUnary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionUnary(std::shared_ptr<DataType> stamp, std::string name);
 
     /**
      * @brief set the child node of this function.
-     * @param child NodeFunctionPtr
+     * @param child std::shared_ptr<NodeFunction>
      */
-    void setChild(const NodeFunctionPtr& child);
+    void setChild(const std::shared_ptr<NodeFunction>& child);
 
     /**
      * @brief returns the child of this function
      * @return
      */
-    NodeFunctionPtr child() const;
+    std::shared_ptr<NodeFunction> child() const;
 
     /**
     * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
+    * @return std::shared_ptr<NodeFunction>
     */
-    NodeFunctionPtr deepCopy() override = 0;
+    std::shared_ptr<NodeFunction> deepCopy() override = 0;
 
 protected:
     explicit NodeFunctionUnary(NodeFunctionUnary* other);

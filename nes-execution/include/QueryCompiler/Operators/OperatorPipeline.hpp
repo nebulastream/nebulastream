@@ -112,9 +112,9 @@ public:
 
     /**
      * @brief Returns the decomposed query plan
-     * @return DecomposedQueryPlanPtr
+     * @return std::shared_ptr<DecomposedQueryPlan>
      */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan();
+    std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
 
     /**
      * @brief Returns the pipeline id
@@ -172,9 +172,8 @@ private:
     PipelineId id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
-    DecomposedQueryPlanPtr decomposedQueryPlan;
+    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
     std::vector<OperatorId> operatorIds;
     Type pipelineType;
 };
-using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
 }

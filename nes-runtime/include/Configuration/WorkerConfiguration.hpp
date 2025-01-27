@@ -25,14 +25,10 @@
 namespace NES
 {
 
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 namespace Configurations
 {
 
-class WorkerConfiguration;
-using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
 class WorkerConfiguration : public BaseConfiguration
 {
@@ -40,8 +36,6 @@ public:
     WorkerConfiguration() : BaseConfiguration() {};
     WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
 
-
-    static WorkerConfigurationPtr create() { return std::make_shared<WorkerConfiguration>(); }
 
     StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
 

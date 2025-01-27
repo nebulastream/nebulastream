@@ -13,31 +13,34 @@
 */
 
 #include <cmath>
+#include <memory>
+#include <utility>
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
 
-NodeFunctionFloor::NodeFunctionFloor(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
+NodeFunctionFloor::NodeFunctionFloor(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
 
 NodeFunctionFloor::NodeFunctionFloor(NodeFunctionFloor* other) : NodeFunctionArithmeticalUnary(other)
 {
 }
 
-NodeFunctionPtr NodeFunctionFloor::create(const NodeFunctionPtr& child)
+std::shared_ptr<NodeFunction> NodeFunctionFloor::create(const std::shared_ptr<NodeFunction>& child)
 {
     auto floorNode = std::make_shared<NodeFunctionFloor>(child->getStamp());
     floorNode->setChild(child);
     return floorNode;
 }
 
-bool NodeFunctionFloor::equal(const NodePtr& rhs) const
+bool NodeFunctionFloor::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFloor>(rhs))
     {
@@ -54,7 +57,7 @@ std::string NodeFunctionFloor::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionFloor::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionFloor::deepCopy()
 {
     return NodeFunctionFloor::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

@@ -14,8 +14,14 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 
@@ -33,50 +39,50 @@ public:
     /**
      * @brief Creates a new pipelining phase with a operator fusion policy.
      * @param operatorFusionPolicy Policy to determine if an operator can be fused.
-     * @return PipeliningPhasePtr
+     * @return std::shared_ptr<PipeliningPhase>
      */
-    static PipeliningPhasePtr create(const OperatorFusionPolicyPtr& operatorFusionPolicy);
-    explicit DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
-    PipelineQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan) override;
+    static std::shared_ptr<PipeliningPhase> create(const std::shared_ptr<OperatorFusionPolicy>& operatorFusionPolicy);
+    explicit DefaultPipeliningPhase(std::shared_ptr<OperatorFusionPolicy> operatorFusionPolicy);
+    std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan) override;
 
 protected:
     void process(
-        const PipelineQueryPlanPtr& pipeline,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        const OperatorPipelinePtr& currentPipeline,
+        const std::shared_ptr<PipelineQueryPlan>& pipeline,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        const std::shared_ptr<OperatorPipeline>& currentPipeline,
         const std::shared_ptr<Operator>& currentOperator);
     void processSink(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        const OperatorPipelinePtr& currentPipeline,
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        const std::shared_ptr<OperatorPipeline>& currentPipeline,
         const SinkLogicalOperator& currentOperator);
     static void processSource(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        OperatorPipelinePtr currentPipeline,
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        std::shared_ptr<OperatorPipeline> currentPipeline,
         const std::shared_ptr<SourceDescriptorLogicalOperator>& sourceOperator);
     void processMultiplex(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        OperatorPipelinePtr currentPipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        std::shared_ptr<OperatorPipeline> currentPipeline,
+        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& currentOperator);
     void processDemultiplex(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        OperatorPipelinePtr currentPipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        std::shared_ptr<OperatorPipeline> currentPipeline,
+        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& currentOperator);
     void processFusibleOperator(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        const OperatorPipelinePtr& currentPipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        const std::shared_ptr<OperatorPipeline>& currentPipeline,
+        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& currentOperator);
     void processPipelineBreakerOperator(
-        const PipelineQueryPlanPtr& pipelinePlan,
-        std::map<std::shared_ptr<Operator>, OperatorPipelinePtr>& pipelineOperatorMap,
-        const OperatorPipelinePtr& currentPipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+        const std::shared_ptr<PipelineQueryPlan>& pipelinePlan,
+        std::map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>>& pipelineOperatorMap,
+        const std::shared_ptr<OperatorPipeline>& currentPipeline,
+        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& currentOperator);
 
 private:
-    OperatorFusionPolicyPtr operatorFusionPolicy;
+    std::shared_ptr<OperatorFusionPolicy> operatorFusionPolicy;
 };
 }

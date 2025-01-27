@@ -22,18 +22,12 @@
 namespace NES
 {
 
-class DataType;
-using DataTypePtr = std::shared_ptr<DataType>;
-
-class PhysicalType;
-using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-
 
 /// The physical data type represents the physical representation of a NES data type.
 class PhysicalType
 {
 public:
-    explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
@@ -52,7 +46,7 @@ public:
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 
     /// Type that is contained by this PhysicalType container
-    const DataTypePtr type;
+    std::shared_ptr<DataType> type;
 };
 
 }

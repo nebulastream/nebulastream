@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
@@ -19,26 +20,26 @@
 namespace NES
 {
 
-BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
+BreadthFirstNodeIterator::BreadthFirstNodeIterator(std::shared_ptr<Node> start) : start(std::move(start)) {};
 
-BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::begin()
+BreadthFirstNodeIterator::Iterator BreadthFirstNodeIterator::begin() const
 {
-    return iterator(start);
+    return Iterator(start);
 }
 
-BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::end()
+BreadthFirstNodeIterator::Iterator BreadthFirstNodeIterator::end()
 {
-    return iterator();
+    return Iterator();
 }
 
-BreadthFirstNodeIterator::iterator::iterator(const NodePtr& current)
+BreadthFirstNodeIterator::Iterator::Iterator(const std::shared_ptr<Node>& current)
 {
     workQueue.push(current);
 }
 
-BreadthFirstNodeIterator::iterator::iterator() = default;
+BreadthFirstNodeIterator::Iterator::Iterator() = default;
 
-bool BreadthFirstNodeIterator::iterator::operator!=(const iterator& other) const
+bool BreadthFirstNodeIterator::Iterator::operator!=(const Iterator& other) const
 {
     /// todo currently we only check if we reached the end of the iterator.
     if (workQueue.empty() && other.workQueue.empty())
@@ -48,12 +49,12 @@ bool BreadthFirstNodeIterator::iterator::operator!=(const iterator& other) const
     return true;
 }
 
-NodePtr BreadthFirstNodeIterator::iterator::operator*()
+std::shared_ptr<Node> BreadthFirstNodeIterator::Iterator::operator*()
 {
     return workQueue.front();
 }
 
-BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator++()
+BreadthFirstNodeIterator::Iterator& BreadthFirstNodeIterator::Iterator::operator++()
 {
     if (workQueue.empty())
     {

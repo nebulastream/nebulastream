@@ -13,7 +13,11 @@
 */
 #pragma once
 
+#include <memory>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -30,20 +34,20 @@ public:
      * @param id operator id
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, const SchemaPtr& outputSchema);
+    PhysicalScanOperator(OperatorId id, const std::shared_ptr<Schema>& outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
      * @param id operator id
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(SchemaPtr outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& outputSchema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

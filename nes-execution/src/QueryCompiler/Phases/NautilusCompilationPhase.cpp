@@ -34,7 +34,7 @@ NautilusCompilationPhase::NautilusCompilationPhase(const std::shared_ptr<QueryCo
 {
 }
 
-PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan)
+std::shared_ptr<PipelineQueryPlan> NautilusCompilationPhase::apply(std::shared_ptr<PipelineQueryPlan> queryPlan)
 {
     NES_DEBUG("Generate code for query plan {}", queryPlan->getQueryId());
     for (const auto& pipeline : queryPlan->getPipelines())
@@ -63,7 +63,7 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
     }
 }
 
-OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline)
+std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_ptr<OperatorPipeline> pipeline)
 {
     const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");

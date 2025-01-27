@@ -13,42 +13,40 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include "Nodes/Node.hpp"
+#include <Nodes/Node.hpp>
 namespace NES
 {
 
-class NodeFunctionFieldRename;
-using NodeFunctionFieldRenamePtr = std::shared_ptr<NodeFunctionFieldRename>;
 
 class NodeFunctionFieldRename : public NodeFunction
 {
 public:
-    static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
 
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     bool validateBeforeLowering() const override;
-
-
     std::string getNewFieldName() const;
 
     void inferStamp(const Schema& schema) override;
 
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
-    NodeFunctionFieldAccessPtr getOriginalField() const;
+    std::shared_ptr<NodeFunctionFieldAccess> getOriginalField() const;
 
 protected:
-    explicit NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other);
+    explicit NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other);
 
     [[nodiscard]] std::string toString() const override;
 
 private:
-    NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName);
+    NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
 
-    NodeFunctionFieldAccessPtr originalField;
+    std::shared_ptr<NodeFunctionFieldAccess> originalField;
     std::string newFieldName;
 };
 

@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <memory>
 #include <ostream>
 #include <queue>
 #include <utility>
+#include <vector>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -32,7 +35,7 @@ Node::Node()
 #endif
 }
 
-bool Node::addChildWithEqual(const NodePtr& newNode)
+bool Node::addChildWithEqual(const std::shared_ptr<Node>& newNode)
 {
     if (newNode.get() == this)
     {
@@ -47,7 +50,7 @@ bool Node::addChildWithEqual(const NodePtr& newNode)
     return true;
 }
 
-bool Node::addChild(const NodePtr newNode)
+bool Node::addChild(const std::shared_ptr<Node>& newNode)
 {
     if (newNode.get() == this)
     {
@@ -71,7 +74,7 @@ bool Node::addChild(const NodePtr newNode)
     return true;
 }
 
-bool Node::removeChild(const NodePtr& node)
+bool Node::removeChild(const std::shared_ptr<Node>& node)
 {
     if (!node)
     {
@@ -102,7 +105,7 @@ bool Node::removeChild(const NodePtr& node)
     return false;
 }
 
-bool Node::addParent(const NodePtr newNode)
+bool Node::addParent(const std::shared_ptr<Node>& newNode)
 {
     if (newNode.get() == this)
     {
@@ -125,7 +128,7 @@ bool Node::addParent(const NodePtr newNode)
     return true;
 }
 
-bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode)
+bool Node::insertBetweenThisAndParentNodes(const std::shared_ptr<Node>& newNode)
 {
     ///Perform sanity checks
     if (newNode.get() == this)
@@ -142,7 +145,7 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode)
 
     ///replace this with the new node in all its parent
     NES_DEBUG("Node: Create temporary copy of this nodes parents.");
-    std::vector<NodePtr> copyOfParents = parents;
+    const std::vector<std::shared_ptr<Node>> copyOfParents = parents;
 
     for (auto& parent : copyOfParents)
     {
@@ -172,7 +175,7 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode)
     return true;
 }
 
-bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode)
+bool Node::insertBetweenThisAndChildNodes(const std::shared_ptr<Node>& newNode)
 {
     if (newNode.get() == this)
     {
@@ -187,7 +190,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode)
     }
 
     NES_INFO("Node: Create temporary copy of this nodes parents.");
-    std::vector<NodePtr> copyOfChildren = children;
+    const std::vector<std::shared_ptr<Node>> copyOfChildren = children;
 
     NES_INFO("Node: Remove all children of this node.");
     removeChildren();
@@ -199,16 +202,17 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode)
     }
 
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
-    for (const NodePtr& child : copyOfChildren)
-    {
-        if (!newNode->addChild(child))
+    return std::ranges::all_of(
+        copyOfChildren,
+        [newNode](const std::shared_ptr<Node>& child)
         {
-            NES_ERROR("Node: Unable to add child of this node as child to input node.");
-            return false;
-        }
-    }
-
-    return true;
+            const auto addedChild = newNode->addChild(child);
+            if (not addedChild)
+            {
+                NES_ERROR("Node: Unable to add child of this node as child to input node.");
+            }
+            return addedChild;
+        });
 }
 
 void Node::removeAllParent()
@@ -219,7 +223,7 @@ void Node::removeAllParent()
     {
         if (!this->removeParent(*nodeItr))
         {
-            nodeItr++;
+            ++nodeItr;
         }
         NES_INFO("Node: Removed node as parent of this node");
     }
@@ -233,13 +237,13 @@ void Node::removeChildren()
     {
         if (!this->removeChild(*nodeItr))
         {
-            nodeItr++;
+            ++nodeItr;
         }
         NES_INFO("Node: Removed node as child of this node");
     }
 }
 
-bool Node::removeParent(const NodePtr& node)
+bool Node::removeParent(const std::shared_ptr<Node>& node)
 {
     if (!node)
     {
@@ -268,12 +272,12 @@ bool Node::removeParent(const NodePtr& node)
     return false;
 }
 
-bool Node::replace(NodePtr newNode)
+bool Node::replace(const std::shared_ptr<Node>& newNode)
 {
     return replace(std::move(newNode), shared_from_this());
 }
 
-bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode)
+bool Node::replace(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node>& oldNode)
 {
     if (!newNode || !oldNode)
     {
@@ -332,9 +336,9 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode)
     return false;
 }
 
-bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode)
+bool Node::swap(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node>& oldNode)
 {
-    auto node = findRecursively(shared_from_this(), oldNode);
+    const auto node = findRecursively(shared_from_this(), oldNode);
     /// oldNode is not in current graph
     if (!node)
     {
@@ -386,13 +390,13 @@ bool Node::swapLeftAndRightBranch()
     return true;
 }
 
-bool Node::remove(const NodePtr& node)
+bool Node::remove(const std::shared_ptr<Node>& node)
 {
     /// NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
     return removeChild(node) || removeParent(node);
 }
 
-bool Node::removeAndLevelUpChildren(const NodePtr& node)
+bool Node::removeAndLevelUpChildren(const std::shared_ptr<Node>& node)
 {
     /// if a successor of node is equal to children,
     /// it's confused to merge two equal operators,
@@ -423,8 +427,8 @@ bool Node::removeAndJoinParentAndChildren()
     {
         NES_DEBUG("Node: Joining parents with children");
 
-        std::vector<NodePtr> childCopy = this->children;
-        std::vector<NodePtr> parentCopy = this->parents;
+        const std::vector<std::shared_ptr<Node>> childCopy = this->children;
+        const std::vector<std::shared_ptr<Node>> parentCopy = this->parents;
         for (auto& parent : parentCopy)
         {
             for (auto& child : childCopy)
@@ -453,43 +457,43 @@ void Node::clear()
     parents.clear();
 }
 
-const std::vector<NodePtr>& Node::getChildren() const
+const std::vector<std::shared_ptr<Node>>& Node::getChildren() const
 {
     return children;
 }
 
-bool Node::containAsParent(NodePtr node)
+bool Node::containAsParent(const std::shared_ptr<Node>& node)
 {
     NES_DEBUG("Node: Checking if the input node is contained in the parent list");
     return vectorContainsTheNode(parents, std::move(node));
 }
 
-bool Node::containAsGrandParent(NodePtr node)
+bool Node::containAsGrandParent(const std::shared_ptr<Node>& node)
 {
-    std::vector<NodePtr> ancestors{};
+    std::vector<std::shared_ptr<Node>> ancestors{};
     for (auto& parent : parents)
     {
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
         NES_TRACE("Node: Add them to the result");
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
     return vectorContainsTheNode(ancestors, std::move(node));
 }
 
-bool Node::containAsChild(NodePtr node)
+bool Node::containAsChild(const std::shared_ptr<Node>& node)
 {
     NES_DEBUG("Node: Checking if the input node is contained in the children list");
     return vectorContainsTheNode(children, std::move(node));
 }
 
-bool Node::containAsGrandChild(NodePtr node)
+bool Node::containAsGrandChild(const std::shared_ptr<Node>& node)
 {
-    std::vector<NodePtr> grandChildren{};
+    std::vector<std::shared_ptr<Node>> grandChildren{};
     for (auto& child : children)
     {
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(true);
+        std::vector<std::shared_ptr<Node>> childAndGrandChildren = child->getAndFlattenAllChildren(true);
         childAndGrandChildren.emplace_back(child);
         NES_TRACE("Node: Add them to the result");
         grandChildren.insert(grandChildren.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
@@ -497,15 +501,15 @@ bool Node::containAsGrandChild(NodePtr node)
     return vectorContainsTheNode(grandChildren, std::move(node));
 }
 
-const std::vector<NodePtr>& Node::getParents() const
+const std::vector<std::shared_ptr<Node>>& Node::getParents() const
 {
     return parents;
 }
 
-std::vector<NodePtr> Node::getAllRootNodes()
+std::vector<std::shared_ptr<Node>> Node::getAllRootNodes()
 {
     NES_DEBUG("Node: Get all root nodes for this node");
-    std::vector<NodePtr> rootNodes;
+    std::vector<std::shared_ptr<Node>> rootNodes;
 
     if (getParents().empty())
     {
@@ -525,7 +529,7 @@ std::vector<NodePtr> Node::getAllRootNodes()
             NES_DEBUG("Node: Iterating over all parents to find more root nodes");
             for (const auto& parentOfParent : parent->getParents())
             {
-                std::vector<NodePtr> parentNodes = parentOfParent->getAllRootNodes();
+                std::vector<std::shared_ptr<Node>> parentNodes = parentOfParent->getAllRootNodes();
                 NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
             }
@@ -535,10 +539,10 @@ std::vector<NodePtr> Node::getAllRootNodes()
     return rootNodes;
 }
 
-std::vector<NodePtr> Node::getAllLeafNodes()
+std::vector<std::shared_ptr<Node>> Node::getAllLeafNodes()
 {
     NES_DEBUG("Node: Get all leaf nodes for this node");
-    std::vector<NodePtr> leafNodes;
+    std::vector<std::shared_ptr<Node>> leafNodes;
 
     if (children.empty())
     {
@@ -558,7 +562,7 @@ std::vector<NodePtr> Node::getAllLeafNodes()
             NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
             for (const auto& childOfChild : child->getChildren())
             {
-                std::vector<NodePtr> childrenLeafNodes = childOfChild->getAllLeafNodes();
+                std::vector<std::shared_ptr<Node>> childrenLeafNodes = childOfChild->getAllLeafNodes();
                 NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
                 leafNodes.insert(leafNodes.end(), childrenLeafNodes.begin(), childrenLeafNodes.end());
             }
@@ -568,7 +572,7 @@ std::vector<NodePtr> Node::getAllLeafNodes()
     return leafNodes;
 }
 
-bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind)
+bool Node::vectorContainsTheNode(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<NES::Node>& nodeToFind)
 {
     return find(nodes, nodeToFind) != nullptr;
 }
@@ -579,7 +583,7 @@ bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::N
  * @param nodeToFind
  * @return
  */
-NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
+std::shared_ptr<Node> Node::find(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind)
 {
     for (auto&& currentNode : nodes)
     {
@@ -591,10 +595,10 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
     return nullptr;
 }
 
-NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind)
+std::shared_ptr<Node> Node::findRecursively(const std::shared_ptr<Node>& root, const std::shared_ptr<Node>& nodeToFind)
 {
     /// DFS
-    NodePtr resultNode = nullptr;
+    std::shared_ptr<Node> resultNode = nullptr;
     /// two operator are equal, may not the same object
     if (root->isIdentical(nodeToFind))
     {
@@ -613,7 +617,7 @@ NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind)
     return resultNode;
 }
 
-bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2)
+bool Node::equalWithAllChildrenHelper(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2)
 {
     if (node1->children.size() != node2->children.size())
     {
@@ -645,7 +649,7 @@ bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2
     return true;
 }
 
-bool Node::equalWithAllChildren(const NodePtr& otherNode)
+bool Node::equalWithAllChildren(const std::shared_ptr<Node>& otherNode)
 {
     /// the root is equal
     if (!equal(otherNode))
@@ -656,7 +660,7 @@ bool Node::equalWithAllChildren(const NodePtr& otherNode)
     return equalWithAllChildrenHelper(shared_from_this(), otherNode);
 }
 
-bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
+bool Node::equalWithAllParentsHelper(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2)
 {
     if (node1->parents.size() != node2->parents.size())
     {
@@ -689,7 +693,7 @@ bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
     return true;
 }
 
-bool Node::equalWithAllParents(const NodePtr& node)
+bool Node::equalWithAllParents(const std::shared_ptr<Node>& node)
 {
     /// the root is equal
     if (!equal(node))
@@ -699,9 +703,9 @@ bool Node::equalWithAllParents(const NodePtr& node)
     return equalWithAllParentsHelper(shared_from_this(), node);
 }
 
-std::vector<NodePtr> Node::split(const NodePtr& splitNode)
+std::vector<std::shared_ptr<Node>> Node::split(const std::shared_ptr<Node>& splitNode)
 {
-    std::vector<NodePtr> result{};
+    std::vector<std::shared_ptr<Node>> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node)
     {
@@ -725,15 +729,18 @@ bool Node::isValid()
     return !isCyclic();
 }
 
-std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren)
+std::vector<std::shared_ptr<Node>> Node::getAndFlattenAllChildren(bool withDuplicateChildren)
 {
-    std::vector<NodePtr> allChildren{};
+    std::vector<std::shared_ptr<Node>> allChildren{};
     getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), withDuplicateChildren);
     return allChildren;
 }
 
 void Node::getAndFlattenAllChildrenHelper(
-    const NodePtr& node, std::vector<NodePtr>& allChildren, const NodePtr& excludedNode, bool allowDuplicate)
+    const std::shared_ptr<Node>& node,
+    std::vector<std::shared_ptr<Node>>& allChildren,
+    const std::shared_ptr<Node>& excludedNode,
+    bool allowDuplicate)
 {
     /// todo this implementation may be slow
     for (auto&& currentNode : node->children)
@@ -751,14 +758,14 @@ void Node::getAndFlattenAllChildrenHelper(
     }
 }
 
-std::vector<NodePtr> Node::getAndFlattenAllAncestors()
+std::vector<std::shared_ptr<Node>> Node::getAndFlattenAllAncestors()
 {
     NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-    std::vector<NodePtr> result{shared_from_this()};
+    std::vector<std::shared_ptr<Node>> result{shared_from_this()};
     for (auto& parent : parents)
     {
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
         NES_TRACE("Node: Add them to the result");
         result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }

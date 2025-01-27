@@ -12,20 +12,22 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
 
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include "Nodes/Node.hpp"
 namespace NES
 {
 
-NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name)
+NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name)
     : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
@@ -58,7 +60,7 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalUnary::equal(const NodePtr& rhs) const
+bool NodeFunctionArithmeticalUnary::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalUnary>(rhs))
     {

@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <memory>
+#include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 
@@ -49,7 +51,6 @@ public:
     std::vector<std::shared_ptr<Operator>> getRightOperators() const;
 
 private:
-    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const SchemaPtr& schema) const;
+    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const;
 };
-using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 }

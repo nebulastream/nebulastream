@@ -26,7 +26,6 @@ namespace NES::Runtime::Execution::Operators
 {
 using namespace Nautilus;
 class ExecutableOperator;
-using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 
 /**
  * @brief Base operator for all specific operators.
@@ -70,12 +69,12 @@ public:
      * @brief Sets a child operator to this operator.
      * @param child
      */
-    void setChild(ExecuteOperatorPtr child);
+    void setChild(std::shared_ptr<ExecutableOperator> child);
 
     virtual ~Operator();
 
 protected:
-    mutable ExecuteOperatorPtr child;
+    std::shared_ptr<ExecutableOperator> child;
 };
 
 }

@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
@@ -33,7 +35,8 @@ public:
         Max,
         Min,
         Sum,
-        Median
+        Median,
+        None
     };
 
     /**
@@ -41,19 +44,19 @@ public:
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    std::shared_ptr<WindowAggregationDescriptor> as(const NodeFunctionPtr& asField);
+    std::shared_ptr<WindowAggregationDescriptor> as(const std::shared_ptr<NodeFunction>& asField);
 
     /**
     * Returns the result field of the aggregation
-    * @return NodeFunctionPtr
+    * @return std::shared_ptr<NodeFunction>
     */
-    NodeFunctionPtr as() const;
+    [[nodiscard]] std::shared_ptr<NodeFunction> as() const;
 
     /**
     * Returns the result field of the aggregation
-    * @return NodeFunctionPtr
+    * @return std::shared_ptr<NodeFunction>
     */
-    NodeFunctionPtr on() const;
+    [[nodiscard]] std::shared_ptr<NodeFunction> on() const;
 
     /**
      * @brief Returns the type of this aggregation.
@@ -76,17 +79,17 @@ public:
     /**
      * @return the input type
      */
-    virtual DataTypePtr getInputStamp() = 0;
+    virtual std::shared_ptr<DataType> getInputStamp() = 0;
 
     /**
      * @return the partial aggregation type
      */
-    virtual DataTypePtr getPartialAggregateStamp() = 0;
+    virtual std::shared_ptr<DataType> getPartialAggregateStamp() = 0;
 
     /**
      * @return the final aggregation type
      */
-    virtual DataTypePtr getFinalAggregateStamp() = 0;
+    virtual std::shared_ptr<DataType> getFinalAggregateStamp() = 0;
 
     std::string toString() const;
 
@@ -98,15 +101,14 @@ public:
      * @param otherWindowAggregationDescriptor : other window aggregation definition
      * @return true if equal else false
      */
-    bool equal(std::shared_ptr<WindowAggregationDescriptor> otherWindowAggregationDescriptor) const;
+    [[nodiscard]] bool equal(const std::shared_ptr<WindowAggregationDescriptor>& otherWindowAggregationDescriptor) const;
 
 protected:
-    explicit WindowAggregationDescriptor(const NodeFunctionFieldAccessPtr& onField);
-    WindowAggregationDescriptor(const NodeFunctionPtr& onField, const NodeFunctionPtr& asField);
+    explicit WindowAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
+    WindowAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
     WindowAggregationDescriptor() = default;
-    NodeFunctionPtr onField;
-    NodeFunctionPtr asField;
+    std::shared_ptr<NodeFunction> onField;
+    std::shared_ptr<NodeFunction> asField;
     Type aggregationType;
 };
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 }

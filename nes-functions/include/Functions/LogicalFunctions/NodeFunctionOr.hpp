@@ -13,10 +13,11 @@
 */
 
 #pragma once
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -27,14 +28,14 @@ public:
     NodeFunctionOr();
     ~NodeFunctionOr() override = default;
 
-    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
     /// Infers the stamp of this logical OR function node.
     /// We assume that both children of an OR function are predicates.
     void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);

@@ -14,10 +14,11 @@
 
 #include <memory>
 #include <utility>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -32,16 +33,16 @@ uint64_t LogicalLimitOperator::getLimit() const
     return limit;
 }
 
-bool LogicalLimitOperator::isIdentical(const NodePtr& rhs) const
+bool LogicalLimitOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalLimitOperator>(rhs)->getId() == id;
 }
 
-bool LogicalLimitOperator::equal(const NodePtr& rhs) const
+bool LogicalLimitOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalLimitOperator>(rhs))
     {
-        auto limitOperator = NES::Util::as<LogicalLimitOperator>(rhs);
+        const auto limitOperator = NES::Util::as<LogicalLimitOperator>(rhs);
         return limit == limitOperator->limit;
     }
     return false;
@@ -69,7 +70,6 @@ std::shared_ptr<Operator> LogicalLimitOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {
@@ -80,23 +80,23 @@ std::shared_ptr<Operator> LogicalLimitOperator::copy()
 
 void LogicalLimitOperator::inferStringSignature()
 {
-    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "Limit should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "LIMIT(" << limit << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
+    const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

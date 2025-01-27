@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -49,15 +50,15 @@ public:
     };
 
     static std::shared_ptr<LogicalJoinDescriptor> create(
-        NodeFunctionPtr joinFunction,
-        const Windowing::WindowTypePtr& windowType,
+        const std::shared_ptr<NodeFunction>& joinFunction,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType);
 
     explicit LogicalJoinDescriptor(
-        NodeFunctionPtr joinFunction,
-        Windowing::WindowTypePtr windowType,
+        std::shared_ptr<NodeFunction> joinFunction,
+        std::shared_ptr<Windowing::WindowType> windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType,
@@ -66,17 +67,17 @@ public:
     /**
    * @brief getter left source type
    */
-    SchemaPtr getLeftSourceType() const;
+    [[nodiscard]] std::shared_ptr<Schema> getLeftSourceType() const;
 
     /**
    * @brief getter of right source type
    */
-    SchemaPtr getRightSourceType() const;
+    [[nodiscard]] std::shared_ptr<Schema> getRightSourceType() const;
 
     /**
      * @brief getter/setter for window type
     */
-    Windowing::WindowTypePtr getWindowType() const;
+    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
 
     /**
      * @brief getter for on trigger action
@@ -102,19 +103,19 @@ public:
      * @param leftSourceType the type of the left source
      * @param rightSourceType the type of the right source
      */
-    void updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType);
+    void updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType);
 
     /**
      * @brief Update the output source type upon type inference
      * @param outputSchema the type of the output source
      */
-    void updateOutputDefinition(SchemaPtr outputSchema);
+    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
 
     /**
      * @brief Getter of the output source schema
      * @return the output source schema
      */
-    [[nodiscard]] SchemaPtr getOutputSchema() const;
+    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
 
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
@@ -135,7 +136,7 @@ public:
      * @brief Getter keys
      * @return keys
      */
-    [[nodiscard]] NodeFunctionPtr getJoinFunction();
+    [[nodiscard]] std::shared_ptr<NodeFunction> getJoinFunction();
 
     /**
      * @brief Checks if these two are equal
@@ -145,16 +146,15 @@ public:
     bool equals(const LogicalJoinDescriptor& other) const;
 
 private:
-    NodeFunctionPtr joinFunction;
-    SchemaPtr leftSourceType = Schema::create();
-    SchemaPtr rightSourceType = Schema::create();
-    SchemaPtr outputSchema = Schema::create();
-    Windowing::WindowTypePtr windowType;
+    std::shared_ptr<NodeFunction> joinFunction;
+    std::shared_ptr<Schema> leftSourceType = Schema::create();
+    std::shared_ptr<Schema> rightSourceType = Schema::create();
+    std::shared_ptr<Schema> outputSchema = Schema::create();
+    std::shared_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
     JoinType joinType;
     OriginId originId;
 };
 
-using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 }

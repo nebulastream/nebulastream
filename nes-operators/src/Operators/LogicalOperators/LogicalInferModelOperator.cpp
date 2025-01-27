@@ -14,21 +14,30 @@
 
 #include <filesystem>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "Nodes/Node.hpp"
 
 
 namespace NES::InferModel
 {
 
 LogicalInferModelOperator::LogicalInferModelOperator(
-    std::string model, std::vector<NodeFunctionPtr> inputFields, std::vector<NodeFunctionPtr> outputFields, OperatorId id)
+    std::string model,
+    std::vector<std::shared_ptr<NodeFunction>> inputFields,
+    std::vector<std::shared_ptr<NodeFunction>> outputFields,
+    OperatorId id)
     : Operator(id)
     , LogicalUnaryOperator(id)
     , model(std::move(model))
@@ -51,7 +60,6 @@ std::shared_ptr<Operator> LogicalInferModelOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
     {
@@ -59,26 +67,26 @@ std::shared_ptr<Operator> LogicalInferModelOperator::copy()
     }
     return copy;
 }
-bool LogicalInferModelOperator::equal(const NodePtr& rhs) const
+bool LogicalInferModelOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))
     {
-        auto inferModelOperator = NES::Util::as<LogicalInferModelOperator>(rhs);
+        const auto inferModelOperator = NES::Util::as<LogicalInferModelOperator>(rhs);
         return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
     }
     return false;
 }
 
-bool LogicalInferModelOperator::isIdentical(const NodePtr& rhs) const
+bool LogicalInferModelOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalInferModelOperator>(rhs)->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(NodeFunctionFieldAccessPtr field) const
+void LogicalInferModelOperator::updateToFullyQualifiedFieldName(const std::shared_ptr<NodeFunctionFieldAccess>& field) const
 {
-    auto schema = getInputSchema();
-    auto fieldName = field->getFieldName();
-    auto existingField = schema->getFieldByName(fieldName);
+    const auto schema = getInputSchema();
+    const auto fieldName = field->getFieldName();
+    const auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         field->updateFieldName(existingField.value()->getName());
@@ -105,7 +113,7 @@ bool LogicalInferModelOperator::inferSchema()
         return false;
     }
 
-    auto inputSchema = getInputSchema();
+    const auto inputSchema = getInputSchema();
 
     for (auto inputField : inputFields)
     {
@@ -142,21 +150,21 @@ bool LogicalInferModelOperator::inferSchema()
 
 void LogicalInferModelOperator::inferStringSignature()
 {
-    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "InferModel must have children, but had none");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
+    const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
@@ -167,7 +175,7 @@ const std::string& LogicalInferModelOperator::getModel() const
 
 const std::string LogicalInferModelOperator::getDeployedModelPath() const
 {
-    auto idx = model.find_last_of('/');
+    const auto idx = model.find_last_of('/');
     auto path = model;
 
     /// If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
@@ -180,12 +188,12 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const
     return path;
 }
 
-const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getInputFields() const
+const std::vector<std::shared_ptr<NodeFunction>>& LogicalInferModelOperator::getInputFields() const
 {
     return inputFields;
 }
 
-const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getOutputFields() const
+const std::vector<std::shared_ptr<NodeFunction>>& LogicalInferModelOperator::getOutputFields() const
 {
     return outputFields;
 }

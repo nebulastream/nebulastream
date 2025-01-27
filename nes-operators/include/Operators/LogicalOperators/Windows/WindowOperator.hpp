@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -25,8 +26,6 @@
 namespace NES
 {
 
-class WindowOperator;
-using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
 /// Stores the window start and window end field names
 struct WindowMetaData
@@ -47,13 +46,13 @@ struct WindowMetaData
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id, OriginId originId);
-    WindowOperator(Windowing::LogicalWindowDescriptorPtr windowDefinition, OperatorId id);
+    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id, OriginId originId);
+    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id);
     /**
     * @brief Gets the window definition of the window operator.
-    * @return LogicalWindowDescriptorPtr
+    * @return std::shared_ptr<LogicalWindowDescriptor>
     */
-    Windowing::LogicalWindowDescriptorPtr getWindowDefinition() const;
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition() const;
 
     /**
      * @brief Gets the output origin ids from this operator
@@ -71,7 +70,7 @@ public:
     WindowMetaData windowMetaData;
 
 protected:
-    const Windowing::LogicalWindowDescriptorPtr windowDefinition;
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
 };
 
 }

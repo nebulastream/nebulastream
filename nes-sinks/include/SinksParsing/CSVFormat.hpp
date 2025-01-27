@@ -33,7 +33,7 @@ public:
     std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
+    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 

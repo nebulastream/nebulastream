@@ -38,11 +38,11 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator
 public:
     PhysicalWindowOperator(
         OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
+        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
-    const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
+    const std::shared_ptr<Windowing::LogicalWindowDescriptor>& getWindowDefinition() const;
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const;
     std::unique_ptr<Runtime::Execution::Operators::TimeFunction> getTimeFunction() const;
     std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
@@ -54,7 +54,7 @@ public:
 protected:
     std::string toString() const override;
 
-    Windowing::LogicalWindowDescriptorPtr windowDefinition;
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler;
 };
 }

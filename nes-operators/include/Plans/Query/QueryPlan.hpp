@@ -30,11 +30,6 @@
 namespace NES
 {
 
-class Operator;
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
 
 /// The query plan encapsulates a set of operators and provides a set of utility functions.
 class QueryPlan
@@ -43,8 +38,8 @@ public:
     QueryPlan() = default;
     explicit QueryPlan(std::shared_ptr<Operator> rootOperator);
     explicit QueryPlan(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
-    static QueryPlanPtr create(std::shared_ptr<Operator> rootOperator);
-    static QueryPlanPtr create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
+    static std::shared_ptr<QueryPlan> create(std::shared_ptr<Operator> rootOperator);
+    static std::shared_ptr<QueryPlan> create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
 
     template <typename LogicalSourceType>
     std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
@@ -120,7 +115,7 @@ public:
 
     [[nodiscard]] QueryId getQueryId() const;
 
-    QueryPlanPtr copy();
+    std::shared_ptr<QueryPlan> copy();
 
     [[nodiscard]] std::string getSourceConsumed() const;
 
@@ -145,7 +140,7 @@ public:
 
     /// Comparison to another plan and its children nodes by tree traversal.
     /// @return true, if this and other plan are equal in their structure and operators, false else
-    [[nodiscard]] bool compare(const QueryPlanPtr& otherPlan) const;
+    [[nodiscard]] bool compare(const std::shared_ptr<QueryPlan>& otherPlan) const;
 
 private:
     /// Find operators between source and target operators

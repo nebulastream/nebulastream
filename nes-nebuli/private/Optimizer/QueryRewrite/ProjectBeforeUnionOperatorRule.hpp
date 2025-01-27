@@ -14,27 +14,14 @@
 
 #pragma once
 
+#include <memory>
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES
-{
-
-class LogicalOperator;
-using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-}
 
 namespace NES::Optimizer
 {
-
-class ProjectBeforeUnionOperatorRule;
-using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
-
 /**
  * @brief This rule is defined for adding a Projection Operator before a Union Operator. Following are the conditions:
  * - If there exists a Union operator with different schemas then add on one side a project operator to make both schema equal.
@@ -42,8 +29,8 @@ using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOper
 class ProjectBeforeUnionOperatorRule : public BaseRewriteRule
 {
 public:
-    static ProjectBeforeUnionOperatorRulePtr create();
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    static std::shared_ptr<ProjectBeforeUnionOperatorRule> create();
+    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
     virtual ~ProjectBeforeUnionOperatorRule() = default;
 
 private:
@@ -53,9 +40,10 @@ private:
      * @brief Construct the project operator to be added between union and one of the child.
      * @param sourceSchema : the source schema for project.
      * @param destinationSchema : the destination schema for project.
-     * @return LogicalOperatorPtr: the project operator based on source and destination schema
+     * @return std::shared_ptr<LogicalOperator>: the project operator based on source and destination schema
      */
-    static LogicalOperatorPtr constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema);
+    static std::shared_ptr<LogicalOperator>
+    constructProjectOperator(const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema);
 };
 
 }

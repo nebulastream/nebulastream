@@ -221,14 +221,14 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
     return nautilusEngine->registerFunction(std::function(
         [this](nautilus::val<Memory::TupleBuffer*> bufferOutput, nautilus::val<Interface::HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef const hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             RecordBuffer recordBufferOutput(bufferOutput);
             nautilus::val<uint64_t> outputBufferIndex(0);
             for (auto entry : hashMapRef)
             {
                 /// Writing the read value from the chained hash map into the buffer.
                 Record outputRecord;
-                Interface::ChainedHashMapRef::ChainedEntryRef const entryRef(entry, fieldKeys, fieldValues);
+                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
                 const auto keyRecord = entryRef.getKey();
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
@@ -324,7 +324,7 @@ std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const
     std::map<TestUtils::RecordWithFields, Record> exactMap;
     for (const auto& buffer : inputBuffers)
     {
-        RecordBuffer const recordBuffer(nautilus::val<const Memory::TupleBuffer*>(std::addressof(buffer)));
+        const RecordBuffer recordBuffer(nautilus::val<const Memory::TupleBuffer*>(std::addressof(buffer)));
         for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
         {
             const auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBuffer, i);

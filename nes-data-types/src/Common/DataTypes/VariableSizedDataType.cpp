@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
@@ -25,7 +26,7 @@ bool VariableSizedDataType::operator==(const NES::DataType& other) const
 }
 
 /// A VariableSizedData type cannot be joined with another type.
-DataTypePtr VariableSizedDataType::join(DataTypePtr)
+std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType>)
 {
     return DataTypeFactory::createUndefined();
 }

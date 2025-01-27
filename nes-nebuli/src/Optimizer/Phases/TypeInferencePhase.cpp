@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -25,16 +27,17 @@
 namespace NES::Optimizer
 {
 
-TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog))
+TypeInferencePhase::TypeInferencePhase(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
+    : sourceCatalog(std::move(sourceCatalog))
 {
 }
 
-TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalogPtr sourceCatalog)
+std::shared_ptr<TypeInferencePhase> TypeInferencePhase::create(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
 {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPlan)
+std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan)
 {
     /// Infer schema recursively, starting with sinks for sinks.
     auto sinkOperators = queryPlan->getSinkOperators();
@@ -65,7 +68,7 @@ void TypeInferencePhase::performTypeInferenceSources(
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
-        SchemaPtr schema = Schema::create();
+        std::shared_ptr<Schema> schema = Schema::create();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName))
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);

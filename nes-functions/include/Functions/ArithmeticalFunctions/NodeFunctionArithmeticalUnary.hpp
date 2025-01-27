@@ -13,10 +13,13 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
-#include "Nodes/Node.hpp"
+#include <Nodes/Node.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -27,10 +30,10 @@ public:
     /// Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
     void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
 protected:
-    explicit NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name);
     explicit NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other);
     ~NodeFunctionArithmeticalUnary() noexcept override = default;
     [[nodiscard]] std::string toString() const override;

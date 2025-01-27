@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -29,14 +31,15 @@ NodeFunctionLess::NodeFunctionLess(NodeFunctionLess* other) : NodeFunctionLogica
 {
 }
 
-NodeFunctionPtr NodeFunctionLess::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction>
+NodeFunctionLess::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto lessThen = std::make_shared<NodeFunctionLess>();
     lessThen->setChildren(left, right);
     return lessThen;
 }
 
-bool NodeFunctionLess::equal(const NodePtr& rhs) const
+bool NodeFunctionLess::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLess>(rhs))
     {
@@ -53,7 +56,7 @@ std::string NodeFunctionLess::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionLess::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionLess::deepCopy()
 {
     return NodeFunctionLess::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

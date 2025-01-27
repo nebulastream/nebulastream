@@ -28,10 +28,9 @@ public:
     virtual ~PhysicalOperatorProvider() = default;
 
     /// This method is called to replace the logical operator with corresponding physical operators.
-    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) = 0;
+    virtual void lower(const DecomposedQueryPlan& decomposedQueryPlan, std::shared_ptr<LogicalOperator> operatorNode) = 0;
 
 protected:
     std::shared_ptr<QueryCompilerOptions> options;
 };
-using PhysicalOperatorProviderPtr = std::shared_ptr<PhysicalOperatorProvider>;
 }

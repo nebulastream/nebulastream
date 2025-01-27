@@ -94,7 +94,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 
 
     /// Updating the aggregation states
-    Interface::ChainedHashMapRef::ChainedEntryRef const entryRef(hashMapEntry, fieldKeys, fieldValues);
+    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {

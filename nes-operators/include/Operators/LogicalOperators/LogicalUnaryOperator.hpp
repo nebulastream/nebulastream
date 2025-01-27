@@ -40,5 +40,4 @@ public:
      */
     void inferInputOrigins() override;
 };
-using LogicalUnaryOperatorPtr = std::shared_ptr<LogicalUnaryOperator>;
 }

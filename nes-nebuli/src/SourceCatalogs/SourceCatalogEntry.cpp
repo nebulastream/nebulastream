@@ -12,28 +12,32 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 
 namespace NES::Catalogs::Source
 {
 
-SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
+SourceCatalogEntry::SourceCatalogEntry(
+    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
     : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId)
 {
 }
 
-SourceCatalogEntryPtr SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
+std::shared_ptr<SourceCatalogEntry> SourceCatalogEntry::create(
+    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
 {
     return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(std::move(physicalSource), std::move(logicalSource), topologyNodeId));
 }
 
-const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const
+const std::shared_ptr<PhysicalSource>& SourceCatalogEntry::getPhysicalSource() const
 {
     return physicalSource;
 }
 
-const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const
+const std::shared_ptr<LogicalSource>& SourceCatalogEntry::getLogicalSource() const
 {
     return logicalSource;
 }

@@ -13,12 +13,18 @@
 */
 
 #include <algorithm>
+#include <any>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -30,6 +36,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 
 namespace NES
@@ -45,7 +52,7 @@ std::string Util::printTupleBufferAsText(Memory::TupleBuffer& buffer)
     return ss.str();
 }
 
-std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -70,7 +77,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
                           "from the tuple buffer");
 
                 /// read the child buffer index from the tuple buffer
-                auto childIdx = *reinterpret_cast<const uint32_t*>(indexInBuffer);
+                const auto childIdx = *reinterpret_cast<const uint32_t*>(indexInBuffer);
                 str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
             }
             else
@@ -90,12 +97,13 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
     return ss.str();
 }
 
-std::string Util::toCSVString(const SchemaPtr& schema)
+std::string Util::toCSVString(const Schema& schema)
 {
-    return schema->toString("", ",", "\n");
+    return schema.toString("", ",", "\n");
 }
 
-std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>
+Util::createMemoryLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize)
 {
     switch (schema->getLayoutType())
     {
@@ -106,7 +114,8 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayo
     }
 }
 
-bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties)
+bool Util::assignPropertiesToQueryOperators(
+    const std::shared_ptr<QueryPlan>& queryPlan, std::vector<std::map<std::string, std::any>> properties)
 {
     /// count the number of operators in the query
     auto queryPlanIterator = PlanIterator(*queryPlan);
@@ -140,13 +149,12 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
     return true;
 }
 
-std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
+std::vector<std::shared_ptr<PhysicalType>> Util::getPhysicalTypes(const Schema& schema)
 {
-    std::vector<PhysicalTypePtr> retVector;
-
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : *schema)
+    std::vector<std::shared_ptr<PhysicalType>> retVector;
+    for (const auto& field : schema)
     {
+        const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         retVector.push_back(physicalField);
     }
@@ -154,13 +162,14 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
 }
 
 #ifdef WRAP_READ_CALL
+#    include <sys/types.h>
 /// If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function
 /// to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
 /// However, this allows to mock calls to read (e.g. TCPSourceTest)
-extern "C" ssize_t __real_read(int fd, void* data, size_t size);
-__attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size)
+extern "C" ssize_t __real_read(int fileDescriptor, void* data, size_t size);
+__attribute__((weak)) extern "C" ssize_t __wrap_read(const int fileDescriptor, void* data, const size_t size)
 {
-    return __real_read(fd, data, size);
+    return __real_read(fileDescriptor, data, size);
 }
 #endif
 }
