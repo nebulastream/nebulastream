@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <memory>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -23,13 +24,14 @@
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 namespace NES
 {
 
 DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() = default;
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) const
+std::shared_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::shared_ptr<DataType> dataType) const
 {
     if (NES::Util::instanceOf<Boolean>(dataType))
     {
@@ -57,7 +59,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& integer)
+std::shared_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const std::shared_ptr<Integer>& integer)
 {
     using enum NES::BasicPhysicalType::NativeType;
     if (integer->lowerBound >= 0)
@@ -108,7 +110,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& in
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floatType)
+std::shared_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const std::shared_ptr<Float>& floatType)
 {
     if (floatType->getBits() <= 32)
     {

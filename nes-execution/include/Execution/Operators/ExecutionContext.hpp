@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -32,11 +33,6 @@ namespace NES::Runtime::Execution
 {
 using namespace Nautilus;
 
-namespace Operators
-{
-class Operator;
-class OperatorState;
-}
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.

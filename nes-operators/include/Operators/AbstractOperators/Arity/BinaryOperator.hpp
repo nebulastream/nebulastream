@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
 
@@ -30,39 +31,39 @@ public:
 
     /**
    * @brief get the input schema of this operator from the left side
-   * @return SchemaPtr
+   * @return std::shared_ptr<Schema>
    */
-    SchemaPtr getLeftInputSchema() const;
+    std::shared_ptr<Schema> getLeftInputSchema() const;
 
     /**
     * @brief set the input schema of this operator for the left side
      * @param inputSchema
     */
-    void setLeftInputSchema(SchemaPtr inputSchema);
+    void setLeftInputSchema(std::shared_ptr<Schema> inputSchema);
 
     /**
     * @brief get the input schema of this operator from the left side
-    * @return SchemaPtr
+    * @return std::shared_ptr<Schema>
     */
-    SchemaPtr getRightInputSchema() const;
+    std::shared_ptr<Schema> getRightInputSchema() const;
 
     /**
      * @brief set the input schema of this operator for the right side
      * @param inputSchema
     */
-    void setRightInputSchema(SchemaPtr inputSchema);
+    void setRightInputSchema(std::shared_ptr<Schema> inputSchema);
 
     /**
     * @brief get the result schema of this operator
-    * @return SchemaPtr
+    * @return std::shared_ptr<Schema>
     */
-    SchemaPtr getOutputSchema() const override;
+    std::shared_ptr<Schema> getOutputSchema() const override;
 
     /**
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-    void setOutputSchema(SchemaPtr outputSchema) override;
+    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override;
 
     /**
      * @brief Set the input origin ids for the left input stream.
@@ -103,10 +104,10 @@ public:
 protected:
     std::string toString() const override;
 
-    SchemaPtr leftInputSchema = Schema::create();
-    SchemaPtr rightInputSchema = Schema::create();
-    SchemaPtr outputSchema = Schema::create();
-    std::vector<SchemaPtr> distinctSchemas;
+    std::shared_ptr<Schema> leftInputSchema = Schema::create();
+    std::shared_ptr<Schema> rightInputSchema = Schema::create();
+    std::shared_ptr<Schema> outputSchema = Schema::create();
+    std::vector<std::shared_ptr<Schema>> distinctSchemas;
     std::vector<OriginId> leftInputOriginIds;
     std::vector<OriginId> rightInputOriginIds;
 };

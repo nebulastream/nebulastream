@@ -12,26 +12,30 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 
 namespace NES
 {
-NodeFunctionWhen::NodeFunctionWhen(DataTypePtr stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
+NodeFunctionWhen::NodeFunctionWhen(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
 
 NodeFunctionWhen::NodeFunctionWhen(NodeFunctionWhen* other) : NodeFunctionBinary(other)
 {
 }
 
-NodeFunctionPtr NodeFunctionWhen::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction>
+NodeFunctionWhen::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto whenNode = std::make_shared<NodeFunctionWhen>(left->getStamp());
     whenNode->setChildren(left, right);
@@ -58,7 +62,7 @@ void NodeFunctionWhen::inferStamp(const Schema& schema)
     NES_TRACE("NodeFunctionWhen: we assigned the following stamp: {}", stamp->toString())
 }
 
-bool NodeFunctionWhen::equal(const NodePtr& rhs) const
+bool NodeFunctionWhen::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionWhen>(rhs))
     {
@@ -75,7 +79,7 @@ std::string NodeFunctionWhen::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionWhen::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionWhen::deepCopy()
 {
     return NodeFunctionWhen::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

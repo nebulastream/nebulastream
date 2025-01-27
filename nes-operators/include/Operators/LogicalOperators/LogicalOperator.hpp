@@ -19,21 +19,6 @@
 #include <Operators/Operator.hpp>
 #include <Util/OperatorState.hpp>
 
-namespace z3
-{
-class expr;
-using ExprPtr = std::shared_ptr<expr>;
-class context;
-using ContextPtr = std::shared_ptr<context>;
-}
-
-namespace NES::Optimizer
-{
-class QuerySignatureContext;
-class QuerySignature;
-using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
-}
-
 namespace NES
 {
 
@@ -46,20 +31,8 @@ public:
     explicit LogicalOperator(OperatorId id);
 
     /**
-     * @brief Get the First Order Logic formula representation by the Z3 function
-     * @param context: the shared pointer to the z3::context
-     */
-    void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
-
-    /**
-     * @brief Set the Z3 signature for the logical operator
-     * @param signature : the signature
-     */
-    void setZ3Signature(Optimizer::QuerySignaturePtr signature);
-
-    /**
      * @brief Infers the input origin of a logical operator.
-     * If this operator dose not assign new origin ids, e.g., windowing,
+     * If this operator does not assign new origin ids, e.g., windowing,
      * this function collects the origin ids from all upstream operators.
      */
     virtual void inferInputOrigins() = 0;
@@ -80,12 +53,6 @@ public:
      * @param signature : the signature
      */
     void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
-
-    /**
-     * @brief Get the Z3 function for the logical operator
-     * @return reference to the Z3 function
-     */
-    Optimizer::QuerySignaturePtr getZ3Signature() const;
 
     /**
      * @brief Get the string signature computed based on upstream operator chain
@@ -114,10 +81,8 @@ public:
     OperatorState getOperatorState() const;
 
 protected:
-    Optimizer::QuerySignaturePtr z3Signature = nullptr;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
     [[no_unique_address]] std::hash<std::string> hashGenerator;
     OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
-using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 }

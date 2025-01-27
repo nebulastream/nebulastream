@@ -42,7 +42,7 @@ QueryCompiler::QueryCompiler(
 {
 }
 
-QueryCompilationResult QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request) const
+QueryCompilationResult QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const
 {
     NES_INFO("Compile Query with Nautilus");
 

@@ -90,7 +90,7 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(const PhysicalTypePtr& type) const
+VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
 {
     if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(type))
     {
@@ -144,7 +144,7 @@ VarVal VarVal::castToType(const PhysicalTypePtr& type) const
     }
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type)
 {
     if (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type))
     {

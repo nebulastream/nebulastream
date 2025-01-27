@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -93,7 +94,7 @@ namespace NES::QueryCompilation::Util
  * @param windowType
  * @return Tuple<WindowSize, WindowSlide, TimeFunction>
  */
-std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
+std::tuple<uint64_t, uint64_t, std::unique_ptr<Runtime::Execution::Operators::TimeFunction>>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
 }

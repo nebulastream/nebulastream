@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <memory>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 namespace NES::QueryCompilation
 {
@@ -23,8 +25,7 @@ namespace NES::QueryCompilation
 class PipeliningPhase
 {
 public:
-    virtual PipelineQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan) = 0;
+    virtual std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan) = 0;
     virtual ~PipeliningPhase() = default;
 };
-using PipeliningPhasePtr = std::shared_ptr<PipeliningPhase>;
 }

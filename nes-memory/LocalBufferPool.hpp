@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -24,10 +25,6 @@
 
 namespace NES::Memory
 {
-namespace detail
-{
-class MemorySegment;
-}
 
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
@@ -42,7 +39,9 @@ public:
      * @param numberOfReservedBuffers number of exclusive bufferss
      */
     explicit LocalBufferPool(
-        const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers, size_t numberOfReservedBuffers);
+        const std::shared_ptr<BufferManager>& bufferManager,
+        std::deque<detail::MemorySegment*>& availableBuffers,
+        size_t numberOfReservedBuffers);
     ~LocalBufferPool() override;
 
     /**

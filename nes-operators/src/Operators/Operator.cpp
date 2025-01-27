@@ -13,9 +13,12 @@
 */
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -68,14 +71,14 @@ std::shared_ptr<Operator> Operator::duplicate()
     NES_DEBUG("Operator: copy all parents");
     for (const auto& parent : getParents())
     {
-        auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
+        const auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
         INVARIANT(success, "Unable to add parent ({}) to copy ({})", NES::Util::as<Operator>(parent)->toString(), copyOperator->toString());
     }
 
     NES_DEBUG("Operator: copy all children");
     for (const auto& child : getChildren())
     {
-        auto success = copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate()));
+        const auto success = copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate()));
         INVARIANT(success, "Unable to add child ({}) to copy ({})", NES::Util::as<Operator>(child)->toString(), copyOperator->toString());
     }
     return copyOperator;
@@ -119,7 +122,7 @@ std::shared_ptr<Operator> Operator::getDuplicateOfChild(const std::shared_ptr<Op
     return copyOfOperator;
 }
 
-bool Operator::addChild(const NodePtr newNode)
+bool Operator::addChild(const std::shared_ptr<Node>& newNode)
 {
     if (!newNode)
     {
@@ -133,11 +136,12 @@ bool Operator::addChild(const NodePtr newNode)
         return false;
     }
 
-    std::vector<NodePtr> currentChildren = getChildren();
-    auto found = std::find_if(
+    std::vector<std::shared_ptr<Node>> currentChildren = getChildren();
+    const auto found = std::find_if(
         currentChildren.begin(),
         currentChildren.end(),
-        [&](const NodePtr& child) { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
+        [&](const std::shared_ptr<Node>& child)
+        { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 
     if (found == currentChildren.end())
     {
@@ -150,7 +154,7 @@ bool Operator::addChild(const NodePtr newNode)
     return false;
 }
 
-bool Operator::addParent(const NodePtr newNode)
+bool Operator::addParent(const std::shared_ptr<Node>& newNode)
 {
     if (!newNode)
     {
@@ -164,11 +168,11 @@ bool Operator::addParent(const NodePtr newNode)
         return false;
     }
 
-    std::vector<NodePtr> currentParents = getParents();
-    auto found = std::find_if(
-        currentParents.begin(),
-        currentParents.end(),
-        [&](const NodePtr& child) { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
+    std::vector<std::shared_ptr<Node>> currentParents = getParents();
+    const auto found = std::ranges::find_if(
+        currentParents,
+        [&](const std::shared_ptr<Node>& child)
+        { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 
     if (found == currentParents.end())
     {
@@ -181,7 +185,7 @@ bool Operator::addParent(const NodePtr newNode)
     return false;
 }
 
-NodePtr Operator::getChildWithOperatorId(const OperatorId operatorId) const
+std::shared_ptr<Node> Operator::getChildWithOperatorId(const OperatorId operatorId) const
 {
     for (const auto& child : children)
     {
@@ -221,38 +225,38 @@ void Operator::removeProperty(const std::string& key)
     properties.erase(key);
 }
 
-bool Operator::containAsGrandChild(const NodePtr operatorNode)
+bool Operator::containAsGrandChild(const std::shared_ptr<Node>& operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
-    std::vector<NodePtr> ancestors{};
-    for (auto& child : children)
+    std::vector<std::shared_ptr<Node>> ancestors{};
+    for (const auto& child : children)
     {
-        std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(false);
+        std::vector<std::shared_ptr<Node>> childAndGrandChildren = child->getAndFlattenAllChildren(false);
         ancestors.insert(ancestors.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
     }
     ///Check if an operator with the id exists as ancestor
-    return std::any_of(
-        ancestors.begin(),
-        ancestors.end(),
-        [operatorIdToCheck](const NodePtr& ancestor) { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
+    return std::ranges::any_of(
+        ancestors,
+        [operatorIdToCheck](const std::shared_ptr<Node>& ancestor)
+        { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 
-bool Operator::containAsGrandParent(const NodePtr operatorNode)
+bool Operator::containAsGrandParent(const std::shared_ptr<Node>& operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
-    std::vector<NodePtr> ancestors{};
+    std::vector<std::shared_ptr<Node>> ancestors{};
     for (const auto& parent : parents)
     {
-        std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
     ///Check if an operator with the id exists as ancestor
-    return std::any_of(
-        ancestors.begin(),
-        ancestors.end(),
-        [operatorIdToCheck](const NodePtr& ancestor) { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
+    return std::ranges::any_of(
+        ancestors,
+        [operatorIdToCheck](const std::shared_ptr<Node>& ancestor)
+        { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 void Operator::addAllProperties(const OperatorProperties& properties)
 {
@@ -274,13 +278,13 @@ std::string Operator::toString() const
     out << std::endl;
     out << "operatorId: " << id << "\n";
     out << "properties: ";
-    for (const auto& item : properties)
+    for (const auto& itemKey : properties | std::views::keys)
     {
-        if (item.first != properties.begin()->first)
+        if (itemKey != properties.begin()->first)
         {
             out << ", ";
         }
-        out << item.first;
+        out << itemKey;
     }
     out << std::endl;
     return out.str();

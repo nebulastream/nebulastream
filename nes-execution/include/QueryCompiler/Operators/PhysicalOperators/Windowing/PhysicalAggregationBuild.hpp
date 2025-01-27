@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -25,11 +26,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalAggregationBuild final : public PhysicalWindowOperator
 {
 public:
-    static PhysicalOperatorPtr create(
+    static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
+        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
 
     std::shared_ptr<Operator> copy() override;
@@ -37,9 +38,9 @@ public:
 private:
     PhysicalAggregationBuild(
         OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
+        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
 };
 

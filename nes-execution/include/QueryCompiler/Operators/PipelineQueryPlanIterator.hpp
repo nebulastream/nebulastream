@@ -15,13 +15,17 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include <stack>
+#include <vector>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
 
 /**
- * @brief Iterator for pipeline query plans, which correctly handles multiple sources and sinks.
+ * @brief iterator for pipeline query plans, which correctly handles multiple sources and sinks.
  * The iterator visits each pipeline exactly one time in the following order:
  * top-to-bottom and left-to-right
  * @see
@@ -29,11 +33,14 @@ namespace NES::QueryCompilation
 class PipelineQueryPlanIterator
 {
 public:
-    explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
+    explicit PipelineQueryPlanIterator(std::shared_ptr<PipelineQueryPlan> queryPlan);
 
-    class iterator
-        : public std::
-              iterator<std::forward_iterator_tag, OperatorPipelinePtr, OperatorPipelinePtr, OperatorPipelinePtr*, OperatorPipelinePtr&>
+    class Iterator : public std::iterator<
+                         std::forward_iterator_tag,
+                         std::shared_ptr<OperatorPipeline>,
+                         std::shared_ptr<OperatorPipeline>,
+                         std::shared_ptr<OperatorPipeline>*,
+                         std::shared_ptr<OperatorPipeline>&>
     {
         /// use PipelineQueryPlanIterator as a fiend to access its state
         friend class PipelineQueryPlanIterator;
@@ -44,45 +51,45 @@ public:
          * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
-        iterator& operator++();
+        Iterator& operator++();
 
         /**
          * @brief Checks if the iterators are not at the same position
          * @return boolean
          */
-        bool operator!=(const iterator& other) const;
+        bool operator!=(const Iterator& other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
-         * @return OperatorPipelinePtr
+         * @return std::shared_ptr<OperatorPipeline>
          */
-        OperatorPipelinePtr operator*();
+        std::shared_ptr<OperatorPipeline> operator*();
 
     private:
-        explicit iterator(const PipelineQueryPlanPtr& current);
-        explicit iterator();
-        std::stack<OperatorPipelinePtr> workStack;
+        explicit Iterator(const std::shared_ptr<PipelineQueryPlan>& current);
+        explicit Iterator();
+        std::stack<std::shared_ptr<OperatorPipeline>> workStack;
     };
 
     /**
      * @brief Starts a new iterator at the start node, which is always a sink.
      * @return iterator
      */
-    iterator begin();
+    Iterator begin();
 
     /**
     * @brief The end of this iterator has an empty work stack.
     * @return iterator
     */
-    static iterator end();
+    static Iterator end();
 
     /**
      * @brief Return a snapshot of the iterator.
-     * @return vector<NodePtr> nodes
+     * @return vector<std::shared_ptr<Node>> nodes
      */
-    std::vector<OperatorPipelinePtr> snapshot();
+    std::vector<std::shared_ptr<OperatorPipeline>> snapshot();
 
 private:
-    PipelineQueryPlanPtr queryPlan;
+    std::shared_ptr<PipelineQueryPlan> queryPlan;
 };
 }

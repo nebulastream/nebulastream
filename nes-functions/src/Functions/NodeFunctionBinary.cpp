@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunctionBinary::NodeFunctionBinary(DataTypePtr stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
+NodeFunctionBinary::NodeFunctionBinary(std::shared_ptr<DataType> stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
 {
 }
 
@@ -29,19 +33,19 @@ NodeFunctionBinary::NodeFunctionBinary(NodeFunctionBinary* other) : NodeFunction
     addChildWithEqual(getRight()->deepCopy());
 }
 
-void NodeFunctionBinary::setChildren(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+void NodeFunctionBinary::setChildren(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     addChildWithEqual(left);
     addChildWithEqual(right);
 }
 
-NodeFunctionPtr NodeFunctionBinary::getLeft() const
+std::shared_ptr<NodeFunction> NodeFunctionBinary::getLeft() const
 {
     INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: " + std::to_string(children.size()));
     return Util::as<NodeFunction>(children[0]);
 }
 
-NodeFunctionPtr NodeFunctionBinary::getRight() const
+std::shared_ptr<NodeFunction> NodeFunctionBinary::getRight() const
 {
     INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: " + std::to_string(children.size()));
     return Util::as<NodeFunction>(children[1]);

@@ -17,10 +17,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 
@@ -33,7 +35,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    DecomposedQueryPlanPtr queryPlan;
+    std::shared_ptr<DecomposedQueryPlan> queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
 };

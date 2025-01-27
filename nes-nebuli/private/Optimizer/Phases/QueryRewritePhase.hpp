@@ -20,48 +20,23 @@ namespace NES
 {
 
 class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
 namespace Configurations
 {
-
 class CoordinatorConfiguration;
-using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-
 }
-
 }
 
 namespace NES::Optimizer
 {
-
 class QueryRewritePhase;
-using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
-
 class AttributeSortRule;
-using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
-
 class BinaryOperatorSortRule;
-using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
-
 class FilterMergeRule;
-using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
-
 class FilterPushDownRule;
-using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
-
 class FilterSplitUpRule;
-using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
-
 class PredicateReorderingRule;
-using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
-
 class ProjectBeforeUnionOperatorRule;
-using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
-
 class RenameSourceToProjectOperatorRule;
-using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
-
 
 /**
  * @brief This phase is responsible for re-writing the query plan
@@ -69,20 +44,20 @@ using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProje
 class QueryRewritePhase
 {
 public:
-    static QueryRewritePhasePtr create();
+    static std::shared_ptr<QueryRewritePhase> create();
 
-    void execute(QueryPlanPtr& queryPlan) const;
+    void execute(std::shared_ptr<QueryPlan>& queryPlan) const;
 
 private:
     explicit QueryRewritePhase();
 
-    AttributeSortRulePtr attributeSortRule;
-    BinaryOperatorSortRulePtr binaryOperatorSortRule;
-    FilterMergeRulePtr filterMergeRule;
-    FilterPushDownRulePtr filterPushDownRule;
-    FilterSplitUpRulePtr filterSplitUpRule;
-    PredicateReorderingRulePtr predicateReorderingRule;
-    ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
-    RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
+    std::shared_ptr<AttributeSortRule> attributeSortRule;
+    std::shared_ptr<BinaryOperatorSortRule> binaryOperatorSortRule;
+    std::shared_ptr<FilterMergeRule> filterMergeRule;
+    std::shared_ptr<FilterPushDownRule> filterPushDownRule;
+    std::shared_ptr<FilterSplitUpRule> filterSplitUpRule;
+    std::shared_ptr<PredicateReorderingRule> predicateReorderingRule;
+    std::shared_ptr<ProjectBeforeUnionOperatorRule> projectBeforeUnionOperatorRule;
+    std::shared_ptr<RenameSourceToProjectOperatorRule> renameSourceToProjectOperatorRule;
 };
 }

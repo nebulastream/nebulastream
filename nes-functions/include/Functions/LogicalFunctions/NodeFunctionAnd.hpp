@@ -13,10 +13,11 @@
 */
 
 #pragma once
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -31,14 +32,14 @@ public:
     /**
     * @brief Create a new AND function
     */
-    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
     /// Infers the stamp of this logical AND function node.
     /// We assume that both children of an and function are predicates.
     void inferStamp(const Schema& schema) override;
     bool validateBeforeLowering() const override;
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

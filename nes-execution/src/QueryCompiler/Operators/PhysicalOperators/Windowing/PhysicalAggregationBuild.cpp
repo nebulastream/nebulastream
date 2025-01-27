@@ -26,11 +26,11 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalOperatorPtr PhysicalAggregationBuild::create(
+std::shared_ptr<PhysicalOperator> PhysicalAggregationBuild::create(
     const OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::LogicalWindowDescriptorPtr windowDefinition,
+    std::shared_ptr<Schema> inputSchema,
+    std::shared_ptr<Schema> outputSchema,
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
 {
     return std::make_shared<PhysicalAggregationBuild>(PhysicalAggregationBuild(
@@ -44,9 +44,9 @@ std::shared_ptr<Operator> PhysicalAggregationBuild::copy()
 
 PhysicalAggregationBuild::PhysicalAggregationBuild(
     OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::LogicalWindowDescriptorPtr windowDefinition,
+    std::shared_ptr<Schema> inputSchema,
+    std::shared_ptr<Schema> outputSchema,
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     : Operator(id)
     , PhysicalWindowOperator(

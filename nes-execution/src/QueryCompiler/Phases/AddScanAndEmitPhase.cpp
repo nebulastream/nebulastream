@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
@@ -29,12 +30,12 @@
 namespace NES::QueryCompilation
 {
 
-AddScanAndEmitPhasePtr AddScanAndEmitPhase::create()
+std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhase::create()
 {
     return std::make_shared<AddScanAndEmitPhase>();
 }
 
-PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan)
+std::shared_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<PipelineQueryPlan> pipelineQueryPlan)
 {
     for (const auto& pipeline : pipelineQueryPlan->getPipelines())
     {
@@ -46,7 +47,7 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQue
     return pipelineQueryPlan;
 }
 
-OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
+std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<OperatorPipeline> pipeline)
 {
     const auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
     const auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();

@@ -230,7 +230,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
+std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
     std::unique_lock lock(unpooledBuffersMutex);
     UnpooledBufferHolder probe(bufferSize);
@@ -402,7 +402,7 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createLoca
         numOfAvailableBuffers.fetch_sub(1);
         buffers.emplace_back(memorySegment);
     }
-    auto ret = std::make_shared<LocalBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    auto ret = std::make_shared<LocalBufferPool>(shared_from_this(), buffers, numberOfReservedBuffers);
     {
         std::unique_lock lock(localBufferPoolsMutex);
         localBufferPools.push_back(ret);
@@ -429,7 +429,7 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixe
         numOfAvailableBuffers.fetch_sub(1);
         buffers.emplace_back(memorySegment);
     }
-    auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), buffers, numberOfReservedBuffers);
     {
         std::unique_lock lock(localBufferPoolsMutex);
         localBufferPools.push_back(ret);

@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
@@ -22,23 +24,25 @@
 namespace NES::Windowing
 {
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const NodeFunctionFieldAccessPtr& onField) : onField(onField), asField(onField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField)
+    : onField(onField), asField(onField), aggregationType(Type::None)
 {
 }
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const NodeFunctionPtr& onField, const NodeFunctionPtr& asField)
-    : onField(onField), asField(asField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(
+    const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField)
+    : onField(onField), asField(asField), aggregationType(Type::None)
 {
 }
 
-WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const NodeFunctionPtr& asField)
+std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptor::as(const std::shared_ptr<NodeFunction>& asField)
 {
     const auto& field = NES::Util::as<NodeFunctionFieldAccess>(asField);
     this->asField = field;
     return this->copy();
 }
 
-NodeFunctionPtr WindowAggregationDescriptor::as() const
+std::shared_ptr<NodeFunction> WindowAggregationDescriptor::as() const
 {
     if (asField == nullptr)
     {
@@ -68,12 +72,12 @@ std::string WindowAggregationDescriptor::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-NodeFunctionPtr WindowAggregationDescriptor::on() const
+std::shared_ptr<NodeFunction> WindowAggregationDescriptor::on() const
 {
     return onField;
 }
 
-bool WindowAggregationDescriptor::equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const
+bool WindowAggregationDescriptor::equal(const std::shared_ptr<WindowAggregationDescriptor>& otherWindowAggregationDescriptor) const
 {
     return this->getType() == otherWindowAggregationDescriptor->getType() && this->onField->equal(otherWindowAggregationDescriptor->onField)
         && this->asField->equal(otherWindowAggregationDescriptor->asField);

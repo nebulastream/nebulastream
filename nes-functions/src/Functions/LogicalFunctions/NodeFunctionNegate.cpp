@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
 namespace NES
 {
 
@@ -30,7 +31,7 @@ NodeFunctionNegate::NodeFunctionNegate(NodeFunctionNegate* other) : NodeFunction
 {
 }
 
-bool NodeFunctionNegate::equal(const NodePtr& rhs) const
+bool NodeFunctionNegate::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionNegate>(rhs))
     {
@@ -47,7 +48,7 @@ std::string NodeFunctionNegate::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionNegate::create(const NodeFunctionPtr& child)
+std::shared_ptr<NodeFunction> NodeFunctionNegate::create(const std::shared_ptr<NodeFunction>& child)
 {
     auto equals = std::make_shared<NodeFunctionNegate>();
     equals->setChild(child);
@@ -65,7 +66,7 @@ void NodeFunctionNegate::inferStamp(const Schema& schema)
             fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()->toString()));
     }
 }
-NodeFunctionPtr NodeFunctionNegate::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionNegate::deepCopy()
 {
     return NodeFunctionNegate::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

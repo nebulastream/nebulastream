@@ -29,7 +29,6 @@
 
 namespace NES::Runtime
 {
-class QueryCatalog;
 class BaseTask
 {
 public:

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Util/Common.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -26,7 +27,7 @@ bool Char::operator==(const NES::DataType& other) const
     return dynamic_cast<const Char*>(&other) != nullptr;
 }
 
-DataTypePtr Char::join(DataTypePtr otherDataType)
+std::shared_ptr<DataType> Char::join(const std::shared_ptr<DataType> otherDataType)
 {
     if (NES::Util::instanceOf<Char>(otherDataType))
     {

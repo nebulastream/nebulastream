@@ -13,6 +13,11 @@
 */
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -24,15 +29,12 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalLimitOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
+    PhysicalLimitOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, uint64_t limit);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit);
+    static std::shared_ptr<PhysicalOperator>
+    create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit);
     std::shared_ptr<Operator> copy() override;
-
-    /**
-   * @brief get the limit.
-   * @return limit
-   */
     uint64_t getLimit();
 
 protected:

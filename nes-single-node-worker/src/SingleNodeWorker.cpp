@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -47,7 +48,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
+QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan)
 {
     try
     {

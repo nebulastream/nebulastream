@@ -14,22 +14,16 @@
 
 #pragma once
 
+#include <memory>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
 {
-
 class BinaryOperator;
-using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
-
 }
 
 namespace NES::Optimizer
 {
-
-class BinaryOperatorSortRule;
-using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
-
 /**
  * @brief This rule sorts children of a binary operators (Join and Union) by qualifier name.
  *
@@ -43,17 +37,17 @@ using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 class BinaryOperatorSortRule : public BaseRewriteRule
 {
 public:
-    static BinaryOperatorSortRulePtr create();
+    static std::shared_ptr<BinaryOperatorSortRule> create();
     virtual ~BinaryOperatorSortRule() = default;
 
-    QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
+    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
 
 private:
     /**
      * @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
      * @param binaryOperator : the input binary operator
      */
-    static void sortChildren(const BinaryOperatorPtr& binaryOperator);
+    static void sortChildren(const std::shared_ptr<BinaryOperator>& binaryOperator);
 
     BinaryOperatorSortRule();
 };

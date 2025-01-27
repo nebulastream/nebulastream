@@ -38,7 +38,7 @@ bool Float::operator==(const NES::DataType& other) const
     return false;
 }
 
-DataTypePtr Float::join(const DataTypePtr otherDataType)
+std::shared_ptr<DataType> Float::join(const std::shared_ptr<DataType> otherDataType)
 {
     if (NES::Util::instanceOf<Undefined>(otherDataType))
     {

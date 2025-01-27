@@ -14,17 +14,15 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
+#include <Types/WindowType.hpp>
 
-namespace NES
-{
-
-using ExpressionNodePtr = std::shared_ptr<class ExpressionNode>;
-
-namespace Windowing
+namespace NES::Windowing
 {
 /*
  * Threshold window creates a window whenever an event attribute exceeds a threshold (predicate), and close the window if it is below the threshold (or the other way around)
@@ -36,21 +34,21 @@ public:
     /**
     * @brief Constructor for ThresholdWindow
     * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
-    * @return WindowTypePtr
+    * @return std::shared_ptr<WindowType>
     */
-    static WindowTypePtr of(NodeFunctionPtr predicate);
+    static std::shared_ptr<WindowType> of(std::shared_ptr<NodeFunction> predicate);
 
     /**
     * @brief Constructor for ThresholdWindow
     * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
     * @param minimumCount specifies the minimum amount of tuples to occur within the window
-    * @return WindowTypePtr
+    * @return std::shared_ptr<WindowType>
     */
-    static WindowTypePtr of(NodeFunctionPtr predicate, uint64_t minimumCount);
+    static std::shared_ptr<WindowType> of(std::shared_ptr<NodeFunction> predicate, uint64_t minimumCount);
 
     std::string toString() const override;
 
-    bool equal(WindowTypePtr otherWindowType) override;
+    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
 
     /**
      * @brief return the content-based Subwindow Type, i.e., THRESHOLDWINDOW
@@ -58,7 +56,7 @@ public:
      */
     ContentBasedSubWindowType getContentBasedSubWindowType() override;
 
-    [[nodiscard]] const NodeFunctionPtr& getPredicate() const;
+    [[nodiscard]] const std::shared_ptr<NodeFunction>& getPredicate() const;
 
     uint64_t getMinimumCount() const;
 
@@ -67,12 +65,11 @@ public:
     uint64_t hash() const override;
 
 private:
-    explicit ThresholdWindow(NodeFunctionPtr predicate);
-    ThresholdWindow(NodeFunctionPtr predicate, uint64_t minCount);
+    explicit ThresholdWindow(std::shared_ptr<NodeFunction> predicate);
+    ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount);
 
-    NodeFunctionPtr predicate;
+    std::shared_ptr<NodeFunction> predicate;
     uint64_t minimumCount = 0;
 };
 
-}
 }

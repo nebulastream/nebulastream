@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <memory>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
@@ -23,25 +27,26 @@ namespace NES::Windowing
 class MedianAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
+    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
 
     /// Creates a new MedianAggregationDescriptor
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
+    static std::shared_ptr<WindowAggregationDescriptor>
+    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    WindowAggregationDescriptorPtr copy() override;
+    std::shared_ptr<WindowAggregationDescriptor> copy() override;
 
-    DataTypePtr getInputStamp() override;
-    DataTypePtr getPartialAggregateStamp() override;
-    DataTypePtr getFinalAggregateStamp() override;
+    std::shared_ptr<DataType> getInputStamp() override;
+    std::shared_ptr<DataType> getPartialAggregateStamp() override;
+    std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
     virtual ~MedianAggregationDescriptor() = default;
 
 private:
-    explicit MedianAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
-    MedianAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
+    explicit MedianAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
+    MedianAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
 };
 }

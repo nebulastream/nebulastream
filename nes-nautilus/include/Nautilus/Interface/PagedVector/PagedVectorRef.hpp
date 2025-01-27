@@ -27,6 +27,7 @@
 
 namespace NES::Nautilus::Interface
 {
+/// Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
 
 /// This class is a nautilus interface to our PagedVector. It provides a way to write and read records to and from the PagedVector

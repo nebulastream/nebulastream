@@ -13,20 +13,22 @@
 */
 
 #pragma once
+#include <memory>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 class NodeFunctionRound final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionRound(DataTypePtr stamp);
+    explicit NodeFunctionRound(std::shared_ptr<DataType> stamp);
     ~NodeFunctionRound() noexcept override = default;
-    [[nodiscard]] static NodeFunctionPtr create(const NodeFunctionPtr& child);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& child);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

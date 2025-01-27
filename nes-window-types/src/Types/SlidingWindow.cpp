@@ -12,21 +12,24 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Types/SlidingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing
 {
 
-SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+SlidingWindow::SlidingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide))
 {
 }
 
-WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+std::shared_ptr<WindowType> SlidingWindow::of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide)
 {
     return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
 }
@@ -51,7 +54,7 @@ std::string SlidingWindow::toString() const
     return ss.str();
 }
 
-bool SlidingWindow::equal(WindowTypePtr otherWindowType)
+bool SlidingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType))
     {

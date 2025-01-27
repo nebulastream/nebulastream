@@ -12,12 +12,16 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <memory>
 #include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -29,13 +33,13 @@ namespace NES::Join
 {
 
 LogicalJoinDescriptor::LogicalJoinDescriptor(
-    NodeFunctionPtr joinFunction,
-    Windowing::WindowTypePtr windowType,
-    uint64_t numberOfInputEdgesLeft,
-    uint64_t numberOfInputEdgesRight,
-    JoinType joinType,
-    OriginId originId)
-    : joinFunction(joinFunction)
+    std::shared_ptr<NodeFunction> joinFunction,
+    std::shared_ptr<Windowing::WindowType> windowType,
+    const uint64_t numberOfInputEdgesLeft,
+    const uint64_t numberOfInputEdgesRight,
+    const JoinType joinType,
+    const OriginId originId)
+    : joinFunction(std::move(joinFunction))
     , leftSourceType(Schema::create())
     , rightSourceType(Schema::create())
     , outputSchema(Schema::create())
@@ -54,9 +58,9 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
         magic_enum::enum_name(this->joinType));
 }
 
-LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(
-    NodeFunctionPtr joinFunctions,
-    const Windowing::WindowTypePtr& windowType,
+std::shared_ptr<LogicalJoinDescriptor> LogicalJoinDescriptor::create(
+    const std::shared_ptr<NodeFunction>& joinFunctions,
+    const std::shared_ptr<Windowing::WindowType>& windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
     JoinType joinType)
@@ -65,17 +69,17 @@ LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(
         joinFunctions, windowType, numberOfInputEdgesLeft, numberOfInputEdgesRight, joinType);
 }
 
-SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const
+std::shared_ptr<Schema> LogicalJoinDescriptor::getLeftSourceType() const
 {
     return leftSourceType;
 }
 
-SchemaPtr LogicalJoinDescriptor::getRightSourceType() const
+std::shared_ptr<Schema> LogicalJoinDescriptor::getRightSourceType() const
 {
     return rightSourceType;
 }
 
-Windowing::WindowTypePtr LogicalJoinDescriptor::getWindowType() const
+std::shared_ptr<Windowing::WindowType> LogicalJoinDescriptor::getWindowType() const
 {
     return windowType;
 }
@@ -95,7 +99,7 @@ uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesRight() const
     return numberOfInputEdgesRight;
 }
 
-void LogicalJoinDescriptor::updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType)
+void LogicalJoinDescriptor::updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType)
 {
     if (leftSourceType)
     {
@@ -107,7 +111,7 @@ void LogicalJoinDescriptor::updateSourceTypes(SchemaPtr leftSourceType, SchemaPt
     }
 }
 
-void LogicalJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema)
+void LogicalJoinDescriptor::updateOutputDefinition(std::shared_ptr<Schema> outputSchema)
 {
     if (outputSchema)
     {
@@ -115,7 +119,7 @@ void LogicalJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema)
     }
 }
 
-SchemaPtr LogicalJoinDescriptor::getOutputSchema() const
+std::shared_ptr<Schema> LogicalJoinDescriptor::getOutputSchema() const
 {
     return outputSchema;
 }
@@ -139,7 +143,7 @@ void LogicalJoinDescriptor::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
-NodeFunctionPtr LogicalJoinDescriptor::getJoinFunction()
+std::shared_ptr<NodeFunction> LogicalJoinDescriptor::getJoinFunction()
 {
     return this->joinFunction;
 }

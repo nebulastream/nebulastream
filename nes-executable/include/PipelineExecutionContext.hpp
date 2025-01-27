@@ -18,15 +18,15 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {
-class OperatorHandler;
 class PipelineExecutionContext
 {
 public:
-    /// Policy whether an emitted TupleBuffer is able to be processed immediately or
+    /// Policy whether an emitted TupleBuffer is able to process immediately or
     /// needs to be dispatched as a new Task.
     enum class ContinuationPolicy : uint8_t
     {

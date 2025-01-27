@@ -15,7 +15,9 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <Functions/NodeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
@@ -27,7 +29,7 @@ namespace NES
 class LogicalProjectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id);
+    explicit LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
     const std::vector<std::shared_ptr<NodeFunction>>& getFunctions() const;

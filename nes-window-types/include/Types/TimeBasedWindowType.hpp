@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -22,17 +23,15 @@
 namespace NES::Windowing
 {
 
-class TimeBasedWindowType;
-using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
 class TimeBasedWindowType : public WindowType
 {
 public:
-    explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
+    explicit TimeBasedWindowType(std::shared_ptr<TimeCharacteristic> timeCharacteristic);
 
     ~TimeBasedWindowType() override = default;
 
-    [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
+    [[nodiscard]] std::shared_ptr<TimeCharacteristic> getTimeCharacteristic() const;
 
     /**
      * @brief method to get the window size
@@ -49,7 +48,7 @@ public:
     bool inferStamp(const Schema& schema) override;
 
 protected:
-    TimeCharacteristicPtr timeCharacteristic;
+    std::shared_ptr<TimeCharacteristic> timeCharacteristic;
 };
 
 }

@@ -50,7 +50,6 @@ struct QueryCompilerOptions
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     WindowOperatorOptions windowOperatorOptions;
 } __attribute__((aligned(64)));
-using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 /// TODO #122: Refactor QueryCompilerConfiguration
 [[maybe_unused]]

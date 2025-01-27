@@ -12,21 +12,23 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
 
-NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name)
+NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(std::shared_ptr<DataType> stamp, std::string name)
     : NodeFunctionBinary(std::move(stamp), std::move(name)), NodeFunctionArithmetical()
 {
 }
@@ -77,7 +79,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
     NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalBinary::equal(const NodePtr& rhs) const
+bool NodeFunctionArithmeticalBinary::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalBinary>(rhs))
     {

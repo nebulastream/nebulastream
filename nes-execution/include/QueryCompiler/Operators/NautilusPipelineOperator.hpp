@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <vector>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -25,18 +26,18 @@ public:
     std::shared_ptr<Operator> copy() override;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
-    std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> getOperatorHandlers();
 
     NautilusPipelineOperator(
         OperatorId id,
         std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers);
 
 protected:
     std::string toString() const override;
 
 private:
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
 };
 

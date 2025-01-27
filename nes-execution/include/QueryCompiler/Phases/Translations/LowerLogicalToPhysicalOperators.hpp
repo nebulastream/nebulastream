@@ -13,11 +13,12 @@
 */
 #pragma once
 
+#include <memory>
 #include <vector>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 namespace NES::QueryCompilation
 {
-using LowerLogicalToPhysicalOperatorsPtr = std::shared_ptr<class LowerLogicalToPhysicalOperators>;
 /**
  * @brief This phase lowers a query plan of logical operators into a query plan of physical operators.
  * The lowering of individual operators is defined by the physical operator provider to improve extendability.
@@ -25,11 +26,11 @@ using LowerLogicalToPhysicalOperatorsPtr = std::shared_ptr<class LowerLogicalToP
 class LowerLogicalToPhysicalOperators
 {
 public:
-    explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
-    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider);
-    DecomposedQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan);
+    explicit LowerLogicalToPhysicalOperators(std::shared_ptr<PhysicalOperatorProvider> provider);
+    static std::shared_ptr<LowerLogicalToPhysicalOperators> create(const std::shared_ptr<PhysicalOperatorProvider>& provider);
+    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> apply(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan) const;
 
 private:
-    PhysicalOperatorProviderPtr provider;
+    std::shared_ptr<PhysicalOperatorProvider> provider;
 };
 }

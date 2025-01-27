@@ -31,11 +31,6 @@
 namespace NES::Memory
 {
 
-class TupleBuffer;
-namespace detail
-{
-class MemorySegment;
-}
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
@@ -212,6 +207,5 @@ private:
     std::atomic<bool> isDestroyed{false};
 };
 
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 }

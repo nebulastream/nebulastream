@@ -15,6 +15,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstddef>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -26,10 +27,6 @@
 
 namespace NES::Memory
 {
-namespace detail
-{
-class MemorySegment;
-}
 
 const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
 
@@ -46,7 +43,9 @@ public:
      * @param numberOfReservedBuffers number of exclusive buffers
      */
     explicit FixedSizeBufferPool(
-        const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers, size_t numberOfReservedBuffers);
+        const std::shared_ptr<BufferManager>& bufferManager,
+        std::deque<detail::MemorySegment*>& availableBuffers,
+        size_t numberOfReservedBuffers);
 
     ~FixedSizeBufferPool() override;
 
@@ -93,10 +92,10 @@ public:
 
     virtual BufferManagerType getBufferManagerType() const override;
 
-    BufferManagerPtr getParentBufferManager() const { return bufferManager; }
+    std::shared_ptr<BufferManager> getParentBufferManager() const { return bufferManager; }
 
 private:
-    BufferManagerPtr bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
 
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
     [[maybe_unused]] size_t numberOfReservedBuffers;

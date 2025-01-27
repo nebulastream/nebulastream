@@ -17,34 +17,37 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
 
-LogicalMapOperator::LogicalMapOperator(const NodeFunctionFieldAssignmentPtr& mapFunction, OperatorId id)
+LogicalMapOperator::LogicalMapOperator(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), mapFunction(mapFunction)
 {
 }
 
-NodeFunctionFieldAssignmentPtr LogicalMapOperator::getMapFunction() const
+std::shared_ptr<NodeFunctionFieldAssignment> LogicalMapOperator::getMapFunction() const
 {
     return mapFunction;
 }
 
-bool LogicalMapOperator::isIdentical(const NodePtr& rhs) const
+bool LogicalMapOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalMapOperator>(rhs)->getId() == id;
 }
 
-bool LogicalMapOperator::equal(const NodePtr& rhs) const
+bool LogicalMapOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
     {
-        auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
+        const auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
         return mapFunction->equal(mapOperator->mapFunction);
     }
     return false;
@@ -93,7 +96,6 @@ std::shared_ptr<Operator> LogicalMapOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
     {
@@ -107,15 +109,15 @@ void LogicalMapOperator::inferStringSignature()
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
     INVARIANT(children.size() == 1, "Map should have 1 child, but got: {}", children.size());
     ///Infer query signatures for child operator
-    auto child = NES::Util::as<LogicalOperator>(children[0]);
+    const auto child = NES::Util::as<LogicalOperator>(children[0]);
     child->inferStringSignature();
     /// Infer signature for this operator.
     std::stringstream signatureStream;
-    auto childSignature = child->getHashBasedSignature();
+    const auto childSignature = child->getHashBasedSignature();
     signatureStream << "MAP(" << *mapFunction << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
+    const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 

@@ -64,7 +64,10 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const SchemaPtr& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
+    const std::shared_ptr<Schema>& schema,
+    const uint64_t numberOfTuples,
+    Memory::BufferManager& bufferManager,
+    const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
@@ -75,14 +78,14 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const SchemaPtr& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
+    const std::shared_ptr<Schema>& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     const uint64_t numberOfTuples,
     Memory::BufferManager& bufferManager,
     const uint64_t seed,
@@ -121,7 +124,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
     std::vector<Memory::TupleBuffer> buffers;
-    const auto capacity = memoryProviderInputBuffer->getMemoryLayoutPtr()->getCapacity();
+    const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
     for (uint64_t i = 0; i < numberOfTuples; i = i + capacity)
@@ -170,7 +173,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
     QueryCompilation::NautilusBackend backend,
     nautilus::engine::Options& options,
-    const SchemaPtr& schema,
+    const std::shared_ptr<Schema>& schema,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -189,7 +192,7 @@ void NautilusTestUtils::compileFillBufferFunction(
             Record record;
             for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema->getFieldCount(); ++fieldIndex)
             {
-                DefaultPhysicalTypeFactory const physicalTypeFactory;
+                const DefaultPhysicalTypeFactory physicalTypeFactory;
                 const auto field = schema->getFieldByIndex(fieldIndex);
                 const auto type = physicalTypeFactory.getPhysicalType(field->getDataType());
                 const auto fieldName = field->getName();

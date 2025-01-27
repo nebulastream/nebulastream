@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
@@ -20,26 +21,26 @@
 namespace NES
 {
 
-DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
+DepthFirstNodeIterator::DepthFirstNodeIterator(std::shared_ptr<Node> start) : start(std::move(start)) {};
 
-DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin()
+DepthFirstNodeIterator::Iterator DepthFirstNodeIterator::begin() const
 {
-    return iterator(start);
+    return Iterator(start);
 }
 
-DepthFirstNodeIterator::iterator DepthFirstNodeIterator::end()
+DepthFirstNodeIterator::Iterator DepthFirstNodeIterator::end()
 {
-    return iterator();
+    return Iterator();
 }
 
-DepthFirstNodeIterator::iterator::iterator(const NodePtr& current)
+DepthFirstNodeIterator::Iterator::Iterator(const std::shared_ptr<Node>& current)
 {
     workStack.push(current);
 }
 
-DepthFirstNodeIterator::iterator::iterator() = default;
+DepthFirstNodeIterator::Iterator::Iterator() = default;
 
-bool DepthFirstNodeIterator::iterator::operator!=(const iterator& other) const
+bool DepthFirstNodeIterator::Iterator::operator!=(const Iterator& other) const
 {
     /// todo currently we only check if we reached the end of the iterator.
     if (workStack.empty() && other.workStack.empty())
@@ -49,12 +50,12 @@ bool DepthFirstNodeIterator::iterator::operator!=(const iterator& other) const
     return true;
 }
 
-NodePtr DepthFirstNodeIterator::iterator::operator*()
+std::shared_ptr<Node> DepthFirstNodeIterator::Iterator::operator*()
 {
     return workStack.top();
 }
 
-DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++()
+DepthFirstNodeIterator::Iterator& DepthFirstNodeIterator::Iterator::operator++()
 {
     if (workStack.empty())
     {

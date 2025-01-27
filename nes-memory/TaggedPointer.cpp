@@ -43,7 +43,7 @@ TaggedPointer<T>::operator bool() const
 }
 
 template <typename T>
-void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
+void TaggedPointer<T>::reset(T* ptr, const uint16_t tag)
 {
     uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
     PRECONDITION(!(pointer >> TAG_SHIFT), "tag out of range");

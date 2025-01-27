@@ -13,10 +13,12 @@
 */
 
 #pragma once
+#include <memory>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Nodes/Node.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -25,17 +27,17 @@ namespace NES
 class NodeFunctionWhen final : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionWhen(DataTypePtr stamp);
+    explicit NodeFunctionWhen(std::shared_ptr<DataType> stamp);
     ~NodeFunctionWhen() noexcept override = default;
 
-    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
 
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 
     bool validateBeforeLowering() const override;
-    NodeFunctionPtr deepCopy() override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

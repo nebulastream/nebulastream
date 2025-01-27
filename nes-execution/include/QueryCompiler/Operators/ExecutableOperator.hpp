@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <vector>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -35,7 +36,7 @@ public:
      */
     static std::shared_ptr<Operator> create(
         std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
-        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers);
 
     /**
      * @brief Gets the executable pipeline stage.
@@ -47,9 +48,9 @@ public:
 
     /**
      * @brief Gets the operator handlers, which capture specific operator state.
-     * @return std::vector<Runtime::Execution::OperatorHandlerPtr>
+     * @return std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>
      */
-    std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> getOperatorHandlers();
     std::shared_ptr<Operator> copy() override;
 
 protected:
@@ -59,9 +60,9 @@ private:
     ExecutableOperator(
         OperatorId id,
         std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage,
-        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers);
     std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> executablePipelineStage;
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
 };
 
 }

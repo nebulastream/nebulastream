@@ -23,15 +23,15 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
-#include "Configurations/Descriptor.hpp"
-#include "Sources/SourceDescriptor.hpp"
 
 namespace NES::Sources
 {

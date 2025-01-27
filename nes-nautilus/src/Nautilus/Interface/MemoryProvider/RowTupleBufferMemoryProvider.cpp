@@ -27,7 +27,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr)
     : rowMemoryLayout(std::move(rowMemoryLayoutPtr)) {};
 
-Memory::MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout()
 {
     return rowMemoryLayout;
 }

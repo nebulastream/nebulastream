@@ -14,6 +14,7 @@
 
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -56,7 +57,7 @@ public:
      * Builds the TimeFunction
      * @return reference to the field name
      */
-    [[nodiscard]] Runtime::Execution::Operators::TimeFunctionPtr toTimeFunction() const;
+    [[nodiscard]] std::unique_ptr<Runtime::Execution::Operators::TimeFunction> toTimeFunction() const;
     static TimestampField IngestionTime();
     static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
 

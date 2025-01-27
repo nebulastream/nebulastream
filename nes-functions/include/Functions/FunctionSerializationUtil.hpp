@@ -15,12 +15,11 @@
 #pragma once
 
 #include <memory>
+#include <Functions/NodeFunction.hpp>
 
 namespace NES
 {
 
-class NodeFunction;
-using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 class SerializableFunction;
 class SerializableFunction_FunctionConstantValue;
@@ -44,19 +43,20 @@ public:
     * @param serializedFunction The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedFunction
     */
-    static SerializableFunction* serializeFunction(const NodeFunctionPtr& nodeFunction, SerializableFunction* serializedFunction);
+    static SerializableFunction*
+    serializeFunction(const std::shared_ptr<NodeFunction>& nodeFunction, SerializableFunction* serializedFunction);
 
     /**
-    * @brief De-serializes the SerializableFunction and all its children to a corresponding NodeFunctionPtr
+    * @brief De-serializes the SerializableFunction and all its children to a corresponding std::shared_ptr<NodeFunction>
     * @param serializedFunction the serialized function.
-    * @return NodeFunctionPtr
+    * @return std::shared_ptr<NodeFunction>
     */
-    static NodeFunctionPtr deserializeFunction(const SerializableFunction& serializedFunction);
+    static std::shared_ptr<NodeFunction> deserializeFunction(const SerializableFunction& serializedFunction);
 
 private:
-    static void serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
-    static void serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
-    static NodeFunctionPtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
-    static NodeFunctionPtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
+    static void serializeLogicalFunctions(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction);
+    static void serializeArithmeticalFunctions(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction);
+    static std::shared_ptr<NodeFunction> deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
+    static std::shared_ptr<NodeFunction> deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
 };
 }

@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -27,11 +29,13 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType)
+DynamicField::DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType)
+    : address(address), physicalType(std::move(std::move(physicalType)))
 {
 }
 
@@ -114,7 +118,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const SchemaPtr& schema) const
+std::string DynamicTuple::toString(const std::shared_ptr<Schema>& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
@@ -199,7 +203,7 @@ bool DynamicField::operator!=(const DynamicField& rhs) const
     return not(*this == rhs);
 }
 
-const PhysicalTypePtr& DynamicField::getPhysicalType() const
+const std::shared_ptr<PhysicalType>& DynamicField::getPhysicalType() const
 {
     return physicalType;
 }
@@ -264,11 +268,17 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const SchemaPtr& schema, const bool showHeader)
+std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema)
+{
+    constexpr auto showHeader = true;
+    return toString(schema, showHeader);
+}
+
+std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const bool showHeader)
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
-    std::vector<PhysicalTypePtr> types;
+    std::vector<std::shared_ptr<PhysicalType>> types;
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : *schema)
     {
@@ -355,7 +365,7 @@ std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
     return memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {

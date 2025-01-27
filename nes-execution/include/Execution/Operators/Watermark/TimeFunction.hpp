@@ -16,13 +16,9 @@
 #include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>
 
-namespace NES::Nautilus
-{
-class Record;
-class RecordBuffer;
-}
 
 namespace NES::Runtime::Execution
 {
@@ -32,9 +28,6 @@ struct ExecutionContext;
 namespace NES::Runtime::Execution::Operators
 {
 using namespace Nautilus;
-
-class TimeFunction;
-using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /// @brief A time function, infers the timestamp of an record.
 /// For ingestion time, this is determined by the creation ts in the buffer.

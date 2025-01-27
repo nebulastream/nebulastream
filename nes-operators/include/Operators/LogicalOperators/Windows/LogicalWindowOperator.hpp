@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include "Identifiers/Identifiers.hpp"
-#include "Nodes/Node.hpp"
-#include "Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp"
 
 namespace NES
 {
@@ -26,9 +27,9 @@ namespace NES
 class LogicalWindowOperator : public WindowOperator
 {
 public:
-    LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
-    [[nodiscard]] bool isIdentical(const NodePtr& rhs) const override;
+    LogicalWindowOperator(const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition, OperatorId id);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;

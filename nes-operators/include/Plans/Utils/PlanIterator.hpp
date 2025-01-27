@@ -18,14 +18,11 @@
 #include <memory>
 #include <stack>
 #include <Operators/Operator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES
 {
-
-class Node;
-class QueryPlan;
-class DecomposedQueryPlan;
-
 /**
  * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
  * The iterator visits each operator exactly one time in the following order:
@@ -65,7 +62,7 @@ public:
     private:
         explicit Iterator(const std::vector<std::shared_ptr<Operator>>& rootOperators);
         explicit Iterator();
-        std::stack<NodePtr> workStack;
+        std::stack<std::shared_ptr<Node>> workStack;
     };
 
     /// @note always a sink

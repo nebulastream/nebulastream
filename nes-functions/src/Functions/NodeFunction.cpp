@@ -12,16 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunction::NodeFunction(DataTypePtr stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
+NodeFunction::NodeFunction(std::shared_ptr<DataType> stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
 {
 }
 
@@ -30,12 +32,12 @@ bool NodeFunction::isPredicate() const
     return NES::Util::instanceOf<Boolean>(stamp);
 }
 
-DataTypePtr NodeFunction::getStamp() const
+std::shared_ptr<DataType> NodeFunction::getStamp() const
 {
     return stamp;
 }
 
-void NodeFunction::setStamp(DataTypePtr stamp)
+void NodeFunction::setStamp(std::shared_ptr<DataType> stamp)
 {
     this->stamp = std::move(stamp);
 }

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <vector>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
@@ -50,7 +52,7 @@ namespace NES
 {
 
 SerializableFunction*
-FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
+FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize function {}", *function);
     /// serialize function node depending on its type.
@@ -140,19 +142,19 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
     return serializedFunction;
 }
 
-NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
+std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: deserialize function {}", serializedFunction.details().type_url());
     /// de-serialize function
     /// 1. check if the serialized function is a logical function
-    auto nodeFunctionPtr = deserializeLogicalFunctions(serializedFunction);
+    auto nodeFunction = deserializeLogicalFunctions(serializedFunction);
     /// 2. if the function was not de-serialized then try if it's an arithmetical function
-    if (!nodeFunctionPtr)
+    if (!nodeFunction)
     {
-        nodeFunctionPtr = deserializeArithmeticalFunctions(serializedFunction);
+        nodeFunction = deserializeArithmeticalFunctions(serializedFunction);
     }
     /// 3. if the function was not de-serialized try remaining function types
-    if (!nodeFunctionPtr)
+    if (!nodeFunction)
     {
         if (serializedFunction.details().Is<SerializableFunction_FunctionConstantValue>())
         {
@@ -162,7 +164,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             serializedFunction.details().UnpackTo(&serializedConstantValue);
             /// The data type stored in the function's stamp is equal to the datatype of the value
             auto valueDataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
-            nodeFunctionPtr = NodeFunctionConstantValue::create(valueDataType, serializedConstantValue.value());
+            nodeFunction = NodeFunctionConstantValue::create(valueDataType, serializedConstantValue.value());
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
         {
@@ -171,7 +173,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             SerializableFunction_FunctionFieldAccess serializedFieldAccessFunction;
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto& name = serializedFieldAccessFunction.fieldname();
-            nodeFunctionPtr = NodeFunctionFieldAccess::create(name);
+            nodeFunction = NodeFunctionFieldAccess::create(name);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldRename>())
         {
@@ -188,7 +190,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
                     *originalFieldAccessFunction));
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-            nodeFunctionPtr = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
+            nodeFunction = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
         {
@@ -200,8 +202,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
             auto fieldAccessNode = NodeFunctionFieldAccess::create(fieldStamp, field->fieldname());
             auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
-            nodeFunctionPtr
-                = NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(fieldAccessNode), fieldAssignmentFunction);
+            nodeFunction = NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(fieldAccessNode), fieldAssignmentFunction);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionWhen>())
         {
@@ -219,7 +220,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Case function node.");
             auto serializedNodeFunction = SerializableFunction_FunctionCase();
             serializedFunction.details().UnpackTo(&serializedNodeFunction);
-            std::vector<NodeFunctionPtr> leftExps;
+            std::vector<std::shared_ptr<NodeFunction>> leftExps;
 
             ///todo: deserialization might be possible more efficiently
             for (int i = 0; i < serializedNodeFunction.left_size(); i++)
@@ -236,19 +237,20 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
         }
     }
 
-    if (!nodeFunctionPtr)
+    if (!nodeFunction)
     {
         throw CannotDeserialize("FunctionSerializationUtil:: fatal error during de-serialization. The function node must not be null");
     }
 
     /// deserialize function stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
-    nodeFunctionPtr->setStamp(stamp);
-    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", *nodeFunctionPtr);
-    return nodeFunctionPtr;
+    nodeFunction->setStamp(stamp);
+    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", *nodeFunction);
+    return nodeFunction;
 }
 
-void FunctionSerializationUtil::serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
+void FunctionSerializationUtil::serializeArithmeticalFunctions(
+    const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", *function);
     if (Util::instanceOf<NodeFunctionAdd>(function))
@@ -374,7 +376,8 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(const NodeFunctio
     }
 }
 
-void FunctionSerializationUtil::serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
+void FunctionSerializationUtil::serializeLogicalFunctions(
+    const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
@@ -465,7 +468,7 @@ void FunctionSerializationUtil::serializeLogicalFunctions(const NodeFunctionPtr&
     }
 }
 
-NodeFunctionPtr FunctionSerializationUtil::deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction)
+std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction)
 {
     if (serializedFunction.details().Is<SerializableFunction_FunctionAdd>())
     {
@@ -584,7 +587,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeArithmeticalFunctions(cons
     return nullptr;
 }
 
-NodeFunctionPtr FunctionSerializationUtil::deserializeLogicalFunctions(const SerializableFunction& serializedFunction)
+std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeLogicalFunctions(const SerializableFunction& serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: de-serialize logical function {}", serializedFunction.details().type_url());
     if (serializedFunction.details().Is<SerializableFunction_FunctionAnd>())

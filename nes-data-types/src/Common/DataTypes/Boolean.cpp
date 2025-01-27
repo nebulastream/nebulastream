@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
@@ -28,7 +29,7 @@ bool Boolean::operator==(const NES::DataType& other) const
 }
 
 
-DataTypePtr Boolean::join(DataTypePtr otherDataType)
+std::shared_ptr<DataType> Boolean::join(const std::shared_ptr<DataType> otherDataType)
 {
     if (NES::Util::instanceOf<Boolean>(otherDataType))
     {

@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
-#include "Nodes/Node.hpp"
 
 
 namespace NES
@@ -33,7 +34,7 @@ NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* 
 {
 }
 
-bool NodeFunctionLogicalBinary::equal(const NodePtr& rhs) const
+bool NodeFunctionLogicalBinary::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLogicalBinary>(rhs))
     {

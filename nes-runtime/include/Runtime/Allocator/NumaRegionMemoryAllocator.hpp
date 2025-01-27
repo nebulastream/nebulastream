@@ -53,6 +53,5 @@ private:
 private:
     const uint32_t numaNodeIndex;
 };
-using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
 }
 #endif

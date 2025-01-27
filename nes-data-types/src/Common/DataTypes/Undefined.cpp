@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Undefined.hpp>
@@ -24,7 +25,7 @@ bool Undefined::operator==(const DataType& other) const
     return dynamic_cast<const Undefined*>(&other) != nullptr;
 }
 
-DataTypePtr Undefined::join(DataTypePtr)
+std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>)
 {
     return DataTypeFactory::createUndefined();
 }

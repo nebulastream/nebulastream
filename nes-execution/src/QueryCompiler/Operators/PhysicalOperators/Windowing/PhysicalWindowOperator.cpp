@@ -49,9 +49,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalWindowOperator::PhysicalWindowOperator(
     const OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::LogicalWindowDescriptorPtr windowDefinition,
+    std::shared_ptr<Schema> inputSchema,
+    std::shared_ptr<Schema> outputSchema,
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
@@ -60,7 +60,7 @@ PhysicalWindowOperator::PhysicalWindowOperator(
 {
 }
 
-const Windowing::LogicalWindowDescriptorPtr& PhysicalWindowOperator::getWindowDefinition() const
+const std::shared_ptr<Windowing::LogicalWindowDescriptor>& PhysicalWindowOperator::getWindowDefinition() const
 {
     return windowDefinition;
 };
@@ -178,7 +178,7 @@ PhysicalWindowOperator::getAggregationFunctions(const QueryCompilerOptions& opti
                 case Windowing::WindowAggregationDescriptor::Type::Median: {
                     auto layout
                         = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(inputSchema, options.windowOperatorOptions.pageSize);
-                    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> const memoryProvider
+                    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                         = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MedianAggregationFunction>(
                         physicalInputType,
@@ -186,6 +186,10 @@ PhysicalWindowOperator::getAggregationFunctions(const QueryCompilerOptions& opti
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
                         memoryProvider));
+                    break;
+                }
+                case Windowing::WindowAggregationDescriptor::Type::None: {
+                    throw NotImplemented();
                     break;
                 }
             }

@@ -11,31 +11,40 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalSelectionOperator::PhysicalSelectionOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate)
+    OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, std::shared_ptr<NodeFunction> predicate)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate))
 {
 }
 
-PhysicalOperatorPtr PhysicalSelectionOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
+std::shared_ptr<PhysicalOperator> PhysicalSelectionOperator::create(
+    OperatorId id,
+    const std::shared_ptr<Schema>& inputSchema,
+    const std::shared_ptr<Schema>& outputSchema,
+    const std::shared_ptr<NodeFunction>& function)
 {
     return std::make_shared<PhysicalSelectionOperator>(id, inputSchema, outputSchema, function);
 }
 
-NodeFunctionPtr PhysicalSelectionOperator::getPredicate()
+std::shared_ptr<NodeFunction> PhysicalSelectionOperator::getPredicate()
 {
     return predicate;
 }
 
-PhysicalOperatorPtr PhysicalSelectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function)
+std::shared_ptr<PhysicalOperator> PhysicalSelectionOperator::create(
+    const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, const std::shared_ptr<NodeFunction>& function)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }

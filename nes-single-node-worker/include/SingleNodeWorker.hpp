@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -25,11 +27,6 @@ namespace NES
 namespace Runtime
 {
 struct PrintingStatisticListener;
-class NodeEngine;
-}
-namespace QueryCompilation
-{
-class QueryCompiler;
 }
 
 /**
@@ -60,9 +57,9 @@ public:
      * Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
      * returned the query can be started with the QueryId. The registered Query will be in the StoppedState
      * @param plan Fully Specified LogicalQueryPlan.
-     * @return QueryId which identifies the registered Query
+     * @return QueryId which identifies the registered Qconst uery
      */
-    QueryId registerQuery(DecomposedQueryPlanPtr plan);
+    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan);
 
     /**
      * Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime

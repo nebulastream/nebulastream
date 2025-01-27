@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -41,7 +42,7 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
 MemorySegment::MemorySegment(
     uint8_t* ptr,
-    uint32_t size,
+    const uint32_t size,
     BufferRecycler* recycler,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock)
@@ -54,7 +55,11 @@ MemorySegment::MemorySegment(
 }
 
 MemorySegment::MemorySegment(
-    uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
+    uint8_t* ptr,
+    const uint32_t size,
+    BufferRecycler* recycler,
+    std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+    bool)
     : ptr(ptr), size(size)
 {
     INVARIANT(this->ptr, "invalid pointer");

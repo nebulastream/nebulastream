@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <memory>
+#include <random>
+#include <tuple>
 #include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -30,7 +35,9 @@ namespace NES::Memory::MemoryLayouts
 class ColumnarMemoryLayoutTest : public Testing::BaseUnitTest
 {
 public:
-    Memory::BufferManagerPtr bufferManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::mt19937 rng;
+    std::uniform_int_distribution<std::mt19937::result_type> dist;
     static void SetUpTestCase()
     {
         NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
@@ -41,6 +48,8 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
+        rng = std::mt19937(std::random_device()());
+        dist = std::uniform_int_distribution<std::mt19937::result_type>(0, std::numeric_limits<std::mt19937::result_type>::max());
     }
 };
 
@@ -49,7 +58,7 @@ public:
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -62,7 +71,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -71,9 +80,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    auto capacity = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    const auto capacity = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
     ASSERT_EQ(testBuffer->getCapacity(), capacity);
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 0u);
     ASSERT_EQ(columnLayout->getFieldOffset(1, 2), capacity * 1 + capacity * 2 + 1 * 4);
@@ -86,7 +95,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecord)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -95,12 +104,12 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+    const std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
     testBuffer->pushRecordToBuffer(writeRecord);
 
-    std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(0);
+    const std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(0);
 
     ASSERT_EQ(writeRecord, readRecord);
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 1UL);
@@ -111,7 +120,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -120,25 +129,25 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+    const size_t numTuples = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
-    for (size_t i = 0; i < NUM_TUPLES; i++)
+    for (size_t i = 0; i < numTuples; i++)
     {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
         testBuffer->pushRecordToBuffer(writeRecord);
     }
 
-    for (size_t i = 0; i < NUM_TUPLES; i++)
+    for (size_t i = 0; i < numTuples; i++)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
         ASSERT_EQ(allTuples[i], readRecord);
     }
 
-    ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), numTuples);
 }
 
 /**
@@ -146,7 +155,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
@@ -154,14 +163,14 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+    const size_t numTuples = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
-    for (size_t i = 0; i < NUM_TUPLES; i++)
+    for (size_t i = 0; i < numTuples; i++)
     {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
         testBuffer->pushRecordToBuffer(writeRecord);
     }
@@ -170,7 +179,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
     auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
     auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
 
-    for (size_t i = 0; i < NUM_TUPLES; ++i)
+    for (size_t i = 0; i < numTuples; ++i)
     {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
@@ -183,7 +192,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -199,7 +208,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; i++)
     {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
         testBuffer->pushRecordToBuffer(writeRecord);
     }
@@ -233,7 +242,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
  */
 TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -258,16 +267,16 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
  */
 TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = TestTupleBuffer(columnLayout, tupleBuffer);
-    uint32_t numberOfRecords = 10;
+    const auto tupleBuffer = bufferManager->getBufferBlocking();
+    const auto buffer = TestTupleBuffer(columnLayout, tupleBuffer);
+    const uint32_t numberOfRecords = 10;
     for (uint32_t i = 0; i < numberOfRecords; i++)
     {
         auto record = buffer[i];
@@ -290,7 +299,7 @@ TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 {
-    SchemaPtr schema
+    const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -299,33 +308,33 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    const size_t numTuples = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     size_t i = 0;
-    for (; i < NUM_TUPLES; i++)
+    for (; i < numTuples; i++)
     {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
         testBuffer->pushRecordToBuffer(writeRecord);
     }
 
-    for (; i < NUM_TUPLES + 1; i++)
+    for (; i < numTuples + 1; i++)
     {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
         ASSERT_EXCEPTION_ERRORCODE(testBuffer->pushRecordToBuffer(writeRecord), ErrorCode::CannotAccessBuffer);
     }
 
-    for (size_t i = 0; i < NUM_TUPLES; i++)
+    for (size_t i = 0; i < numTuples; i++)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
         ASSERT_EQ(allTuples[i], readRecord);
     }
 
-    ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), numTuples);
 }
 
 TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)

@@ -11,8 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -25,12 +28,12 @@
 namespace NES::Optimizer
 {
 
-ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create()
+std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRule::create()
 {
     return std::make_shared<ProjectBeforeUnionOperatorRule>(ProjectBeforeUnionOperatorRule());
 }
 
-QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
+std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
     auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
@@ -60,8 +63,8 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
     return queryPlan;
 }
 
-LogicalOperatorPtr
-ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema)
+std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjectOperator(
+    const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema)
 {
     NES_TRACE(
         "Computing Projection operator for Source Schema{} and Destination schema {}",
@@ -70,7 +73,7 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
     /// Fetch source and destination schema fields
     auto sourceFields = sourceSchema;
     auto destinationFields = destinationSchema;
-    std::vector<NodeFunctionPtr> projectFunctions;
+    std::vector<std::shared_ptr<NodeFunction>> projectFunctions;
     /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
     {

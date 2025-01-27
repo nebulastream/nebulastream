@@ -12,42 +12,47 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
 {
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
+MaxAggregationDescriptor::MaxAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& field)
+    : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Max;
 }
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
+MaxAggregationDescriptor::MaxAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Max;
 }
 
-WindowAggregationDescriptorPtr MaxAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
+std::shared_ptr<WindowAggregationDescriptor>
+MaxAggregationDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
 {
     return std::make_shared<MaxAggregationDescriptor>(std::move(onField), std::move(asField));
 }
 
-WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
+std::shared_ptr<WindowAggregationDescriptor> MaxAggregationDescriptor::on(const std::shared_ptr<NodeFunction>& onField)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onField))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
+        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
-    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
+    const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(onField);
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
@@ -61,10 +66,10 @@ void MaxAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
-    auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
+    const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
+    const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
-    auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -72,28 +77,28 @@ void MaxAggregationDescriptor::inferStamp(const Schema& schema)
     }
     else
     {
-        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(getFinalAggregateStamp());
 }
 
-WindowAggregationDescriptorPtr MaxAggregationDescriptor::copy()
+std::shared_ptr<WindowAggregationDescriptor> MaxAggregationDescriptor::copy()
 {
     return std::make_shared<MaxAggregationDescriptor>(this->onField->deepCopy(), this->asField->deepCopy());
 }
 
-DataTypePtr MaxAggregationDescriptor::getInputStamp()
+std::shared_ptr<DataType> MaxAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
 
-DataTypePtr MaxAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> MaxAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
 
-DataTypePtr MaxAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> MaxAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }

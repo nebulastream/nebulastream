@@ -13,13 +13,15 @@
 */
 
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
+std::shared_ptr<Schema> TestSchemas::getSchemaTemplate(const std::string& name)
 {
     auto it = testSchemaCatalog.find(name);
     PRECONDITION(it != testSchemaCatalog.end(), "Schema with name: {} not found", name);
@@ -29,7 +31,7 @@ SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
     return newSchema;
 }
 
-std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {
+std::unordered_map<std::string, std::shared_ptr<Schema>> NES::TestSchemas::testSchemaCatalog = {
     {"id_u64", Schema::create()->addField("id", BasicType::UINT64)},
     {"id_time_u64", Schema::create()->addField("id", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
     {"id2_time_u64", Schema::create()->addField("id2", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},

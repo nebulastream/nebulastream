@@ -13,9 +13,10 @@
 */
 
 #pragma once
+#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Nodes/Node.hpp"
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -24,9 +25,9 @@ class NodeFunctionLessEquals : public NodeFunctionLogicalBinary
 public:
     NodeFunctionLessEquals();
     ~NodeFunctionLessEquals() override = default;
-    static NodeFunctionPtr create(const NodeFunctionPtr& left, const NodeFunctionPtr& right);
-    [[nodiscard]] bool equal(const NodePtr& rhs) const override;
-    NodeFunctionPtr deepCopy() override;
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
     explicit NodeFunctionLessEquals(NodeFunctionLessEquals* other);

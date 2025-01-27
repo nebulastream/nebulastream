@@ -16,28 +16,32 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataTypePtr stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp)
+    : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
 
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
 
-NodeFunctionFieldAssignmentPtr
-NodeFunctionFieldAssignment::create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr)
+std::shared_ptr<NodeFunctionFieldAssignment> NodeFunctionFieldAssignment::create(
+    const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction)
 {
-    auto fieldAssignment = std::make_shared<NodeFunctionFieldAssignment>(NodeFunctionPtr->getStamp());
-    fieldAssignment->setChildren(fieldAccess, NodeFunctionPtr);
+    auto fieldAssignment = std::make_shared<NodeFunctionFieldAssignment>(nodeFunction->getStamp());
+    fieldAssignment->setChildren(fieldAccess, nodeFunction);
     return fieldAssignment;
 }
 
-bool NodeFunctionFieldAssignment::equal(const NodePtr& rhs) const
+bool NodeFunctionFieldAssignment::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(rhs))
     {
@@ -57,12 +61,12 @@ std::string NodeFunctionFieldAssignment::toString() const
     return ss.str();
 }
 
-NodeFunctionFieldAccessPtr NodeFunctionFieldAssignment::getField() const
+std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldAssignment::getField() const
 {
     return Util::as<NodeFunctionFieldAccess>(getLeft());
 }
 
-NodeFunctionPtr NodeFunctionFieldAssignment::getAssignment() const
+std::shared_ptr<NodeFunction> NodeFunctionFieldAssignment::getAssignment() const
 {
     return getRight();
 }
@@ -115,7 +119,7 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
         }
     }
 }
-NodeFunctionPtr NodeFunctionFieldAssignment::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionFieldAssignment::deepCopy()
 {
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(getField()->deepCopy()), getAssignment()->deepCopy());
 }

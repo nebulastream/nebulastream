@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
@@ -29,14 +31,15 @@ NodeFunctionLessEquals::NodeFunctionLessEquals(NodeFunctionLessEquals* other) : 
 {
 }
 
-NodeFunctionPtr NodeFunctionLessEquals::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
+std::shared_ptr<NodeFunction>
+NodeFunctionLessEquals::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
     auto lessThen = std::make_shared<NodeFunctionLessEquals>();
     lessThen->setChildren(left, right);
     return lessThen;
 }
 
-bool NodeFunctionLessEquals::equal(const NodePtr& rhs) const
+bool NodeFunctionLessEquals::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLessEquals>(rhs))
     {
@@ -53,7 +56,7 @@ std::string NodeFunctionLessEquals::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionLessEquals::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionLessEquals::deepCopy()
 {
     return NodeFunctionLessEquals::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

@@ -34,8 +34,8 @@ namespace NES::Runtime::Execution::Aggregation
 {
 
 MedianAggregationFunction::MedianAggregationFunction(
-    PhysicalTypePtr inputType,
-    PhysicalTypePtr resultType,
+    std::shared_ptr<PhysicalType> inputType,
+    std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
@@ -78,7 +78,7 @@ Nautilus::Record MedianAggregationFunction::lower(
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, bufferProvider);
-    const auto allFieldNames = memProviderPagedVector->getMemoryLayoutPtr()->getSchema()->getFieldNames();
+    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema()->getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {

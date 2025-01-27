@@ -13,30 +13,35 @@
 */
 
 #include <cmath>
+#include <memory>
+#include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include "Nodes/Node.hpp"
 
 namespace NES
 {
 
-NodeFunctionAbs::NodeFunctionAbs(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
+NodeFunctionAbs::NodeFunctionAbs(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
 
 NodeFunctionAbs::NodeFunctionAbs(NodeFunctionAbs* other) : NodeFunctionArithmeticalUnary(other)
 {
 }
 
-NodeFunctionPtr NodeFunctionAbs::create(const NodeFunctionPtr& child)
+std::shared_ptr<NodeFunction> NodeFunctionAbs::create(const std::shared_ptr<NodeFunction>& child)
 {
     auto absNode = std::make_shared<NodeFunctionAbs>(child->getStamp());
     absNode->setChild(child);
     return absNode;
 }
 
-bool NodeFunctionAbs::equal(const NodePtr& rhs) const
+bool NodeFunctionAbs::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAbs>(rhs))
     {
@@ -53,7 +58,7 @@ std::string NodeFunctionAbs::toString() const
     return ss.str();
 }
 
-NodeFunctionPtr NodeFunctionAbs::deepCopy()
+std::shared_ptr<NodeFunction> NodeFunctionAbs::deepCopy()
 {
     return NodeFunctionAbs::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

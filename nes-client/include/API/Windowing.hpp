@@ -15,55 +15,36 @@
 #pragma once
 
 #include <memory>
+#include <API/Functions/Functions.hpp>
 #include <API/TimeUnit.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
-namespace NES
-{
-
-class NodeFunction;
-using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
-
-class FunctionItem;
-
-namespace Windowing
-{
-
-class WindowType;
-using WindowTypePtr = std::shared_ptr<WindowType>;
-
-class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
-class TimeMeasure;
-class TimeCharacteristic;
-using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
-
-class WatermarkStrategyDescriptor;
-using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-}
-}
+/**
+ * @brief The following declares API functions for windowing.
+ */
 namespace NES::API
 {
 
-class WindowAggregation;
-using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 class WindowAggregation
 {
 public:
-    WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
-    API::WindowAggregationPtr as(const FunctionItem& asField);
-    const Windowing::WindowAggregationDescriptorPtr aggregation;
+    explicit WindowAggregation(std::shared_ptr<Windowing::WindowAggregationDescriptor> windowAggregationDescriptor);
+    [[nodiscard]] std::shared_ptr<API::WindowAggregation> as(const FunctionItem& asField) const;
+    std::shared_ptr<Windowing::WindowAggregationDescriptor> aggregation;
 };
 
-API::WindowAggregationPtr Sum(const FunctionItem& onField);
-API::WindowAggregationPtr Min(const FunctionItem& onField);
-API::WindowAggregationPtr Max(const FunctionItem& onField);
-API::WindowAggregationPtr Count(const FunctionItem& onField);
-API::WindowAggregationPtr Median(const FunctionItem& onField);
-API::WindowAggregationPtr Avg(const FunctionItem& onField);
-Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField);
-Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit);
-Windowing::TimeCharacteristicPtr IngestionTime();
+std::shared_ptr<API::WindowAggregation> Sum(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Min(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Max(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Avg(const FunctionItem& onField);
+std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField);
+std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit);
+std::shared_ptr<Windowing::TimeCharacteristic> IngestionTime();
 Windowing::TimeMeasure Milliseconds(uint64_t milliseconds);
 Windowing::TimeMeasure Seconds(uint64_t seconds);
 Windowing::TimeMeasure Minutes(uint64_t minutes);
@@ -74,6 +55,6 @@ Windowing::TimeUnit Seconds();
 Windowing::TimeUnit Minutes();
 Windowing::TimeUnit Hours();
 Windowing::TimeUnit Days();
-[[maybe_unused]] NodeFunctionPtr RecordCreationTs();
+[[maybe_unused]] std::shared_ptr<NodeFunction> RecordCreationTs();
 
 }

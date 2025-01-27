@@ -76,10 +76,10 @@ void logProxy(const char* message, const LogLevel logLevel);
     } while (0)
 
 
-VarVal createNautilusMinValue(const PhysicalTypePtr& physicalType);
-VarVal createNautilusMaxValue(const PhysicalTypePtr& physicalType);
+VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType);
+VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType);
 template <typename T>
-static VarVal createNautilusConstValue(T value, const PhysicalTypePtr& physicalType)
+static VarVal createNautilusConstValue(T value, const std::shared_ptr<PhysicalType>& physicalType)
 {
     if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
     {

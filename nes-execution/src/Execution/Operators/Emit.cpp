@@ -151,7 +151,7 @@ void Emit::emitRecordBuffer(
 
 Emit::Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity())
+    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
     , memoryProvider(std::move(memoryProvider))
 {
 }

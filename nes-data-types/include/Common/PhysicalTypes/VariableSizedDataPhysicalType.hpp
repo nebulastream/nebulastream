@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <utility>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
@@ -25,11 +27,14 @@ namespace NES
 class VariableSizedDataPhysicalType final : public PhysicalType
 {
 public:
-    inline VariableSizedDataPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) { }
+    explicit VariableSizedDataPhysicalType(std::shared_ptr<DataType> type) noexcept : PhysicalType(std::move(type)) { }
 
     ~VariableSizedDataPhysicalType() override = default;
 
-    static inline PhysicalTypePtr create(const DataTypePtr& type) noexcept { return std::make_shared<VariableSizedDataPhysicalType>(type); }
+    static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type) noexcept
+    {
+        return std::make_shared<VariableSizedDataPhysicalType>(type);
+    }
 
     [[nodiscard]] uint64_t size() const override;
 

@@ -12,7 +12,12 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation::Phases
 {
@@ -21,10 +26,11 @@ class DefaultPhaseFactory : public PhaseFactory
 {
 public:
     virtual ~DefaultPhaseFactory() = default;
-    static PhaseFactoryPtr create();
-    LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) override;
-    PipeliningPhasePtr createPipeliningPhase() override;
-    AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) override;
+    static std::shared_ptr<PhaseFactory> create();
+    std::shared_ptr<LowerLogicalToPhysicalOperators>
+    createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) override;
+    std::shared_ptr<PipeliningPhase> createPipeliningPhase() override;
+    std::shared_ptr<AddScanAndEmitPhase> createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) override;
 };
 
 }

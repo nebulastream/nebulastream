@@ -11,20 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <memory>
 #include <sstream>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
+PhysicalLimitOperator::PhysicalLimitOperator(
+    OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, uint64_t limit)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), limit(limit)
 {
 }
 
-PhysicalOperatorPtr
-PhysicalLimitOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit)
+std::shared_ptr<PhysicalOperator> PhysicalLimitOperator::create(
+    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit)
 {
     return std::make_shared<PhysicalLimitOperator>(id, inputSchema, outputSchema, limit);
 }
@@ -34,7 +40,8 @@ uint64_t PhysicalLimitOperator::getLimit()
     return limit;
 }
 
-PhysicalOperatorPtr PhysicalLimitOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
+std::shared_ptr<PhysicalOperator>
+PhysicalLimitOperator::create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
 }

@@ -17,16 +17,12 @@
 #include <memory>
 #include <string>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-class DataType;
-using DataTypePtr = std::shared_ptr<DataType>;
-
-class AttributeField;
-using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 /**
  * @brief Represents a typed field in a schema.
@@ -40,31 +36,31 @@ public:
      * @brief Factory method to create a new field
      * @param name name of the field
      * @param dataType data type
-     * @return AttributeFieldPtr
+     * @return std::shared_ptr<AttributeField>
      */
-    static AttributeFieldPtr create(const std::string& name, const DataTypePtr& dataType);
+    static std::shared_ptr<AttributeField> create(const std::string& name, const std::shared_ptr<DataType>& dataType);
 
-    [[nodiscard]] DataTypePtr getDataType() const;
+    [[nodiscard]] std::shared_ptr<DataType> getDataType() const;
 
     [[nodiscard]] const std::string& getName() const;
 
     void setName(std::string newName);
 
     [[nodiscard]] std::string toString() const;
-    bool isEqual(const AttributeFieldPtr& attr) const;
+    [[nodiscard]] bool isEqual(const std::shared_ptr<AttributeField>& attr) const;
 
     uint64_t hash() const;
     /**
      * @brief Make copy of this attribute
      * @return shared pointer
      */
-    AttributeFieldPtr deepCopy() const;
+    [[nodiscard]] std::shared_ptr<AttributeField> deepCopy() const;
 
 private:
-    AttributeField(std::string name, DataTypePtr dataType);
+    AttributeField(std::string name, std::shared_ptr<DataType> dataType);
 
     std::string name;
-    DataTypePtr dataType;
+    std::shared_ptr<DataType> dataType;
 };
 
 }

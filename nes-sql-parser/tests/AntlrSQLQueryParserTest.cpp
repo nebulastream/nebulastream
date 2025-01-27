@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <iostream>
+#include <memory>
 #include <regex>
 #include <string>
 #include <API/Query.hpp>
@@ -43,7 +44,7 @@ public:
 
 bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query& internalLogicalQuery)
 {
-    const QueryPlanPtr antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    const std::shared_ptr<QueryPlan> antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
     NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
     return antlrQueryParsed->compare(internalLogicalQuery.getQueryPlan());
 }
