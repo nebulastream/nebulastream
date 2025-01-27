@@ -206,7 +206,7 @@ bool AbstractQueryManager::updatePlanVersion(DecomposedQueryIdWithVersion idWith
     decomposeQueryToSourceIdMapping.erase(idWithVersion);
 
     auto runningPlanIteator = runningQEPs.find(idWithVersion);
-    runningQEPs[newIdWithVersion] =  runningPlanIteator->second;
+    runningQEPs[newIdWithVersion] = runningPlanIteator->second;
     runningQEPs.erase(runningPlanIteator);
 
     return true;

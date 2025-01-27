@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -46,7 +47,6 @@
 #include <Util/TopologyLinkInformation.hpp>
 #include <atomic>
 #include <gtest/gtest.h>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 
 namespace NES {
 
@@ -679,28 +679,28 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
     auto lambdaSourceFunction3 =
         [&bufferCount3, &waitForReconfig, &waitForFinalCount, &actualReconnects](NES::Runtime::TupleBuffer& buffer,
                                                                                  uint64_t numberOfTuplesToProduce) {
-          struct Record {
-              uint64_t value;
-          };
-          auto currentCount = ++bufferCount3;
-          if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
-              //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-              while (!waitForReconfig)
-                  ;
-          }
-          if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
-                             + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
-              while (!waitForFinalCount)
-                  ;
-          }
-          if (currentCount > totalBuffersToProduce) {
-              return;
-          }//avoid eos
-          auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-          auto* records = buffer.getBuffer<Record>();
-          for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-              records[u].value = valCount + u + addToSrcThree;
-          }
+            struct Record {
+                uint64_t value;
+            };
+            auto currentCount = ++bufferCount3;
+            if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
+                //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+                while (!waitForReconfig)
+                    ;
+            }
+            if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+                    + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
+                while (!waitForFinalCount)
+                    ;
+            }
+            if (currentCount > totalBuffersToProduce) {
+                return;
+            }//avoid eos
+            auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+            auto* records = buffer.getBuffer<Record>();
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].value = valCount + u + addToSrcThree;
+            }
         };
     auto lambdaSourceType = LambdaSourceType::create("seq",
                                                      "test_stream",
@@ -807,7 +807,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-                    R"(Query::from("seq").map(Attribute("value") = Attribute("value")).map(Attribute("value") = Attribute("value")).sink(FileSinkDescriptor::create(")"
+        R"(Query::from("seq").map(Attribute("value") = Attribute("value")).map(Attribute("value") = Attribute("value")).sink(FileSinkDescriptor::create(")"
             + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;
@@ -858,7 +858,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
     auto fixedWorkerParentSrcCrdIt2 =
         crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().cbegin();
     while (std::static_pointer_cast<Network::NetworkSource>(*fixedWorkerParentSrcCrdIt2)->getSenderLocation().getNodeId()
-           != wrk4->getWorkerId() || fixedWorkerParentSrcCrdIt2 == fixedWorkerParentSrcCrdIt) {
+               != wrk4->getWorkerId()
+           || fixedWorkerParentSrcCrdIt2 == fixedWorkerParentSrcCrdIt) {
         fixedWorkerParentSrcCrdIt2++;
     }
     ASSERT_NE(fixedWorkerParentSrcCrdIt2, fixedWorkerParentSrcCrdIt);
@@ -961,12 +962,12 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
             newPlanCrd->addRootOperator(fixedSourceOpCrdNew);
 
             auto fixedNetworkSrcDescriptor2 = Network::NetworkSourceDescriptor::create(fixedCoordinatorSource2->getSchema(),
-                                                                                      fixedNetworkSource2->getPartition(),
-                                                                                      fixedNetworkSource2->getSenderLocation(),
-                                                                                      std::chrono::milliseconds(1000),
-                                                                                      5,
-                                                                                      0,
-                                                                                      fixedNetworkSource2->getUniqueId());
+                                                                                       fixedNetworkSource2->getPartition(),
+                                                                                       fixedNetworkSource2->getSenderLocation(),
+                                                                                       std::chrono::milliseconds(1000),
+                                                                                       5,
+                                                                                       0,
+                                                                                       fixedNetworkSource2->getUniqueId());
             fixedSourceOpCrdNew = std::make_shared<SourceLogicalOperator>(
                 fixedNetworkSrcDescriptor2,
                 OperatorId(fixedCoordinatorSource2->getOperatorId()));//todo: check if we need a new operator id
@@ -1067,7 +1068,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
             auto sinkToReconfigure = wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front();
             auto networkSinkToReconfigure = std::dynamic_pointer_cast<Network::NetworkSink>(sinkToReconfigure);
             networkSinkToReconfigure->configureNewSinkDescriptor(*newNetworkSinkDescriptor, reconfigMarker);
-
         }
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
@@ -1144,7 +1144,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
                 oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                 Network::PartitionRegistrationStatus::Registered);
             oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-
         }
 
         //check that all tuples arrived
@@ -1178,8 +1177,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
                           .front();
     dataSource->handleReconfigurationMarker(reconfigMarker);
     for (auto p : wrk4->getNodeEngine()->getDecomposedQueryIds(sharedQueryId)) {
-        wrk4->getNodeEngine()
-    ->getExecutableQueryPlan(p)->getSources().front()->handleReconfigurationMarker(reconfigMarker);
+        wrk4->getNodeEngine()->getExecutableQueryPlan(p)->getSources().front()->handleReconfigurationMarker(reconfigMarker);
     }
 
     //send the last tuples, after which the lambda source shuts down
@@ -1992,8 +1990,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testsourceReuseFromCrd) {
                           .front();
     dataSource->handleReconfigurationMarker(reconfigMarker);
     for (auto p : wrk4->getNodeEngine()->getDecomposedQueryIds(sharedQueryId)) {
-        wrk4->getNodeEngine()
-            ->getExecutableQueryPlan(p)->getSources().front()->handleReconfigurationMarker(reconfigMarker);
+        wrk4->getNodeEngine()->getExecutableQueryPlan(p)->getSources().front()->handleReconfigurationMarker(reconfigMarker);
     }
 
     //send the last tuples, after which the lambda source shuts down

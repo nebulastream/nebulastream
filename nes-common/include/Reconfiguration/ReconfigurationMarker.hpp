@@ -62,8 +62,7 @@ class ReconfigurationMarker {
      * @param decomposedQueryId : the id for which the reconfiguration events are to be retrieved
      * @return optional immutable reconfiguration marker event
      */
-  std::vector<ReconfigurationMarkerEventPtr>
-    getReconfigurationEventsForPlanId(DecomposedQueryId decomposedQueryId) const;
+    std::vector<ReconfigurationMarkerEventPtr> getReconfigurationEventsForPlanId(DecomposedQueryId decomposedQueryId) const;
 
     /**
      * @brief Add a reconfiguration marker event

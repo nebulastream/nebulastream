@@ -197,10 +197,12 @@ class ReconfigurationEventMessage {
                                 WorkerId workerId,
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryId decomposedQueryId,
-                                DecomposedQueryPlanVersion decomposedQueryPlanVersion, uint16_t sinkReconfigurationCount)
+                                DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                uint16_t sinkReconfigurationCount)
         : decomposedQueryIdWithVersion(decomposedQueryIdWithVersion), queryState(queryState), metadataType(metadataType),
           numberOfSources(numberOfSources), workerId(workerId), sharedQueryId(sharedQueryId),
-          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion), sinkReconfigurationCount(sinkReconfigurationCount) {}
+          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
+          sinkReconfigurationCount(sinkReconfigurationCount) {}
 
     DecomposedQueryIdWithVersion decomposedQueryIdWithVersion;
     QueryState queryState;

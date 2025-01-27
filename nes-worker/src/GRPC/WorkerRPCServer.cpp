@@ -55,7 +55,8 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
     bool success = false;
     try {
         //check if the plan is reconfigured
-        NES_ASSERT(decomposedQueryPlan->getState() != QueryState::MARKED_FOR_REDEPLOYMENT, "Plan marked for redeployment should not be registered again");
+        NES_ASSERT(decomposedQueryPlan->getState() != QueryState::MARKED_FOR_REDEPLOYMENT,
+                   "Plan marked for redeployment should not be registered again");
         success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());

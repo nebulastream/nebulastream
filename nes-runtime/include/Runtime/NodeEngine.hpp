@@ -358,13 +358,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::vector<DecomposedQueryId> getDecomposedQueryIdsWithStatus(SharedQueryId sharedQueryId,
                                                                    Execution::ExecutableQueryPlanStatus status);
-  /**
+    /**
    * @brief udpate the version of a running executable query plan
    * @param idAndVersion the id of the plan and its current version
    * @param newVersion the new version to set for the plan
    * @return true if the plan was successfully updated
    */
-  bool updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndVersion, DecomposedQueryPlanVersion newVersion);
+    bool updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndVersion, DecomposedQueryPlanVersion newVersion);
 
   public:
     /**

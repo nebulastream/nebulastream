@@ -17,8 +17,8 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Reconfiguration/Metadata/ReconfigurationMetadata.hpp>
-#include <vector>
 #include <chrono>
+#include <vector>
 
 namespace NES {
 
@@ -67,7 +67,8 @@ class UpdateQueryMetadata : public ReconfigurationMetadata {
                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                         std::vector<NetworkSinkUpdateInfo> networkSinkUpdates)
         : ReconfigurationMetadata(ReconfigurationMetadataType::UpdateQuery), workerId(workerId), sharedQueryId(sharedQueryId),
-          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion), networkSinkUpdates(networkSinkUpdates) {};
+          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
+          networkSinkUpdates(networkSinkUpdates){};
 
     const WorkerId workerId;
     const SharedQueryId sharedQueryId;

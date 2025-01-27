@@ -130,11 +130,12 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
 
     for (const auto& mapOfQuerySubPlan : mapOfSharedQueryToDecomposedQueryPlans) {
         for (const auto& [querySubPlanId, querySubPlan] : mapOfQuerySubPlan.second) {
-            lines.push_back(fmt::format("QuerySubPlan(SharedQueryId:{}, DecomposedQueryId:{}, DecomposedQueryVersion:{}, queryState:{})",
-                                        mapOfQuerySubPlan.first,
-                                        querySubPlan->getDecomposedQueryId(),
-                                        querySubPlan->getVersion(),
-                                        magic_enum::enum_name(querySubPlan->getState())));
+            lines.push_back(
+                fmt::format("QuerySubPlan(SharedQueryId:{}, DecomposedQueryId:{}, DecomposedQueryVersion:{}, queryState:{})",
+                            mapOfQuerySubPlan.first,
+                            querySubPlan->getDecomposedQueryId(),
+                            querySubPlan->getVersion(),
+                            magic_enum::enum_name(querySubPlan->getState())));
 
             // Split the string representation of the queryPlan into multiple lines
             std::string s = querySubPlan->toString();
