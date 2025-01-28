@@ -56,21 +56,21 @@ std::string convertSecondsToTimestamp(long long seconds) {
  * @return true if the point is within the STBox at the given time, false otherwise
  */
 double teintersects(double lon, double lat, int t) {
-    NES_INFO("teintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
+    //NES_INFO("teintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
     STBox* stbx = stbox_in("SRID=4326;STBOX X((3.5, 50.5),(4.5, 51.5))"); // Adjust the coordinates to cover half of the points
     //STBox *stbx = stbox_in("SRID=4326;STBOX X((13, 58),(14, 59))");
     GSERIALIZED *geom = stbox_to_geo(stbx);
     std::string t_out = convertSecondsToTimestamp(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
-    NES_INFO("Point buffer created {}", str_pointbuffer);
+    //NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 
     if (eintersects_tpoint_geo((const Temporal *)inst, geom)){
-        NES_INFO("Intersects");
+        //NES_INFO("Intersects");
         return 1;
     } else {
-        NES_INFO("Does not intersect");
+        //NES_INFO("Does not intersect");
         return 0;
     }
 

@@ -110,8 +110,9 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(8000);  
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
 
@@ -123,8 +124,9 @@ TEST_F(ReadSNCB, testReadCSV) {
                     
         auto csvSourceType2 = CSVSourceType::create("highriskArea", "arear_time");
             csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "high_risk_areas_ordered_unix.csv");
-            csvSourceType2->setNumberOfTuplesToProducePerBuffer(40); // Read 40 tuples per buffer
-            csvSourceType2->setNumberOfBuffersToProduce(20);        // Produce 20 buffers
+            csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+            csvSourceType->setGatheringInterval(0);                      
+            csvSourceType->setNumberOfBuffersToProduce(8000);
             csvSourceType2->setSkipHeader(true);                    // Skip the header
 
     
@@ -135,7 +137,6 @@ TEST_F(ReadSNCB, testReadCSV) {
                         Attribute("latitude", BasicType::FLOAT64),
                         Attribute("timestamp", BasicType::UINT64)) == 1
                         && Attribute("timestamp", BasicType::UINT64) > 0);
-
 
         /*
         Dynamic Speed Limit
@@ -155,6 +156,7 @@ TEST_F(ReadSNCB, testReadCSV) {
                             Attribute("id"),
                             Attribute("speed"),
                             Attribute("Vbat"));
+
             
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

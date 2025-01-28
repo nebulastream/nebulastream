@@ -127,10 +127,10 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setGatheringInterval(0);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20); // Read 410,668 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);  
-        csvSourceType->setSkipHeader(true);                   // Skip the header
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                       // if supported, to avoid artificial wait
+        csvSourceType->setNumberOfBuffersToProduce(6000);
+        csvSourceType->setSkipHeader(true);                 
 
         /*
         Location-Based Alert Filtering
@@ -138,7 +138,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         If confirmed, alerts such as speed violations or equipment malfunctions are filtered out, 
         as they are redundant during maintenance.
         */
-        
+
         auto query =
             Query::from("sncb")
                 .filter(
@@ -152,7 +152,8 @@ TEST_F(ReadSNCB, testReadCSV) {
                 )
                 .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), 
                                         Seconds(30), Seconds(30)))
-                .apply(Sum(Attribute("speed")));
+                .apply(Avg(Attribute("speed")));
+
 
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -161,8 +162,10 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         testHarness.validate().setupTopology();
 
+
         // Define expected output
-        const auto expectedOutput = "1722510000, 1722540000, 30084.9358\n";                            
+        const auto expectedOutput = "1722510000, 1722540000, 44.902889\n";      
+                      
                             
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();

@@ -136,8 +136,9 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("gps", "dfgps_time");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfgps_time.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(10);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(20);       // Produce 10 buffers
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(100);
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
         /* Query Unscheduled Stops

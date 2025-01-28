@@ -67,9 +67,11 @@ void exportToJson(const std::vector<NES::Runtime::MemoryLayouts::TestTupleBuffer
             auto tuple = buffer[i];
             // Adjust fields as needed
             nlohmann::json row;
-            row["window_start"] = tuple[0].read<uint64_t>();
-            row["window_end"]   = tuple[1].read<uint64_t>();
-            row["speed_sum"]    = tuple[2].read<double>();
+            row["latitude"] = tuple[0].read<double>();
+            row["longitude"]   = tuple[1].read<double>();
+            row["timestamp"]    = tuple[2].read<uint64_t>();
+            row["speed"]    = tuple[3].read<double>();
+            row["PCFA_mbar"]    = tuple[4].read<double>();
             jsonData.push_back(row);
         }
     }
@@ -78,6 +80,27 @@ void exportToJson(const std::vector<NES::Runtime::MemoryLayouts::TestTupleBuffer
     outFile.close();
 }
 
+
+void exportToCsv(const std::vector<NES::Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
+                 const std::string& outputPath) {
+    std::ofstream outFile(outputPath);
+    
+    // Write CSV header
+    outFile << "latitude,longitude, timestamp, speed,PCFA_mbar \n";
+    
+    for (const auto& buffer : actualBuffers) {
+        size_t numTuples = buffer.getNumberOfTuples();
+        for (size_t i = 0; i < numTuples; ++i) {
+            auto tuple = buffer[i];
+            outFile << tuple[0].read<double>() << ","   // latitude
+                   << tuple[1].read<double>() << ","   // longitude
+                   << tuple[2].read<uint64_t>() << ","     // timestamp
+                    << tuple[3].read<double>() << ","   // speed
+                    << tuple[4].read<double>() <<"\n";   // PCFA_mbar
+        }
+    }
+    outFile.close();
+}
 class ReadSNCB : public Testing::BaseIntegrationTest,
                    public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::string>> {
   protected:
@@ -127,9 +150,10 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("sncb", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
-        csvSourceType->setSkipHeader(true);                   // Skip the header
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(150);
+        csvSourceType->setSkipHeader(true);                
 
         /*
         Location-Based Noise Monitoring
@@ -152,6 +176,25 @@ TEST_F(ReadSNCB, testReadCSV) {
                 .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                 .apply(Max(Attribute("PCFA_mbar")));
 
+        // auto query = Query::from("sncb")
+        // .filter(
+        //     // Location and validity checks
+        //     tpointatstbox(Attribute("longitude", BasicType::FLOAT64),
+        //         Attribute("latitude", BasicType::FLOAT64),
+        //         Attribute("timestamp", BasicType::UINT64)) == 1
+        //     && 
+        //     Attribute("speed") > 0 && Attribute("PCFA_mbar") > 0
+        //     &&
+        //     Attribute("speed") * 0.5 + Attribute("PCFA_mbar") * 0.5 > 10)
+        //     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(20)))
+        //     .project( Attribute("latitude"),
+        //           Attribute("longitude"),
+        //           Attribute("timestamp"),
+        //           Attribute("speed"),
+        //           Attribute("PCFA_mbar"));
+
+
+
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                .addLogicalSource("sncb", gpsSchema)
@@ -160,15 +203,49 @@ TEST_F(ReadSNCB, testReadCSV) {
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "1722520000, 1722520500, 5.043\n"
-                                                        "1722520500, 1722521000, 5.051\n"
-                                                        "1722521000, 1722521500, 5.047\n"
-                                                        "1722521500, 1722522000, 4.991\n"
-                                                        "1722522000, 1722522500, 5.388\n"
-                                                        "1722522500, 1722523000, 5.152\n"
-                                                        "1722523000, 1722523500, 5.021\n"
-                                                        "1722523500, 1722524000, 5.017\n";
-
+        const auto expectedOutput = "51.3001,4.4325,1722520348,94.9161,5.043\n"
+                                                        "51.3024,4.4318,1722520358,97.5431,5.043\n"
+                                                        "51.3049,4.4311,1722520368,98.8548,5.04\n"
+                                                        "51.3073,4.4307,1722520378,93.9449,4.586\n"
+                                                        "51.3095,4.4309,1722520388,84.1066,4.608\n"
+                                                        "51.3114,4.4317,1722520399,74.9694,4.473\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n"
+                                                        "51.3001,4.4325,1722520348,94.9161,5.043\n"
+                                                        "51.3024,4.4318,1722520358,97.5431,5.043\n"
+                                                        "51.3049,4.4311,1722520368,98.8548,5.04\n"
+                                                        "51.3073,4.4307,1722520378,93.9449,4.586\n"
+                                                        "51.3095,4.4309,1722520388,84.1066,4.608\n"
+                                                        "51.3114,4.4317,1722520399,74.9694,4.473\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n"
+                                                        "51.3001,4.4325,1722520348,94.9161,5.043\n"
+                                                        "51.3024,4.4318,1722520358,97.5431,5.043\n"
+                                                        "51.3049,4.4311,1722520368,98.8548,5.04\n"
+                                                        "51.3073,4.4307,1722520378,93.9449,4.586\n"
+                                                        "51.3095,4.4309,1722520388,84.1066,4.608\n"
+                                                        "51.3114,4.4317,1722520399,74.9694,4.473\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n"
+                                                        "51.3001,4.4325,1722520348,94.9161,5.043\n"
+                                                        "51.3024,4.4318,1722520358,97.5431,5.043\n"
+                                                        "51.3049,4.4311,1722520368,98.8548,5.04\n"
+                                                        "51.3073,4.4307,1722520378,93.9449,4.586\n"
+                                                        "51.3095,4.4309,1722520388,84.1066,4.608\n"
+                                                        "51.3114,4.4317,1722520399,74.9694,4.473\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n"
+                                                        "51.3001,4.4325,1722520348,94.9161,5.043\n"
+                                                        "51.3024,4.4318,1722520358,97.5431,5.043\n"
+                                                        "51.3049,4.4311,1722520368,98.8548,5.04\n"
+                                                        "51.3073,4.4307,1722520378,93.9449,4.586\n"
+                                                        "51.3095,4.4309,1722520388,84.1066,4.608\n"
+                                                        "51.3114,4.4317,1722520399,74.9694,4.473\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n"
+                                                        "51.3114,3.1354,1722520403,15.6399,4.995\n"
+                                                        "51.3131,4.4325,1722520409,64.0082,4.305\n";
+                                                    
                             
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
@@ -178,15 +255,18 @@ TEST_F(ReadSNCB, testReadCSV) {
             size_t numTuples = buffer.getNumberOfTuples();
             for (size_t i = 0; i < numTuples; ++i) {
                 auto tuple = buffer[i];
-                NES_INFO("The result is : {}, {}, {}",
-                    tuple[0].read<uint64_t>(), // window_start
-                    tuple[1].read<uint64_t>(), // window_end
-                    tuple[2].read<double>()); // speed            
+                NES_INFO("The result is : {}, {}, {}, {}, {}",
+                    tuple[0].read<double>(), // latitude
+                    tuple[1].read<double>(), // longitude
+                    tuple[2].read<uint64_t>(), // timestamp
+                    tuple[3].read<double>(), // speed         
+                    tuple[4].read<double>()); // PCFA_mbar   
             }
         }
 
         // Export the actual output to a JSON file
         exportToJson(actualBuffers, "query2.json");
+        exportToCsv(actualBuffers, "query2_out.csv");
 
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =

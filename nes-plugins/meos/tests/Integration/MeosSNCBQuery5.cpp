@@ -141,9 +141,10 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("gps", "gpsSchema");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);       // Produce 10 buffers
-        csvSourceType->setSkipHeader(true);                   // Skip the header
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(7000);
+        csvSourceType->setSkipHeader(true);                   
 
 
         // Define Workshops Schema
@@ -156,10 +157,15 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType2 = CSVSourceType::create("workshops", "workshops_data");
         csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "SNCB_workshops.csv");
-        csvSourceType2->setNumberOfTuplesToProducePerBuffer(10); // Read 10 tuples per buffer
-        csvSourceType2->setNumberOfBuffersToProduce(1);         // Single buffer as workshops data is static
-        csvSourceType2->setSkipHeader(true);                    // Skip the header
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(7000);
+        csvSourceType2->setSkipHeader(true);                 
 
+    /*Battery Monitoring
+    monitoring battery usage to prevent overheating and excessive discharge. 
+    It queries nearby workshops.
+    */
 
     auto  subquery = Query::from("workshops")
         .map(Attribute("workshops$timestamp") = Attribute("timestamp"))

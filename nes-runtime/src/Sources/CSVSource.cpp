@@ -131,6 +131,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
         generatedTuplesThisPass = buffer.getCapacity();
     } else {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        NES_DEBUG("Mariana fill buffer with #tuples={} of size={},getBufferSize={} ", generatedTuplesThisPass, tupleSize, buffer.getBuffer().getBufferSize());
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);

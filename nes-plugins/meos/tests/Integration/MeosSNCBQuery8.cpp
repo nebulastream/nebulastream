@@ -148,8 +148,9 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("gps", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20); // Produce 20 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);  
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(100);
         csvSourceType->setSkipHeader(true);                 // Skip the header
 
         /* Monitoring Emergency Brake Usage and Brake Pressures

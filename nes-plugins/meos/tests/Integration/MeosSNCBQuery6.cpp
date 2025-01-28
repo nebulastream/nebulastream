@@ -114,8 +114,9 @@ TEST_F(ReadSNCB, testReadCSV) {
 
         auto csvSourceType = CSVSourceType::create("gps", "sncbmerged");
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(20); // Produce 20 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(40);  
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
+        csvSourceType->setGatheringInterval(0);                      
+        csvSourceType->setNumberOfBuffersToProduce(7000);
         csvSourceType->setSkipHeader(true);                 // Skip the header
 
 
@@ -130,7 +131,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         auto subQueryA = Query::from("gps")
                     .map(
                         Attribute("passenger_count") = 
-                            (Attribute("PCFA_mbar") + Attribute("PCFF_mbar") +
+                            (Attribute("T1_mbar") + Attribute("T2_mbar") +
                             Attribute("PCF1_mbar") + Attribute("PCF2_mbar")) / 4.0
                     )
                     .filter(Attribute("passenger_count") > 3.15);
@@ -172,7 +173,7 @@ TEST_F(ReadSNCB, testReadCSV) {
                                                         "1722522227,5, 3.16375, 20, 80\n"
                                                         "1722522227,5, 3.16375, 20, 80\n"
                                                         "1722522227,5, 3.16375, 20, 80\n"
-                                                        "1722522227,5, 3.16375, 20, 80\n";
+                                                        "1722521938,4,11.747500,20.000000,80.000000\n";
                                  
           
         // Run the query and get the actual dynamic buffers
