@@ -16,7 +16,6 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -56,8 +55,7 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 
-        auto compilationResult = compiler->compileQuery(std::move(request));
-        return nodeEngine->registerExecutableQueryPlan(compilationResult.takeExecutableQueryPlan());
+        return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
     }
     catch (Exception& e)
     {
