@@ -21,7 +21,6 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -29,7 +28,7 @@ class QueryCompiler
 {
 public:
     QueryCompiler(Configurations::QueryCompilerConfiguration queryCompilerConfig, const Phases::PhaseFactory& phaseFactory);
-    [[nodiscard]] QueryCompilationResult compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const;
+    std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> compileQuery(const std::shared_ptr<QueryCompilationRequest>& request);
 
 protected:
     Configurations::QueryCompilerConfiguration queryCompilerConfig;
