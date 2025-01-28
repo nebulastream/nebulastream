@@ -122,14 +122,16 @@ public:
             keysOnlySchema->addField(keyFieldName, BasicType::UINT64);
         }
 
-        return std::make_shared<Nautilus::Interface::PagedVector>(
-            bufferManager, Util::createMemoryLayout(keysOnlySchema, bufferManager->getBufferSize()));
+        const auto memoryLayout = Util::createMemoryLayout(keysOnlySchema, bufferManager->getBufferSize());
+        memoryLayout->setKeyFieldNames(keyFieldNames);
+        return std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
     }
 
-    void clearPagedVector(
+    static void clearPagedVector(
         std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::BufferManagerPtr& bufferManager,
-        const SeparateKeys separateKeys)
+        const SeparateKeys separateKeys,
+        std::vector<double>& execTimes)
     {
         NES_INFO("PagedVector clearing...");
         Timer<> timer("clearTimer");
@@ -200,10 +202,11 @@ public:
         NES_INFO("PagedVector cleared in {} ms", timeInMs);
     }
 
-    std::shared_ptr<Nautilus::Interface::PagedVector> createPagedVector(
+    static std::shared_ptr<Nautilus::Interface::PagedVector> createPagedVector(
         const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
         const Memory::BufferManagerPtr& bufferManager,
-        const uint64_t numBuffers)
+        const uint64_t numBuffers,
+        std::vector<double>& execTimes)
     {
         NES_INFO("Data generating...");
         Timer<> timer("generateDataTimer");
@@ -244,11 +247,12 @@ public:
         return pagedVector;
     }
 
-    void writePagedVectorToFile(
+    static void writePagedVectorToFile(
         const std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const std::vector<std::string>& fileNames,
         const uint64_t fileBufferSize,
-        const SeparateKeys separateKeys)
+        const SeparateKeys separateKeys,
+        std::vector<double>& execTimes)
     {
         NES_INFO("File writing...");
         Timer<> timer("writeFileTimer");
@@ -401,14 +405,15 @@ public:
         NES_INFO("File written in {} ms", timeInMs);
     }
 
-    void writeFileToPagedVector(
+    static void writeFileToPagedVector(
         std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
         const Memory::BufferManagerPtr& bufferManager,
         const std::vector<std::string>& fileNames,
         const uint64_t expectedNumPages,
         const uint64_t fileBufferSize,
-        const SeparateKeys separateKeys)
+        const SeparateKeys separateKeys,
+        std::vector<double>& execTimes)
     {
         NES_INFO("PagedVector writing...");
         Timer<> timer("writePagedVectorTimer");
@@ -546,9 +551,10 @@ public:
         NES_INFO("PagedVector written in {} ms", timeInMs);
     }
 
-    void comparePagedVectors(
+    static void comparePagedVectors(
         const std::shared_ptr<Nautilus::Interface::PagedVector>& expectedPagedVector,
-        const std::shared_ptr<Nautilus::Interface::PagedVector>& actualPagedVector)
+        const std::shared_ptr<Nautilus::Interface::PagedVector>& actualPagedVector,
+        std::vector<double>& execTimes)
     {
         NES_INFO("PagedVectors comparing...");
         Timer<> timer("compareTimer");
@@ -563,14 +569,18 @@ public:
         const auto& actualPages = actualPagedVector->getPages();
 
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
-        const auto bufferSize = expectedPagedVector->getMemoryLayout()->getBufferSize();
+        const auto memoryLayout = expectedPagedVector->getMemoryLayout();
+        const auto tuplesOnPageSize = memoryLayout->getCapacity() * memoryLayout->getTupleSize();
+
+        ASSERT_EQ(*memoryLayout, *actualPagedVector->getMemoryLayout());
 
         for (auto pageIdx = 0UL; pageIdx < expectedNumPages; ++pageIdx)
         {
             const auto* const expectedBufferAddr = expectedPages[pageIdx].getBuffer();
             const auto* const actualBufferAddr = actualPages[pageIdx].getBuffer();
 
-            ASSERT_EQ(std::memcmp(expectedBufferAddr, actualBufferAddr, bufferSize), 0);
+            ASSERT_EQ(std::memcmp(expectedBufferAddr, actualBufferAddr, tuplesOnPageSize), 0);
+            NES_INFO("Page {} compared", pageIdx);
 
             if (pageIdx % tenPercentOfNumPages == 0)
             {
@@ -584,185 +594,117 @@ public:
         execTimes.emplace_back(timeInMs);
         NES_INFO("PagedVectors compared in {} ms", timeInMs);
     }
+
+    static void runTests(const SeparateKeys separateKeys, const std::vector<std::string>& keyFieldNames)
+    {
+        std::vector<double> execTimes;
+
+        const auto [bufferSize, fileBufferSizePercent] = GetParam();
+        const auto numBuffers = DATA_SIZE / bufferSize;
+        const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+
+        std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
+        if (separateKeys == SEPARATE_FILES)
+        {
+            fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
+        }
+
+        const auto testSchema = createSchema();
+        const auto bufferManager = Memory::BufferManager::create(bufferSize, 4 * numBuffers);
+        const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+        if (!keyFieldNames.empty())
+        {
+            memoryLayout->setKeyFieldNames(keyFieldNames);
+        }
+
+        auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimes);
+        NES_INFO("PagedVector copying...");
+        const auto expectedPagedVector = copyPagedVector(*pagedVector);
+        NES_INFO("PagedVector copied");
+
+        if (separateKeys == SAME_FILE_KEYS)
+        {
+            writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, SAME_FILE_PAYLOAD, execTimes);
+            execTimes.pop_back();
+            clearPagedVector(pagedVector, bufferManager, SAME_FILE_PAYLOAD, execTimes);
+            execTimes.pop_back();
+        }
+
+        writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, separateKeys, execTimes);
+        clearPagedVector(pagedVector, bufferManager, separateKeys, execTimes);
+
+        writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, separateKeys, execTimes);
+        comparePagedVectors(expectedPagedVector, pagedVector, execTimes);
+
+        ASSERT_EQ(execTimes.size(), 5);
+        //createMeasurementsCSV("fileName.csv");
+    }
 };
 
 TEST_P(MicroBenchmarksTest, DISABLED_noSeparation)
 {
-    execTimes.clear();
-
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
-    const auto seperateKeys = NO_SEPARATION;
-
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
-
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
-
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
-
-    //createMeasurementsCSV("fileName.csv");
+    runTests(NO_SEPARATION, {});
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separateFilesLittleConsecutiveKeys)
 {
-    execTimes.clear();
-
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat", "../../../micro_benchmarks_keys.dat"};
-    const auto seperateKeys = SEPARATE_FILES;
-
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f1"});
-
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
-
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
-
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
-
-    //createMeasurementsCSV("fileName.csv");
+    runTests(SEPARATE_FILES, {"f0", "f1"});
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separateFilesLittleNonConsecutiveKeys)
 {
-    execTimes.clear();
-
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat", "../../../micro_benchmarks_keys.dat"};
-    const auto seperateKeys = SEPARATE_FILES;
-
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f5"});
-
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
-
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
-
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
-
-    //createMeasurementsCSV("fileName.csv");
+    runTests(SEPARATE_FILES, {"f0", "f5"});
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separateFilesManyConsecutiveKeys)
 {
-    execTimes.clear();
-
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat", "../../../micro_benchmarks_keys.dat"};
-    const auto seperateKeys = SEPARATE_FILES;
-
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f1", "f2", "f3", "f4"});
-
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
-
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
-
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
-
-    //createMeasurementsCSV("fileName.csv");
+    runTests(SEPARATE_FILES, {"f0", "f1", "f2", "f3", "f4"});
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separateFilesManyNonConsecutiveKeys)
 {
-    execTimes.clear();
-
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat", "../../../micro_benchmarks_keys.dat"};
-    const auto seperateKeys = SEPARATE_FILES;
-
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 2 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f2", "f4", "f6", "f8"});
-
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
-
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
-
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
-
-    //createMeasurementsCSV("fileName.csv");
+    runTests(SEPARATE_FILES, {"f0", "f2", "f4", "f6", "f8"});
 }
 
 TEST_P(MicroBenchmarksTest, sameFileOnlyPayloadLittleConsecutiveKeys)
 {
-    execTimes.clear();
+    runTests(SAME_FILE_PAYLOAD, {"f0", "f1"});
+}
 
-    const auto [bufferSize, fileBufferSizePercent] = GetParam();
-    const auto numBuffers = DATA_SIZE / bufferSize;
-    const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+TEST_P(MicroBenchmarksTest, DISABLED_sameFileOnlyPayloadLittleNonConsecutiveKeys)
+{
+    runTests(SAME_FILE_PAYLOAD, {"f0", "f5"});
+}
 
-    const std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
-    const auto seperateKeys = SAME_FILE_PAYLOAD;
+TEST_P(MicroBenchmarksTest, DISABLED_sameFileOnlyPayloadManyConsecutiveKeys)
+{
+    runTests(SAME_FILE_PAYLOAD, {"f0", "f1", "f2", "f3", "f4"});
+}
 
-    const auto testSchema = createSchema();
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    memoryLayout->setKeyFieldNames({"f0", "f1"});
+TEST_P(MicroBenchmarksTest, DISABLED_sameFileOnlyPayloadManyNonConsecutiveKeys)
+{
+    runTests(SAME_FILE_PAYLOAD, {"f0", "f2", "f4", "f6", "f8"});
+}
 
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers);
-    NES_INFO("PagedVector copying...");
-    const auto expectedPagedVector = copyPagedVector(*pagedVector);
-    NES_INFO("PagedVector copied");
+TEST_P(MicroBenchmarksTest, sameFilePayloadAndKeyLittleConsecutiveKeys)
+{
+    //runTests(SAME_FILE_KEYS, {"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9"});
+    runTests(SAME_FILE_KEYS, {"f0", "f1"});
+}
 
-    writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, seperateKeys);
-    clearPagedVector(pagedVector, bufferManager, seperateKeys);
+TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadAndKeyLittleNonConsecutiveKeys)
+{
+    runTests(SAME_FILE_KEYS, {"f0", "f5"});
+}
 
-    writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, seperateKeys);
-    comparePagedVectors(expectedPagedVector, pagedVector);
+TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadAndKeyManyConsecutiveKeys)
+{
+    runTests(SAME_FILE_KEYS, {"f0", "f1", "f2", "f3", "f4"});
+}
 
-    //createMeasurementsCSV("fileName.csv");
+TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadAndKeyManyNonConsecutiveKeys)
+{
+    runTests(SAME_FILE_KEYS, {"f0", "f2", "f4", "f6", "f8"});
 }
 
 INSTANTIATE_TEST_CASE_P(
