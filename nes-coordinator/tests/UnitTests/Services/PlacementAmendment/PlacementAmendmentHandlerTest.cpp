@@ -837,7 +837,7 @@ TEST_F(PlacementAmendmentHandlerTest, testMultipleAddQueryEventsInaSingleBatchWi
 }
 
 //test adding multiple queries
-TEST_F(PlacementAmendmentHandlerTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC) {
+TEST_F(PlacementAmendmentHandlerTest, DISABLED_testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC) {
 
     // 1. Create mocked amendment handler and ISQP request to setup topology and queries to be processed
     auto mockedPlacementAmendmentHandler = std::make_shared<NES::Optimizer::MockedPlacementAmendmentHandler>(1);

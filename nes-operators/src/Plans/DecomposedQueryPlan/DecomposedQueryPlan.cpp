@@ -293,6 +293,7 @@ std::string DecomposedQueryPlan::toString() const {
     }
     return ss.str();
 }
+
 void DecomposedQueryPlan::setOldVersion(DecomposedQueryPlanVersion oldVersion) { this->oldVersion = oldVersion; }
 
 std::optional<DecomposedQueryPlanVersion> DecomposedQueryPlan::getOldVersion() const { return oldVersion; }
