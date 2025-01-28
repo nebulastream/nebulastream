@@ -276,7 +276,7 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
-    UIntOption numberOfBuffersToProduce = {BUFFERS_TO_PRODUCE, "0", "buff"};
+    UIntOption numberOfBuffersToProduce = {BUFFERS_TO_PRODUCE, "100000", "buff"};
 
 #ifdef TFDEF
     BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};

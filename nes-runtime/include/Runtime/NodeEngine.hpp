@@ -356,6 +356,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                               DecomposedQueryId decomposedQueryId,
                               ReconfigurationMarkerPtr& reconfigurationMarker);
 
+    void setNumberOfBuffersToProduce(uint64_t numberOfBuffersToProduce);
+
+    uint64_t getNumberOfBuffersToProduce();
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -415,6 +419,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    uint64_t numberOfBuffersToProduce;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

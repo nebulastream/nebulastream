@@ -42,15 +42,18 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               bool addTimestamp,
                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager(), addTimestamp);
-    return std::make_shared<FileSink>(format,
+    auto fileSink = std::make_shared<FileSink>(format,
                                       nodeEngine,
                                       activeProducers,
                                       filePath,
                                       append,
                                       sharedQueryId,
                                       decomposedQueryId,
+                  //                    nodeEngine->getNumberOfBuffersToProduce(),
                                       decomposedQueryVersion,
                                       numberOfOrigins);
+    fileSink->setNumOfBuffers(nodeEngine->getNumberOfBuffersToProduce());
+    return fileSink;
 }
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,

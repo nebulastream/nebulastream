@@ -99,7 +99,7 @@ void FileSink::shutdown() {
     auto dotPosition = filePath.find_last_of('.');
     auto completedPath = filePath.substr(0, dotPosition) + "_finished" + filePath.substr(dotPosition);
     outputFile.close();
-    if (numberOfProcessedBuffers == 1024) {
+    if (numberOfProcessedBuffers == numberOfBuffersToProduce) {
         if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
             std::cout << "file " << filePath.c_str() << " renamed" << std::endl;
             NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
@@ -144,11 +144,17 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     outputFile.flush();
 
     // NES_ERROR("number {}", numberOfProcessedBuffers);
-    if (numberOfProcessedBuffers == 1024) {
+    if (numberOfProcessedBuffers == numberOfBuffersToProduce) {
         shutdown();
         isClosed = true;
     }
     return true;
 }
+
+void FileSink::setNumOfBuffers(uint64_t numberOfBuffersToProduce) {
+    // NES_ERROR("should buffer {}", numberOfBuffersToProduce);
+    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+}
+
 
 }// namespace NES

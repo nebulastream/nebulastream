@@ -219,7 +219,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue(),
             workerConfiguration->enableSourceSharing.getValue());
-        // engine->setNumberOfBuffersToProduce(workerConfiguration->numberOfBuffersToProduce.getValue());
+        engine->setNumberOfBuffersToProduce(workerConfiguration->numberOfBuffersToProduce.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

@@ -194,7 +194,7 @@ using namespace NES;
 
     std::vector<NesWorkerPtr> sourceNodes;
 
-    NesWorkerPtr startSourceWorker(std::atomic<bool>&, uint64_t bufferSize, uint64_t, uint64_t originId) {
+    NesWorkerPtr startSourceWorker(std::atomic<bool>&, uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t originId) {
         std::cout << "start source node " << originId << std::endl;
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -210,6 +210,7 @@ using namespace NES;
         wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 5000;
         wrkConf->numberOfBuffersPerWorker = 10000;
+        wrkConf->numberOfBuffersToProduce = numberOfBuffersToProduce;
 
 //        auto func = [&shouldProduce, originId](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
 //            struct Record {
@@ -267,7 +268,7 @@ using namespace NES;
 
     std::vector<NesWorkerPtr> intermediateNodes;
 
-    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t, uint64_t numOfOrigins, uint64_t interIndex) {
+    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t numOfOrigins, uint64_t interIndex) {
         std::cout << "start intermediate node " << interIndex << std::endl;
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -283,6 +284,7 @@ using namespace NES;
         wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 5000;
         wrkConf->numberOfBuffersPerWorker = 10000;
+        wrkConf->numberOfBuffersToProduce = numberOfBuffersToProduce;
 
         for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
             const auto& logicalSourceName = intermediateSourceNames[originId][interIndex];

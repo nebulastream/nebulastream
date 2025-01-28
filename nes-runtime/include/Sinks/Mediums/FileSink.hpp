@@ -82,6 +82,8 @@ class FileSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
+    void setNumOfBuffers(uint64_t numberOfBuffersToProduce);
+
   protected:
     /// The output file path of the file sink.
     std::string filePath;
@@ -96,6 +98,7 @@ class FileSink : public SinkMedium {
     bool isOpen{false};
 
     std::atomic<uint64_t> numberOfProcessedBuffers{0};
+    uint64_t numberOfBuffersToProduce{100000};
     std::atomic<uint64_t> isClosed{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
