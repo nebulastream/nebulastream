@@ -13,7 +13,6 @@
 add_source_files(nes-execution
         QueryCompiler.cpp
         QueryCompilationRequest.cpp
-        QueryCompilationResult.cpp
         )
 add_subdirectory(Operators)
 add_subdirectory(Phases)
