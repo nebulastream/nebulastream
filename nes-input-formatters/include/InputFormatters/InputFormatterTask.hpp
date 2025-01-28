@@ -13,9 +13,9 @@
 */
 #pragma once
 
-#include <ExecutablePipelineStage.hpp>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <ostream>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -26,8 +26,7 @@
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
-#include <memory>
-
+#include <ExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -79,12 +78,7 @@ public:
     {
         /* noop */
     }
-    void stop(Runtime::Execution::PipelineExecutionContext&) override
-    {
-        // Todo: flush the current state
-        // can use: flushBuffers of SequenceShredder
-        /* noop */
-    }
+    void stop(Runtime::Execution::PipelineExecutionContext&) override;
     void execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
     std::ostream& toString(std::ostream& os) const override

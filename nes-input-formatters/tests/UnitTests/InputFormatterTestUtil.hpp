@@ -276,6 +276,7 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create tasks for task queue
     auto tasks = createTasks(testHandle);
     /// process tasks in task queue
+    // Todo: we need to flush, to get the last buffers
     testHandle.testTaskQueue.processTasks(std::move(tasks));
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);

@@ -42,6 +42,7 @@ public:
         NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder) = 0;
+    virtual void flushBuffers(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& obj) { return obj.toString(os); }
 

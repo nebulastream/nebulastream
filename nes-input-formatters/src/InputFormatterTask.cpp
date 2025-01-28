@@ -152,6 +152,10 @@ InputFormatterTask::InputFormatterTask(std::unique_ptr<InputFormatter> inputForm
 {
 }
 InputFormatterTask::~InputFormatterTask() = default;
+void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+{
+    inputFormatter->flushBuffers(pipelineExecutionContext, *sequenceShredder);
+}
 // Todo: think about layouts
 // Todo: do we create a new InputFormatterTask everytime we execute the pipeline?
 // - if yes: then the InputFormatterTask should have a static SequenceShredder that all instances can use

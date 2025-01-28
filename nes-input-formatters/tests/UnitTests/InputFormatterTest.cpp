@@ -67,7 +67,7 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         // .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
         // Todo: set workerThreadId in TestablePipelineTask? <--- would allow TestTaskQueue to only take tasks
         // Todo: first buffer should not contain starting delimiter <-- we must recognize first buffer in parser
-        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
 }
 
 // Todo: test with multiple tasks per buffer/thread (split tasks)

@@ -196,6 +196,7 @@ public:
         const std::scoped_lock lock(readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
         for (size_t offsetToTail = 1; offsetToTail <= numberOfBitmaps; ++offsetToTail)
         {
+            // Todo: getting here, but bitmapIndex is off by 1
             const auto bitmapIndex = (this->tail + (numberOfBitmaps - offsetToTail)) & numberOfBitmapsModulo;
             const auto seenAndUsedBitmap = seenAndUsedBitmaps[bitmapIndex];
             const auto tupleDelimiterBitmap = tupleDelimiterBitmaps[bitmapIndex];

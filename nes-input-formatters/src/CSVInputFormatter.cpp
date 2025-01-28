@@ -360,7 +360,8 @@ CSVInputFormatter::~CSVInputFormatter() = default;
 void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& rawTB, //Todo: pass by value and move? Who owns the buffer?
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-    const size_t numBytesInRawTB, SequenceShredder& sequenceShredder)
+    const size_t numBytesInRawTB,
+    SequenceShredder& sequenceShredder)
 {
     PRECONDITION(rawTB.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
 
@@ -368,11 +369,11 @@ void CSVInputFormatter::parseTupleBufferRaw(
     auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
 
     const auto isInRange = sequenceShredder.isSequenceNumberInRange(rawTB.getSequenceNumber().getRawValue());
-    if(not(isInRange))
+    if (not(isInRange))
     {
         pipelineExecutionContext.emitBuffer(
-                    rawTB,
-                    NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER); /// Todo: emit buffer with RE_EMIT policy
+            rawTB,
+            NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER); /// Todo: emit buffer with RE_EMIT policy
         return;
     }
     /// Reset all values that are tied to a specific rawTB.
@@ -390,15 +391,23 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0 or isFirstSequenceNumber;
     const auto numUses = static_cast<uint8_t>(2 - (not(hasTupleDelimiter) or isFirstSequenceNumber));
     // Todo: add third buffer without delimiter in between two buffers with delimiter
-    const auto buffersToFormat = (hasTupleDelimiter)
-        ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInRawTB,
-            .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=numUses})
-        : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInRawTB,
-            .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=numUses});
+    const auto buffersToFormat = (hasTupleDelimiter) ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{
+                                                           .buffer = rawTB,
+                                                           .sizeOfBufferInBytes = numBytesInRawTB,
+                                                           .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
+                                                           .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
+                                                           .uses = numUses})
+                                                     : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{
+                                                           .buffer = rawTB,
+                                                           .sizeOfBufferInBytes = numBytesInRawTB,
+                                                           .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
+                                                           .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
+                                                           .uses = numUses});
 
+    /// If SequenceShredder::processSequenceNumber(StagedBuffer stagedBuffer) only returned stagedBuffer and it does not have a tuple delimiter
+    /// then the thread cannot format any tuples and can therefore return. A subsequent thread will format the the tuple that the rawTB belongs to.
     if (buffersToFormat.size() == 1 and numUses == 1)
     {
-        // Todo: is it ok to simply return?
         return;
     }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
@@ -406,15 +415,18 @@ void CSVInputFormatter::parseTupleBufferRaw(
     std::string partialTuple;
     for (size_t bufferIdx = 0; const auto& stagedBuffer : buffersToFormat)
     {
-        const auto startOffset = (buffersToFormat.size() > 1 and bufferIdx == buffersToFormat.size() - 1) ? 0 : stagedBuffer.offsetOfFirstTupleDelimiter;
+        const auto startOffset
+            = (buffersToFormat.size() > 1 and bufferIdx == buffersToFormat.size() - 1) ? 0 : stagedBuffer.offsetOfFirstTupleDelimiter;
         const auto endOffset = stagedBuffer.offsetOfLastTupleDelimiter;
-        progressTracker.resetForNewRawTB(stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), startOffset, endOffset);
+        progressTracker.resetForNewRawTB(
+            stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), startOffset, endOffset);
         /// Process partial tuple of previous buffer, if given, then start to process the rest of the buffer, if there is more
         if (not(partialTuple.empty()))
         {
             partialTuple.reserve(partialTuple.size() + stagedBuffer.offsetOfFirstTupleDelimiter);
             partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfFirstTupleDelimiter));
-            parseStringIntoTupleBuffer(partialTuple, *pipelineExecutionContext.getBufferManager(), progressTracker); //Todo: move partial tuple
+            parseStringIntoTupleBuffer(
+                partialTuple, *pipelineExecutionContext.getBufferManager(), progressTracker); //Todo: move partial tuple
             progressTracker.progressOneTuple();
         }
 
@@ -459,6 +471,68 @@ void CSVInputFormatter::parseTupleBufferRaw(
         /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
         pipelineExecutionContext.emitBuffer(
             progressTracker.getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    }
+}
+void CSVInputFormatter::flushBuffers(
+    NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+{
+    const auto flushedBuffers = sequenceShredder.flushBuffers();
+    if (flushedBuffers.empty())
+    {
+        return;
+    }
+    // Todo: move below into separate function to de-duplicate
+    auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+    std::string partialTuple;
+    for (size_t bufferIdx = 0; const auto& stagedBuffer : flushedBuffers)
+    {
+        const auto startOffset
+            = (flushedBuffers.size() > 1 and bufferIdx == flushedBuffers.size() - 1) ? 0 : stagedBuffer.offsetOfFirstTupleDelimiter;
+        const auto endOffset = stagedBuffer.offsetOfLastTupleDelimiter;
+        progressTracker.resetForNewRawTB(
+            stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), startOffset, endOffset);
+        /// Process partial tuple of previous buffer, if given, then start to process the rest of the buffer, if there is more
+        if (not(partialTuple.empty()))
+        {
+            partialTuple.reserve(partialTuple.size() + stagedBuffer.offsetOfFirstTupleDelimiter);
+            partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfFirstTupleDelimiter));
+            parseStringIntoTupleBuffer(
+                partialTuple, *pipelineExecutionContext.getBufferManager(), progressTracker); //Todo: move partial tuple
+            progressTracker.progressOneTuple();
+        }
+
+        /// While the start of the next tuple is not the endOffset (+ sizeOfTupleInBytes) get the next tuple
+        while (progressTracker.hasOneMoreTupleInRawTB())
+        {
+            /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
+            /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
+            if (not progressTracker.hasSpaceForTupleInTBFormatted())
+            {
+                /// Emit TBF and get new TBF
+                progressTracker.setNumberOfTuplesInTBFormatted();
+                NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker.numTuplesInTBFormatted);
+                /// true triggers adding sequence number, etc.
+                pipelineExecutionContext.emitBuffer(
+                    progressTracker.getTupleBufferFormatted(),
+                    NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+                progressTracker.currentFieldOffsetTBFormatted = 0;
+                progressTracker.numTuplesInTBFormatted = 0;
+            }
+
+            const auto currentTuple = progressTracker.getNextTuple();
+            parseStringIntoTupleBuffer(currentTuple, *pipelineExecutionContext.getBufferManager(), progressTracker);
+
+            progressTracker.progressOneTuple();
+        }
+        ++bufferIdx;
+        //Todo: improve: handle via indexes?
+        /// only set partial tuple, if there is another iteration that may use it
+        if (bufferIdx != flushedBuffers.size())
+        {
+            partialTuple = progressTracker.getEndingPartialTuple();
+        }
     }
 }
 

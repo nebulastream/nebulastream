@@ -50,7 +50,11 @@ public:
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-        size_t numBytesInRawTB, SequenceShredder& sequenceShredder) override;
+        size_t numBytesInRawTB,
+        SequenceShredder& sequenceShredder) override;
+
+    void
+    flushBuffers(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

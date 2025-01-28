@@ -125,6 +125,8 @@ public:
     NES::SequenceNumber sequenceNumber;
     std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
 
+    std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> getExecutablePipelineStage() const { return eps; }
+
 private:
     NES::Memory::TupleBuffer tupleBuffer;
     std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
@@ -296,10 +298,20 @@ public:
         }
     }
 
+    void stopProcessing()
+    {
+        while (!testTasks.empty())
+        {
+        }
+    }
+
     void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
+        auto inputFormatterTask = pipelineTasks.front().getExecutablePipelineStage();
+        auto pipelineExecutionContext = pipelineTasks.front().pipelineExecutionContext;
         enqueueTasks(std::move(pipelineTasks));
         startProcessing();
+        inputFormatterTask->stop(*pipelineExecutionContext);
     }
 
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
