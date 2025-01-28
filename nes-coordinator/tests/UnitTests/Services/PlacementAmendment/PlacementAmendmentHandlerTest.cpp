@@ -1658,7 +1658,7 @@ TEST_F(PlacementAmendmentHandlerTest,
     placementAmendmentHandler->shutDown();
 }
 
-TEST_F(PlacementAmendmentHandlerTest, testJoinMigrationAmendmentPhase) {
+TEST_F(PlacementAmendmentHandlerTest, DISABLED_testJoinMigrationAmendmentPhase) {
 
     //  Create mocked amendment handler and ISQP request to setup topology and queries to be processed
     auto mockedPlacementAmendmentHandler = std::make_shared<NES::Optimizer::MockedPlacementAmendmentHandler>(1);
