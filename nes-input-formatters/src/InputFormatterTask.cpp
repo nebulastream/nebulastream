@@ -161,8 +161,11 @@ void InputFormatterTask::execute(
     const Memory::TupleBuffer& inputTupleBuffer,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-    // pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER);
-    // pipelineExecutionContext.getOperatorHandler<NES::InputFormatters::InputFormatterTask>()
+    /// Todo: We cannot simply call inputFormatter each time, since the ThreadPool of the QueryEngine may execute this Task many times concurrently.
+    /// - each Task in the TaskQueue contains a RunningQueryPlanNode that holds a unique_ptr to a ExecutablePipelineStage, which is this InputFormatterTask
+    // either, we create a new input formatter each time, or, the CSVInputFormatter is stateless/thread-safe
+    // (temporary) Solution
+    // -> the CSVInputFormatter is thread-safe, since it does not change its state after construction, each call to 'parseTupleBufferRaw' creates a new ProgressTracker that is stateful for the duration of the call
     inputFormatter->parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples(), *sequenceShredder);
 }
 }

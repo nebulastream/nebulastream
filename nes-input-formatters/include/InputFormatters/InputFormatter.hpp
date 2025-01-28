@@ -36,7 +36,7 @@ public:
     InputFormatter(InputFormatter&&) = delete;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-
+    /// Must only manipulate the sequenceShredder and otherwise by free of side-effects
     virtual void parseTupleBufferRaw(
         const NES::Memory::TupleBuffer& tbRaw,
         NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,

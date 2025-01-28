@@ -37,7 +37,7 @@ class CSVInputFormatter : public InputFormatter
 {
 public:
     using CastFunctionSignature
-        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
+        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider, Memory::TupleBuffer& tupleBufferFormatted)>;
 
     CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
     ~CSVInputFormatter() override; //needs implementation in source file to allow for forward declaring 'InputFormatter'
@@ -55,8 +55,9 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::string fieldDelimiter;
-    std::unique_ptr<ProgressTracker> progressTracker;
+    const Schema schema;
+    const std::string fieldDelimiter;
+    const std::string tupleDelimiter;
     std::vector<size_t> fieldSizes;
     std::vector<CastFunctionSignature> fieldParseFunctions;
 
@@ -64,7 +65,7 @@ private:
     /// Assumptions: input is a string that contains either:
     /// - one complete tuple
     /// - a string containing a partial tuple (potentially with a partial field) and another string that contains the rest of the tuple.
-    void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const;
+    void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider, ProgressTracker& progressTracker) const;
 };
 
 }
