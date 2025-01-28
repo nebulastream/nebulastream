@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-/*
 #include <memory>
 #include <utility>
 #include <vector>
@@ -21,9 +20,9 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <TraitSets/RewriteRules/RewriteRuleRegistry.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <grpcpp/impl/codegen/config_protobuf.h>
@@ -34,14 +33,11 @@
 #include <Selection.hpp>
 #include <FunctionProvider.hpp>
 
-// TODO we have muliple occurences of ExceuctableOperators. Should there be only one?
-
 using namespace NES;
 
 namespace NES::QueryCompilation::LowerLogicalToNautilusOperators
 {
 
-// TODO get rid of the shared_ptrs
 std::shared_ptr<PhysicalOperatorNode> lowerFilter(const std::shared_ptr<LogicalSelectionOperator>& operatorPtr)
 {
     auto function = FunctionProvider::lowerFunction(operatorPtr->getPredicate());
@@ -80,28 +76,33 @@ std::shared_ptr<PhysicalQueryPlan> apply(const std::shared_ptr<DecomposedQueryPl
 {
     std::shared_ptr<PhysicalOperatorNode> rootOperator;
     std::shared_ptr<PhysicalOperatorNode> currentOperator;
-    for (const auto& node : PlanIterator(decomposedQueryPlan).snapshot())
+    // TODO this is wrong...
+    for (const auto& operatorNode : BFSRange<Operator>(decomposedQueryPlan->getRootOperators()[0]))
     {
-        if (NES::Util::instanceOf<SinkLogicalOperator>(node))
+        if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
         {
-            rootOperator = std::make_shared<PhysicalOperatorNode>(NES::Util::as<SinkLogicalOperator>(node));
+            rootOperator = std::make_shared<PhysicalOperatorNode>(NES::Util::as<SinkLogicalOperator>(operatorNode));
             currentOperator = rootOperator;
         }
-        else if (NES::Util::instanceOf<SourceDescriptorLogicalOperator>(node))
+        else if (NES::Util::instanceOf<SourceDescriptorLogicalOperator>(operatorNode))
         {
             auto tmp = currentOperator;
-            currentOperator = std::make_shared<PhysicalOperatorNode>(NES::Util::as<SourceDescriptorLogicalOperator>(node));
+            currentOperator = std::make_shared<PhysicalOperatorNode>(NES::Util::as<SourceDescriptorLogicalOperator>(operatorNode));
             tmp->children.push_back(currentOperator);
         }
-        else if (NES::Util::instanceOf<LogicalOperator>(node))
+        else if (NES::Util::instanceOf<LogicalOperator>(operatorNode))
         {
             auto tmp = currentOperator;
-            currentOperator = lower(NES::Util::as<LogicalOperator>(node));
+            currentOperator = lower(NES::Util::as<LogicalOperator>(operatorNode));
             tmp->children.push_back(currentOperator); // TODO this might not work for more complex variants
+        }
+        else if (auto logicalOperator = RewriteRuleRegistry::instance().create("LogicalToPhysicalMap", operatorNode))
+        {
+
         }
         else
         {
-            throw UnknownLogicalOperator("Cannot lower {}", node->toString());
+            throw UnknownLogicalOperator("Cannot lower {}", operatorNode->toString());
         }
     }
     auto plan = std::make_shared<PhysicalQueryPlan>(decomposedQueryPlan->getQueryId(), std::vector{rootOperator});
@@ -109,4 +110,3 @@ std::shared_ptr<PhysicalQueryPlan> apply(const std::shared_ptr<DecomposedQueryPl
     return plan;
 }
 }
- */

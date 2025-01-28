@@ -33,25 +33,23 @@ QueryCompiler::QueryCompiler(std::shared_ptr<QueryCompilerConfiguration> options
 {
 }
 
-std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr<QueryCompilationRequest>, QueryId)
+std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr<QueryCompilationRequest> request, QueryId queryId)
 {
     try
     {
         // TODO: the query id does not need to part of all the operators here?
         /// For now we have to override the id here as it should not be set by the client
-        //request->decomposedQueryPlan->setQueryId(queryId);
+        request->decomposedQueryPlan->setQueryId(queryId);
 
         /// 0) here we should allow logical reorderings. These rules are simpler to construct.
 
         /// 1) get the logical query plan
-        // auto nodeEngine = request->nodeEngine;
-        // auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
-        // auto logicalQueryPlan = request->decomposedQueryPlan;
 
         /// During lowering we add the operator handlers?
         /// 2) lower to physical query plan (old Nautilus)
-        // auto physicalQueryPlan = LowerLogicalToNautilusOperators::apply(logicalQueryPlan);
+        auto physicalQueryPlan = LowerLogicalToNautilusOperators::apply(request->decomposedQueryPlan);
 
+        std::terminate();
         /// When lowering the scan operators cannot be used as they are not 'Operators'.
         /// The current way we mode it is, that a pipeline is a 'Operator' which then can be placed in the DQP.
         /// We have a decomposed query plan with pipelines as 'operators' (clever!)
@@ -62,18 +60,19 @@ std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr
         /// We do not require that the functions are pure or deterministaic, e.i., they can internally use statistics.
         /// TODO here we can register other transformation rules
 
+        /*
         // TODO should add scan and emit where this is needed
         /// 4) Pipelining & Scan and emit
-        //auto pipelinedQueryPlan = PipeliningPhase::apply(physicalQueryPlan);
-
-        ///pipelinedQueryPlan = AddScanAndEmitPhase::apply(physicalQueryPlan, bufferSize);
+        auto pipelinedQueryPlan = PipeliningPhase::apply(physicalQueryPlan);
+        auto phase = AddScanAndEmitPhase::create();
+        pipelinedQueryPlan = phase->apply(physicalQueryPlan);
 
         /// 5) Here we create a executable pipeline state (compilation or interpretation)
         /// They are included into executable operators
         /// TODO I think, we can also already start the compilation here
         // TODO shouldn't the executable operator not be called ExecutablePipeline?
-        ///pipelinedQueryPlan = NautilusCompilationPhase::apply(pipelinedQueryPlan, options);
-
+        pipelinedQueryPlan = LowerLogicalToNautilusOperators::apply(pipelinedQueryPlan);
+        */
         /// 6) create a executable query plan
         return std::unique_ptr<ExecutableQueryPlan>();//LowerToExecutableQueryPlanPhase::apply(PipelinedQueryPlan(), request->nodeEngine);
     }

@@ -14,13 +14,16 @@
 
 #pragma once
 
-#include <TraitSets/RewriteRule/RewriteRule.hpp>
-#include "Util/PluginRegistry.hpp"
+#include <any>
+#include <typeindex>
+#include <TraitSets/RewriteRules/RewriteRule.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES
 {
 
-class RegistryRewriteRule
+/*
+class RewriteRuleRegistry
 {
 public:
 
@@ -30,7 +33,7 @@ public:
         typename InputTraitSet,
         typename OutputTraitSet
         >
-    requires RewriteRuleConcept<Rule, InputTraitSet, OutputTraitSet>
+    ///requires RewriteRuleConcept<Rule, InputTraitSet, OutputTraitSet>
     void registerRule(const std::string& name)
     {
         if (registry.find(name) != registry.end()) {
@@ -87,15 +90,15 @@ private:
 
     std::unordered_map<std::string, RewriteRuleEntry> registry;
 };
-}
-
-/*
-using RegistryRewriteRuleSignature = RegistrySignature<std::string, RewriteRule, std::vector<std::unique_ptr<RewriteRule>>>;
-class RegistryRewriteRule : public BaseRegistry<RegistryRewriteRule, RegistryRewriteRuleSignature>
-{
-};
 }*/
 
+
+using RewriteRuleRegistrySignature = RegistrySignature<std::string, NES::RewriteRule, std::vector<std::unique_ptr<NES::RewriteRule>>>;
+class RewriteRuleRegistry : public BaseRegistry<RewriteRuleRegistry, RewriteRuleRegistrySignature>
+{
+};
+}
+
 #define INCLUDED_FROM_REGISTRY_REWRITE_RULE
-#include <TraitSets/RewriteRule/GeneratedRewriteRuleRegistrar.inc>
+#include <TraitSets/RewriteRules/GeneratedRewriteRuleRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_REWRITE_RULE

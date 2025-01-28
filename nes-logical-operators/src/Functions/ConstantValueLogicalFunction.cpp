@@ -37,7 +37,7 @@ bool ConstantValueLogicalFunction::equal(std::shared_ptr<LogicalFunction> const&
     if (Util::instanceOf<ConstantValueLogicalFunction>(rhs))
     {
         auto otherConstantValueNode = Util::as<ConstantValueLogicalFunction>(rhs);
-        return otherConstantValueNode->stamp->equals(stamp) && constantValue == otherConstantValueNode->constantValue;
+        return otherConstantValueNode->stamp == stamp && constantValue == otherConstantValueNode->constantValue;
     }
     return false;
 }

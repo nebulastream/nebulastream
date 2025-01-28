@@ -16,7 +16,7 @@
 
 #include <tuple>
 #include <vector>
-#include <TraitSet/Trait.hpp>
+#include <TraitSets/Trait.hpp>
 
 template <Trait... T>
 class RecursiveTupleTraitSet

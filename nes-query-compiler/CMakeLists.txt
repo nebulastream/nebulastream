@@ -15,11 +15,8 @@ add_subdirectory(src)
 get_source(nes-query-compiler NES_QUERY_COMPILER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES}
-        src/Phases/Transitions/AddScanAndEmitPhase.cpp
-        src/Phases/Transitions/LowerToExecutableQueryPlanPhase.cpp
-        src/QueryCompilationRequest.cpp)
-target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators)
+add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES})
+target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-optimizer)
 target_include_directories(nes-query-compiler PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

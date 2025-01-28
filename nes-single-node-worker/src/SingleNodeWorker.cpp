@@ -13,13 +13,11 @@
 */
 
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <QueryCompilationRequest.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryCompiler.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
 
@@ -53,7 +51,7 @@ QueryId SingleNodeWorker::registerQuery(std::shared_ptr<DecomposedQueryPlan> pla
 
         listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
-        auto request = QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
+        auto request = std::make_unique<QueryCompilationRequest>(logicalQueryPlan, bufferSize);
 
         return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
     }

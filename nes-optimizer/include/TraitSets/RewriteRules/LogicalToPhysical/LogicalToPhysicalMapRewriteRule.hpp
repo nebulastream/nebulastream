@@ -17,13 +17,13 @@
 #include <memory>
 #include <set>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include "../../TraitSet.hpp"
-#include "../../Traits/ChildNodes.hpp"
-#include "../../Traits/PhysicalOperatorTrait.hpp"
-#include "../../Traits/QueryForSubtree.hpp"
-#include "../RewriteRule.hpp"
-#include "Operators/LogicalOperators/LogicalMapOperator.hpp"
-#include "Operators/Operator.hpp"
+#include <TypeTraits/TraitSet.hpp>
+#include <TypeTraits/Traits/ChildNodes.hpp>
+#include <TypeTraits/Traits/PhysicalOperatorTrait.hpp>
+#include <TypeTraits/Traits/QueryForSubtree.hpp>
+#include <TypeTraits/RewriteRule.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

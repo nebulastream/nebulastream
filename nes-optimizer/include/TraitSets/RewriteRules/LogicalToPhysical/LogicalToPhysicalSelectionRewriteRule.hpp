@@ -17,17 +17,16 @@
 #include <memory>
 #include <set>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
-#include "../../TraitSet.hpp"
-#include "../../Traits/ChildNodes.hpp"
-#include "../../Traits/PhysicalOperatorTrait.hpp"
-#include "../../Traits/QueryForSubtree.hpp"
-#include "../RewriteRule.hpp"
-#include "Operators/LogicalOperators/LogicalSelectionOperator.hpp"
-#include "Operators/Operator.hpp"
+#include <TraitSets/TraitSet.hpp>
+#include <TraitSets/Traits/ChildNodes.hpp>
+#include <TraitSets/Traits/PhysicalOperatorTrait.hpp>
+#include <TraitSets/Traits/QueryForSubtree.hpp>
+#include <TraitSets/RewriteRule.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {
-
 
 struct LogicalToPhysicalSelectionRewriteRule
 {

@@ -20,19 +20,19 @@
 #endif
 
 
+namespace NES::RewriteRuleGeneratedRegistrar
+{
+std::unique_ptr<RewriteRule> RegisterLogicalToPhysicalMap(std::vector<std::unique_ptr<RewriteRule>>);
+std::unique_ptr<RewriteRule> RegisterLogicalToPhysicalSelection(std::vector<std::unique_ptr<RewriteRule>>);
+}
+
 namespace NES
 {
-
-std::unique_ptr<RewriteRule> RegisterRewriteLogicalMap();
-
 template <>
-inline void
-Registrar<RegistryRewriteRule, RegistryRewriteRuleSignature>::registerAll(Registry<Registrar>& registry)
+inline void Registrar<RewriteRuleRegistry, RewriteRuleRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    registry.registerRule<
-        LogicalToPhysicalSelectionRewriteRule,
-        TraitSet<ChildNodes, QueryForSubtree, LogicalSelectionOperator>,
-        TraitSet<ChildNodes, QueryForSubtree, PhysicalOperatorTrait>
-        >("LogicalToPhysicalSelection");
+    using namespace NES::RewriteRuleGeneratedRegistrar;
+    registry.registerPlugin("LogicalToPhysicalMap", RegisterLogicalToPhysicalMap);
+    registry.registerPlugin("LogicalToPhysicalSelection", RegisterLogicalToPhysicalSelection);
 }
 }
