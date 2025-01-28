@@ -232,11 +232,12 @@ std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTempla
 
     // Todo: can we move the testBufferManagerHere?
     // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask = InputFormatters::InputFormatterProvider::provideInputFormatter(
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         testHandle.testConfig.parserConfig.parserType,
         testHandle.schema,
         testHandle.testConfig.parserConfig.tupleDelimiter,
         testHandle.testConfig.parserConfig.fieldDelimiter);
+    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
     std::vector<TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {

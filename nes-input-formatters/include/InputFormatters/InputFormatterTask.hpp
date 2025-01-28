@@ -14,19 +14,20 @@
 #pragma once
 
 #include <ExecutablePipelineStage.hpp>
-
-
 #include <cstddef>
 #include <functional>
 #include <ostream>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
+#include <memory>
+
 
 namespace NES::Runtime::Execution
 {
@@ -34,6 +35,9 @@ class PipelineExecutionContext;
 }
 namespace NES::InputFormatters
 {
+
+/// Forward referencing SequenceShredder to keep it as a private implementation detail of nes-input-formatters
+class SequenceShredder;
 
 namespace ReturnType
 {
@@ -63,8 +67,8 @@ using EmitFunction = std::function<void(const OriginId, InputFormatterTaskReturn
 class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    InputFormatterTask() = default;
-    ~InputFormatterTask() override = default;
+    explicit InputFormatterTask(std::unique_ptr<InputFormatter> inputFormatter);
+    ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;
     InputFormatterTask& operator=(const InputFormatterTask&) = delete;
@@ -77,25 +81,21 @@ public:
     }
     void stop(Runtime::Execution::PipelineExecutionContext&) override
     {
+        // Todo: flush the current state
+        // can use: flushBuffers of SequenceShredder
         /* noop */
     }
-
-    // Todo: think about what to do with setup and stop
-    // uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    // uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-
-    virtual void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
-        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-        size_t numBytesInTBRaw)
-        = 0;
-
-    friend std::ostream& operator<<(std::ostream& out, const InputFormatterTask& InputFormatterTask)
+    std::ostream& toString(std::ostream& os) const override
     {
-        return InputFormatterTask.toString(out);
-    }
+        // Todo: implement
+        os << "InputFormatterTask";
+        return os;
+    };
+private:
+    std::unique_ptr<InputFormatter> inputFormatter;
+    std::unique_ptr<SequenceShredder> sequenceShredder;
 };
 
 

@@ -28,9 +28,11 @@
 #include <mutex>
 #include <cmath>
 #include <Runtime/TupleBuffer.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 
-
+namespace NES::InputFormatters
+{
 // Todo: does the design brake with big/little endian?
 // Todo: handle sequence number wrapping (prevent SNs to reach MAX_VALUE and make sure that re-starting is seamless)
 //  -> write test
@@ -179,13 +181,53 @@ public:
     /// Example: 4 bitmaps, tail is 0, then the allowed range for sequence numbers is 1-256: [1,64][65,128][129,192][193,256]
     [[nodiscard]] bool isSequenceNumberInRange(const SequenceNumberType sequenceNumber) {
         const auto targetBitmap = ((sequenceNumber - 1) >> BITMAP_SIZE_BIT_SHIFT);
-        std::scoped_lock lock(readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
+        const std::scoped_lock lock(readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
         const auto isInRange = targetBitmap < (this->tail + numberOfBitmaps);
         if (isInRange) {
             return true;
         }
         ++resizeRequestCount;
         return false;
+    }
+
+    // Todo: test function
+    [[nodiscard]] std::vector<StagedBuffer> flushBuffers()
+    {
+        const std::scoped_lock lock(readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
+        for (size_t offsetToTail = 1; offsetToTail <= numberOfBitmaps; ++offsetToTail)
+        {
+            const auto bitmapIndex = (this->tail + (numberOfBitmaps - offsetToTail)) & numberOfBitmapsModulo;
+            const auto seenAndUsedBitmap = seenAndUsedBitmaps[bitmapIndex];
+            const auto tupleDelimiterBitmap = tupleDelimiterBitmaps[bitmapIndex];
+            /// Reverse-search bitmaps, until a bitmap is not 0, meaning, it represents a buffer that is in the stagedBuffers vector
+            if ((seenAndUsedBitmap | tupleDelimiterBitmap) != 0)
+            {
+                // If the last buffer contains a tuple delimiter, we only need to return the last buffer
+                if (tupleDelimiterBitmap > seenAndUsedBitmap)
+                {
+                    const auto offsetToLargestBit = std::countl_zero(tupleDelimiterBitmap);
+                    const auto firstStagedBufferOfBitmap = numberOfBitmaps - offsetToTail;
+                    const auto sequenceNumberOffsetOfBit = SIZE_OF_BITMAP_IN_BITS - offsetToLargestBit;
+                    const auto stagedBufferOffset = (firstStagedBufferOfBitmap << BITMAP_SIZE_BIT_SHIFT) + sequenceNumberOffsetOfBit;
+                    const auto lastBuffer = std::move(stagedBuffers[stagedBufferOffset]);
+                    return {lastBuffer};
+                }
+                /// If the last buffer contains a buffer that does not contain a delimiter, we need to check for a spanning tuple
+                /// We construct a dummy staged buffer and set its sequence number to exactly one higher than the largest seen sequence number.
+                /// The dummy staged buffer flushes out all prior buffers that still depended on a tuple delimiter that did not appear,
+                /// because an EOF/EOS is not a tuple delimiter.
+                const auto firstSequenceNumberOfTail = this->tail * SIZE_OF_BITMAP_IN_BITS;
+                const auto sequenceNumberOffsetOfBitmap = (numberOfBitmaps - offsetToTail) * SIZE_OF_BITMAP_IN_BITS;
+                const auto firstSequenceNumberOfBitmap = firstSequenceNumberOfTail + sequenceNumberOffsetOfBitmap;
+                const auto sequenceNumberOffsetOfBit = SIZE_OF_BITMAP_IN_BITS - std::countl_zero(seenAndUsedBitmap);
+                const auto largestSeenSequenceNumber = firstSequenceNumberOfBitmap + sequenceNumberOffsetOfBit + 1;
+                auto dummyBuffer = NES::Memory::TupleBuffer{};
+                dummyBuffer.setSequenceNumber(NES::SequenceNumber(largestSeenSequenceNumber + 1));
+                const auto dummyStagedBuffer = StagedBuffer{.buffer = std::move(dummyBuffer), .sizeOfBufferInBytes = 0, .offsetOfFirstTupleDelimiter = 0, .offsetOfLastTupleDelimiter = 0, .uses = 1};
+                return processSequenceNumber<true>(dummyStagedBuffer);
+            }
+        }
+        return std::vector<StagedBuffer>{};
     }
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
@@ -658,3 +700,4 @@ private:
         this->tail = initialTail;
     };
 };
+}

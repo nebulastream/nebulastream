@@ -46,6 +46,8 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include "InputFormatters/InputFormatter.hpp"
+#include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
 {
@@ -358,7 +360,7 @@ CSVInputFormatter::~CSVInputFormatter() = default;
 void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& rawTB, //Todo: pass by value and move? Who owns the buffer?
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-    const size_t numBytesInrawTB)
+    const size_t numBytesInRawTB, SequenceShredder& sequenceShredder)
 {
     PRECONDITION(rawTB.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
     const auto isInRange = sequenceShredder.isSequenceNumberInRange(rawTB.getSequenceNumber().getRawValue());
@@ -371,7 +373,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
     /// Reset all values that are tied to a specific rawTB.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
-    progressTracker->resetForNewRawTB(numBytesInrawTB, rawTB.getBuffer<const char>());
+    progressTracker->resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>());
 
     const auto isFirstSequenceNumber = rawTB.getSequenceNumber().getRawValue() == SequenceNumber::INITIAL;
     const auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
@@ -383,17 +385,20 @@ void CSVInputFormatter::parseTupleBufferRaw(
     offsetOfLastTupleDelimiter += static_cast<uint64_t>(offsetOfLastTupleDelimiter == maxSequenceNumber);
     const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != maxSequenceNumber;
     const auto numUses = static_cast<uint8_t>(2 - (not(hasTupleDelimiter) or isFirstSequenceNumber));
-    // Todo: offset calculation still wrong, needs to be '0' for final buffer
     // Todo: add third buffer without delimiter in between two buffers with delimiter
-    // Todo: free buffers from SequenceShredder on destruction! (automatically done by vector? -> need to see whether buffermanager complains)
     const auto buffersToFormat = (hasTupleDelimiter)
-        ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInrawTB,
+        ? sequenceShredder.processSequenceNumber<true>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInRawTB,
             .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=numUses})
-        : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInrawTB,
+        : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{.buffer=rawTB, .sizeOfBufferInBytes=numBytesInRawTB,
             .offsetOfFirstTupleDelimiter=offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter=offsetOfLastTupleDelimiter, .uses=numUses});
 
+    if (buffersToFormat.empty())
+    {
+        // Todo: is it ok to simply return?
+        return;
+    }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
-    progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer()); //Todo: only allocate if producing buffer!
+    progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
     std::string partialTuple;
     for (size_t bufferIdx = 0; const auto& stagedBuffer : buffersToFormat)
     {
@@ -434,7 +439,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
             progressTracker->progressOneTuple();
         }
         ++bufferIdx;
-        //Todo: only set partial tuple, if there is another pass <-- improve: handle via indexes?
+        //Todo: improve: handle via indexes?
+        /// only set partial tuple, if there is another iteration that may use it
         if (bufferIdx != buffersToFormat.size())
         {
             partialTuple = progressTracker->getEndingPartialTuple();
@@ -475,10 +481,11 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatterTask>
+std::unique_ptr<NES::InputFormatters::InputFormatter>
 InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    return std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
+    std::unique_ptr<NES::InputFormatters::InputFormatter> inputFormatter = std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
+    return inputFormatter;
 }
 
 }

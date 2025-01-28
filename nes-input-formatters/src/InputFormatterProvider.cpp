@@ -24,7 +24,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask>
+std::unique_ptr<InputFormatter>
 provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
     if (auto inputFormatter

@@ -15,10 +15,10 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<InputFormatterTask>
+std::unique_ptr<InputFormatter>
 provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
 }

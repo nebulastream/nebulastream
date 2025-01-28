@@ -22,13 +22,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 {
 
-std::unique_ptr<InputFormatterTask> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
+std::unique_ptr<NES::InputFormatters::InputFormatter> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
 
 }
 

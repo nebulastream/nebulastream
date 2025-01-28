@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SequenceShredder.hpp>
+#include "InputFormatters/InputFormatter.hpp"
+
 
 // Nomenclature:
 // - rTB: raw tuple buffer
@@ -143,6 +147,11 @@ namespace NES::InputFormatters {
 //  - emits TupleBuffer
 //  - initiates END_SYNCHRONIZATION
 
+InputFormatterTask::InputFormatterTask(std::unique_ptr<InputFormatter> inputFormatter)
+    : inputFormatter(std::move(inputFormatter)), sequenceShredder(std::make_unique<SequenceShredder>())
+{
+}
+InputFormatterTask::~InputFormatterTask() = default;
 // Todo: think about layouts
 // Todo: do we create a new InputFormatterTask everytime we execute the pipeline?
 // - if yes: then the InputFormatterTask should have a static SequenceShredder that all instances can use
@@ -154,6 +163,6 @@ void InputFormatterTask::execute(
 {
     // pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER);
     // pipelineExecutionContext.getOperatorHandler<NES::InputFormatters::InputFormatterTask>()
-    parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples());
+    inputFormatter->parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples(), *sequenceShredder);
 }
 }
