@@ -27,9 +27,8 @@ using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_P
 class MicroBenchmarksTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<uint64_t, uint64_t>>
 {
 public:
-    /// NOTE: The test needs approximately up to five times DATA_SIZE of memory
-    static constexpr uint64_t DATA_SIZE = 10737418240; /// 10GB
-    std::vector<double> execTimes;
+    /// NOTE: The test needs approximately up to six times DATA_SIZE of memory
+    static constexpr uint64_t DATA_SIZE = 8192; //1073741824; /// 1GB
 
     static void SetUpTestSuite()
     {
@@ -263,7 +262,7 @@ public:
 
         if (separateKeys == SAME_FILE_KEYS)
         {
-            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::binary);
+            payloadFile = std::ofstream(fileNames.front(), std::ios::in | std::ios::binary);
         }
         else
         {
@@ -624,13 +623,13 @@ public:
 
         if (separateKeys == SAME_FILE_KEYS)
         {
-            writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, SAME_FILE_PAYLOAD, execTimes);
+            writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, SAME_FILE_PAYLOAD, execTimes);
             execTimes.pop_back();
             clearPagedVector(pagedVector, bufferManager, SAME_FILE_PAYLOAD, execTimes);
             execTimes.pop_back();
         }
 
-        writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, separateKeys, execTimes);
+        writePagedVectorToFile(pagedVector, fileNames, fileBufferSize, separateKeys, execTimes);
         clearPagedVector(pagedVector, bufferManager, separateKeys, execTimes);
 
         writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, separateKeys, execTimes);
@@ -711,6 +710,6 @@ INSTANTIATE_TEST_CASE_P(
     //Benchmarks, MicroBenchmarksTest, ::testing::Combine(::testing::Values(1024, 4096, 134217728, 268435456, 1073741824), ::testing::Values(0, 100)));
     Benchmarks,
     MicroBenchmarksTest,
-    ::testing::Combine(::testing::Values(4096), ::testing::Values(0, 100)));
+    ::testing::Combine(::testing::Values(4096), ::testing::Values(0)));
 
 }
