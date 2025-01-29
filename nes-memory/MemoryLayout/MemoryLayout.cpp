@@ -140,8 +140,16 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
 
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
-    return bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
-        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap;
+    auto equalPhysicalTypes = physicalTypes.size() == rhs.physicalTypes.size();
+    for (auto physicalTypeIdx = 0UL; physicalTypeIdx < physicalTypes.size(); ++physicalTypeIdx)
+    {
+        // TODO implement operator== for PhysicalType
+        equalPhysicalTypes
+            = equalPhysicalTypes && physicalTypes[physicalTypeIdx]->toString() == rhs.physicalTypes[physicalTypeIdx]->toString();
+    }
+
+    return equalPhysicalTypes && bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize
+        && capacity == rhs.capacity && physicalFieldSizes == rhs.physicalFieldSizes && nameFieldIndexMap == rhs.nameFieldIndexMap;
 }
 
 bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
