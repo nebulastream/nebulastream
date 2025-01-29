@@ -520,11 +520,12 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithSameId) {
 
     // register new decomposed query plan
     crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk2->getWorkerId(), decomposedQueryPlanToStart);
-    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
-                                                            decomposedQueryPlanToStart->getDecomposedQueryId(),
-                                                            decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
-                                                            wrk2->getWorkerId());
+    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(
+        decomposedQueryPlanToStart->getSharedQueryId(),
+        decomposedQueryPlanToStart->getDecomposedQueryId(),
+        decomposedQueryPlanToStart->getVersion(),
+        QueryState::MARKED_FOR_DEPLOYMENT,//FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
+        wrk2->getWorkerId());
     auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
 
@@ -618,11 +619,12 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoin) {
 
     // register new decomposed query plan
     crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk->getWorkerId(), decomposedQueryPlanToStart);
-    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
-                                                            decomposedQueryPlanToStart->getDecomposedQueryId(),
-                                                            decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
-                                                            wrk->getWorkerId());
+    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(
+        decomposedQueryPlanToStart->getSharedQueryId(),
+        decomposedQueryPlanToStart->getDecomposedQueryId(),
+        decomposedQueryPlanToStart->getVersion(),
+        QueryState::MARKED_FOR_DEPLOYMENT,//FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
+        wrk->getWorkerId());
     auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
 
@@ -723,11 +725,12 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoinWithMigration) {
 
     // register new decomposed query plan
     crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk->getWorkerId(), decomposedQueryPlanToStart);
-    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
-                                                            decomposedQueryPlanToStart->getDecomposedQueryId(),
-                                                            decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
-                                                            wrk->getWorkerId());
+    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(
+        decomposedQueryPlanToStart->getSharedQueryId(),
+        decomposedQueryPlanToStart->getDecomposedQueryId(),
+        decomposedQueryPlanToStart->getVersion(),
+        QueryState::MARKED_FOR_DEPLOYMENT,//FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
+        wrk->getWorkerId());
     auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
 
