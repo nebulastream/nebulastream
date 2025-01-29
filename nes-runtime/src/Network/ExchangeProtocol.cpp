@@ -24,15 +24,18 @@ namespace NES::Network {
 // Important invariant: never leak the protocolListener pointer
 // there is a hack that disables the reference counting
 
-ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+ExchangeProtocol::ExchangeProtocol(uint64_t numbOfBuffers,
+                                   std::shared_ptr<PartitionManager> partitionManager,
                                    std::shared_ptr<ExchangeProtocolListener> protocolListener)
     : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
+    this->numbOfBuffers = numbOfBuffers;
     NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
     NES_ASSERT(this->protocolListener, "Wrong parameter ExchangeProtocolListener is null");
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
 }
 
 ExchangeProtocol::ExchangeProtocol(const ExchangeProtocol& other) {
+    numbOfBuffers = other.numbOfBuffers;
     partitionManager = other.partitionManager;
     protocolListener = other.protocolListener;
 
@@ -106,6 +109,13 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer&
         NES_DEBUG("buffer {} received for {}", messageSequenceData.sequenceNumber, nesPartition.toString())
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer, false);
+        if (numbOfBuffers > 0) {
+            if (messageSequenceData.sequenceNumber == 1) {
+                NES_ERROR("started receiving tuples {}", messageSequenceData.sequenceNumber);
+            } else if (messageSequenceData.sequenceNumber == numbOfBuffers - 1) {
+                NES_ERROR("finished receiving tuples {}", messageSequenceData.sequenceNumber);
+            }
+        }
     } else {
         NES_ERROR("DataBuffer for {} is not registered and was discarded!", nesPartition.toString());
     }

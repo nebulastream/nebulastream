@@ -236,6 +236,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
+            if (shouldBuffer) {
+                NES_ERROR("End of stream sent");
+            }
+            shouldBuffer = false;
             break;
         }
         case Runtime::ReconfigurationType::FailEndOfStream: {
@@ -539,9 +543,9 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
         // NES_DEBUG("buffer {} sent", buffersCount);
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     }
-//    if (shouldBuffer) {
-//        NES_ERROR("thread {} sent {}", workerContext.getId(), buffersCount);
-//    }
+    if (shouldBuffer) {
+        NES_ERROR("thread {} finished unbuffering", workerContext.getId());
+    }
 }
 
 bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext) {

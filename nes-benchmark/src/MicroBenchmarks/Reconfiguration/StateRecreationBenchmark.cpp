@@ -621,7 +621,7 @@ int main(int argc, const char* argv[]) {
             auto minNumberOfBuffersToProduce = configs["MinNumberOfBuffersToProduce"].As<uint64_t>();
             auto maxNumberOfBuffersToProduce = configs["MaxNumberOfBuffersToProduce"].As<uint64_t>();
 
-            runDataBenchmark(defaultNumberOfIntermediateNodes, minNumberOfBuffersToProduce, maxNumberOfBuffersToProduce, defaultBufferSize);
+            runDataBenchmark(1, 2048, 2048, 1024);
         } else if (benchmarkType->second == "nodes") {
             auto minNUmberOfIntermediateNodes = configs["MinNumberOfIntermediateNodes"].As<uint64_t>();
             auto maxNUmberOfIntermediateNodes = configs["MaxNumberOfIntermediateNodes"].As<uint64_t>();

@@ -46,7 +46,8 @@ class NetworkManager {
      * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      * @return the shared_ptr object
      */
-    static NetworkManagerPtr create(WorkerId nodeEngineId,
+    static NetworkManagerPtr create(uint64_t numbOfBuffers,
+                                    WorkerId nodeEngineId,
                                     const std::string& hostname,
                                     uint16_t port,
                                     Network::ExchangeProtocol&& exchangeProtocol,
@@ -68,7 +69,8 @@ class NetworkManager {
      * @param connectSinksAsync if true, sinks will use a dedicated thread when attempting to establish a network channel
      * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      */
-    explicit NetworkManager(WorkerId nodeEngineId,
+    explicit NetworkManager(uint64_t numbOfBuffers,
+                            WorkerId nodeEngineId,
                             const std::string& hostname,
                             uint16_t port,
                             ExchangeProtocol&& exchangeProtocol,

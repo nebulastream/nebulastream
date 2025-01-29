@@ -37,7 +37,8 @@ class ExchangeProtocol {
      * @param partitionManager
      * @param listener
      */
-    explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+    explicit ExchangeProtocol(uint64_t numbOfBuffers,
+                              std::shared_ptr<PartitionManager> partitionManager,
                               std::shared_ptr<ExchangeProtocolListener> listener);
 
     /**
@@ -95,6 +96,7 @@ class ExchangeProtocol {
     [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
   private:
+    uint64_t numbOfBuffers{0};
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
     folly::Synchronized<std::unordered_map<NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
