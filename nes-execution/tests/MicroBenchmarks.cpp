@@ -18,10 +18,14 @@
 #include <Util/Timer.hpp>
 #include <BaseUnitTest.hpp>
 
+/// NOTE: Comment out define if measurements are taken
+#define LOGGING
+
 namespace NES
 {
 
 using FieldType = enum : uint8_t { KEY, PAYLOAD };
+// TODO add SEPARATE_FILES_KEYS and SEPARATE_FILES_PAYLOAD
 using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES };
 
 class MicroBenchmarksTest : public Testing::BaseUnitTest,
@@ -29,7 +33,10 @@ class MicroBenchmarksTest : public Testing::BaseUnitTest,
 {
 public:
     /// NOTE: The test needs approximately up to five times DATA_SIZE of memory
-    static constexpr uint64_t DATA_SIZE = 10737418240; /// 10GB
+    static constexpr uint64_t DATA_SIZE = 1073741824; /// 1GB
+
+    /// INFO: Each experiment will run NUM_MEASUREMENTS many times
+    static constexpr uint64_t NUM_MEASUREMENTS = 1;
 
     static void SetUpTestSuite()
     {
@@ -127,17 +134,17 @@ public:
         return std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
     }
 
+    template <SeparateKeys SeparateKeys>
     static void clearPagedVector(
         std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::BufferManagerPtr& bufferManager,
-        const SeparateKeys separateKeys,
-        std::vector<double>& execTimes)
+        std::vector<double>& execTimesInMs)
     {
         NES_INFO("PagedVector clearing...");
         Timer<> timer("clearTimer");
         timer.start();
 
-        if (separateKeys == SAME_FILE_PAYLOAD)
+        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
         {
             const auto oldMemoryLayout = pagedVector->getMemoryLayout();
             const auto fieldTypeSizes = getFieldTypeSizes(oldMemoryLayout);
@@ -147,9 +154,8 @@ public:
             const auto newPagedVector = createKeysOnlyPagedVector(oldMemoryLayout->getKeyFieldNames(), bufferManager);
             const auto newMemoryLayout = newPagedVector->getMemoryLayout();
             const auto newCapacity = newMemoryLayout->getCapacity();
-            const uint64_t expectedNumPages = std::ceil(static_cast<double>(oldNumTuples) / newCapacity);
 
-            // TODO does this enhance performance?
+            const uint64_t expectedNumPages = std::ceil(static_cast<double>(oldNumTuples) / newCapacity);
             newPagedVector->getPages().reserve(expectedNumPages);
 
             auto& newPages = newPagedVector->getPages();
@@ -198,7 +204,7 @@ public:
         timer.snapshot("done clearing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
-        execTimes.emplace_back(timeInMs);
+        execTimesInMs.emplace_back(timeInMs);
         NES_INFO("PagedVector cleared in {} ms", timeInMs);
     }
 
@@ -206,19 +212,17 @@ public:
         const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
         const Memory::BufferManagerPtr& bufferManager,
         const uint64_t numBuffers,
-        std::vector<double>& execTimes)
+        std::vector<double>& execTimesInMs)
     {
         NES_INFO("Data generating...");
         Timer<> timer("generateDataTimer");
         timer.start();
 
-        // TODO does this enhance performance?
         const auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
         pagedVector->getPages().reserve(numBuffers);
 
         auto valueCnt = 0UL;
         const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
-        const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
 
         for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
         {
@@ -231,29 +235,24 @@ public:
             {
                 tupleBufferAddr[fieldIdx] = valueCnt++;
             }
-
-            if (bufferIdx % tenPercentOfNumBuffers == 0)
-            {
-                NES_INFO("Data {}% generated", std::round(100 * static_cast<double>(bufferIdx) / numBuffers));
-            }
         }
 
         timer.snapshot("done generating");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
-        execTimes.emplace_back(timeInMs);
+        execTimesInMs.emplace_back(timeInMs);
         NES_INFO("Data generated in {} ms", timeInMs);
 
         return pagedVector;
     }
 
+    template <SeparateKeys SeparateKeys>
     static void writePagedVectorToFile(
         const std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::MemoryLayouts::MemoryLayoutPtr& oldMemoryLayout,
         const std::vector<std::string>& fileNames,
         const uint64_t fileBufferSize,
-        const SeparateKeys separateKeys,
-        std::vector<double>& execTimes)
+        std::vector<double>& execTimesInMs)
     {
         NES_INFO("File writing...");
         Timer<> timer("writeFileTimer");
@@ -262,7 +261,7 @@ public:
         std::ofstream payloadFile;
         std::ofstream keyFile;
 
-        if (separateKeys == SAME_FILE_KEYS)
+        if constexpr (SeparateKeys == SAME_FILE_KEYS)
         {
             payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::in | std::ios::binary);
         }
@@ -272,9 +271,9 @@ public:
         }
         ASSERT_TRUE(payloadFile);
         ASSERT_EQ(payloadFile.tellp(), 0);
-        if (fileNames.size() > 1)
+        if constexpr (SeparateKeys == SEPARATE_FILES)
         {
-            ASSERT_EQ(separateKeys, SEPARATE_FILES);
+            ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
             ASSERT_TRUE(keyFile);
             ASSERT_EQ(keyFile.tellp(), 0);
@@ -293,9 +292,10 @@ public:
 
         const uint64_t numBuffers = std::ceil(bufferSize * numPages / fileBufferSize);
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
+        // TODO if constexpr
         const auto keyFileWriteSize
-            = separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_KEYS ? numPagesPerBuffer * capacity * keySize : 0;
-        const auto payloadFileWriteSize = separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_PAYLOAD
+            = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_KEYS ? numPagesPerBuffer * capacity * keySize : 0;
+        const auto payloadFileWriteSize = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD
             ? numPagesPerBuffer * capacity * payloadSize
             : fileBufferSize;
         const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
@@ -320,7 +320,7 @@ public:
                 const auto& page = pages[pageIdx];
                 const auto* fieldAddrPagedVector = page.getBuffer();
 
-                if (separateKeys == NO_SEPARATION)
+                if constexpr (SeparateKeys == NO_SEPARATION)
                 {
                     std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, bufferSize);
                     fieldAddrPayloadBuffer += bufferSize;
@@ -331,12 +331,13 @@ public:
                     {
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
                         {
-                            if (fieldType == KEY && (separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_KEYS))
+                            // TODO if constexpr
+                            if (fieldType == KEY && (SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_KEYS))
                             {
                                 std::memcpy(fieldAddrKeyBuffer, fieldAddrPagedVector, fieldSize);
                                 fieldAddrKeyBuffer += fieldSize;
                             }
-                            else if (fieldType == PAYLOAD && (separateKeys == SEPARATE_FILES || separateKeys == SAME_FILE_PAYLOAD))
+                            else if (fieldType == PAYLOAD && (SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD))
                             {
                                 std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, fieldSize);
                                 fieldAddrPayloadBuffer += fieldSize;
@@ -348,11 +349,11 @@ public:
                 }
             }
 
-            if (separateKeys == NO_SEPARATION)
+            if constexpr (SeparateKeys == NO_SEPARATION)
             {
                 payloadFile.write(payloadBuffer.data(), fileBufferSize);
             }
-            else if (separateKeys == SEPARATE_FILES)
+            else if constexpr (SeparateKeys == SEPARATE_FILES)
             {
                 keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
                 payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
@@ -370,12 +371,13 @@ public:
 
                     for (const auto [fieldType, fieldSize] : oldFieldTypeSizes)
                     {
-                        if (separateKeys == SAME_FILE_KEYS && fieldType == KEY)
+                        // TODO if constexpr
+                        if (SeparateKeys == SAME_FILE_KEYS && fieldType == KEY)
                         {
                             payloadFile.write(fieldAddrKeyBuffer, fieldSize);
                             fieldAddrKeyBuffer += fieldSize;
                         }
-                        else if (separateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD)
+                        else if (SeparateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD)
                         {
                             payloadFile.write(fieldAddrPayloadBuffer, fieldSize);
                             fieldAddrPayloadBuffer += fieldSize;
@@ -409,10 +411,11 @@ public:
         timer.snapshot("done writing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
-        execTimes.emplace_back(timeInMs);
+        execTimesInMs.emplace_back(timeInMs);
         NES_INFO("File written in {} ms", timeInMs);
     }
 
+    template <SeparateKeys SeparateKeys>
     static void writeFileToPagedVector(
         std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
         const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
@@ -420,8 +423,7 @@ public:
         const std::vector<std::string>& fileNames,
         const uint64_t expectedNumPages,
         const uint64_t fileBufferSize,
-        const SeparateKeys separateKeys,
-        std::vector<double>& execTimes)
+        std::vector<double>& execTimesInMs)
     {
         NES_INFO("PagedVector writing...");
         Timer<> timer("writePagedVectorTimer");
@@ -433,15 +435,14 @@ public:
         payloadFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
         ASSERT_TRUE(payloadFile);
         ASSERT_EQ(payloadFile.tellg(), 0);
-        if (fileNames.size() > 1)
+        if constexpr (SeparateKeys == SEPARATE_FILES)
         {
-            ASSERT_EQ(separateKeys, SEPARATE_FILES);
+            ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ifstream(fileNames.at(1), std::ios::in | std::ios::binary);
             ASSERT_TRUE(keyFile);
             ASSERT_EQ(keyFile.tellg(), 0);
         }
 
-        // TODO does this enhance performance?
         auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
         newPagedVector->getPages().reserve(expectedNumPages);
 
@@ -458,8 +459,9 @@ public:
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
 
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
-        const auto keyFileReadSize = separateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * keySize : 0;
-        const auto payloadFileReadSize = separateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * payloadSize : fileBufferSize;
+        // TODO if constexpr
+        const auto keyFileReadSize = SeparateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * keySize : 0;
+        const auto payloadFileReadSize = SeparateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * payloadSize : fileBufferSize;
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
 
         auto pageCnt = 0UL;
@@ -476,7 +478,7 @@ public:
             auto* fieldAddrKeyBuffer = keyBuffer.data();
             auto* fieldAddrPayloadBuffer = payloadBuffer.data();
 
-            if (separateKeys == SEPARATE_FILES)
+            if constexpr (SeparateKeys == SEPARATE_FILES)
             {
                 keyFile.read(keyBuffer.data(), keyFileReadSize);
                 ASSERT_GT(keyFile.gcount(), 0);
@@ -490,7 +492,7 @@ public:
 
                 auto* fieldAddrPagedVector = page.getBuffer();
 
-                if (separateKeys == NO_SEPARATION || separateKeys == SAME_FILE_KEYS)
+                if constexpr (SeparateKeys == NO_SEPARATION || SeparateKeys == SAME_FILE_KEYS)
                 {
                     std::memcpy(fieldAddrPagedVector, fieldAddrPayloadBuffer, bufferSize);
                     fieldAddrPayloadBuffer += bufferSize;
@@ -499,7 +501,8 @@ public:
                 {
                     for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++oldTupleCnt)
                     {
-                        if (separateKeys == SAME_FILE_PAYLOAD && oldTupleCnt >= oldCapacity)
+                        // TODO if constexpr
+                        if (SeparateKeys == SAME_FILE_PAYLOAD && oldTupleCnt >= oldCapacity)
                         {
                             fieldAddrKeyPagedVector = oldPages[++oldPageCnt].getBuffer();
                             oldTupleCnt = 0;
@@ -509,7 +512,7 @@ public:
                         {
                             if (fieldType == KEY)
                             {
-                                if (separateKeys == SEPARATE_FILES)
+                                if constexpr (SeparateKeys == SEPARATE_FILES)
                                 {
                                     std::memcpy(fieldAddrPagedVector, fieldAddrKeyBuffer, fieldSize);
                                     fieldAddrKeyBuffer += fieldSize;
@@ -532,7 +535,7 @@ public:
                     }
                 }
 
-                if (separateKeys == SAME_FILE_PAYLOAD)
+                if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
                 {
                     fieldAddrPayloadBuffer += pagePadding;
                 }
@@ -555,14 +558,14 @@ public:
         timer.snapshot("done writing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
-        execTimes.emplace_back(timeInMs);
+        execTimesInMs.emplace_back(timeInMs);
         NES_INFO("PagedVector written in {} ms", timeInMs);
     }
 
     static void comparePagedVectors(
         const std::shared_ptr<Nautilus::Interface::PagedVector>& expectedPagedVector,
         const std::shared_ptr<Nautilus::Interface::PagedVector>& actualPagedVector,
-        std::vector<double>& execTimes)
+        std::vector<double>& execTimesInMs)
     {
         NES_INFO("PagedVectors comparing...");
         Timer<> timer("compareTimer");
@@ -598,71 +601,87 @@ public:
         timer.snapshot("done comparing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
-        execTimes.emplace_back(timeInMs);
+        execTimesInMs.emplace_back(timeInMs);
         NES_INFO("PagedVectors compared in {} ms", timeInMs);
     }
 
-    static void runTests(const SeparateKeys separateKeys)
+    static void createMeasurementsCSV(const std::string& fileName, const std::vector<double>& execTimesInMs)
     {
-        std::vector<double> execTimes;
+        (void)fileName;
+        (void)execTimesInMs;
+    }
 
-        const auto [bufferSize, fileBufferSizePercent, keyFieldNames] = GetParam();
-        const auto numBuffers = DATA_SIZE / bufferSize;
-        const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+    template <SeparateKeys SeparateKeys>
+    static void runTests()
+    {
+        std::vector<double> execTimesInMs;
 
-        std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
-        if (separateKeys == SEPARATE_FILES)
+        for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
         {
-            fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
+            const auto [bufferSize, fileBufferSizePercent, keyFieldNames] = GetParam();
+            const auto numBuffers = DATA_SIZE / bufferSize;
+            const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+
+            std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
+            if constexpr (SeparateKeys == SEPARATE_FILES)
+            {
+                fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
+            }
+
+            const auto testSchema = createSchema();
+            const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
+            const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+            memoryLayout->setKeyFieldNames(keyFieldNames);
+
+            auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimesInMs);
+            NES_INFO("PagedVector copying...");
+            const auto expectedPagedVector = copyPagedVector(*pagedVector);
+            NES_INFO("PagedVector copied");
+
+            if constexpr (SeparateKeys == SAME_FILE_KEYS)
+            {
+                writePagedVectorToFile<SAME_FILE_PAYLOAD>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+                execTimesInMs.pop_back();
+                clearPagedVector<SAME_FILE_PAYLOAD>(pagedVector, bufferManager, execTimesInMs);
+                execTimesInMs.pop_back();
+            }
+
+            writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+            clearPagedVector<SeparateKeys>(pagedVector, bufferManager, execTimesInMs);
+
+            writeFileToPagedVector<SeparateKeys>(
+                pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, execTimesInMs);
+            comparePagedVectors(expectedPagedVector, pagedVector, execTimesInMs);
         }
 
-        const auto testSchema = createSchema();
-        const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
-        const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-        memoryLayout->setKeyFieldNames(keyFieldNames);
-
-        auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimes);
-        NES_INFO("PagedVector copying...");
-        const auto expectedPagedVector = copyPagedVector(*pagedVector);
-        NES_INFO("PagedVector copied");
-
-        if (separateKeys == SAME_FILE_KEYS)
-        {
-            writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, SAME_FILE_PAYLOAD, execTimes);
-            execTimes.pop_back();
-            clearPagedVector(pagedVector, bufferManager, SAME_FILE_PAYLOAD, execTimes);
-            execTimes.pop_back();
-        }
-
-        writePagedVectorToFile(pagedVector, memoryLayout, fileNames, fileBufferSize, separateKeys, execTimes);
-        clearPagedVector(pagedVector, bufferManager, separateKeys, execTimes);
-
-        writeFileToPagedVector(pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, separateKeys, execTimes);
-        comparePagedVectors(expectedPagedVector, pagedVector, execTimes);
-
-        ASSERT_EQ(execTimes.size(), 5);
-        //createMeasurementsCSV("fileName.csv");
+        ASSERT_EQ(execTimesInMs.size(), 5 * NUM_MEASUREMENTS);
+        createMeasurementsCSV("fileName.csv", execTimesInMs);
     }
 };
 
 TEST_P(MicroBenchmarksTest, noSeparation)
 {
-    runTests(NO_SEPARATION);
+    runTests<NO_SEPARATION>();
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separateFiles)
 {
-    runTests(SEPARATE_FILES);
+    runTests<SEPARATE_FILES>();
 }
 
-TEST_P(MicroBenchmarksTest, DISABLED_sameFileOnlyPayload)
+/*TEST_P(MicroBenchmarksTest, DISABLED_separateFilesPayloadAndKey)
 {
-    runTests(SAME_FILE_PAYLOAD);
+    runTests<SEPARATE_FILES_KEYS>();
+}*/
+
+TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadOnly)
+{
+    runTests<SAME_FILE_PAYLOAD>();
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadAndKey)
 {
-    runTests(SAME_FILE_KEYS);
+    runTests<SAME_FILE_KEYS>();
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -673,9 +692,9 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(4096),
         ::testing::Values(0, 100),
         ::testing::Values(
-            std::vector<std::string>{"f0", "f1"},
-            std::vector<std::string>{"f0", "f5"},
-            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
+            //std::vector<std::string>{"f0", "f1"},
+            //std::vector<std::string>{"f0", "f5"},
+            //std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
             std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"})));
 
 }
