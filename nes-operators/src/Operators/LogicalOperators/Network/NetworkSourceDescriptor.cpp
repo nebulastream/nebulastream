@@ -81,4 +81,17 @@ SourceDescriptorPtr NetworkSourceDescriptor::copy() {
     return copy;
 }
 OperatorId NetworkSourceDescriptor::getUniqueId() const { return uniqueNetworkSourceId; }
+
+void NetworkSourceDescriptor::markForReuse() {
+    NES_ASSERT(!markedForReuse, "NetworkSourceDescriptor::markForReuse: already marked for reuse");
+    markedForReuse = true;
+}
+
+bool NetworkSourceDescriptor::isMarkedForReuse() {
+    if (markedForReuse) {
+        markedForReuse = false;
+        return true;
+    }
+    return false;
+}
 }// namespace NES::Network

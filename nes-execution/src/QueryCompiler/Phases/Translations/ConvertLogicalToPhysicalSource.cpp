@@ -198,7 +198,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         //todo #5174: move this check out of the if condition to the top of the function
         //in case the source is to be reused, do not create a new one
         auto sourceToReuse = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
-        if (sourceToReuse) {
+        if (sourceToReuse && networkSourceDescriptor->isMarkedForReuse()) {
             sourceToReuse->scheduleSuccessors(successors);
             return std::static_pointer_cast<NES::DataSource>(sourceToReuse);
         }

@@ -482,7 +482,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithDifferentId) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with same id
  */
-TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanWithSameId) {
+TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithSameId) {
     // source names
     auto logicalSourceName = "seq";
     auto physicalSourceName = "test_stream";
@@ -516,14 +516,14 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanWithSameId) {
     auto decomposedQueryPlanToStart =
         crd->getGlobalExecutionPlan()->getCopyOfDecomposedQueryPlan(wrk2->getWorkerId(), sharedQueryId, decompPlanIdToCopy);
     decomposedQueryPlanToStart->setVersion(DecomposedQueryPlanVersion(2));
-    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_UPDATE_AND_DRAIN);
 
     // register new decomposed query plan
     crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk2->getWorkerId(), decomposedQueryPlanToStart);
     crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
                                                             decomposedQueryPlanToStart->getDecomposedQueryId(),
                                                             decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT,
+                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
                                                             wrk2->getWorkerId());
     auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
@@ -574,7 +574,7 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanWithSameId) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with join operator
  */
-TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoin) {
+TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoin) {
     // source names
     auto logicalSourceName = "seq1";
     auto physicalSourceName = "test_stream";
@@ -614,14 +614,14 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoin) {
     auto decomposedQueryPlanToStart =
         crd->getGlobalExecutionPlan()->getCopyOfDecomposedQueryPlan(wrk->getWorkerId(), sharedQueryId, decompPlanIdToCopy);
     decomposedQueryPlanToStart->setVersion(DecomposedQueryPlanVersion(2));
-    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_UPDATE_AND_DRAIN);
 
     // register new decomposed query plan
     crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk->getWorkerId(), decomposedQueryPlanToStart);
     crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
                                                             decomposedQueryPlanToStart->getDecomposedQueryId(),
                                                             decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT,
+                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
                                                             wrk->getWorkerId());
     auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
@@ -676,7 +676,7 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoin) {
 /*
  * Test UpdateAndDrain marker, starting decomposed query plan with join operator and migration pipeline
  */
-TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoinWithMigration) {
+TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoinWithMigration) {
     // source names
     auto logicalSourceName = "seq1";
     auto physicalSourceName = "test_stream";
@@ -716,7 +716,7 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoinWithMigra
     auto decomposedQueryPlanToStart =
         crd->getGlobalExecutionPlan()->getCopyOfDecomposedQueryPlan(wrk->getWorkerId(), sharedQueryId, decompPlanIdToCopy);
     decomposedQueryPlanToStart->setVersion(DecomposedQueryPlanVersion(2));
-    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_UPDATE_AND_DRAIN);
 
     // add migration sink operator
     addMigrationPipelineToDecomposedQueryPlan(decomposedQueryPlanToStart);
@@ -726,7 +726,7 @@ TEST_F(QueryReconfigurationTest, DISABLED_testUpdateAndDrainPlanForJoinWithMigra
     crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
                                                             decomposedQueryPlanToStart->getDecomposedQueryId(),
                                                             decomposedQueryPlanToStart->getVersion(),
-                                                            QueryState::MARKED_FOR_DEPLOYMENT,
+                                                            QueryState::MARKED_FOR_DEPLOYMENT, //FIXME: should be MARKED_FOR_UPDATE_AND_DRAIN
                                                             wrk->getWorkerId());
     auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
     ASSERT_TRUE(res);
