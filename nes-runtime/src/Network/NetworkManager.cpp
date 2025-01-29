@@ -22,8 +22,7 @@
 
 namespace NES::Network {
 
-NetworkManager::NetworkManager(uint64_t,
-                               WorkerId nodeEngineId,
+NetworkManager::NetworkManager(WorkerId nodeEngineId,
                                const std::string& hostname,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
@@ -47,8 +46,7 @@ NetworkManager::NetworkManager(uint64_t,
 
 NetworkManager::~NetworkManager() { destroy(); }
 
-NetworkManagerPtr NetworkManager::create(uint64_t numbOfBuffers,
-                                         WorkerId nodeEngineId,
+NetworkManagerPtr NetworkManager::create(WorkerId nodeEngineId,
                                          const std::string& hostname,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,
@@ -57,8 +55,7 @@ NetworkManagerPtr NetworkManager::create(uint64_t numbOfBuffers,
                                          uint16_t numServerThread,
                                          bool connectSinksAsync,
                                          bool connectSourceEventChannelsAsync) {
-    return std::make_shared<NetworkManager>(numbOfBuffers,
-                                            nodeEngineId,
+    return std::make_shared<NetworkManager>(nodeEngineId,
                                             hostname,
                                             port,
                                             std::move(exchangeProtocol),

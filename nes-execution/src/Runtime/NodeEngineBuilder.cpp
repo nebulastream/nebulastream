@@ -199,11 +199,10 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(bufferManagers),
             std::move(queryManager),
             [this](const std::shared_ptr<NodeEngine>& engine) {
-                return Network::NetworkManager::create(workerConfiguration->numberOfBuffersToProduce,
-                                                       engine->getWorkerId(),
+                return Network::NetworkManager::create(engine->getWorkerId(),
                                                        this->workerConfiguration->localWorkerHost.getValue(),
                                                        this->workerConfiguration->dataPort.getValue(),
-                                                       Network::ExchangeProtocol(workerConfiguration->numberOfBuffersToProduce, engine->getPartitionManager(), engine),
+                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine, workerConfiguration->numberOfBuffersToProduce),
                                                        engine->getBufferManager(),
                                                        this->workerConfiguration->senderHighwatermark.getValue(),
                                                        this->workerConfiguration->numWorkerThreads.getValue(),

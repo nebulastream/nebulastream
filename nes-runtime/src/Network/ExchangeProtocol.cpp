@@ -24,9 +24,9 @@ namespace NES::Network {
 // Important invariant: never leak the protocolListener pointer
 // there is a hack that disables the reference counting
 
-ExchangeProtocol::ExchangeProtocol(uint64_t numbOfBuffers,
-                                   std::shared_ptr<PartitionManager> partitionManager,
-                                   std::shared_ptr<ExchangeProtocolListener> protocolListener)
+ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+                                   std::shared_ptr<ExchangeProtocolListener> protocolListener,
+                                   uint64_t numbOfBuffers)
     : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
     this->numbOfBuffers = numbOfBuffers;
     NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
