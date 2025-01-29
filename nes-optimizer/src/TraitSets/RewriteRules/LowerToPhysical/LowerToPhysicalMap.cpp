@@ -12,22 +12,11 @@
     limitations under the License.
 */
 
-#pragma once
+#include <TraitSets/RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
 
-#include <any>
-#include <typeindex>
-#include <TraitSets/RewriteRules/AbstractRewriteRule.hpp>
-#include <Util/PluginRegistry.hpp>
-
-namespace NES
+std::unique_ptr<NES::Optimizer::AbstractRewriteRule> NES::RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalMap()
 {
-
-using RewriteRuleRegistrySignature = RegistrySignature<std::string, NES::Optimizer::AbstractRewriteRule>;
-class RewriteRuleRegistry : public BaseRegistry<RewriteRuleRegistry, RewriteRuleRegistrySignature>
-{
-};
+    return std::make_unique<LowerToPhysicalMap>();
 }
 
-#define INCLUDED_FROM_REGISTRY_REWRITE_RULE
-#include <TraitSets/RewriteRules/GeneratedRewriteRuleRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_REWRITE_RULE
+

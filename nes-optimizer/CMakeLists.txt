@@ -22,7 +22,10 @@ add_subdirectory(src)
 get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
+add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES}
+        src/TraitSets/RewriteRules/LowerToPhysical/LowerToPhysicalJoin.cpp
+        src/TraitSets/RewriteRules/LowerToPhysical/LowerToPhysicalMap.cpp
+        src/TraitSets/RewriteRules/LowerToPhysical/LowerToPhysicalSelection.cpp)
 target_link_libraries(nes-optimizer PUBLIC nes-nautilus nes-logical-operators nes-physical-operators)
 target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

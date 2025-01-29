@@ -10,4 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(RewriteRules)
+add_source_files(nes-optimizer
+        LowerToPhysicalJoin.cpp
+        LowerToPhysicalMap.cpp
+        LowerToPhysicalSelection.cpp
+)

@@ -22,8 +22,9 @@
 
 namespace NES::RewriteRuleGeneratedRegistrar
 {
-std::unique_ptr<RewriteRule> RegisterLogicalToPhysicalMap(std::vector<std::unique_ptr<RewriteRule>>);
-std::unique_ptr<RewriteRule> RegisterLogicalToPhysicalSelection(std::vector<std::unique_ptr<RewriteRule>>);
+std::unique_ptr<NES::Optimizer::AbstractRewriteRule> RegisterLowerToPhysicalMap();
+std::unique_ptr<NES::Optimizer::AbstractRewriteRule> RegisterLowerToPhysicalSelection();
+std::unique_ptr<NES::Optimizer::AbstractRewriteRule> RegisterLowerToPhysicalJoin();
 }
 
 namespace NES
@@ -32,7 +33,8 @@ template <>
 inline void Registrar<RewriteRuleRegistry, RewriteRuleRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::RewriteRuleGeneratedRegistrar;
-    registry.registerPlugin("LogicalToPhysicalMap", RegisterLogicalToPhysicalMap);
-    registry.registerPlugin("LogicalToPhysicalSelection", RegisterLogicalToPhysicalSelection);
+    registry.registerPlugin("LowerToPhysicalMap", RegisterLowerToPhysicalMap);
+    registry.registerPlugin("LowerToPhysicalSelection", RegisterLowerToPhysicalSelection);
+    registry.registerPlugin("LowerToPhysicalJoin", RegisterLowerToPhysicalJoin);
 }
 }

@@ -15,21 +15,26 @@
 #pragma once
 
 #include <memory>
-#include <set>
-#include <Operators/Operator.hpp>
+#include <string>
+#include <TraitSets/TraitSet.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
 
-/// The physical operator pipeline captures a set of operators within a pipeline.
-class PhysicalOperatorPipeline
+class Placement
 {
+    const int nodeID;
+
 public:
-    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
-    [[nodiscard]] std::shared_ptr<Operators::Operator> getRootOperator() const;
-
-private:
-    std::shared_ptr<Operators::Operator> rootOperator;
+    explicit Placement(int nodeID) : nodeID(nodeID) { }
+    bool operator==(const Placement& other) const { return nodeID == other.nodeID; }
+    static constexpr bool atNode() { return true; }
+    static std::string getName()
+    {
+        return "Placement";
+    }
 };
+
+static_assert(Trait<Placement>);
 
 }

@@ -18,47 +18,31 @@
 #include <set>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <TypeTraits/TraitSet.hpp>
-#include <TypeTraits/Traits/ChildNodes.hpp>
+#include <TypeTraits/Traits/Children.hpp>
 #include <TypeTraits/Traits/PhysicalOperatorTrait.hpp>
 #include <TypeTraits/Traits/QueryForSubtree.hpp>
-#include <TypeTraits/RewriteRule.hpp>
+#include <TypeTraits/RewriteRule/AbstractRewriteRule.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
 {
 
-struct LogicalToPhysicalMapRewriteRule : RewriteRule
+class LowerToPhysicalSelection : TypedAbstractRewriteRule<QueryForSubtree, Operator>
 {
-    /// Define the input and output trait sets
-    using InputTrait = TraitSet<ChildNodes, QueryForSubtree, LogicalMapOperator>;
-    using OutputTrait = TraitSet<ChildNodes, QueryForSubtree, PhysicalOperatorTrait>;
-
-    static OutputTrait apply(const InputTrait& in)
+    DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>*) override
     {
         /// Extract the predicate from the logical selection operator
-        auto predicate = in.get<LogicalMapOperator>().getPredicate();
+        auto predicate = in.get<LogicalSelectionOperator>().getPredicate();
 
         /// Build the PhysicalSelectionOperator
-        auto phyOp = std::make_shared<PhysicalMapOperator>();
+        auto phyOp = std::make_shared<PhysicalSelectionOperator>();
         phyOp->predicate = predicate;
 
         /// Construct the output trait set
-        return {
-            in.get<ChildNodes>(),
-            in.get<QueryForSubtree>(),
-            PhysicalOperatorTrait{phyOp}
-        };
+        return {in.get<Children>(), in.get<QueryForSubtree>(), PhysicalOperatorTrait{phyOp}};
     }
 };
 
-static_assert(
-    RewriteRuleConcept<
-        LogicalToPhysicalSelectionRewriteRule,
-        TraitSet<ChildNodes, QueryForSubtree, LogicalSelectionOperator>,
-        TraitSet<ChildNodes, QueryForSubtree, PhysicalOperatorTrait>
-        >,
-    "Rule does not satisfy RewriteRuleConcept"
-);
 
 }

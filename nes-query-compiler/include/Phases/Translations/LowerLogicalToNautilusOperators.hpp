@@ -96,7 +96,7 @@ std::shared_ptr<PhysicalQueryPlan> apply(const std::shared_ptr<DecomposedQueryPl
             currentOperator = lower(NES::Util::as<LogicalOperator>(operatorNode));
             tmp->children.push_back(currentOperator); // TODO this might not work for more complex variants
         }
-        else if (auto logicalOperator = RewriteRuleRegistry::instance().create("LogicalToPhysicalMap", operatorNode))
+        else if (auto logicalOperator = RewriteRuleRegistry::instance().create("LowerToPhysicalMap"))
         {
 
         }

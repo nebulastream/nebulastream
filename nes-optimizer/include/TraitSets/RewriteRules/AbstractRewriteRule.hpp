@@ -14,32 +14,27 @@
 
 #pragma once
 
-#include <string>
 #include <TraitSets/Trait.hpp>
+#include <TraitSets/TraitSet.hpp>
 
 namespace NES::Optimizer
 {
-
-/// Holds the query representation of the query subtree as string
-class QueryForSubtree
+class AbstractRewriteRule
 {
-    const std::string str;
-
 public:
-    explicit QueryForSubtree(std::string str) : str(std::move(str)) { }
-    bool operator==(const QueryForSubtree&) const { return true; }
-    static bool atNode() { return false; }
-
-    static std::string getName()
-    {
-        return "QueryForSubtree";
-    }
-
-    const std::string& getQuery() const {
-        return str;
-    }
+    virtual VirtualTraitSet* apply(VirtualTraitSet*);
+    virtual ~AbstractRewriteRule();
 };
 
-static_assert(Trait<QueryForSubtree>);
+template <Trait... T>
+class TypedAbstractRewriteRule : AbstractRewriteRule
+{
+    VirtualTraitSet* apply(VirtualTraitSet * inputTS) override
+    {
+        applyTyped(DynamicTraitSet<T...>{inputTS});
+    };
+
+    virtual DynamicTraitSet<T...>* applyTyped(DynamicTraitSet<T...>*) = 0;
+};
 
 }
