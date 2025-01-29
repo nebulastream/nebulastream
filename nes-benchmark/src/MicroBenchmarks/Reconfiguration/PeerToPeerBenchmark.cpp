@@ -138,6 +138,7 @@ using namespace NES;
 //            coordinatorConfiguration->worker.numberOfBuffersPerWorker = 5 * 1024 + 50;
 //        }
         coordinatorConfiguration->worker.numberOfBuffersToProduce = numberOfBuffersToProduce;
+        coordinatorConfiguration->worker.shouldDelayEOS = true;
         // coordinatorConfiguration->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
 
 //        if (numOfIntermediateNodes == 1) {
@@ -173,8 +174,8 @@ using namespace NES;
             const auto physicalSourceName = "phy_" + logicalSourceName;
             std::map<std::string, std::string> sourceConfig {
                 {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
-                {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
-                //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+                {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
+                {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
             };
             auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
             coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
@@ -250,8 +251,8 @@ using namespace NES;
         const auto physicalSourceName = "phy_" + logicalSourceName;
         std::map<std::string, std::string> sourceConfig {
             {Configurations::FILE_PATH_CONFIG, "start_source.csv"},
-            {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"}
-            //                    {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+            {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
+            {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
         };
         auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
         wrkConf->physicalSourceTypes.add(csvSourceType);
@@ -292,7 +293,7 @@ using namespace NES;
             std::map<std::string, std::string> sourceConfig {
                 {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
                 {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
-                // {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numOfBuffersToProduce)},
+                {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)},
                 {Configurations::SKIP_HEADER_CONFIG, "true"}
             };
             auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
@@ -366,7 +367,7 @@ using namespace NES;
         NES_TRACE("TestUtils: Keep checking the status of query {} until a fixed time out", queryId);
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             QueryState queryState = queryCatalog->getQueryState(queryId);
-            NES_DEBUG("TestUtils: Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
+            // NES_DEBUG("TestUtils: Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
             switch (queryState) {
                 case QueryState::MARKED_FOR_HARD_STOP:
                 case QueryState::MARKED_FOR_SOFT_STOP:

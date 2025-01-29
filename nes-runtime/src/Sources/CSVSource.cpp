@@ -41,7 +41,8 @@ CSVSource::CSVSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      const std::string& physicalSourceName,
-                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                     bool shouldDelayEOS)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -52,6 +53,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                  gatheringMode,
                  physicalSourceName,
                  false,
+                 shouldDelayEOS,
                  std::move(successors)),
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
@@ -91,7 +93,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
 void CSVSource::openFile() {
     while (!std::filesystem::exists(filePath)) {
-        NES_DEBUG("File {} does not exist yet", filePath);
+        // NES_DEBUG("File {} does not exist yet", filePath);
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 

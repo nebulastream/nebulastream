@@ -360,6 +360,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     uint64_t getNumberOfBuffersToProduce();
 
+    void setShouldDelayEOS(bool shouldDelay);
+
+    bool getShouldDelayEOSe();
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -420,6 +424,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     uint64_t numberOfBuffersToProduce;
+    bool shouldDelayEOS;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

@@ -59,7 +59,8 @@ void FileSink::setup() {
               filePath,
               sinkFormat->getSchemaPtr()->toString(),
               sinkFormat->toString(),
-              append);
+              append)
+    schemaWritten = true;
     // Remove an existing file unless the append mode is APPEND.
     if (!append) {
         if (std::filesystem::exists(filePath.c_str())) {
@@ -134,11 +135,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
         NES_DEBUG("Writing the schema is not supported for NES_FORMAT");
     } else {
-        NES_DEBUG("Schema already written");
+        // NES_DEBUG("Schema already written");
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
+    // NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     numberOfProcessedBuffers++;
     outputFile.flush();

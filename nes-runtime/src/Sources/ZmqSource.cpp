@@ -45,6 +45,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                  gatheringMode,
                  physicalSourceName,
                  false,
+                 false,
                  std::move(successors)),
       host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE: Init ZMQ ZMQSOURCE to  {} : {} /", host, port);

@@ -51,6 +51,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
                        bool persistentSource,
+                       bool shouldDelayEOS,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
@@ -60,7 +61,7 @@ DataSource::DataSource(SchemaPtr pSchema,
       originId(originId), statisticId(statisticId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId),
       physicalSourceName(physicalSourceName) {
-
+    this->shouldDelayEOS = shouldDelayEOS;
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -571,6 +572,11 @@ void DataSource::runningRoutineWithGatheringInterval() {
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);
         }
+    }
+    if (shouldDelayEOS) {
+        auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("finished sending from {}", startTime)
+        sleep(5);
     }
     NES_WARNING("DataSource {} call close", operatorId);
     close();

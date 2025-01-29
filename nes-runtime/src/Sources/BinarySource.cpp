@@ -43,6 +43,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  gatheringMode,
                  physicalSourceName,
                  false,
+                 false,
                  std::move(successors)),
       input(std::ifstream(pathToFile.c_str())), filePath(pathToFile) {
     if (!(input.is_open() && input.good())) {

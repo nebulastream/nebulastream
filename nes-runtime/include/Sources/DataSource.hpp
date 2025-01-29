@@ -79,6 +79,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         GatheringMode gatheringMode,
                         const std::string& physicalSourceName,
                         bool persistentSource,
+                        bool shouldDelayEOS = false,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -335,6 +336,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    bool shouldDelayEOS{false};
 
   private:
     mutable std::recursive_mutex startStopMutex;

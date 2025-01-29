@@ -45,6 +45,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,
                  false,
+                 false,
                  successors),
       metricCollector(metricCollector), waitTime(waitTime) {
     schema = metricCollector->getSchema();

@@ -163,7 +163,8 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       INVALID_STATISTIC_ID,
                                       12,
                                       defaultPhysicalStreamName,
-                                      {sink});
+                                      {sink},
+                                      false);
 
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(queryId),
                                                      DecomposedQueryId(queryId),

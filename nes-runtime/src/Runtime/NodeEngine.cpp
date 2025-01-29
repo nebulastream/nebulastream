@@ -875,5 +875,13 @@ uint64_t NodeEngine::getNumberOfBuffersToProduce() {
     return numberOfBuffersToProduce;
 }
 
+void NodeEngine::setShouldDelayEOS(bool shouldDelay) {
+    this->shouldDelayEOS = shouldDelay;
+}
+
+bool NodeEngine::getShouldDelayEOSe() {
+    return shouldDelayEOS;
+}
+
 
 }// namespace NES::Runtime

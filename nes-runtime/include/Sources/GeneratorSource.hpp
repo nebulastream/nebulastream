@@ -65,6 +65,7 @@ class GeneratorSource : public DataSource {
                      gatheringMode,
                      physicalSourceName,
                      false,
+                     false,
                      std::move(successors)) {
         this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }

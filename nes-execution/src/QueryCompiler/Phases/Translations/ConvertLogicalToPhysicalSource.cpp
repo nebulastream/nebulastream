@@ -122,7 +122,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    statisticId,
                                    numSourceLocalBuffers,
                                    sourceDescriptor->getPhysicalSourceName(),
-                                   successors);
+                                   successors,
+                                   nodeEngine->getShouldDelayEOSe());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");

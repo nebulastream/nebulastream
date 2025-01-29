@@ -278,6 +278,8 @@ class WorkerConfiguration : public BaseConfiguration {
 
     UIntOption numberOfBuffersToProduce = {BUFFERS_TO_PRODUCE, "100000", "buff"};
 
+    BoolOption shouldDelayEOS = {SHOULD_DELAY_EOS, "false", "should delay eos", {std::make_shared<BooleanValidation>()}};
+
 #ifdef TFDEF
     BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
 #endif// TFDEF
@@ -372,6 +374,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfBuffersInSourceLocalBufferPool,
                 &bufferSizeInBytes,
                 &numberOfBuffersToProduce,
+                &shouldDelayEOS,
                 &parentId,
                 &logLevel,
                 &sourcePinList,

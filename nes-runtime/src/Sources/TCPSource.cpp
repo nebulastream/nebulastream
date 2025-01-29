@@ -58,6 +58,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                  gatheringMode,
                  physicalSourceName,
                  tcpSourceType->getPersistentTcpSource()->getValue(),
+                 false,
                  std::move(executableSuccessors)),
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
 

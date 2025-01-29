@@ -220,6 +220,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersPerWorker.getValue(),
             workerConfiguration->enableSourceSharing.getValue());
         engine->setNumberOfBuffersToProduce(workerConfiguration->numberOfBuffersToProduce.getValue());
+        engine->setShouldDelayEOS(workerConfiguration->shouldDelayEOS.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

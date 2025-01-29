@@ -319,7 +319,8 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   StatisticId statisticId,
                                   size_t numSourceLocalBuffers,
                                   const std::string& physicalSourceName,
-                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                  bool shouldDelay) {
     return std::make_shared<CSVSource>(schema,
                                        bufferManager,
                                        queryManager,
@@ -330,7 +331,8 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
                                        physicalSourceName,
-                                       successors);
+                                       successors,
+                                       shouldDelay);
 }
 
 DataSourcePtr createNetworkSource(const SchemaPtr& schema,
