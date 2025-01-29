@@ -103,4 +103,9 @@ const WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const
     return windowMetaData;
 }
 
+std::string PhysicalStreamJoinProbeOperator::toString() const
+{
+    return fmt::format("PhysicalStreamJoinProbeOperator: {}", id);
+}
+
 }

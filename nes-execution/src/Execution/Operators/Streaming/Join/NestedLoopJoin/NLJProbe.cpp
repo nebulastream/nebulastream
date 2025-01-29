@@ -101,67 +101,67 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     executionCtx.originId = recordBuffer.getOriginId();
     Operator::open(executionCtx, recordBuffer);
 
-    /// Getting all needed info from the recordBuffer
-    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
-    const auto sliceIdLeft = invoke(
-        getNLJSliceEndProxy,
-        nljWindowTriggerTaskRef,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
-    const auto sliceIdRight = invoke(
-        getNLJSliceEndProxy,
-        nljWindowTriggerTaskRef,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
-    const auto windowStart = invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
-    const auto windowEnd = invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
-
-    /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
-
-    /// Getting the left and right paged vector
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
-
-    const auto leftPagedVectorRef = invoke(
-        getNLJPagedVectorProxy,
-        sliceRefLeft,
-        workerThreadIdForPages,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
-    const auto rightPagedVectorRef = invoke(
-        getNLJPagedVectorProxy,
-        sliceRefRight,
-        workerThreadIdForPages,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
-
-    const Interface::PagedVectorRef leftPagedVector(
-        leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
-    const Interface::PagedVectorRef rightPagedVector(
-        rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
-
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-
-    nautilus::val<uint64_t> leftItemPos = 0UL;
-    for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
-    {
-        nautilus::val<uint64_t> rightItemPos = 0UL;
-        for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
-        {
-            auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
-            {
-                auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
-                auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
-                auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
-                child->execute(executionCtx, joinedRecord);
-            }
-
-            ++rightItemPos;
-        }
-        ++leftItemPos;
-    }
+    // /// Getting all needed info from the recordBuffer
+    // const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
+    // const auto sliceIdLeft = invoke(
+    //     getNLJSliceEndProxy,
+    //     nljWindowTriggerTaskRef,
+    //     nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
+    // const auto sliceIdRight = invoke(
+    //     getNLJSliceEndProxy,
+    //     nljWindowTriggerTaskRef,
+    //     nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
+    // const auto windowStart = invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
+    // const auto windowEnd = invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
+    //
+    // /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
+    // const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
+    //
+    // /// Getting the left and right paged vector
+    // const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    // const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
+    // const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
+    //
+    // const auto leftPagedVectorRef = invoke(
+    //     getNLJPagedVectorProxy,
+    //     sliceRefLeft,
+    //     workerThreadIdForPages,
+    //     nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
+    // const auto rightPagedVectorRef = invoke(
+    //     getNLJPagedVectorProxy,
+    //     sliceRefRight,
+    //     workerThreadIdForPages,
+    //     nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
+    //
+    // const Interface::PagedVectorRef leftPagedVector(
+    //    leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    // const Interface::PagedVectorRef rightPagedVector(
+    //    rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    //
+    // const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
+    // const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
+    // const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
+    // const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
+    //
+    // nautilus::val<uint64_t> leftItemPos = 0UL;
+    // for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
+    // {
+    //     nautilus::val<uint64_t> rightItemPos = 0UL;
+    //     for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
+    //     {
+    //         auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
+    //         if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+    //         {
+    //             auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
+    //             auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
+    //             auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
+    //             child->execute(executionCtx, joinedRecord);
+    //         }
+    //
+    //         ++rightItemPos;
+    //     }
+    //     ++leftItemPos;
+    // }
 }
 
 }

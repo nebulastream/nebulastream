@@ -49,6 +49,9 @@ public:
     const TimestampField& getTimeStampField() const;
     JoinBuildSideType getBuildSide() const;
 
+protected:
+    std::string toString() const override;
+
 private:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;

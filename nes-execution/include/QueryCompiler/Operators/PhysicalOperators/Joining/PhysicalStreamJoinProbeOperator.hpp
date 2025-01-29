@@ -60,6 +60,7 @@ public:
     const WindowMetaData& getWindowMetaData() const;
 
 protected:
+    std::string toString() const override;
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;

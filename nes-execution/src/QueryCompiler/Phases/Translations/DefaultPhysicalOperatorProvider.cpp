@@ -51,6 +51,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
@@ -442,6 +443,8 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
+    const auto trigger
+        = PhysicalOperators::PhysicalWindowTrigger::create(getNextOperatorId(), windowInputSchema, windowOutputSchema, windowHandler);
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);

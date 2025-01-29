@@ -34,8 +34,8 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , listener(std::make_shared<Runtime::PrintingStatisticListener>(
-        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads))
+          configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+          configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {

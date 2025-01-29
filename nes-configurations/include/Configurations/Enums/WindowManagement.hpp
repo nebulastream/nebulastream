@@ -13,7 +13,8 @@
 */
 
 #pragma once
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 enum class SliceStoreType : uint8_t
 {

@@ -54,4 +54,8 @@ PhysicalAggregationBuild::PhysicalAggregationBuild(
 {
 }
 
+std::string PhysicalAggregationBuild::toString() const
+{
+    return fmt::format("PhysicalAggregationBuild: {}", id);
+}
 }

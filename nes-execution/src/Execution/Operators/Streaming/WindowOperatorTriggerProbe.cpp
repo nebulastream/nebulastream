@@ -17,6 +17,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorTriggerProbe.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -25,7 +26,6 @@
 #include <Util/Execution.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorTriggerProbe.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -50,7 +50,7 @@ void checkWindowsTriggerProxy(
 void WindowOperatorTriggerProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// Giving the chance for any child operator to open its state
-    ExecutableOperator::open(executionCtx, recordBuffer);
+    Operator::open(executionCtx, recordBuffer);
 
     /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -79,10 +79,13 @@ void WindowOperatorTriggerProbe::terminate(ExecutionContext& executionCtx) const
         },
         operatorHandlerMemRef,
         executionCtx.pipelineContext);
+
+    /// Giving the chance for any child operator to terminate
+    Operator::terminate(executionCtx);
+
 }
 
-WindowOperatorTriggerProbe::WindowOperatorTriggerProbe(uint64_t operatorHandlerIndex)
-    : operatorHandlerIndex(operatorHandlerIndex)
+WindowOperatorTriggerProbe::WindowOperatorTriggerProbe(uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex)
 {
 }
 }

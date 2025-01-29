@@ -14,10 +14,7 @@ class ClientHandler
 {
 public:
     ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep)
-        : clientSocket(clientSocket)
-        , address(address)
-        , countLimit(countLimit)
-        , timeStep(timeStep)
+        : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep)
     {
     }
 
@@ -38,7 +35,7 @@ public:
 
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
                     + std::to_string(timestamp) + "\n";
-                std::cout << "Sending message: " << message;
+                // std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
 
                 timestamp += timeStep;
@@ -74,9 +71,9 @@ public:
 private:
     int clientSocket;
     sockaddr_in address;
-    int countLimit;
+    uint64_t countLimit;
     int timeStep;
-    int counter = 0;
+    uint64_t counter = 0;
     int value = 0;
     int payload = 0;
     int timestamp = 0;
@@ -86,17 +83,15 @@ private:
 class CounterServer
 {
 public:
-    CounterServer(const std::string& host, const int port, const int countLimit, const int timeStep)
-        : host(host)
-        , port(port)
-        , countLimit(countLimit)
-        , timeStep(timeStep)
+    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep)
+        : host(host), port(port), countLimit(countLimit), timeStep(timeStep)
     {
     }
 
     void start()
     {
-        if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        {
             std::cerr << "Failed to create server socket" << std::endl;
             cleanup(-1);
         }
@@ -123,7 +118,7 @@ public:
             {
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
-                int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
+                int const clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
                 ClientHandler client(clientSocket, clientAddress, countLimit, timeStep);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
@@ -174,7 +169,7 @@ public:
 private:
     std::string host = "0.0.0.0";
     int port = 5020;
-    int countLimit = 0;
+    uint64_t countLimit = 0;
     int timeStep = 1;
     int serverSocket;
     sockaddr_in serverAddress;
@@ -186,7 +181,7 @@ int main(const int argc, char* argv[])
 {
     std::string host = "0.0.0.0";
     int port = 5020;
-    int countLimit = 0;
+    uint64_t countLimit = 0;
     int timeStep = 1;
 
     for (int i = 1; i < argc; ++i)
@@ -201,7 +196,7 @@ int main(const int argc, char* argv[])
         }
         else if (std::strcmp(argv[i], "-n") == 0 || std::strcmp(argv[i], "--count-limit") == 0)
         {
-            countLimit = std::stoi(argv[++i]);
+            countLimit = std::stoll(argv[++i]);
         }
         else if (std::strcmp(argv[i], "-t") == 0 || std::strcmp(argv[i], "--time-step") == 0)
         {

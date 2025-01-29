@@ -26,23 +26,29 @@
 
 #include "../../nes-configurations/include/Configurations/ScalarOption.hpp"
 
-template<typename Var1, typename Var2> struct FlattenVariant;
-template<typename... Ts1, typename... Ts2> struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...> > {
-  using type = std::variant<Ts1..., Ts2...>;
+template <typename Var1, typename Var2>
+struct FlattenVariant;
+template <typename... Ts1, typename... Ts2>
+struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
+{
+    using type = std::variant<Ts1..., Ts2...>;
 };
 
-namespace NES::Runtime {
-struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener {
-  using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
-  void onEvent(Event event) override;
-  void onEvent(SystemEvent event) override;
+namespace NES::Runtime
+{
+struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener
+{
+    using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
+    void onEvent(Event event) override;
+    void onEvent(SystemEvent event) override;
 
-  explicit PrintingStatisticListener(const Configurations::StringOption& statisticDir, const Configurations::UIntOption& numberOfWorkerThreads);
-  static_assert(std::is_default_constructible_v<CombinedEventType>);
+    explicit PrintingStatisticListener(
+        const Configurations::StringOption& statisticDir, const Configurations::UIntOption& numberOfWorkerThreads);
+    static_assert(std::is_default_constructible_v<CombinedEventType>);
 
 private:
-  /// Each worker thread writes to its own file
-  std::vector<std::ofstream> files;
-  std::ofstream systemEventFile;
+    /// Each worker thread writes to its own file
+    std::vector<std::ofstream> files;
+    std::ofstream systemEventFile;
 };
 }

@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <utility>
+
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -23,6 +24,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Util/Execution.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -73,4 +75,8 @@ JoinBuildSideType PhysicalStreamJoinBuildOperator::getBuildSide() const
     return buildSide;
 }
 
+std::string PhysicalStreamJoinBuildOperator::toString() const
+{
+    return fmt::format("PhysicalStreamJoinBuildOperator: {} and build side {}", id, magic_enum::enum_name(buildSide));
+}
 }

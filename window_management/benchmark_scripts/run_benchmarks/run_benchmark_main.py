@@ -20,6 +20,7 @@ import random
 import yaml
 import BenchmarkConfig
 import pathlib
+import copy
 
 # Configuration for compilation
 BUILD_DIR = "build_dir"
@@ -34,12 +35,14 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+MEASURE_INTERVAL = 10
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
+PIPELINE_TXT = "pipelines.txt"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
+BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 WORKER_CONFIG_FILE_NAME = "worker_config.yaml"
 QUERY_CONFIG_FILE_NAME = "query.yaml"
 CONFIG_FILES = {
@@ -97,6 +100,7 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     worker_config_yaml["worker"]["queryCompiler"]["sliceCacheType"] = current_benchmark_config.slice_cache_type
     worker_config_yaml["worker"]["queryCompiler"]["sliceCacheSize"] = current_benchmark_config.slice_cache_size
     worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
+    worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
@@ -112,6 +116,20 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     with open(CONFIG_FILES[QUERY_CONFIG], 'r') as input_file:
         query_config_yaml = yaml.safe_load(input_file)
     query_config_yaml["query"] = current_benchmark_config.query
+
+    # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
+    assert len(tcp_server_ports) % len(query_config_yaml["physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
+
+    # Iterating over the physical sources and writing as many in a separate list as we have configured in the benchmark config
+    new_physical_sources = []
+    for idx, physical_source in enumerate(query_config_yaml["physical"]):
+        for i in range(current_benchmark_config.no_physical_sources_per_logical_source):
+            new_physical_sources.append(copy.deepcopy(physical_source))
+
+    # Replacing the old physical sources with the new ones
+    query_config_yaml["physical"] = new_physical_sources
+
+    # Changing the source ports
     for idx, port in enumerate(tcp_server_ports):
         query_config_yaml["physical"][idx]["sourceConfig"]["socketPort"] = int(port)
 
@@ -120,29 +138,41 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
         yaml.dump(query_config_yaml, output_file)
 
 
+    # Write the current benchmark config to the output folder in a way that it can be easily read
+    # We use a dictionary representation of the configuration
+    with open(os.path.join(output_folder, BENCHMARK_CONFIG_FILE), 'w') as output_file:
+        yaml.dump(current_benchmark_config.to_dict(), output_file)
+
+
+
 def start_tcp_servers(starting_ports, current_benchmark_config):
     processes = []
     ports = []
     max_retries = 10
     for port in starting_ports:
-        for attempt in range(max_retries):
-            # -n 0 means unlimited number of tuples
-            cmd = f"{TCP_SERVER} -p {port} -n 0 -t {current_benchmark_config.timestamp_increment}"
-            print(f"Trying to start tcp server with {cmd}")
-            process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
-            time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
-            if process.poll() is not None and process.poll() != 0:
-                print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
-                port = str(int(port) + random.randint(1,10))
-                terminate_process_if_exists(process)
-                time.sleep(1)
+        for i in range(benchmark_config.no_physical_sources_per_logical_source):
+            for attempt in range(max_retries):
+                # no. tuples set to 0 means that the source will run indefinitely
+                number_of_tuples_before_stopping_source = 0 #10 * 1000 * 1000 * 1000
+                cmd = f"{TCP_SERVER} -p {port} -n {number_of_tuples_before_stopping_source} -t {current_benchmark_config.timestamp_increment}"
+                print(f"Trying to start tcp server with {cmd}")
+                process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+                time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
+                if process.poll() is not None and process.poll() != 0:
+                    print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
+                    port = str(int(port) + random.randint(1,10))
+                    terminate_process_if_exists(process)
+                    time.sleep(1)
+                else:
+                    print(f"Started tcp server with PID: {process.pid} and port: {port}")
+                    processes.append(process)
+                    ports.append(port)
+                    port = str(int(port) + 1) # Increment the port for the next server
+                    break
             else:
-                print(f"Started tcp server with PID: {process.pid} and port: {port}")
-                processes.append(process)
-                ports.append(port)
-                break
-        else:
-            raise Exception(f"Failed to start the TCP server after {max_retries} attempts.")
+                raise Exception(f"Failed to start the TCP server after {max_retries} attempts.")
+
+    print(f"Started all TCP servers with the following <port, pid>: {list(zip(ports, [proc.pid for proc in processes]))}")
     return [processes, ports]
 
 
@@ -154,6 +184,7 @@ def submitting_query(query_file):
                             stderr=subprocess.PIPE,  # Capture standard error
                             text=True  # Decode output to a string
                             )
+    print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
     query_id = result.stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
@@ -204,6 +235,7 @@ def get_start_ports():
 # Benchmark loop
 def run_benchmark(current_benchmark_config):
     # Defining here two empty lists so that we can use it in the finally
+    output_folder = ""
     source_processes = []
     single_node_process = []
     stop_process = []
@@ -240,15 +272,20 @@ def run_benchmark(current_benchmark_config):
         for proc in all_processes:
             terminate_process_if_exists(proc)
 
+        return output_folder
+
 
 if __name__ == "__main__":
     # Removing the build folder and compiling the project
     # clear_build_dir()
     compile_project()
 
+    # Running all benchmarks
+    output_folders = []
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
-    # For now, we are running a single experiment to check if the script works
-    ALL_BENCHMARK_CONFIGS = ALL_BENCHMARK_CONFIGS[:3]
     for benchmark_config in ALL_BENCHMARK_CONFIGS:
-        run_benchmark(benchmark_config)
-        time.sleep(1) # Sleep for a second to allow the system to cleanup
+        output_folders.append(run_benchmark(benchmark_config))
+        time.sleep(1) # Sleep for a second to allow the system to clean up
+
+    output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
+    print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")

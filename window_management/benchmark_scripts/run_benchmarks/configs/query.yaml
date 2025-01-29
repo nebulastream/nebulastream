@@ -5,7 +5,7 @@ sink:
   type: File
   config:
     inputFormat: CSV
-    filePath: "GENERATE"
+    filePath: "/tmp/csv_sink.csv"
     append: false
 logical:
   - name: tcp_source
@@ -39,7 +39,7 @@ physical:
       socketPort: 5010
       socketHost: localhost
       socketBufferSize: 2
-      flushIntervalMS: 1000
+      flushIntervalMS: 100
   - logical: tcp_source2
     parserConfig:
       type: CSV
@@ -50,4 +50,4 @@ physical:
       socketPort: 5011
       socketHost: localhost
       socketBufferSize: 2
-      flushIntervalMS: 1000
+      flushIntervalMS: 100

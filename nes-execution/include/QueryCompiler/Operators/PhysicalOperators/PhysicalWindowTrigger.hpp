@@ -14,29 +14,43 @@
 
 #pragma once
 #include <memory>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
-class PhysicalWindowTrigger final : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator {
+namespace NES::QueryCompilation::PhysicalOperators
+{
+class PhysicalWindowTrigger final : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
+{
 public:
-  static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema,
-    SchemaPtr outputSchema, std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler) {
-    return std::make_shared<PhysicalWindowTrigger>(PhysicalWindowTrigger(std::move(id), std::move(inputSchema), std::move(outputSchema), std::move(windowHandler)));
-  }
-  std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const {
-    return windowHandler;
-  }
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
+    {
+        return std::make_shared<PhysicalWindowTrigger>(
+            PhysicalWindowTrigger(std::move(id), std::move(inputSchema), std::move(outputSchema), std::move(windowHandler)));
+    }
+    std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const { return windowHandler; }
 
-  std::shared_ptr<Operator> copy() override {
-    return create(id, inputSchema, outputSchema, windowHandler);
-  }
+    std::shared_ptr<Operator> copy() override { return create(id, inputSchema, outputSchema, windowHandler); }
+
+protected:
+    std::string toString() const override { return fmt::format("PhysicalWindowTrigger: {}", id); }
 
 private:
-  explicit PhysicalWindowTrigger(OperatorId id, SchemaPtr inputSchema,
-    SchemaPtr outputSchema, std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler) : Operator(id), PhysicalUnaryOperator(std::move(id), std::move(inputSchema), std::move(outputSchema)), windowHandler(std::move(windowHandler)) {}
+    explicit PhysicalWindowTrigger(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
+        : Operator(id)
+        , PhysicalUnaryOperator(std::move(id), std::move(inputSchema), std::move(outputSchema))
+        , windowHandler(std::move(windowHandler))
+    {
+    }
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler;
 };
 }

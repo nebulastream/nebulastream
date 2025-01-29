@@ -14,6 +14,9 @@
 
 #include <memory>
 #include <utility>
+
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>

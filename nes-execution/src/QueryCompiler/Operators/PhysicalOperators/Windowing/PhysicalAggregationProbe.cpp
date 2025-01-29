@@ -68,4 +68,9 @@ PhysicalAggregationProbe::PhysicalAggregationProbe(
 {
 }
 
+std::string PhysicalAggregationProbe::toString() const
+{
+    return fmt::format("PhysicalAggregationProbe: {}", id);
+}
+
 }

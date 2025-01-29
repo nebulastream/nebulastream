@@ -38,6 +38,7 @@ public:
         WindowMetaData windowMetaData);
 
     std::shared_ptr<Operator> copy() override;
+    std::string toString() const override;
 
 private:
     PhysicalAggregationProbe(

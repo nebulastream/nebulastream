@@ -17,7 +17,7 @@ from numpy.lib.format import BUFFER_SIZE
 # This class stores all information needed to run a single benchmarks
 class BenchmarkConfig:
     def __init__(self, number_of_worker_threads, slice_cache_type, slice_store_type, slice_cache_size, lock_slice_cache,
-                 timestamp_increment, buffer_size_in_bytes, query):
+                 timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source):
         self.number_of_worker_threads = number_of_worker_threads
         self.slice_cache_type = slice_cache_type
         self.slice_store_type = slice_store_type
@@ -26,29 +26,53 @@ class BenchmarkConfig:
         self.timestamp_increment = timestamp_increment
         self.buffer_size_in_bytes = buffer_size_in_bytes
         self.query = query
+        self.no_physical_sources_per_logical_source = no_physical_sources_per_logical_source
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
-        self.task_queue_size = 10000
-        self.buffers_in_global_buffer_manager = 102400
+        self.task_queue_size = 100000
+        self.buffers_in_global_buffer_manager = 1 * 1000 * 1000
         self.buffers_per_worker = 12800
-        self.buffers_in_source_local_buffer_pool = 6400
-        self.nautilus_backend = "INTERPRETER" # "COMPILER" or "INTERPRETER"
+        self.buffers_in_source_local_buffer_pool = 1000
+        self.nautilus_backend = "COMPILER" # "COMPILER" or "INTERPRETER"
+
+    # Returns a dictionary representation of the configuration
+    def to_dict(self):
+        return {
+            "number_of_worker_threads": self.number_of_worker_threads,
+            "slice_cache_type": self.slice_cache_type,
+            "slice_store_type": self.slice_store_type,
+            "slice_cache_size": self.slice_cache_size,
+            "lock_slice_cache": self.lock_slice_cache,
+            "timestamp_increment": self.timestamp_increment,
+            "buffer_size_in_bytes": self.buffer_size_in_bytes,
+            "query": self.query,
+            "task_queue_size": self.task_queue_size,
+            "buffers_in_global_buffer_manager": self.buffers_in_global_buffer_manager,
+            "buffers_per_worker": self.buffers_per_worker,
+            "buffers_in_source_local_buffer_pool": self.buffers_in_source_local_buffer_pool,
+            "nautilus_backend": self.nautilus_backend
+        }
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [4, 1]
+    NUMBER_OF_WORKER_THREADS = [8, 4, 1]
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in ["LRU", "FIFO"] for size in [1, 10, 100] for locked_slice_cache in [True, False]] + [("NO_CACHE", 0, False)]
+    SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:1]
 
-    SLICE_STORE_TYPE = ["MAP", "LIST"]  # MAP or LIST
-    TIMESTAMP_INCREMENT = [1, 10, 1000]
-    BUFFER_SIZES = [1024, 4096, 102400]  # 1KB, 4KB, 100KB
+    SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
+    TIMESTAMP_INCREMENT = [1]
+    BUFFER_SIZES = [8196, 4096] #[1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
+    NO_PHYSICAL_SOURCES = [1] # Currently only 1 is supported. Otherwise, nebuli does not pass the query to the single node worker
 
     # Adding join queries
-    WINDOW_SIZE_SLIDE = [(5, 5), (100, 10)]
+    WINDOW_SIZE_SLIDE = [(10*1000, 1*1000)]
     for window_size, slide in WINDOW_SIZE_SLIDE:
+        # QUERIES.append(
+        #     f"SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON value = value2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"
+        # )
         QUERIES.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON value = value2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"
+            f"SELECT * FROM tcp_source WHERE value > 5000 INTO csv_sink;"
         )
 
     # Returning all possible configurations
@@ -62,6 +86,7 @@ def create_all_benchmark_configs():
             timestamp_increment,
             buffer_size_in_bytes,
             query,
+            no_physical_sources_per_logical_source
         )
         for slice_cache_type_size in SLICE_CACHE_TYPE_AND_SIZE
         for slice_store_type in SLICE_STORE_TYPE
@@ -69,4 +94,5 @@ def create_all_benchmark_configs():
         for timestamp_increment in TIMESTAMP_INCREMENT
         for query in QUERIES
         for number_of_worker_threads in NUMBER_OF_WORKER_THREADS
+        for no_physical_sources_per_logical_source in NO_PHYSICAL_SOURCES
     ]

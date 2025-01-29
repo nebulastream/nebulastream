@@ -230,6 +230,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
         if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
+            NES_DEBUG("Deleting window with window end: {} and window start: {}", windowInfo.windowEnd, windowInfo.windowStart);
             windowsWriteLocked->erase(windowsLockedIt++);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
@@ -250,6 +251,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
+            NES_DEBUG("Deleting slice with slice end: {}", sliceEnd);
             slicesWriteLocked->erase(slicesLockedIt++);
         }
         else

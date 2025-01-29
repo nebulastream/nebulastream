@@ -32,6 +32,7 @@
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorTriggerProbe.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
@@ -59,6 +60,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -101,6 +103,8 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
+    std::unordered_map<PipelineId, std::stringstream> pipelineIdToText;
+
     for (const auto& node : nodes)
     {
         /// The scan and emit phase already contain the schema changes of the physical project operator.
@@ -109,6 +113,19 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
+        /// Adding the node and the pipeline id to the pipelineIdToText
+        if (options->pipelinesTxtFilePath.empty())
+        {
+            continue;
+        }
+        if (not pipelineIdToText.contains(operatorPipeline->getPipelineId()))
+        {
+            pipelineIdToText[operatorPipeline->getPipelineId()] << "";
+        }
+        pipelineIdToText[operatorPipeline->getPipelineId()] << " Node: " << *NES::Util::as<PhysicalOperators::PhysicalOperator>(node)
+                                                            << "\n";
+
+
         parentOperator
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
@@ -248,6 +265,15 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             std::move(windowAggregationOperator), handlerIndex, windowMetaData);
         pipeline.setRootOperator(executableAggregationProbe);
         return executableAggregationProbe;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalWindowTrigger>(operatorNode))
+    {
+        auto triggerOperator = NES::Util::as<PhysicalOperators::PhysicalWindowTrigger>(operatorNode);
+        const auto handlerIndex = operatorHandlers.size();
+        operatorHandlers.push_back(triggerOperator->getOperatorHandler());
+        const auto triggerOperatorNautilus = std::make_shared<Runtime::Execution::Operators::WindowOperatorTriggerProbe>(handlerIndex);
+        pipeline.setRootOperator(triggerOperatorNautilus);
+        return triggerOperatorNautilus;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {

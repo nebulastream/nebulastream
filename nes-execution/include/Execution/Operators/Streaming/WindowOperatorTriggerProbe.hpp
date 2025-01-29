@@ -13,12 +13,14 @@
 */
 
 #pragma once
-#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /// Is the general probe operator for window operators. It is responsible for the emitting of slices and windows to the second phase (probe).
-class WindowOperatorTriggerProbe : public ExecutableOperator {
+class WindowOperatorTriggerProbe : public Operator
+{
 public:
     explicit WindowOperatorTriggerProbe(uint64_t operatorHandlerIndex);
 

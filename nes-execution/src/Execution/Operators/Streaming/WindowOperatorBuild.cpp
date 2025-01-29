@@ -25,7 +25,6 @@ namespace NES::Runtime::Execution::Operators
 {
 
 
-
 WindowOperatorBuild::WindowOperatorBuild(const uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction))
 {
@@ -54,6 +53,7 @@ void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer& re
     recordBufferCopy.setWatermarkTs(recordBuffer.getWatermarkTs());
     recordBufferCopy.setLastChunk(recordBuffer.isLastChunk());
     recordBufferCopy.setCreationTs(recordBuffer.getCreatingTs());
+    recordBufferCopy.setNumRecords(recordBuffer.getNumRecords());
     executionCtx.emitBuffer(recordBufferCopy);
 }
 }

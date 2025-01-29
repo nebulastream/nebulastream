@@ -38,8 +38,7 @@ public:
         = {"numberOfWorkerThreads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
     Configurations::UIntOption taskQueueSize
         = {"taskQueueSize", "1000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
-    Configurations::StringOption statisticsDir
-        = {"statisticsDir", "/tmp", "Directory to dump query engine statistics."};
+    Configurations::StringOption statisticsDir = {"statisticsDir", "/tmp", "Directory to dump query engine statistics."};
 
 protected:
     std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &taskQueueSize, &statisticsDir}; }
