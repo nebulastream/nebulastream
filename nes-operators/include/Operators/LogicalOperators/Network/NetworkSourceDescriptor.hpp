@@ -85,6 +85,17 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      */
     uint16_t getVersion() const;
 
+    /**
+     * @brief mark the source for reuse
+     */
+    void markForReuse();
+
+    /**
+     * @brief check if the source is marked for reuse and clear the mark
+     * @return true if marked for reuse, else false
+     */
+    bool isMarkedForReuse();
+
     OperatorId getUniqueId() const;
 
     SourceDescriptorPtr copy() override;
@@ -104,6 +115,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
     OperatorId uniqueNetworkSourceId;
+    bool markedForReuse = false;
 };
 
 using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;

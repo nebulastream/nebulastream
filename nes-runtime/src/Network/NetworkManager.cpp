@@ -260,8 +260,8 @@ bool NetworkManager::getConnectSinksAsync() { return connectSinksAsync; }
 
 bool NetworkManager::getConnectSourceEventChannelsAsync() { return connectSourceEventChannelsAsync; }
 
-NetworkSourcePtr NetworkManager::getNetworkSourceWithPartition(NesPartition partition) {
+DataSourcePtr NetworkManager::getNetworkSourceWithPartition(NesPartition partition) {
     auto dataEmitter = partitionManager->getDataEmitter(partition);
-    return std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
+    return std::dynamic_pointer_cast<DataSource>(dataEmitter);
 }
 }// namespace NES::Network

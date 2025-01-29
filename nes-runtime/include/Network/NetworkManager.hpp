@@ -250,7 +250,7 @@ class NetworkManager {
      * @partition the partition of the network source in question
      * @return a pointer to the running source or nullptr if no running source exists with this partition
      */
-    NetworkSourcePtr getNetworkSourceWithPartition(NesPartition partition);
+    DataSourcePtr getNetworkSourceWithPartition(NesPartition partition);
 
   private:
     NodeLocation nodeLocation;

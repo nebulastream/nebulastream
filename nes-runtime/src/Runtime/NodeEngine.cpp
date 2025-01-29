@@ -120,11 +120,17 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
              decomposedQueryPlan->getVersion());
 
     std::vector<OperatorId> sourcesToReuse;
-    for (auto src : decomposedQueryPlan->getSourceOperators()) {
-        auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-        if (networkSourceDescriptor
-            && networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition())) {
-            sourcesToReuse.push_back(networkSourceDescriptor->getUniqueId());
+    // if the plan is marked for redeployment, we must check for sources to be reused
+    if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_DEPLOYMENT) {
+        for (auto src : decomposedQueryPlan->getSourceOperators()) {
+            auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+            if (networkSourceDescriptor) {
+                auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
+                if (source) {
+                    sourcesToReuse.push_back(networkSourceDescriptor->getUniqueId());
+                    networkSourceDescriptor->markForReuse();
+                }
+            }
         }
     }
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, inherited1::shared_from_this());
