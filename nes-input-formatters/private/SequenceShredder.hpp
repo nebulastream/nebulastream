@@ -193,10 +193,10 @@ public:
     // Todo: test function
     [[nodiscard]] std::vector<StagedBuffer> flushBuffers()
     {
-        const std::scoped_lock lock(readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
+        // Todo: improve locking
+        readWriteMutex.lock(); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
         for (size_t offsetToTail = 1; offsetToTail <= numberOfBitmaps; ++offsetToTail)
         {
-            // Todo: getting here, but bitmapIndex is off by 1
             const auto bitmapIndex = (this->tail + (numberOfBitmaps - offsetToTail)) & numberOfBitmapsModulo;
             const auto seenAndUsedBitmap = seenAndUsedBitmaps[bitmapIndex];
             const auto tupleDelimiterBitmap = tupleDelimiterBitmaps[bitmapIndex];
@@ -218,16 +218,16 @@ public:
                 /// The dummy staged buffer flushes out all prior buffers that still depended on a tuple delimiter that did not appear,
                 /// because an EOF/EOS is not a tuple delimiter.
                 const auto firstSequenceNumberOfTail = this->tail * SIZE_OF_BITMAP_IN_BITS;
-                const auto sequenceNumberOffsetOfBitmap = (numberOfBitmaps - offsetToTail) * SIZE_OF_BITMAP_IN_BITS;
+                const auto sequenceNumberOffsetOfBitmap = ((numberOfBitmaps - offsetToTail) & numberOfBitmapsModulo) << BITMAP_SIZE_BIT_SHIFT;
                 const auto firstSequenceNumberOfBitmap = firstSequenceNumberOfTail + sequenceNumberOffsetOfBitmap;
                 const auto sequenceNumberOffsetOfBit = SIZE_OF_BITMAP_IN_BITS - std::countl_zero(seenAndUsedBitmap);
                 const auto largestSeenSequenceNumber = firstSequenceNumberOfBitmap + sequenceNumberOffsetOfBit + 1;
-                auto dummyBuffer = NES::Memory::TupleBuffer{};
-                dummyBuffer.setSequenceNumber(NES::SequenceNumber(largestSeenSequenceNumber + 1));
-                const auto dummyStagedBuffer = StagedBuffer{.buffer = std::move(dummyBuffer), .sizeOfBufferInBytes = 0, .offsetOfFirstTupleDelimiter = 0, .offsetOfLastTupleDelimiter = 0, .uses = 1};
-                return processSequenceNumber<true>(dummyStagedBuffer);
+                const auto dummyStagedBuffer = StagedBuffer{.buffer =  NES::Memory::TupleBuffer{}, .sizeOfBufferInBytes = 0, .offsetOfFirstTupleDelimiter = 0, .offsetOfLastTupleDelimiter = 0, .uses = 1};
+                readWriteMutex.unlock();
+                return processSequenceNumber<true>(dummyStagedBuffer, largestSeenSequenceNumber);
             }
         }
+        readWriteMutex.unlock();
         return std::vector<StagedBuffer>{};
     }
 
@@ -237,9 +237,8 @@ public:
     /// For details on the inner workings of this function, read the description of the class above.
     template <bool hasTupleDelimiter>
     std::vector<StagedBuffer>
-    // Todo: pass staged buffer as input? or pass 3 args?
-    processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber) {
-        const auto sequenceNumber = stagedBufferOfSequenceNumber.buffer.getSequenceNumber().getRawValue();
+    // Todo: get rid of sequence number type?
+    processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, const SequenceNumberType sequenceNumber) {
         /// Calculate how many bitmaps preceed the bitmap that the sequence number maps to ((sequenceNumber -1) / SIZE_OF_BITMAP_IN_BITS).
         const auto sequenceNumberBitmapCount = ((sequenceNumber - 1) >> BITMAP_SIZE_BIT_SHIFT);
         /// Calculate the sequenceNumber (-1) that the first bit of the bitmap that the sequence number belongs to represents
@@ -590,20 +589,20 @@ private:
         const auto startIndex = ((spanningTupleIsValid) ? spanningTuple.spanStart : sequenceNumber) - 1;
         const auto endIndex = ((spanningTupleIsValid) ? spanningTuple.spanEnd - 1 : sequenceNumber);
         // Todo: can we return exactly the needed upper and lower bounds?
-        const auto returningOnlyBufferOfSequenceNumber = startIndex == (endIndex - 1);
+        const auto returningMoreThanOnlyBufferOfSequenceNumber = endIndex > (startIndex + 1);
         for(auto spanningTupleIndex = startIndex; spanningTupleIndex < endIndex; ++spanningTupleIndex)
         {
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningOnlyBufferOfSequenceNumber);
+            stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
             auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex]) : stagedBuffers[spanningTupleIndex];
             /// We change the offsets correctly for the iteration of the InputFormatter. We either manipulate the copy, or the buffer with a final use.
             /// Three cases:
             /// 1. buffer is not start/end buffer or is buffer of sequence number, keep offsets (we want to process the entire buffer)
             /// 2. buffer is start and is not buffer of sequence number: set last tuple delimiter as start (we only want to process the last (partial) tuple)
             /// 3. buffer is end and is not buffer of sequence number: set first tuple delimiter as start (we only want to process the first (partial) tuple)
-            const auto isNotBufferOfSequenceNumber = (spanningTupleIndex != (sequenceNumber - 1));
-            returnBuffer.offsetOfFirstTupleDelimiter = ((spanningTupleIndex == spanningTuple.spanStart - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfLastTupleDelimiter : returnBuffer.offsetOfFirstTupleDelimiter;
-            returnBuffer.offsetOfLastTupleDelimiter = ((spanningTupleIndex == spanningTuple.spanEnd - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfFirstTupleDelimiter : returnBuffer.offsetOfLastTupleDelimiter;
+            // const auto isNotBufferOfSequenceNumber = (spanningTupleIndex != (sequenceNumber - 1));
+            // returnBuffer.offsetOfFirstTupleDelimiter = ((spanningTupleIndex == startIndex - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfLastTupleDelimiter : returnBuffer.offsetOfFirstTupleDelimiter;
+            // returnBuffer.offsetOfLastTupleDelimiter = ((spanningTupleIndex == endIndex - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfFirstTupleDelimiter : returnBuffer.offsetOfLastTupleDelimiter;
             returnBuffers.emplace_back(std::move(returnBuffer));
         }
 
@@ -651,6 +650,9 @@ private:
         const auto startIndex = (firstSpanningTupleIsValid) ? spanningTuple.spanStart - 1 : sequenceNumber - 1;
         const auto endIndex = (secondSpanningTupleIsValid) ? spanningTuple.spanEnd - 1 : sequenceNumber;
         const auto returningMoreThanOnlyBufferOfSequenceNumber = endIndex > (startIndex + 1);
+
+        // Todo: improve
+        // const auto sequenceNumberBufferPosition = (sequenceNumber - 1) & ((numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT) - 1);
         for(auto spanningTupleIndex = startIndex; spanningTupleIndex < endIndex; ++spanningTupleIndex)
         {
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
@@ -659,7 +661,7 @@ private:
             // - difference between: returning the buffer itself (no usage!) and returning it to complete a spanning tuple
             stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
             auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex]) : stagedBuffers[spanningTupleIndex]; //Todo: does this actually move out of the vector?
-            const auto isNotBufferOfSequenceNumber = (spanningTupleIndex != (sequenceNumber - 1));
+            // const auto isBufferOfSequenceNumber = spanningTupleIndex == sequenceNumberBufferPosition;
             /// Three cases:
             /// Todo: special case when we return but one buffer
             /// 1. buffer is not start/end buffer or is buffer of sequence number (entire buffer is relevant)
@@ -670,8 +672,19 @@ private:
             ///     - [offsetOfLastTupleDelimiter, sizeOfBuffer] // Todo: is partial tuple, so do we care?
             /// 3. buffer is end and is not buffer of sequence number: set '0' as start and offsetOfFirstTupleDelimiter as end
             /// ///     - [0, offsetOfFirstTupleDelimiter] // Todo: is partial tuple, so do we care?
-            returnBuffer.offsetOfFirstTupleDelimiter = ((spanningTupleIndex == spanningTuple.spanStart - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfLastTupleDelimiter : returnBuffer.offsetOfFirstTupleDelimiter;
-            returnBuffer.offsetOfLastTupleDelimiter = ((spanningTupleIndex == spanningTuple.spanEnd - 1) and isNotBufferOfSequenceNumber) ? returnBuffer.offsetOfFirstTupleDelimiter : returnBuffer.offsetOfLastTupleDelimiter;
+            // const auto isFirstBufferOfSequence = spanningTupleIndex == startIndex - 1;
+            // const auto isLastBufferOfSequence = spanningTupleIndex == endIndex - 1;
+            //
+            // if (isFirstBufferOfSequence and not(isBufferOfSequenceNumber))
+            // {
+            //     returnBuffer.offsetOfFirstTupleDelimiter = returnBuffer.offsetOfLastTupleDelimiter;
+            //     returnBuffer.offsetOfLastTupleDelimiter = returnBuffer.sizeOfBufferInBytes;
+            // }
+            // if (isLastBufferOfSequence and not(isBufferOfSequenceNumber))
+            // {
+            //     returnBuffer.offsetOfLastTupleDelimiter = returnBuffer.offsetOfFirstTupleDelimiter;
+            //     returnBuffer.offsetOfFirstTupleDelimiter = 0;
+            // }
             returnBuffers.emplace_back(std::move(returnBuffer));
         }
 

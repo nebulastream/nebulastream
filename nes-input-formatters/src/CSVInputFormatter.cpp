@@ -87,6 +87,51 @@ public:
     [[nodiscard]] size_t getOffsetOfFirstTupleDelimiter() const { return currentTupleEndrawTB; }
     [[nodiscard]] size_t getOffsetOfLastTupleDelimiter() const { return tupleBufferRawSV.rfind(tupleDelimiter, tupleBufferRawSV.size() - 1); }
 
+
+    void processCurrentTuple(std::string_view currentTuple, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, const std::string& fieldDelimiter,
+        const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions, const std::vector<size_t>& fieldSizes)
+    {
+        const boost::char_separator sep{fieldDelimiter.c_str()};
+        const boost::tokenizer tupleTokenizer{currentTuple.begin(), currentTuple.end(), sep};
+        /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
+        for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
+        {
+            parseFunction(token, getCurrentFieldPointer(), *pipelineExecutionContext.getBufferManager(), getTupleBufferFormatted());
+            const auto lastVal = *reinterpret_cast<int32_t*>(getCurrentFieldPointer());
+            std::cout << lastVal << std::endl;
+            currentFieldOffsetTBFormatted += fieldSize;
+        }
+    }
+
+    void processCurrentBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, const std::string& fieldDelimiter,
+        const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions, const std::vector<size_t>& fieldSizes)
+    {
+        while (hasOneMoreTupleInRawTB())
+        {
+            /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
+            /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
+            if (not hasSpaceForTupleInTBFormatted())
+            {
+                /// Emit TBF and get new TBF
+                setNumberOfTuplesInTBFormatted();
+                NES_TRACE("emitting TupleBuffer with {} tuples.", numTuplesInTBFormatted);
+                /// true triggers adding sequence number, etc.
+                pipelineExecutionContext.emitBuffer(
+                    getTupleBufferFormatted(),
+                    NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+                currentFieldOffsetTBFormatted = 0;
+                numTuplesInTBFormatted = 0;
+            }
+
+            /// Get next tuple
+            const auto currentTuple = getNextTuple();
+            /// Parse fields of tuple
+            processCurrentTuple(currentTuple, pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+            /// Progress one tuple
+            progressOneTuple();
+        }
+    }
     [[nodiscard]] bool hasOneMoreTupleInRawTB() const { return currentTupleEndrawTB != std::numeric_limits<uint64_t>::max(); }
 
     [[nodiscard]] size_t sizeOfCurrentTuple() const { return this->currentTupleEndrawTB - this->currentTupleStartrawTB; }
@@ -380,14 +425,22 @@ void CSVInputFormatter::parseTupleBufferRaw(
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     progressTracker.resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>());
     // Todo: initiate SequenceShredder with the first bit set and a tuple buffer in it, with no data <-- makes it possible to get rid of specific behavior for first sequence number
-    const auto isFirstSequenceNumber = rawTB.getSequenceNumber().getRawValue() == SequenceNumber::INITIAL;
-    const auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
+    const auto sequenceNumberOfBuffer = rawTB.getSequenceNumber().getRawValue();
+    const auto isFirstSequenceNumber = sequenceNumberOfBuffer == SequenceNumber::INITIAL;
+    constexpr auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
     /// The first buffer has an 'implicit' tuple delimiter
-    // If there is no tuple delimiter, the return value is max
-    auto offsetOfFirstTupleDelimiter = (isFirstSequenceNumber) ? 0 : progressTracker.getOffsetOfFirstTupleDelimiter();
-    offsetOfFirstTupleDelimiter += static_cast<uint64_t>(offsetOfFirstTupleDelimiter == maxSequenceNumber);
-    auto offsetOfLastTupleDelimiter = progressTracker.getOffsetOfLastTupleDelimiter();
-    offsetOfLastTupleDelimiter += static_cast<uint64_t>(offsetOfLastTupleDelimiter == maxSequenceNumber);
+    size_t offsetOfFirstTupleDelimiter = 0;
+    auto offsetOfLastTupleDelimiter = (isFirstSequenceNumber) ? 0 : numBytesInRawTB;
+    offsetOfFirstTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter();
+    /// If the buffer contains a tuple delimiter, find the last tuple delimiter
+    /// (0 is a valid index for a first tuple delimiter)
+    if (offsetOfFirstTupleDelimiter != maxSequenceNumber)
+    {
+        offsetOfLastTupleDelimiter = progressTracker.getOffsetOfLastTupleDelimiter();
+    } else
+    {
+        offsetOfFirstTupleDelimiter = 0;
+    }
     const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0 or isFirstSequenceNumber;
     const auto numUses = static_cast<uint8_t>(2 - (not(hasTupleDelimiter) or isFirstSequenceNumber));
     // Todo: add third buffer without delimiter in between two buffers with delimiter
@@ -396,71 +449,110 @@ void CSVInputFormatter::parseTupleBufferRaw(
                                                            .sizeOfBufferInBytes = numBytesInRawTB,
                                                            .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
                                                            .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
-                                                           .uses = numUses})
+                                                           .uses = numUses}, sequenceNumberOfBuffer)
                                                      : sequenceShredder.processSequenceNumber<false>(SequenceShredder::StagedBuffer{
                                                            .buffer = rawTB,
                                                            .sizeOfBufferInBytes = numBytesInRawTB,
                                                            .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
                                                            .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
-                                                           .uses = numUses});
+                                                           .uses = numUses}, sequenceNumberOfBuffer);
 
     /// If SequenceShredder::processSequenceNumber(StagedBuffer stagedBuffer) only returned stagedBuffer and it does not have a tuple delimiter
     /// then the thread cannot format any tuples and can therefore return. A subsequent thread will format the the tuple that the rawTB belongs to.
-    if (buffersToFormat.size() == 1 and numUses == 1)
+    // Todo: is there any reason why we should process a single buffer with a tuple delimiter?
+    // -> Yes, if the buffer is the first buffer (implicit tuple delimiter)
+    const auto currentBufferHasOnlyOneTupleDelimiter = (offsetOfFirstTupleDelimiter == offsetOfLastTupleDelimiter);
+    if (buffersToFormat.size() == 1 and ((numUses == 1) or currentBufferHasOnlyOneTupleDelimiter))
+    // if (buffersToFormat.size() == 1 and (currentBufferHasOnlyOneTupleDelimiter and not(isFirstSequenceNumber)))
     {
         return;
     }
-    /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
-    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-    std::string partialTuple;
-    for (size_t bufferIdx = 0; const auto& stagedBuffer : buffersToFormat)
+
+    formatBuffers(progressTracker, pipelineExecutionContext, buffersToFormat);
+}
+void CSVInputFormatter::flushBuffers(
+    NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+{
+    const auto flushedBuffers = sequenceShredder.flushBuffers();
+    if (flushedBuffers.size() == 1)
     {
-        const auto startOffset
-            = (buffersToFormat.size() > 1 and bufferIdx == buffersToFormat.size() - 1) ? 0 : stagedBuffer.offsetOfFirstTupleDelimiter;
-        const auto endOffset = stagedBuffer.offsetOfLastTupleDelimiter;
+        return;
+    }
+    auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    formatBuffers(progressTracker, pipelineExecutionContext, flushedBuffers);
+}
+
+// Todo: try implementing the input-formatter-registry using only the constructor
+void CSVInputFormatter::formatBuffers(ProgressTracker& progressTracker, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+    const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat)
+{
+     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+    // Todo:
+    // at this point, we get the correct tuple delimiter offsets, that is,
+    // - no tuple delimiter: [0,sizeOfBuffer]
+    // - tuple delimiter: [firstDel,lastDel]
+
+    // Todo:
+    // 1. process first buffer
+    // 2. process all buffers except for the last buffer
+    // 3. process the last buffer
+    const auto firstBuffer = std::move(buffersToFormat.front());
+    /// Process first buffer, we don't know anything about the buffer
+    /// - it might have multiple tuples, it might not,
+    /// - if it is a single buffer, it has multiple tuple delimiters
+
+    /// We are only interested in the partial tuple resulting from the first buffer (even if it is the very first buffer)
+    // Todo: set offset of last tuple delimiter to 0 for first buffer
+    // Todo: what if the input is only a single tuple buffer with multiple tuples?
+    // -> handle in special case
+    // Todo: what if there are two buffers? (both must have a tuple delimiter
+    // -> skipping for-loop, seems correct
+    std::string partialTuple;
+    partialTuple.reserve(firstBuffer.sizeOfBufferInBytes - firstBuffer.offsetOfLastTupleDelimiter);
+    // Todo: is memcpy safe on string?
+    const std::string_view firstPartialTuple = std::string_view(firstBuffer.buffer.getBuffer<const char>() + firstBuffer.offsetOfLastTupleDelimiter, firstBuffer.sizeOfBufferInBytes);
+    partialTuple.append(firstPartialTuple);
+    // std::memcpy(partialTuple.data(), firstBuffer.buffer.getBuffer<const char>() + firstBuffer.offsetOfLastTupleDelimiter, firstBuffer.sizeOfBufferInBytes);
+
+    for (size_t bufferIdx = 1; bufferIdx < buffersToFormat.size() - 1; ++bufferIdx)
+    {
+        // Don't copy?
+        const auto stagedBuffer = std::move(buffersToFormat[bufferIdx]);
         progressTracker.resetForNewRawTB(
-            stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), startOffset, endOffset);
+            stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), stagedBuffer.offsetOfFirstTupleDelimiter, stagedBuffer.offsetOfLastTupleDelimiter);
         /// Process partial tuple of previous buffer, if given, then start to process the rest of the buffer, if there is more
-        if (not(partialTuple.empty()))
+        if (not(partialTuple.empty())) //Todo: get rid of if case
         {
             partialTuple.reserve(partialTuple.size() + stagedBuffer.offsetOfFirstTupleDelimiter);
-            partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfFirstTupleDelimiter));
-            parseStringIntoTupleBuffer(
-                partialTuple, *pipelineExecutionContext.getBufferManager(), progressTracker); //Todo: move partial tuple
-            progressTracker.progressOneTuple();
-        }
-
-        /// While the start of the next tuple is not the endOffset (+ sizeOfTupleInBytes) get the next tuple
-        while (progressTracker.hasOneMoreTupleInRawTB())
-        {
-            /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
-            /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            if (not progressTracker.hasSpaceForTupleInTBFormatted())
+            // Todo: problem: offsetOfFirstTupleDelimiter is '0', if the buffer does not contain a tuple delimiter
+            // - improve, it is possible, that the first and last byte are the delimiters, with more delimiters in-between
+            // - ALSO: if the delimiter is a string, it can be larger than a single byte...
+            const auto hasNoTupleDelimiter = stagedBuffer.offsetOfFirstTupleDelimiter == 0 and stagedBuffer.offsetOfLastTupleDelimiter == stagedBuffer.sizeOfBufferInBytes;
+            if (hasNoTupleDelimiter)
             {
-                /// Emit TBF and get new TBF
-                progressTracker.setNumberOfTuplesInTBFormatted();
-                NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker.numTuplesInTBFormatted);
-                /// true triggers adding sequence number, etc.
-                pipelineExecutionContext.emitBuffer(
-                    progressTracker.getTupleBufferFormatted(),
-                    NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-                progressTracker.currentFieldOffsetTBFormatted = 0;
-                progressTracker.numTuplesInTBFormatted = 0;
+                partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfLastTupleDelimiter));
+                continue;
             }
-
-            const auto currentTuple = progressTracker.getNextTuple();
-            parseStringIntoTupleBuffer(currentTuple, *pipelineExecutionContext.getBufferManager(), progressTracker);
-
+            partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfFirstTupleDelimiter));
+            //Todo: move partial tuple
+            progressTracker.processCurrentTuple(std::move(partialTuple), pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+            // Todo: the tuple might not be complete yet
             progressTracker.progressOneTuple();
         }
-        ++bufferIdx;
-        //Todo: improve: handle via indexes?
-        /// only set partial tuple, if there is another iteration that may use it
-        if (bufferIdx != buffersToFormat.size())
-        {
-            partialTuple = progressTracker.getEndingPartialTuple();
-        }
+        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+        partialTuple = progressTracker.getEndingPartialTuple();
+    }
+    const auto lastBuffer = std::move(buffersToFormat.back());
+    partialTuple.reserve(partialTuple.size() + lastBuffer.offsetOfFirstTupleDelimiter);
+    const auto hasNoTupleDelimiter = lastBuffer.offsetOfFirstTupleDelimiter == 0 and lastBuffer.offsetOfLastTupleDelimiter == lastBuffer.sizeOfBufferInBytes;
+    const auto endOfLastPartialTuple = (hasNoTupleDelimiter) ? lastBuffer.sizeOfBufferInBytes : lastBuffer.offsetOfFirstTupleDelimiter;
+    const std::string_view lastPartialTuple = std::string_view(lastBuffer.buffer.getBuffer<const char>(), endOfLastPartialTuple);
+    partialTuple.append(lastPartialTuple);
+    if (not(partialTuple.empty()))
+    {
+        progressTracker.processCurrentTuple(std::move(partialTuple), pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+        progressTracker.progressOneTuple();
     }
 
     progressTracker.setNumberOfTuplesInTBFormatted();
@@ -471,84 +563,6 @@ void CSVInputFormatter::parseTupleBufferRaw(
         /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
         pipelineExecutionContext.emitBuffer(
             progressTracker.getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-    }
-}
-void CSVInputFormatter::flushBuffers(
-    NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
-{
-    const auto flushedBuffers = sequenceShredder.flushBuffers();
-    if (flushedBuffers.empty())
-    {
-        return;
-    }
-    // Todo: move below into separate function to de-duplicate
-    auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
-    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-    std::string partialTuple;
-    for (size_t bufferIdx = 0; const auto& stagedBuffer : flushedBuffers)
-    {
-        const auto startOffset
-            = (flushedBuffers.size() > 1 and bufferIdx == flushedBuffers.size() - 1) ? 0 : stagedBuffer.offsetOfFirstTupleDelimiter;
-        const auto endOffset = stagedBuffer.offsetOfLastTupleDelimiter;
-        progressTracker.resetForNewRawTB(
-            stagedBuffer.sizeOfBufferInBytes, stagedBuffer.buffer.getBuffer<const char>(), startOffset, endOffset);
-        /// Process partial tuple of previous buffer, if given, then start to process the rest of the buffer, if there is more
-        if (not(partialTuple.empty()))
-        {
-            partialTuple.reserve(partialTuple.size() + stagedBuffer.offsetOfFirstTupleDelimiter);
-            partialTuple += std::string(progressTracker.getInitialPartialTuple(stagedBuffer.offsetOfFirstTupleDelimiter));
-            parseStringIntoTupleBuffer(
-                partialTuple, *pipelineExecutionContext.getBufferManager(), progressTracker); //Todo: move partial tuple
-            progressTracker.progressOneTuple();
-        }
-
-        /// While the start of the next tuple is not the endOffset (+ sizeOfTupleInBytes) get the next tuple
-        while (progressTracker.hasOneMoreTupleInRawTB())
-        {
-            /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
-            /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            if (not progressTracker.hasSpaceForTupleInTBFormatted())
-            {
-                /// Emit TBF and get new TBF
-                progressTracker.setNumberOfTuplesInTBFormatted();
-                NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker.numTuplesInTBFormatted);
-                /// true triggers adding sequence number, etc.
-                pipelineExecutionContext.emitBuffer(
-                    progressTracker.getTupleBufferFormatted(),
-                    NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-                progressTracker.currentFieldOffsetTBFormatted = 0;
-                progressTracker.numTuplesInTBFormatted = 0;
-            }
-
-            const auto currentTuple = progressTracker.getNextTuple();
-            parseStringIntoTupleBuffer(currentTuple, *pipelineExecutionContext.getBufferManager(), progressTracker);
-
-            progressTracker.progressOneTuple();
-        }
-        ++bufferIdx;
-        //Todo: improve: handle via indexes?
-        /// only set partial tuple, if there is another iteration that may use it
-        if (bufferIdx != flushedBuffers.size())
-        {
-            partialTuple = progressTracker.getEndingPartialTuple();
-        }
-    }
-}
-
-void CSVInputFormatter::parseStringIntoTupleBuffer(
-    const std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider, ProgressTracker& progressTracker) const
-{
-    const boost::char_separator sep{this->fieldDelimiter.c_str()};
-    const boost::tokenizer tupleTokenizer{stringTuple.begin(), stringTuple.end(), sep};
-
-    /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
-    for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
-    {
-        parseFunction(token, progressTracker.getCurrentFieldPointer(), bufferProvider, progressTracker.getTupleBufferFormatted());
-        const auto lastVal = *reinterpret_cast<int32_t*>(progressTracker.getCurrentFieldPointer());
-        std::cout << lastVal << std::endl;
-        progressTracker.currentFieldOffsetTBFormatted += fieldSize;
     }
 }
 

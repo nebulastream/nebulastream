@@ -26,6 +26,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <InputFormatters/InputFormatter.hpp>
+#include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
 {
@@ -69,7 +70,8 @@ private:
     /// Assumptions: input is a string that contains either:
     /// - one complete tuple
     /// - a string containing a partial tuple (potentially with a partial field) and another string that contains the rest of the tuple.
-    void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider, ProgressTracker& progressTracker) const;
+    // void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider, ProgressTracker& progressTracker) const;
+    void formatBuffers(ProgressTracker& progressTracker, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat);
 };
 
 }

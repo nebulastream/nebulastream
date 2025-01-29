@@ -308,10 +308,12 @@ public:
     void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
         auto inputFormatterTask = pipelineTasks.front().getExecutablePipelineStage();
-        auto pipelineExecutionContext = pipelineTasks.front().pipelineExecutionContext;
         enqueueTasks(std::move(pipelineTasks));
         startProcessing();
+        auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
         inputFormatterTask->stop(*pipelineExecutionContext);
+        // Todo: add final buffer that can result from 'stop' call
+        
     }
 
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
