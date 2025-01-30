@@ -437,14 +437,12 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
     /// Reset all values that are tied to a specific rawTB.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
+    // Todo: get of resetting and perform calculations in place
     progressTracker.resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>());
-    // Todo: initiate SequenceShredder with the first bit set and a tuple buffer in it, with no data <-- makes it possible to get rid of specific behavior for first sequence number
     const auto sequenceNumberOfBuffer = rawTB.getSequenceNumber().getRawValue();
-    const auto isFirstSequenceNumber = sequenceNumberOfBuffer == SequenceNumber::INITIAL;
     constexpr auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
-    /// The first buffer has an 'implicit' tuple delimiter
     size_t offsetOfFirstTupleDelimiter = 0;
-    auto offsetOfLastTupleDelimiter = (isFirstSequenceNumber) ? 0 : numBytesInRawTB;
+    auto offsetOfLastTupleDelimiter = numBytesInRawTB;
     offsetOfFirstTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter();
     /// If the buffer contains a tuple delimiter, find the last tuple delimiter
     /// (0 is a valid index for a first tuple delimiter)
@@ -456,8 +454,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
     {
         offsetOfFirstTupleDelimiter = 0;
     }
-    const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0 or isFirstSequenceNumber;
-    const auto numUses = static_cast<uint8_t>(2 - (not(hasTupleDelimiter) or isFirstSequenceNumber));
+    const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0;
+    const auto numUses = static_cast<uint8_t>(2 - not(hasTupleDelimiter));
     // Todo: branch and handle cases differently
 
     if (hasTupleDelimiter)
