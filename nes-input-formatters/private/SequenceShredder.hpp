@@ -155,22 +155,16 @@ private:
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
     static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
 
-public:
     /// The sequence shredder returns 0, 1, or 2 SpanningTuples
     /// The spanning tuple(s) tell the thread that called 'processSequenceNumber()', the range of buffers it needs to format.
     struct SpanningTuple
     {
         SequenceNumberType spanStart;
         SequenceNumberType spanEnd;
-
-        friend std::ostream& operator<<(std::ostream& os, const SpanningTuple& spanningTuple)
-        {
-            os << '[' << spanningTuple.spanStart << "-" << spanningTuple.spanEnd << ']';
-            return os;
-        }
-        bool operator==(const SpanningTuple& other) const = default;
+        bool isStartValid;
+        bool isEndValid;
     };
-
+public:
     explicit SequenceShredder()
         : tail(0)
         , tupleDelimiterBitmaps(BitmapVectorType(INITIAL_NUM_BITMAPS))
@@ -183,10 +177,12 @@ public:
         this->tupleDelimiterBitmaps.shrink_to_fit();
         this->seenAndUsedBitmaps.shrink_to_fit();
 
-        // Todo: initialize sequence shredder so that sequence numbers are mapped 1-1 to bitmap indexes,
-        //  -> i.e., sequence number 1 is the bitIndex 1 of the first bitmap (and not 0)
-        // - then initialize the very first bit/stagedBuffer with a dummy buffer that contains a 'tuple delimiter'
-        // - the dummy tuple buffer simply simulates the implicit 'tuple delimiter' of the first tuple
+        // Todo: with the current approach, the max sequence number(18446744073709551615) would map exactly to the last bit of the largest possible bitmap
+        // Todo: problem:
+        // - there is one invalid sequence number, which means that there will never be possible to cleanly fill all bits and wrap around with the largest SN
+        // - potential solution: initialize (and skip) first bit, detect wrapping around (max SN), and initialize again
+        //      - first initialization: tupDel, with no data (implicit tupDel of first buffer)
+        //      - other initializations: noTupDel, no data (connects next buffer to prior buffer, without interfering)
         tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
         stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, 0, 0, 0, 1};
     };
@@ -351,23 +347,23 @@ public:
                 const auto bitmapSnapshot = std::get<BitmapSnapshot>(snapshot);
                 /// Try to find the start and end of the spanning tuple in the bitmap of the sequence number.
                 /// Sets start/end to INVALID_SEQUENCE_NUMBER (0), if it could not find start/end.
-                const auto validatedSpanningTupleStart = tryGetSpanningTupleStart(
+                const auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
                     sequenceNumberBitIndex,
                     sequenceNumberBitmapOffset,
                     bitmapSnapshot.tupleDelimiterBitmapSnapshot,
                     bitmapSnapshot.seenAndUsedBitmapSnapshot);
-                const auto validatedSpanningTupleEnd = tryGetSpanningTupleEnd(
+                const auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
                     sequenceNumberBitIndex,
                     sequenceNumberBitmapOffset,
                     bitmapSnapshot.tupleDelimiterBitmapSnapshot,
                     bitmapSnapshot.seenAndUsedBitmapSnapshot);
 
-                spanningTuple = SpanningTuple{validatedSpanningTupleStart, validatedSpanningTupleEnd};
+                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
                 break;
             }
             case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
                 const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
-                auto validatedSpanningTupleEnd = tryGetSpanningTupleEnd(
+                auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
                     sequenceNumberBitIndex,
                     sequenceNumberBitmapOffset,
                     bitmapSnapshot.tupleDelimiterVectorSnapshot[sequenceNumberBitmapIndex],
@@ -376,21 +372,21 @@ public:
                 /// If the buffer of the sequence number has tuple delimiter, we always need to check for wrapping, since
                 /// the there are two possible spanning tuples, one starting at the sequence number.
                 /// If it does not have a tuple delimiter, we can abort early, because start and end must both be valid.
-                if (validatedSpanningTupleEnd or HasTupleDelimiter)
+                if (isEndValid or HasTupleDelimiter)
                 {
-                    const auto validatedSpanningTupleStart
+                    const auto [spanningTupleStart, isStartValid]
                         = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                    spanningTuple = SpanningTuple{validatedSpanningTupleStart, validatedSpanningTupleEnd};
+                    spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
                 }
                 else
                 {
-                    spanningTuple = SpanningTuple{INVALID_SEQUENCE_NUMBER, validatedSpanningTupleEnd};
+                    spanningTuple = SpanningTuple{INVALID_SEQUENCE_NUMBER, spanningTupleEnd, false, isEndValid};
                 }
                 break;
             }
             case WrappingMode::CHECK_WRAPPING_TO_HIGHER: {
                 const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
-                auto validatedSpanningTupleStart = tryGetSpanningTupleStart(
+                auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
                     sequenceNumberBitIndex,
                     sequenceNumberBitmapOffset,
                     bitmapSnapshot.tupleDelimiterVectorSnapshot[sequenceNumberBitmapIndex],
@@ -399,32 +395,32 @@ public:
                 /// If the buffer of the sequence number has tuple delimiter, we always need to check for wrapping, since
                 /// the there are two possible spanning tuples, one ending with the sequence number.
                 /// If it does not have a tuple delimiter, we can abort early, because start and end must both be valid.
-                if (validatedSpanningTupleStart or HasTupleDelimiter)
+                if (spanningTupleStart or HasTupleDelimiter)
                 {
-                    const auto validatedSpanningTupleEnd
+                    const auto [spanningTupleEnd, isEndValid]
                         = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                    spanningTuple = SpanningTuple{validatedSpanningTupleStart, validatedSpanningTupleEnd};
+                    spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
                 }
                 else
                 {
-                    spanningTuple = SpanningTuple{validatedSpanningTupleStart, INVALID_SEQUENCE_NUMBER};
+                    spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
                 }
                 break;
             }
             // Todo: test this case specifically!
             case WrappingMode::CHECK_WRAPPING_TO_LOWER_AND_HIGHER: {
                 const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
-                const auto validatedSpanningTupleStart
+                const auto [spanningTupleStart, isStartValid]
                     = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                if (validatedSpanningTupleStart or HasTupleDelimiter)
+                if (spanningTupleStart or HasTupleDelimiter)
                 {
-                    const auto validatedSpanningTupleEnd
+                    const auto [spanningTupleEnd, isEndValid]
                         = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                    spanningTuple = SpanningTuple{validatedSpanningTupleStart, validatedSpanningTupleEnd};
+                    spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
                 }
                 else
                 {
-                    spanningTuple = SpanningTuple{validatedSpanningTupleStart, INVALID_SEQUENCE_NUMBER};
+                    spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
                 }
                 break;
             }
@@ -537,7 +533,7 @@ private:
 
     /// Determines whether the buffer of the sequence number connects to buffer with tuple delimiter, which starts a spanning tuple that spans
     /// into the buffer of the sequence number.
-    SequenceNumberType tryGetSpanningTupleStart(
+    std::pair<SequenceNumberType, bool> tryGetSpanningTupleStart(
         const SequenceNumberType sequenceNumberBitIndex,
         const SequenceNumberType sequenceNumberBitmapOffset,
         const SequenceNumberType& tupleDelimiterBitmap,
@@ -559,13 +555,12 @@ private:
         /// 5. check if the tuple delimiter bitmap contains a '1' at the index (example: bool((1 << 1=)0000001 & 0000001) = true)
         const bool isTupleDelimiter = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & tupleDelimiterBitmap;
         /// 6. set the return value to 0, if the tuple delimiter bitmap contained a '0' at the index, otherwise preserve it
-        const auto validatedSpanningTupleStart = sequenceNumberOfTupleClosestReachableTupleDelimiter & (0 - isTupleDelimiter);
-        return validatedSpanningTupleStart;
+        return std::make_pair(sequenceNumberOfTupleClosestReachableTupleDelimiter, isTupleDelimiter);
     }
 
     /// Determines whether the buffer of the sequence number connects to buffer with tuple delimiter, which ends a spanning tuple that originates
     /// from the buffer of the sequence number, if it has a tuple delimiter, or in an earlier buffer.
-    size_t tryGetSpanningTupleEnd(
+    std::pair<SequenceNumberType, bool> tryGetSpanningTupleEnd(
         const SequenceNumberType sequenceNumberBitIndex,
         const SequenceNumberType sequenceNumberBitmapOffset,
         const SequenceNumberType& tupleDelimiterBitmap,
@@ -590,15 +585,14 @@ private:
         /// 5. check if the tuple delimiter bitmap contains a '1' at the index (example: bool((1 << 6=)1000000 & 1000000) = true)
         const bool isTupleDelimiter = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & tupleDelimiterBitmap;
         /// 6. set the return value to 0, if the tuple delimiter bitmap contained a '0' at the index, otherwise preserve it
-        const auto validatedSpanningTupleEnd = sequenceNumberOfTupleClosestReachableTupleDelimiter & (0 - isTupleDelimiter);
-        return validatedSpanningTupleEnd;
+        return std::make_pair(sequenceNumberOfTupleClosestReachableTupleDelimiter, isTupleDelimiter);
     }
 
     /// Called by a thread that needs to search for the start of a spanning tuple in a lower bitmap than the one that its sequence number maps to.
     /// Skips over buffers that were seen, but did not contain a tuple delimiter, represented by a '0' in the tuple delimiter bitmap and
     /// a '1' in the seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
     /// representing the start of a spanning tuple, otherwise it returns 0 (the INVALID_SEQUENCE_NUMBER).
-    SequenceNumberType tryToFindLowerWrappingSpanningTuple(
+    std::pair<SequenceNumberType, bool> tryToFindLowerWrappingSpanningTuple(
         const size_t sequenceNumberBitmapOffset, const size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot)
     {
         size_t bitmapIndex = currentBitmapIndex;
@@ -636,8 +630,7 @@ private:
             = (sequenceNumberBitmapOffset - (bitmapIndexOffset << BITMAP_SIZE_BIT_SHIFT) + indexOfClosestReachableTupleDelimiter);
         const bool isTupleDelimiter
             = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & bitmapSnapshot.tupleDelimiterVectorSnapshot[bitmapIndex];
-        const auto validatedSpanningTupleStart = sequenceNumberOfClosestReachableTupleDelimiter & (0 - (isTupleDelimiter));
-        return validatedSpanningTupleStart;
+        return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, isTupleDelimiter);
     }
 
     // - while checking bitmaps, the tail can move
@@ -651,7 +644,7 @@ private:
     /// Skips over buffers that were seen, but did not contain a tuple delimiter, represented by a '1' in the tuple delimiter bitmap and a '0'
     /// seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
     /// representing the end of a spanning tuple, otherwise it returns 0 (the INVALID_SEQUENCE_NUMBER).
-    SequenceNumberType tryToFindHigherWrappingSpanningTuple(
+    std::pair<SequenceNumberType, bool> tryToFindHigherWrappingSpanningTuple(
         const size_t sequenceNumberBitmapOffset, const size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot)
     {
         /// Skip bitmaps that consist of only seen buffers without a tuple delimiter
@@ -683,9 +676,7 @@ private:
             << (indexOfClosestReachableTupleDelimiter)&bitmapSnapshot.tupleDelimiterVectorSnapshot[bitmapIndex];
         const auto tailBitmapIndex = bitmapSnapshot.tail & bitmapSnapshot.numberOfBitmapsModulo;
         const auto isNotTailBitmap = bitmapIndex != tailBitmapIndex;
-        const auto validatedSpanningTupleEnd
-            = sequenceNumberOfClosestReachableTupleDelimiter & (0 - (isTupleDelimiter and isNotTailBitmap));
-        return validatedSpanningTupleEnd;
+        return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, (isTupleDelimiter and isNotTailBitmap));
     }
 
     /// Checks results in the absence of a tuple delimiter.
@@ -702,8 +693,7 @@ private:
         const auto bitmapIndexOfSpanningTupleStart = bitmapOfSpanningTupleStart & numberOfBitmapsModuloSnapshot;
         const auto positionOfSpanningTupleStart = ((spanningTuple.spanStart) & BITMAP_SIZE_MODULO);
         /// Check that both the start and the end of the spanning tuple are valid
-        const auto spanningTupleStartIsValid = (spanningTuple.spanStart != INVALID_SEQUENCE_NUMBER);
-        const auto spanningTupleIsValid = spanningTupleStartIsValid and (spanningTuple.spanEnd != INVALID_SEQUENCE_NUMBER);
+        const auto spanningTupleIsValid = spanningTuple.isStartValid and spanningTuple.isEndValid;
         /// If both are valid, move a '1' to the bit position of the start of the spanning tuple
         const auto validatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTupleIsValid)) << positionOfSpanningTupleStart;
 
@@ -723,7 +713,7 @@ private:
         // Todo: remove calculation of exact size (in lock!)?
         // size_t sizeOfStagedBuffersInBytes = stagedBuffers[startIndex].sizeOfBufferInBytes - stagedBuffers[startIndex].offsetOfLastTupleDelimiter;
         size_t sequenceNumberIndex = 0;
-        for (auto spanningTupleIndex = startIndex; spanningTupleIndex < endIndex; ++spanningTupleIndex)
+        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
         {
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
             sequenceNumberIndex = (spanningTupleIndex == sequenceNumberBufferPosition) ? spanningTupleIndex : sequenceNumberIndex;
@@ -761,13 +751,10 @@ private:
         const auto bitmapOfSequenceNumber = sequenceNumber >> BITMAP_SIZE_BIT_SHIFT;
         const auto bitmapIndexOfSpanningSequenceNumber = bitmapOfSequenceNumber & numberOfBitmapsModuloSnapshot;
         const auto positionOfSequenceNumber = (sequenceNumber & BITMAP_SIZE_MODULO);
-        /// Check for both the start and the end of spanning tuple, whether they are valid
-        const auto firstSpanningTupleIsValid = (spanningTuple.spanStart != INVALID_SEQUENCE_NUMBER);
-        const auto secondSpanningTupleIsValid = (spanningTuple.spanEnd != INVALID_SEQUENCE_NUMBER);
         /// If they are valid, move the corresponding '1's to the bit positions of the starts of the respective spanning tuples
-        const auto firstValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(firstSpanningTupleIsValid))
+        const auto firstValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTuple.isStartValid))
             << positionOfSpanningTupleStart;
-        const auto secondValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(secondSpanningTupleIsValid))
+        const auto secondValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTuple.isEndValid))
             << positionOfSequenceNumber;
 
         readWriteMutex
@@ -777,21 +764,21 @@ private:
         seenAndUsedBitmaps[bitmapIndexOfSpanningSequenceNumber] |= secondValidatedSpanningTupleStartBit;
         /// Check if either of the two spanning tuples completed a bitmap (set the last bit in corresponding the seenAndUsed bitmap)
         const auto firstSpanningTupleCompletedBitmap
-            = ((seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] == MAX_VALUE) and firstSpanningTupleIsValid);
+            = ((seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] == MAX_VALUE) and spanningTuple.isStartValid);
         const auto secondSpanningTupleCompletedBitmap
-            = ((seenAndUsedBitmaps[bitmapIndexOfSpanningSequenceNumber] == MAX_VALUE) and secondSpanningTupleIsValid);
+            = ((seenAndUsedBitmaps[bitmapIndexOfSpanningSequenceNumber] == MAX_VALUE) and spanningTuple.isEndValid);
         /// Check if either of the two bitmaps is the current tail-bitmap
         const bool firstSpanningTupleCompletedTailBitmap
             = firstSpanningTupleCompletedBitmap and ((bitmapOfSpanningTupleStart) == this->tail);
         const bool secondSpanningTupleCompletedTailBitmap = secondSpanningTupleCompletedBitmap and ((bitmapOfSequenceNumber) == this->tail);
         /// If one of the two spanning tuples completed a bitmap that is the current tail bitmap, the thread needs to increment the tail
         std::vector<StagedBuffer> returnBuffers{};
-        const auto startIndex = (firstSpanningTupleIsValid) ? spanningTuple.spanStart : sequenceNumber;
-        const auto endIndex = (secondSpanningTupleIsValid) ? spanningTuple.spanEnd : sequenceNumber;
+        const auto startIndex = (spanningTuple.isStartValid) ? spanningTuple.spanStart : sequenceNumber;
+        const auto endIndex = (spanningTuple.isEndValid) ? spanningTuple.spanEnd : sequenceNumber;
         const auto returningMoreThanOnlyBufferOfSequenceNumber = endIndex > (startIndex + 1);
 
         size_t sequenceNumberIndex = 0;
-        for (auto spanningTupleIndex = startIndex; spanningTupleIndex < endIndex; ++spanningTupleIndex)
+        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex) //Todo: since sequenceNumbers now 1-1 map to stagedBuffers, we need to include endIndex
         {
             sequenceNumberIndex = (spanningTupleIndex == sequenceNumberBufferPosition) ? spanningTupleIndex : sequenceNumberIndex;
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.

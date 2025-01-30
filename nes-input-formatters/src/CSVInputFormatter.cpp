@@ -455,8 +455,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         offsetOfFirstTupleDelimiter = 0;
     }
     const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0;
-    const auto numUses = static_cast<uint8_t>(2 - not(hasTupleDelimiter));
-    // Todo: branch and handle cases differently
+    const auto numUses = static_cast<uint8_t>(1 + hasTupleDelimiter);
 
     if (hasTupleDelimiter)
     {
