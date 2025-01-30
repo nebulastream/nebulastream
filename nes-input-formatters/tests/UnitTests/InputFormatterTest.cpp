@@ -46,7 +46,7 @@ public:
 
 
 // [x] 1. finish utils refactoring
-// [ ] 2. enable binding tasks (here rawBuffers) to workerThreadIds
+// [x] 2. enable binding tasks (here rawBuffers) to workerThreadIds
 // [ ] 3. write a decent basis for tests (fix InputFormatter issues) (fix in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
 // [ ] 4. new design for Informar (chunk/synchronize/parse)
 // [ ] 5. multiple stages per task (allow splitting tasks)
@@ -64,46 +64,42 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {{{TestTuple(123456789, 123456789)}}},
-        // .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
-        // Todo: set workerThreadId in TestablePipelineTask? <--- would allow TestTaskQueue to only take tasks
-        // Todo: first buffer should not contain starting delimiter <-- we must recognize first buffer in parser
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
 }
-// Todo: Test out of order
+
+/// Each thread should share the same InputFormatterTask, meaning that we need to check that threads don't interfere with each other's state
+TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
+{
+    // Todo: make assignment of tasks to worker ids explicit
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 2,
+        .numThreads = 2,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        .expectedResults = {{{TestTuple(123456789, 123456789)}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(1), "789"}}});
+}
+
+/// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
+TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOrder)
+{
+    // Todo: make assignment of tasks to worker ids explicit
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 2,
+        .numThreads = 2,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        .expectedResults = {{{TestTuple(123456789, 123456789)}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789"}, /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}}});
+}
 // Todo: add third buffer without delimiter in between two buffers with delimiter
 // Todo: test with multiple tasks per buffer/thread (split tasks)
-// TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
-// {
-//     constexpr size_t NUM_THREADS = 1;
-//     constexpr size_t NUM_TASKS = 1;
-//     constexpr size_t NUM_RESULT_BUFFERS = 1;
-//     auto testBufferManager = getBufferManager(1, 1, 16);
-//     auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_RESULT_BUFFERS);
-//
-//     /// Create and fill buffers for tasks.
-//     using TestTuple = std::tuple<int>;
-//     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32);
-//     auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(42));
-//
-//     /// create task queue and add tasks to it.
-//     TestTaskQueue taskQueue(NUM_THREADS, NUM_TASKS);
-//     auto stage1 = std::make_unique<TestablePipelineStage>(
-//         "step_1",
-//         [](const Memory::TupleBuffer& tupleBuffer, Runtime::Execution::PipelineExecutionContext& pec)
-//         {
-//             auto theNewBuffer = pec.getBufferManager()->getBufferBlocking();
-//             const auto theOnlyIntInBuffer = *tupleBuffer.getBuffer<int>();
-//             *theNewBuffer.getBuffer<int>() = theOnlyIntInBuffer;
-//             pec.emitBuffer(theNewBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-//         });
-//     auto task1
-//         = std::make_unique<TestablePipelineTask>(SequenceNumber(0), testTupleBuffer, std::move(stage1), testBufferManager, resultBuffers);
-//
-//     taskQueue.enqueueTask(std::move(task1));
-//
-//     taskQueue.waitForCompletion();
-//     ASSERT_FALSE(resultBuffers->at(0).empty());
-//     auto resultBuffer = resultBuffers->at(0).at(0);
-//     ASSERT_EQ(*resultBuffer.getBuffer<int>(), 42);
-// }
 }

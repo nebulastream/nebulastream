@@ -471,7 +471,11 @@ void CSVInputFormatter::parseTupleBufferRaw(
                 .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
                 .uses = numUses},
             sequenceNumberOfBuffer);
-
+        /// Skip, if there is only a single buffer, with a single tuple delimiter, since there are no possible tuples to parse
+        if (buffersToFormat.size() == 1 and (buffersToFormat[0].offsetOfFirstTupleDelimiter == buffersToFormat[0].offsetOfLastTupleDelimiter))
+        {
+            return;
+        }
         /// 0. Allocate formatted buffer to write formatted tuples into.
         progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
