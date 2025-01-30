@@ -36,7 +36,7 @@ public:
     static constexpr uint64_t DATA_SIZE = 1073741824; /// 1GB
 
     /// INFO: Each experiment will run NUM_MEASUREMENTS many times
-    static constexpr uint64_t NUM_MEASUREMENTS = 1;
+    static constexpr uint64_t NUM_MEASUREMENTS = 2;
 
     static void SetUpTestSuite()
     {
@@ -61,15 +61,15 @@ public:
             ->addField("f9", BasicType::UINT64);
     }
 
-    static std::vector<std::tuple<uint8_t, uint64_t>> getFieldTypeSizes(const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
+    static std::vector<std::tuple<FieldType, uint64_t>> getFieldTypeSizes(const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
     {
-        std::vector<std::tuple<uint8_t, uint64_t>> fieldTypeSizes;
+        std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
         const auto schema = memoryLayout->getSchema();
         const auto keyFieldNames = memoryLayout->getKeyFieldNames();
 
         for (auto fieldIdx = 0UL; fieldIdx < schema->getFieldCount(); ++fieldIdx)
         {
-            uint8_t fieldType = PAYLOAD;
+            FieldType fieldType = PAYLOAD;
             if (std::ranges::find(keyFieldNames, schema->getFieldNames()[fieldIdx]) != keyFieldNames.end())
             {
                 fieldType = KEY;
@@ -111,7 +111,6 @@ public:
             }
         }
 
-        NES_ASSERT2_FMT(keySize + payloadSize == memoryLayout->getTupleSize(), "Error occurred in getKeyAndPayloadSizes");
         return std::make_tuple(keySize, payloadSize);
     }
 
@@ -269,13 +268,13 @@ public:
         {
             payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
         }
-        ASSERT_TRUE(payloadFile);
+        ASSERT_TRUE(payloadFile.is_open());
         ASSERT_EQ(payloadFile.tellp(), 0);
         if constexpr (SeparateKeys == SEPARATE_FILES)
         {
             ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
-            ASSERT_TRUE(keyFile);
+            ASSERT_TRUE(keyFile.is_open());
             ASSERT_EQ(keyFile.tellp(), 0);
         }
 
@@ -433,13 +432,13 @@ public:
         std::ifstream keyFile;
 
         payloadFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
-        ASSERT_TRUE(payloadFile);
+        ASSERT_TRUE(payloadFile.is_open());
         ASSERT_EQ(payloadFile.tellg(), 0);
         if constexpr (SeparateKeys == SEPARATE_FILES)
         {
             ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ifstream(fileNames.at(1), std::ios::in | std::ios::binary);
-            ASSERT_TRUE(keyFile);
+            ASSERT_TRUE(keyFile.is_open());
             ASSERT_EQ(keyFile.tellg(), 0);
         }
 
@@ -605,10 +604,70 @@ public:
         NES_INFO("PagedVectors compared in {} ms", timeInMs);
     }
 
-    static void createMeasurementsCSV(const std::string& fileName, const std::vector<double>& execTimesInMs)
+    template <SeparateKeys SeparateKeys>
+    static std::string createMeasurementsFileName(
+        const uint64_t bufferSize, const uint64_t fileBufferSizePercent, const std::vector<std::string>& keyFieldNames)
     {
-        (void)fileName;
-        (void)execTimesInMs;
+        std::string separateKeys;
+        std::stringstream filename;
+
+        if constexpr (SeparateKeys == NO_SEPARATION)
+        {
+            separateKeys = "NO_SEPARATION";
+        }
+        else if constexpr (SeparateKeys == SAME_FILE_KEYS)
+        {
+            separateKeys = "SAME_FILE_KEYS";
+        }
+        else if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+        {
+            separateKeys = "SAME_FILE_PAYLOAD";
+        }
+        else if constexpr (SeparateKeys == SEPARATE_FILES)
+        {
+            separateKeys = "SEPARATE_FILES";
+        }
+
+        filename << "../../../micro_benchmarks_" << separateKeys;
+        filename << "_bufferSize_" << bufferSize;
+        filename << "_fileBufferSizePercent_" << fileBufferSizePercent;
+        filename << "_keys";
+        for (const auto& key : keyFieldNames)
+        {
+            filename << "_" << key;
+        }
+        filename << ".csv";
+
+        return filename.str();
+    }
+
+    template <SeparateKeys SeparateKeys>
+    static void createMeasurementsCSV(
+        const std::vector<double>& execTimesInMs,
+        const uint64_t bufferSize,
+        const uint64_t fileBufferSizePercent,
+        const std::vector<std::string>& keyFieldNames)
+    {
+        std::ofstream file(
+            createMeasurementsFileName<SeparateKeys>(bufferSize, fileBufferSizePercent, keyFieldNames), std::ios::out | std::ios::trunc);
+        ASSERT_TRUE(file.is_open());
+
+        ASSERT_EQ(execTimesInMs.size(), 5 * NUM_MEASUREMENTS);
+        const auto numRows = execTimesInMs.size() / 5;
+        for (auto i = 0UL; i < numRows; ++i)
+        {
+            for (auto j = 0UL; j < 5; ++j)
+            {
+                file << execTimesInMs[i * 5 + j];
+                if (j < 4)
+                {
+                    file << ",";
+                }
+            }
+            file << "\n";
+        }
+
+        file.close();
     }
 
     template <SeparateKeys SeparateKeys>
@@ -616,18 +675,18 @@ public:
     {
         std::vector<double> execTimesInMs;
 
+        const auto [bufferSize, fileBufferSizePercent, keyFieldNames] = GetParam();
+        const auto numBuffers = DATA_SIZE / bufferSize;
+        const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+
+        std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
+        if constexpr (SeparateKeys == SEPARATE_FILES)
+        {
+            fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
+        }
+
         for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
         {
-            const auto [bufferSize, fileBufferSizePercent, keyFieldNames] = GetParam();
-            const auto numBuffers = DATA_SIZE / bufferSize;
-            const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
-
-            std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
-            if constexpr (SeparateKeys == SEPARATE_FILES)
-            {
-                fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
-            }
-
             const auto testSchema = createSchema();
             const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
             const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
@@ -654,8 +713,7 @@ public:
             comparePagedVectors(expectedPagedVector, pagedVector, execTimesInMs);
         }
 
-        ASSERT_EQ(execTimesInMs.size(), 5 * NUM_MEASUREMENTS);
-        createMeasurementsCSV("fileName.csv", execTimesInMs);
+        createMeasurementsCSV<SeparateKeys>(execTimesInMs, bufferSize, fileBufferSizePercent, keyFieldNames);
     }
 };
 
