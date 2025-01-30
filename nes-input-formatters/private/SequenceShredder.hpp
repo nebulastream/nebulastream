@@ -184,7 +184,7 @@ public:
         //      - first initialization: tupDel, with no data (implicit tupDel of first buffer)
         //      - other initializations: noTupDel, no data (connects next buffer to prior buffer, without interfering)
         tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, 0, 0, 0, 1};
+        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, 1, 0, 0, 1};
     };
 
     explicit SequenceShredder(const size_t initialTail)
@@ -709,15 +709,11 @@ private:
         std::vector<StagedBuffer> returnBuffers{};
         const auto startIndex = ((spanningTupleIsValid) ? spanningTuple.spanStart : sequenceNumber);
         const auto endIndex = ((spanningTupleIsValid) ? spanningTuple.spanEnd : sequenceNumber);
-        const auto returningMoreThanOnlyBufferOfSequenceNumber = endIndex > (startIndex + 1);
+        const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
         // Todo: remove calculation of exact size (in lock!)?
-        // size_t sizeOfStagedBuffersInBytes = stagedBuffers[startIndex].sizeOfBufferInBytes - stagedBuffers[startIndex].offsetOfLastTupleDelimiter;
-        size_t sequenceNumberIndex = 0;
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
         {
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            sequenceNumberIndex = (spanningTupleIndex == sequenceNumberBufferPosition) ? spanningTupleIndex : sequenceNumberIndex;
-            // sizeOfStagedBuffersInBytes += stagedBuffers[spanningTupleIndex].sizeOfBufferInBytes;
             stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
             auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex])
                                                                               : stagedBuffers[spanningTupleIndex];
@@ -731,7 +727,8 @@ private:
             incrementTail();
         }
         readWriteMutex.unlock();
-        // Todo: index is wrong!
+
+        const size_t sequenceNumberIndex = sequenceNumberBufferPosition - startIndex;
         return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = sequenceNumberIndex, .stagedBuffers = std::move(returnBuffers)};
     }
 
@@ -775,12 +772,10 @@ private:
         std::vector<StagedBuffer> returnBuffers{};
         const auto startIndex = (spanningTuple.isStartValid) ? spanningTuple.spanStart : sequenceNumber;
         const auto endIndex = (spanningTuple.isEndValid) ? spanningTuple.spanEnd : sequenceNumber;
-        const auto returningMoreThanOnlyBufferOfSequenceNumber = endIndex > (startIndex + 1);
+        const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
 
-        size_t sequenceNumberIndex = 0;
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex) //Todo: since sequenceNumbers now 1-1 map to stagedBuffers, we need to include endIndex
         {
-            sequenceNumberIndex = (spanningTupleIndex == sequenceNumberBufferPosition) ? spanningTupleIndex : sequenceNumberIndex;
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
             stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
             auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex])
@@ -793,6 +788,8 @@ private:
             incrementTail();
         }
         readWriteMutex.unlock();
+
+        const size_t sequenceNumberIndex = sequenceNumberBufferPosition - startIndex;
         return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = sequenceNumberIndex, .stagedBuffers = std::move(returnBuffers)};
     }
 

@@ -16,7 +16,8 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES}
-        include/InputFormatters/InputFormatter.hpp)
+        include/InputFormatters/InputFormatter.hpp
+        src/TestExpected.hpp)
 
 target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory nes-runtime)
 

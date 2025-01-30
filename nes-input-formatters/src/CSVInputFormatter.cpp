@@ -47,7 +47,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include "InputFormatters/InputFormatter.hpp"
+#include <InputFormatters/InputFormatter.hpp>
 
 namespace NES::InputFormatters
 {
@@ -477,10 +477,12 @@ void CSVInputFormatter::parseTupleBufferRaw(
         progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
         /// 1. Process leading partial tuple if exists
-        if (indexOfBuffer != 0)
+        const auto hasLeadingPartialTuple = (indexOfBuffer != 0);
+        if (hasLeadingPartialTuple)
         {
             processPartialTuple(0, indexOfBuffer, buffersToFormat, progressTracker, pipelineExecutionContext);
         }
+        progressTracker.getTupleBufferFormatted().setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
 
         /// 2. Process buffer itself // <-- Todo: skip if TB only has a single tuple delimiter?
         const auto& bufferOfSequenceNumber = buffersToFormat[indexOfBuffer];
@@ -498,7 +500,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
             processPartialTuple(indexOfBuffer, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
-        finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + static_cast<uint64_t>(hasTrailingPartialTuple));
+        finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
         pipelineExecutionContext.emitBuffer(
                     finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -536,8 +538,9 @@ void CSVInputFormatter::processPartialTuple(const size_t partialTupleStartIdx, c
     // partialTuple.reserve(buffersToFormat.size() * numBytesInRawTB); //Todo: return exact size from SequenceShredder?
     /// 1. Process the first buffer
     const auto& firstBuffer = buffersToFormat[partialTupleStartIdx]; //Todo: move buffers? clashes with surrounding code
+    const auto sizeOfLeadingPartialTuple = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + 1);
     const std::string_view firstPartialTuple = std::string_view(
-        firstBuffer.buffer.getBuffer<const char>() + firstBuffer.offsetOfLastTupleDelimiter, firstBuffer.sizeOfBufferInBytes);
+        firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
     partialTuple.append(firstPartialTuple);
     /// 2. Process all buffers in-between the first and the last
     for (size_t bufferIndex = 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
@@ -547,6 +550,10 @@ void CSVInputFormatter::processPartialTuple(const size_t partialTupleStartIdx, c
             = std::string_view(currentBuffer.buffer.getBuffer<const char>(), currentBuffer.sizeOfBufferInBytes);
         partialTuple.append(intermediatePartialTuple);
     }
+    // Todo: there may only be two buffers making up a SpanningTuple
+    // Todo: we include the tuple delimiters in the offset calculations
+
+
     /// 3. Process the last buffer
     const auto& lastBuffer = buffersToFormat[partialTupleEndIdx];
     const std::string_view lastPartialTuple

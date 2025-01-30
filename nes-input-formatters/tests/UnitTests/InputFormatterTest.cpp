@@ -111,13 +111,13 @@ TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 2,
+    runTest<TestTuple, true>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 4,
         .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 12345), TestTuple{12345, 123456789}}}}, //Todo: expected result per worker thread?
+        .expectedResults = {{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}, //Todo: expected result per worker thread?
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
 }

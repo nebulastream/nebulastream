@@ -161,7 +161,7 @@ TestablePipelineTask createInputFormatterTask(
         testHandle.operatorHandlers);
 }
 
-template <typename TupleSchemaTemplate>
+template <typename TupleSchemaTemplate, bool PrintDebug>
 bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     /// check that vectors of vectors contain the same number of vectors.
@@ -177,6 +177,15 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
         /// in the expected results.
         for (size_t bufferIndex = 0; const auto& actualResultBuffer : actualResultVector)
         {
+            if (PrintDebug)
+            {
+                /// If specified, print the contents of the buffers.
+                auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
+                actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
+                auto expectedTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
+                expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
+                NES_DEBUG("\n Actual result buffer:   {} Expected result buffer: {}", actualResultTestBuffer.toString(testHandle.schema, false), expectedTestBuffer.toString(testHandle.schema, false));
+            }
             isValid &= TestUtil::checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
             ++bufferIndex;
@@ -266,7 +275,7 @@ std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
     return rawTupleBuffers;
 }
 
-template <typename TupleSchemaTemplate>
+template <typename TupleSchemaTemplate, bool PrintDebug = false>
 void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
     /// setup buffer manager, container for results, schema, operator handlers, and the task queue
@@ -281,7 +290,8 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
     /// validate: actual results vs expected results
-    ASSERT_TRUE(validateResult(testHandle));
+    const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
+    ASSERT_TRUE(validationResult);
     /// clean up
     testHandle.destroy();
 }

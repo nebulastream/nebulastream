@@ -304,9 +304,9 @@ public:
             workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
             workerThreads.wait();
             temporaryResultBuffers = pipelineExecutionContext->takeTemporaryResultBuffers();
-            if (not(temporaryResultBuffers.empty()))
+            for (const auto& resultBuffer : temporaryResultBuffers)
             {
-                resultBuffers->at(responsibleWorkerThread.getRawValue()) = std::move(temporaryResultBuffers);
+                resultBuffers->at(responsibleWorkerThread.getRawValue()).emplace_back(resultBuffer);
             }
         }
         /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
@@ -323,11 +323,10 @@ public:
         workerThreads.wait();
 
         temporaryResultBuffers = pipelineExecutionContext->takeTemporaryResultBuffers();
-        if (not(temporaryResultBuffers.empty()))
+        for (const auto& resultBuffer : temporaryResultBuffers)
         {
-            resultBuffers->at(idxOfWorkerThreadForFlushTask) = std::move(temporaryResultBuffers);
+            resultBuffers->at(idxOfWorkerThreadForFlushTask).emplace_back(resultBuffer);
         }
-
     }
 
     void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
