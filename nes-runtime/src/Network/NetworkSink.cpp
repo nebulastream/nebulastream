@@ -544,7 +544,8 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     }
     if (shouldBuffer) {
-        NES_ERROR("thread {} finished unbuffering", workerContext.getId());
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("thread {} finished unbuffering at {}", workerContext.getId(), time);
     }
 }
 

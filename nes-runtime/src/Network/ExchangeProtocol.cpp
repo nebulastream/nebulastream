@@ -110,10 +110,11 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer&
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer, false);
         if (numbOfBuffers > 0) {
+            auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             if (messageSequenceData.sequenceNumber == 1) {
-                NES_ERROR("started receiving tuples {}", messageSequenceData.sequenceNumber);
+                NES_ERROR("started receiving tuples {} at {}", messageSequenceData.sequenceNumber, time);
             } else if (messageSequenceData.sequenceNumber == numbOfBuffers - 1) {
-                NES_ERROR("finished receiving tuples {}", messageSequenceData.sequenceNumber);
+                NES_ERROR("finished receiving tuples {} at {}", messageSequenceData.sequenceNumber, time);
             }
         }
     } else {
