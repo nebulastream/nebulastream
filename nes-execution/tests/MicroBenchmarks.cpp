@@ -289,12 +289,13 @@ public:
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
 
-        const uint64_t numBuffers = std::ceil(bufferSize * numPages / fileBufferSize);
+        const uint64_t numBuffers = std::ceil(static_cast<double>(bufferSize * numPages) / fileBufferSize);
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
         // TODO if constexpr
         const auto keyFileWriteSize
             = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_KEYS ? numPagesPerBuffer * capacity * keySize : 0;
-        const auto payloadFileWriteSize = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD
+        const auto payloadFileWriteSize
+            = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SAME_FILE_KEYS
             ? numPagesPerBuffer * capacity * payloadSize
             : fileBufferSize;
         const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
@@ -456,6 +457,12 @@ public:
 
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
+
+        // TODO if constexpr
+        if (SeparateKeys == SAME_FILE_PAYLOAD && payloadSize == 0)
+        {
+            newPagedVector = pagedVector;
+        }
 
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
         // TODO if constexpr
@@ -685,13 +692,13 @@ public:
             fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
         }
 
+        const auto testSchema = createSchema();
+        const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
+        const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+        memoryLayout->setKeyFieldNames(keyFieldNames);
+
         for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
         {
-            const auto testSchema = createSchema();
-            const auto bufferManager = Memory::BufferManager::create(bufferSize, 3 * numBuffers);
-            const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-            memoryLayout->setKeyFieldNames(keyFieldNames);
-
             auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimesInMs);
             NES_INFO("PagedVector copying...");
             const auto expectedPagedVector = copyPagedVector(*pagedVector);
