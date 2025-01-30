@@ -13,19 +13,19 @@
 */
 
 #include <API/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/CeilUnaryLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivBinaryLogicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <Functions/ArithmeticalFunctions/DivPhysicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubPhysicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/LogicalFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/MulBinaryLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubBinaryLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/EqualsPhysicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegatePhysicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -76,7 +76,7 @@ TEST_F(FunctionProviderTest, testLoweringAdd)
     LogicalFunctionAdd->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(LogicalFunctionAdd);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionAdd*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::AddPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringDiv)
@@ -85,7 +85,7 @@ TEST_F(FunctionProviderTest, testLoweringDiv)
     DivBinaryLogicalFunction->inferStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(DivBinaryLogicalFunction);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionDiv*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::DivPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringSub)
@@ -94,7 +94,7 @@ TEST_F(FunctionProviderTest, testLoweringSub)
     SubBinaryLogicalFunction->inferStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(SubBinaryLogicalFunction);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionSub*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::SubPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringMul)
@@ -103,7 +103,7 @@ TEST_F(FunctionProviderTest, testLoweringMul)
     MulBinaryLogicalFunction->inferStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(MulBinaryLogicalFunction);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionMul*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::MulPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringEquals)
@@ -112,7 +112,7 @@ TEST_F(FunctionProviderTest, testLoweringEquals)
     EqualsBinaryLogicalFunction->inferStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(EqualsBinaryLogicalFunction);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionEquals*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::EqualsPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringNegate)
@@ -121,7 +121,7 @@ TEST_F(FunctionProviderTest, testLoweringNegate)
     NegateUnaryLogicalFunction->inferStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(NegateUnaryLogicalFunction);
     ASSERT_TRUE(executableFunction);
-    EXPECT_TRUE(dynamic_cast<Functions::ExecutableFunctionNegate*>(executableFunction.get()));
+    EXPECT_TRUE(dynamic_cast<Functions::NegatePhysicalFunction*>(executableFunction.get()));
 }
 
 }

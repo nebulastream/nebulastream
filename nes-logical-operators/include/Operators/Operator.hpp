@@ -18,13 +18,10 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
-#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
 #include <fmt/base.h>
-#include <fmt/ostream.h>
 
 namespace NES
 {
@@ -38,6 +35,7 @@ OperatorId getNextOperatorId();
 class Operator : public std::enable_shared_from_this<Operator>
 {
 public:
+    Operator() : id(getNextOperatorId()) {}; // New option to just create it without Id. Needed for the physical operators
     explicit Operator(OperatorId id);
     virtual ~Operator() noexcept = default;
 
@@ -47,7 +45,12 @@ public:
     /// Create duplicate of this operator by copying its context information and also its parent and child operator set.
     std::shared_ptr<Operator> duplicate();
 
-    virtual std::shared_ptr<Operator> clone() const= 0;
+    virtual std::shared_ptr<Operator> clone() const = 0;
+
+    /// Are the operators equal. Does not check for equal id
+    virtual bool operator==(const Operator& rhs) const = 0;
+    /// Are the operators equal and share the same id
+    virtual bool isIdentical(const Operator& rhs) const = 0;
 
     bool hasMultipleChildrenOrParents() const;
     bool hasMultipleChildren() const;
@@ -71,10 +74,6 @@ public:
     bool hasProperty(const std::string& key) const;
 
     virtual std::vector<OriginId> getOutputOriginIds() const = 0;
-
-    virtual bool isIdentical(std::shared_ptr<Operator> const& rhs) const = 0;
-    virtual bool equal(std::shared_ptr<Operator> const& rhs) const = 0;
-
 
     template <class OperatorType>
     void getOperatorByTypeHelper(std::vector<std::shared_ptr<OperatorType>>& foundNodes)
@@ -142,7 +141,7 @@ public:
     {
         for (auto&& currentNode : nodes)
         {
-            if (nodeToFind->equal(currentNode))
+            if (nodeToFind == currentNode)
             { /// TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
                 return currentNode;
             }
@@ -340,13 +339,13 @@ public:
             return true;
         }
 
-        if (oldNode->isIdentical(newNode))
+        if (newNode && oldNode->isIdentical(*newNode))
         {
             NES_WARNING("Node: the new node was the same so will skip replace operation.");
             return true;
         }
 
-        if (!oldNode->equal(newNode))
+        if (oldNode != newNode)
         {
             /// newNode is already inside children or parents and it's not oldNode
             if (find(children, newNode) || find(parents, newNode))

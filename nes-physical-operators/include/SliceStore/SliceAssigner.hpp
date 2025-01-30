@@ -16,7 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <Operators/SliceStore/Slice.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 

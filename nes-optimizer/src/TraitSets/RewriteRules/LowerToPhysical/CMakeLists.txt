@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-        LowerToPhysicalJoin.cpp
+        LowerToPhysicalNLJoin.cpp
         LowerToPhysicalMap.cpp
         LowerToPhysicalSelection.cpp
 )

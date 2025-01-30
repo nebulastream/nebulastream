@@ -37,7 +37,7 @@ SubBinaryLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, c
     return subNode;
 }
 
-bool SubBinaryLogicalFunction::equal(std::shared_ptr<Operator> const& rhs) const
+bool SubBinaryLogicalFunction::operator==(Operator const& rhs) const
 {
     if (NES::Util::instanceOf<SubBinaryLogicalFunction>(rhs))
     {

@@ -18,7 +18,7 @@
 #include <Functions/LogicalFunctions/AndBinaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,18 +36,18 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
 {
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
-    std::set<std::shared_ptr<LogicalSelectionOperator>> filterOperatorsSet;
+    std::set<std::shared_ptr<SelectionLogicalOperator>> filterOperatorsSet;
     for (const std::shared_ptr<Operator>& rootOperator : rootOperators)
     {
-        auto filters = rootOperator->getOperatorsByType<LogicalSelectionOperator>();
+        auto filters = rootOperator->getOperatorsByType<SelectionLogicalOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
-    std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
+    std::vector<std::shared_ptr<SelectionLogicalOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
-        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs) { return lhs->getId() < rhs->getId(); });
+        [](const std::shared_ptr<SelectionLogicalOperator>& lhs, const std::shared_ptr<SelectionLogicalOperator>& rhs) { return lhs->getId() < rhs->getId(); });
     auto originalQueryPlan = queryPlan->clone();
     try
     {
@@ -66,19 +66,19 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     }
 }
 
-void FilterSplitUpRule::splitUpFilters(std::shared_ptr<LogicalSelectionOperator> filterOperator)
+void FilterSplitUpRule::splitUpFilters(std::shared_ptr<SelectionLogicalOperator> filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.
     if (Util::instanceOf<AndBinaryLogicalFunction>(filterOperator->getPredicate()))
     {
         /// create filter that contains function1 of the andFunction
-        auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->clone());
+        auto child1 = Util::as<SelectionLogicalOperator>(filterOperator->clone());
         child1->setId(getNextOperatorId());
         child1->setPredicate(Util::as<LogicalFunction>(filterOperator->getPredicate()->children[0]));
 
         /// create filter that contains function2 of the andFunction
-        auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->clone());
+        auto child2 = Util::as<SelectionLogicalOperator>(filterOperator->clone());
         child2->setId(getNextOperatorId());
         child2->setPredicate(Util::as<LogicalFunction>(filterOperator->getPredicate()->children[1]));
 

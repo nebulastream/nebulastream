@@ -16,7 +16,7 @@
 #include <utility>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -28,18 +28,16 @@
 namespace NES
 {
 
-bool SinkLogicalOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool SinkLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const SinkLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool SinkLogicalOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool SinkLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
-    {
-        const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return this->sinkName == sinkOperator->sinkName
-            and ((this->sinkDescriptor) ? this->sinkDescriptor == sinkOperator->sinkDescriptor : true);
+    if (const auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs)) {
+        return this->sinkName == rhsOperator->sinkName
+            and ((this->sinkDescriptor) ? this->sinkDescriptor == rhsOperator->sinkDescriptor : true);
     }
     return false;
 };
@@ -54,7 +52,7 @@ std::string SinkLogicalOperator::toString() const
 }
 bool SinkLogicalOperator::inferSchema()
 {
-    const auto result = LogicalUnaryOperator::inferSchema();
+    const auto result = UnaryLogicalOperator::inferSchema();
 
     if (result && sinkDescriptor)
     {

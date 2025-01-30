@@ -12,7 +12,7 @@
 
 add_source_files(nes-logical-operators
         LogicalWindowDescriptor.cpp
-        LogicalWindowOperator.cpp
+        WindowLogicalOperator.cpp
         WindowOperator.cpp
 )
 

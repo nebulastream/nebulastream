@@ -11,11 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        Map.cpp
-        Selection.cpp
+        MapPhysicalOperator.cpp
+        SelectionPhysicalOperator.cpp
         PhysicalOperator.cpp
-        Emit.cpp
-        Scan.cpp)
+        EmitPhysicalOperator.cpp
+        ScanPhysicalOperator.cpp)
 
 add_subdirectory(Watermark)
 add_subdirectory(Functions)

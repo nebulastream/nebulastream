@@ -21,14 +21,12 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Operators/Operator.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <SliceStore/Slice.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <OperatorState.hpp>
 #include <val_ptr.hpp>
@@ -39,7 +37,7 @@ namespace NES
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
 /// corresponding slice one after the other. Afterward, the second phase (NLJProbe) will start joining the tuples
 /// via two nested loops.
-class NLJBuild final : public StreamJoinBuild
+class NLJBuild final : public StreamJoinBuildPhysicalOperator
 {
 public:
     /// Local state stores all the necessary variables for the current slice,

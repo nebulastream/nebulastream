@@ -12,7 +12,7 @@
 
 add_source_files(nes-query-compiler
         QueryCompiler.cpp
-        FunctionProvider.cpp
+        ../../nes-physical-operators/src/Functions/FunctionProvider.cpp
 )
 
 add_subdirectory(Phases)

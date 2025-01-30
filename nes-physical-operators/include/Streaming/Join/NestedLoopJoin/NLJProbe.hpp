@@ -16,24 +16,23 @@
 
 #include <cstdint>
 #include <memory>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Execution.hpp>
+#include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES
 {
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
-class NLJProbe final : public StreamJoinProbe
+class NLJProbe final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbe(
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::Function>& joinFunction,
+        const std::shared_ptr<Functions::PhysicalFunction>& joinFunction,
         const WindowMetaData& windowMetaData,
         const JoinSchema& joinSchema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,

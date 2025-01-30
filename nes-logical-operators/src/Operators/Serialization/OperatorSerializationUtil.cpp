@@ -16,18 +16,16 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -42,9 +40,9 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
@@ -78,58 +76,58 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         /// serialize sink operator
         serializeSinkOperator(*NES::Util::as<SinkLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
+    else if (NES::Util::instanceOf<SelectionLogicalOperator>(operatorNode))
     {
-        serializeSelectionOperator(*NES::Util::as<LogicalSelectionOperator>(operatorNode), serializedOperator);
+        serializeSelectionOperator(*NES::Util::as<SelectionLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
+    else if (NES::Util::instanceOf<ProjectionLogicalOperator>(operatorNode))
     {
         /// serialize projection operator
-        serializeProjectionOperator(*NES::Util::as<LogicalProjectionOperator>(operatorNode), serializedOperator);
+        serializeProjectionOperator(*NES::Util::as<ProjectionLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalUnionOperator>(operatorNode))
+    else if (NES::Util::instanceOf<UnionLogicalOperator>(operatorNode))
     {
         /// serialize union operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to LogicalUnionOperator");
+        NES_TRACE("OperatorSerializationUtil:: serialize to UnionLogicalOperator");
         const auto unionDetails = SerializableOperator_UnionDetails();
         serializedOperator.mutable_details()->PackFrom(unionDetails);
     }
-    else if (NES::Util::instanceOf<LogicalMapOperator>(operatorNode))
+    else if (NES::Util::instanceOf<MapLogicalOperator>(operatorNode))
     {
         /// serialize map operator
-        serializeMapOperator(*NES::Util::as<LogicalMapOperator>(operatorNode), serializedOperator);
+        serializeMapOperator(*NES::Util::as<MapLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
+    else if (NES::Util::instanceOf<InferModel::InferModelLogicalOperator>(operatorNode))
     {
         /// serialize infer model
-        serializeInferModelOperator(*NES::Util::as<InferModel::LogicalInferModelOperator>(operatorNode), serializedOperator);
+        serializeInferModelOperator(*NES::Util::as<InferModel::InferModelLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalWindowOperator>(operatorNode))
+    else if (NES::Util::instanceOf<WindowLogicalOperator>(operatorNode))
     {
         /// serialize window operator
-        serializeWindowOperator(*NES::Util::as<LogicalWindowOperator>(operatorNode), serializedOperator);
+        serializeWindowOperator(*NES::Util::as<WindowLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalJoinOperator>(operatorNode))
+    else if (NES::Util::instanceOf<JoinLogicalOperator>(operatorNode))
     {
         /// serialize streaming join operator
-        serializeJoinOperator(*NES::Util::as<LogicalJoinOperator>(operatorNode), serializedOperator);
+        serializeJoinOperator(*NES::Util::as<JoinLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<LogicalLimitOperator>(operatorNode))
+    else if (NES::Util::instanceOf<LimitLogicalOperator>(operatorNode))
     {
         /// serialize limit operator
-        serializeLimitOperator(*NES::Util::as<LogicalLimitOperator>(operatorNode), serializedOperator);
+        serializeLimitOperator(*NES::Util::as<LimitLogicalOperator>(operatorNode), serializedOperator);
     }
     else if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(operatorNode))
     {
         /// serialize watermarkAssigner operator
         serializeWatermarkAssignerOperator(*NES::Util::as<WatermarkAssignerLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<RenameSourceOperator>(operatorNode))
+    else if (NES::Util::instanceOf<RenameSourceLogicalOperator>(operatorNode))
     {
         /// Serialize rename source operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceOperator");
+        NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceLogicalOperator");
         auto renameDetails = SerializableOperator_RenameDetails();
-        renameDetails.set_newsourcename(NES::Util::as<RenameSourceOperator>(operatorNode)->getNewSourceName());
+        renameDetails.set_newsourcename(NES::Util::as<RenameSourceLogicalOperator>(operatorNode)->getNewSourceName());
         serializedOperator.mutable_details()->PackFrom(renameDetails);
     }
     else
@@ -153,9 +151,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     }
 
     /// serialize and append origin id
-    if (NES::Util::instanceOf<LogicalBinaryOperator>(operatorNode))
+    if (NES::Util::instanceOf<BinaryLogicalOperator>(operatorNode))
     {
-        const auto binaryOperator = NES::Util::as<LogicalBinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryLogicalOperator>(operatorNode);
         for (const auto& originId : binaryOperator->getLeftInputOriginIds())
         {
             serializedOperator.add_leftoriginids(originId.getRawValue());
@@ -167,7 +165,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     }
     else
     {
-        const auto unaryOperator = NES::Util::as<LogicalUnaryOperator>(operatorNode);
+        const auto unaryOperator = NES::Util::as<UnaryLogicalOperator>(operatorNode);
         for (const auto& originId : unaryOperator->getInputOriginIds())
         {
             serializedOperator.add_originids(originId.getRawValue());
@@ -178,13 +176,13 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     return serializedOperator;
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
+std::shared_ptr<UnaryLogicalOperator> deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
 {
     const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
-    return std::make_shared<LogicalSelectionOperator>(filterFunction, getNextOperatorId());
+    return std::make_shared<SelectionLogicalOperator>(filterFunction, getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
+std::shared_ptr<UnaryLogicalOperator> deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
 {
     /// serialize and append children if the node has any
     std::vector<std::shared_ptr<LogicalFunction>> exps;
@@ -194,27 +192,27 @@ std::shared_ptr<LogicalUnaryOperator> deserializeProjectionOperator(const Serial
         exps.push_back(projectFunction);
     }
 
-    return std::make_shared<LogicalProjectionOperator>(exps, getNextOperatorId());
+    return std::make_shared<ProjectionLogicalOperator>(exps, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::deserializeInputSchema(
     std::shared_ptr<LogicalOperator> operatorNode, const SerializableOperator& serializedOperator)
 {
     /// de-serialize operator input schema
-    if (!NES::Util::instanceOf<LogicalBinaryOperator>(operatorNode))
+    if (!NES::Util::instanceOf<BinaryLogicalOperator>(operatorNode))
     {
-        NES::Util::as<LogicalUnaryOperator>(operatorNode)
+        NES::Util::as<UnaryLogicalOperator>(operatorNode)
             ->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
     }
     else
     {
-        const auto binaryOperator = NES::Util::as<LogicalBinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryLogicalOperator>(operatorNode);
         binaryOperator->setLeftInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
         binaryOperator->setRightInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
+std::shared_ptr<UnaryLogicalOperator> deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
 {
     std::vector<std::shared_ptr<LogicalFunction>> inputFields;
     std::vector<std::shared_ptr<LogicalFunction>> outputFields;
@@ -235,7 +233,7 @@ std::shared_ptr<LogicalUnaryOperator> deserializeInferModelOperator(const Serial
     output << content;
     output.close();
 
-    return std::make_shared<InferModel::LogicalInferModelOperator>(
+    return std::make_shared<InferModel::InferModelLogicalOperator>(
         inferModelDetails.mlfilename(), inputFields, outputFields, getNextOperatorId());
 }
 
@@ -273,25 +271,25 @@ deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrat
     }
 }
 
-std::shared_ptr<LogicalUnaryOperator>
+std::shared_ptr<UnaryLogicalOperator>
 deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
 {
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
 }
-std::shared_ptr<LogicalUnaryOperator> deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
+std::shared_ptr<UnaryLogicalOperator> deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
 {
-    return std::make_shared<LogicalLimitOperator>(limitDetails.limit(), getNextOperatorId());
+    return std::make_shared<LimitLogicalOperator>(limitDetails.limit(), getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
+std::shared_ptr<UnaryLogicalOperator> deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
 {
     const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
-    return std::make_shared<LogicalMapOperator>(
+    return std::make_shared<MapLogicalOperator>(
         NES::Util::as<FieldAssignmentBinaryLogicalFunction>(fieldAssignmentFunction), getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator>
+std::shared_ptr<UnaryLogicalOperator>
 deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails, OperatorId operatorId)
 {
     const auto& serializedWindowAggregations = windowDetails.windowaggregations();
@@ -409,13 +407,13 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
     windowDef->setOriginId(OriginId(windowDetails.originid()));
-    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
+    auto windowOperator = std::make_shared<WindowLogicalOperator>(windowDef, operatorId);
     windowOperator->windowMetaData.windowStartFieldName = windowDetails.windowstartfieldname();
     windowOperator->windowMetaData.windowEndFieldName = windowDetails.windowendfieldname();
     return windowOperator;
 }
 
-std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
+std::shared_ptr<JoinLogicalOperator> deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
 {
     const auto& serializedWindowType = joinDetails.windowtype();
     const auto& serializedJoinType = joinDetails.jointype();
@@ -493,7 +491,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
 
     const auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
-    auto joinOperator = std::make_shared<LogicalJoinOperator>(joinDefinition, operatorId);
+    auto joinOperator = std::make_shared<JoinLogicalOperator>(joinDefinition, operatorId);
     joinOperator->windowMetaData.windowStartFieldName = joinDetails.windowstartfieldname();
     joinOperator->windowMetaData.windowEndFieldName = joinDetails.windowendfieldname();
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
@@ -543,7 +541,7 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
         auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedUnionDescriptor);
-        operatorNode = std::make_shared<LogicalUnionOperator>(getNextOperatorId());
+        operatorNode = std::make_shared<UnionLogicalOperator>(getNextOperatorId());
     }
     else if (details.Is<SerializableOperator_MapDetails>())
     {
@@ -600,7 +598,7 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         NES_TRACE("OperatorSerializationUtil:: deserialize to rename source operator");
         auto renameDetails = SerializableOperator_RenameDetails();
         details.UnpackTo(&renameDetails);
-        operatorNode = std::make_shared<RenameSourceOperator>(renameDetails.newsourcename(), getNextOperatorId());
+        operatorNode = std::make_shared<RenameSourceLogicalOperator>(renameDetails.newsourcename(), getNextOperatorId());
     }
     else
     {
@@ -615,15 +613,15 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
 
     if (details.Is<SerializableOperator_JoinDetails>())
     {
-        auto joinOp = NES::Util::as<LogicalJoinOperator>(operatorNode);
+        auto joinOp = NES::Util::as<JoinLogicalOperator>(operatorNode);
         joinOp->getJoinDefinition()->updateSourceTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
         joinOp->getJoinDefinition()->setOutputSchema(joinOp->getOutputSchema());
     }
 
     /// de-serialize and append origin id
-    if (NES::Util::instanceOf<LogicalBinaryOperator>(operatorNode))
+    if (NES::Util::instanceOf<BinaryLogicalOperator>(operatorNode))
     {
-        auto binaryOperator = NES::Util::as<LogicalBinaryOperator>(operatorNode);
+        auto binaryOperator = NES::Util::as<BinaryLogicalOperator>(operatorNode);
         std::vector<OriginId> leftOriginIds;
         for (const auto& originId : serializedOperator.leftoriginids())
         {
@@ -639,7 +637,7 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
     }
     else
     {
-        auto unaryOperator = NES::Util::as<LogicalUnaryOperator>(operatorNode);
+        auto unaryOperator = NES::Util::as<UnaryLogicalOperator>(operatorNode);
         std::vector<OriginId> originIds;
         for (const auto& originId : serializedOperator.originids())
         {
@@ -664,7 +662,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
     serializedOperator.mutable_details()->PackFrom(sourceDetails);
 }
 
-std::shared_ptr<LogicalUnaryOperator>
+std::shared_ptr<UnaryLogicalOperator>
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
@@ -682,7 +680,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
 
-std::shared_ptr<LogicalUnaryOperator>
+std::shared_ptr<UnaryLogicalOperator>
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
@@ -693,18 +691,18 @@ OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_Si
 }
 
 void OperatorSerializationUtil::serializeSelectionOperator(
-    const LogicalSelectionOperator& filterOperator, SerializableOperator& serializedOperator)
+    const SelectionLogicalOperator& filterOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalSelectionOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to SelectionLogicalOperator");
     auto selectionDetails = SerializableOperator_SelectionDetails();
     FunctionSerializationUtil::serializeFunction(filterOperator.getPredicate(), selectionDetails.mutable_predicate());
     serializedOperator.mutable_details()->PackFrom(selectionDetails);
 }
 
 void OperatorSerializationUtil::serializeProjectionOperator(
-    const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator)
+    const ProjectionLogicalOperator& projectionOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalProjectionOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to ProjectionLogicalOperator");
     auto projectionDetail = SerializableOperator_ProjectionDetails();
     for (auto& exp : projectionOperator.getFunctions())
     {
@@ -715,9 +713,9 @@ void OperatorSerializationUtil::serializeProjectionOperator(
     serializedOperator.mutable_details()->PackFrom(projectionDetail);
 }
 
-void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperator& mapOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalMapOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperator");
     auto mapDetails = SerializableOperator_MapDetails();
     FunctionSerializationUtil::serializeFunction(mapOperator.getMapFunction(), mapDetails.mutable_function());
     serializedOperator.mutable_details()->PackFrom(mapDetails);
@@ -840,9 +838,9 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
     serializedOperator.mutable_details()->PackFrom(windowDetails);
 }
 
-void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperator& joinOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalJoinOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to JoinLogicalOperator");
     auto joinDetails = SerializableOperator_JoinDetails();
     const auto joinDefinition = joinOperator.getJoinDefinition();
 
@@ -1066,7 +1064,7 @@ std::unique_ptr<Sinks::SinkDescriptor> OperatorSerializationUtil::deserializeSin
     return sinkDescriptor;
 }
 
-void OperatorSerializationUtil::serializeLimitOperator(const LogicalLimitOperator& limitOperator, SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::serializeLimitOperator(const LimitLogicalOperator& limitOperator, SerializableOperator& serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize limit operator ");
 
@@ -1156,24 +1154,24 @@ void OperatorSerializationUtil::serializeInputSchema(
     const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
-    if (!NES::Util::instanceOf<LogicalBinaryOperator>(operatorNode))
+    if (!NES::Util::instanceOf<BinaryLogicalOperator>(operatorNode))
     {
         SchemaSerializationUtil::serializeSchema(
-            NES::Util::as<LogicalUnaryOperator>(operatorNode)->getInputSchema(), serializedOperator.mutable_inputschema());
+            NES::Util::as<UnaryLogicalOperator>(operatorNode)->getInputSchema(), serializedOperator.mutable_inputschema());
     }
     else
     {
-        const auto binaryOperator = NES::Util::as<LogicalBinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryLogicalOperator>(operatorNode);
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(), serializedOperator.mutable_leftinputschema());
         SchemaSerializationUtil::serializeSchema(binaryOperator->getRightInputSchema(), serializedOperator.mutable_rightinputschema());
     }
 }
 
 void OperatorSerializationUtil::serializeInferModelOperator(
-    const InferModel::LogicalInferModelOperator& inferModelOperator, SerializableOperator& serializedOperator)
+    const InferModel::InferModelLogicalOperator& inferModelOperator, SerializableOperator& serializedOperator)
 {
     /// serialize infer model operator
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalInferModelOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperator");
     auto inferModelDetails = SerializableOperator_InferModelDetails();
 
     for (auto& exp : inferModelOperator.getInputFields())

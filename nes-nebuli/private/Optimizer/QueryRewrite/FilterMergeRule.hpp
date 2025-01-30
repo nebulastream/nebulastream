@@ -23,7 +23,7 @@
 
 namespace NES
 {
-class LogicalSelectionOperator;
+class SelectionLogicalOperator;
 }
 
 namespace NES::Optimizer
@@ -61,6 +61,6 @@ private:
     /// @brief Given a filter, retrieve all the consecutive filters (including the filter itself).
     /// @param firstFilter: the filter to check
     /// @return vector of filters
-    static std::vector<std::shared_ptr<LogicalSelectionOperator>> getConsecutiveFilters(const std::shared_ptr<LogicalSelectionOperator>& firstFilter);
+    static std::vector<std::shared_ptr<SelectionLogicalOperator>> getConsecutiveFilters(const std::shared_ptr<SelectionLogicalOperator>& firstFilter);
 };
 }

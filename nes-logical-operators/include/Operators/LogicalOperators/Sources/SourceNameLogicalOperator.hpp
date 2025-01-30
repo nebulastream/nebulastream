@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
@@ -24,7 +24,7 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator : public LogicalUnaryOperator
+class SourceNameLogicalOperator : public UnaryLogicalOperator
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
@@ -33,8 +33,8 @@ public:
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
     std::shared_ptr<Operator> clone() const override;
     void inferInputOrigins() override;

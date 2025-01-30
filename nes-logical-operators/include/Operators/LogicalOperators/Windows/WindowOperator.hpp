@@ -20,7 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 
 namespace NES
@@ -43,7 +43,7 @@ struct WindowMetaData
 /**
  * @brief Window operator, which defines the window definition.
  */
-class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+class WindowOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
     WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id, OriginId originId);

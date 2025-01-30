@@ -12,3 +12,14 @@
     limitations under the License.
 */
 
+#include <TraitSets/RewriteRules/AbstractRewriteRule.hpp>
+#include <TraitSets/RewriteRules/RewriteRuleRegistry.hpp>
+#include <TraitSets/RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
+
+namespace NES
+{
+std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalSelection()
+{
+    return std::make_unique<NES::Optimizer::LowerToPhysicalSelection>();
+}
+}

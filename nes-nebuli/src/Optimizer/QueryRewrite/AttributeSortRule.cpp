@@ -32,8 +32,8 @@
 #include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/QueryPlan.hpp>
@@ -51,24 +51,24 @@ std::shared_ptr<AttributeSortRule> AttributeSortRule::create()
 
 std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
-    auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    auto selectionOperators = queryPlan->getOperatorByType<SelectionLogicalOperator>();
     for (const auto& selectionOperator : selectionOperators)
     {
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
-        auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
+        auto updatedFilter = std::make_shared<SelectionLogicalOperator>(updatedPredicate, getNextOperatorId());
         updatedFilter->setInputSchema(selectionOperator->getInputSchema()->clone());
         Util::as_if<LogicalOperator>(updatedFilter)
             ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->clone());
         selectionOperator->replace(updatedFilter);
     }
 
-    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
+    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperator>();
     for (const auto& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<FieldAssignmentBinaryLogicalFunction>(sortAttributesInFunction(mapFunction));
-        auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
+        auto updatedMap = std::make_shared<MapLogicalOperator>(updatedMapFunction, getNextOperatorId());
         updatedMap->setInputSchema(mapOperator->getInputSchema()->clone());
         Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->clone());
         mapOperator->replace(updatedMap);

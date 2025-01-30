@@ -19,19 +19,18 @@
 
 namespace NES::Optimizer
 {
-class AbstractRewriteRule
+struct AbstractRewriteRule
 {
-public:
-    virtual VirtualTraitSet* apply(VirtualTraitSet*);
-    virtual ~AbstractRewriteRule();
+    virtual VirtualTraitSet* apply(VirtualTraitSet*) = 0;
+    virtual ~AbstractRewriteRule() = default;
 };
 
 template <Trait... T>
-class TypedAbstractRewriteRule : AbstractRewriteRule
+struct TypedAbstractRewriteRule : AbstractRewriteRule
 {
-    VirtualTraitSet* apply(VirtualTraitSet * inputTS) override
+    VirtualTraitSet* apply(VirtualTraitSet* inputTS) override
     {
-        applyTyped(DynamicTraitSet<T...>{inputTS});
+        return applyTyped(new DynamicTraitSet<T...>(inputTS));
     };
 
     virtual DynamicTraitSet<T...>* applyTyped(DynamicTraitSet<T...>*) = 0;

@@ -25,27 +25,25 @@ namespace NES
 {
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName))
+    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool SourceNameLogicalOperator::isIdentical(Operator const& rhs) const
 {
-    return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const SourceNameLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool SourceNameLogicalOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool SourceNameLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
-    {
-        const auto rhsAsSourceNameLogicalOperator = Util::as<SourceNameLogicalOperator>(rhs);
-        return this->getSchema() == rhsAsSourceNameLogicalOperator->getSchema()
-            && this->getLogicalSourceName() == rhsAsSourceNameLogicalOperator->getLogicalSourceName();
+    if (auto rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs)) {
+        return this->getSchema() == rhsOperator->getSchema()
+            && this->getLogicalSourceName() == rhsOperator->getLogicalSourceName();
     }
     return false;
 }

@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
@@ -60,7 +60,7 @@ private:
     /// @param curOperator the operator through which we want to push the filter.
     /// @param parOperator the operator that is the parent of curOperator in this queryPlan
     void
-    pushDownFilter( std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<Operator> curOperator, std::shared_ptr<Operator> parOperator);
+    pushDownFilter( std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<Operator> curOperator, std::shared_ptr<Operator> parOperator);
 
     /// In case the filter cant be pushed any further this method is called to remove the filter from its original position in the query plan
     /// and insert the filter at the new position of the query plan. (only if the position of the filter changed)
@@ -68,7 +68,7 @@ private:
     /// @param childOperator insert the filter operator above this operator in the query plan
     /// @param parOperator  insert the filter operator below this operator in the query plan
     static void insertFilterIntoNewPosition(
-        std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<Operator> childOperator, std::shared_ptr<Operator> parOperator);
+        std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<Operator> childOperator, std::shared_ptr<Operator> parOperator);
 
     /// @brief pushes a filter that is above a join, below that join if that is possible. We differentiate four cases:
     /// Starting Position of the query plan:
@@ -103,7 +103,7 @@ private:
     /// @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
     /// joinOperator and parOperator.
     void pushFilterBelowJoin(
-        std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<LogicalJoinOperator> joinOperator, std::shared_ptr<Operator> parentOperator);
+        std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<JoinLogicalOperator> joinOperator, std::shared_ptr<Operator> parentOperator);
 
     /// @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
     /// If the filter only accesses one attribute and that attribute is part of the join condition, a duplicate filter can be created and pushed down as well.
@@ -121,7 +121,7 @@ private:
     /// @param filterOperator the filter operator that is tried to be pushed
     /// @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
     /// @return true if we pushed the filter to both branches of this joinOperator
-    bool pushFilterBelowJoinSpecialCase(std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<LogicalJoinOperator> joinOperator);
+    bool pushFilterBelowJoinSpecialCase(std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<JoinLogicalOperator> joinOperator);
 
     /// @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
     /// substitute the filter's field access expression by the map transformation.
@@ -133,13 +133,13 @@ private:
     /// @param filterOperator the filter operator that we want to push down
     /// @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
     /// mapOperator and parOperator
-    void pushFilterBelowMap(std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<LogicalMapOperator> mapOperator);
+    void pushFilterBelowMap(std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<MapLogicalOperator> mapOperator);
 
     /// @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
     /// so we can always push the filter to both sides.
     /// @param filterOperator the filter operator to be pushed down
     /// @param unionOperator the union operator to which the filter should be pushed down below. (it is currently the child of the filter)
-    void pushFilterBelowUnion(std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<Operator> unionOperator);
+    void pushFilterBelowUnion(std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<Operator> unionOperator);
 
     /// @brief pushes the filter below a keyed window operator. This is only possible if all the attributes accessed by the filter are
     /// not aggregated themselves but are a part of the groupBy clause. In this case no aggregation will be effected but it and the
@@ -154,7 +154,7 @@ private:
     /// @param parOperator the parent operator of the windowOperator. In case the filter cant be pushed down, it is inserted between
     /// windowOperator and parOperator
     void pushFilterBelowWindowAggregation(
-        std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<Operator> windowOperator, std::shared_ptr<Operator> parOperator);
+        std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<Operator> windowOperator, std::shared_ptr<Operator> parOperator);
 
     /// @brief Get the name of the field manipulated by the Map operator
     /// @param node the map operator node
@@ -175,13 +175,13 @@ private:
     /// @param filterOperator the filter operator to be pushed down
     /// @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
     /// @return @link std::vector<std::shared_ptr<FieldAccessLogicalFunction>> @endLink
-    void pushBelowProjection(std::shared_ptr<LogicalSelectionOperator> filterOperator, std::shared_ptr<Operator> projectionOperator);
+    void pushBelowProjection(std::shared_ptr<SelectionLogicalOperator> filterOperator, std::shared_ptr<Operator> projectionOperator);
 
     /// @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
     /// @param filterOperator filter operator whose predicate need to be checked and updated
     /// @param expressionNodes expression nodes containing the attribute name and the new attribute name
     static void renameFilterAttributesByLogicalFunctions(
-        const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::vector<std::shared_ptr<LogicalFunction>>& expressionNodes);
+        const std::shared_ptr<SelectionLogicalOperator>& filterOperator, const std::vector<std::shared_ptr<LogicalFunction>>& expressionNodes);
 
     /// @brief Rename the attribute in the field access expression node.
     /// @param expressionNode to be renamed
@@ -195,8 +195,8 @@ private:
     /// @param mapOperator map operator node where the filter should be pushed below
     /// @param fieldName field name of the attribute that is assigned a field by the map transformation
     void substituteFilterAttributeWithMapTransformation(
-        const std::shared_ptr<LogicalSelectionOperator>& filterOperator,
-        const std::shared_ptr<LogicalMapOperator>& mapOperator,
+        const std::shared_ptr<SelectionLogicalOperator>& filterOperator,
+        const std::shared_ptr<MapLogicalOperator>& mapOperator,
         const std::string& fieldName);
 };
 

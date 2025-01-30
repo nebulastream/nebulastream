@@ -18,18 +18,18 @@
 #include <utility>
 #include <variant>
 #include <API/Schema.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <MemoryLayout/RowLayout.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
 #include <Plans/PipelineQueryPlan.hpp>
-#include <Emit.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
-#include <PhysicalOperator.hpp>
-#include <Scan.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -48,7 +48,7 @@ void processFusibleOperator(
     const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
 {
     PRECONDITION(
-        std::holds_alternative<std::shared_ptr<PhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
+        std::holds_alternative<std::shared_ptr<AbstractPhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
 
     currentPipeline->prependOperator(currentOperator);
     currentPipeline->setType(OperatorPipeline::Type::OperatorPipelineType); // TODO remove me
@@ -65,7 +65,7 @@ void processPipelineBreakerOperator(
     const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
 {
     PRECONDITION(
-        std::holds_alternative<std::shared_ptr<PhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
+        std::holds_alternative<std::shared_ptr<AbstractPhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
 
     currentPipeline->prependOperator(currentOperator);
 

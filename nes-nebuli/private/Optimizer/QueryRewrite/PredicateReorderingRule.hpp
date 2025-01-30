@@ -21,6 +21,12 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+class Node;
+
+class SelectionLogicalOperator;
+}
 
 namespace NES::Optimizer
 {
@@ -62,6 +68,6 @@ private:
     /// @brief Given a node, check if the parent or the child is a filter.
     /// @param std::shared_ptr<Operator>: the node to be check
     /// @return boolean, true when a consecutive filter is found
-    static std::vector<std::shared_ptr<LogicalSelectionOperator>> getConsecutiveFilters(const std::shared_ptr<LogicalSelectionOperator>& firstFilter);
+    static std::vector<std::shared_ptr<SelectionLogicalOperator>> getConsecutiveFilters(const std::shared_ptr<SelectionLogicalOperator>& firstFilter);
 };
 }

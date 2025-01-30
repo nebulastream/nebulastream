@@ -40,7 +40,7 @@ public:
 private:
     ///  @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
     ///  @param binaryOperator : the input binary operator
-    static void sortChildren(const std::shared_ptr<LogicalBinaryOperator>& binaryOperator);
+    static void sortChildren(const std::shared_ptr<BinaryLogicalOperator>& binaryOperator);
 
     BinaryOperatorSortRule();
 };

@@ -19,11 +19,12 @@
 #include <numeric>
 #include <sstream>
 #include <utility>
-#include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Plans/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Plans/OperatorPipeline.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::QueryCompilation
 {

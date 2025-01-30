@@ -14,12 +14,12 @@
 
 #include <memory>
 #include <Iterators/DFSIterator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
@@ -238,8 +238,8 @@ void LogicalSourceExpansionRule::addBlockingDownStreamOperator(
 bool LogicalSourceExpansionRule::isBlockingOperator(const std::shared_ptr<Operator>& operatorNode)
 {
     return (
-        NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<LogicalWindowOperator>(operatorNode)
-        || NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode));
+        NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<WindowLogicalOperator>(operatorNode)
+        || NES::Util::instanceOf<UnionLogicalOperator>(operatorNode) || NES::Util::instanceOf<JoinLogicalOperator>(operatorNode));
 }
 
 }

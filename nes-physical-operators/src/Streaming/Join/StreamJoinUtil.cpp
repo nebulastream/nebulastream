@@ -15,7 +15,7 @@
 #include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>

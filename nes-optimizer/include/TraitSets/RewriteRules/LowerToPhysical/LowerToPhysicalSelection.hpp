@@ -16,35 +16,28 @@
 
 #include <memory>
 #include <set>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <TraitSets/TraitSet.hpp>
 #include <TraitSets/Traits/Children.hpp>
-#include <TraitSets/Traits/PhysicalOperatorTrait.hpp>
 #include <TraitSets/Traits/QueryForSubtree.hpp>
-#include <TraitSets/RewriteRule.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <TraitSets/RewriteRules/AbstractRewriteRule.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
 #include <Operators/Operator.hpp>
+#include <SelectionPhysicalOperator.hpp>
+#include <Functions/FunctionProvider.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
 
-class LowerToPhysicalSelection : TypedAbstractRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalSelection : TypedAbstractRewriteRule<QueryForSubtree, Operator>
 {
-    DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>*) override
+    DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>* traitSet) override
     {
-        /// Extract the predicate from the logical selection operator
-        auto predicate = in.get<LogicalSelectionOperator>().getPredicate();
-
-        /// Build the PhysicalSelectionOperator
-        auto phyOp = std::make_shared<PhysicalSelectionOperator>();
-        phyOp->predicate = predicate;
-
-        /// Construct the output trait set
-        return {
-            in.get<ChildNodes>(),
-            in.get<QueryForSubtree>(),
-            PhysicalOperatorTrait{phyOp}
-        };
+        auto op = traitSet->get<Operator>();
+        auto function = dynamic_cast<SelectionLogicalOperator*>(op)->getPredicate();
+        auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+        auto phyOp = SelectionPhysicalOperator(std::move(func));
+        return traitSet;
     };
 };
 

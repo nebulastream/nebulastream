@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <PhysicalOperator.hpp>
+#include <AbstractPhysicalOperator.hpp>
 #include "ExecutionContext.hpp"
 
 namespace NES
 {
 
-void PhysicalOperator::setup(ExecutionContext& executionCtx) const
+void AbstractPhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     if (child)
     {
@@ -26,7 +26,7 @@ void PhysicalOperator::setup(ExecutionContext& executionCtx) const
     }
 }
 
-void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void AbstractPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (child)
     {
@@ -34,7 +34,7 @@ void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) co
     }
 }
 
-void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void AbstractPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (child)
     {
@@ -42,7 +42,7 @@ void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) c
     }
 }
 
-void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void AbstractPhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     if (child)
     {
@@ -50,7 +50,7 @@ void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-PhysicalOperator::~PhysicalOperator()
+AbstractPhysicalOperator::~AbstractPhysicalOperator()
 {
 }
 

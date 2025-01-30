@@ -35,16 +35,10 @@ constexpr bool is_std_hashable_v = is_std_hashable<T>::value;
 
 template <typename T>
 concept Trait = requires(T trait, T other) {
-    //placeholder condition
-    {
-        T::atNode()
-    } -> std::same_as<bool>;
-    {
-        trait == other
-    };
-    {
-        T::getName()
-    } -> std::same_as<std::string>;
+    /// require equality
+    /// { trait == other } -> std::convertible_to<bool>; // Equality will not work for virtual ==ops as here trait and other have differnt types
+    /// require toString()
+    { trait.toString() } -> std::same_as<std::string>;
 };
 
 template <typename T>
@@ -78,14 +72,14 @@ concept FiniteTrait = requires() {
     && Trait<T>;
 
 
-class VirtualTrait
+struct VirtualTrait
 {
 public:
     virtual std::string getName() = 0;
 };
 
 template <Trait T>
-class VirtualTraitImpl : VirtualTrait
+struct VirtualTraitImpl : VirtualTrait
 {
     T trait;
 public:

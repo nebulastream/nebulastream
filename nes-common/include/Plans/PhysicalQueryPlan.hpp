@@ -19,9 +19,9 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sources/Source.hpp>
-#include <Emit.hpp>
-#include <PhysicalOperator.hpp>
-#include <Scan.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <EmitPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -32,9 +32,7 @@ using namespace NES;
 using OperatorVariant = std::variant<
     std::shared_ptr<SinkLogicalOperator>,
     std::shared_ptr<SourceDescriptorLogicalOperator>,
-    std::shared_ptr<PhysicalOperator>,
-    std::shared_ptr<Scan>,
-    std::shared_ptr<Emit>>;
+    std::shared_ptr<AbstractPhysicalOperator>>;
 
 struct PhysicalOperatorNode
 {
@@ -138,17 +136,9 @@ inline std::string printOperatorVariantType(const OperatorVariant& op)
             {
                 ss << "SourceDescriptorLogicalOperator";
             }
-            else if constexpr (std::is_same_v<T, std::shared_ptr<PhysicalOperator>>)
+            else if constexpr (std::is_same_v<T, std::shared_ptr<AbstractPhysicalOperator>>)
             {
                 ss << "PhysicalOperator";
-            }
-            else if constexpr (std::is_same_v<T, std::shared_ptr<Scan>>)
-            {
-                ss << "Scan";
-            }
-            else if constexpr (std::is_same_v<T, std::shared_ptr<Emit>>)
-            {
-                ss << "Emit";
             }
             else
             {

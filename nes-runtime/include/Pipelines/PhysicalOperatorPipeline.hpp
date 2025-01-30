@@ -13,7 +13,7 @@
 */
 #pragma once
 
-#include <PhysicalOperator.hpp>
+#include <AbstractPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -24,14 +24,14 @@ class PhysicalOperatorPipeline
 public:
     /// @brief Sets the root operator of an pipeline.
     /// @param rootOperator
-    void setRootOperator(std::shared_ptr<PhysicalOperator> rootOperator);
+    void setRootOperator(std::shared_ptr<AbstractPhysicalOperator> rootOperator);
 
     /// @brief Returns the root operator of an pipeline
     /// @return operator
-    std::shared_ptr<PhysicalOperator> getRootOperator() const;
+    std::shared_ptr<AbstractPhysicalOperator> getRootOperator() const;
 
 private:
-    std::shared_ptr<PhysicalOperator> rootOperator;
+    std::shared_ptr<AbstractPhysicalOperator> rootOperator;
 };
 
 }

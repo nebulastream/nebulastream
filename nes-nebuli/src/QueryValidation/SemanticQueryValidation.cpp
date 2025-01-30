@@ -13,12 +13,12 @@
 */
 
 #include <memory>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Common.hpp>
@@ -172,7 +172,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<Qu
 
 void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
 {
-    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
+    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperator>();
     if (!inferModelOperators.empty())
     {
         std::shared_ptr<DataType> commonStamp;

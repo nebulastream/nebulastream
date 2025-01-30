@@ -18,6 +18,10 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+class SelectionLogicalOperator;
+}
 
 namespace NES::Optimizer
 {
@@ -43,7 +47,7 @@ private:
     /// If our query plan contains a parentOperaters->filter(!(expression1 || expression2))->childOperator, we use deMorgan to
     /// reformulate the predicate to an andFunction and call splitUpFilter on the Filter.
     /// @param filterOperator the filter operator node that we want to split up
-    void splitUpFilters(std::shared_ptr<LogicalSelectionOperator> filterOperator);
+    void splitUpFilters(std::shared_ptr<SelectionLogicalOperator> filterOperator);
 };
 
 }

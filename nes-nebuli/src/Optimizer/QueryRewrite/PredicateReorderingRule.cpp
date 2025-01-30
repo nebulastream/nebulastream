@@ -16,7 +16,7 @@
 #include <vector>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Common.hpp>
@@ -33,14 +33,14 @@ std::shared_ptr<PredicateReorderingRule> PredicateReorderingRule::create()
 std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     std::set<OperatorId> visitedOperators;
-    auto filterOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    auto filterOperators = queryPlan->getOperatorByType<SelectionLogicalOperator>();
     NES_DEBUG("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
     NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators)
     {
         if (visitedOperators.find(filter->getId()) == visitedOperators.end())
         {
-            std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = getConsecutiveFilters(filter);
+            std::vector<std::shared_ptr<SelectionLogicalOperator>> consecutiveFilters = getConsecutiveFilters(filter);
             NES_TRACE(
                 "PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2)
@@ -51,7 +51,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                 auto already_sorted = std::is_sorted(
                     consecutiveFilters.begin(),
                     consecutiveFilters.end(),
-                    [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
+                    [](const std::shared_ptr<SelectionLogicalOperator>& lhs, const std::shared_ptr<SelectionLogicalOperator>& rhs)
                     { return lhs->getSelectivity() < rhs->getSelectivity(); });
                 if (!already_sorted)
                 {
@@ -59,7 +59,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                     std::sort(
                         consecutiveFilters.begin(),
                         consecutiveFilters.end(),
-                        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
+                        [](const std::shared_ptr<SelectionLogicalOperator>& lhs, const std::shared_ptr<SelectionLogicalOperator>& rhs)
                         { return lhs->getSelectivity() < rhs->getSelectivity(); });
                     NES_TRACE("PredicateReorderingRule: Start re-writing the new query plan");
                     NES_TRACE("PredicateReorderingRule: Remove parent/children references");
@@ -106,16 +106,16 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
     return queryPlan;
 }
 
-std::vector<std::shared_ptr<LogicalSelectionOperator>> PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<LogicalSelectionOperator>& filter)
+std::vector<std::shared_ptr<SelectionLogicalOperator>> PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<SelectionLogicalOperator>& filter)
 {
-    std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
+    std::vector<std::shared_ptr<SelectionLogicalOperator>> consecutiveFilters = {};
     DFSRange queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
-    while (NES::Util::instanceOf<LogicalSelectionOperator>(node))
+    while (NES::Util::instanceOf<SelectionLogicalOperator>(node))
     {
         NES_DEBUG("Found consecutive filter in the chain, adding it the list");
-        consecutiveFilters.push_back(NES::Util::as<LogicalSelectionOperator>(node));
+        consecutiveFilters.push_back(NES::Util::as<SelectionLogicalOperator>(node));
         ++nodeIterator;
         node = (*nodeIterator);
     }

@@ -16,13 +16,13 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/RenameLogicalFunction.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer
@@ -31,16 +31,16 @@ namespace NES::Optimizer
 std::shared_ptr<QueryPlan> RenameSourceToProjectOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
+    auto RenameSourceLogicalOperators = queryPlan->getOperatorByType<RenameSourceLogicalOperator>();
     /// Iterate over all rename source operators and convert them to project operator
-    for (auto& renameSourceOperator : renameSourceOperators)
+    for (auto& RenameSourceLogicalOperator : RenameSourceLogicalOperators)
     {
         /// Convert the rename source operator to project operator
-        auto projectOperator = convert(renameSourceOperator);
+        auto projectOperator = convert(RenameSourceLogicalOperator);
         /// Replace rename source operator with the project operator
-        renameSourceOperator->replace(projectOperator);
+        RenameSourceLogicalOperator->replace(projectOperator);
         /// Assign the project operator the id of as operator
-        projectOperator->setId(renameSourceOperator->getId());
+        projectOperator->setId(RenameSourceLogicalOperator->getId());
     }
     /// Return updated query plan
     return queryPlan;
@@ -49,9 +49,9 @@ std::shared_ptr<QueryPlan> RenameSourceToProjectOperatorRule::apply(std::shared_
 std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::shared_ptr<Operator>& operatorNode)
 {
     /// Fetch the new source name and input schema for the as operator
-    auto renameSourceOperator = NES::Util::as<RenameSourceOperator>(operatorNode);
-    auto newSourceName = renameSourceOperator->getNewSourceName();
-    auto inputSchema = renameSourceOperator->getInputSchema();
+    auto RenameSourceLogicalOperator = NES::Util::as<RenameSourceLogicalOperator>(operatorNode);
+    auto newSourceName = RenameSourceLogicalOperator->getNewSourceName();
+    auto inputSchema = RenameSourceLogicalOperator->getInputSchema();
 
     std::vector<std::shared_ptr<LogicalFunction>> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
@@ -68,7 +68,7 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
         projectionAttributes.push_back(fieldRenameFunction);
     }
     /// Construct a new project operator
-    auto projectOperator = std::make_shared<LogicalProjectionOperator>(projectionAttributes, getNextOperatorId());
+    auto projectOperator = std::make_shared<ProjectionLogicalOperator>(projectionAttributes, getNextOperatorId());
     return projectOperator;
 }
 

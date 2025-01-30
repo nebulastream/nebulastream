@@ -23,6 +23,11 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
+#include <Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <OperatorState.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
@@ -38,7 +43,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    Operator::open(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
@@ -62,7 +67,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
     executionCtx.watermarkTs = state->currentWatermark;
-    Operator::close(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::close(executionCtx, recordBuffer);
 }
 
 }

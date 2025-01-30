@@ -24,10 +24,10 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Streaming/Join/StreamJoinBuild.hpp>
-#include <Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
+
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

@@ -15,57 +15,57 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/ExecutableFunctionWriteField.hpp>
+#include <Functions/WriteFieldPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <TraitSets/RewriteRules/RewriteRuleRegistry.hpp>
-#include <Plans/PhysicalQueryPlan.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan.hpp>
+#include <Plans/PhysicalQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>
+#include <TraitSets/RewriteRules/RewriteRuleRegistry.hpp>
 #include <Util/Common.hpp>
 #include <grpcpp/impl/codegen/config_protobuf.h>
+#include <AbstractPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
-#include <Map.hpp>
-#include <PhysicalOperator.hpp>
-#include <Scan.hpp>
-#include <Selection.hpp>
-#include <FunctionProvider.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
+#include <SelectionPhysicalOperator.hpp>
+#include <Functions/FunctionProvider.hpp>
 
 using namespace NES;
 
 namespace NES::QueryCompilation::LowerLogicalToNautilusOperators
 {
 
-std::shared_ptr<PhysicalOperatorNode> lowerFilter(const std::shared_ptr<LogicalSelectionOperator>& operatorPtr)
+std::shared_ptr<PhysicalOperatorNode> lowerFilter(const std::shared_ptr<SelectionLogicalOperator>& operatorPtr)
 {
     auto function = FunctionProvider::lowerFunction(operatorPtr->getPredicate());
-    auto selection = std::make_shared<Selection>(std::move(function));
+    auto selection = std::make_shared<SelectionPhysicalOperator>(std::move(function));
     return std::make_shared<PhysicalOperatorNode>(selection);
 }
 
-std::shared_ptr<PhysicalOperatorNode> lowerMap(const std::shared_ptr<LogicalMapOperator>& operatorPtr)
+std::shared_ptr<PhysicalOperatorNode> lowerMap(const std::shared_ptr<MapLogicalOperator>& operatorPtr)
 {
     auto assignmentField = operatorPtr->getMapFunction()->getField();
     auto assignmentFunction = operatorPtr->getMapFunction()->getAssignment();
     auto function = FunctionProvider::lowerFunction(assignmentFunction);
-    auto writeField = std::make_unique<Functions::ExecutableFunctionWriteField>(assignmentField->getFieldName(), std::move(function));
-    auto map = std::make_shared<Map>(std::move(writeField));
+    auto writeField = std::make_unique<Functions::WriteFieldPhysicalFunction>(assignmentField->getFieldName(), std::move(function));
+    auto map = std::make_shared<MapPhysicalOperator>(std::move(writeField));
     return std::make_shared<PhysicalOperatorNode>(map);
 }
 
 std::shared_ptr<PhysicalOperatorNode> lower(const std::shared_ptr<NES::Operator>& operatorNode)
 {
-    if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
+    if (NES::Util::instanceOf<SelectionLogicalOperator>(operatorNode))
     {
-        auto filter = lowerFilter(NES::Util::as<LogicalSelectionOperator>(operatorNode));
+        auto filter = lowerFilter(NES::Util::as<SelectionLogicalOperator>(operatorNode));
         return filter;
     }
 
-    if (NES::Util::instanceOf<LogicalMapOperator>(operatorNode))
+    if (NES::Util::instanceOf<MapLogicalOperator>(operatorNode))
     {
-        auto map = lowerMap(NES::Util::as<LogicalMapOperator>(operatorNode));
+        auto map = lowerMap(NES::Util::as<MapLogicalOperator>(operatorNode));
         return map;
     }
 

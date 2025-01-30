@@ -20,11 +20,11 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Operators/WindowBasedOperatorHandler.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/Execution.hpp>
+
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
 

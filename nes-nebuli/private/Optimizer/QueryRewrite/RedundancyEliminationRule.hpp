@@ -21,7 +21,7 @@
 namespace NES
 {
 class Node;
-class LogicalSelectionOperator;
+class SelectionLogicalOperator;
 }
 
 namespace NES::Optimizer

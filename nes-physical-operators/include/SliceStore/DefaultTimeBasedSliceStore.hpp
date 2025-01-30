@@ -20,14 +20,14 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/SliceStore/SliceAssigner.hpp>
+#include <SliceStore/Slice.hpp>
+#include <SliceStore/SliceAssigner.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
+
 
 namespace NES
 {

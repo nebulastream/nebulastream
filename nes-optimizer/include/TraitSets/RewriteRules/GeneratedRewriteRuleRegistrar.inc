@@ -16,7 +16,7 @@
 
 #ifndef INCLUDED_FROM_REGISTRY_REWRITE_RULE
 #    error "This file should not be included directly! " \
-"Include instead include <TraitSet/RewriteRule/RewriteRuleRegistry.hpp>"
+"Include instead include <TraitSets/RewriteRules/RewriteRuleRegistry.hpp>"
 #endif
 
 

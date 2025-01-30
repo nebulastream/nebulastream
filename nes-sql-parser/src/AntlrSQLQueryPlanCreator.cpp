@@ -37,7 +37,7 @@
 #include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/QueryPlan.hpp>

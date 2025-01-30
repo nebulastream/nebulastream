@@ -14,35 +14,28 @@
 
 #pragma once
 
-#include <memory>
-#include <set>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <TypeTraits/TraitSet.hpp>
-#include <TypeTraits/Traits/Children.hpp>
-#include <TypeTraits/Traits/PhysicalOperatorTrait.hpp>
-#include <TypeTraits/Traits/QueryForSubtree.hpp>
-#include <TypeTraits/RewriteRule/AbstractRewriteRule.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <TraitSets/TraitSet.hpp>
+#include <TraitSets/Traits/QueryForSubtree.hpp>
+#include <TraitSets/RewriteRules/AbstractRewriteRule.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Functions/FunctionProvider.hpp>
 #include <Operators/Operator.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
 
-class LowerToPhysicalSelection : TypedAbstractRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalMap : TypedAbstractRewriteRule<QueryForSubtree, Operator>
 {
-    DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>*) override
+    DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>* traitSet) override
     {
-        /// Extract the predicate from the logical selection operator
-        auto predicate = in.get<LogicalSelectionOperator>().getPredicate();
-
-        /// Build the PhysicalSelectionOperator
-        auto phyOp = std::make_shared<PhysicalSelectionOperator>();
-        phyOp->predicate = predicate;
-
-        /// Construct the output trait set
-        return {in.get<Children>(), in.get<QueryForSubtree>(), PhysicalOperatorTrait{phyOp}};
+        auto op = traitSet->get<Operator>();
+        auto function = dynamic_cast<MapLogicalOperator*>(op)->getMapFunction();
+        auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+        auto phyOp = MapPhysicalOperator(std::move(func));
+        traitSet->set<MapPhysicalOperator>(phyOp);
+        return traitSet;
     }
 };
-
 
 }

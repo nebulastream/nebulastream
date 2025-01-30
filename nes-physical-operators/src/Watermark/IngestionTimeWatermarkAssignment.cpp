@@ -12,15 +12,13 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <Watermark/IngestionTimeWatermarkAssignment.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <OperatorState.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
@@ -30,7 +28,7 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_p
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    Operator::open(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);

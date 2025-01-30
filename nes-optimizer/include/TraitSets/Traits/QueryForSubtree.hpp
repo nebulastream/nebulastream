@@ -28,16 +28,15 @@ class QueryForSubtree
 public:
     explicit QueryForSubtree(std::string str) : str(std::move(str)) { }
     bool operator==(const QueryForSubtree&) const { return true; }
-    static bool atNode() { return false; }
-
-    static std::string getName()
-    {
-        return "QueryForSubtree";
+    std::string toString() const {
+        return str;
     }
 
     const std::string& getQuery() const {
         return str;
     }
+
+
 };
 
 static_assert(Trait<QueryForSubtree>);

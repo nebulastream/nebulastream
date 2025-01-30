@@ -30,13 +30,13 @@
 #include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
 #include <Iterators/DFSIterator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -57,7 +57,7 @@ std::shared_ptr<QueryPlan> RedundancyEliminationRule::apply(std::shared_ptr<Quer
 {
     NES_INFO("Applying RedundancyEliminationRule to query {}", queryPlan->toString());
     NES_DEBUG("Applying rule to filter operators");
-    auto filterOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    auto filterOperators = queryPlan->getOperatorByType<SelectionLogicalOperator>();
     for (auto& filter : filterOperators)
     {
         const std::shared_ptr<LogicalFunction> filterPredicate = filter->getPredicate();
@@ -70,7 +70,7 @@ std::shared_ptr<QueryPlan> RedundancyEliminationRule::apply(std::shared_ptr<Quer
         filter->replace(updatedFilter);
     }
     NES_DEBUG("Applying rule to map operators");
-    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
+    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperator>();
     for (auto& map : mapOperators)
     {
         const std::shared_ptr<LogicalFunction> mapFunction = map->getMapFunction();

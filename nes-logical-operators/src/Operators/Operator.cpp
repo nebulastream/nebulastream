@@ -65,7 +65,7 @@ std::shared_ptr<Operator> find(const std::vector<std::shared_ptr<Operator>>& nod
 {
     for (auto&& currentNode : nodes)
     {
-        if (nodeToFind->equal(currentNode))
+        if (nodeToFind == currentNode)
         {
             return currentNode;
         }
@@ -168,7 +168,7 @@ bool Operator::addChild(const std::shared_ptr<Operator> newNode)
         return false;
     }
 
-    if (isIdentical(newNode))
+    if (newNode && isIdentical(*newNode))
     {
         NES_ERROR("Operator: can not add self as child to itself");
         return false;
@@ -200,7 +200,7 @@ bool Operator::addParent(const std::shared_ptr<Operator> newNode)
         return false;
     }
 
-    if (isIdentical(newNode))
+    if (newNode && isIdentical(*newNode))
     {
         NES_ERROR("Operator: can not add self as parent to itself");
         return false;
