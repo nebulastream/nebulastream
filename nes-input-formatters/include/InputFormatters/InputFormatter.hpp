@@ -42,7 +42,10 @@ public:
         NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder) = 0;
-    virtual void flushBuffers(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) = 0;
+
+    /// Since there is no symbol that represents EoF/EoS, the final buffer does not end in a tuple delimiter. We need to 'manually' flush
+    /// the final tuple, between the last tuple delimiter of the final buffer and (including) the last byte of the final buffer.
+    virtual void flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& obj) { return obj.toString(os); }
 

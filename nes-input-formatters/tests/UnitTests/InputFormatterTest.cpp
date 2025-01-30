@@ -69,7 +69,8 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         // Todo: first buffer should not contain starting delimiter <-- we must recognize first buffer in parser
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
 }
-
+// Todo: Test out of order
+// Todo: add third buffer without delimiter in between two buffers with delimiter
 // Todo: test with multiple tasks per buffer/thread (split tasks)
 // TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
 // {

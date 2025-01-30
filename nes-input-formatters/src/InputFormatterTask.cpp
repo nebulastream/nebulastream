@@ -154,7 +154,7 @@ InputFormatterTask::InputFormatterTask(std::unique_ptr<InputFormatter> inputForm
 InputFormatterTask::~InputFormatterTask() = default;
 void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-    inputFormatter->flushBuffers(pipelineExecutionContext, *sequenceShredder);
+    inputFormatter->flushFinalTuple(pipelineExecutionContext, *sequenceShredder);
 }
 // Todo: think about layouts
 // Todo: do we create a new InputFormatterTask everytime we execute the pipeline?

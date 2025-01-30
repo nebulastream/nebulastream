@@ -116,17 +116,22 @@ public:
         NES::Memory::TupleBuffer tupleBuffer,
         std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps,
         std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>>)
-        : workerThreadId(workerThreadId), sequenceNumber(sequenceNumber), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
+        : isFinalTask(false), workerThreadId(workerThreadId), sequenceNumber(sequenceNumber), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
+    {}
+    TestablePipelineTask(
+        bool isFinalTask,
+        NES::WorkerThreadId workerThreadId,
+        std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps)
+        : isFinalTask(isFinalTask), workerThreadId(workerThreadId), sequenceNumber(NES::SequenceNumber::INVALID), tupleBuffer(NES::Memory::TupleBuffer{}), eps(std::move(eps))
     {}
 
     void execute(TestPipelineExecutionContext& pipelineExecutionContext) { eps->execute(tupleBuffer, pipelineExecutionContext); }
-
+    std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> getExecutablePipelineStage() const { return eps; }
+public:
+    bool isFinalTask;
     NES::WorkerThreadId workerThreadId;
     NES::SequenceNumber sequenceNumber;
     std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
-
-    std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> getExecutablePipelineStage() const { return eps; }
-
 private:
     NES::Memory::TupleBuffer tupleBuffer;
     std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
@@ -245,7 +250,14 @@ private:
 
                 // Release lock while processing
                 lock.unlock();
-                task.task.execute(*task.pipelineExecutionContext);
+                if (not(task.task.isFinalTask))
+                {
+                    task.task.execute(*task.pipelineExecutionContext);
+                }
+                else
+                {
+                    task.task.getExecutablePipelineStage()->stop(*task.pipelineExecutionContext);
+                }
                 lock.lock();
             }
             data.is_working = false;
@@ -276,7 +288,8 @@ public:
 
     void startProcessing()
     {
-        while (!testTasks.empty())
+        auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
+        while (not(testTasks.empty()))
         {
             std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
             auto currentTestTask = std::move(testTasks.front());
@@ -296,24 +309,31 @@ public:
                 resultBuffers->at(responsibleWorkerThread.getRawValue()) = std::move(temporaryResultBuffers);
             }
         }
-    }
+        /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
+        constexpr auto idxOfWorkerThreadForFlushTask = 0;
+        std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
+        auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
+        pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(idxOfWorkerThreadForFlushTask);
+        pipelineExecutionContext->setTemporaryResultBuffers(temporaryResultBuffers);
+        pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
 
-    void stopProcessing()
-    {
-        while (!testTasks.empty())
+        const auto flushTask = TestablePipelineTask{true, NES::WorkerThreadId(idxOfWorkerThreadForFlushTask), std::move(pointerToSharedExecutablePipelineStage)};
+        const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(flushTask), .pipelineExecutionContext = pipelineExecutionContext};
+        workerThreads.assign_work(idxOfWorkerThreadForFlushTask, std::move(workTask));
+        workerThreads.wait();
+
+        temporaryResultBuffers = pipelineExecutionContext->takeTemporaryResultBuffers();
+        if (not(temporaryResultBuffers.empty()))
         {
+            resultBuffers->at(idxOfWorkerThreadForFlushTask) = std::move(temporaryResultBuffers);
         }
+
     }
 
     void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
-        auto inputFormatterTask = pipelineTasks.front().getExecutablePipelineStage();
         enqueueTasks(std::move(pipelineTasks));
         startProcessing();
-        auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
-        inputFormatterTask->stop(*pipelineExecutionContext);
-        // Todo: add final buffer that can result from 'stop' call
-        
     }
 
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
