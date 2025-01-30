@@ -64,7 +64,8 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {{{TestTuple(123456789, 123456789)}}},
-        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
+                              /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
 }
 
 /// Each thread should share the same InputFormatterTask, meaning that we need to check that threads don't interfere with each other's state
@@ -81,7 +82,8 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {{{TestTuple(123456789, 123456789)}}},
-        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(1), "789"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
+                              /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(1), "789"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -98,8 +100,32 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOr
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {{{TestTuple(123456789, 123456789)}}},
-        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789"}, /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789"},
+                              /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}}});
 }
+
+/// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
+TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
+{
+    // Todo: make assignment of tasks to worker ids explicit
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 2,
+        .numThreads = 1,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        .expectedResults = {{{TestTuple(123456789, 12345), TestTuple{12345, 123456789}}}}, //Todo: expected result per worker thread?
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"},
+                              /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
+}
+// TEST_F(InputFormatterTest, testWhetherBufferWithoutDelimiterCanBridgeTwoBuffersWithDelimiters)
+
+// Todo: test tupleDelimiter that is not exactly one symbol
+// - will fail in InputFormatter, since we expect that the tuple delimiter is exactly one byte
 // Todo: add third buffer without delimiter in between two buffers with delimiter
+// Todo: add test with buffers that are not the first or last buffer and are not full
 // Todo: test with multiple tasks per buffer/thread (split tasks)
 }
