@@ -60,6 +60,9 @@ public:
     void
     flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) override;
 
+    size_t getSizeOfTupleDelimiter() override;
+    size_t getSizeOfFieldDelimiter() override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

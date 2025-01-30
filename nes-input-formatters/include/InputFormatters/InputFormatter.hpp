@@ -47,6 +47,9 @@ public:
     /// the final tuple, between the last tuple delimiter of the final buffer and (including) the last byte of the final buffer.
     virtual void flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) = 0;
 
+    virtual size_t getSizeOfTupleDelimiter() = 0;
+    virtual size_t getSizeOfFieldDelimiter() = 0;
+
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& obj) { return obj.toString(os); }
 
 protected:

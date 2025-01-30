@@ -71,7 +71,6 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 /// Each thread should share the same InputFormatterTask, meaning that we need to check that threads don't interfere with each other's state
 TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
 {
-    // Todo: make assignment of tasks to worker ids explicit
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
@@ -89,7 +88,6 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
 TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOrder)
 {
-    // Todo: make assignment of tasks to worker ids explicit
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
@@ -107,7 +105,6 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOr
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
 TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
 {
-    // Todo: make assignment of tasks to worker ids explicit
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
@@ -121,10 +118,42 @@ TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
 }
+
+TEST_F(InputFormatterTest, testDelimiterThatIsMoreThanOneCharacter)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple, true>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 4,
+        .numThreads = 1,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        .expectedResults = {{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,1234--"},
+                              /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,12345678--"}}});
+}
+
+TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    runTest<TestTuple, true>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 6,
+        .numThreads = 1,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32},
+        .expectedResults = {{{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}} ,{TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
+            {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}}, {TestTuple{1}}}}, //Todo: <--- the last test tuple would fit into the prior buffer
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1\n2\n3\n4\n5\n6\n7\n8\n"},
+                              /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "1234\n5678\n1001\n1"}}});
+}
 // TEST_F(InputFormatterTest, testWhetherBufferWithoutDelimiterCanBridgeTwoBuffersWithDelimiters)
 
-// Todo: test tupleDelimiter that is not exactly one symbol
-// - will fail in InputFormatter, since we expect that the tuple delimiter is exactly one byte
+// Todo: flush into still existing buffer if possible? (probably not!)
 // Todo: add third buffer without delimiter in between two buffers with delimiter
 // Todo: add test with buffers that are not the first or last buffer and are not full
 // Todo: test with multiple tasks per buffer/thread (split tasks)

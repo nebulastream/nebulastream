@@ -184,7 +184,7 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
                 actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
                 auto expectedTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
                 expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
-                NES_DEBUG("\n Actual result buffer:   {} Expected result buffer: {}", actualResultTestBuffer.toString(testHandle.schema, false), expectedTestBuffer.toString(testHandle.schema, false));
+                NES_DEBUG("\n Actual result buffer:\n{} Expected result buffer:\n{}", actualResultTestBuffer.toString(testHandle.schema, false), expectedTestBuffer.toString(testHandle.schema, false));
             }
             isValid &= TestUtil::checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
@@ -290,6 +290,7 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
     /// validate: actual results vs expected results
+    auto intPtr = testHandle.resultBuffers->at(0).at(0).template getBuffer<int32_t>();
     const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
     ASSERT_TRUE(validationResult);
     /// clean up

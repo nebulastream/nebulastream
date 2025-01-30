@@ -165,7 +165,7 @@ private:
         bool isEndValid;
     };
 public:
-    explicit SequenceShredder()
+    explicit SequenceShredder(const size_t sizeOfTupleDelimiter)
         : tail(0)
         , tupleDelimiterBitmaps(BitmapVectorType(INITIAL_NUM_BITMAPS))
         , seenAndUsedBitmaps(BitmapVectorType(INITIAL_NUM_BITMAPS))
@@ -184,10 +184,10 @@ public:
         //      - first initialization: tupDel, with no data (implicit tupDel of first buffer)
         //      - other initializations: noTupDel, no data (connects next buffer to prior buffer, without interfering)
         tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, 1, 0, 0, 1};
+        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0, 1};
     };
 
-    explicit SequenceShredder(const size_t initialTail)
+    explicit SequenceShredder(const size_t initialTail, const size_t sizeOfTupleDelimiter)
         : tail(initialTail)
         , tupleDelimiterBitmaps(BitmapVectorType(INITIAL_NUM_BITMAPS))
         , seenAndUsedBitmaps(BitmapVectorType(INITIAL_NUM_BITMAPS))
@@ -198,6 +198,9 @@ public:
     {
         this->tupleDelimiterBitmaps.shrink_to_fit();
         this->seenAndUsedBitmaps.shrink_to_fit();
+
+        tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
+        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0, 1};
     }
 
     [[nodiscard]] size_t getTail() const { return this->tail; }

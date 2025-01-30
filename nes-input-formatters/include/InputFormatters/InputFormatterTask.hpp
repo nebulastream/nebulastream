@@ -88,8 +88,8 @@ public:
         return os;
     };
 private:
-    std::unique_ptr<InputFormatter> inputFormatter;
     std::unique_ptr<SequenceShredder> sequenceShredder;
+    std::unique_ptr<InputFormatter> inputFormatter;
 };
 
 

@@ -148,7 +148,7 @@ namespace NES::InputFormatters {
 //  - initiates END_SYNCHRONIZATION
 
 InputFormatterTask::InputFormatterTask(std::unique_ptr<InputFormatter> inputFormatter)
-    : inputFormatter(std::move(inputFormatter)), sequenceShredder(std::make_unique<SequenceShredder>())
+    :  sequenceShredder(std::make_unique<SequenceShredder>(inputFormatter->getSizeOfTupleDelimiter())), inputFormatter(std::move(inputFormatter))
 {
 }
 InputFormatterTask::~InputFormatterTask() = default;
