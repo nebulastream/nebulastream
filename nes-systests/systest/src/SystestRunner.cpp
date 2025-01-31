@@ -12,26 +12,22 @@
     limitations under the License.
 */
 
+#include <SystestRunner.hpp>
+
 #include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <chrono>
-#include <cmath>
-#include <condition_variable>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <ostream>
 #include <ranges>
 #include <regex>
-#include <stop_token>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -39,29 +35,30 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <fmt/ostream.h>
-#include <folly/Synchronized.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
+#include <fmt/std.h>
+#include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <DataTypes/DataType.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
+#include <QuerySubmitter.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestGrpc.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
-#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -258,201 +255,80 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     {
         tryLogCurrentException();
         exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
-        throw exception;
+        throw;
     }
     return plans;
 }
 
-std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<Query>& queries,
-    const uint64_t numConcurrentQueries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration)
+
+std::vector<RunningQuery> runQueries(const std::vector<Query>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& submitter)
 {
-    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::Synchronized<std::vector<std::shared_ptr<RunningQuery>>> runningQueries;
-    SingleNodeWorker worker(configuration);
+    std::vector<std::shared_ptr<RunningQuery>> terminatedQueries;
+    std::vector<std::shared_ptr<RunningQuery>> runningQueries;
+    std::vector<std::shared_ptr<RunningQuery>> failedQueries;
+    size_t queryFinishedCounter = 0;
+    std::vector queriesToRunReverseOrder(queries.rbegin(), queries.rend());
 
-    std::atomic<size_t> queriesToResultCheck{0};
-    std::atomic<size_t> queryFinishedCounter{0};
-    const auto totalQueries = queries.size();
-    std::atomic finishedProducing{false};
-
-    std::mutex mtx;
-    std::condition_variable cv;
-
-    std::jthread producer(
-        [&queries, &queriesToResultCheck, &worker, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
-            std::stop_token stopToken)
-        {
-            for (auto& query : queries)
-            {
-                {
-                    std::unique_lock lock(mtx);
-                    cv.wait(
-                        lock,
-                        [&stopToken, &queriesToResultCheck, &numConcurrentQueries]
-                        { return stopToken.stop_requested() or queriesToResultCheck.load() < numConcurrentQueries; });
-                    if (stopToken.stop_requested())
-                    {
-                        finishedProducing = true;
-                        return;
-                    }
-                    const auto queryId = worker.registerQuery(query.queryPlan);
-                    if (queryId == INVALID_QUERY_ID)
-                    {
-                        throw QueryInvalid("Received an invalid query id from the worker");
-                    }
-                    worker.startQuery(queryId);
-
-                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                    runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
-
-                    /// We are waiting if we have reached the maximum number of concurrent queries
-                    queriesToResultCheck.fetch_add(1);
-                    while (queriesToResultCheck.load() == numConcurrentQueries)
-                    {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                    }
-                }
-            }
-            finishedProducing = true;
-            cv.notify_all();
-        });
-
-    while (not finishedProducing or queriesToResultCheck > 0)
+    while (!queriesToRunReverseOrder.empty() || !runningQueries.empty())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        for (size_t concurrentQueries = runningQueries.size();
+             concurrentQueries < numConcurrentQueries && !queriesToRunReverseOrder.empty();
+             ++concurrentQueries)
         {
-            auto runningQueriesLock = runningQueries.wlock();
-            for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
+            auto query = std::move(queriesToRunReverseOrder.back());
+            queriesToRunReverseOrder.pop_back();
+
+            auto id = submitter.registerQuery(query);
+            if (id == INVALID<QueryId>)
             {
-                const auto& runningQuery = *runningQueriesIter;
-                if (runningQuery)
-                {
-                    const auto querySummary = worker.getQuerySummary(QueryId(runningQuery->queryId));
-                    if (not querySummary.has_value())
-                    {
-                        /// Query Summary is not yet available
-                        continue;
-                    }
-
-                    if (const auto queryStatus = querySummary->currentStatus;
-                        queryStatus == QueryStatus::Stopped or queryStatus == QueryStatus::Failed)
-                    {
-                        worker.unregisterQuery(QueryId(runningQuery->queryId));
-
-                        std::optional<std::string> errorMessage;
-                        if (queryStatus == QueryStatus::Failed)
-                        {
-                            errorMessage
-                                = querySummary->runs.back().error.transform([](auto ex) { return ex.what(); }).value_or("No Error Message");
-                        }
-                        else
-                        {
-                            errorMessage = checkResult(*runningQuery);
-                        }
-                        runningQuery->passed = not errorMessage.has_value();
-                        runningQuery->querySummary = querySummary.value();
-                        printQueryResultToStdOut(
-                            *runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
-                        if (errorMessage.has_value())
-                        {
-                            failedQueries.wlock()->emplace_back(*runningQuery);
-                        }
-                        runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
-                        queriesToResultCheck.fetch_sub(1);
-                        cv.notify_one();
-                        continue;
-                    }
-                }
-                ++runningQueriesIter;
+                auto failedQuery = std::make_shared<RunningQuery>(query, id);
+                failedQuery->passed = false;
+                failedQueries.emplace_back(std::move(failedQuery));
             }
+            submitter.startQuery(id);
+            auto runningQuery = std::make_shared<RunningQuery>(query, id);
+            runningQuery->passed = false;
+            runningQueries.emplace_back(std::move(runningQuery));
         }
-    }
 
-    return failedQueries.copy();
-}
-
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
-{
-    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::Synchronized<std::vector<std::shared_ptr<RunningQuery>>> runningQueries;
-    const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
-
-    std::atomic<size_t> runningQueryCount{0};
-    std::atomic<size_t> queryFinishedCounter{0};
-    const auto totalQueries = queries.size();
-    std::atomic finishedProducing{false};
-
-    std::mutex mtx;
-    std::condition_variable cv;
-
-    std::jthread producer(
-        [&queries, &runningQueryCount, &client, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
-            std::stop_token stopToken)
+        for (auto querySummary : submitter.finishedQueries())
         {
-            for (auto& query : queries)
+            if (auto currentQuery
+                = std::ranges::find(runningQueries, querySummary.queryId, [](const auto& runningQuery) { return runningQuery->queryId; });
+                currentQuery != runningQueries.end())
             {
+                if (auto queryFailed = querySummary.runs.back().error)
                 {
-                    std::unique_lock lock(mtx);
-                    cv.wait(lock, [&] { return stopToken.stop_requested() or runningQueryCount.load() < numConcurrentQueries; });
-                    if (stopToken.stop_requested())
-                    {
-                        finishedProducing = true;
-                        return;
-                    }
-
-                    const auto queryId = client.registerQuery(query.queryPlan);
-                    client.start(queryId);
-                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                    runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
-
-                    /// We are waiting if we have reached the maximum number of concurrent queries
-                    runningQueryCount.fetch_add(1);
-                    while (runningQueryCount.load() <= numConcurrentQueries)
-                    {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                    }
+                    fmt::println(std::cerr, "Query {} failed with exception: {}", querySummary.queryId, queryFailed->what());
+                    failedQueries.emplace_back(*currentQuery);
                 }
-            }
-            finishedProducing = true;
-            cv.notify_all();
-        });
-
-    while (not finishedProducing or runningQueryCount > 0)
-    {
-        auto runningQueriesLock = runningQueries.wlock();
-        for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
-        {
-            const auto& runningQuery = *runningQueriesIter;
-            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == QueryStatus::Failed))
-            {
-                client.unregister(runningQuery->queryId.getRawValue());
-                runningQuery->querySummary = client.status(runningQuery->queryId.getRawValue());
-                auto errorMessage = checkResult(*runningQuery);
-                runningQuery->passed = not errorMessage.has_value();
-
-                printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
-                if (errorMessage.has_value())
+                auto error = checkResult(**currentQuery);
+                auto result = std::make_shared<RunningQuery>((*currentQuery)->query, (*currentQuery)->queryId);
+                result->passed = not error.has_value();
+                printQueryResultToStdOut(*result, error.value_or(""), queryFinishedCounter++, queries.size(), "");
+                if (error)
                 {
-                    failedQueries.wlock()->emplace_back(*runningQuery);
+                    failedQueries.emplace_back(std::move(result));
                 }
-                runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
-                runningQueryCount.fetch_sub(1);
-                cv.notify_one();
+                else
+                {
+                    terminatedQueries.emplace_back(std::move(result));
+                }
+                std::erase_if(runningQueries, [&](const auto& runningQuery) { return runningQuery->queryId == (*currentQuery)->queryId; });
             }
             else
             {
-                ++runningQueriesIter;
+                throw TestException("Received non registered queryId: {}", (*currentQuery)->queryId);
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
-    return failedQueries.copy();
+    return terminatedQueries | std::views::filter([](const auto& query) { return !query->passed; })
+        | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>();
 }
 
+namespace
+{
 std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQuery>& queries, nlohmann::json& resultJson)
 {
     std::vector<RunningQuery> failedQueries;
@@ -472,46 +348,30 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     }
     return failedQueries;
 }
-
-QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
-{
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        const auto summary = worker.getQuerySummary(queryId);
-        if (summary)
-        {
-            if (summary->currentStatus == QueryStatus::Stopped)
-            {
-                return *summary;
-            }
-        }
-    }
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
 {
-    SingleNodeWorker worker(configuration);
-    std::vector<RunningQuery> ranQueries;
+    LocalWorkerQuerySubmitter submitter(configuration);
+    std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     std::size_t queryFinishedCounter = 0;
     const auto totalQueries = queries.size();
     for (const auto& queryToRun : queries)
     {
-        const auto queryId = worker.registerQuery(queryToRun.queryPlan);
-        RunningQuery currentRunningQuery(queryToRun, queryId);
+        const auto queryId = submitter.registerQuery(queryToRun);
+        auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
+        runningQueryPtr->passed = false;
+        ranQueries.emplace_back(runningQueryPtr);
+        submitter.startQuery(queryId);
+        const auto summary = submitter.finishedQueries().at(0);
+
+        if (summary.runs.empty() or summary.runs.back().error.has_value())
         {
-            /// Measuring the time it takes from registering the query till unregistering / completion
-            worker.startQuery(queryId);
-            const auto summary = waitForQueryTermination(worker, queryId);
-            if (summary.runs.back().error.has_value())
-            {
-                fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
-                continue;
-            }
-            worker.unregisterQuery(queryId);
-            currentRunningQuery.querySummary = summary;
+            fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
+            continue;
         }
+        runningQueryPtr->querySummary = summary;
 
         /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
         size_t bytesProcessed = 0;
@@ -523,23 +383,24 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             /// Counting the lines, i.e., \n in the sourcePath
             std::ifstream inFile(sourcePath);
             tuplesProcessed
-                += std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
+                += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
         }
-        currentRunningQuery.bytesProcessed = bytesProcessed;
-        currentRunningQuery.tuplesProcessed = tuplesProcessed;
+        ranQueries.back()->bytesProcessed = bytesProcessed;
+        ranQueries.back()->tuplesProcessed = tuplesProcessed;
 
-        auto errorMessage = checkResult(currentRunningQuery);
-        currentRunningQuery.passed = not errorMessage.has_value();
+        auto errorMessage = checkResult(*ranQueries.back());
+        ranQueries.back()->passed = not errorMessage.has_value();
         const auto queryPerformanceMessage
-            = fmt::format(" in {} ({})", currentRunningQuery.getElapsedTime(), currentRunningQuery.getThroughput());
+            = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
         printQueryResultToStdOut(
-            currentRunningQuery, errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
-        ranQueries.emplace_back(currentRunningQuery);
+            *ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
+        ranQueries.emplace_back(ranQueries.back());
 
         queryFinishedCounter += 1;
     }
 
-    return serializeExecutionResults(ranQueries, resultJson);
+    return serializeExecutionResults(
+        ranQueries | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>(), resultJson);
 }
 
 void printQueryResultToStdOut(
@@ -574,4 +435,18 @@ void printQueryResultToStdOut(
         std::cout << "===================================================================" << '\n';
     }
 }
+
+std::vector<RunningQuery> runQueriesAtLocalWorker(
+    const std::vector<Query>& queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration)
+{
+    LocalWorkerQuerySubmitter submitter(configuration);
+    return runQueries(queries, numConcurrentQueries, submitter);
+}
+std::vector<RunningQuery>
+runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurrentQueries, const std::string& serverURI)
+{
+    RemoteWorkerQuerySubmitter submitter(serverURI);
+    return runQueries(queries, numConcurrentQueries, submitter);
+}
+
 }
