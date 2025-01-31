@@ -220,8 +220,11 @@ public:
         return false;
     }
 
-    /// Todo: documentation
-    [[nodiscard]] StagedBufferResult flushBuffers()
+    /// Since EoF/EoS is not a symbol that allows the parser to tell that the final tuple just ended, we require a function
+    /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
+    /// The artificial tuple is a buffer with a sequence number (SN) that is exactly one larger than the largest seen SN.
+    /// We configure the buffer to 'contain' a tuple delimiter as its first and only content.
+    [[nodiscard]] StagedBufferResult flushFinalPartialTuple()
     {
         // Todo: improve locking
         readWriteMutex.lock(); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
@@ -233,20 +236,6 @@ public:
             /// Reverse-search bitmaps, until a bitmap is not 0, meaning, it represents a buffer that is in the stagedBuffers vector
             if ((seenAndUsedBitmap | tupleDelimiterBitmap) != 0)
             {
-                // If the last buffer contains a tuple delimiter, we only need to return the last buffer
-                if (tupleDelimiterBitmap > seenAndUsedBitmap)
-                {
-                    // example (SN 2 is largest, ...0100):
-                    // offset: 61
-                    // snOffset: 64 - 61: 3
-                    const auto offsetToLargestBit = std::countl_zero(tupleDelimiterBitmap);
-                    const auto firstStagedBufferOfBitmap = numberOfBitmaps - offsetToTail;
-                    const auto sequenceNumberOffsetOfBit = SIZE_OF_BITMAP_IN_BITS - offsetToLargestBit;
-                    const auto stagedBufferOffset = (firstStagedBufferOfBitmap << BITMAP_SIZE_BIT_SHIFT) + sequenceNumberOffsetOfBit
-                        - 1; // Todo: need to deduct 1 to convert from bit index to SN?
-                    const auto lastBuffer = std::move(stagedBuffers[stagedBufferOffset]);
-                    return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = 0, .stagedBuffers = {std::move(lastBuffer)}};
-                }
                 /// If the last buffer contains a buffer that does not contain a delimiter, we need to check for a spanning tuple
                 /// We construct a dummy staged buffer and set its sequence number to exactly one higher than the largest seen sequence number.
                 /// The dummy staged buffer flushes out all prior buffers that still depended on a tuple delimiter that did not appear,
@@ -255,8 +244,9 @@ public:
                 const auto sequenceNumberOffsetOfBitmap = ((numberOfBitmaps - offsetToTail) & numberOfBitmapsModulo)
                     << BITMAP_SIZE_BIT_SHIFT;
                 const auto firstSequenceNumberOfBitmap = firstSequenceNumberOfTail + sequenceNumberOffsetOfBitmap;
-                const auto sequenceNumberOffsetOfBit = SIZE_OF_BITMAP_IN_BITS - std::countl_zero(seenAndUsedBitmap);
-                const auto largestSeenSequenceNumber = firstSequenceNumberOfBitmap + sequenceNumberOffsetOfBit;
+                const auto numberOfNotSeenSequenceNumbersInBitmap = std::countl_zero(seenAndUsedBitmap | tupleDelimiterBitmap);
+                const auto offsetToNextLargerSequenceNumber = SIZE_OF_BITMAP_IN_BITS - numberOfNotSeenSequenceNumbersInBitmap;
+                const auto nextLargestSequenceNumber = firstSequenceNumberOfBitmap + offsetToNextLargerSequenceNumber;
                 const auto dummyStagedBuffer = StagedBuffer{
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = 0,
@@ -264,7 +254,8 @@ public:
                     .offsetOfLastTupleDelimiter = 0,
                     .uses = 1};
                 readWriteMutex.unlock();
-                return processSequenceNumber<true>(dummyStagedBuffer, largestSeenSequenceNumber);
+                // Todo: test correctness, when next largest sequence number is in next bitmap
+                return processSequenceNumber<true>(dummyStagedBuffer, nextLargestSequenceNumber);
             }
         }
         readWriteMutex.unlock();

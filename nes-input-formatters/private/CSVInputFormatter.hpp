@@ -36,6 +36,12 @@ class ProgressTracker;
 
 class CSVInputFormatter : public InputFormatter
 {
+private:
+    enum class FormattedTupleIs : uint8_t
+    {
+        EMTPY = 0,
+        NOT_EMPTY = 1,
+    };
 public:
     using CastFunctionSignature = std::function<void(
         std::string inputString,
@@ -72,7 +78,7 @@ private:
     std::vector<size_t> fieldSizes;
     std::vector<CastFunctionSignature> fieldParseFunctions;
 
-    void processPartialTuple(
+    FormattedTupleIs processPartialTuple(
         const size_t partialTupleStartIdx,
         const size_t partialTupleEndIdx,
         const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat,

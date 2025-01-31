@@ -38,7 +38,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
@@ -124,9 +123,6 @@ public:
         {
             const auto fieldPointer = this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted;
             parseFunction(token, fieldPointer, *pipelineExecutionContext.getBufferManager(), getTupleBufferFormatted());
-            const auto lastVal = *reinterpret_cast<int32_t*>(fieldPointer);
-            const auto firstVal = *reinterpret_cast<int32_t*>(this->tupleBufferFormatted.getBuffer());
-            std::cout << lastVal << " vs " << firstVal << std::endl;
             currentFieldOffsetTBFormatted += fieldSize;
         }
     }
@@ -549,7 +545,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
 }
 
-void CSVInputFormatter::processPartialTuple(const size_t partialTupleStartIdx, const size_t partialTupleEndIdx, const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat, ProgressTracker& progressTracker,
+CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(const size_t partialTupleStartIdx, const size_t partialTupleEndIdx,
+    const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat, ProgressTracker& progressTracker,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     /// If the buffers are not empty, there are at least three buffers
@@ -575,37 +572,34 @@ void CSVInputFormatter::processPartialTuple(const size_t partialTupleStartIdx, c
     const std::string_view lastPartialTuple
         = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
     partialTuple.append(lastPartialTuple);
+    const auto stateOfPartialTuple = static_cast<FormattedTupleIs>(not(partialTuple.empty()));
     progressTracker.processCurrentTuple(
         std::move(partialTuple), pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
     progressTracker.progressOneTuple();
+    return stateOfPartialTuple;
 }
 
 void CSVInputFormatter::flushFinalTuple(
     NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
 {
-    const auto [bufferIndex, flushedBuffers] = sequenceShredder.flushBuffers();
+    const auto [bufferIndex, flushedBuffers] = sequenceShredder.flushFinalPartialTuple();
 
     auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     if (flushedBuffers.size() == 1)
     {
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-        const auto& firstBuffer = flushedBuffers.front(); //Todo: move buffers? clashes with surrounding code
-        const auto sizeOfLeadingPartialTuple = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + tupleDelimiter.size());
-        const std::string_view partialTuple = std::string_view(
-            firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
-        progressTracker.processCurrentTuple(partialTuple, pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
-        progressTracker.progressOneTuple();
-    } else
-    {
-        /// Allocate formatted buffer to write formatted tuples into.
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
-        processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
+        return;
     }
+    /// Allocate formatted buffer to write formatted tuples into.
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+    const auto formattedTupleIs = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
     /// Emit formatted buffer with single flushed tuple
-    auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
-    finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
-    pipelineExecutionContext.emitBuffer(
-        finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    if (formattedTupleIs == FormattedTupleIs::NOT_EMPTY)
+    {
+        auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
+        finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        pipelineExecutionContext.emitBuffer(
+            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    }
 }
 size_t CSVInputFormatter::getSizeOfTupleDelimiter()
 {

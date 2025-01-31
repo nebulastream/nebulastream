@@ -156,5 +156,6 @@ TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
 // Todo: flush into still existing buffer if possible? (probably not!)
 // Todo: add third buffer without delimiter in between two buffers with delimiter
 // Todo: add test with buffers that are not the first or last buffer and are not full
+//      - Todo: what if the last buffer is only partially full?
 // Todo: test with multiple tasks per buffer/thread (split tasks)
 }
