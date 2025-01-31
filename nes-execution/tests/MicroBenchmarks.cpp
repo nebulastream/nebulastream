@@ -188,11 +188,9 @@ public:
                 }
             }
 
-            const auto numTuplesLastPage = oldNumTuples % newCapacity == 0 ? newCapacity : oldNumTuples % newCapacity;
-            ASSERT_EQ(tupleCnt, numTuplesLastPage);
-            newPages.back().setNumberOfTuples(numTuplesLastPage);
-            ASSERT_EQ(newPagedVector->getNumberOfPages(), expectedNumPages);
+            newPages.back().setNumberOfTuples(tupleCnt);
             pagedVector = newPagedVector;
+            ASSERT_EQ(pagedVector->getNumberOfPages(), expectedNumPages);
         }
         else
         {
@@ -278,7 +276,6 @@ public:
             ASSERT_EQ(keyFile.tellp(), 0);
         }
 
-        // TODO remove?
         const auto& pages = pagedVector->getPages();
         const auto numPages = pagedVector->getNumberOfPages();
         const auto memoryLayout = pagedVector->getMemoryLayout();
@@ -288,17 +285,21 @@ public:
 
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
-
         const uint64_t numBuffers = std::ceil(static_cast<double>(bufferSize * numPages) / fileBufferSize);
-        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
-        // TODO if constexpr
-        const auto keyFileWriteSize
-            = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_KEYS ? numPagesPerBuffer * capacity * keySize : 0;
-        const auto payloadFileWriteSize
-            = SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SAME_FILE_KEYS
-            ? numPagesPerBuffer * capacity * payloadSize
-            : fileBufferSize;
         const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
+        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
+
+        auto keyFileWriteSize = 0UL;
+        auto payloadFileWriteSize = 0UL;
+        if constexpr (SeparateKeys == SEPARATE_FILES)
+        {
+            keyFileWriteSize = numPagesPerBuffer * capacity * keySize;
+            payloadFileWriteSize = numPagesPerBuffer * capacity * payloadSize;
+        }
+        else if constexpr (SeparateKeys == NO_SEPARATION)
+        {
+            payloadFileWriteSize = fileBufferSize;
+        }
 
         auto pageIdx = 0UL;
         std::vector<char> keyBuffer(keyFileWriteSize);
@@ -325,19 +326,18 @@ public:
                     std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, bufferSize);
                     fieldAddrPayloadBuffer += bufferSize;
                 }
-                else
+                else if constexpr (SeparateKeys == SEPARATE_FILES)
                 {
                     for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx, ++tuplesWritten)
                     {
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
                         {
-                            // TODO if constexpr
-                            if (fieldType == KEY && (SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_KEYS))
+                            if (fieldType == KEY)
                             {
                                 std::memcpy(fieldAddrKeyBuffer, fieldAddrPagedVector, fieldSize);
                                 fieldAddrKeyBuffer += fieldSize;
                             }
-                            else if (fieldType == PAYLOAD && (SeparateKeys == SEPARATE_FILES || SeparateKeys == SAME_FILE_PAYLOAD))
+                            else if (fieldType == PAYLOAD)
                             {
                                 std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, fieldSize);
                                 fieldAddrPayloadBuffer += fieldSize;
@@ -345,6 +345,43 @@ public:
 
                             fieldAddrPagedVector += fieldSize;
                         }
+                    }
+                }
+                else
+                {
+                    for (auto tupleIdx = numTuplesLastPage; tupleIdx < page.getNumberOfTuples() + numTuplesLastPage; ++tupleIdx)
+                    {
+                        if (tupleIdx > 0 && tupleIdx % oldCapacity == 0)
+                        {
+                            payloadFile.seekp(oldPagePadding, std::ios::cur);
+                        }
+
+                        for (const auto [fieldType, fieldSize] : oldFieldTypeSizes)
+                        {
+                            if ((fieldType == KEY && SeparateKeys == SAME_FILE_KEYS)
+                                || (fieldType == PAYLOAD && SeparateKeys == SAME_FILE_PAYLOAD))
+                            {
+                                payloadFile.write(reinterpret_cast<const char*>(fieldAddrPagedVector), fieldSize);
+                                fieldAddrPagedVector += fieldSize;
+                            }
+                            else
+                            {
+                                payloadFile.seekp(fieldSize, std::ios::cur);
+                                if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+                                {
+                                    fieldAddrPagedVector += fieldSize;
+                                }
+                            }
+                        }
+                    }
+
+                    if constexpr (SeparateKeys == SAME_FILE_KEYS)
+                    {
+                        numTuplesLastPage = (numTuplesLastPage + page.getNumberOfTuples() % oldCapacity) % oldCapacity;
+                    }
+                    if (numTuplesLastPage == 0)
+                    {
+                        payloadFile.seekp(oldPagePadding, std::ios::cur);
                     }
                 }
             }
@@ -357,43 +394,6 @@ public:
             {
                 keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
                 payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
-            }
-            else
-            {
-                fieldAddrKeyBuffer = keyBuffer.data();
-                fieldAddrPayloadBuffer = payloadBuffer.data();
-                for (auto tupleIdx = numTuplesLastPage; tupleIdx < tuplesWritten + numTuplesLastPage; ++tupleIdx)
-                {
-                    if (tupleIdx > 0 && tupleIdx % oldCapacity == 0)
-                    {
-                        payloadFile.seekp(oldPagePadding, std::ios::cur);
-                    }
-
-                    for (const auto [fieldType, fieldSize] : oldFieldTypeSizes)
-                    {
-                        // TODO if constexpr
-                        if (SeparateKeys == SAME_FILE_KEYS && fieldType == KEY)
-                        {
-                            payloadFile.write(fieldAddrKeyBuffer, fieldSize);
-                            fieldAddrKeyBuffer += fieldSize;
-                        }
-                        else if (SeparateKeys == SAME_FILE_PAYLOAD && fieldType == PAYLOAD)
-                        {
-                            payloadFile.write(fieldAddrPayloadBuffer, fieldSize);
-                            fieldAddrPayloadBuffer += fieldSize;
-                        }
-                        else
-                        {
-                            payloadFile.seekp(fieldSize, std::ios::cur);
-                        }
-                    }
-                }
-
-                numTuplesLastPage = (numTuplesLastPage + tuplesWritten % oldCapacity) % oldCapacity;
-                if (numTuplesLastPage == 0)
-                {
-                    payloadFile.seekp(oldPagePadding, std::ios::cur);
-                }
             }
 
             if (bufferIdx % tenPercentOfNumBuffers == 0)
@@ -446,7 +446,6 @@ public:
         auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
         newPagedVector->getPages().reserve(expectedNumPages);
 
-        // TODO remove?
         auto& oldPages = pagedVector->getPages();
         const auto oldCapacity = pagedVector->getMemoryLayout()->getCapacity();
         auto& pages = newPagedVector->getPages();
@@ -457,18 +456,24 @@ public:
 
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
+        const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
+        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
 
-        // TODO if constexpr
-        if (SeparateKeys == SAME_FILE_PAYLOAD && payloadSize == 0)
+        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
         {
-            newPagedVector = pagedVector;
+            if (payloadSize == 0)
+            {
+                newPagedVector = pagedVector;
+            }
         }
 
-        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
-        // TODO if constexpr
-        const auto keyFileReadSize = SeparateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * keySize : 0;
-        const auto payloadFileReadSize = SeparateKeys == SEPARATE_FILES ? numPagesPerBuffer * capacity * payloadSize : fileBufferSize;
-        const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
+        auto keyFileReadSize = 0UL;
+        auto payloadFileReadSize = fileBufferSize;
+        if constexpr (SeparateKeys == SEPARATE_FILES)
+        {
+            keyFileReadSize = numPagesPerBuffer * capacity * keySize;
+            payloadFileReadSize = numPagesPerBuffer * capacity * payloadSize;
+        }
 
         auto pageCnt = 0UL;
         std::vector<char> keyBuffer(keyFileReadSize);
@@ -507,11 +512,13 @@ public:
                 {
                     for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++oldTupleCnt)
                     {
-                        // TODO if constexpr
-                        if (SeparateKeys == SAME_FILE_PAYLOAD && oldTupleCnt >= oldCapacity)
+                        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
                         {
-                            fieldAddrKeyPagedVector = oldPages[++oldPageCnt].getBuffer();
-                            oldTupleCnt = 0;
+                            if (oldTupleCnt >= oldCapacity)
+                            {
+                                fieldAddrKeyPagedVector = oldPages[++oldPageCnt].getBuffer();
+                                oldTupleCnt = 0;
+                            }
                         }
 
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
