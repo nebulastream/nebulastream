@@ -47,10 +47,12 @@ public:
 
 // [x] 1. finish utils refactoring
 // [x] 2. enable binding tasks (here rawBuffers) to workerThreadIds
-// [ ] 3. write a decent basis for tests (fix InputFormatter issues) (fix in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
-// [ ] 4. new design for Informar (chunk/synchronize/parse)
-// [ ] 5. multiple stages per task (allow splitting tasks)
-// [ ] 6. rigorous testing (improve informar design/fix issues)
+// [x] 3. write a decent basis for tests
+// [ ] 4. write seeded randomized test with larger input data (potentially three sizes
+//      - also think about how to determine buffer sizes
+// ----------------------
+// [ ] 5. new design for Informar (chunk/synchronize/parse)
+// [ ] 6. multiple stages per task (allow splitting tasks)
 
 TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
@@ -157,7 +159,8 @@ TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "1234\n5678\n1001\n1"}}});
 }
 
-/// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
+/// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
+/// [TD][NTD][TD] (TD: TupleDelimiter, NTD: No TupleDelimiter)
 TEST_F(InputFormatterTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
 {
     using namespace InputFormatterTestUtil;
@@ -171,14 +174,32 @@ TEST_F(InputFormatterTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
         /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
-        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(3), WorkerThreadId(0), "3456789\n"},
-                              /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(1), "123456789,123456"},
-                              /* buffer 3 */ {SequenceNumber(2), WorkerThreadId(2), "789,123456789,12"}}});
+        .rawBytesPerThread
+        = {{SequenceNumber(3), WorkerThreadId(0), "3456789\n"},
+           {SequenceNumber(1), WorkerThreadId(1), "123456789,123456"},
+           {SequenceNumber(2), WorkerThreadId(2), "789,123456789,12"}}});
 }
-// Todo: check if numRequiredBuffers actually reflects expected
 
-// Todo: add third buffer without delimiter in between two buffers with delimiter
-// Todo: add test with buffers that are not the first or last buffer and are not full
-//      - Todo: what if the last buffer is only partially full?
-// Todo: test with multiple tasks per buffer/thread (split tasks)
+/// As long as we set the number of bytes in a buffer correctly, it should not matter whether it is only partially full
+TEST_F(InputFormatterTest, testMultiplePartiallyFilledBuffers)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 6, // 4 buffers for raw data, 2 buffer from results
+        .numThreads = 3,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32, INT32, INT32},
+        .expectedResults
+        = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123, 123, 123, 123)}}},
+           WorkerThreadResults<TestTuple>{1, {{TestTuple(123, 123, 123, 456789)}}}},
+        .rawBytesPerThread
+        = {{SequenceNumber(4), WorkerThreadId(0), ",456789"},
+           {SequenceNumber(1), WorkerThreadId(1), "123,123,"},
+           {SequenceNumber(2), WorkerThreadId(2), "123,123\n123,123"}, /// only full buffer
+           {SequenceNumber(3), WorkerThreadId(1), ",123"}}});
+}
+
 }
