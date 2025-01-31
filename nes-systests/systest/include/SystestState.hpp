@@ -34,7 +34,6 @@
 #include <fmt/format.h>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
-#include <SystestRunner.hpp>
 
 
 namespace NES::Systest

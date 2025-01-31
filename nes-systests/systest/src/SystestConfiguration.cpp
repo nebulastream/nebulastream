@@ -28,6 +28,7 @@ std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfigu
         &numberConcurrentQueries,
         &testGroups,
         &testDataDir,
+        &endlessMode,
         &excludeGroups,
         &grpcAddressUri};
 }
