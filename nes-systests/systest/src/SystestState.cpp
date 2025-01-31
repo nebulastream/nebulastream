@@ -231,7 +231,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
             return false;
         });
 
-    return testMap;
+    /// load from test dir
+    return discoverTestsRecursively(testsDiscoverDir, testFileExtension);
 }
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)

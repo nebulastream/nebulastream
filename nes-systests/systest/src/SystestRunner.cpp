@@ -249,11 +249,11 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     std::mutex mtx;
     std::condition_variable cv;
 
-    std::jthread producer(
+    const std::jthread producer(
         [&queries, &queriesToResultCheck, &worker, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
             std::stop_token stopToken)
         {
-            for (auto& query : queries)
+            for (const auto& query : queries)
             {
                 {
                     std::unique_lock lock(mtx);
@@ -273,7 +273,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     }
                     worker.startQuery(queryId);
 
-                    const RunningQuery runningQuery = {query, queryId, {}};
+                    const RunningQuery runningQuery = {query, QueryId(queryId)};
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.blockingWrite(std::move(runningQueryPtr));
                     queriesToResultCheck.fetch_add(1);
@@ -325,11 +325,11 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
     std::mutex mtx;
     std::condition_variable cv;
 
-    std::jthread producer(
+    const std::jthread producer(
         [&queries, &runningQueryCount, &client, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
             std::stop_token stopToken)
         {
-            for (auto& query : queries)
+            for (const auto& query : queries)
             {
                 {
                     std::unique_lock lock(mtx);
