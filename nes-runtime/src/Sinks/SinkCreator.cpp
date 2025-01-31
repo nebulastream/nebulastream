@@ -66,7 +66,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     bool append,
                                     uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format,
+    auto fileSink = std::make_shared<FileSink>(format,
                                       nodeEngine,
                                       activeProducers,
                                       filePath,
@@ -75,6 +75,8 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                       decomposedQueryId,
                                       decomposedQueryVersion,
                                       numberOfOrigins);
+    fileSink->setNumOfBuffers(nodeEngine->getNumberOfBuffersToProduce());
+    return fileSink;
 }
 
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,

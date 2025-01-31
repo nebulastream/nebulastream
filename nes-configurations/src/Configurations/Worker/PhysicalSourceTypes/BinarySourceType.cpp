@@ -51,8 +51,8 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
                                    std::map<std::string, std::string> sourceConfigMap)
     : BinarySourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
-    if (sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");

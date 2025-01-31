@@ -184,6 +184,7 @@ class MockDataSource : public DataSource {
                      gatheringMode,
                      "defaultPhysicalStreamName",
                      false,
+                     false,
                      executableSuccessors){
             // nop
         };
@@ -232,6 +233,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      gatheringMode,
                      "defaultPhysicalStreamName",
                      false,
+                     false,
                      executableSuccessors) {
         ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
             completedPromise.set_value(true);
@@ -267,6 +269,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
+                     false,
                      false,
                      executableSuccessors){};
 

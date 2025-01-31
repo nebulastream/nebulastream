@@ -36,6 +36,7 @@ limitations under the License.
 #include <unistd.h>
 #include <BorrowedPort.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Components/NesWorker.hpp>
@@ -173,12 +174,12 @@ using namespace NES;
             const auto& logicalSourceName = intermediateSourceNames[originId][intermediateSourceNames[originId].size() - 1];
             const auto physicalSourceName = "phy_" + logicalSourceName;
             std::map<std::string, std::string> sourceConfig {
-                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.bin"},
                 {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
                 {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
             };
-            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-            coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
+            auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            coordinatorConfiguration->worker.physicalSourceTypes.add(binarySourceType);
         }
 
         NES::Configurations::OptimizerConfiguration optimizerConfiguration;
@@ -250,12 +251,12 @@ using namespace NES;
         const auto& logicalSourceName = intermediateSourceNames[originId][0];
         const auto physicalSourceName = "phy_" + logicalSourceName;
         std::map<std::string, std::string> sourceConfig {
-            {Configurations::FILE_PATH_CONFIG, "start_source.csv"},
+            {Configurations::FILE_PATH_CONFIG, "start_source.bin"},
             {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
             {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
         };
-        auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-        wrkConf->physicalSourceTypes.add(csvSourceType);
+        auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+        wrkConf->physicalSourceTypes.add(binarySourceType);
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -291,13 +292,13 @@ using namespace NES;
             const auto& logicalSourceName = intermediateSourceNames[originId][interIndex];
             const auto physicalSourceName = "phy_" + logicalSourceName;
             std::map<std::string, std::string> sourceConfig {
-                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.csv"},
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.bin"},
                 {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
                 {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)},
                 {Configurations::SKIP_HEADER_CONFIG, "true"}
             };
-            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-            wrkConf->physicalSourceTypes.add(csvSourceType);
+            auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            wrkConf->physicalSourceTypes.add(binarySourceType);
         }
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -473,7 +474,7 @@ using namespace NES;
 
         std::cout << "Setting up nodes." << std::endl;
         std::atomic<bool> shouldProduce{false};
-        setUp(shouldProduce, bufferSize, defaultNumberOfBuffersToProduce, numberOfIntermediateNodes);
+        setUp(shouldProduce, bufferSize, 1024, numberOfIntermediateNodes);
 
         auto requestHandlerService = crd->getRequestHandlerService();
         auto topology = crd->getTopology();
@@ -512,10 +513,10 @@ using namespace NES;
                 }
 
                 auto fileSinkDescriptor =
-                    FileSinkDescriptor::create(sinkName + ".csv", "CSV_FORMAT", "OVERWRITE");
+                    FileSinkDescriptor::create(sinkName + ".bin", "NES_FORMAT", "OVERWRITE");
                 auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
                 auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
-                std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".csv" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
+                std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"NES_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
                 sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
                 QueryId addedQueryId =
                     requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString,
@@ -529,7 +530,7 @@ using namespace NES;
         for (auto originId = 1; originId <= 2; originId++) {
             auto sourceName = intermediateSourceNames[originId][0];
             auto sinkName = intermediateSourceNames[originId][1];
-            auto fileSinkDescriptor = FileSinkDescriptor::create(sinkName + ".csv", "CSV_FORMAT", "OVERWRITE");
+            auto fileSinkDescriptor = FileSinkDescriptor::create(sinkName + ".bin", "NES_FORMAT", "OVERWRITE");
             auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
             auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
             auto destinationWorkerId = INVALID_WORKER_NODE_ID;
@@ -539,7 +540,7 @@ using namespace NES;
                 destinationWorkerId = intermediateNodes[0]->getWorkerId();
             }
             sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
-            std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".csv" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
+            std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
             QueryId addedQueryId =
                 requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString, Optimizer::PlacementStrategy::TopDown);
             waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
@@ -571,12 +572,12 @@ using namespace NES;
         sleep(5);
         for (auto source: intermediateSourceNames) {
             for (auto name: source) {
-                std::string fileName = name + "_finished.csv";
+                std::string fileName = name + "_finished.bin";
                 remove(fileName.c_str());
             }
         }
 
-        remove("start_source.csv");
+        remove("start_source.bin");
 
         std::cout << "Stop source nodes" << std::endl;
         for (auto& wrk : sourceNodes) {

@@ -194,8 +194,9 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      StatisticId statisticId,
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
-                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
+                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                     bool shouldDelay,
+                                     uint64_t numberOfBuffersToProduce);
 /**
  * @brief function to create a sense source
  * @param schema schema of data source
