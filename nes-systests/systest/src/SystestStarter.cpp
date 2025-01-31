@@ -19,6 +19,8 @@
 #include <filesystem>
 #include <format>
 #include <iostream>
+#include <memory>
+#include <random>
 #include <vector>
 #include <unistd.h>
 #include <Configurations/Util.hpp>
@@ -30,10 +32,11 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
-
 #include <ErrorHandling.hpp>
+#include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <from_current.hpp>
 
@@ -83,6 +86,9 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .default_value(6)
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
+
+    /// endless mode
+    program.add_argument("-e", "--endless").flag().help("continuously issue queries to the worker");
 
     /// single node worker config
     program.add_argument("--")
@@ -258,6 +264,11 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.workingDir = program.get<std::string>("--workingDir");
     }
 
+    if (program.is_used("--endless"))
+    {
+        config.endlessMode = true;
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << loadTestFileMap(config);
@@ -277,6 +288,53 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
     std::random_device rd;
     std::mt19937 g(rd());
     std::ranges::shuffle(queries, g);
+}
+
+static void runEndlessMode(std::vector<NES::Systest::Query> queries, NES::Configuration::SystestConfiguration& config)
+{
+    using namespace NES;
+    std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
+
+    const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+
+    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(Configuration::SingleNodeWorkerConfiguration{});
+    if (not config.workerConfig.getValue().empty())
+    {
+        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+    }
+    else if (config.singleNodeWorkerConfig.has_value())
+    {
+        singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
+    }
+
+
+    std::mt19937 rng(std::random_device{}());
+
+    const auto grpcURI = config.grpcAddressUri.getValue();
+    const auto runRemote = not grpcURI.empty();
+
+    auto submitter = [&]() -> std::unique_ptr<Systest::QuerySubmitter>
+    {
+        if (runRemote)
+        {
+            return std::make_unique<Systest::RemoteWorkerQuerySubmitter>(grpcURI);
+        }
+        return std::make_unique<Systest::LocalWorkerQuerySubmitter>(singleNodeWorkerConfiguration);
+    }();
+
+    while (true)
+    {
+        std::ranges::shuffle(queries, rng);
+        auto failedQueries = Systest::runQueries(queries, numberConcurrentQueries, *submitter);
+        if (!failedQueries.empty())
+        {
+            std::stringstream outputMessage;
+            outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
+            NES_ERROR("{}", outputMessage.str());
+            std::cout << '\n' << outputMessage.str() << '\n';
+            std::exit(1);
+        }
+    }
 }
 
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
@@ -355,7 +413,7 @@ int main(int argc, const char** argv)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue());
+        auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
         if (queries.empty())
         {
@@ -366,10 +424,18 @@ int main(int argc, const char** argv)
             return 1;
         }
 
+        if (config.endlessMode)
+        {
+            runEndlessMode(queries, config);
+            std::exit(1);
+        }
+
+        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
 
         if (config.randomQueryOrder)
         {
-            shuffleQueries(queries);
+            std::mt19937 rng(std::random_device{}());
+            std::ranges::shuffle(queries, rng);
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;

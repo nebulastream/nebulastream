@@ -34,7 +34,6 @@
 #include <fmt/format.h>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
-#include <SystestRunner.hpp>
 
 
 namespace NES::Systest
@@ -102,6 +101,11 @@ struct Query
     SystestParser::Schema expectedSinkSchema;
 };
 
+struct QueryExecutionInfo
+{
+    std::chrono::microseconds executionTime;
+    bool passed;
+};
 
 struct RunningQuery
 {
