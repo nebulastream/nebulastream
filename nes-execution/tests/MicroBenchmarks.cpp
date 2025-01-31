@@ -25,8 +25,7 @@ namespace NES
 {
 
 using FieldType = enum : uint8_t { KEY, PAYLOAD };
-// TODO add SEPARATE_FILES_KEYS and SEPARATE_FILES_PAYLOAD
-using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES };
+using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES_KEYS, SEPARATE_FILES_PAYLOAD };
 
 class MicroBenchmarksTest : public Testing::BaseUnitTest,
                             public testing::WithParamInterface<std::tuple<uint64_t, uint64_t, std::vector<std::string>>>
@@ -143,7 +142,7 @@ public:
         Timer<> timer("clearTimer");
         timer.start();
 
-        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
         {
             const auto oldMemoryLayout = pagedVector->getMemoryLayout();
             const auto fieldTypeSizes = getFieldTypeSizes(oldMemoryLayout);
@@ -268,7 +267,7 @@ public:
         }
         ASSERT_TRUE(payloadFile.is_open());
         ASSERT_EQ(payloadFile.tellp(), 0);
-        if constexpr (SeparateKeys == SEPARATE_FILES)
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
             ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
@@ -286,14 +285,17 @@ public:
         const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
         const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
         const uint64_t numBuffers = std::ceil(static_cast<double>(bufferSize * numPages) / fileBufferSize);
-        const auto tenPercentOfNumBuffers = std::max(1UL, (numBuffers * 10) / 100);
+        const auto tenPercentOfNumPages = std::max(1UL, (numPages * 10) / 100);
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
 
         auto keyFileWriteSize = 0UL;
         auto payloadFileWriteSize = 0UL;
-        if constexpr (SeparateKeys == SEPARATE_FILES)
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
         {
-            keyFileWriteSize = numPagesPerBuffer * capacity * keySize;
+            if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+            {
+                keyFileWriteSize = numPagesPerBuffer * capacity * keySize;
+            }
             payloadFileWriteSize = numPagesPerBuffer * capacity * payloadSize;
         }
         else if constexpr (SeparateKeys == NO_SEPARATION)
@@ -312,6 +314,7 @@ public:
 
         for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
         {
+            // TODO remove tuplesWritten
             auto tuplesWritten = 0UL;
             auto* fieldAddrKeyBuffer = keyBuffer.data();
             auto* fieldAddrPayloadBuffer = payloadBuffer.data();
@@ -326,18 +329,21 @@ public:
                     std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, bufferSize);
                     fieldAddrPayloadBuffer += bufferSize;
                 }
-                else if constexpr (SeparateKeys == SEPARATE_FILES)
+                else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
                 {
-                    for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx, ++tuplesWritten)
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++tuplesWritten)
                     {
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
                         {
                             if (fieldType == KEY)
                             {
-                                std::memcpy(fieldAddrKeyBuffer, fieldAddrPagedVector, fieldSize);
-                                fieldAddrKeyBuffer += fieldSize;
+                                if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+                                {
+                                    std::memcpy(fieldAddrKeyBuffer, fieldAddrPagedVector, fieldSize);
+                                    fieldAddrKeyBuffer += fieldSize;
+                                }
                             }
-                            else if (fieldType == PAYLOAD)
+                            else
                             {
                                 std::memcpy(fieldAddrPayloadBuffer, fieldAddrPagedVector, fieldSize);
                                 fieldAddrPayloadBuffer += fieldSize;
@@ -384,21 +390,26 @@ public:
                         payloadFile.seekp(oldPagePadding, std::ios::cur);
                     }
                 }
+
+#ifdef LOGGING
+                if (pageIdx % tenPercentOfNumPages == 0)
+                {
+                    NES_INFO("File {}% written", std::round(100 * static_cast<double>(pageIdx) / numPages));
+                }
+#endif
             }
 
             if constexpr (SeparateKeys == NO_SEPARATION)
             {
                 payloadFile.write(payloadBuffer.data(), fileBufferSize);
             }
-            else if constexpr (SeparateKeys == SEPARATE_FILES)
+            else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
             {
-                keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
+                if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+                {
+                    keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
+                }
                 payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
-            }
-
-            if (bufferIdx % tenPercentOfNumBuffers == 0)
-            {
-                NES_INFO("File {}% written", std::round(100 * static_cast<double>(bufferIdx) / numBuffers));
             }
         }
 
@@ -435,7 +446,7 @@ public:
         payloadFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
         ASSERT_TRUE(payloadFile.is_open());
         ASSERT_EQ(payloadFile.tellg(), 0);
-        if constexpr (SeparateKeys == SEPARATE_FILES)
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
             ASSERT_GT(fileNames.size(), 1);
             keyFile = std::ifstream(fileNames.at(1), std::ios::in | std::ios::binary);
@@ -459,7 +470,7 @@ public:
         const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
         const auto numPagesPerBuffer = fileBufferSize / bufferSize;
 
-        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
         {
             if (payloadSize == 0)
             {
@@ -469,9 +480,12 @@ public:
 
         auto keyFileReadSize = 0UL;
         auto payloadFileReadSize = fileBufferSize;
-        if constexpr (SeparateKeys == SEPARATE_FILES)
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
         {
-            keyFileReadSize = numPagesPerBuffer * capacity * keySize;
+            if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+            {
+                keyFileReadSize = numPagesPerBuffer * capacity * keySize;
+            }
             payloadFileReadSize = numPagesPerBuffer * capacity * payloadSize;
         }
 
@@ -489,10 +503,9 @@ public:
             auto* fieldAddrKeyBuffer = keyBuffer.data();
             auto* fieldAddrPayloadBuffer = payloadBuffer.data();
 
-            if constexpr (SeparateKeys == SEPARATE_FILES)
+            if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
             {
                 keyFile.read(keyBuffer.data(), keyFileReadSize);
-                ASSERT_GT(keyFile.gcount(), 0);
             }
 
             for (auto pageIdx = 0UL; pageIdx < numPagesPerBuffer; ++pageIdx)
@@ -512,7 +525,7 @@ public:
                 {
                     for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++oldTupleCnt)
                     {
-                        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+                        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
                         {
                             if (oldTupleCnt >= oldCapacity)
                             {
@@ -525,7 +538,7 @@ public:
                         {
                             if (fieldType == KEY)
                             {
-                                if constexpr (SeparateKeys == SEPARATE_FILES)
+                                if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
                                 {
                                     std::memcpy(fieldAddrPagedVector, fieldAddrKeyBuffer, fieldSize);
                                     fieldAddrKeyBuffer += fieldSize;
@@ -534,7 +547,11 @@ public:
                                 {
                                     std::memcpy(fieldAddrPagedVector, fieldAddrKeyPagedVector, fieldSize);
                                     fieldAddrKeyPagedVector += fieldSize;
-                                    fieldAddrPayloadBuffer += fieldSize;
+
+                                    if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+                                    {
+                                        fieldAddrPayloadBuffer += fieldSize;
+                                    }
                                 }
                             }
                             else
@@ -553,10 +570,12 @@ public:
                     fieldAddrPayloadBuffer += pagePadding;
                 }
 
+#ifdef LOGGING
                 if (pageCnt++ % tenPercentOfNumPages == 0)
                 {
                     NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
                 }
+#endif
             }
         }
 
@@ -592,7 +611,6 @@ public:
         const auto& expectedPages = expectedPagedVector->getPages();
         const auto& actualPages = actualPagedVector->getPages();
 
-        const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
         const auto memoryLayout = expectedPagedVector->getMemoryLayout();
         const auto tuplesOnPageSize = memoryLayout->getCapacity() * memoryLayout->getTupleSize();
 
@@ -604,11 +622,6 @@ public:
             const auto* const actualBufferAddr = actualPages[pageIdx].getBuffer();
 
             ASSERT_EQ(std::memcmp(expectedBufferAddr, actualBufferAddr, tuplesOnPageSize), 0);
-
-            if (pageIdx % tenPercentOfNumPages == 0)
-            {
-                NES_INFO("PagedVectors {}% compared", std::round(100 * static_cast<double>(pageIdx) / expectedNumPages));
-            }
         }
 
         timer.snapshot("done comparing");
@@ -637,9 +650,13 @@ public:
         {
             separateKeys = "SAME_FILE_PAYLOAD";
         }
-        else if constexpr (SeparateKeys == SEPARATE_FILES)
+        else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
-            separateKeys = "SEPARATE_FILES";
+            separateKeys = "SEPARATE_FILES_KEYS";
+        }
+        else if constexpr (SeparateKeys == SEPARATE_FILES_PAYLOAD)
+        {
+            separateKeys = "SEPARATE_FILES_PAYLOAD";
         }
 
         filename << "../../../micro_benchmarks_" << separateKeys;
@@ -694,7 +711,7 @@ public:
         const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
 
         std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
-        if constexpr (SeparateKeys == SEPARATE_FILES)
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
             fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
         }
@@ -736,22 +753,22 @@ TEST_P(MicroBenchmarksTest, noSeparation)
     runTests<NO_SEPARATION>();
 }
 
-TEST_P(MicroBenchmarksTest, DISABLED_separateFiles)
+TEST_P(MicroBenchmarksTest, separateFilesPayloadOnly)
 {
-    runTests<SEPARATE_FILES>();
+    runTests<SEPARATE_FILES_PAYLOAD>();
 }
 
-/*TEST_P(MicroBenchmarksTest, DISABLED_separateFilesPayloadAndKey)
+TEST_P(MicroBenchmarksTest, separateFilesPayloadAndKey)
 {
     runTests<SEPARATE_FILES_KEYS>();
-}*/
+}
 
-TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadOnly)
+TEST_P(MicroBenchmarksTest, sameFilePayloadOnly)
 {
     runTests<SAME_FILE_PAYLOAD>();
 }
 
-TEST_P(MicroBenchmarksTest, DISABLED_sameFilePayloadAndKey)
+TEST_P(MicroBenchmarksTest, sameFilePayloadAndKey)
 {
     runTests<SAME_FILE_KEYS>();
 }

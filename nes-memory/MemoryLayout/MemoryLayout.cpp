@@ -149,7 +149,8 @@ bool MemoryLayout::operator==(const MemoryLayout& rhs) const
     }
 
     return equalPhysicalTypes && bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize
-        && capacity == rhs.capacity && physicalFieldSizes == rhs.physicalFieldSizes && nameFieldIndexMap == rhs.nameFieldIndexMap;
+        && capacity == rhs.capacity && physicalFieldSizes == rhs.physicalFieldSizes && nameFieldIndexMap == rhs.nameFieldIndexMap
+        && keyFieldNames == rhs.keyFieldNames;
 }
 
 bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
