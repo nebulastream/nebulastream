@@ -259,6 +259,8 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
+    void startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent);
+
   private:
     WorkerRPCClient() = default;
 };

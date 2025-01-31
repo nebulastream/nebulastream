@@ -43,6 +43,7 @@ RestServer::RestServer(std::string host,
                        uint16_t port,
                        NesCoordinatorWeakPtr coordinator,
                        Catalogs::Query::QueryCatalogPtr queryCatalog,
+                       Catalogs::Source::SourceCatalogPtr sourceCatalogService,
                        TopologyPtr topology,
                        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                        RequestHandlerServicePtr requestHandlerService,
@@ -51,12 +52,13 @@ RestServer::RestServer(std::string host,
                        GlobalQueryPlanPtr globalQueryPlan,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
-                       std::optional<std::string> corsAllowedOrigin)
+                       std::optional<std::string> corsAllowedOrigin, CoordinatorConfigurationPtr coordinatorConfiguration)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), requestHandlerService(std::move(requestHandlerService)),
-      globalQueryPlan(std::move(globalQueryPlan)), topology(std::move(topology)), udfCatalog(std::move(udfCatalog)),
-      monitoringService(std::move(monitoringService)), queryParsingService(std::move(queryParsingService)),
-      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
+      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)), monitoringService(std::move(monitoringService)),
+      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
+      corsAllowedOrigin(std::move(corsAllowedOrigin)), coordinatorConfiguration(coordinatorConfiguration) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -106,7 +108,7 @@ void RestServer::run() {
     auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
     auto queryCatalogController =
         REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, coordinator, "/queryCatalog", errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler, requestHandlerService, coordinatorConfiguration, sourceCatalogService);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      requestHandlerService,
                                                                      queryCatalog,
@@ -163,7 +165,7 @@ void RestServer::run() {
 
     /* Run server */
     server.run([this]() -> bool {
-        NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
+        //NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
         std::unique_lock lock(mutex);
         return !stopRequested;
     });

@@ -104,6 +104,7 @@ class RestServer {
                uint16_t port,
                NesCoordinatorWeakPtr coordinator,
                Catalogs::Query::QueryCatalogPtr queryCatalog,
+               Catalogs::Source::SourceCatalogPtr sourceCatalogService,
                TopologyPtr topology,
                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                RequestHandlerServicePtr requestHandlerService,
@@ -112,7 +113,8 @@ class RestServer {
                GlobalQueryPlanPtr globalQueryPlan,
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
-               std::optional<std::string> corsAllowedOrigin);
+               std::optional<std::string> corsAllowedOrigin, CoordinatorConfigurationPtr coordinatorConfiguration
+               );
 
     /**
      * @brief method to start the rest server, calls run() internally
@@ -140,6 +142,7 @@ class RestServer {
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     RequestHandlerServicePtr requestHandlerService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalogService;
     TopologyPtr topology;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     MonitoringServicePtr monitoringService;
@@ -148,6 +151,7 @@ class RestServer {
     std::condition_variable conditionVariable;
     std::mutex mutex;
     std::optional<std::string> corsAllowedOrigin;
+    CoordinatorConfigurationPtr coordinatorConfiguration;
     bool stopRequested{false};
 };
 }// namespace NES

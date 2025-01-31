@@ -188,7 +188,7 @@ class RequestHandlerService {
      * @param isqpEvents a vector of ISQP requests to be handled
      * @return response to the execution of the request
      */
-    RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
+    RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse = true);
 
     /**
      * @brief Processes a track requests by mapping it to a statistic query and returning the statistic keys
@@ -296,6 +296,11 @@ class RequestHandlerService {
      */
     SchemaPtr queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
 
+    bool isIncrementalPlacementEnabled();
+
+    void validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings, uint64_t duplicationFactor = 1);
+
+    void validateAndQueueMultiQueryRequestParallel(std::vector<std::string> queries);
   private:
     /**
      * @brief helper function to create a request to modify the query catalog
@@ -321,6 +326,8 @@ class RequestHandlerService {
     Statistic::StatisticRegistryPtr statisticRegistry;
     Statistic::StatisticIdsExtractor statisticIdsExtractor;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
+    void validateAndQueueMultiQueryRequest(std::vector<std::string, Optimizer::PlacementStrategy> queryStrings,
+                                           uint64_t duplicationFactor);
 };
 
 }// namespace NES

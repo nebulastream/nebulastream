@@ -36,7 +36,8 @@ service WorkerRPCService {
 
     rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
-    rpc BeginBuffer (BufferRequest) returns (BufferReply) {}
+    rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+    rpc StartBufferingOnAllSinks(StartBufferingRequest) returns (StartBufferingReply) {}
 
     rpc UpdateNetworkSink (UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply) {}
 
@@ -210,4 +211,12 @@ message StatisticReply {
 
 message ProbeStatisticsReply {
     repeated StatisticReply statistics = 1;
+}
+
+message StartBufferingRequest {
+  int64 parent = 1;
+}
+
+message StartBufferingReply {
+  bool success = 1;
 }

@@ -28,6 +28,12 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Exceptions/RpcException.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -49,9 +55,12 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        const TopologyPtr& topology,
                        const oatpp::String& completeRouterPrefix,
-                       const ErrorHandlerPtr& errorHandler)
+                       const ErrorHandlerPtr& errorHandler,
+                       const RequestHandlerServicePtr requestHandlerService,
+                       const CoordinatorConfigurationPtr coordinatorConfiguration, const SourceCatalogPtr sourceCatalog)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
-          errorHandler(errorHandler) {}
+          errorHandler(errorHandler), requestHandlerService(requestHandlerService), workerRPCClient(WorkerRPCClient::create()),
+          coordinatorConfiguration(coordinatorConfiguration), sourceCatalog(sourceCatalog) {}
 
     /**
      * Create a shared object of the API controller
@@ -63,9 +72,16 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     static std::shared_ptr<TopologyController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                       const TopologyPtr& topology,
                                                       const std::string& routerPrefixAddition,
-                                                      const ErrorHandlerPtr& errorHandler) {
+                                                      const ErrorHandlerPtr& errorHandler,
+                                                      const RequestHandlerServicePtr requestHandlerService,
+                                                      CoordinatorConfigurationPtr coordinatorConfiguration, SourceCatalogPtr sourceCatalog) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler);
+        return std::make_shared<TopologyController>(objectMapper,
+                                                    std::move(topology),
+                                                    completeRouterPrefix,
+                                                    errorHandler,
+                                                    requestHandlerService,
+                                                    coordinatorConfiguration, sourceCatalog);
     }
 
     ENDPOINT("GET", "", getTopology) {
@@ -154,6 +170,66 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
+        try {
+            NES_ERROR("Processing topology update")
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                NES_ERROR("Invalid json")
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            };
+            NES_ERROR("Parse json")
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            NES_ERROR("{}", reqJson.dump());
+            auto completionQueue = std::make_shared<CompletionQueue>();
+            auto bufferJson = reqJson["events"];
+            NES_ERROR("number of events {}", bufferJson.size())
+            //startBufferingOnAllSources(reqJson, completionQueue);
+            startBufferingOnAllSources(bufferJson, completionQueue);
+            NES_ERROR("Sent buffering messges666666666666666666666666666666666666666666666666666666")
+            //todo: check if proactive is enabled here
+            std::vector<RequestProcessor::ISQPEventPtr> events;
+//            if (coordinatorConfiguration->enableProactiveDeployment) {
+            if (false) {
+                NES_ERROR("Inserting predictions")
+                events = createEvents(reqJson["predictions"]);
+            } else {
+                NES_ERROR("Inserting events")
+                events = createEvents(bufferJson);
+            }
+            // auto events = createEvents(reqJson);
+            if (!events.empty()) {
+                requestHandlerService->queueISQPRequest(events, false);
+            }
+            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
+            //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
+            //            if (success) {
+            //                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
+            //            } else {
+            //                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+            //                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+            //            }
+            //Prepare the response
+            if (bufferJson.size() != 0) {
+                NES_ERROR("waiting for async calls")
+                std::vector<RpcAsyncRequest> asyncRequests;
+                asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
+                workerRPCClient->checkAsyncResult(asyncRequests);
+            }
+            NES_ERROR("received results messges666666666666666666666666666666666666666666666666666666")
+
+            nlohmann::json response;
+            //            response["success"] = success;
+            response["success"] = true;
+            return createResponse(Status::CODE_200, response.dump());
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
+    }
+
     ENDPOINT("DELETE", "/removeAsChild", removeParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
@@ -203,6 +279,110 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     }
 
   private:
+    // create a vector of isqp events from a json array
+    std::vector<RequestProcessor::ISQPEventPtr> createEvents(const nlohmann::json& reqJson) {
+        std::vector<RequestProcessor::ISQPEventPtr> events;
+        for (const auto& event : reqJson) {
+            events.push_back(createEvent(event));
+        }
+        return events;
+    }
+
+    //start buffering at all child nodes from the json
+    void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
+
+        NES_ERROR("Buffer on moving devices")
+        // std::set<uint64_t> buffer_only;
+        std::set<WorkerId> moving;
+        for (const auto& worker : reqJson) {
+            std::string action = worker["action"].get<std::string>();
+            if (action == "add" || action == "buffer") {
+                WorkerId childId (worker["childId"].get<uint64_t>());
+                WorkerId parentId(worker["parentId"].get<uint64_t>());
+                NES_ERROR("Buffering on child {} until connected to parent {}", childId, parentId);
+                auto node = topology->lockTopologyNode(childId);
+                NES_ERROR("retrieved topology node, getting address");
+                //get the adress of the node
+                auto ipAddress = node->operator*()->getIpAddress();
+                NES_ERROR("got address, getting grpc port");
+                //get the grpc port
+                auto grpcPort = node->operator*()->getGrpcPort();
+                //construct the adress
+                std::string address = ipAddress + ":" + std::to_string(grpcPort);
+                NES_ERROR("send buffering request to {}", address);
+                workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
+                NES_ERROR("sent bufering request")
+
+                moving.insert(childId);
+                //buffer_only.insert(sourceNodeMaps[childId].begin(), sourceNodeMaps[parentId].end());
+            }
+        }
+
+        auto mockParent = INVALID_WORKER_NODE_ID;
+        //if ((requestHandlerService->isIncrementalPlacementEnabled() && !coordinatorConfiguration->enableProactiveDeployment) || moving.empty()) {
+        if (requestHandlerService->isIncrementalPlacementEnabled() || moving.empty()) {
+            NES_ERROR("incremental placement is enabled, no futher buffering needed")
+            // mockParent = 0;
+            return;
+        }
+
+        if (!sourceNodeMapInitialized) {
+            NES_ERROR("initializing source node map")
+            for (const auto& [logicalSourceName, _] : sourceCatalog->getAllLogicalSource()) {
+                auto sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+                for (const auto& sourceNode : sourceNodes) {
+                    auto& vec = sourceNodeMap[sourceNode];
+                    vec.insert(vec.begin(), sourceNodes.cbegin(), sourceNodes.cend());
+                }
+            }
+            //            auto nodeIds = topology->getAllRegisteredNodeIds();
+            //            for (const auto& nodeId : nodeIds) {
+            //                auto node = topology->lockTopologyNode(nodeId);
+            //                if (node->operator*()->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            //                    NES_ERROR("adding node {} to mobile nodes", nodeId);
+            //                    mobileNodes.push_back(nodeId);
+            //                }
+            //            }
+            sourceNodeMapInitialized = true;
+        }
+
+        std::set<WorkerId> buffering;
+        NES_ERROR("send buffering requests to non moving workers")
+        for (const auto& worker : moving) {
+            for (const auto& sourceNode : sourceNodeMap[worker]) {
+
+                if (moving.contains(sourceNode) || buffering.contains(sourceNode)) {
+                    NES_ERROR("worker {} is moving or buffering, do not send another buffering request", sourceNode);
+                    continue;
+                }
+                NES_ERROR("worker {} is not moving, send buffering request", sourceNode);
+                auto node = topology->lockTopologyNode(sourceNode);
+                //get the adress of the node
+                auto ipAddress = node->operator*()->getIpAddress();
+                //get the grpc port
+                auto grpcPort = node->operator*()->getGrpcPort();
+                //construct the adress
+                std::string address = ipAddress + ":" + std::to_string(grpcPort);
+                workerRPCClient->startBufferingAsync(address, completionQueue, mockParent);
+                buffering.insert(sourceNode);
+            }
+        }
+    }
+
+    //create an add or remove event
+    RequestProcessor::ISQPEventPtr createEvent(const nlohmann::json& reqJson) {
+        WorkerId parentId(reqJson["parentId"].get<uint64_t>());
+        WorkerId childId(reqJson["childId"].get<uint64_t>());
+        std::string action = reqJson["action"].get<std::string>();
+        if (action == "add") {
+            return RequestProcessor::ISQPAddLinkEvent::create(parentId, childId);
+        }
+        if (action == "remove") {
+            return RequestProcessor::ISQPRemoveLinkEvent::create(parentId, childId);
+        }
+        throw std::logic_error("Invalid action type");
+    }
+
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>> validateRequest(nlohmann::json reqJson) {
         if (reqJson.empty()) {
             return errorHandler->handleError(Status::CODE_400, "empty body");
@@ -237,6 +417,13 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     TopologyPtr topology;
     ErrorHandlerPtr errorHandler;
+    RequestHandlerServicePtr requestHandlerService;
+    WorkerRPCClientPtr workerRPCClient;
+    CoordinatorConfigurationPtr coordinatorConfiguration;
+    std::unordered_map<WorkerId, std::vector<WorkerId>> sourceNodeMap;
+    bool sourceNodeMapInitialized = false;
+    SourceCatalogPtr sourceCatalog;
+    std::vector<uint64_t> mobileNodes;
 };
 }// namespace REST::Controller
 }// namespace NES

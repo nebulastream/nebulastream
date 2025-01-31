@@ -28,6 +28,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddKeyDistributionEntryEvent.hpp>
@@ -51,6 +52,10 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <llvm/Support/MathExtras.h>
 #include <nlohmann/json.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Services/QueryParsingService.hpp>
+#include <thread>
 
 namespace NES {
 
@@ -73,6 +78,118 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
                                                                          udfCatalog,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
+
+void compileQuery(const std::string& stringQuery,
+                  QueryId id,
+                  const std::shared_ptr<QueryParsingService>& queryParsingService,
+                  std::promise<QueryPlanPtr> promise) {
+    auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
+    queryplan->setQueryId(id);
+    promise.set_value(queryplan);
+}
+
+void RequestHandlerService::validateAndQueueMultiQueryRequestParallel(std::vector<std::string> queries) {
+    //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
+    const uint32_t numOfQueries = queries.size();
+    QueryPlanPtr queryObjects[numOfQueries];
+
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+//    auto queryParsingService = QueryParsingService::create(jitCompiler);
+
+    //If no available thread then set number of threads to 1
+    uint64_t numThreads = std::thread::hardware_concurrency();
+    if (numThreads == 0) {
+        NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
+        numThreads = 1;
+    }
+    std::cout << "Using " << numThreads << " of threads for parallel parsing." << std::endl;
+
+    uint64_t queryNum = 0;
+    //Work till all queries are not parsed
+    while (queryNum < numOfQueries) {
+        NES_ERROR("Parsing queries from {} to {}", queryNum, queryNum + numThreads - 1);
+        std::vector<std::future<QueryPlanPtr>> futures;
+        std::vector<std::thread> threadPool(numThreads);
+        uint64_t threadNum;
+        //Schedule queries to be parsed with #numThreads parallelism
+        for (threadNum = 0; threadNum < numThreads; threadNum++) {
+            //If no more query to parse
+            if (queryNum >= numOfQueries) {
+                break;
+            }
+            //Schedule thread for execution and pass a promise
+            std::promise<QueryPlanPtr> promise;
+            //Store the future, schedule the thread, and increment the query count
+            futures.emplace_back(promise.get_future());
+            threadPool.emplace_back(
+                std::thread(compileQuery, queries[queryNum], QueryId(queryNum + 1), queryParsingService, std::move(promise)));
+            queryNum++;
+        }
+
+        //Wait for all unfinished threads
+        for (auto& item : threadPool) {
+            if (item.joinable()) {// if thread is not finished yet
+                item.join();
+            }
+        }
+
+        //Fetch the parsed query from all threads
+        for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
+            auto query = futures[futureNum].get();
+            auto queryID = query->getQueryId();
+            queryObjects[queryID.getRawValue() - 1] = query;//Add the parsed query to the (queryID - 1)th index
+        }
+    }
+    NES_ERROR("adding {} queries using isqp request", queries.size());
+    //vector of add query events
+    std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
+    for (const auto& query : queryObjects) {
+        auto addQueryEvent = RequestProcessor::ISQPAddQueryEvent::create(query, Optimizer::PlacementStrategy::BottomUp);
+        isqpEvents.push_back(addQueryEvent);
+    }
+    NES_ERROR("queue isqp request");
+//    auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
+//    auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
+    auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES);
+    auto future = isqpRequest->getFuture();
+    asyncRequestExecutor->runAsync(isqpRequest);
+    auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
+}
+
+void RequestHandlerService::validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings, uint64_t duplicationFactor) {
+
+    NES_ERROR("adding {} queries using isqp request", queryStrings.size());
+    //vector of add query events
+    std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
+
+    auto count = 0;
+    for (const auto& query : queryStrings) {
+        NES_ERROR("validating query {}", count);
+        auto queryPlan = syntacticQueryValidation->validate(query.first);
+        if (queryPlan == nullptr) {
+            NES_THROW_RUNTIME_ERROR("Query validation failed.");
+        }
+        auto addQueryEvent = RequestProcessor::ISQPAddQueryEvent::create(queryPlan, query.second);
+        isqpEvents.push_back(addQueryEvent);
+        NES_ERROR("added query plan {}", queryPlan->toString());
+        count++;
+        auto duplicatedQueryPlan = queryPlan->copy();
+        auto nullOutputSink = NullOutputSinkDescriptor::create();
+        auto child = duplicatedQueryPlan->getRootOperators().front()->getChildren().front();
+        auto nullQueryPlan = QueryPlan::create();
+//        nullQueryPlan->addRootOperator(nullOutputSink);
+
+        for (uint64_t i = 1; i < duplicationFactor; i++) {
+            isqpEvents.push_back(addQueryEvent);
+        }
+    }
+    NES_ERROR("queue isqp request");
+//    auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
+    auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(isqpRequest);
+}
+
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                                const Optimizer::PlacementStrategy placementStrategy) {
@@ -153,7 +270,7 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
 }
 
 RequestProcessor::ISQPRequestResponsePtr
-RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
+RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse) {
 
     // 1. Compute an ISQP request for the collection of external change events (ISQP events)
     auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler,
@@ -166,7 +283,10 @@ RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQP
 
     // 3. Wait for the response
     auto future = isqpRequest->getFuture();
-    return std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
+    if (waitForResponse) {
+        return std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
+    }
+    return {};
 }
 
 std::vector<Statistic::StatisticKey>

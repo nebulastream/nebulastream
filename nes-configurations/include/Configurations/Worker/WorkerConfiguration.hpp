@@ -335,7 +335,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Let network sinks use a separate thread to establish a connection
      */
     BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC,
-                                    "false",
+                                    "true",
                                     "Let network sinks use a separate thread to establish a connection",
                                     {std::make_shared<BooleanValidation>()}};
 
@@ -344,9 +344,11 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption connectSourceEventChannelsAsync = {
         CONNECT_SOURCE_ASYNC,
-        "false",
+        "true",
         "Let network sources use a separate thread to establish a the upstream event channel",
         {std::make_shared<BooleanValidation>()}};
+
+    BoolOption timestampFileSinkAndWriteToTCP = {TIMESTAMP_FILE_SINK, "true", "Let network sources use a separate thread to establish a the upstream event channel"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
@@ -386,6 +388,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &configPath,
                 &connectSinksAsync,
                 &connectSourceEventChannelsAsync,
+                &timestampFileSinkAndWriteToTCP,
 #ifdef TFDEF
                 &isTensorflowSupported
 #endif

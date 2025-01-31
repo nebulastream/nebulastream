@@ -206,6 +206,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               restPort,
                                               this->inherited0::weak_from_this(),
                                               queryCatalog,
+                                              //sourceCatalogService,
+                                              sourceCatalog,
                                               topology,
                                               globalExecutionPlan,
                                               requestHandlerService,
@@ -214,7 +216,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
-                                              allowedOrigin);
+                                              allowedOrigin,
+                                              coordinatorConfiguration);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         auto result = restServer->start();//this call is blocking
@@ -358,6 +361,8 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
+
+Catalogs::Source::SourceCatalogPtr NesCoordinator::getSourceCatalogService() const { return sourceCatalog; }
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 

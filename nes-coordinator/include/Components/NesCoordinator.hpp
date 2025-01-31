@@ -193,6 +193,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     bool isCoordinatorRunning();
 
     /**
+     * getter for the sourceCatalogService
+     * @return
+     */
+    Catalogs::Source::SourceCatalogPtr getSourceCatalogService() const;
+
+    /**
      * getter for the locationService
      * @return
      */

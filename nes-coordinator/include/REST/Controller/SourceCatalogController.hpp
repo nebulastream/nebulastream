@@ -356,7 +356,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ErrorHandlerPtr errorHandler;
     RequestHandlerServicePtr requestHandlerService;
 };
-using SourceCatalogPtr = std::shared_ptr<SourceCatalogController>;
+using SourceCatalogPtr = std::shared_ptr<Catalogs::Source::SourceCatalog>;
 }// namespace NES::REST::Controller
 
 #include OATPP_CODEGEN_END(ApiController)
