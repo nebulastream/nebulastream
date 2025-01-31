@@ -51,6 +51,7 @@ public:
 // [ ] 4. new design for Informar (chunk/synchronize/parse)
 // [ ] 5. multiple stages per task (allow splitting tasks)
 // [ ] 6. rigorous testing (improve informar design/fix issues)
+
 TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
     // Todo: make assignment of tasks to worker ids explicit
@@ -58,12 +59,12 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 2,
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 123456789)}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
 }
@@ -75,12 +76,12 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 2,
+        .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .numThreads = 2,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 123456789)}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{1, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(1), "789"}}});
 }
@@ -92,12 +93,12 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOr
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 2,
+        .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .numThreads = 2,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 123456789)}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789"},
                               /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}}});
 }
@@ -109,12 +110,12 @@ TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple, true>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 4,
+        .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}, //Todo: expected result per worker thread?
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
 }
@@ -125,12 +126,12 @@ TEST_F(InputFormatterTest, testDelimiterThatIsMoreThanOneCharacter)
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple, true>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 4,
+        .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,1234--"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,12345678--"}}});
 }
@@ -141,19 +142,41 @@ TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
     runTest<TestTuple, true>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 6,
+        .numRequiredBuffers = 6, // 2 buffers for raw data, 4 buffers for results
         .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32},
-        .expectedResults = {{{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}} ,{TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
-            {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}}, {TestTuple{1}}}}, //Todo: <--- the last test tuple would fit into the prior buffer
+        .expectedResults = {WorkerThreadResults<TestTuple>{
+            0,
+            {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
+             {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
+             {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}},
+             {TestTuple{1}}}}}, //Todo: <--- the last test tuple would fit into the prior buffer
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1\n2\n3\n4\n5\n6\n7\n8\n"},
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "1234\n5678\n1001\n1"}}});
 }
-// TEST_F(InputFormatterTest, testWhetherBufferWithoutDelimiterCanBridgeTwoBuffersWithDelimiters)
 
-// Todo: flush into still existing buffer if possible? (probably not!)
+/// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
+TEST_F(InputFormatterTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 4, // 3 buffers for raw data, 1 buffer from results
+        .numThreads = 3,
+        .bufferSize = 16,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32, INT32, INT32},
+        .expectedResults = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
+        /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(3), WorkerThreadId(0), "3456789\n"},
+                              /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(1), "123456789,123456"},
+                              /* buffer 3 */ {SequenceNumber(2), WorkerThreadId(2), "789,123456789,12"}}});
+}
+// Todo: check if numRequiredBuffers actually reflects expected
+
 // Todo: add third buffer without delimiter in between two buffers with delimiter
 // Todo: add test with buffers that are not the first or last buffer and are not full
 //      - Todo: what if the last buffer is only partially full?

@@ -63,6 +63,8 @@ public:
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder) override;
 
+    /// Currently always allocates new buffer. Would require keeping state between potentially different states otherwise, since the
+    /// stop call of the InputFormatterTask (pipeline) triggers the flush call.
     void
     flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) override;
 

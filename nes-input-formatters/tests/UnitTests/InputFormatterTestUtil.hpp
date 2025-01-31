@@ -108,6 +108,13 @@ struct TaskPackage
 };
 
 template <typename TupleSchemaTemplate>
+struct WorkerThreadResults
+{
+    const WorkerThreadId::Underlying workerThreadId;
+    const std::vector<std::vector<TupleSchemaTemplate>> expectedResultsForThread;
+};
+
+template <typename TupleSchemaTemplate>
 struct TestConfig
 {
     const size_t numRequiredBuffers;
@@ -116,7 +123,7 @@ struct TestConfig
     const Sources::ParserConfig parserConfig;
     const std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
-    const std::vector<std::vector<std::vector<TupleSchemaTemplate>>> expectedResults;
+    const std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
     const std::vector<ThreadInputBuffers> rawBytesPerThread; //Todo: rename
     using TupleSchema = TupleSchemaTemplate;
 };
@@ -199,18 +206,16 @@ template <typename TupleSchemaTemplate>
 std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(testHandle.testConfig.numThreads);
-    /// expectedWorkerThreadVector: vector<vector<TupleSchemaTemplate>>
-    for (size_t workerThreadId = 0; const auto expectedTaskVector : testHandle.testConfig.expectedResults)
+    for (const auto workerThreadResultVector : testHandle.testConfig.expectedResults)
     {
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
-        for (const auto& expectedBuffersVector : expectedTaskVector)
+        for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
-            expectedTupleBuffers.at(workerThreadId)
+            expectedTupleBuffers.at(workerThreadResultVector.workerThreadId)
                 .emplace_back(
                     TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, true>(
                         testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
         }
-        ++workerThreadId;
     }
     return expectedTupleBuffers;
 }

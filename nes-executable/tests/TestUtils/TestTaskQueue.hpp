@@ -288,11 +288,13 @@ public:
 
     void startProcessing()
     {
+        auto lastWorkerThread = NES::WorkerThreadId(NES::WorkerThreadId::INITIAL);
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
         while (not(testTasks.empty()))
         {
             std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
             auto currentTestTask = std::move(testTasks.front());
+            lastWorkerThread = currentTestTask.workerThreadId;
             const auto responsibleWorkerThread = currentTestTask.workerThreadId;
             testTasks.pop();
             auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
@@ -310,7 +312,7 @@ public:
             }
         }
         /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
-        constexpr auto idxOfWorkerThreadForFlushTask = 0;
+        const auto idxOfWorkerThreadForFlushTask = lastWorkerThread.getRawValue();
         std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
         pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(idxOfWorkerThreadForFlushTask);
