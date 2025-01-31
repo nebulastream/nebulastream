@@ -228,7 +228,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             CMakeAppRunConfiguration cMakeAppRunConfigurationPlugin = (CMakeAppRunConfiguration)  pluginConfigSettings.getConfiguration();
             cMakeAppRunConfigurationPlugin.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
             cMakeAppRunConfigurationPlugin.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
-            cMakeAppRunConfigurationPlugin.setProgramParameters(cleanedOldParameters + " " + Parameters);
+            cMakeAppRunConfigurationPlugin.setProgramParameters(Parameters + " " + cleanedOldParameters);
             pluginConfigSettings.setTemporary(false);
             cMakeAppRunConfigurationPlugin.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
             runManager.setSelectedConfiguration(pluginConfigSettings);
