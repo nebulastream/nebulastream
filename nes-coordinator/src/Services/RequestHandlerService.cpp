@@ -419,4 +419,9 @@ bool RequestHandlerService::handleCatalogUpdateRequest(RequestProcessor::UpdateS
     auto response = future.get();
     return std::static_pointer_cast<RequestProcessor::BaseUpdateSourceCatalogResponse>(response)->success;
 }
+
+
+bool RequestHandlerService::isIncrementalPlacementEnabled() {
+    return optimizerConfiguration.enableIncrementalPlacement;
+}
 }// namespace NES
