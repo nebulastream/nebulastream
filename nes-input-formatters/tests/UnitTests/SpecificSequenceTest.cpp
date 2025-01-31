@@ -31,7 +31,7 @@
 namespace NES
 {
 
-class InputFormatterTest : public Testing::BaseUnitTest
+class SpecificSequenceTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestCase()
@@ -44,17 +44,7 @@ public:
     void TearDown() override { BaseUnitTest::TearDown(); }
 };
 
-
-// [x] 1. finish utils refactoring
-// [x] 2. enable binding tasks (here rawBuffers) to workerThreadIds
-// [x] 3. write a decent basis for tests
-// [ ] 4. write seeded randomized test with larger input data (potentially three sizes
-//      - also think about how to determine buffer sizes
-// ----------------------
-// [ ] 5. new design for Informar (chunk/synchronize/parse)
-// [ ] 6. multiple stages per task (allow splitting tasks)
-
-TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
+TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
     // Todo: make assignment of tasks to worker ids explicit
     using namespace InputFormatterTestUtil;
@@ -72,7 +62,7 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 }
 
 /// Each thread should share the same InputFormatterTask, meaning that we need to check that threads don't interfere with each other's state
-TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
+TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreads)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -89,7 +79,7 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreads)
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
-TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOrder)
+TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOrder)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -106,7 +96,7 @@ TEST_F(InputFormatterTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOfOr
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
-TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
+TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -122,7 +112,7 @@ TEST_F(InputFormatterTest, testTwoFullTuplesInFirstAndLastBuffer)
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
 }
 
-TEST_F(InputFormatterTest, testDelimiterThatIsMoreThanOneCharacter)
+TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -138,7 +128,7 @@ TEST_F(InputFormatterTest, testDelimiterThatIsMoreThanOneCharacter)
                               /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,12345678--"}}});
 }
 
-TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
+TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -161,7 +151,7 @@ TEST_F(InputFormatterTest, testMultipleTuplesInOneBuffer)
 
 /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
 /// [TD][NTD][TD] (TD: TupleDelimiter, NTD: No TupleDelimiter)
-TEST_F(InputFormatterTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
+TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -181,7 +171,7 @@ TEST_F(InputFormatterTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter)
 }
 
 /// As long as we set the number of bytes in a buffer correctly, it should not matter whether it is only partially full
-TEST_F(InputFormatterTest, testMultiplePartiallyFilledBuffers)
+TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;

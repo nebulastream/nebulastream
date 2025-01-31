@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_nes_input_formatter_test(input-formatter-test "InputFormatterTest.cpp")
+add_nes_input_formatter_test(input-formatter-test "SpecificSequenceTest.cpp")
+add_definitions(-DINPUT_FORMATTER_TEST_DATA="${CMAKE_CURRENT_LIST_DIR}/testdata")
+add_nes_input_formatter_test(input-formatter-test-randomized "SmallRandomizedSequenceTest.cpp")
