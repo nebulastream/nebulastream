@@ -23,6 +23,7 @@
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 
@@ -55,16 +56,20 @@ static constexpr auto padSizeQueryCounter = 3;
     std::string_view testFileName,
     const std::filesystem::path& testDataDir);
 
+/// Runs queries
+/// @return returns a collection of failed queries
+[[nodiscard]] std::vector<RunningQuery>
+runQueries(const std::vector<Query>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+
 /// Run queries locally ie not on single-node-worker in a separate process
-/// @return false if one query result is incorrect
+/// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<Query>& queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration);
 
 /// Run queries remote on the single-node-worker specified by the URI
-/// @return false if one query result is incorrect
+/// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
-
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
