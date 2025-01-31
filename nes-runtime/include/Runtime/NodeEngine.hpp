@@ -340,6 +340,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    //const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+    int64_t getParentId();
+    void setParentId(int64_t newParent);
+    void setParentIdIfInvalid(WorkerId newParent);
+    void initializeParentId(WorkerId newParent);
+    uint64_t getParenChangeCount();
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
@@ -387,6 +393,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersPerWorker,
                         bool sourceSharing);
 
+    /**
+     * @brief get the opened tcp descriptor if there is one
+     */
+    std::optional<int> getTcpDescriptor(std::string sourceName);
+    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
   private:
     /**
      * @brief method to start a already deployed query
@@ -425,6 +436,15 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    bool timestampOutPutSources;
+    std::map<std::string, int> tcpDescriptor;
+    std::mutex tcpDescriptorMutex;
+    std::mutex parentMutex;
+    uint64_t parentId;
+    bool connected = true;
+    // uint64_t receiverChangeCount = 0;
+    uint64_t parentChangeCount = 0;
+
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

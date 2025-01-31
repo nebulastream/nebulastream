@@ -56,15 +56,16 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    // std::unordered_map<HashOperatorId , Network::NetworkChannelPtr> dataChannels;
-    std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
+    std::unordered_map<OperatorId, std::pair<Network::NetworkChannelPtr, WorkerId>> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
+    std::unordered_map<OperatorId, std::optional<std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>>>
+        dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// reverse event channels that have not established a connection yet
     std::unordered_map<OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
         reverseEventChannelFutures;
+    std::unordered_map<WorkerId, uint64_t> reconnectCounts;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
     /// worker local buffer pool stored :: use this for fast access
@@ -133,7 +134,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannel(OperatorId id, DecomposedQueryPlanVersion version, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(OperatorId id, DecomposedQueryPlanVersion version, Network::NetworkChannelPtr&& channel,  WorkerId receiver);
 
     bool containsNetworkChannel(OperatorId id);
 
@@ -145,7 +146,7 @@ class WorkerContext {
      */
     void storeNetworkChannelFuture(OperatorId id,
                                    DecomposedQueryPlanVersion version,
-                                   std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+                                   std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>&& channelFuture);
 
     bool containsNetworkChannelFuture(OperatorId id);
 
@@ -242,7 +243,7 @@ class WorkerContext {
      * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(OperatorId operatorId);
+    std::pair<Network::NetworkChannelPtr, WorkerId> waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
@@ -250,6 +251,13 @@ class WorkerContext {
      * @return true if a connection is currently being established
      */
     bool isAsyncConnectionInProgress(OperatorId operatorId);
+
+    /**
+     * @brief do not try connecting to a new data channel until the next time storeNetworkChannelFuture() is called
+     * @param operatorId the id of the callling operator
+     * @return true on success. False if the operation was aborted because a connection attempt is still in progress
+     */
+    bool doNotTryConnectingDataChannel(OperatorId operatorId);
 
     /**
      * @brief retrieve a registered output channel
@@ -317,6 +325,8 @@ class WorkerContext {
      * @return true if a channel was found
      */
     bool doesEventChannelExist(OperatorId operatorId);
+    void increaseReconnectCount(OperatorId operatorId);
+    uint64_t getReconnectCount(OperatorId operatorId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

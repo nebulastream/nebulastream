@@ -60,6 +60,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
       messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
+    nodeEngine->initializeParentId(receiverLocation.getNodeId());
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }
@@ -74,14 +75,34 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
               inputBuffer.getOriginId(),
               inputBuffer.getSequenceNumber());
 
-    auto channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
+    auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    auto* channel = pair.first;
+    auto receiver = pair.second;
 
     //if async establishing of connection is in process, do not attempt to send data
     if (channel == nullptr) {
         return false;
     }
 
-    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
+    // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
+    auto parent = nodeEngine->getParentId();
+    auto changeCount = nodeEngine->getParenChangeCount();
+    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    if (static_cast<int64_t>(receiver) != parent || actualReconnectCount != changeCount) {
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
+        // if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        //     NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
+        // }
+        //        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
+        return false;
+    }
+    //todo 4228: check if buffers are actually sent and not only inserted into to send queue
+    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber, version);
 }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
@@ -92,7 +113,14 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
               inputBuffer.getOriginId(),
               inputBuffer.getSequenceNumber());
 
-    auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
+    //    NetworkChannel* channel = nullptr;
+    //    if (workerContext.doesNetworkChannelExist(getUniqueNetworkSinkDescriptorId())) {
+    //        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    //    }
+
+    auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    auto* channel = pair.first;
+    auto receiver = pair.second;
 
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     //todo #4210: decrease amount of hashmap lookups
@@ -109,7 +137,31 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         }
 
         //if a connection was established, retrieve the channel
-        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
+        pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+        channel = pair.first;
+        receiver = pair.second;
+    }
+    unbuffer(workerContext);
+    // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
+    auto parent = nodeEngine->getParentId();
+    auto changeCount = nodeEngine->getParenChangeCount();
+    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    if (static_cast<int64_t>(receiver) != parent || actualReconnectCount != changeCount) {
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
+        // if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        //     NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}",
+        //               nodeEngine->getNodeId(),
+        //               receiver,
+        //               parent)
+        // }
+        //        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
+        workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+        return true;
     }
 
     NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
@@ -201,6 +253,20 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::ReconfigurationType::BufferOutGoingTuples: {
+            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
+            }
+            workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
+            workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                Runtime::QueryTerminationType::Drain,
+                                                queryManager->getNumberOfWorkerThreads(),
+                                                messageSequenceNumber,
+                                                version,
+                                                0);
+            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, 0);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {

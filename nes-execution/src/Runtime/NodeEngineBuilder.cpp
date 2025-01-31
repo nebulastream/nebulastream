@@ -217,7 +217,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue(),
-            workerConfiguration->enableSourceSharing.getValue());
+            workerConfiguration->enableSourceSharing.getValue(),
+            workerConfiguration->timestampFileSinkAndWriteToTCP.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
