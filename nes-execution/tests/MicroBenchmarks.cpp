@@ -132,6 +132,44 @@ public:
         return std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
     }
 
+    static std::shared_ptr<Nautilus::Interface::PagedVector> createPagedVector(
+        const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+        const Memory::BufferManagerPtr& bufferManager,
+        const uint64_t numBuffers,
+        std::vector<double>& execTimesInMs)
+    {
+        NES_INFO("Data generating...");
+        Timer<> timer("generateDataTimer");
+        timer.start();
+
+        const auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
+        pagedVector->getPages().reserve(numBuffers);
+
+        auto valueCnt = 0UL;
+        const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
+
+        for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
+        {
+            pagedVector->appendPageIfFull();
+            auto& tupleBuffer = pagedVector->getPages().back();
+            tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
+            auto* const tupleBufferAddr = tupleBuffer.getBuffer<uint64_t>();
+
+            for (auto fieldIdx = 0UL; fieldIdx < numFields; ++fieldIdx)
+            {
+                tupleBufferAddr[fieldIdx] = valueCnt++;
+            }
+        }
+
+        timer.snapshot("done generating");
+        timer.pause();
+        auto timeInMs = timer.getPrintTime();
+        execTimesInMs.emplace_back(timeInMs);
+        NES_INFO("Data generated in {} ms", timeInMs);
+
+        return pagedVector;
+    }
+
     template <SeparateKeys SeparateKeys>
     static void clearPagedVector(
         std::shared_ptr<Nautilus::Interface::PagedVector>& pagedVector,
@@ -210,44 +248,6 @@ public:
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
         NES_INFO("PagedVector cleared in {} ms", timeInMs);
-    }
-
-    static std::shared_ptr<Nautilus::Interface::PagedVector> createPagedVector(
-        const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
-        const Memory::BufferManagerPtr& bufferManager,
-        const uint64_t numBuffers,
-        std::vector<double>& execTimesInMs)
-    {
-        NES_INFO("Data generating...");
-        Timer<> timer("generateDataTimer");
-        timer.start();
-
-        const auto pagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
-        pagedVector->getPages().reserve(numBuffers);
-
-        auto valueCnt = 0UL;
-        const auto numFields = memoryLayout->getCapacity() * memoryLayout->getSchema()->getFieldCount();
-
-        for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
-        {
-            pagedVector->appendPageIfFull();
-            auto& tupleBuffer = pagedVector->getPages().back();
-            tupleBuffer.setNumberOfTuples(memoryLayout->getCapacity());
-            auto* const tupleBufferAddr = tupleBuffer.getBuffer<uint64_t>();
-
-            for (auto fieldIdx = 0UL; fieldIdx < numFields; ++fieldIdx)
-            {
-                tupleBufferAddr[fieldIdx] = valueCnt++;
-            }
-        }
-
-        timer.snapshot("done generating");
-        timer.pause();
-        auto timeInMs = timer.getPrintTime();
-        execTimesInMs.emplace_back(timeInMs);
-        NES_INFO("Data generated in {} ms", timeInMs);
-
-        return pagedVector;
     }
 
     template <SeparateKeys SeparateKeys>
