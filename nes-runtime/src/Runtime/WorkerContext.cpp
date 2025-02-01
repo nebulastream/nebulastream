@@ -63,18 +63,31 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
-void WorkerContext::storeNetworkChannel(OperatorId id, DecomposedQueryPlanVersion, Network::NetworkChannelPtr&& channel) {
-    NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
-    dataChannels[id] = std::move(channel);
+void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel, WorkerId receiver) {
+    // NES_ERROR("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
+    auto it = dataChannels.find(id);// note we assume it's always available
+
+    if (it != dataChannels.end()) {
+        if (auto& existingChannel = it->second.first; existingChannel) {
+            // NES_ERROR("WorkerContext: storing channel for operator {}  for context {} but channel already exists", id, workerId);
+            NES_FATAL_ERROR("Cannot drop channel without closing")
+        }
+    }
+    // NES_ERROR("WorkerContext: no network channel exists, proceed to store {}  for context {}", id, workerId);
+    //dataChannels.insert(id, std::move(channel), receiver);
+    //dataChannels.insert(id, std::move(channel), receiver);
+    it->second = {std::move(channel), receiver};
+    // NES_ERROR("WorkerContext: succesfully stored {}  for context {}", id, workerId);
 }
 
 void WorkerContext::storeNetworkChannelFuture(
-    OperatorId id,
-    DecomposedQueryPlanVersion,
-    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
+    NES::OperatorId id,
+    std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
     if (!dataChannelFutures.contains(id)) {
         dataChannelFutures[id] = std::move(channelFuture);
+    } else {
+        NES_FATAL_ERROR("WorkerContext: storing channel future for operator {}  for context {} but there already is a future", id, workerId);
     }
 }
 
@@ -163,7 +176,6 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
 }
 
 bool WorkerContext::releaseNetworkChannel(OperatorId id,
-                                          DecomposedQueryPlanVersion,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
                                           uint64_t currentMessageSequenceNumber,
@@ -171,7 +183,7 @@ bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
-        if (auto& channel = it->second; channel) {
+        if (auto& [channel, receiver] = it->second; channel) {
             channel->close(terminationType,
                            sendingThreadCount,
                            currentMessageSequenceNumber,
@@ -201,22 +213,33 @@ bool WorkerContext::releaseEventOnlyChannel(OperatorId id, Runtime::QueryTermina
     return false;
 }
 
-Network::NetworkChannel* WorkerContext::getNetworkChannel(OperatorId ownerId, DecomposedQueryPlanVersion) {
+std::pair<Network::NetworkChannel*, WorkerId> WorkerContext::getNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
-    return (*it).second.get();
+    if (it == dataChannels.end()) {
+        return {nullptr, INVALID_WORKER_NODE_ID};
+    }
+    return {(*it).second.first.get(), (*it).second.second};
 }
 
-std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(OperatorId operatorId,
-                                                                                  DecomposedQueryPlanVersion) {
+std::optional<std::pair<Network::NetworkChannelPtr, WorkerId>>
+WorkerContext::getAsyncConnectionResult(NES::OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
-    auto& [futureReference, promiseReference] = iteratorOperatorId->second;
+    if (!dataChannelFutures.contains(operatorId)) {
+        return std::nullopt;
+    }
+    if (!iteratorOperatorId->second.has_value()) {
+        return std::nullopt;
+    }
+    auto& [pairRef, promiseReference] = iteratorOperatorId->second.value();
+    auto& [futureReference, receiver] = pairRef;
+
     if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        auto channel = iteratorOperatorId->second.first.get();
-        iteratorOperatorId->second.second.set_value(true);
+        auto channel = futureReference.get();
+        promiseReference.set_value(true);
         dataChannelFutures.erase(iteratorOperatorId);
-        return channel;
+        return {std::make_pair(std::move(channel), receiver)};
     }
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
@@ -241,7 +264,18 @@ bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
     return dataChannelFutures.contains(operatorId);
 }
 
-Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(OperatorId operatorId) {
+bool WorkerContext::doNotTryConnectingDataChannel(OperatorId operatorId) {
+    if (dataChannelFutures.contains(operatorId)) {
+        NES_DEBUG("Cannot set the data channel for operator {}, to buffer without trying to connect, because a connection "
+                  "attempt is still ongoing",
+                  operatorId);
+        return false;
+    }
+    dataChannelFutures[operatorId] = std::nullopt;
+    return true;
+}
+
+Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving event only channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = reverseEventChannels.find(operatorId);// note we assume it's always available
     return (*iteratorOperatorId).second.get();
@@ -251,13 +285,31 @@ LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolT
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
-Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(OperatorId operatorId) {
+std::pair<Network::NetworkChannelPtr, WorkerId> WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId,
+                                                                                      uint64_t retries) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
+    if (iteratorOperatorId == dataChannelFutures.end()) {
+        return {nullptr, INVALID_WORKER_NODE_ID};
+    }
+    if (!iteratorOperatorId->second.has_value()) {
+        dataChannelFutures.erase(iteratorOperatorId);
+        return {nullptr, INVALID_WORKER_NODE_ID};
+    }
+    auto& [pairRef, promiseReference] = iteratorOperatorId->second.value();
+    auto& [futureReference, receiver] = pairRef;
+    Network::NetworkChannelPtr channel = nullptr;
+    for (uint64_t i = 0; i < retries; ++i) {
+        if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            channel = futureReference.get();
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     //blocking wait on get
-    auto channel = iteratorOperatorId->second.first.get();
-    iteratorOperatorId->second.second.set_value(true);
+    //auto channel = futureReference.get();
+    promiseReference.set_value(true);
     dataChannelFutures.erase(iteratorOperatorId);
-    return channel;
+    return {std::move(channel), receiver};
 }
 
 Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(OperatorId operatorId) {
@@ -273,16 +325,24 @@ Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventCh
     return channel;
 }
 
+//todo: make sure that this propagates the marker
 void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
-    auto& promise = iteratorOperatorId->second.second;
+    if (!iteratorOperatorId->second.has_value()) {
+        dataChannelFutures.erase(iteratorOperatorId);
+        return;
+    }
+    auto& [pairRef, promise] = iteratorOperatorId->second.value();
+    auto& [future, receiver] = pairRef;
+    // auto& [future, promise] = iteratorOperatorId->second.value();
     //signal connection process to stop
     promise.set_value(true);
-    //wait for the future to be set, so we can make sure that channel is closed in case it has already been created
-    auto& future = iteratorOperatorId->second.first;
+    //wait for the future to be set so we can make sure that channel is closed in case it has already been created
     auto channel = future.get();
     if (channel) {
-        channel->close(QueryTerminationType::Failure);
+        uint16_t numSendingThreads = 0;
+        uint16_t currentMessageSequenceNumber = 0;
+        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
     }
     dataChannelFutures.erase(iteratorOperatorId);
 }
@@ -290,4 +350,19 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
 bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
 
 bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return reverseEventChannels.contains(operatorId); }
+
+void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
+    if (reconnectCounts.contains(operatorId)) {
+        reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
+    } else {
+        reconnectCounts[operatorId] = 1;
+    }
+}
+
+uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
+    if (reconnectCounts.contains(operatorId)) {
+        return reconnectCounts[operatorId];
+    }
+    return 0;
+}
 }// namespace NES::Runtime
