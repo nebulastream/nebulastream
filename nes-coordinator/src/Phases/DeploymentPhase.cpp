@@ -19,6 +19,7 @@
 #include <Phases/DeploymentPhase.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
 
 namespace NES {
 
@@ -66,6 +67,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
     QueryState sharedQueryState = QueryState::REGISTERED;
     SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
     std::vector<RpcAsyncRequest> asyncRequests;
+    auto count = 1;
     for (const auto& deploymentContext : deploymentContexts) {
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
         auto grpcAddress = deploymentContext->getGrpcAddress();
@@ -75,6 +77,11 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlan = deploymentContext->getDecomposedQueryPlan();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+        NES_ERROR("Deployment context {} of {} for in status {} with decomposed query {}",
+                  count++,
+                  magic_enum::enum_name(decomposedQueryPlanState),
+                  deploymentContexts.size(),
+                  decomposedQueryId);
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_DEPLOYMENT: {
                 if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
