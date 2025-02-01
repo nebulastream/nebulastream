@@ -21,6 +21,7 @@
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <string>
 
 namespace NES::Network {
@@ -62,6 +63,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @return true if no error occurred
     */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
+
+    WorkerId getReceiverId();
+
+    bool startBuffering(DecomposedQueryId decomposedQueryPlanId, DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
   protected:
     /**
@@ -209,6 +214,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+    bool checkParentDiff(int64_t receiver, int64_t parent);
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

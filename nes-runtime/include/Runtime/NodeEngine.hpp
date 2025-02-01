@@ -67,9 +67,25 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     using inherited1 = virtual_enable_shared_from_this<NodeEngine>;
     using inherited2 = ErrorListener;
 
+  public:
+//    NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
+//               HardwareManagerPtr&& hardwareManager,
+//               std::vector<BufferManagerPtr>&& bufferManagers,
+//               QueryManagerPtr&& queryManager,
+//               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+//               Network::PartitionManagerPtr&& partitionManager,
+//               OperatorHandlerStorePtr operatorHandlerStore,
+//               QueryCompilation::QueryCompilerPtr&& queryCompiler,
+//               std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
+//               OpenCLManagerPtr&& openCLManager,
+//               WorkerId nodeEngineId,
+//               uint64_t numberOfBuffersInGlobalBufferManager,
+//               uint64_t numberOfBuffersInSourceLocalBufferPool,
+//               uint64_t numberOfBuffersPerWorker,
+//               bool sourceSharing,
+//               bool timeStampOutputSources = false);
     friend class NodeEngineBuilder;
 
-  public:
     enum class NodeEngineQueryStatus : uint8_t { started, stopped, registered };
 
     virtual ~NodeEngine() override;
@@ -391,7 +407,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+                        bool sourceSharing,
+                        bool timeStampOutputSources = false);
 
     /**
      * @brief get the opened tcp descriptor if there is one
@@ -445,6 +462,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     // uint64_t receiverChangeCount = 0;
     uint64_t parentChangeCount = 0;
 
+    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+    bool getTimesStampOutputSources();
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
