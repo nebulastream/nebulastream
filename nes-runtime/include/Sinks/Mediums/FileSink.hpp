@@ -46,7 +46,7 @@ class FileSink : public SinkMedium {
                       SharedQueryId sharedQueryId,
                       DecomposedQueryId decomposedQueryId,
                       DecomposedQueryPlanVersion decomposedQueryVersion,
-                      uint64_t numberOfOrigins = 1);
+                      uint64_t numberOfOrigins = 1, bool timestampAndWriteToSocket = true);
 
     /**
      * @brief Setup the file sink.
@@ -76,12 +76,20 @@ class FileSink : public SinkMedium {
      */
     std::string toString() const override;
 
+    std::string getFilePath() const;
+
     /**
     * @brief Return the type of the sink medium.
     * @return SinkMediumTypes::FILE_SINK indicating that this is a file sink.
     */
     SinkMediumTypes getSinkMediumType() override;
 
+    /**
+     * @brief method to write a TupleBuffer to a local file system file
+     * @param a tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
   protected:
     /// The output file path of the file sink.
     std::string filePath;
@@ -94,6 +102,10 @@ class FileSink : public SinkMedium {
 
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
+    std::vector<std::basic_string<char>> receivedBuffers;
+    std::vector<uint64_t> arrivalTimestamps;
+    int sockfd;
+    bool timestampAndWriteToSocket;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

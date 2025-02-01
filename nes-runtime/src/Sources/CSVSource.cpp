@@ -21,10 +21,14 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
+#include <netinet/in.h>
 #include <sstream>
 #include <string>
+#include <sys/socket.h>
 #include <utility>
 #include <vector>
 
@@ -336,7 +340,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
             } else {
                 uint64_t valCount = 0;
                 for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
-                    records[u].id = operatorId;
+                    records[u].id = operatorId.getRawValue();
                     records[u].value = valCount + u;
                     records[u].ingestionTimestamp = getTimestamp();
                     records[u].processingTimestamp = 0;
