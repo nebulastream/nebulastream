@@ -50,7 +50,13 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-uint16_t TopologyNode::getAvailableResources() const { return totalSlots - occupiedSlots; }
+uint16_t TopologyNode::getAvailableResources() const {
+    NES_ERROR("Get available slots on topology node {}. Currently occupied {} of {}",
+              workerId,
+              occupiedSlots,
+              totalSlots);
+    return totalSlots - occupiedSlots;
+}
 
 uint16_t TopologyNode::getTotalResources() const { return totalSlots; }
 

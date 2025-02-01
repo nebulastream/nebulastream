@@ -90,7 +90,7 @@ void BottomUpStrategy::pinOperators(const std::set<LogicalOperatorPtr>& pinnedUp
             }
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0) {
-                NES_ERROR("Unable to find resources on the physical node for placement of source operator");
+                NES_ERROR("Unable to find resources on the physical node {} for placement of source operator", candidateTopologyNode->getId());
                 throw Exceptions::RuntimeException(
                     "Unable to find resources on the physical node for placement of source operator");
             }
