@@ -403,14 +403,14 @@ bool NesWorker::connect() {
             for (const auto& physicalSourceType : configPhysicalSourceTypes) {
                 physicalSourceTypes.push_back(physicalSourceType);
             }
-            NES_DEBUG("NesWorker: start with register source");
+            NES_ERROR("NesWorker: start with register source");
             bool success = registerPhysicalSources(physicalSourceTypes);
-            NES_DEBUG("registered= {}", success);
+            NES_ERROR("registered= {}", success);
             NES_ASSERT(success, "cannot register");
         }
         return true;
     }
-    NES_DEBUG("NesWorker::registerWorker rpc register failed");
+    NES_ERROR("NesWorker::registerWorker rpc register failed");
     connected = false;
     return connected;
 }
