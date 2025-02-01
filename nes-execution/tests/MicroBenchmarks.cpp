@@ -314,8 +314,6 @@ public:
 
         for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
         {
-            // TODO remove tuplesWritten
-            auto tuplesWritten = 0UL;
             auto* fieldAddrKeyBuffer = keyBuffer.data();
             auto* fieldAddrPayloadBuffer = payloadBuffer.data();
 
@@ -331,7 +329,8 @@ public:
                 }
                 else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
                 {
-                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++tuplesWritten)
+                    numTuplesLastPage += capacity;
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
                     {
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
                         {
@@ -407,9 +406,10 @@ public:
             {
                 if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
                 {
-                    keyFile.write(keyBuffer.data(), tuplesWritten * keySize);
+                    keyFile.write(keyBuffer.data(), numTuplesLastPage * keySize);
                 }
-                payloadFile.write(payloadBuffer.data(), tuplesWritten * payloadSize);
+                payloadFile.write(payloadBuffer.data(), numTuplesLastPage * payloadSize);
+                numTuplesLastPage = 0;
             }
         }
 
@@ -457,8 +457,6 @@ public:
         auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
         newPagedVector->getPages().reserve(expectedNumPages);
 
-        auto& oldPages = pagedVector->getPages();
-        const auto oldCapacity = pagedVector->getMemoryLayout()->getCapacity();
         auto& pages = newPagedVector->getPages();
         const auto tupleSize = memoryLayout->getTupleSize();
         const auto bufferSize = memoryLayout->getBufferSize();
@@ -495,7 +493,9 @@ public:
 
         auto oldPageCnt = 0UL;
         auto oldTupleCnt = 0UL;
-        const auto pagePadding = bufferSize - capacity * tupleSize;
+        auto& oldPages = pagedVector->getPages();
+        const auto oldPagePadding = bufferSize - capacity * tupleSize;
+        const auto oldCapacity = pagedVector->getMemoryLayout()->getCapacity();
         auto* fieldAddrKeyPagedVector = !oldPages.empty() ? oldPages.front().getBuffer() : nullptr;
 
         while (payloadFile.read(payloadBuffer.data(), payloadFileReadSize) || payloadFile.gcount() > 0)
@@ -523,14 +523,14 @@ public:
                 }
                 else
                 {
-                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx, ++oldTupleCnt)
+                    for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
                     {
                         if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
                         {
-                            if (oldTupleCnt >= oldCapacity)
+                            if (oldTupleCnt++ >= oldCapacity)
                             {
                                 fieldAddrKeyPagedVector = oldPages[++oldPageCnt].getBuffer();
-                                oldTupleCnt = 0;
+                                oldTupleCnt = 1;
                             }
                         }
 
@@ -563,11 +563,11 @@ public:
                             fieldAddrPagedVector += fieldSize;
                         }
                     }
-                }
 
-                if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
-                {
-                    fieldAddrPayloadBuffer += pagePadding;
+                    if constexpr (SeparateKeys == SAME_FILE_PAYLOAD)
+                    {
+                        fieldAddrPayloadBuffer += oldPagePadding;
+                    }
                 }
 
 #ifdef LOGGING
@@ -618,10 +618,11 @@ public:
 
         for (auto pageIdx = 0UL; pageIdx < expectedNumPages; ++pageIdx)
         {
-            const auto* const expectedBufferAddr = expectedPages[pageIdx].getBuffer();
-            const auto* const actualBufferAddr = actualPages[pageIdx].getBuffer();
+            const auto expectedBuffer = expectedPages[pageIdx];
+            const auto actualBuffer = actualPages[pageIdx];
 
-            ASSERT_EQ(std::memcmp(expectedBufferAddr, actualBufferAddr, tuplesOnPageSize), 0);
+            ASSERT_EQ(expectedBuffer.getNumberOfTuples(), actualBuffer.getNumberOfTuples());
+            ASSERT_EQ(std::memcmp(expectedBuffer.getBuffer(), actualBuffer.getBuffer(), tuplesOnPageSize), 0);
         }
 
         timer.snapshot("done comparing");
