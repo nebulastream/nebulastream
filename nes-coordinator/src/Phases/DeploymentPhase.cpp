@@ -76,11 +76,12 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlan = deploymentContext->getDecomposedQueryPlan();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-        NES_ERROR("Deployment context {} of {} for in status {} with decomposed query {}",
+        NES_ERROR("Deployment context {} of {} for in status {} with decomposed query {}, request type {}",
                   count++,
                   deploymentContexts.size(),
                   magic_enum::enum_name(decomposedQueryPlanState),
-                  decomposedQueryId);
+                  decomposedQueryId,
+                  magic_enum::enum_name(requestType));
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_DEPLOYMENT: {
                 if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
@@ -182,8 +183,9 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                                                                   workerId);
 //                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else {
-                    NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
-                              magic_enum::enum_name(requestType));
+                    continue;
+//                    NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
+//                              magic_enum::enum_name(requestType));
                 }
                 break;
             }
