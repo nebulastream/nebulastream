@@ -550,6 +550,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                         true,
                                         reconfigurationMarker);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
+    workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
