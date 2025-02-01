@@ -196,6 +196,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (withConnect) {
         NES_ERROR("NesWorker: start with connect");
         bool con = connect();
+        NES_ERROR("Connected");
         NES_ASSERT(con, "cannot connect");
     }
 
