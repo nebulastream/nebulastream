@@ -72,7 +72,8 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
 DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}", sharedQueryPlan->getId());
 
-    bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
+//    bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
+      bool enableIncrementalPlacement = true;
     NES_ERROR("Enable incremental placement: {}", enableIncrementalPlacement);
 
     auto sharedQueryId = sharedQueryPlan->getId();
