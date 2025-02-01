@@ -19,7 +19,6 @@
 #include <Phases/DeploymentPhase.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <magic_enum.hpp>
 
 namespace NES {
 
