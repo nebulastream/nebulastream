@@ -177,7 +177,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
         if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             //is s2 is activated, create a reconnect schedule predictor
-            trajectoryPredictor = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(mobilityConfig);
+//            trajectoryPredictor = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(mobilityConfig);
         }
     }
 
