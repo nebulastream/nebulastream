@@ -506,6 +506,7 @@ void NetworkSink::configureNewSinkDescriptor(const NetworkSinkDescriptor& newNet
                                                                               inherited0::shared_from_this(),
                                                                               newReceiverTuple);
     queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryId, version, message, false);
+    NES_ERROR("Inserted reconfiguration marker for operator {} to connect to new receiver", nesPartition.toString());
 }
 
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
