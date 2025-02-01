@@ -693,13 +693,12 @@ public:
         ASSERT_TRUE(file.is_open());
 
         ASSERT_EQ(execTimesInMs.size(), 5 * NUM_MEASUREMENTS);
-        const auto numRows = execTimesInMs.size() / 5;
-        for (auto i = 0UL; i < numRows; ++i)
+        for (auto rowIdx = 0UL; rowIdx < execTimesInMs.size() / 5; ++rowIdx)
         {
-            for (auto j = 0UL; j < 5; ++j)
+            for (auto colIdx = 0UL; colIdx < 5; ++colIdx)
             {
-                file << execTimesInMs[i * 5 + j];
-                if (j < 4)
+                file << execTimesInMs[rowIdx * 5 + colIdx];
+                if (colIdx < 4)
                 {
                     file << ",";
                 }
@@ -787,7 +786,7 @@ INSTANTIATE_TEST_CASE_P(
     MicroBenchmarksTest,
     ::testing::Combine(
         ::testing::Values(1024, 4096, 134217728, 268435456, 1073741824),
-        ::testing::Values(0, 100),
+        ::testing::Values(0, 50, 100),
         ::testing::Values(
             std::vector<std::string>{},
             std::vector<std::string>{"f0", "f1"},
