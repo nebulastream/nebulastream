@@ -71,6 +71,7 @@ ISQPRequestPtr ISQPRequest::create(const Optimizer::PlacementAmendmentHandlerPtr
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
     try {
+        NES_ERROR("Starting isqp request");
         auto processingStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         topology = storageHandle->getTopologyHandle(requestId);
@@ -83,6 +84,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
 
+        NES_ERROR("Applying topology events");
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -128,6 +130,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             }
         }
 
+        NES_ERROR("Identifying affected operators");
         // Identify affected operator placements
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -145,6 +148,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             }
         }
 
+        NES_ERROR("Processing affected operators");
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -152,6 +156,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
         auto deploymentPhase = DeploymentPhase::create(queryCatalog);
+        NES_ERROR("Create amendment instances");
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
@@ -170,6 +175,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 numOfFailedPlacements++;
             }
         }
+        NES_ERROR("failed placements {}", numOfFailedPlacements);
         NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
