@@ -51,10 +51,10 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const {
-    NES_ERROR("Get available slots on topology node {}. Currently occupied {} of {}",
-              workerId,
-              occupiedSlots,
-              totalSlots);
+//    NES_ERROR("Get available slots on topology node {}. Currently occupied {} of {}",
+//              workerId,
+//              occupiedSlots,
+//              totalSlots);
     return totalSlots - occupiedSlots;
 }
 
@@ -79,11 +79,11 @@ bool TopologyNode::releaseSlots(uint16_t freedSlots) {
 }
 
 bool TopologyNode::occupySlots(uint16_t occupySlots) {
-    NES_ERROR("Reducing slots {} on topology node {}. Currently occupied {} of {}",
-              occupySlots,
-              workerId,
-              occupiedSlots,
-              totalSlots);
+//    NES_ERROR("Reducing slots {} on topology node {}. Currently occupied {} of {}",
+//              occupySlots,
+//              workerId,
+//              occupiedSlots,
+//              totalSlots);
     if (occupySlots > (totalSlots - occupiedSlots)) {
         NES_WARNING("Amount of resources to be used should not be more than available resources.");
         return false;
