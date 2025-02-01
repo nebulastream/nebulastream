@@ -199,6 +199,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 events = createEvents(bufferJson);
             }
             // auto events = createEvents(reqJson);
+            NES_ERROR("Processing {} events", events.size());
             if (!events.empty()) {
                 requestHandlerService->queueISQPRequest(events, false);
             }
