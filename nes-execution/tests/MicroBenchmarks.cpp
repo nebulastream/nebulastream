@@ -19,7 +19,7 @@
 #include <BaseUnitTest.hpp>
 
 /// NOTE: Comment out define if measurements are taken
-#define LOGGING
+//#define LOGGING
 
 namespace NES
 {
@@ -32,10 +32,10 @@ class MicroBenchmarksTest : public Testing::BaseUnitTest,
 {
 public:
     /// NOTE: The test needs approximately up to five times DATA_SIZE of memory
-    static constexpr uint64_t DATA_SIZE = 1073741824; /// 1GB
+    static constexpr uint64_t DATA_SIZE = 4294967296; /// 4GB
 
     /// INFO: Each experiment will run NUM_MEASUREMENTS many times
-    static constexpr uint64_t NUM_MEASUREMENTS = 2;
+    static constexpr uint64_t NUM_MEASUREMENTS = 5;
 
     static void SetUpTestSuite()
     {
@@ -64,7 +64,7 @@ public:
     {
         std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
         const auto schema = memoryLayout->getSchema();
-        const auto keyFieldNames = memoryLayout->getKeyFieldNames();
+        const auto& keyFieldNames = memoryLayout->getKeyFieldNames();
 
         for (auto fieldIdx = 0UL; fieldIdx < schema->getFieldCount(); ++fieldIdx)
         {
@@ -95,8 +95,8 @@ public:
         auto keySize = 0UL;
         auto payloadSize = 0UL;
         const auto schema = memoryLayout->getSchema();
-        const auto keyFieldNames = memoryLayout->getKeyFieldNames();
         const auto fieldSizes = memoryLayout->getFieldSizes();
+        const auto& keyFieldNames = memoryLayout->getKeyFieldNames();
 
         for (auto fieldIdx = 0UL; fieldIdx < schema->getFieldCount(); ++fieldIdx)
         {
@@ -145,51 +145,59 @@ public:
         if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
         {
             const auto oldMemoryLayout = pagedVector->getMemoryLayout();
-            const auto fieldTypeSizes = getFieldTypeSizes(oldMemoryLayout);
-            const auto oldCapacity = oldMemoryLayout->getCapacity();
-            const auto oldNumTuples = oldCapacity * pagedVector->getNumberOfPages();
-
-            const auto newPagedVector = createKeysOnlyPagedVector(oldMemoryLayout->getKeyFieldNames(), bufferManager);
-            const auto newMemoryLayout = newPagedVector->getMemoryLayout();
-            const auto newCapacity = newMemoryLayout->getCapacity();
-
-            const uint64_t expectedNumPages = std::ceil(static_cast<double>(oldNumTuples) / newCapacity);
-            newPagedVector->getPages().reserve(expectedNumPages);
-
-            auto& newPages = newPagedVector->getPages();
-            auto* newFieldAddr = newPages.front().getBuffer();
-
-            auto tupleCnt = 0UL;
-            for (auto& page : pagedVector->getPages())
+            if (const auto& keyFieldNames = oldMemoryLayout->getKeyFieldNames(); keyFieldNames.empty())
             {
-                const auto* oldFieldAddr = page.getBuffer();
+                pagedVector->getPages().clear();
+                ASSERT_EQ(pagedVector->getNumberOfPages(), 0);
+            }
+            else
+            {
+                const auto fieldTypeSizes = getFieldTypeSizes(oldMemoryLayout);
+                const auto oldCapacity = oldMemoryLayout->getCapacity();
+                const auto oldNumTuples = oldCapacity * pagedVector->getNumberOfPages();
 
-                for (auto oldTupleIdx = 0UL; oldTupleIdx < oldCapacity; ++oldTupleIdx, ++tupleCnt)
+                const auto newPagedVector = createKeysOnlyPagedVector(keyFieldNames, bufferManager);
+                const auto newMemoryLayout = newPagedVector->getMemoryLayout();
+                const auto newCapacity = newMemoryLayout->getCapacity();
+
+                const uint64_t expectedNumPages = std::ceil(static_cast<double>(oldNumTuples) / newCapacity);
+                newPagedVector->getPages().reserve(expectedNumPages);
+
+                auto& newPages = newPagedVector->getPages();
+                auto* newFieldAddr = newPages.front().getBuffer();
+
+                auto tupleCnt = 0UL;
+                for (auto& page : pagedVector->getPages())
                 {
-                    if (tupleCnt >= newCapacity)
-                    {
-                        newPages.back().setNumberOfTuples(newCapacity);
-                        newPagedVector->appendPageIfFull();
-                        newFieldAddr = newPages.back().getBuffer();
-                        tupleCnt = 0;
-                    }
+                    const auto* oldFieldAddr = page.getBuffer();
 
-                    for (const auto [fieldType, fieldSize] : fieldTypeSizes)
+                    for (auto oldTupleIdx = 0UL; oldTupleIdx < oldCapacity; ++oldTupleIdx, ++tupleCnt)
                     {
-                        if (fieldType == KEY)
+                        if (tupleCnt >= newCapacity)
                         {
-                            std::memcpy(newFieldAddr, oldFieldAddr, fieldSize);
-                            newFieldAddr += fieldSize;
+                            newPages.back().setNumberOfTuples(newCapacity);
+                            newPagedVector->appendPageIfFull();
+                            newFieldAddr = newPages.back().getBuffer();
+                            tupleCnt = 0;
                         }
 
-                        oldFieldAddr += fieldSize;
+                        for (const auto [fieldType, fieldSize] : fieldTypeSizes)
+                        {
+                            if (fieldType == KEY)
+                            {
+                                std::memcpy(newFieldAddr, oldFieldAddr, fieldSize);
+                                newFieldAddr += fieldSize;
+                            }
+
+                            oldFieldAddr += fieldSize;
+                        }
                     }
                 }
-            }
 
-            newPages.back().setNumberOfTuples(tupleCnt);
-            pagedVector = newPagedVector;
-            ASSERT_EQ(pagedVector->getNumberOfPages(), expectedNumPages);
+                newPages.back().setNumberOfTuples(tupleCnt);
+                pagedVector = newPagedVector;
+                ASSERT_EQ(pagedVector->getNumberOfPages(), expectedNumPages);
+            }
         }
         else
         {
@@ -618,8 +626,8 @@ public:
 
         for (auto pageIdx = 0UL; pageIdx < expectedNumPages; ++pageIdx)
         {
-            const auto expectedBuffer = expectedPages[pageIdx];
-            const auto actualBuffer = actualPages[pageIdx];
+            const auto& expectedBuffer = expectedPages[pageIdx];
+            const auto& actualBuffer = actualPages[pageIdx];
 
             ASSERT_EQ(expectedBuffer.getNumberOfTuples(), actualBuffer.getNumberOfTuples());
             ASSERT_EQ(std::memcmp(expectedBuffer.getBuffer(), actualBuffer.getBuffer(), tuplesOnPageSize), 0);
@@ -775,16 +783,16 @@ TEST_P(MicroBenchmarksTest, sameFilePayloadAndKey)
 }
 
 INSTANTIATE_TEST_CASE_P(
-    //Benchmarks, MicroBenchmarksTest, ::testing::Combine(::testing::Values(1024, 4096, 134217728, 268435456, 1073741824), ::testing::Values(0, 100)));
     Benchmarks,
     MicroBenchmarksTest,
     ::testing::Combine(
-        ::testing::Values(4096),
+        ::testing::Values(1024, 4096, 134217728, 268435456, 1073741824),
         ::testing::Values(0, 100),
         ::testing::Values(
-            //std::vector<std::string>{"f0", "f1"},
-            //std::vector<std::string>{"f0", "f5"},
-            //std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
+            std::vector<std::string>{},
+            std::vector<std::string>{"f0", "f1"},
+            std::vector<std::string>{"f0", "f5"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
             std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"})));
 
 }
