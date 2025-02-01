@@ -217,7 +217,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     };
     if (workerConfig->lambdaSource) {
         auto lambdaSourceType1 = LambdaSourceType::create("A",
-                                                          "A" + std::to_string(workerConfig->lambdaSource.getValue()),
+                                                          "A" + workerConfig->workerId.toString(),
                                                           std::move(func1),
                                                           workerConfig->numberOfBuffersToProduce,
                                                           workerConfig->sourceGatheringInterval,
@@ -452,7 +452,7 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
             std::map<WorkerId, double> neighborLoadScores;
 
             for (auto neighbor : currentNeighbors) {
-                auto neighborStats = nodeEngine->getNeighbourStatistics().at(neighbor.first);
+                auto neighborStats = nodeEngine->getNeighbourStatistics(neighbor.first);
                 double totalNeighborLoad = 0.0;
 
                 for (auto& nStat : neighborStats) {
@@ -465,7 +465,7 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
                 }
 
                 // If no stats returned, assume zero load
-                if (neighborStats.empty()) {
+                if (!neighborStats.empty()) {
                     totalNeighborLoad = 0.0;
                 }
 

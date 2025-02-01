@@ -923,7 +923,12 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
 }
 
 void NodeEngine::addNeighbourStatistics(WorkerId workerId, std::map<DecomposedQueryId, QueryPreviousMetrics> stats) { previousNeighborMetricsMap[workerId] = stats; }
-std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> NodeEngine::getNeighbourStatistics() const { return previousNeighborMetricsMap; }
+std::map<DecomposedQueryId, QueryPreviousMetrics> NodeEngine::getNeighbourStatistics(WorkerId workerId) const {
+    auto neighbourStats = previousNeighborMetricsMap.find(workerId);
+    if(neighbourStats != previousNeighborMetricsMap.end())
+        return neighbourStats->second;
+    return {};
+}
 void NodeEngine::setSelfStatistics(std::map<DecomposedQueryId, QueryPreviousMetrics> stats) {
     selfStatistics = stats;
 }

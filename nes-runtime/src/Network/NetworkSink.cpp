@@ -458,11 +458,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
         auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, epochBarrier);
         if (success) {
             success = queryManager->propagateEpochBackwards(decomposedQueryId, epochBarrier);
-            if (success) {
-                NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
-            } else {
-                NES_INFO("NetworkSink::onEvent end of propagation: epoch {} queryId {}", epochBarrier, decomposedQueryId);
-            }
+            NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
         } else {
             NES_ERROR("NetworkSink::onEvent:: could not trim : epoch {} queryId {}", epochBarrier, decomposedQueryId);
         }

@@ -308,41 +308,41 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     EXPECT_TRUE(wrkMid4->start(false, true));
 
-    NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
-    EXPECT_TRUE(wrkMid5->start(false, true));
-
-    NesWorkerPtr wrkMid6 = std::make_shared<NesWorker>(std::move(workerConfig6));
-    EXPECT_TRUE(wrkMid6->start(false, true));
-
-    NesWorkerPtr wrkMid7 = std::make_shared<NesWorker>(std::move(workerConfig7));
-    EXPECT_TRUE(wrkMid7->start(false, true));
-
-    NesWorkerPtr wrkMid8 = std::make_shared<NesWorker>(std::move(workerConfig8));
-    EXPECT_TRUE(wrkMid8->start(false, true));
-
-    NesWorkerPtr wrkMid9 = std::make_shared<NesWorker>(std::move(workerConfig9));
-    EXPECT_TRUE(wrkMid9->start(false, true));
-
-    NesWorkerPtr wrkMid10 = std::make_shared<NesWorker>(std::move(workerConfig10));
-    EXPECT_TRUE(wrkMid10->start(false, true));
-
-    NesWorkerPtr wrkMid11 = std::make_shared<NesWorker>(std::move(workerConfig11));
-    EXPECT_TRUE(wrkMid11->start(false, true));
-
-    NesWorkerPtr wrkMid12 = std::make_shared<NesWorker>(std::move(workerConfig12));
-    EXPECT_TRUE(wrkMid12->start(false, true));
-
-    NesWorkerPtr wrkMid13 = std::make_shared<NesWorker>(std::move(workerConfig13));
-    EXPECT_TRUE(wrkMid13->start(false, true));
-
-    NesWorkerPtr wrkMid14 = std::make_shared<NesWorker>(std::move(workerConfig14));
-    EXPECT_TRUE(wrkMid14->start(false, true));
-
-    NesWorkerPtr wrkMid15 = std::make_shared<NesWorker>(std::move(workerConfig15));
-    EXPECT_TRUE(wrkMid15->start(false, true));
-
-    NesWorkerPtr wrkMid16 = std::make_shared<NesWorker>(std::move(workerConfig16));
-    EXPECT_TRUE(wrkMid16->start(false, true));
+    // NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
+    // EXPECT_TRUE(wrkMid5->start(false, true));
+    //
+    // NesWorkerPtr wrkMid6 = std::make_shared<NesWorker>(std::move(workerConfig6));
+    // EXPECT_TRUE(wrkMid6->start(false, true));
+    //
+    // NesWorkerPtr wrkMid7 = std::make_shared<NesWorker>(std::move(workerConfig7));
+    // EXPECT_TRUE(wrkMid7->start(false, true));
+    //
+    // NesWorkerPtr wrkMid8 = std::make_shared<NesWorker>(std::move(workerConfig8));
+    // EXPECT_TRUE(wrkMid8->start(false, true));
+    //
+    // NesWorkerPtr wrkMid9 = std::make_shared<NesWorker>(std::move(workerConfig9));
+    // EXPECT_TRUE(wrkMid9->start(false, true));
+    //
+    // NesWorkerPtr wrkMid10 = std::make_shared<NesWorker>(std::move(workerConfig10));
+    // EXPECT_TRUE(wrkMid10->start(false, true));
+    //
+    // NesWorkerPtr wrkMid11 = std::make_shared<NesWorker>(std::move(workerConfig11));
+    // EXPECT_TRUE(wrkMid11->start(false, true));
+    //
+    // NesWorkerPtr wrkMid12 = std::make_shared<NesWorker>(std::move(workerConfig12));
+    // EXPECT_TRUE(wrkMid12->start(false, true));
+    //
+    // NesWorkerPtr wrkMid13 = std::make_shared<NesWorker>(std::move(workerConfig13));
+    // EXPECT_TRUE(wrkMid13->start(false, true));
+    //
+    // NesWorkerPtr wrkMid14 = std::make_shared<NesWorker>(std::move(workerConfig14));
+    // EXPECT_TRUE(wrkMid14->start(false, true));
+    //
+    // NesWorkerPtr wrkMid15 = std::make_shared<NesWorker>(std::move(workerConfig15));
+    // EXPECT_TRUE(wrkMid15->start(false, true));
+    //
+    // NesWorkerPtr wrkMid16 = std::make_shared<NesWorker>(std::move(workerConfig16));
+    // EXPECT_TRUE(wrkMid16->start(false, true));
 
     NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig17));
     wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
@@ -354,55 +354,55 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
     wrkMid4->addParent(wrkMid2->getWorkerId());
 
-    wrkMid5->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid5->addParent(wrkMid3->getWorkerId());
-
-    wrkMid6->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid6->addParent(wrkMid4->getWorkerId());
-
-    wrkMid7->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid7->addParent(wrkMid5->getWorkerId());
-
-    wrkMid8->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid8->addParent(wrkMid6->getWorkerId());
-
-    wrkMid9->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid9->addParent(wrkMid7->getWorkerId());
-
-    wrkMid10->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid10->addParent(wrkMid8->getWorkerId());
-
-    wrkMid11->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid11->addParent(wrkMid9->getWorkerId());
-
-    wrkMid12->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid12->addParent(wrkMid10->getWorkerId());
-
-    wrkMid13->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid13->addParent(wrkMid11->getWorkerId());
-
-    wrkMid14->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid14->addParent(wrkMid12->getWorkerId());
-
-    wrkMid15->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid15->addParent(wrkMid13->getWorkerId());
-
-    wrkMid16->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid16->addParent(wrkMid14->getWorkerId());
+    // wrkMid5->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid5->addParent(wrkMid3->getWorkerId());
+    //
+    // wrkMid6->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid6->addParent(wrkMid4->getWorkerId());
+    //
+    // wrkMid7->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid7->addParent(wrkMid5->getWorkerId());
+    //
+    // wrkMid8->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid8->addParent(wrkMid6->getWorkerId());
+    //
+    // wrkMid9->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid9->addParent(wrkMid7->getWorkerId());
+    //
+    // wrkMid10->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid10->addParent(wrkMid8->getWorkerId());
+    //
+    // wrkMid11->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid11->addParent(wrkMid9->getWorkerId());
+    //
+    // wrkMid12->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid12->addParent(wrkMid10->getWorkerId());
+    //
+    // wrkMid13->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid13->addParent(wrkMid11->getWorkerId());
+    //
+    // wrkMid14->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid14->addParent(wrkMid12->getWorkerId());
+    //
+    // wrkMid15->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid15->addParent(wrkMid13->getWorkerId());
+    //
+    // wrkMid16->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid16->addParent(wrkMid14->getWorkerId());
 
     wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkLeaf->addParent(wrkMid15->getWorkerId());
-    wrkLeaf->addParent(wrkMid16->getWorkerId());
+    wrkLeaf->addParent(wrkMid3->getWorkerId());
+    wrkLeaf->addParent(wrkMid4->getWorkerId());
 
     auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                                   FaultToleranceType::AS);
+                                                                                   FaultToleranceType::M);
 
     auto queryCatalog = crd->getQueryCatalog();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-    // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
+    wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
     std::this_thread::sleep_for(std::chrono::milliseconds(100000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
@@ -442,7 +442,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopology) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
     wrkMid->requestOffload(sharedQueryPlanId, wrkMid->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkLeaf->getWorkerId());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 

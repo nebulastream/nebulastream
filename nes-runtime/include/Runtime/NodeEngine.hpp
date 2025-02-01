@@ -23,13 +23,9 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <iostream>
 #include <map>
 #include <mutex>
-#include <pthread.h>
 #include <string>
-#include <unistd.h>
-#include <unordered_set>
 #include <vector>
 
 namespace NES {
@@ -414,7 +410,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         bool sourceSharing);
 
  void addNeighbourStatistics(WorkerId workerId, std::map<DecomposedQueryId, QueryPreviousMetrics> stats);
-std::map<WorkerId, std::map<DecomposedQueryId, QueryPreviousMetrics>> getNeighbourStatistics() const;
+std::map<DecomposedQueryId, QueryPreviousMetrics> getNeighbourStatistics(WorkerId workerId) const;
  void setSelfStatistics(std::map<DecomposedQueryId, QueryPreviousMetrics> stats);
  std::map<DecomposedQueryId, QueryPreviousMetrics> getSelfStatistics() const;
 
