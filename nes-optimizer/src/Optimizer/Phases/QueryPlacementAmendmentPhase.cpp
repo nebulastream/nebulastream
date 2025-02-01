@@ -100,6 +100,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
+                NES_ERROR("Compute reconf marker deployment unit");
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 
@@ -110,6 +111,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                 // Make a copy of current decomposed plan, which includes this stateful operators
                 std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToPlanCopy;
 
+                NES_ERROR("Stateful migrations");
                 // TODO [#5149]: rewrite to give stateful operators not including upstream and downstream [https://github.com/nebulastream/nebulastream/issues/5149]
                 for (auto operatorId : changeLogEntry->poSetOfSubQueryPlan) {
                     auto logicalOperator = queryPlan->getOperatorWithOperatorId(operatorId);
@@ -139,8 +141,10 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                         }
                     }
                 }
+                NES_ERROR("Stateful migrations done");
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
+                NES_ERROR("reconfiguration marker deployment unit done");
 
                 // P1: Compute placement removal
                 handlePlacementRemoval(sharedQueryId,
@@ -148,6 +152,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                        changeLogEntry->downstreamOperators,
                                        nextDecomposedQueryPlanVersion,
                                        deploymentContexts);
+                NES_ERROR("placement removal  done");
                 // P2: Compute placement addition
                 handlePlacementAddition(placementStrategy,
                                         sharedQueryId,
@@ -155,6 +160,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                         changeLogEntry->downstreamOperators,
                                         nextDecomposedQueryPlanVersion,
                                         deploymentContexts);
+                NES_ERROR("placement addition  done");
 
                 // get new location of migrating stateful operator
                 std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>> migratingOperatorToProperties;
@@ -190,6 +196,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                          sharedQueryId,
                                          nextDecomposedQueryPlanVersion,
                                          deploymentContexts);
+                NES_ERROR("migration placement  done");
             } catch (std::exception& ex) {
                 NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
                           "failed changelog for further processing. {}",
