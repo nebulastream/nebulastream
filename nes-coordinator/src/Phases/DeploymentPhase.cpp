@@ -152,10 +152,10 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 //                                                              decomposedQueryId,
 //                                                              Runtime::QueryTerminationType::Graceful,
 //                                                              queueForDeploymentContext);
-                    workerRPCClient->stopDecomposedQuery(grpcAddress,
-                                                              sharedQueryId,
-                                                              decomposedQueryId,
-                                                              Runtime::QueryTerminationType::Graceful);
+//                    workerRPCClient->stopDecomposedQuery(grpcAddress,
+//                                                              sharedQueryId,
+//                                                              decomposedQueryId,
+//                                                              Runtime::QueryTerminationType::Graceful);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryId,
@@ -183,7 +183,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                                                                   workerId);
 //                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else {
-                    continue;
+//                    continue;
 //                    NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
 //                              magic_enum::enum_name(requestType));
                 }
