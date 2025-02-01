@@ -172,11 +172,12 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         uint64_t count = 1;
         // Wait for all amendment runners to finish processing
         for (auto& completedAmendment : completedAmendments) {
-            NES_ERROR("Waiting for amendment completion {} of {}", count, sharedQueryPlans.size());
-            count++;
+            NES_ERROR("Waiting for amendment completion {} of {} in request {}", count, sharedQueryPlans.size(), requestId);
             if (!completedAmendment.get()) {
                 numOfFailedPlacements++;
             }
+            NES_ERROR("Finished amendment completion {} of {} in request {}", count, sharedQueryPlans.size(), requestId);
+            count++;
         }
         NES_ERROR("failed placements {}", numOfFailedPlacements);
         NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
