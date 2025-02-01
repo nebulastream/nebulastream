@@ -143,7 +143,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
               workerConfig->dataPort.getValue(),
               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
 
-    NES_DEBUG("NesWorker::start: start Runtime");
+    NES_ERROR("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
@@ -162,13 +162,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }
-        NES_DEBUG("NesWorker: Node engine started successfully");
+        NES_ERROR("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started with error {}", err.what());
         throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
-    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
+    NES_ERROR("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
     auto promRPC = std::make_shared<std::promise<int>>();
@@ -188,30 +188,33 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = workerConfig->localWorkerHost.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
-    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
+    NES_ERROR("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
 
+    NES_ERROR("NesWorker: Checking if the worker should connect to the coordinator");
     if (withConnect) {
-        NES_DEBUG("NesWorker: start with connect");
+        NES_ERROR("NesWorker: start with connect");
         bool con = connect();
         NES_ASSERT(con, "cannot connect");
     }
 
     if (parentId.getRawValue() > NES_COORDINATOR_ID.getRawValue()) {
-        NES_DEBUG("NesWorker: add parent id={}", parentId);
+        NES_ERROR("NesWorker: add parent id={}", parentId);
         bool success = replaceParent(NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= {}", success);
         NES_ASSERT(success, "cannot addParent");
+    } else {
+        NES_ERROR("NesWorker: no parent to add");
     }
 
     if (withConnect && locationProvider
         && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-        workerMobilityHandler =
-            std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
-                                                                                          coordinatorRpcClient,
-                                                                                          nodeEngine,
-                                                                                          mobilityConfig);
+//        workerMobilityHandler =
+//            std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
+//                                                                                          coordinatorRpcClient,
+//                                                                                          nodeEngine,
+//                                                                                          mobilityConfig);
         //FIXME: currently the worker mobility handler will only work with exactly one parent
         auto parentIds = coordinatorRpcClient->getParents(workerId);
         if (parentIds.size() > 1) {
