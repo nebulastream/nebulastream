@@ -359,7 +359,7 @@ void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
 }
 
 uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
-    NES_ERROR("WorkerContext: getting reconnect count for operator {} for context {}", operatorId, workerId);
+//    NES_ERROR("WorkerContext: getting reconnect count for operator {} for context {}", operatorId, workerId);
     if (reconnectCounts.contains(operatorId)) {
         return reconnectCounts[operatorId];
     }
