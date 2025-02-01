@@ -301,13 +301,13 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 WorkerId childId (worker["childId"].get<uint64_t>());
                 WorkerId parentId(worker["parentId"].get<uint64_t>());
                 NES_ERROR("Buffering on child {} until connected to parent {}", childId, parentId);
-                auto node = topology->lockTopologyNode(childId);
+                auto node = topology->getCopyOfTopologyNodeWithId(childId);
                 NES_ERROR("retrieved topology node, getting address");
                 //get the adress of the node
-                auto ipAddress = node->operator*()->getIpAddress();
+                auto ipAddress = node->getIpAddress();
                 NES_ERROR("got address, getting grpc port");
                 //get the grpc port
-                auto grpcPort = node->operator*()->getGrpcPort();
+                auto grpcPort = node->getGrpcPort();
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
                 NES_ERROR("send buffering request to {}", address);
@@ -357,11 +357,12 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                     continue;
                 }
                 NES_ERROR("worker {} is not moving, send buffering request", sourceNode);
-                auto node = topology->lockTopologyNode(sourceNode);
+                //auto node = topology->lockTopologyNode(sourceNode);
+                auto node = topology->getCopyOfTopologyNodeWithId(sourceNode);
                 //get the adress of the node
-                auto ipAddress = node->operator*()->getIpAddress();
+                auto ipAddress = node->getIpAddress();
                 //get the grpc port
-                auto grpcPort = node->operator*()->getGrpcPort();
+                auto grpcPort = node->getGrpcPort();
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
                 workerRPCClient->startBufferingAsync(address, completionQueue, mockParent);

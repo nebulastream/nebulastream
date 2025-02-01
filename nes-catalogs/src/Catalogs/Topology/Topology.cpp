@@ -235,7 +235,7 @@ TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) const {
     NES_INFO("Finding a physical node with id {}", workerId);
     if (workerIdToTopologyNode.contains(workerId)) {
         NES_DEBUG("Found a physical node with id {}", workerId);
-        return (*workerIdToTopologyNode.at(workerId).wlock())->copy();
+        return (*workerIdToTopologyNode.at(workerId).rlock())->copy();
     }
     NES_WARNING("Unable to find a physical node with id {}", workerId);
     return nullptr;
