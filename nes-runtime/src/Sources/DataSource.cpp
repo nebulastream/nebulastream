@@ -576,6 +576,9 @@ void DataSource::runningRoutineWithGatheringInterval() {
     if (shouldDelayEOS) {
         auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         NES_ERROR("finished sending from {}", startTime)
+        if (numberOfBuffersToProduce > 2048) {
+            sleep(5);
+        }
         sleep(5);
     }
     NES_WARNING("DataSource {} call close", operatorId);
