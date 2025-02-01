@@ -329,7 +329,7 @@ bool NesWorker::connect() {
 
     std::string coordinatorAddress =
         workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
-    NES_DEBUG("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
+    NES_ERROR("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = CoordinatorRPCClient::create(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
@@ -350,27 +350,27 @@ bool NesWorker::connect() {
                                   registrationRequest.add_opencldevices());
     }
 
-    if (locationProvider) {
-        auto waypoint = registrationRequest.mutable_waypoint();
-        auto currentWaypoint = locationProvider->getCurrentWaypoint();
-        if (currentWaypoint.getTimestamp()) {
-            waypoint->set_timestamp(currentWaypoint.getTimestamp().value());
-        }
-        auto geolocation = waypoint->mutable_geolocation();
-        geolocation->set_lat(currentWaypoint.getLocation().getLatitude());
-        geolocation->set_lng(currentWaypoint.getLocation().getLongitude());
-    }
+//    if (locationProvider) {
+//        auto waypoint = registrationRequest.mutable_waypoint();
+//        auto currentWaypoint = locationProvider->getCurrentWaypoint();
+//        if (currentWaypoint.getTimestamp()) {
+//            waypoint->set_timestamp(currentWaypoint.getTimestamp().value());
+//        }
+//        auto geolocation = waypoint->mutable_geolocation();
+//        geolocation->set_lat(currentWaypoint.getLocation().getLatitude());
+//        geolocation->set_lng(currentWaypoint.getLocation().getLongitude());
+//    }
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
-    NES_DEBUG("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
+    NES_ERROR("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
     workerId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
         if (workerId != workerConfig->workerId) {
             if (workerConfig->workerId == INVALID_WORKER_NODE_ID) {
                 // workerId value is written in the yaml for the first time
-                NES_DEBUG("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
+                NES_ERROR("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
                 bool success =
                     getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, false);
                 if (!success) {
@@ -380,7 +380,7 @@ bool NesWorker::connect() {
                 }
             } else {
                 // a value was in the yaml file but it's being overwritten, because the coordinator assigns a new value
-                NES_DEBUG("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file",
+                NES_ERROR("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file",
                           workerId);
                 bool success =
                     getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, true);
@@ -398,7 +398,7 @@ bool NesWorker::connect() {
         healthCheckService = std::make_unique<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
-        NES_DEBUG("NesWorker start health check");
+        NES_ERROR("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
         auto configPhysicalSourceTypes = workerConfig->physicalSourceTypes.getValues();
