@@ -89,12 +89,12 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     auto changeCount = nodeEngine->getParenChangeCount();
     auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
-//        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
-//                  "actual reconnects: {}",
-//                  receiver,
-//                  parent,
-//                  changeCount,
-//                  actualReconnectCount);
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
         return false;
     }
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
@@ -143,12 +143,12 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     auto changeCount = nodeEngine->getParenChangeCount();
     auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
-//        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
-//                  "actual reconnects: {}",
-//                  receiver,
-//                  parent,
-//                  changeCount,
-//                  actualReconnectCount);
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
         workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
         return true;
     }
