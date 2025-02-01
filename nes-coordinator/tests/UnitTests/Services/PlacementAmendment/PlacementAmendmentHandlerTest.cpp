@@ -837,6 +837,7 @@ TEST_F(PlacementAmendmentHandlerTest, testMultipleAddQueryEventsInaSingleBatchWi
 }
 
 //test adding multiple queries
+//TODO #5179: reactivate after mocked deployment phase considers the update and drain case
 TEST_F(PlacementAmendmentHandlerTest, DISABLED_testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC) {
 
     // 1. Create mocked amendment handler and ISQP request to setup topology and queries to be processed
@@ -1658,6 +1659,7 @@ TEST_F(PlacementAmendmentHandlerTest,
     placementAmendmentHandler->shutDown();
 }
 
+//TODO #5179: reactivate after mocked deployment phase considers the update and drain case
 TEST_F(PlacementAmendmentHandlerTest, DISABLED_testJoinMigrationAmendmentPhase) {
 
     //  Create mocked amendment handler and ISQP request to setup topology and queries to be processed
