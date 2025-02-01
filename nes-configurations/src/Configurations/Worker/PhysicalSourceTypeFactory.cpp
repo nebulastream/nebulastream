@@ -140,6 +140,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 
+    NES_ERROR("Creating physical source type from yaml config");
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
         case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
