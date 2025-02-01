@@ -866,7 +866,12 @@ int64_t NodeEngine::getParentId() {
     return -1;
 }
 
+bool NodeEngine::isSimulatingBuffering() {
+    return activeBufferingSimulation;
+}
+
 void NodeEngine::setParentId(int64_t newParent) {
+    activeBufferingSimulation = true;
     NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
     ++parentChangeCount;

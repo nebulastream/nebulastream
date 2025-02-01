@@ -415,6 +415,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::optional<int> getTcpDescriptor(std::string sourceName);
     void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
+
+    bool isSimulatingBuffering();
   private:
     /**
      * @brief method to start a already deployed query
@@ -464,6 +466,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
     bool getTimesStampOutputSources();
+    std::atomic<bool> activeBufferingSimulation = false;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
