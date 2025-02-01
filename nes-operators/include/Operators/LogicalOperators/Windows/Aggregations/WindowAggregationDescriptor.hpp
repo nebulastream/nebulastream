@@ -33,6 +33,8 @@ public:
         Min,
         Sum,
         Median
+
+        ,SamplingWoR
     };
 
     /**

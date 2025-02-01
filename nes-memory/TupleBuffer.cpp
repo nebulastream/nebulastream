@@ -32,7 +32,6 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
     auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
     auto* const memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
-    tb.retain();
     return tb;
 }
 

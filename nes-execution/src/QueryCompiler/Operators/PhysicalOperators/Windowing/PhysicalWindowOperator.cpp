@@ -42,6 +42,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Operators/Streaming/Aggregation/Synopsis/SampleWithoutReplacementFunction.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -185,6 +186,21 @@ PhysicalWindowOperator::getAggregationFunctions(const QueryCompilerOptions& opti
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
                         memoryProvider));
+                    break;
+                }
+
+                case Windowing::WindowAggregationDescriptor::Type::SamplingWoR: {
+                    auto layout
+                        = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(inputSchema, options.windowOperatorOptions.pageSize);
+                    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> const memoryProvider
+                        = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Synopsis::SampleWithoutReplacementFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        memoryProvider,
+                        800));
                     break;
                 }
             }

@@ -11,11 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        AggregationBuild.cpp
-        AggregationProbe.cpp
-        AggregationOperatorHandler.cpp
-        AggregationSlice.cpp
+        SampleWithoutReplacementFunction.cpp
 )
-
-add_subdirectory(Function)
-add_subdirectory(Synopsis)

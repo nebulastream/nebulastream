@@ -10,12 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AggregationBuild.cpp
-        AggregationProbe.cpp
-        AggregationOperatorHandler.cpp
-        AggregationSlice.cpp
-)
+add_source_files(nes-operators
 
-add_subdirectory(Function)
-add_subdirectory(Synopsis)
+        SamplingWoRDescriptor.cpp
+)

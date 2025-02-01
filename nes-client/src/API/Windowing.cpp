@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopsis/SamplingWoRDescriptor.hpp>
 
 namespace NES::API
 {
@@ -66,6 +67,11 @@ API::WindowAggregationPtr Count(const FunctionItem& onField)
 API::WindowAggregationPtr Median(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
+}
+
+API::WindowAggregationPtr SamplingWoR(const FunctionItem& onField)
+{
+    return std::make_shared<API::WindowAggregation>(Windowing::SamplingWoRDescriptor::on(onField.getNodeFunction()));
 }
 
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)

@@ -61,6 +61,8 @@ API::WindowAggregationPtr Max(const FunctionItem& onField);
 API::WindowAggregationPtr Count(const FunctionItem& onField);
 API::WindowAggregationPtr Median(const FunctionItem& onField);
 API::WindowAggregationPtr Avg(const FunctionItem& onField);
+
+API::WindowAggregationPtr SamplingWoR(const FunctionItem& onField);
 Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField);
 Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit);
 Windowing::TimeCharacteristicPtr IngestionTime();
