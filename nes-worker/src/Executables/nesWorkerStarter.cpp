@@ -53,11 +53,14 @@ int main(int argc, char** argv) {
                 std::string(argv[i]).substr(std::string(argv[i]).find('=') + 1, std::string(argv[i]).length() - 1)));
         }
 
+        NES_ERROR("Checkiing if yaml file is provided");
         auto workerConfigPath = commandLineParams.find("--configPath");
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
         if (workerConfigPath != commandLineParams.end()) {
+            NES_ERROR("Overwriting config with yaml file input");
             workerConfiguration->configPath = workerConfigPath->second;
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
+            NES_ERROR("Finished Overwriting config with yaml file input done");
         }
 
         //if command line params are provided that do not contain a path to a yaml file for worker config,
@@ -72,7 +75,7 @@ int main(int argc, char** argv) {
         auto nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
-        NES_INFO("Starting worker");
+        NES_ERROR("Starting worker");
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//This is a blocking call
         NES_INFO("Stopping worker");
         nesWorker->stop(/**force*/ true);

@@ -95,7 +95,6 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yaml
         NES_THROW_RUNTIME_ERROR(
             "Found Invalid Physical Source Configuration. Please define Source Type Configuration properties.");
     }
-    NES_ERROR("Finished physical source type from yaml config");
 }
 
 PhysicalSourceTypePtr
@@ -155,7 +154,6 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
         case SourceType::ARROW_SOURCE: return ArrowSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
-    NES_ERROR("Finished creating physical source type from yaml config");
 }
 
 }// namespace NES::Configurations
