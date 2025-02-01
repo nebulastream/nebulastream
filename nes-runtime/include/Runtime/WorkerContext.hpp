@@ -56,7 +56,7 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    std::unordered_map<OperatorId, std::pair<Network::NetworkChannelPtr, WorkerId>> dataChannels;
+    std::unordered_map<OperatorId, std::pair<Network::NetworkChannelPtr, uint64_t>> dataChannels;
     /// data channels that have not established a connection yet
     std::unordered_map<OperatorId, std::optional<std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>>>
         dataChannelFutures;

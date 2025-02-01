@@ -74,9 +74,7 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
         }
     }
     // NES_ERROR("WorkerContext: no network channel exists, proceed to store {}  for context {}", id, workerId);
-    //dataChannels.insert(id, std::move(channel), receiver);
-    //dataChannels.insert(id, std::move(channel), receiver);
-    it->second = {std::move(channel), receiver};
+    dataChannels[id] = {std::move(channel), receiver.getRawValue()};
     // NES_ERROR("WorkerContext: succesfully stored {}  for context {}", id, workerId);
 }
 
@@ -219,7 +217,7 @@ std::pair<Network::NetworkChannel*, WorkerId> WorkerContext::getNetworkChannel(N
     if (it == dataChannels.end()) {
         return {nullptr, INVALID_WORKER_NODE_ID};
     }
-    return {(*it).second.first.get(), (*it).second.second};
+    return {(*it).second.first.get(), WorkerId ((*it).second.second)};
 }
 
 std::optional<std::pair<Network::NetworkChannelPtr, WorkerId>>
