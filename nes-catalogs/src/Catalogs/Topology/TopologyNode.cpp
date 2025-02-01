@@ -73,7 +73,7 @@ bool TopologyNode::releaseSlots(uint16_t freedSlots) {
 }
 
 bool TopologyNode::occupySlots(uint16_t occupySlots) {
-    NES_DEBUG("Reducing slots {} on topology node {}. Currently occupied {} of {}",
+    NES_ERROR("Reducing slots {} on topology node {}. Currently occupied {} of {}",
               occupySlots,
               workerId,
               occupiedSlots,
