@@ -668,7 +668,7 @@ public:
             separateKeys = "SEPARATE_FILES_PAYLOAD";
         }
 
-        filename << "../../../micro_benchmarks_" << separateKeys;
+        filename << "../../../measurements/micro_benchmarks_" << separateKeys;
         filename << "_bufferSize_" << bufferSize;
         filename << "_fileBufferSizePercent_" << fileBufferSizePercent;
         filename << "_keys";
@@ -785,7 +785,7 @@ INSTANTIATE_TEST_CASE_P(
     Benchmarks,
     MicroBenchmarksTest,
     ::testing::Combine(
-        ::testing::Values(1024, 4096, 67108864, 134217728, 268435456),
+        ::testing::Values(1024, 4096, 65536, 262144),
         ::testing::Values(0, 50, 100),
         ::testing::Values(
             std::vector<std::string>{},
