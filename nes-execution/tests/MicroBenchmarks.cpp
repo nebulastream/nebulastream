@@ -785,7 +785,7 @@ INSTANTIATE_TEST_CASE_P(
     Benchmarks,
     MicroBenchmarksTest,
     ::testing::Combine(
-        ::testing::Values(1024, 4096, 134217728, 268435456, 1073741824),
+        ::testing::Values(1024, 4096, 67108864, 134217728, 268435456),
         ::testing::Values(0, 50, 100),
         ::testing::Values(
             std::vector<std::string>{},
