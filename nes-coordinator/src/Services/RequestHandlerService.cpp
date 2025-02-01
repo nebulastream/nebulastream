@@ -272,12 +272,14 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
 RequestProcessor::ISQPRequestResponsePtr
 RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse) {
 
+    NES_ERROR("creating ISQP request");
     // 1. Compute an ISQP request for the collection of external change events (ISQP events)
     auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler,
                                                              z3Context,
                                                              isqpEvents,
                                                              RequestProcessor::DEFAULT_RETRIES);
 
+    NES_ERROR("Async running isqp request");
     // 2. Execute the request
     asyncRequestExecutor->runAsync(isqpRequest);
 
