@@ -804,21 +804,21 @@ bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
     }
 }
 
-bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
-    bool reconfiguredSink = false;
-    for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
-        for (auto& sink : executableQueryPlan.second->getSinks()) {
-            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-            if (networkSink != nullptr) {
-                if (receivingWorkerId == INVALID_WORKER_NODE_ID || networkSink->getReceiverId() == receivingWorkerId) {
-                    networkSink->startBuffering(executableQueryPlan.second->getDecomposedQueryId(), executableQueryPlan.second->getDecomposedQueryVersion());
-                    reconfiguredSink = true;
-                }
-            }
-        }
-    }
-    return reconfiguredSink;
-}
+//bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
+//    bool reconfiguredSink = false;
+//    for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
+//        for (auto& sink : executableQueryPlan.second->getSinks()) {
+//            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+//            if (networkSink != nullptr) {
+//                if (receivingWorkerId == INVALID_WORKER_NODE_ID || networkSink->getReceiverId() == receivingWorkerId) {
+//                    networkSink->startBuffering(executableQueryPlan.second->getDecomposedQueryId(), executableQueryPlan.second->getDecomposedQueryVersion());
+//                    reconfiguredSink = true;
+//                }
+//            }
+//        }
+//    }
+//    return reconfiguredSink;
+//}
 Monitoring::MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
 
 void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {

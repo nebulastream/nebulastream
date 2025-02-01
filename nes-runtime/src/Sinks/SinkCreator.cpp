@@ -50,7 +50,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                       sharedQueryId,
                                       decomposedQueryId,
                                       decomposedQueryVersion,
-                                      numberOfOrigins);
+                                      numberOfOrigins,
+                                      nodeEngine->getTimesStampOutputSources());
 }
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,

@@ -41,7 +41,7 @@ enum class ReconfigurationType : uint8_t {
     /// reconfiguration marker
     ReconfigurationMarker,
 
-    BufferOutGoingTuples
+    BufferOutGoingTuples //todo: remove
 };
 
 QueryTerminationType reconfigurationTypeToTerminationType(ReconfigurationType reconfigurationType);

@@ -259,20 +259,21 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ReconfigurationType::BufferOutGoingTuples: {
-            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                //todo: make sure marker is propagated if connection happens
-                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
-            }
-            workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
-            //todo: we are just sending an empty marker hare to close the connection, the coordinator will then take care of the rest
-            auto marker = std::make_shared<ReconfigurationMarker>();
-            workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
-                                                Runtime::QueryTerminationType::Reconfiguration,
-                                                queryManager->getNumberOfWorkerThreads(),
-                                                messageSequenceNumber,
-                                                true,
-                                                marker);
-            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
+            NES_NOT_IMPLEMENTED();
+//            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+//                //todo: make sure marker is propagated if connection happens
+//                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+//            }
+//            workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
+//            //todo: we are just sending an empty marker hare to close the connection, the coordinator will then take care of the rest
+//            auto marker = std::make_shared<ReconfigurationMarker>();
+//            workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+//                                                Runtime::QueryTerminationType::Reconfiguration,
+//                                                queryManager->getNumberOfWorkerThreads(),
+//                                                messageSequenceNumber,
+//                                                true,
+//                                                marker);
+//            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
@@ -602,14 +603,14 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     return true;
 }
 
-bool NetworkSink::startBuffering(DecomposedQueryId decomposedQueryPlanId, DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
-    Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
-                                                                              decomposedQueryPlanId,
-                                                                                decomposedQueryPlanVersion,
-                                                                              Runtime::ReconfigurationType::BufferOutGoingTuples,
-                                                                              inherited0::shared_from_this());
-    return queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, decomposedQueryPlanVersion, message, false);
-}
+//bool NetworkSink::startBuffering(DecomposedQueryId decomposedQueryPlanId, DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
+//    Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+//                                                                              decomposedQueryPlanId,
+//                                                                                decomposedQueryPlanVersion,
+//                                                                              Runtime::ReconfigurationType::BufferOutGoingTuples,
+//                                                                              inherited0::shared_from_this());
+//    return queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, decomposedQueryPlanVersion, message, false);
+//}
 
 WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 

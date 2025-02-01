@@ -66,7 +66,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     WorkerId getReceiverId();
 
-    bool startBuffering(DecomposedQueryId decomposedQueryPlanId, DecomposedQueryPlanVersion decomposedQueryPlanVersion);
+    //todo: remove
+//    bool startBuffering(DecomposedQueryId decomposedQueryPlanId, DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
   protected:
     /**

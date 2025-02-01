@@ -417,6 +417,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
     bool isSimulatingBuffering();
+
+    bool getTimesStampOutputSources();
   private:
     /**
      * @brief method to start a already deployed query
@@ -465,7 +467,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t parentChangeCount = 0;
 
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
-    bool getTimesStampOutputSources();
     std::atomic<bool> activeBufferingSimulation = false;
 };
 
