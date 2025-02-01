@@ -71,19 +71,19 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         //Assign new operator ids and move the one sent by coordinator to the properties
         logicalQueryPlan->refreshOperatorIds();
 
-        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+//        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
 
         auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+//        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
         timer.snapshot("PhysicalQueryPlan");
 
         auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+//        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
         timer.snapshot("AfterPipelinedQueryPlan");
 
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+//        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
         auto nodeEngine = request->getNodeEngine();
         auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
