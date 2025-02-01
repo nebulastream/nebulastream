@@ -277,6 +277,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
+            NES_ERROR("NetworkSink: reconfigure() ConnectToNewReceiver called");
             //retrieve information about which source to connect to
             auto versionUpdate = task.getUserData<VersionUpdate>();
             auto newReceiverLocation = versionUpdate.nodeLocation;
@@ -512,7 +513,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                                       NesPartition newNesPartition,
                                                       DecomposedQueryPlanVersion newVersion,
                                                       const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
-    NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
+    NES_ERROR("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               decomposedQueryId,
               Runtime::NesThread::getId());
