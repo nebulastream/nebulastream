@@ -185,6 +185,26 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         return Status::CANCELLED;
     }
 }
+Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
+                                                 const StartBufferingRequest* request,
+                                                 StartBufferingReply* reply) {
+    //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
+    // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
+    nodeEngine->setParentId(request->parent());
+//    nodeEngine->tryApplyingNewDescriptors();
+    auto success = true;
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StartBufferingOnAllSinks: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StartBufferingOnAllSinks: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+}
+
 Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");

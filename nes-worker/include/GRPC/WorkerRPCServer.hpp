@@ -80,6 +80,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
+    Status StartBufferingOnAllSinks(ServerContext* context, const StartBufferingRequest* request, StartBufferingReply* reply) override;
+
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;

@@ -866,6 +866,21 @@ int64_t NodeEngine::getParentId() {
     return -1;
 }
 
+void NodeEngine::setParentId(int64_t newParent) {
+    NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
+    std::unique_lock lock(parentMutex);
+    ++parentChangeCount;
+    if (newParent == 0) {
+        return;
+    }
+    if (newParent == -1) {
+        connected = false;
+    } else {
+        connected = true;
+        parentId = newParent;
+    }
+}
+
 bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                       DecomposedQueryId decomposedQueryid,
                                       ReconfigurationMarkerPtr reconfigurationMarker) {
