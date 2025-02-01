@@ -134,6 +134,8 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
         throw std::logic_error("Exception:: we performed an invalid cast of exception");
     }
 
+    RequestId getId();
+
   protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back

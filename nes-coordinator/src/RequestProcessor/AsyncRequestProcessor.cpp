@@ -134,10 +134,10 @@ void AsyncRequestProcessor::runningRoutine() {
             lock.unlock();
             cv.notify_all();
 
-            NES_ERROR("Executing request")
+            NES_ERROR("Executing request {}", abstractRequest->getId())
             //execute request logic
             std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);
-            NES_ERROR("Finished Executing request, {} follow up requests", nextRequests.size())
+            NES_ERROR("Finished Executing request {}, {} follow up requests", abstractRequest->getId(), nextRequests.size())
 
             //queue follow up requests
             for (auto followUpRequest : nextRequests) {

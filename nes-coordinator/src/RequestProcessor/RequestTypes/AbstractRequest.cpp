@@ -67,4 +67,6 @@ void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exceptio
 }
 
 void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
+
+RequestId AbstractRequest::getId() { return requestId; }
 }// namespace NES::RequestProcessor
