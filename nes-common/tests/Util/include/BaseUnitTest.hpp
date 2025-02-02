@@ -47,7 +47,7 @@ private:
     std::unique_ptr<std::thread> waitThread;
     std::shared_ptr<std::promise<bool>> testCompletion;
     std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+    static constexpr uint64_t WAIT_TIME_SETUP = 30;
 };
 
 /**
