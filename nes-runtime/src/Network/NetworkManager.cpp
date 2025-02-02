@@ -157,6 +157,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                         abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
         //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
         auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
+        NES_ERROR("creating new channel")
 
         //create the channel
         auto channel = NetworkChannel::create(zmqContext,
@@ -170,9 +171,11 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                                               version,
                                               std::move(future_optional));
 
+      NES_ERROR("successfull created new channel, setting promise")
         //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
 
+      NES_ERROR("inserting reconfiguration message")
         //notify the sink about successful connection via reconfiguration message
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
                                                 reconfigurationMessage.getParentPlanId(),

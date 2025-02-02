@@ -68,7 +68,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_TRACE("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
+    NES_ERROR("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
               workerContext.getId(),
               getUniqueNetworkSinkDescriptorId(),
               nodeEngine->getNodeId(),
@@ -76,11 +76,14 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
               inputBuffer.getSequenceNumber());
 
     auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    NES_ERROR("retrieved pair from context")
     auto* channel = pair.first;
     auto receiver = pair.second;
 
+    NES_ERROR("checking if channel is null")
     //if async establishing of connection is in process, do not attempt to send data
     if (channel == nullptr) {
+        NES_ERROR("channel is null returning")
         return false;
     }
 
