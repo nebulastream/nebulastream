@@ -117,14 +117,16 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     //    }
 
-    NES_ERROR()
+    NES_ERROR("retrieving channel")
 
     auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    NES_ERROR("retrived channel")
     auto* channel = pair.first;
     auto receiver = pair.second;
 
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     //todo #4210: decrease amount of hashmap lookups
+    NES_ERROR("checking if channel is null")
     if (!channel) {
         //todo #4311: check why sometimes buffers arrive after a channel has been closed
         NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
