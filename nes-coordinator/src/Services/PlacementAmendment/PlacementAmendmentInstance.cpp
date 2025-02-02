@@ -61,8 +61,7 @@ PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr shared
 void PlacementAmendmentInstance::execute() {
     try {
         // 1. Check if the incremental placement is enabled
-//        auto incrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement.getValue();
-        auto incrementalPlacement = true;
+        auto incrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement.getValue();
         // 2. get the status of the shared query plan
         SharedQueryPlanStatus sharedQueryPlanStatus = sharedQueryPlan->getStatus();
         // 3. Compute the request type

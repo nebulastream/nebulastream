@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
 
         Logger::getInstance()->changeLogLevel(coordinatorConfig->logLevel.getValue());
 
-        NES_INFO("start coordinator with {}", coordinatorConfig->toString());
+        NES_ERROR("start coordinator with {}", coordinatorConfig->toString());
 
         NES_INFO("creating coordinator");
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
