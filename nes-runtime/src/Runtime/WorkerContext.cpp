@@ -352,7 +352,6 @@ bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return revers
 void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
     if (reconnectCounts.contains(operatorId)) {
         NES_ERROR("WorkerContext: increasing existing reconnect count for operator {} for context {}", operatorId, workerId);
-        if (reconnectCounts.contains(operatorId)) {
         reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
     } else {
         NES_ERROR("WorkerContext: creating new reconnect count for operator {} for context {}", operatorId, workerId);
