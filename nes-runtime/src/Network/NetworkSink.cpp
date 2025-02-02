@@ -364,14 +364,16 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 }
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), decomposedQueryId);
+    NES_ERROR("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), decomposedQueryId);
     inherited0::postReconfigurationCallback(task);
 
     switch (task.getType()) {
         //update info about receiving network source to new target
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
+            NES_ERROR("Unregistering subpartition producer");
             auto versionUpdate = task.getUserData<VersionUpdate>();
             networkManager->unregisterSubpartitionProducer(nesPartition);
+            NES_ERROR("Succesfully Unregistered subpartition producer");
 
             receiverLocation = versionUpdate.nodeLocation;
             nesPartition = versionUpdate.partition;
