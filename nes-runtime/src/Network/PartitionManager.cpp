@@ -40,6 +40,13 @@ DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return 
 
 DecomposedQueryPlanVersion PartitionManager::PartitionConsumerEntry::getVersion() { return consumer->getVersion(); }
 
+uint64_t PartitionManager::PartitionConsumerEntry::getMaxRegisteredSeqNumber() {
+    return maxRegisteredSeqNumber;
+}
+void PartitionManager::PartitionConsumerEntry::updateMaxRegisteredSeqNumber(uint64_t newMaxRegisteredSequenceNumber) {
+    maxRegisteredSeqNumber = std::max(maxRegisteredSeqNumber, newMaxRegisteredSequenceNumber);
+}
+
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation)) {
     // nop
@@ -85,7 +92,17 @@ bool PartitionManager::registerSubpartitionConsumer(NesPartition partition,
     return (*it).second.count() == 1;
 }
 
-bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
+uint64_t PartitionManager::getMaxRegisteredSequenceNumber(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+
+    auto it = consumerPartitions.find(partition);
+    NES_ASSERT2_FMT(it != consumerPartitions.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    return it->second.getMaxRegisteredSeqNumber();
+}
+
+bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition, uint64_t newMaxRegisteredSeqNumber) {
     std::unique_lock lock(consumerPartitionsMutex);
 
     auto it = consumerPartitions.find(partition);
@@ -98,6 +115,7 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
         return true;
     }
 
+    it->second.updateMaxRegisteredSeqNumber(newMaxRegisteredSeqNumber);
     it->second.unpin();
 
     NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());

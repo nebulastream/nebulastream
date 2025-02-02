@@ -51,10 +51,11 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     auto filePath = recreationFilePath.value();
 
     while (!std::filesystem::exists(filePath)) {
-        NES_DEBUG("File {} does not exist yet", filePath);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
-
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("started recreating at {}", time);
     NES_DEBUG("File exists. Start of recreation from file");
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
 
@@ -90,6 +91,8 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     restoreWindowInfo(recreatedWindowInfoBuffers);
     // reset recreation flag and delete file
     shouldBeRecreated = false;
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("State finished recreating at {}", endTime);
     if (std::remove(recreationFilePath->c_str()) == 0) {
         NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
     } else {
@@ -98,6 +101,8 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHandlerForMigration() {
+    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Started serializing at {}", startTime);
     // get timestamp of not probed slices
     auto migrationTimestamp =
         std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
@@ -133,6 +138,11 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
                          std::make_move_iterator(windowInfoBuffers.begin()),
                          std::make_move_iterator(windowInfoBuffers.end()));
     NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
+    for (auto& buffer: mergedBuffers) {
+        buffer.setWatermark(mergedBuffers.size());
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Finished serializing at {}", endTime);
     return mergedBuffers;
 }
 

@@ -244,21 +244,21 @@ bool DataSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
                 }
                 bool expected = true;
                 if (!running.compare_exchange_strong(expected, false)) {
-                    NES_DEBUG("DataSource {} was not running, retrieving future now...", operatorId);
-                    auto expected = false;
-                    if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true)) {
-                        NES_ASSERT2_FMT(detail::waitForFuture(completedPromise.get_future(), 60s),
-                                        "Cannot complete future to stop source " << operatorId);
-                    }
-                    NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
+//                    NES_DEBUG("DataSource {} was not running, retrieving future now...", operatorId);
+//                    auto expected = false;
+//                    if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true)) {
+//                        NES_ASSERT2_FMT(detail::waitForFuture(completedPromise.get_future(), 60s),
+//                                        "Cannot complete future to stop source " << operatorId);
+//                    }
+//                    NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
                     return true;// it's ok to return true because the source is stopped
                 } else {
-                    NES_DEBUG("DataSource {} is running, retrieving future now...", operatorId);
-                    auto expected = false;
-                    NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
-                                        && detail::waitForFuture(completedPromise.get_future(), 10min),
-                                    "Cannot complete future to stop source " << operatorId);
-                    NES_WARNING("Stopped Source {} = {}", operatorId, wasGracefullyStopped);
+//                    NES_DEBUG("DataSource {} is running, retrieving future now...", operatorId);
+//                    auto expected = false;
+//                    NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
+//                                        && detail::waitForFuture(completedPromise.get_future(), 10min),
+//                                    "Cannot complete future to stop source " << operatorId);
+//                    NES_WARNING("Stopped Source {} = {}", operatorId, wasGracefullyStopped);
                     return true;
                 }
             } catch (...) {
@@ -572,6 +572,17 @@ void DataSource::runningRoutineWithGatheringInterval() {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
+    sleep(5);
+    auto marker = ReconfigurationMarker::create();
+    auto metadata = std::make_shared<DrainQueryMetadata>(1);
+    auto sourcePtr = shared_from_base<DataSource>();
+    auto executablePlans = queryManager->getExecutablePlanIdsForSource(sourcePtr);
+    NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
+    auto decomposedQueryIdWithVersion = *executablePlans.begin();
+    auto event = ReconfigurationMarkerEvent::create(QueryState::RUNNING, metadata);
+    marker->addReconfigurationEvent(decomposedQueryIdWithVersion.id, decomposedQueryIdWithVersion.version, event);
+    handleReconfigurationMarker(marker);
+    // sleep(100);
     NES_WARNING("DataSource {} call close", operatorId);
     close();
     NES_WARNING("DataSource {} end running", operatorId);

@@ -50,21 +50,21 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
-void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
+void StreamJoinBuild::close(ExecutionContext&, RecordBuffer&) const {
     // Update the watermark for the nlj operator and trigger slices
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("checkWindowsTriggerProxy",
-                           checkWindowsTriggerProxy,
-                           operatorHandlerMemRef,
-                           ctx.getPipelineContext(),
-                           ctx.getWorkerContext(),
-                           ctx.getWatermarkTs(),
-                           ctx.getSequenceNumber(),
-                           ctx.getChunkNumber(),
-                           ctx.getLastChunk(),
-                           ctx.getOriginId(),
-                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+//    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+//    Nautilus::FunctionCall("checkWindowsTriggerProxy",
+//                           checkWindowsTriggerProxy,
+//                           operatorHandlerMemRef,
+//                           ctx.getPipelineContext(),
+//                           ctx.getWorkerContext(),
+//                           ctx.getWatermarkTs(),
+//                           ctx.getSequenceNumber(),
+//                           ctx.getChunkNumber(),
+//                           ctx.getLastChunk(),
+//                           ctx.getOriginId(),
+//                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+//                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 }
 
 StreamJoinBuild::StreamJoinBuild(const uint64_t operatorHandlerIndex,

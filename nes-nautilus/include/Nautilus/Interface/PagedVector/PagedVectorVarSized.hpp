@@ -49,7 +49,7 @@ struct VarSizedDataEntryMapValue {
  */
 class PagedVectorVarSized {
   public:
-    static constexpr uint64_t PAGE_SIZE = 4096;
+    static constexpr uint64_t PAGE_SIZE = 1024;
 
     /**
      * @brief Constructor. It calculates the entrySize and the capacityPerPage based on the schema and the pageSize.

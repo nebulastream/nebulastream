@@ -16,6 +16,9 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -129,8 +132,29 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() cons
 QueryState DecomposedQueryPlan::getState() const { return currentState; }
 
 void DecomposedQueryPlan::refreshOperatorIds() {
+    auto numberOfSinks = 0;
+    auto migrationSinkId = INVALID_OPERATOR_ID;
+
+    for (const auto& logicalOperator : getAllOperators()) {
+        if (logicalOperator->as_if<SinkLogicalOperator>()) {
+            numberOfSinks += 1;
+        }
+        if (logicalOperator->as_if<SinkLogicalOperator>() && logicalOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->as_if<Network::NetworkSinkDescriptor>()) {
+            migrationSinkId = logicalOperator->getId();
+        }
+    }
     for (const auto& logicalOperator : getAllOperators()) {
         logicalOperator->addProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY, logicalOperator->getId());
+        if (logicalOperator->getId() == migrationSinkId && numberOfSinks == 2) {
+            logicalOperator->addProperty("MIGRATION_SINK", true);
+        }
+        if (numberOfSinks == 2 && logicalOperator->as_if<LogicalJoinOperator>()) {
+            logicalOperator->addProperty("MIGRATION_FLAG", true);
+        }
+        if (numberOfSinks == 1 && logicalOperator->as_if<LogicalJoinOperator>()) {
+            std::string file = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file_completed.bin";
+            logicalOperator->addProperty("MIGRATION_FILE", file);
+        }
         logicalOperator->setId(getNextOperatorId());
     }
 }

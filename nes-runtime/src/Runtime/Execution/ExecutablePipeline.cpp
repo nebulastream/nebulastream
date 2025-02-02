@@ -226,7 +226,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                 isMigrationPipeline = false;
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     // TODO [#5149]: add start and end timestamps based on watermarks [https://github.com/nebulastream/nebulastream/issues/5149]
-                    auto dataToMigrate = operatorHandler->getStateToMigrate(0, 1000);
+                    auto dataToMigrate = operatorHandler->serializeOperatorHandlerForMigration();
                     for (auto& buffer : dataToMigrate) {
                         pipelineContext->migrateBuffer(buffer, context);
                     }

@@ -493,6 +493,9 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
 
             auto operatorId = any_cast<OperatorId>(joinOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
             auto migrationFlagVal = joinOperator->getProperty(MIGRATION_FLAG);
+            if (migrationFlagVal.has_value() && std::any_cast<bool>(migrationFlagVal)) {
+                join_migration_flag = true;
+            }
             // check if operator handler for this operator was already created before
             if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
                 && std::any_cast<bool>(migrationFlagVal)) {

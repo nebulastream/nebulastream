@@ -79,7 +79,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @brief Retrieves state, window info and watermarks information from max(last watermark, migrated tmstmp)
      * @return vector of tuple buffers
      */
-    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration();
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
 
     /**
      * @brief Retrieve the state as a vector of tuple buffers

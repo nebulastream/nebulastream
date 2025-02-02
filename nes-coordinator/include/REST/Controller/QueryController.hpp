@@ -29,7 +29,15 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <API/QueryAPI.hpp>
 #include <utility>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
+#include <Operators/Operator.hpp>
+#include <Execution/Operators/ReorderTupleBuffersOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -111,6 +119,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
             auto response = queryCatalog->getQueryEntry(QueryId(queryId));
@@ -148,6 +157,81 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
+    ENDPOINT("POST", "/place-migration-join", placeMigrationJoin) {
+        try {
+            auto nullOutputSinkDescriptor = NullOutputSinkDescriptor::create();
+            auto migrationQuery = Query::from("source_1_start")
+                                      .joinWith(Query::from("source_2_start"))
+                                      .where(Attribute("value1") == Attribute("value2"))
+                                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                                      .sink(nullOutputSinkDescriptor, WorkerId(2));
+            auto queryPlan = migrationQuery.getQueryPlan();
+            auto join = queryPlan->getOperatorByType<LogicalJoinOperator>()[0];
+            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file.bin";
+            auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(
+                FileSinkDescriptor::create(recreationFileName, "MIGRATION_FORMAT", "OVERWRITE"));
+            migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
+            migrateSinkOperator->addProperty("MIGRATION_SINK", true);
+            join->addParent(migrateSinkOperator);
+            join->addProperty("MIGRATION_FLAG", true);
+            queryPlan->addRootOperator(migrateSinkOperator);
+
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryPlan, Optimizer::PlacementStrategy::BottomUp);
+            //Prepare the response
+            nlohmann::json response;
+            response["queryId"] = queryId;
+            return createResponse(Status::CODE_202, response.dump());
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
+    }
+
+    ENDPOINT("POST", "/place-recreation-join", placeRecreationJoin) {
+        try {
+            auto nullOutputSinkDescriptor = NullOutputSinkDescriptor::create();
+            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file";
+            auto query = Query::from("source_1_cord")
+                             .joinWith(Query::from("source_2_cord"))
+                             .where(Attribute("value1") == Attribute("value2"))
+                             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                             .sink(nullOutputSinkDescriptor, WorkerId(1));
+            auto joins = query.getQueryPlan()->getOperatorByType<LogicalJoinOperator>();
+            joins[0]->addProperty("MIGRATION_FILE", recreationFileName + "_completed.bin");
+
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+            //Prepare the response
+            nlohmann::json response;
+            response["queryId"] = queryId;
+            return createResponse(Status::CODE_202, response.dump());
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
 
