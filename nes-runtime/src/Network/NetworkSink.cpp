@@ -105,7 +105,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
 }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
+    NES_ERROR("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
               workerContext.getId(),
               getUniqueNetworkSinkDescriptorId(),
               nodeEngine->getNodeId(),
@@ -116,6 +116,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //    if (workerContext.doesNetworkChannelExist(getUniqueNetworkSinkDescriptorId())) {
     //        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     //    }
+
+    NES_ERROR()
 
     auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     auto* channel = pair.first;
