@@ -61,7 +61,8 @@ PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr shared
 void PlacementAmendmentInstance::execute() {
     try {
         // 1. Check if the incremental placement is enabled
-        auto incrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement.getValue();
+//        auto incrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement.getValue();
+        auto incrementalPlacement = true;
         // 2. get the status of the shared query plan
         SharedQueryPlanStatus sharedQueryPlanStatus = sharedQueryPlan->getStatus();
         // 3. Compute the request type
@@ -114,6 +115,8 @@ void PlacementAmendmentInstance::execute() {
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
             NES_ERROR("Deployment phase number 2 executed successfully for shared query {}", sharedQueryPlan->getId());
 
+            NES_ERROR("Incremental placement: {}", incrementalPlacement);
+            NES_ERROR("Reconfiguration marker count {}", deploymentUnit.reconfigurationMarkerUnits.size());
             if (incrementalPlacement && !deploymentUnit.reconfigurationMarkerUnits.empty()) {
                 // Compute reconfiguration marker based on deployment contexts
                 auto reconfigurationMarker = ReconfigurationMarker::create();
