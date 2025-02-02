@@ -32,44 +32,43 @@
 #include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
 
-namespace NES::Runtime::Execution::Operators
-{
+namespace NES::Runtime::Execution::Operators {
 /// This task models the information for a join window trigger
-struct EmittedNLJWindowTrigger
-{
-    SliceEnd leftSliceEnd;
-    SliceEnd rightSliceEnd;
-    WindowInfo windowInfo;
+struct EmittedNLJWindowTrigger {
+  SliceEnd leftSliceEnd;
+  SliceEnd rightSliceEnd;
+  WindowInfo windowInfo;
 };
 
-class NLJOperatorHandler final : public StreamJoinOperatorHandler
-{
+class NLJOperatorHandler final : public StreamJoinOperatorHandler {
 public:
-    static constexpr int64_t windowSizeRollingAverage = 10;
-    NLJOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+  static constexpr int64_t windowSizeRollingAverage = 10;
+  NLJOperatorHandler(
+    const std::vector<OriginId> &inputOrigins,
+    OriginId outputOriginId,
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> &leftMemoryProvider,
+    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> &rightMemoryProvider);
 
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
+  std::function<std::vector<std::shared_ptr<Slice> >(SliceStart, SliceEnd)>
+  getCreateNewSlicesFunction(const Memory::AbstractBufferProvider *bufferProvider) const override;
 
 private:
-    void emitSliceIdsToProbe(
-        Slice& sliceLeft,
-        Slice& sliceRight,
-        const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
-        const ChunkNumber& chunkNumber,
-        bool isLastChunk,
-        PipelineExecutionContext* pipelineCtx) override;
+  void emitSliceIdsToProbe(
+    Slice &sliceLeft,
+    Slice &sliceRight,
+    const WindowInfoAndSequenceNumber &windowInfoAndSeqNumber,
+    const ChunkNumber &chunkNumber,
+    bool isLastChunk,
+    PipelineExecutionContext *pipelineCtx) override;
 
-    /// We store as a pair the average number of tuples left/right and the number of samples left/right
-    folly::Synchronized<std::pair<int64_t, int64_t>> averageNumberOfTuplesLeft, averageNumberOfTuplesRight;
+  /// We store as a pair the average number of tuples left/right and the number of samples left/right
+  folly::Synchronized<std::pair<int64_t, int64_t> > averageNumberOfTuplesLeft, averageNumberOfTuplesRight;
 };
 
 /// Proxy function that returns the pointer to the correct PagedVector
-Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+Nautilus::Interface::PagedVector *
+getNLJPagedVectorProxy(const NLJSlice *nljSlice,
+                       WorkerThreadId workerThreadId,
+                       QueryCompilation::JoinBuildSideType joinBuildSide);
 }

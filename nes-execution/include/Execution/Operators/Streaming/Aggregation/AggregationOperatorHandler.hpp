@@ -27,45 +27,45 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 
-namespace NES::Runtime::Execution::Operators
-{
-
+namespace NES::Runtime::Execution::Operators {
 /// This struct models the information for an aggregation window trigger
 /// As we are triggering the probe pipeline by passing a tuple buffer to the probe operator, we assume that the tuple buffer
 /// is large enough to store all slices of the window to be triggered.
-struct EmittedAggregationWindow
-{
-    WindowInfo windowInfo;
-    std::unique_ptr<Interface::HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
-    uint64_t numberOfHashMaps;
-    Interface::HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
+struct EmittedAggregationWindow {
+  WindowInfo windowInfo;
+  std::unique_ptr<Interface::HashMap> finalHashMap;
+  /// Pointer to the final hash map that the probe should use to combine all hash maps
+  uint64_t numberOfHashMaps;
+  Interface::HashMap **hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
 };
 
-class AggregationOperatorHandler final : public WindowBasedOperatorHandler
-{
+class AggregationOperatorHandler final : public WindowBasedOperatorHandler {
 public:
-    AggregationOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+  AggregationOperatorHandler(
+    const std::vector<OriginId> &inputOrigins,
+    OriginId outputOriginId,
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
+  /// We do not wish to set the hash map specific params during the lowering from the logical to physical
+  /// TODO #409 This might change after the [DD] Operator Representations  has been implemented
+  void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
 
-    /// We do not wish to set the hash map specific params during the lowering from the logical to physical
-    /// TODO #409 This might change after the [DD] Operator Representations  has been implemented
-    void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
-
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
+  std::function<std::vector<std::shared_ptr<Slice> >(SliceStart, SliceEnd)>
+  getCreateNewSlicesFunction(const Memory::AbstractBufferProvider *bufferProvider) const override;
+  int8_t *getStartOfSliceCacheEntries(const WorkerThreadId &workerThreadId);
+  void allocateSliceCacheEntries(
+    const uint64_t sizeOfEntry,
+    const uint64_t numberOfEntries,
+    Memory::AbstractBufferProvider* bufferProvider) override;
 
 protected:
-    void triggerSlices(
-        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-        PipelineExecutionContext* pipelineCtx) override;
+  void triggerSlices(
+    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice> > > &slicesAndWindowInfo,
+    PipelineExecutionContext *pipelineCtx) override;
 
-    uint64_t keySize{};
-    uint64_t valueSize{};
-    uint64_t pageSize{};
-    uint64_t numberOfBuckets{};
+  uint64_t keySize{};
+  uint64_t valueSize{};
+  uint64_t pageSize{};
+  uint64_t numberOfBuckets{};
 };
-
 }

@@ -31,7 +31,7 @@ namespace NES::QueryCompilation
 {
 enum class JoinBuildSideType : uint8_t
 {
-    Right,
+    Right = 0,
     Left
 };
 }

@@ -201,6 +201,7 @@ bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
     }
     return false;
 }
+
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 {
     /// Enable ADL to spell out to onlookers how swap should be used.
@@ -210,6 +211,7 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
     swap(lhs.size, rhs.size);
     swap(lhs.controlBlock, rhs.controlBlock);
 }
+
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 {
     return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
@@ -219,14 +221,17 @@ uint64_t TupleBuffer::getNumberOfTuples() const noexcept
 {
     return controlBlock->getNumberOfTuples();
 }
+
 OriginId TupleBuffer::getOriginId() const noexcept
 {
     return controlBlock->getOriginId();
 }
+
 uint32_t TupleBuffer::getNumberOfChildrenBuffer() const noexcept
 {
     return controlBlock->getNumberOfChildrenBuffer();
 }
+
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
     return controlBlock->getChunkNumber();

@@ -144,4 +144,5 @@ Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
             return nljSlice->getPagedVectorRefRight(workerThreadId);
     }
 }
+
 }

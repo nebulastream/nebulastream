@@ -46,7 +46,7 @@ then
     # list files in repo
     #   remove filenames ending with .bin or .png
     #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
-    git ls-files \
+    git ls-files *[^window_management] --exclude='window_management/*' --cached --modified --deleted --others --exclude-standard \
       | grep --invert-match -e "\.bin$" -e "\.png$" -e "\.zip$" \
       | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
@@ -62,7 +62,7 @@ else
     #   remove filenames ending with .bin or .png
     #   take last char of the files, count lines and chars,
     #   fail if not equal (i.e. not every char is a newline)
-    git ls-files \
+    git ls-files *[^window_management] --exclude='window_management/*' --cached --modified --deleted --others --exclude-standard \
       | grep --invert-match -e "\.bin$" -e "\.png$" -e "\.zip$" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
       | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }' \

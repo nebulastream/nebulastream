@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -57,6 +58,7 @@ static constexpr SequenceNumber INITIAL_SEQ_NUMBER = INITIAL<SequenceNumber>;
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets
 inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
+    PRECONDITION(containerSize > 0, "Container size must be greater than 0");
     return id.getRawValue() % containerSize;
 }
 

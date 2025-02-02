@@ -1,0 +1,210 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <cstdint>
+#include <memory>
+#include <ranges>
+#include <utility>
+#include <vector>
+#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Time/Timestamp.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES::Runtime::Execution::Operators
+{
+AggregationBuildCache::AggregationBuildCache(
+    const uint64_t operatorHandlerIndex,
+    std::unique_ptr<TimeFunction> timeFunction,
+    std::vector<std::unique_ptr<Functions::Function> > keyFunctions,
+    WindowAggregationOperator windowAggregationOperator,
+    const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions)
+    : WindowAggregationOperator(std::move(windowAggregationOperator))
+    , WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction))
+    , keyFunctions(std::move(keyFunctions))
+    , sliceCacheOptions(sliceCacheOptions)
+
+{
+}
+void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
+{
+    WindowOperatorBuild::setup(executionCtx);
+    /// I know that we should not set the numberOfWorkerThreads in the build operator, due to a race condition.
+    /// However, we need to set it here, as we need to know the number of worker threads to allocate the slice cache entries.
+    /// This should/is fine for this PoC
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    nautilus::invoke(
+        +[](AggregationOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
+        {
+            opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
+        },
+        globalOperatorHandler,
+        executionCtx.pipelineContext);
+
+    /// Allocating the memory for the slice cache, so that we can use it in the execute method
+    nautilus::val<uint64_t> sizeOfEntry = 0;
+    nautilus::val<uint64_t> numberOfEntries = sliceCacheOptions.numberOfEntries;
+    switch (sliceCacheOptions.sliceCacheType)
+    {
+        case QueryCompilation::SliceCacheType::NONE:
+            return;
+        case QueryCompilation::SliceCacheType::FIFO:
+            sizeOfEntry = sizeof(SliceCacheEntryFIFO);
+            break;
+        case QueryCompilation::SliceCacheType::LRU:
+            sizeOfEntry = sizeof(SliceCacheEntryLRU);
+            break;
+    }
+    nautilus::invoke(
+        +[](
+        AggregationOperatorHandler* opHandler,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const uint64_t sizeOfEntry,
+        const uint64_t numberOfEntries)
+        {
+            opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider);
+        },
+        globalOperatorHandler,
+        executionCtx.bufferProvider,
+        sizeOfEntry,
+        numberOfEntries);
+}
+
+void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    WindowOperatorBuild::open(executionCtx, recordBuffer);
+
+    /// Creating the local state for the slice cache, so that we can use it in the execute method
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    const auto startOfSliceEntries = nautilus::invoke(
+        +[](AggregationOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
+        {
+            return opHandler->getStartOfSliceCacheEntries(workerThreadId);
+        },
+        globalOperatorHandler,
+        executionCtx.getWorkerThreadId());
+    const auto startOfDataEntry = nautilus::invoke(+[](const SliceCacheEntry* sliceCacheEntry)
+    {
+        const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
+        return startOfDataStructure;
+    }, startOfSliceEntries);
+
+    switch (sliceCacheOptions.sliceCacheType)
+    {
+        case QueryCompilation::SliceCacheType::NONE:
+            break;
+        case QueryCompilation::SliceCacheType::FIFO:
+
+            executionCtx.setLocalOperatorState(
+                this,
+                std::make_unique<SliceCacheFIFO>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
+            break;
+        case QueryCompilation::SliceCacheType::LRU:
+            executionCtx.setLocalOperatorState(
+                this,
+                std::make_unique<SliceCacheLRU>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
+            break;
+    }
+}
+
+int8_t* createNewAggregationSliceProxy(
+    SliceCacheEntry* sliceCacheEntry,
+    OperatorHandler* ptrOpHandler,
+    const Timestamp timestamp,
+    const Memory::AbstractBufferProvider* bufferProvider,
+    const WorkerThreadId workerThreadId)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    const auto* opHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
+    const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
+    const auto newAggregationSlice = dynamic_cast<AggregationSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(
+        timestamp,
+        createFunction)[0].get());
+
+    /// Updating the slice cache entry with the new slice
+    sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
+    sliceCacheEntry->sliceEnd = newAggregationSlice->getSliceEnd();
+    sliceCacheEntry->dataStructure = reinterpret_cast<int8_t*>(newAggregationSlice->getHashMapPtr(workerThreadId));
+    return sliceCacheEntry->dataStructure;
+}
+
+void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
+{
+    /// Getting the slice cache from the local state
+    auto sliceCache = dynamic_cast<SliceCache*>(executionCtx.getLocalState(this));
+
+    /// Getting the current hash map that we have to insert/update the record into
+    const auto timestamp = timeFunction->getTs(executionCtx, record);
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    const auto hashMapPtr = sliceCache->getDataStructureRef(
+        timestamp,
+        [&](const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace)
+        {
+            return nautilus::invoke(
+                createNewAggregationSliceProxy,
+                sliceCacheEntryToReplace,
+                globalOperatorHandler,
+                timestamp,
+                executionCtx.bufferProvider,
+                executionCtx.getWorkerThreadId());
+        });
+    Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
+
+
+    /// Calling the key functions to add/update the keys to the record
+    for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
+    {
+        const auto value = function->execute(record);
+        record.write(field.fieldIdentifier, value);
+    }
+
+    /// Finding or creating the entry for the provided record
+    const auto hashMapEntry = hashMap.findOrCreateEntry(
+        record,
+        *hashFunction,
+        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+        {
+            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
+            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+            for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
+            {
+                aggFunction->reset(state, executionCtx.bufferProvider);
+                state = state + aggFunction->getSizeOfStateInBytes();
+            }
+        },
+        executionCtx.bufferProvider);
+
+
+    /// Updating the aggregation states
+    Interface::ChainedHashMapRef::ChainedEntryRef const entryRef(hashMapEntry, fieldKeys, fieldValues);
+    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
+    for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
+    {
+        aggFunction->lift(state, executionCtx.bufferProvider, record);
+        state = state + aggFunction->getSizeOfStateInBytes();
+    }
+}
+}

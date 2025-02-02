@@ -19,13 +19,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Operators/Operator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Util/Execution.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-class PhysicalAggregationProbe final : public PhysicalWindowOperator
+class PhysicalAggregationProbe final : public PhysicalWindowOperator, public AbstractScanOperator
 {
 public:
     WindowMetaData getWindowMetaData() const;

@@ -22,6 +22,7 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -37,6 +38,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
 
     /// Returns the pointer to the PagedVector on either side.
+    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
 

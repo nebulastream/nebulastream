@@ -38,6 +38,12 @@ public:
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
+    int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide);
+    void allocateSliceCacheEntries(
+      const uint64_t sizeOfEntry,
+      const uint64_t numberOfEntries,
+      Memory::AbstractBufferProvider *bufferProvider) override;
+
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,

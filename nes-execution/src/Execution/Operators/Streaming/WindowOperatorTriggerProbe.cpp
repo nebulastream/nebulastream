@@ -82,7 +82,6 @@ void WindowOperatorTriggerProbe::terminate(ExecutionContext& executionCtx) const
 
     /// Giving the chance for any child operator to terminate
     Operator::terminate(executionCtx);
-
 }
 
 WindowOperatorTriggerProbe::WindowOperatorTriggerProbe(uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex)

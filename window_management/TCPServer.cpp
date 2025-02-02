@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #include <chrono>
 #include <csignal>
 #include <cstring>
@@ -23,7 +37,7 @@ public:
         std::cout << "New connection from " << inet_ntoa(address.sin_addr) << std::endl;
         try
         {
-            // define random distributions for unorderedness and ts delay
+            /// define random distributions for unorderedness and ts delay
             std::random_device rd;
             std::mt19937 gen(rd());
 
@@ -35,7 +49,7 @@ public:
 
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
                     + std::to_string(timestamp) + "\n";
-                // std::cout << "Sending message: " << message;
+                /// std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
 
                 timestamp += timeStep;
@@ -62,7 +76,7 @@ public:
     {
         running = false;
         close(clientSocket);
-        // log("TCP server shut down.");
+        /// log("TCP server shut down.");
         std::cout << "Cleaned up connection from " << inet_ntoa(address.sin_addr) << std::endl;
     }
 
@@ -123,7 +137,7 @@ public:
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
                 clients.push_back(std::move(client));
-                // Clean up disconnected clients
+                /// Clean up disconnected clients
                 auto it = clients.begin();
                 while (it != clients.end())
                 {
@@ -153,12 +167,12 @@ public:
     void cleanup(const int errorCode)
     {
         running = false;
-        // Clean up all client connections
+        /// Clean up all client connections
         for (auto& client : clients)
         {
             client.cleanup();
         }
-        // Close server socket
+        /// Close server socket
         close(serverSocket);
         std::cout << "Server shutdown complete" << std::endl;
         exit(errorCode);

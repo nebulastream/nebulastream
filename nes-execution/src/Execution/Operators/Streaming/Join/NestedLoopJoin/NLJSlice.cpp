@@ -55,6 +55,21 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
+Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRef(
+    const WorkerThreadId workerThreadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide) const
+{
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Right:
+            return getPagedVectorRefRight(workerThreadId);
+        case QueryCompilation::JoinBuildSideType::Left:
+            return getPagedVectorRefLeft(workerThreadId);
+    }
+
+    INVARIANT(false, "Invalid join build side type");
+}
+
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectors.size();

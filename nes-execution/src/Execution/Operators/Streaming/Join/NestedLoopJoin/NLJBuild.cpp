@@ -77,7 +77,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceReference
         = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
-    const auto nljPagedVectorMemRef = invoke(
+    const auto nljPagedVectorRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,
         executionCtx.getWorkerThreadId(),
@@ -86,7 +86,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(
-        nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+        nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 }

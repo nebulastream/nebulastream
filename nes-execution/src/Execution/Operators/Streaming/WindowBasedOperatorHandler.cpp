@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -85,5 +86,4 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
-
 }

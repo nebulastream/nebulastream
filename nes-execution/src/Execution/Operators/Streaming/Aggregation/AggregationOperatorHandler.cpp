@@ -145,4 +145,40 @@ void AggregationOperatorHandler::triggerSlices(
     }
 }
 
+int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId)
+{
+    PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
+    const auto pos = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size();
+    INVARIANT(pos < sliceCacheEntriesBufferForWorkerThreads.size(), "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
+    return sliceCacheEntriesBufferForWorkerThreads[pos].getBuffer();
+}
+
+void AggregationOperatorHandler::allocateSliceCacheEntries(
+    const uint64_t sizeOfEntry,
+    const uint64_t numberOfEntries,
+    Memory::AbstractBufferProvider* bufferProvider)
+{
+    /// If the slice cache has already been created, we simply return
+    if (hasSliceCacheCreated.exchange(true))
+    {
+        return;
+    }
+
+    PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider should not be null");
+
+    /// As we have a left and right side, we have to allocate the slice cache entries for both sides
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        const auto neededSize = numberOfEntries * sizeOfEntry;
+        INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
+
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
+        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        sliceCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
+    }
+}
+
+
 }

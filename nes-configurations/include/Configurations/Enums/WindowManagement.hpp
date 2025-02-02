@@ -24,7 +24,7 @@ enum class SliceStoreType : uint8_t
 
 enum class SliceCacheType : uint8_t
 {
-    DEFAULT,
+    NONE,
     FIFO,
     LRU
 };

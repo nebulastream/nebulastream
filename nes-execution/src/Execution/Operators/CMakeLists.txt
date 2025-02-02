@@ -21,4 +21,5 @@ add_source_files(nes-execution
 
 add_subdirectory(Watermark)
 add_subdirectory(Streaming)
+add_subdirectory(SliceCache)
 add_subdirectory(SliceStore)

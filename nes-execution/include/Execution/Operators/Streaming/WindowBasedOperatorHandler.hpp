@@ -30,56 +30,64 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
 
-namespace NES::Runtime::Execution::Operators
-{
+namespace NES::Runtime::Execution::Operators {
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
 /// The build phase is the phase where the operator adds tuples to window(s) / the state.
 /// The probe phase gets triggered by the build phase and is the phase where the operator processes the build-up state, e.g., performs the join or aggregation.
-class WindowBasedOperatorHandler : public OperatorHandler
-{
+class WindowBasedOperatorHandler : public OperatorHandler {
 public:
-    WindowBasedOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+  WindowBasedOperatorHandler(
+    const std::vector<OriginId> &inputOrigins,
+    OriginId outputOriginId,
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
-    ~WindowBasedOperatorHandler() override = default;
+  ~WindowBasedOperatorHandler() override = default;
 
-    /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
-    void setWorkerThreads(uint64_t numberOfWorkerThreads);
-    void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
-    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
+  /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
+  void setWorkerThreads(uint64_t numberOfWorkerThreads);
+  void start(PipelineExecutionContext &pipelineExecutionContext, uint32_t localStateVariableId) override;
+  void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext &pipelineExecutionContext) override;
 
-    WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+  WindowSlicesStoreInterface &getSliceAndWindowStore() const;
 
-    /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
-    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
+  /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
+  void garbageCollectSlicesAndWindows(const BufferMetaData &bufferMetaData) const;
 
-    /// Checks and triggers windows that are ready to be triggered, e.g., the watermark has passed the window end for time-based windows.
-    /// This method updates the watermarkProcessor and is thread-safe
-    virtual void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+  /// Checks and triggers windows that are ready to be triggered, e.g., the watermark has passed the window end for time-based windows.
+  /// This method updates the watermarkProcessor and is thread-safe
+  virtual void checkAndTriggerWindows(const BufferMetaData &bufferMetaData, PipelineExecutionContext *pipelineCtx);
 
-    /// Triggers all windows that have not been already emitted to the probe
-    virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
+  /// Triggers all windows that have not been already emitted to the probe
+  virtual void triggerAllWindows(PipelineExecutionContext *pipelineCtx);
 
-    /// Gives the specific operator handler the chance to provide a function that creates new slices
-    /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
-    virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const = 0;
+  /// Gives the specific operator handler the chance to provide a function that creates new slices
+  /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
+  virtual std::function<std::vector<std::shared_ptr<Slice> >(SliceStart, SliceEnd)>
+  getCreateNewSlicesFunction(const Memory::AbstractBufferProvider *bufferProvider) const = 0;
+
+  virtual void allocateSliceCacheEntries(
+    const uint64_t sizeOfEntry,
+    const uint64_t numberOfEntries,
+    Memory::AbstractBufferProvider* bufferProvider) = 0;
 
 protected:
-    /// Gets called if slices should be triggered once a window is ready to be emitted.
-    /// Each window operator can be specific about what to do if the given slices are ready to be emitted
-    virtual void triggerSlices(
-        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-        PipelineExecutionContext* pipelineCtx)
-        = 0;
+  /// Gets called if slices should be triggered once a window is ready to be emitted.
+  /// Each window operator can be specific about what to do if the given slices are ready to be emitted
+  virtual void triggerSlices(
+    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice> > > &slicesAndWindowInfo,
+    PipelineExecutionContext *pipelineCtx)
+  = 0;
 
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
-    uint64_t numberOfWorkerThreads;
-    const OriginId outputOriginId;
+  std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+  std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
+  std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
+  uint64_t numberOfWorkerThreads;
+  const OriginId outputOriginId;
+
+  /// Might not be the best way to do this, but it is fine for this PoC branch.
+  /// This vector stores the start of the cache entries for each worker thread.
+  std::vector<Memory::TupleBuffer> sliceCacheEntriesBufferForWorkerThreads;
+  std::atomic<bool> hasSliceCacheCreated{false};
 };
 }
