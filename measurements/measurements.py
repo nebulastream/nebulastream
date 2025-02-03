@@ -15,7 +15,7 @@ import numpy as np
 
 def plot_measurements():
     # Glob for all csv files in the subdirectory
-    data_dir = "measurements"
+    data_dir = "data"
     pattern = os.path.join(data_dir, "micro_benchmarks_*.csv")
     files = glob.glob(pattern)
 

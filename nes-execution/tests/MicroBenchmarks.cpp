@@ -668,7 +668,7 @@ public:
             separateKeys = "SEPARATE_FILES_PAYLOAD";
         }
 
-        filename << "../../../measurements/micro_benchmarks_" << separateKeys;
+        filename << "../../../measurements/data/micro_benchmarks_" << separateKeys;
         filename << "_bufferSize_" << bufferSize;
         filename << "_fileBufferSizePercent_" << fileBufferSizePercent;
         filename << "_keys";
@@ -718,10 +718,10 @@ public:
         const auto numBuffers = DATA_SIZE / bufferSize;
         const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
 
-        std::vector<std::string> fileNames = {"../../../micro_benchmarks_payload.dat"};
+        std::vector<std::string> fileNames = {"../../../measurements/micro_benchmarks_payload.dat"};
         if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
-            fileNames.emplace_back("../../../micro_benchmarks_keys.dat");
+            fileNames.emplace_back("../../../measurements/micro_benchmarks_keys.dat");
         }
 
         const auto testSchema = createSchema();
