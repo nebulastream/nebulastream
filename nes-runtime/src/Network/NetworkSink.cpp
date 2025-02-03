@@ -296,12 +296,14 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::ConnectionEstablished: {
             //if the callback was triggered by the channel for another thread becoming ready, we cannot do anything
+            NES_ERROR("Connection established")
             if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                NES_DEBUG("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
+                NES_ERROR("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
                 break;
             }
+            NES_ERROR("retrieving channel and unbuffering")
             retrieveNewChannelAndUnbuffer(workerContext);
             break;
         }
@@ -578,7 +580,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 
     //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
     if (!newNetworkChannelFutureOptional.has_value()) {
-        NES_DEBUG("NetworkSink: reconfigure() network channel has not connected yet for operator {} Thread {}",
+        NES_ERROR("NetworkSink: reconfigure() network channel has not connected yet for operator {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
         return false;
@@ -586,7 +588,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 
     //check if channel connected successfully
     if (newNetworkChannelFutureOptional.value().first == nullptr) {
-        NES_DEBUG("NetworkSink: reconfigure() network channel retrieved from future is null for operator {} Thread {}",
+        NES_ERROR("NetworkSink: reconfigure() network channel retrieved from future is null for operator {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
         NES_ASSERT2_FMT(retryTimes != 0, "Received invalid channel although channel retry times are set to indefinite");
@@ -595,12 +597,14 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
         NES_ASSERT2_FMT(false, "Could not establish network channel");
         return false;
     }
+    NES_ERROR("retrieved channel from future, storing it")
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                       std::move(newNetworkChannelFutureOptional.value().first),
                                       newNetworkChannelFutureOptional.value().second);
 //    workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
+    NES_ERROR("setting parent");
     nodeEngine->setParentIdIfInvalid(newNetworkChannelFutureOptional.value().second);
-    NES_INFO("stop buffering data for context {}", workerContext.getId());
+    NES_ERROR("stop buffering data for context {}", workerContext.getId());
     unbuffer(workerContext);
     return true;
 }
