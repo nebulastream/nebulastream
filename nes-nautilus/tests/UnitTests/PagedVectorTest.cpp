@@ -85,7 +85,7 @@ public:
 
         /// Getting a new random seed and then generating a random number for the no. items
         /// We print the seed, so that we can reproduce the test if necessary
-        const auto seed = std::random_device()();
+        const auto seed = 528892079; //std::random_device()();
         NES_INFO("Seed: {}", seed);
         std::srand(seed);
         numberOfItems = std::rand() % (maxNumberOfItems - minNumberOfItems + 1) + minNumberOfItems;

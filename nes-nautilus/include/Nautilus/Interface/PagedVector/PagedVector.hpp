@@ -42,10 +42,13 @@ public:
     /// Copies all pages from other to this
     void copyFrom(const PagedVector& other);
 
+    /// Increases the number of entries in the last page of the accumulatedNumberOfEntries vector.
+    void increaseAccumulatedNumberOfEntries();
+
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
-    [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
+    [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos);
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
-    [[nodiscard]] uint64_t getBufferPosForEntry(uint64_t entryPos) const;
+    [[nodiscard]] uint64_t getBufferPosForEntry(uint64_t entryPos);
 
     /// Iterates over all pages and sums up the number of tuples.
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
@@ -54,7 +57,11 @@ public:
     [[nodiscard]] uint64_t getNumberOfPages() const;
 
 private:
+    uint64_t findPageIndex(const uint64_t& pos);
+
     std::vector<Memory::TupleBuffer> pages;
+    std::vector<uint64_t> accumulatedNumberOfEntries;
+    uint64_t counter = 0;
 };
 
 }

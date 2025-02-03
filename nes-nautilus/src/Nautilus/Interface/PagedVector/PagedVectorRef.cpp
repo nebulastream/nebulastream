@@ -40,6 +40,7 @@ const Memory::TupleBuffer* createNewEntryProxy(
     PagedVector* pagedVector, Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
     pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
+    pagedVector->increaseAccumulatedNumberOfEntries();
     return std::addressof(pagedVector->getLastPage());
 }
 
