@@ -24,7 +24,7 @@ def main():
 
     # Read base path to nebulastream-public/nebulastream-public
     with open(tested_files, "r", encoding="utf-8") as file:
-        line = file.readline.strip()
+        line = file.readline().strip()
 
         expected_path = "nebulastream-public/nebulastream-public"
         assert expected_path in line, f"Expected '{expected_path}' in the line, but it was not found. Line content: '{line}'"
