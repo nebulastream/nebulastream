@@ -1,0 +1,26 @@
+# name: milestone/LinearRoadBenchmark.test
+# description: LinearRoadBenchmark from https://www.cs.brandeis.edu/~linearroad/linear-road.pdf
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+SourceCSV lrb UINT64 creationTS INT16 vehicle FLOAT32 speed INT16 highway INT16 lane INT16 direction INT32 position TESTDATA/large/lrb/linear_road_benchmark.csv
+
+
+# Query 1
+SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
+FROM (SELECT creationTS, highway, direction, position/5280 AS positionDiv5280, speed FROM lrb)
+GROUP BY (highway, direction, positionDiv5280)
+WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
+HAVING avgSpeed < 40
+INTO CHECKSUM;
+----
+70916, 151995926
+
+# Query 2
+SELECT start, end, vehicle, highway, direction, positionDiv5280, COUNT(speed) AS cntSpeed
+FROM (SELECT creationTS, vehicle, highway, direction, position/5280 AS positionDiv5280, speed FROM lrb)
+GROUP BY (vehicle, highway, direction, positionDiv5280)
+WINDOW SLIDING(creationTS, SIZE 30 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
+----
+491460, 991265094
