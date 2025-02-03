@@ -11,6 +11,7 @@ import glob
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_measurements():
     # Glob for all csv files in the subdirectory
@@ -27,9 +28,8 @@ def plot_measurements():
         r"micro_benchmarks_(?P<method>.+)_bufferSize_(?P<buffer_size>\d+)_fileBufferSizePercent_(?P<file_buffer_size>\d+)_keys(?:_(?P<keys>.+))?\.csv"
     )
 
-    # Dictionaries to accumulate averages and counts for each method
-    averages = {} # method -> [sum_write, sum_truncate, sum_read]
-    counts = {}   # method -> number of files
+    # Dictionary to accumulate averages and counts
+    data = {}
 
     for file in files:
         base = os.path.basename(file)
@@ -45,8 +45,11 @@ def plot_measurements():
         keys_str = m.group("keys") or ""
 
         # Filter out files
-        if buffer_size_str != "4096" or file_buffer_size_str != "0" or keys_str != "f0_f1":
+        if method == "SAME_FILE_KEYS" or method == "SAME_FILE_PAYLOAD" or buffer_size_str == "262144" or file_buffer_size_str != "0" or keys_str == "":
             continue
+
+        # Create a key representing the combination
+        key = (method, buffer_size_str, file_buffer_size_str, keys_str)
 
         try:
             # Read the CSV file
@@ -65,55 +68,94 @@ def plot_measurements():
         avg_truncate = df.iloc[:, 2].mean()
         avg_read = df.iloc[:, 3].mean()
 
-        if method not in averages:
-            averages[method] = [0.0, 0.0, 0.0]
-            counts[method] = 0
-        averages[method][0] += avg_write
-        averages[method][1] += avg_truncate
-        averages[method][2] += avg_read
-        counts[method] += 1
+        if key not in data:
+            data[key] = [0.0, 0.0, 0.0, 0]
+        else:
+            print("Multiple files for {}_{}_{}_{} found.".format(method, buffer_size_str, file_buffer_size_str, keys_str))
+            return
 
-    # If no matching files were processed, exit.
-    if not averages:
-        print("No files met the filtering criteria.")
+        data[key][0] += avg_write
+        data[key][1] += avg_truncate
+        data[key][2] += avg_read
+        data[key][3] += 1
+
+    if not data:
+        print("No files were processed after parsing.")
         return
 
-    # Prepare lists for plotting.
-    methods = []
+    # Sort the keys for consistent ordering
+    sorted_keys = sorted(
+        data.keys(),
+        key=lambda k: (k[0], int(k[1]), int(k[2]), k[3])
+    )
+
+    # Create lists for plotting
+    tick_labels = []
     write_times = []
     truncate_times = []
     read_times = []
-    for method, sums in averages.items():
-        n = counts[method]
-        methods.append(method)
-        write_times.append(sums[0] / n)
-        truncate_times.append(sums[1] / n)
-        read_times.append(sums[2] / n)
+    methods_list = []
+    sizes_list = []
 
-    # Sort the methods alphabetically for a consistent order
-    methods, write_times, truncate_times, read_times = zip(*sorted(zip(methods, write_times, truncate_times, read_times)))
+    for key in sorted_keys:
+        method, buffer_size_str, file_buffer_size_str, keys_str = key
+        total_write, total_truncate, total_read, count = data[key]
+        methods_list.append(method)
+        sizes_list.append(buffer_size_str)
+        # Use the tick label to display only fileBufferSizePercent and keys
+        label = f"{file_buffer_size_str}" + (f", {keys_str}" if keys_str else "-")
+        tick_labels.append(label)
+        write_times.append((total_write / count) / 1000)
+        truncate_times.append((total_truncate / count) / 1000)
+        read_times.append((total_read / count) / 1000)
 
     # Create a stacked bar chart
-    fig, ax = plt.subplots(figsize=(8, 6))
-    x = range(len(methods))
+    fig, ax = plt.subplots(figsize=(16, 8))
+    x = np.arange(len(sorted_keys))
 
     # Plot the "write" times
-    bar1 = ax.bar(x, write_times, label="Write")
+    ax.bar(x, write_times, label="Write")
     # Plot the "truncate" times on top of the "write" times
-    bar2 = ax.bar(x, truncate_times, bottom=write_times, label="Truncate")
+    ax.bar(x, truncate_times, bottom=write_times, label="Truncate")
     # Compute the bottom for the "read" times
     bottom_for_read = [w + t for w, t in zip(write_times, truncate_times)]
-    bar3 = ax.bar(x, read_times, bottom=bottom_for_read, label="Read")
+    ax.bar(x, read_times, bottom=bottom_for_read, label="Read")
 
-    # Label the x-axis with the method names
+    # Set the tick labels for each bar
     ax.set_xticks(x)
-    ax.set_xticklabels(methods, rotation=45, ha="right")
-    ax.set_xlabel("Method")
-    ax.set_ylabel("Execution Time")
-    ax.set_title("Stacked Execution Times (Write, Truncate, Read)")
+    ax.set_xticklabels(tick_labels, rotation=45, ha="right")
+    ax.set_xlabel("fileBufferSize [% of BufferSize], Keys")
+    ax.set_ylabel("Execution Time [sec]")
+    ax.set_title("Stacked Execution Times by Benchmark Parameters")
     ax.legend()
 
-    plt.tight_layout()
+    # Group positions for methods
+    group_positions_method = {}
+    for i, method in enumerate(methods_list):
+        group_positions_method.setdefault(method, []).append(i)
+
+    # Group positions for bufferSize (grouped within each method)
+    group_positions_size = {}
+    for i, (method, size) in enumerate(zip(methods_list, sizes_list)):
+        group_positions_size.setdefault((method, size), []).append(i)
+
+    # Draw the bufferSize group labels (just below tick labels)
+    for (method, size), indices in group_positions_size.items():
+        center = np.mean(indices)
+        ax.text(center, -0.35, f"{size}", ha="center", va="top",
+                transform=ax.get_xaxis_transform(), fontsize=11, fontstyle="italic")
+
+    ax.text(-0.5, -0.35, "BufferSize [B]", ha="right", va="top",
+            transform=ax.get_xaxis_transform(), fontsize=11)
+
+    # Draw the method group labels (at the very bottom)
+    for method, indices in group_positions_method.items():
+        center = np.mean(indices)
+        ax.text(center, -0.40, method, ha="center", va="top",
+                transform=ax.get_xaxis_transform(), fontsize=12, fontweight="bold")
+
+    # Increase the bottom margin to ensure that both labels are visible
+    plt.subplots_adjust(bottom=0.40)
     plt.show()
 
 # To run the function:
