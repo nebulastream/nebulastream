@@ -1,0 +1,142 @@
+# name: milestone/DEBS.test
+# description: Queries from our DEBS tutorial
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+# Query 1 - Filter tuples
+SELECT * FROM consumers WHERE consumedPower >= 400 INTO SINK;
+----
+
+# Query 2 - Filter with multiple attributes
+SELECT * FROM consumers WHERE consumedPower >= 400 AND sectorId = 1 INTO SINK;
+----
+
+# Query 3 - Filter with complex expression
+SELECT * FROM consumers WHERE consumedPower >= 1 AND consumedPower < (60 + 1) INTO SINK;
+----
+
+# Query 4 - Filter with complex expression
+SELECT consumedPower / 1000 AS consumedPower FROM consumers INTO SINK;
+----
+
+# Query 5 - Combine multiple data sources
+SELECT *
+FROM windTurbines
+UNION
+SELECT *
+FROM solarPanels
+INTO SINK;
+----
+
+# Query 6 - Enrich tuples with data
+SELECT 1 AS source
+FROM windTurbines
+UNION
+SELECT 2 AS source
+FROM solarPanels
+INTO SINK;
+----
+
+# Query 7 - Window aggregations with tumbling windows
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM solarPanels
+GROUP BY groupId
+WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+INTO SINK;
+----
+
+# Query 8 - Window aggregations with sliding windows
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM solarPanels
+GROUP BY groupId
+WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MIN)
+INTO SINK;
+----
+
+# Query 9 - Window join
+SELECT (p.producedPower - c.consumedPower) AS DifferenceProducedConsumedPower
+FROM (
+  SELECT 1 AS JoinKey,
+         SUM(producedPower) AS producedPower,
+         MIN(windTurbines$start) AS start_time
+  FROM (
+    SELECT * FROM windTurbines
+    UNION
+    SELECT * FROM solarPanels
+  ) AS combined
+  WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+  GROUP BY 1
+) AS p
+JOIN (
+  SELECT 1 AS JoinKey,
+         SUM(consumedPower) AS consumedPower
+  FROM consumers
+  WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+  GROUP BY 1
+) AS c
+  ON p.JoinKey = c.JoinKey
+WINDOW TUMBLING(p.start_time, SIZE 1 HOUR)
+INTO SINK;
+----
+
+# Query 10 - Meant to highlight query merging
+SELECT producedPower / 1000 AS producedPower
+FROM windTurbines
+WHERE producedPower < 80000
+INTO SINK;
+----
+
+# Query 11 - Meant to highlight query merging
+SELECT producedPower
+FROM (
+  SELECT producedPower / 1000 AS producedPower
+  FROM windTurbines
+) AS t
+WHERE producedPower < 80
+INTO SINK;
+----
+
+# Query 12 - Show wind turbines produced power
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM windTurbines
+GROUP BY groupId
+WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MIN)
+INTO SINK;
+----
+
+# Query 13 - Show solar panels produced power
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM solarPanels
+GROUP BY groupId
+WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MIN)
+INTO SINK;
+----
+
+# Query 14 - Trigger streetlights
+SELECT (p.producedPower - c.consumedPower) AS DifferenceProducedConsumedPower
+FROM (
+  SELECT 1 AS JoinKey,
+         SUM(producedPower) AS producedPower,
+         MIN(start) AS start_time
+  FROM (
+    SELECT * FROM windTurbines
+    UNION
+    SELECT * FROM solarPanels
+  ) AS combined
+  WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 20 MIN)
+  GROUP BY 1
+) AS p
+JOIN (
+  SELECT 1 AS JoinKey,
+         SUM(consumedPower) AS consumedPower
+  FROM consumers
+  WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 20 MIN)
+  GROUP BY 1
+) AS c
+  ON p.JoinKey = c.JoinKey
+WINDOW SLIDING(p.start_time, SIZE 1 HOUR, ADVANCE BY 20 MIN)
+INTO SINK;
+----
+
