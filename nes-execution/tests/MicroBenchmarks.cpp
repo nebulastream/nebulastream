@@ -408,7 +408,7 @@ public:
 
             if constexpr (SeparateKeys == NO_SEPARATION)
             {
-                payloadFile.write(payloadBuffer.data(), fileBufferSize);
+                payloadFile.write(payloadBuffer.data(), fieldAddrPayloadBuffer - payloadBuffer.data());
             }
             else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
             {
@@ -495,7 +495,7 @@ public:
             payloadFileReadSize = numPagesPerBuffer * capacity * payloadSize;
         }
 
-        auto pageCnt = 0UL;
+        auto pageIdx = 0UL;
         std::vector<char> keyBuffer(keyFileReadSize);
         std::vector<char> payloadBuffer(payloadFileReadSize);
 
@@ -516,7 +516,7 @@ public:
                 keyFile.read(keyBuffer.data(), keyFileReadSize);
             }
 
-            for (auto pageIdx = 0UL; pageIdx < numPagesPerBuffer; ++pageIdx)
+            for (auto pageNum = 0UL; pageNum < numPagesPerBuffer && pageIdx < expectedNumPages; ++pageNum, ++pageIdx)
             {
                 newPagedVector->appendPageIfFull();
                 auto& page = pages.back();
@@ -579,9 +579,9 @@ public:
                 }
 
 #ifdef LOGGING
-                if (pageCnt++ % tenPercentOfNumPages == 0)
+                if (pageIdx % tenPercentOfNumPages == 0)
                 {
-                    NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageCnt - 1) / expectedNumPages));
+                    NES_INFO("PagedVector {}% written", std::round(100 * static_cast<double>(pageIdx) / expectedNumPages));
                 }
 #endif
             }
@@ -642,7 +642,10 @@ public:
 
     template <SeparateKeys SeparateKeys>
     static std::string createMeasurementsFileName(
-        const uint64_t bufferSize, const uint64_t fileBufferSizePercent, const std::vector<std::string>& keyFieldNames)
+        const std::string& testName,
+        const uint64_t bufferSize,
+        const uint64_t fileBufferSizePercent,
+        const std::vector<std::string>& keyFieldNames)
     {
         std::string separateKeys;
         std::stringstream filename;
@@ -668,10 +671,13 @@ public:
             separateKeys = "SEPARATE_FILES_PAYLOAD";
         }
 
-        filename << "../../../measurements/data/micro_benchmarks_" << separateKeys;
+        filename << "../../../measurements/data/03-02/micro_benchmarks_" << testName << "_" << separateKeys;
         filename << "_bufferSize_" << bufferSize;
         filename << "_fileBufferSizePercent_" << fileBufferSizePercent;
-        filename << "_keys";
+        if (!keyFieldNames.empty())
+        {
+            filename << "_keys";
+        }
         for (const auto& key : keyFieldNames)
         {
             filename << "_" << key;
@@ -681,23 +687,17 @@ public:
         return filename.str();
     }
 
-    template <SeparateKeys SeparateKeys>
-    static void createMeasurementsCSV(
-        const std::vector<double>& execTimesInMs,
-        const uint64_t bufferSize,
-        const uint64_t fileBufferSizePercent,
-        const std::vector<std::string>& keyFieldNames)
+    static void createMeasurementsCSV(const std::vector<double>& execTimesInMs, const uint64_t numCols, const std::string& fileName)
     {
-        std::ofstream file(
-            createMeasurementsFileName<SeparateKeys>(bufferSize, fileBufferSizePercent, keyFieldNames), std::ios::out | std::ios::trunc);
+        std::ofstream file(fileName, std::ios::out | std::ios::trunc);
         ASSERT_TRUE(file.is_open());
 
-        ASSERT_EQ(execTimesInMs.size(), 5 * NUM_MEASUREMENTS);
-        for (auto rowIdx = 0UL; rowIdx < execTimesInMs.size() / 5; ++rowIdx)
+        ASSERT_EQ(execTimesInMs.size(), numCols * NUM_MEASUREMENTS);
+        for (auto rowIdx = 0UL; rowIdx < execTimesInMs.size() / numCols; ++rowIdx)
         {
-            for (auto colIdx = 0UL; colIdx < 5; ++colIdx)
+            for (auto colIdx = 0UL; colIdx < numCols; ++colIdx)
             {
-                file << execTimesInMs[rowIdx * 5 + colIdx];
+                file << execTimesInMs[rowIdx * numCols + colIdx];
                 if (colIdx < 4)
                 {
                     file << ",";
@@ -710,13 +710,14 @@ public:
     }
 
     template <SeparateKeys SeparateKeys>
-    static void runTests()
+    static void runSeparationTests()
     {
         std::vector<double> execTimesInMs;
 
         const auto [bufferSize, fileBufferSizePercent, keyFieldNames] = GetParam();
         const auto numBuffers = DATA_SIZE / bufferSize;
-        const auto fileBufferSize = std::max(1UL, fileBufferSizePercent * numBuffers / 100) * bufferSize;
+        const auto fileBufferSize
+            = std::max(1UL, static_cast<uint64_t>(std::round(fileBufferSizePercent / 100.0 * numBuffers))) * bufferSize;
 
         std::vector<std::string> fileNames = {"../../../measurements/micro_benchmarks_payload.dat"};
         if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
@@ -752,46 +753,73 @@ public:
             comparePagedVectors(expectedPagedVector, pagedVector, execTimesInMs);
         }
 
-        createMeasurementsCSV<SeparateKeys>(execTimesInMs, bufferSize, fileBufferSizePercent, keyFieldNames);
+        createMeasurementsCSV(
+            execTimesInMs, 5, createMeasurementsFileName<SeparateKeys>("SeparationTest", bufferSize, fileBufferSizePercent, keyFieldNames));
     }
 };
 
-TEST_P(MicroBenchmarksTest, noSeparation)
+TEST_P(MicroBenchmarksTest, separationTestNoSeparation)
 {
-    runTests<NO_SEPARATION>();
+    runSeparationTests<NO_SEPARATION>();
 }
 
-TEST_P(MicroBenchmarksTest, separateFilesPayloadOnly)
+TEST_P(MicroBenchmarksTest, separationTestSeparateFilesPayloadOnly)
 {
-    runTests<SEPARATE_FILES_PAYLOAD>();
+    runSeparationTests<SEPARATE_FILES_PAYLOAD>();
 }
 
-TEST_P(MicroBenchmarksTest, separateFilesPayloadAndKey)
+TEST_P(MicroBenchmarksTest, separationTestSeparateFilesPayloadAndKey)
 {
-    runTests<SEPARATE_FILES_KEYS>();
+    runSeparationTests<SEPARATE_FILES_KEYS>();
 }
 
-TEST_P(MicroBenchmarksTest, sameFilePayloadOnly)
+TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadOnly)
 {
-    runTests<SAME_FILE_PAYLOAD>();
+    runSeparationTests<SAME_FILE_PAYLOAD>();
 }
 
-TEST_P(MicroBenchmarksTest, sameFilePayloadAndKey)
+TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadAndKey)
 {
-    runTests<SAME_FILE_KEYS>();
+    runSeparationTests<SAME_FILE_KEYS>();
 }
+/*
+TEST_F(MicroBenchmarksTest, bulkWrite)
+{
+    std::vector<double> execTimesInMs;
+    const std::vector<uint64_t> data_size = {10 * 1024, 100 * 1024, };
 
+    const auto testSchema = createSchema()->addField("f0", BasicType::UINT64);
+    const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
+    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimesInMs);
+    std::string fileName = "../../../measurements/micro_benchmarks_payload.dat";
+
+    for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
+    {
+        writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+    }
+
+    createMeasurementsCSV(execTimesInMs, 1, createMeasurementsFileName<SeparateKeys>("bulkWrite", bufferSize, fileBufferSizePercent, keyFieldNames));
+}
+*/
 INSTANTIATE_TEST_CASE_P(
     Benchmarks,
     MicroBenchmarksTest,
     ::testing::Combine(
-        ::testing::Values(1024, 4096, 65536, 262144),
-        ::testing::Values(0, 50, 100),
-        ::testing::Values(
+        //::testing::Values(1024, 4096, 8192, 16384, 32768, 65536, 131072, 262144),
+        ::testing::Values(1024, 4096),
+        ::testing::Values(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
+        ::testing::Values(/*
             std::vector<std::string>{},
+            std::vector<std::string>{"f0"},
+            std::vector<std::string>{"f5"},
             std::vector<std::string>{"f0", "f1"},
             std::vector<std::string>{"f0", "f5"},
-            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
+            std::vector<std::string>{"f0", "f1", "f2"},
+            std::vector<std::string>{"f0", "f4", "f8"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3"},
+            std::vector<std::string>{"f0", "f3", "f6", "f9"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},*/
             std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"})));
 
 }
