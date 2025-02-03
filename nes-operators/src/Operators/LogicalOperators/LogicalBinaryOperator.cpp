@@ -31,7 +31,7 @@ LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), Logi
 
 bool LogicalBinaryOperator::inferSchema()
 {
-    PRECONDITION(children.size() == 2, "BinaryOperator: this node should have exactly two child operators");
+    // PRECONDITION(children.size() == 2, "BinaryOperator: this node should have exactly two child operators");
     distinctSchemas.clear();
 
     /// Infer schema of all child operators

@@ -49,12 +49,12 @@ const Memory::TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
     return std::addressof(pagedVector->getFirstPage());
 }
 
-const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+const Memory::TupleBuffer* getTupleBufferForEntryProxy(PagedVector* pagedVector, const uint64_t entryPos)
 {
     return std::addressof(pagedVector->getTupleBufferForEntry(entryPos));
 }
 
-uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+uint64_t getBufferPosForEntryProxy(PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getBufferPosForEntry(entryPos);
 }

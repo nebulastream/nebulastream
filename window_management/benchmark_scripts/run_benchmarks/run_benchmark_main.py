@@ -98,7 +98,7 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     worker_config_yaml["worker"]["queryCompiler"]["nautilusBackend"] = current_benchmark_config.nautilus_backend
     worker_config_yaml["worker"]["queryCompiler"]["sliceStoreType"] = current_benchmark_config.slice_store_type
     worker_config_yaml["worker"]["queryCompiler"]["sliceCacheType"] = current_benchmark_config.slice_cache_type
-    worker_config_yaml["worker"]["queryCompiler"]["sliceCacheSize"] = current_benchmark_config.slice_cache_size
+    worker_config_yaml["worker"]["queryCompiler"]["numberOfEntriesSliceCache"] = current_benchmark_config.numberOfEntriesSliceCache
     worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
     worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
 

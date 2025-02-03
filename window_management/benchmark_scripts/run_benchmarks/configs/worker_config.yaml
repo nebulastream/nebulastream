@@ -7,7 +7,7 @@ worker:
     pageSize: 10240
     sliceStoreType: TBA
     sliceCacheType: TBA
-    sliceCacheSize: TBA
+    numberOfEntriesSliceCache: TBA
     lockSliceCache: TBA
 
   queryEngine:

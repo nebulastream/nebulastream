@@ -24,10 +24,10 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalWindowTrigger final : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
 {
 public:
-    static PhysicalOperatorPtr create(
+    static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     {
         return std::make_shared<PhysicalWindowTrigger>(
@@ -43,8 +43,8 @@ protected:
 private:
     explicit PhysicalWindowTrigger(
         OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
+        std::shared_ptr<Schema> inputSchema,
+        std::shared_ptr<Schema> outputSchema,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
         : Operator(id)
         , PhysicalUnaryOperator(std::move(id), std::move(inputSchema), std::move(outputSchema))

@@ -327,8 +327,16 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         streamJoinConfig.joinFieldNamesRight,
         joinOperator->windowMetaData);
 
+    /// Creating two trigger operators, one for each side of the join
+    const auto triggerLeft = PhysicalOperators::PhysicalWindowTrigger::create(
+        getNextOperatorId(), joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+    const auto triggerRight = PhysicalOperators::PhysicalWindowTrigger::create(
+        getNextOperatorId(), joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    leftJoinBuildOperator->insertBetweenThisAndParentNodes(triggerLeft);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+    rightJoinBuildOperator->insertBetweenThisAndParentNodes(triggerRight);
     streamJoinOperators.operatorNode->replace(joinProbeOperator);
 }
 
@@ -448,6 +456,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
+    operatorNode->insertBetweenThisAndChildNodes(trigger);
     operatorNode->replace(aggregationProbe);
 }
 
