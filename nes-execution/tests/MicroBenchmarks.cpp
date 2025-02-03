@@ -161,7 +161,6 @@ public:
             }
         }
 
-        timer.snapshot("done generating");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
@@ -243,7 +242,6 @@ public:
             ASSERT_EQ(pagedVector->getNumberOfPages(), 0);
         }
 
-        timer.snapshot("done clearing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
@@ -261,27 +259,6 @@ public:
         NES_INFO("File writing...");
         Timer<> timer("writeFileTimer");
         timer.start();
-
-        std::ofstream payloadFile;
-        std::ofstream keyFile;
-
-        if constexpr (SeparateKeys == SAME_FILE_KEYS)
-        {
-            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::in | std::ios::binary);
-        }
-        else
-        {
-            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
-        }
-        ASSERT_TRUE(payloadFile.is_open());
-        ASSERT_EQ(payloadFile.tellp(), 0);
-        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
-        {
-            ASSERT_GT(fileNames.size(), 1);
-            keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
-            ASSERT_TRUE(keyFile.is_open());
-            ASSERT_EQ(keyFile.tellp(), 0);
-        }
 
         const auto& pages = pagedVector->getPages();
         const auto numPages = pagedVector->getNumberOfPages();
@@ -312,13 +289,40 @@ public:
         }
 
         auto pageIdx = 0UL;
-        std::vector<char> keyBuffer(keyFileWriteSize);
-        std::vector<char> payloadBuffer(payloadFileWriteSize);
-
         auto numTuplesLastPage = 0UL;
         const auto oldCapacity = oldMemoryLayout->getCapacity();
         const auto oldFieldTypeSizes = getFieldTypeSizes(oldMemoryLayout);
         const auto oldPagePadding = bufferSize - oldCapacity * oldMemoryLayout->getTupleSize();
+
+        timer.snapshot("defined variables");
+
+        std::vector<char> keyBuffer(keyFileWriteSize);
+        std::vector<char> payloadBuffer(payloadFileWriteSize);
+
+        timer.snapshot("allocated memory");
+
+        std::ofstream payloadFile;
+        std::ofstream keyFile;
+
+        if constexpr (SeparateKeys == SAME_FILE_KEYS)
+        {
+            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::in | std::ios::binary);
+        }
+        else
+        {
+            payloadFile = std::ofstream(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
+        }
+        ASSERT_TRUE(payloadFile.is_open());
+        ASSERT_EQ(payloadFile.tellp(), 0);
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+        {
+            ASSERT_GT(fileNames.size(), 1);
+            keyFile = std::ofstream(fileNames.at(1), std::ios::out | std::ios::trunc | std::ios::binary);
+            ASSERT_TRUE(keyFile.is_open());
+            ASSERT_EQ(keyFile.tellp(), 0);
+        }
+
+        timer.snapshot("opened file");
 
         for (auto bufferIdx = 0UL; bufferIdx < numBuffers; ++bufferIdx)
         {
@@ -337,7 +341,6 @@ public:
                 }
                 else if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
                 {
-                    numTuplesLastPage += capacity;
                     for (auto tupleIdx = 0UL; tupleIdx < capacity; ++tupleIdx)
                     {
                         for (const auto [fieldType, fieldSize] : fieldTypeSizes)
@@ -406,6 +409,11 @@ public:
 #endif
             }
 
+            if (bufferIdx == 0)
+            {
+                timer.snapshot("wrote to buffer");
+            }
+
             if constexpr (SeparateKeys == NO_SEPARATION)
             {
                 payloadFile.write(payloadBuffer.data(), fieldAddrPayloadBuffer - payloadBuffer.data());
@@ -414,10 +422,14 @@ public:
             {
                 if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
                 {
-                    keyFile.write(keyBuffer.data(), numTuplesLastPage * keySize);
+                    keyFile.write(keyBuffer.data(), fieldAddrKeyBuffer - keyBuffer.data());
                 }
-                payloadFile.write(payloadBuffer.data(), numTuplesLastPage * payloadSize);
-                numTuplesLastPage = 0;
+                payloadFile.write(payloadBuffer.data(), fieldAddrPayloadBuffer - payloadBuffer.data());
+            }
+
+            if (bufferIdx == 0)
+            {
+                timer.snapshot("wrote to file");
             }
         }
 
@@ -427,10 +439,15 @@ public:
             keyFile.close();
         }
 
-        timer.snapshot("done writing");
+        timer.snapshot("closed file");
+
         timer.pause();
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
+        for (auto snapshot : timer.getSnapshots())
+        {
+            execTimesInMs.emplace_back(snapshot.getPrintTime());
+        }
         NES_INFO("File written in {} ms", timeInMs);
     }
 
@@ -448,6 +465,45 @@ public:
         Timer<> timer("writePagedVectorTimer");
         timer.start();
 
+        auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
+        newPagedVector->getPages().reserve(expectedNumPages);
+        auto& pages = newPagedVector->getPages();
+        const auto tupleSize = memoryLayout->getTupleSize();
+        const auto bufferSize = memoryLayout->getBufferSize();
+        const auto capacity = memoryLayout->getCapacity();
+        ASSERT_EQ(fileBufferSize % bufferSize, 0);
+
+        const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
+        const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
+        const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
+        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
+
+        auto keyFileReadSize = 0UL;
+        auto payloadFileReadSize = fileBufferSize;
+        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
+        {
+            if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
+            {
+                keyFileReadSize = numPagesPerBuffer * capacity * keySize;
+            }
+            payloadFileReadSize = numPagesPerBuffer * capacity * payloadSize;
+        }
+
+        auto pageIdx = 0UL;
+        auto oldPageCnt = 0UL;
+        auto oldTupleCnt = 0UL;
+        auto& oldPages = pagedVector->getPages();
+        const auto oldPagePadding = bufferSize - capacity * tupleSize;
+        const auto oldCapacity = pagedVector->getMemoryLayout()->getCapacity();
+        auto* fieldAddrKeyPagedVector = !oldPages.empty() ? oldPages.front().getBuffer() : nullptr;
+
+        timer.snapshot("defined variables");
+
+        std::vector<char> keyBuffer(keyFileReadSize);
+        std::vector<char> payloadBuffer(payloadFileReadSize);
+
+        timer.snapshot("allocated memory");
+
         std::ifstream payloadFile;
         std::ifstream keyFile;
 
@@ -462,52 +518,15 @@ public:
             ASSERT_EQ(keyFile.tellg(), 0);
         }
 
-        auto newPagedVector = std::make_shared<Nautilus::Interface::PagedVector>(bufferManager, memoryLayout);
-        newPagedVector->getPages().reserve(expectedNumPages);
-
-        auto& pages = newPagedVector->getPages();
-        const auto tupleSize = memoryLayout->getTupleSize();
-        const auto bufferSize = memoryLayout->getBufferSize();
-        const auto capacity = memoryLayout->getCapacity();
-        ASSERT_EQ(fileBufferSize % bufferSize, 0);
-
-        const auto fieldTypeSizes = getFieldTypeSizes(memoryLayout);
-        const auto [keySize, payloadSize] = getKeyAndPayloadSize(memoryLayout);
-        const auto tenPercentOfNumPages = std::max(1UL, (expectedNumPages * 10) / 100);
-        const auto numPagesPerBuffer = fileBufferSize / bufferSize;
-
-        if constexpr (SeparateKeys == SAME_FILE_PAYLOAD || SeparateKeys == SEPARATE_FILES_PAYLOAD)
-        {
-            if (payloadSize == 0)
-            {
-                newPagedVector = pagedVector;
-            }
-        }
-
-        auto keyFileReadSize = 0UL;
-        auto payloadFileReadSize = fileBufferSize;
-        if constexpr (SeparateKeys == SEPARATE_FILES_KEYS || SeparateKeys == SEPARATE_FILES_PAYLOAD)
-        {
-            if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
-            {
-                keyFileReadSize = numPagesPerBuffer * capacity * keySize;
-            }
-            payloadFileReadSize = numPagesPerBuffer * capacity * payloadSize;
-        }
-
-        auto pageIdx = 0UL;
-        std::vector<char> keyBuffer(keyFileReadSize);
-        std::vector<char> payloadBuffer(payloadFileReadSize);
-
-        auto oldPageCnt = 0UL;
-        auto oldTupleCnt = 0UL;
-        auto& oldPages = pagedVector->getPages();
-        const auto oldPagePadding = bufferSize - capacity * tupleSize;
-        const auto oldCapacity = pagedVector->getMemoryLayout()->getCapacity();
-        auto* fieldAddrKeyPagedVector = !oldPages.empty() ? oldPages.front().getBuffer() : nullptr;
+        timer.snapshot("opened file");
 
         while (payloadFile.read(payloadBuffer.data(), payloadFileReadSize) || payloadFile.gcount() > 0)
         {
+            if (pageIdx == 0)
+            {
+                timer.snapshot("wrote to buffer");
+            }
+
             auto* fieldAddrKeyBuffer = keyBuffer.data();
             auto* fieldAddrPayloadBuffer = payloadBuffer.data();
 
@@ -585,6 +604,11 @@ public:
                 }
 #endif
             }
+
+            if (pageIdx == numPagesPerBuffer)
+            {
+                timer.snapshot("wrote to memory");
+            }
         }
 
         payloadFile.close();
@@ -593,12 +617,24 @@ public:
             keyFile.close();
         }
 
-        pagedVector = newPagedVector;
+        timer.snapshot("closed file");
 
-        timer.snapshot("done writing");
+        if constexpr (SeparateKeys != SAME_FILE_PAYLOAD && SeparateKeys != SEPARATE_FILES_PAYLOAD)
+        {
+            pagedVector = newPagedVector;
+        }
+        else if (payloadSize != 0)
+        {
+            pagedVector = newPagedVector;
+        }
+
         timer.pause();
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
+        for (auto snapshot : timer.getSnapshots())
+        {
+            execTimesInMs.emplace_back(snapshot.getPrintTime());
+        }
         NES_INFO("PagedVector written in {} ms", timeInMs);
     }
 
@@ -633,7 +669,6 @@ public:
             ASSERT_EQ(std::memcmp(expectedBuffer.getBuffer(), actualBuffer.getBuffer(), tuplesOnPageSize), 0);
         }
 
-        timer.snapshot("done comparing");
         timer.pause();
         auto timeInMs = timer.getPrintTime();
         execTimesInMs.emplace_back(timeInMs);
@@ -698,7 +733,7 @@ public:
             for (auto colIdx = 0UL; colIdx < numCols; ++colIdx)
             {
                 file << execTimesInMs[rowIdx * numCols + colIdx];
-                if (colIdx < 4)
+                if (colIdx < numCols - 1)
                 {
                     file << ",";
                 }
@@ -754,7 +789,7 @@ public:
         }
 
         createMeasurementsCSV(
-            execTimesInMs, 5, createMeasurementsFileName<SeparateKeys>("SeparationTest", bufferSize, fileBufferSizePercent, keyFieldNames));
+            execTimesInMs, 17, createMeasurementsFileName<SeparateKeys>("SeparationTest", bufferSize, fileBufferSizePercent, keyFieldNames));
     }
 };
 
@@ -808,11 +843,12 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         //::testing::Values(1024, 4096, 8192, 16384, 32768, 65536, 131072, 262144),
         ::testing::Values(1024, 4096),
-        ::testing::Values(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
-        ::testing::Values(/*
+        //::testing::Values(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
+        ::testing::Values(0, 20, 50, 100),
+        ::testing::Values(
             std::vector<std::string>{},
             std::vector<std::string>{"f0"},
-            std::vector<std::string>{"f5"},
+            /*std::vector<std::string>{"f5"},
             std::vector<std::string>{"f0", "f1"},
             std::vector<std::string>{"f0", "f5"},
             std::vector<std::string>{"f0", "f1", "f2"},
