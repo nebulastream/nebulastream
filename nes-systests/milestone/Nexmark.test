@@ -1,0 +1,107 @@
+# name: milestone/Nexmark.test
+# description: Nexmark benchmark
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+# Query 0
+SELECT * FROM bid INTO SINK;
+----
+
+# Query 1
+SELECT price * 89 / 100 AS price
+FROM bit
+INTO SINK;
+----
+
+# Query 2
+SELECT * FROM bid WHERE auctionId % 123 = 0 INTO SINK;
+----
+
+# Query 3
+#-- Linke Teilschicht (L)
+SELECT 
+    auctionId, 
+    COUNT(*) AS num, 
+    WINDOW_START AS start
+FROM bid
+GROUP BY auctionId
+WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+
+#-- Rechte Teilschicht (R)
+SELECT 
+    auctionId, 
+    MAX(num) AS max, 
+    WINDOW_START AS start
+FROM (
+    SELECT 
+        auctionId, 
+        COUNT(*) AS num, 
+        WINDOW_START AS start
+    FROM bid
+    GROUP BY auctionId
+    WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+) AS temp
+GROUP BY auctionId
+WINDOW TUMBLING(start, SIZE 10 SEC)
+
+# -- JOIN und finale Filterung
+SELECT L.auctionId, L.num
+FROM (
+    SELECT 
+        auctionId, 
+        COUNT(*) AS num, 
+        WINDOW_START AS start
+    FROM bid
+    GROUP BY auctionId
+    WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+) AS L
+JOIN (
+    SELECT 
+        auctionId, 
+        MAX(num) AS max, 
+        WINDOW_START AS start
+    FROM (
+        SELECT 
+            auctionId, 
+            COUNT(*) AS num, 
+            WINDOW_START AS start
+        FROM bid
+        GROUP BY auctionId
+        WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+    ) AS temp
+    GROUP BY auctionId
+    WINDOW TUMBLING(start, SIZE 10 SEC)
+) AS R
+  ON L.start = R.start
+WINDOW SLIDING(L.start, SIZE 10 SEC, ADVANCE BY 2 SEC)
+WHERE L.num >= R.max
+INTO SINK;
+ ----
+
+ # Query 4
+SELECT b.*, t.start, t.end, t.maxprice
+FROM bid AS b
+JOIN (
+    SELECT 
+        MAX(price) AS maxprice, 
+        WINDOW_START AS start, 
+        WINDOW_END AS end
+    FROM bid
+    GROUP BY 
+        /* Gruppierung erfolgt über das gesamte Fenster */
+    WINDOW TUMBLING(timestamp, SIZE 10 SEC)
+) AS t
+  ON b.price = t.maxprice
+WINDOW TUMBLING(b.timestamp, SIZE 10 SEC, OFFSET b.start)
+INTO SINK;
+----
+
+# Query 5
+SELECT *
+FROM bid
+JOIN auction ON bid.auctionId = auction.id
+WINDOW TUMBLING(IngestionTime(), SIZE 12 HOUR)
+INTO SINK;
+----
