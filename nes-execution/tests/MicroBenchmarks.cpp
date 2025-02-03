@@ -820,7 +820,7 @@ TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadAndKey)
     runSeparationTests<SAME_FILE_KEYS>();
 }
 
-TEST_F(MicroBenchmarksTest, DISABLED_bulkWriteTest)
+TEST_F(MicroBenchmarksTest, bulkWriteTest)
 {
     std::vector<double> execTimesInMs;
     const std::vector<uint64_t> dataSizes
@@ -834,10 +834,9 @@ TEST_F(MicroBenchmarksTest, DISABLED_bulkWriteTest)
            128 * 1024 * 1024,
            512 * 1024 * 1024,
            1 * 1024 * 1024 * 1024,
-           4294967296,
-           8589934592};
+           4294967296};
     const std::vector<uint64_t> bufferSizes
-        = {1 * 1024, 4 * 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024};
+        = {1 * 1024, 4 * 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024};
 
     for (const auto dataSize : dataSizes)
     {
@@ -890,6 +889,11 @@ INSTANTIATE_TEST_CASE_P(
             std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"},
             std::vector<std::string>{"f0", "f1", "f2", "f3", "f4", "f5"},
             std::vector<std::string>{"f0", "f1", "f3", "f4", "f7", "f8"},
-            std::vector<std::string>{"f0", "f1", "f3", "f5", "f7", "f9"})));
+            std::vector<std::string>{"f0", "f1", "f3", "f5", "f7", "f9"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4", "f5", "f6"},
+            std::vector<std::string>{"f0", "f1", "f3", "f4", "f6", "f7", "f9"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7"},
+            std::vector<std::string>{"f0", "f1", "f2", "f4", "f5", "f7", "f8", "f9"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"})));
 
 }
