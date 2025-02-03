@@ -140,29 +140,9 @@ TEST_F(PatternParsingServiceTest, NestedDisjunctionPattern) {
     LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlanA->appendOperatorAsNewRoot(sink);
 
-    // expected result patternString2
-    QueryPlanPtr queryPlanA2 = QueryPlan::create();
-    LogicalOperatorPtr source4 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("defaultLogical"));
-
-    QueryPlanPtr queryPlanB2 = QueryPlan::create();
-    LogicalOperatorPtr source5 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("defaultLogicalB"));
-
-    QueryPlanPtr queryPlanC2 = QueryPlan::create();
-    LogicalOperatorPtr source6 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("defaultLogicalC"));
-
-    queryPlanC2->addRootOperator(source6);
-    queryPlanA2->addRootOperator(source4);
-    queryPlanB2->addRootOperator(source5);
-
-    Query subquery = Query(queryPlanA2).unionWith(queryPlanB2);
-    Query query2 = Query(queryPlanC2).unionWith(subquery);
-    queryPlanC2 = query2.getQueryPlan();
-    LogicalOperatorPtr sink2 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
-    queryPlanC2->appendOperatorAsNewRoot(sink2);
-
     //Comparison of the expected and the actual generated query plan
     EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan));
-    EXPECT_EQ(queryPlanToString(queryPlanC2), queryPlanToString(patternPlan2));
+    EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan2));
 }
 
 TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
@@ -279,8 +259,7 @@ TEST_F(PatternParsingServiceTest, NestedSequencePattern) {
     EXPECT_EQ(queryPlanToString(queryPlan1), queryPlanToString(patternPlanABC));
 }
 
-TEST_F(PatternParsingServiceTest, DISABLED_MixedOperatorPattern) {
-    // TODO #5170 the plans are equivalent (also the levels of the operators) but in different orders which is why with the string comparison this test fails, we have to work out a way to compare that nicly
+TEST_F(PatternParsingServiceTest, MixedOperatorPattern) {
     //pattern string as received from the NES UI
     std::string patternStringBCA = "PATTERN test:= A AND (B SEQ C) FROM defaultLogicalA AS A, defaultLogicalB AS B, "
                                    "defaultLogicalC AS C WITHIN [3 MINUTE] INTO PRINT ";

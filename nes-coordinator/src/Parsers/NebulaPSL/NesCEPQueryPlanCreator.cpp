@@ -496,6 +496,10 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 auto subqueryPlanLeft = QueryPlanBuilder::createQueryPlan(subqueryLeftQueryName);
                 rightQueryPlan = addBinaryOperatorToQueryPlan(subqueryOpName, it, subqueryPlanLeft);
             }
+            auto tmpleftqp = leftQueryPlan;
+            leftQueryPlan = rightQueryPlan;
+            rightQueryPlan = tmpleftqp;
+
         } else {
             rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
         }
