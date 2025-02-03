@@ -774,10 +774,10 @@ public:
 
             if constexpr (SeparateKeys == SAME_FILE_KEYS)
             {
+                const auto execTimesSize = execTimesInMs.size();
                 writePagedVectorToFile<SAME_FILE_PAYLOAD>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
-                execTimesInMs.pop_back();
                 clearPagedVector<SAME_FILE_PAYLOAD>(pagedVector, bufferManager, execTimesInMs);
-                execTimesInMs.pop_back();
+                execTimesInMs.resize(execTimesSize);
             }
 
             writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
@@ -789,7 +789,9 @@ public:
         }
 
         createMeasurementsCSV(
-            execTimesInMs, 17, createMeasurementsFileName<SeparateKeys>("SeparationTest", bufferSize, fileBufferSizePercent, keyFieldNames));
+            execTimesInMs,
+            17,
+            createMeasurementsFileName<SeparateKeys>("SeparationTest", bufferSize, fileBufferSizePercent, keyFieldNames));
     }
 };
 
@@ -817,45 +819,77 @@ TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadAndKey)
 {
     runSeparationTests<SAME_FILE_KEYS>();
 }
-/*
-TEST_F(MicroBenchmarksTest, bulkWrite)
+
+TEST_F(MicroBenchmarksTest, DISABLED_bulkWriteTest)
 {
     std::vector<double> execTimesInMs;
-    const std::vector<uint64_t> data_size = {10 * 1024, 100 * 1024, };
+    const std::vector<uint64_t> dataSizes
+        = {8 * 1024,
+           32 * 1024,
+           128 * 1024,
+           512 * 1024,
+           1 * 1024 * 1024,
+           8 * 1024 * 1024,
+           32 * 1024 * 1024,
+           128 * 1024 * 1024,
+           512 * 1024 * 1024,
+           1 * 1024 * 1024 * 1024,
+           4294967296,
+           8589934592};
+    const std::vector<uint64_t> bufferSizes
+        = {1 * 1024, 4 * 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024};
 
-    const auto testSchema = createSchema()->addField("f0", BasicType::UINT64);
-    const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
-    const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
-    auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimesInMs);
-    std::string fileName = "../../../measurements/micro_benchmarks_payload.dat";
-
-    for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
+    for (const auto dataSize : dataSizes)
     {
-        writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
-    }
+        for (const auto bufferSize : bufferSizes)
+        {
+            if (bufferSize > dataSize)
+            {
+                continue;
+            }
 
-    createMeasurementsCSV(execTimesInMs, 1, createMeasurementsFileName<SeparateKeys>("bulkWrite", bufferSize, fileBufferSizePercent, keyFieldNames));
+            const auto numBuffers = dataSize / bufferSize;
+            std::vector<std::string> fileNames = {"../../../measurements/micro_benchmarks_bulk.dat"};
+
+            const auto testSchema = createSchema()->addField("f0", BasicType::UINT64);
+            const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
+            const auto memoryLayout = Util::createMemoryLayout(testSchema, bufferSize);
+
+            for (auto i = 0UL; i < NUM_MEASUREMENTS; ++i)
+            {
+                auto pagedVector = createPagedVector(memoryLayout, bufferManager, numBuffers, execTimesInMs);
+                writePagedVectorToFile<NO_SEPARATION>(pagedVector, memoryLayout, fileNames, bufferSize, execTimesInMs);
+            }
+
+            createMeasurementsCSV(execTimesInMs, 8, createMeasurementsFileName<NO_SEPARATION>("BulkWriteTest", bufferSize, dataSize, {}));
+            execTimesInMs.clear();
+        }
+    }
 }
-*/
+
 INSTANTIATE_TEST_CASE_P(
     Benchmarks,
     MicroBenchmarksTest,
     ::testing::Combine(
-        //::testing::Values(1024, 4096, 8192, 16384, 32768, 65536, 131072, 262144),
-        ::testing::Values(1024, 4096),
-        //::testing::Values(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
-        ::testing::Values(0, 20, 50, 100),
+        ::testing::Values(1024, 4096, 8192, 16384, 32768, 65536, 131072),
+        ::testing::Values(0, 20, 40, 60, 80, 100),
         ::testing::Values(
             std::vector<std::string>{},
             std::vector<std::string>{"f0"},
-            /*std::vector<std::string>{"f5"},
+            std::vector<std::string>{"f5"},
             std::vector<std::string>{"f0", "f1"},
             std::vector<std::string>{"f0", "f5"},
             std::vector<std::string>{"f0", "f1", "f2"},
+            std::vector<std::string>{"f0", "f1", "f5"},
             std::vector<std::string>{"f0", "f4", "f8"},
             std::vector<std::string>{"f0", "f1", "f2", "f3"},
+            std::vector<std::string>{"f0", "f1", "f5", "f6"},
             std::vector<std::string>{"f0", "f3", "f6", "f9"},
-            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},*/
-            std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"})));
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4"},
+            std::vector<std::string>{"f0", "f1", "f3", "f6", "f7"},
+            std::vector<std::string>{"f0", "f2", "f4", "f6", "f8"},
+            std::vector<std::string>{"f0", "f1", "f2", "f3", "f4", "f5"},
+            std::vector<std::string>{"f0", "f1", "f3", "f4", "f7", "f8"},
+            std::vector<std::string>{"f0", "f1", "f3", "f5", "f7", "f9"})));
 
 }
