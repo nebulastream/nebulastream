@@ -16,45 +16,60 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <thread>
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 
-#include <Util/Logger/Logger.hpp>
-
 namespace NES::Sources
 {
 
 namespace asio = boost::asio;
 
-class AsyncTaskExecutor
+template <typename SingletonT>
+class DeferredSharedSingleton
 {
 public:
-    AsyncTaskExecutor(const AsyncTaskExecutor&) = delete;
-    AsyncTaskExecutor& operator=(const AsyncTaskExecutor&) = delete;
-    AsyncTaskExecutor(AsyncTaskExecutor&&) = delete;
-    AsyncTaskExecutor& operator=(AsyncTaskExecutor&&) = delete;
-
-    static AsyncTaskExecutor& getOrCreate()
+    static std::shared_ptr<SingletonT> getOrCreate()
     {
-        static AsyncTaskExecutor executor;
-        return executor;
+        std::lock_guard lock(instantiationMutex);
+        auto strongRef =  weakRef.lock();
+        if (!strongRef)
+        {
+            strongRef = std::make_shared<SingletonT>();
+            weakRef = strongRef;
+        }
+        return strongRef;
     }
 
-    template <typename Callable>
-    void dispatch(Callable&& task)
-    {
-        asio::post(ioc, std::forward<Callable>(task));
-    }
+private:
+    static std::weak_ptr<SingletonT> weakRef;
+    static std::mutex instantiationMutex;
+};
+
+template <typename SingletonT>
+std::weak_ptr<SingletonT> DeferredSharedSingleton<SingletonT>::weakRef;
+
+template <typename SingletonT>
+std::mutex DeferredSharedSingleton<SingletonT>::instantiationMutex;
+
+class IOThread
+{
+public:
+    IOThread();
+    ~IOThread();
+
+    IOThread(const IOThread&) = delete;
+    IOThread(IOThread&&) = delete;
+
+    IOThread& operator=(const IOThread&) = delete;
+    IOThread& operator=(IOThread&&) = delete;
 
     asio::io_context& ioContext() { return ioc; }
 
 private:
-    AsyncTaskExecutor();
-    ~AsyncTaskExecutor();
-
     asio::io_context ioc;
     asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
     std::jthread thread;

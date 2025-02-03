@@ -21,12 +21,12 @@
 namespace NES::Sources
 {
 
-AsyncTaskExecutor::AsyncTaskExecutor() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
+IOThread::IOThread() : workGuard(asio::make_work_guard(ioc)), thread([this] { ioc.run(); })
 {
     NES_DEBUG("AsyncTaskExecutor: started internal I/O thread [{}]", thread.get_id());
 }
 
-AsyncTaskExecutor::~AsyncTaskExecutor()
+IOThread::~IOThread()
 {
     workGuard.reset();
     ioc.stop();
