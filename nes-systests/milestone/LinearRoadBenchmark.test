@@ -1,0 +1,39 @@
+# name: milestone/LinearRoadBenchmark.test
+# description: LinearRoadBenchmark
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+# Query 0
+SELECT 
+    highway, 
+    direction, 
+    position/5280 AS position, 
+    AVG(speed) AS avgSpeed
+FROM lrb
+GROUP BY 
+    highway, 
+    direction, 
+    position/5280
+WINDOW SLIDING(RecordCreationTs(), SIZE 300 SEC, ADVANCE BY 1 SEC)
+HAVING AVG(speed) < 40
+INTO SINK;
+----
+
+# Query 1
+SELECT 
+    vehicle, 
+    highway, 
+    direction, 
+    position/5280 AS position, 
+    COUNT(*) AS cntSpeed
+FROM lrb
+GROUP BY 
+    vehicle, 
+    highway, 
+    direction, 
+    position/5280
+WINDOW SLIDING(RecordCreationTs(), SIZE 30 SEC, ADVANCE BY 1 SEC)
+INTO SINK;
+----
