@@ -1,0 +1,47 @@
+# name: milestone/DEBS.test
+# description: Queries from our DEBS tutorial
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+SourceCSV solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv
+SourceCSV windTurbines INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/WIND_TURBINES_TOPIC.csv
+SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp TESTDATA/large/debs/CONSUMERS_TOPIC.csv
+
+# Query 1 - Filter tuples
+SELECT * FROM consumers WHERE consumedPower >= 400 INTO consumersSink;
+----
+16805, 40836074
+
+# Query 2 - Filter with multiple attributes
+SELECT * FROM consumers WHERE consumedPower >= 400 AND sectorId = 1 INTO CHECKSUM;
+----
+3361, 8161165
+
+# Query 3 - Filter with complex expression
+SELECT * FROM consumers WHERE consumedPower >= 1 AND consumedPower < (60 + 1) INTO CHECKSUM;
+----
+47384, 122395055
+
+# Query 4 - Filter with complex expression
+SELECT consumedPower / 1000 AS consumedPower FROM consumers INTO CHECKSUM;
+----
+346183, 103934822
+
+
+# Query 7 - Window aggregations with tumbling windows
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM solarPanels
+GROUP BY groupId
+WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+INTO CHECKSUM;
+----
+676, 1412710
+
+# Query 8 - Window aggregations with sliding windows
+SELECT groupId, SUM(producedPower) AS producedPower
+FROM solarPanels
+GROUP BY groupId
+WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+INTO CHECKSUM;
+----
+4056, 8466532
