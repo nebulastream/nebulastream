@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.6.207](https://github.com/nebulastream/nebulastream/tree/v0.6.207) (2025-02-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.206...v0.6.207)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix NestedOR in PatternParsingServiceTest [\#5177](https://github.com/nebulastream/nebulastream/issues/5177)
+- \[BUG\] Mixed Pattern Test in PAtternParsingService Test fails due to different order of oeprators in the query plan [\#5170](https://github.com/nebulastream/nebulastream/issues/5170)
+
+## [v0.6.206](https://github.com/nebulastream/nebulastream/tree/v0.6.206) (2024-12-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.205...v0.6.206)
+
 ## [v0.6.205](https://github.com/nebulastream/nebulastream/tree/v0.6.205) (2024-12-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.204...v0.6.205)
