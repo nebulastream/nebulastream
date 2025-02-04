@@ -3,7 +3,7 @@
 # groups: [milestone, benchmark]
 
 # Source definitions
-# MiSSING
+TODO: add missing sources from IoTropolis.tar.gz
 
 # Query 1 - Filter tuples
 SELECT * FROM consumers WHERE consumedPower >= 400 INTO SINK;

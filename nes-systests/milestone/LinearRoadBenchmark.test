@@ -1,39 +1,24 @@
 # name: milestone/LinearRoadBenchmark.test
 # description: LinearRoadBenchmark
-# groups: [milestone, benchmark]
+# groups: [milestone, benchmark, large]
 
 # Source definitions
-# MiSSING
+TODO: check if this is correct from https://www.cs.brandeis.edu/~linearroad/linear-road.pdf
+Source lrb UINT64 RecordCreationTs UINT64 vehicle UINT64 speed UINT64 highway UINT64 direction UINT64 position TESTDATA/large/linear_road_benchmark.csv
 
 # Query 0
-SELECT 
-    highway, 
-    direction, 
-    position/5280 AS position, 
-    AVG(speed) AS avgSpeed
+SELECT highway, direction, position/5280 AS position, AVG(speed) AS avgSpeed
 FROM lrb
-GROUP BY 
-    highway, 
-    direction, 
-    position/5280
-WINDOW SLIDING(RecordCreationTs(), SIZE 300 SEC, ADVANCE BY 1 SEC)
+GROUP BY (highway, direction, position/5280) TODO: not sure, if we support this... better would be to use a subquery here
+WINDOW SLIDING(timestamp, SIZE 300 SEC, ADVANCE BY 1 SEC)
 HAVING AVG(speed) < 40
-INTO SINK;
+INTO CHECKSUM;
 ----
 
 # Query 1
-SELECT 
-    vehicle, 
-    highway, 
-    direction, 
-    position/5280 AS position, 
-    COUNT(*) AS cntSpeed
+SELECT vehicle, highway, direction, position/5280 AS position, COUNT(*) AS cntSpeed
 FROM lrb
-GROUP BY 
-    vehicle, 
-    highway, 
-    direction, 
-    position/5280
-WINDOW SLIDING(RecordCreationTs(), SIZE 30 SEC, ADVANCE BY 1 SEC)
-INTO SINK;
+GROUP BY (vehicle, highway, direction, position/5280) TODO: not sure, if we support this... better would be to use a subquery here
+WINDOW SLIDING(timestamp, SIZE 30 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
 ----

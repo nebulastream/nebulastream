@@ -1,10 +1,12 @@
 # name: milestone/YahooStreamingBenchmark.test
 # description: YahooStreamingBenchmark queries
-# groups: [milestone, benchmark]
+# groups: [milestone, benchmark, large]
 
 # Source definitions
-# MiSSING
+TODO: add source from https://github.com/yahoo/streaming-benchmarks and https://ieeexplore.ieee.org/document/7530084
 
+
+# TODO add here a query description
 SELECT 
     campaign_id, 
     SUM(user_id) AS sum_user_id
@@ -12,5 +14,5 @@ FROM ysb
 WHERE event_type < 1
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO SINK;
+INTO CHUNKSUM;
 ----
