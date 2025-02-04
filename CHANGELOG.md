@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.208](https://github.com/nebulastream/nebulastream/tree/v0.6.208) (2025-02-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.207...v0.6.208)
+
+**Implemented enhancements:**
+
+- \[TASK\] Differentate Sliding Window Join and Interval Join for NESPSL Parser [\#5167](https://github.com/nebulastream/nebulastream/issues/5167)
+
 ## [v0.6.207](https://github.com/nebulastream/nebulastream/tree/v0.6.207) (2025-02-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.206...v0.6.207)
