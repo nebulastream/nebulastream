@@ -49,7 +49,8 @@ class ReorderTupleBuffersOperatorHandler : public virtual OperatorHandler {
     folly::Synchronized<std::map<uint64_t, TupleBuffer>> bufferStorage;
 
     // sequence number of last written tuple buffer
-    folly::Synchronized<uint64_t> lastWritten;
+    std::atomic<uint64_t> lastWritten;
+    std::mutex lastWrittenMtx;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_REORDERTUPLEBUFFERSOPERATORHANDLER_HPP_

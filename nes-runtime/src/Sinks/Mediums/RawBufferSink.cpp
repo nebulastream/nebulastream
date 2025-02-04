@@ -69,7 +69,7 @@ void RawBufferSink::setup() {
 
     // Open the file stream
     if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::out);
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
     isOpen = outputFile.is_open() && outputFile.good();
     if (!isOpen) {
@@ -121,17 +121,20 @@ bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
 
     auto numberOfBuffers = inputBuffer.getWatermark();
 
-    NES_DEBUG("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
-    // 1. write buffer size
-    auto size = inputBuffer.getBufferSize();
-    outputFile.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    // 2. write number of tuples in buffer
-    auto numberOfTuples = inputBuffer.getNumberOfTuples();
-    outputFile.write(reinterpret_cast<char*>((&numberOfTuples)), sizeof(uint64_t));
-    // 3. write buffer content
-    outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), size);
+    uint64_t size = inputBuffer.getBufferSize();
+    uint64_t numberOfTuples = inputBuffer.getNumberOfTuples();
+
+    // Create a temporary buffer to batch writes
+    std::vector<char> buffer(sizeof(uint64_t) * 2 + size);
+
+    // NES_ERROR("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
+    std::memcpy(buffer.data(), &size, sizeof(uint64_t));
+    std::memcpy(buffer.data() + sizeof(uint64_t), &numberOfTuples, sizeof(uint64_t));
+    std::memcpy(buffer.data() + 2 * sizeof(uint64_t), inputBuffer.getBuffer(), size);
+    outputFile.write(buffer.data(), buffer.size());
+
     numberOfWrittenBuffers++;
-    outputFile.flush();
+    // outputFile.flush();
 
     if (numberOfWrittenBuffers == numberOfBuffers) {
         shutdown();

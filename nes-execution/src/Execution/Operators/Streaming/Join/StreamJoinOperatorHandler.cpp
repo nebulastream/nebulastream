@@ -160,8 +160,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortio
     size_t endIdx = std::min(startIdx + chunkSize, totalSize);
 
     std::vector<Runtime::TupleBuffer> portion;
-    if (startIdx < totalSize) {
-        portion.assign(stateToTransfer.begin() + startIdx, stateToTransfer.begin() + endIdx);
+    for (size_t i = id; i < totalSize; i += numberOfThreads) {
+        portion.push_back(stateToTransfer[i]);
     }
 
     return portion;
