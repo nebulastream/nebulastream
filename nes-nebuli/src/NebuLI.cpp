@@ -113,7 +113,7 @@ NES::DataTypePtr stringToFieldType(const std::string& fieldNodeType)
         return NES::DataTypeFactory::createChar();
     }
 
-    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType << " is not a proper Schema Field Type.");
+    throw NES::CannotInferStamp("Found Invalid Logical Source Configuration. {} fieldNodeType is not a proper Schema Field Type.");
 }
 
 template <>
