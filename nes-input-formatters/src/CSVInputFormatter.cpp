@@ -454,12 +454,12 @@ void CSVInputFormatter::parseTupleBufferRaw(
     progressTracker.resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>(), 0, 0, 0);
     const auto sequenceNumberOfBuffer = rawTB.getSequenceNumber().getRawValue();
     constexpr auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
-    size_t offsetOfFirstTupleDelimiter = 0;
-    auto offsetOfLastTupleDelimiter = numBytesInRawTB;
+    uint32_t offsetOfFirstTupleDelimiter = 0;
+    uint32_t offsetOfLastTupleDelimiter = numBytesInRawTB;
     offsetOfFirstTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter();
     /// If the buffer contains a tuple delimiter, find the last tuple delimiter
     /// (0 is a valid index for a first tuple delimiter)
-    if (offsetOfFirstTupleDelimiter != maxSequenceNumber)
+    if (static_cast<uint64_t>(offsetOfFirstTupleDelimiter) != maxSequenceNumber)
     {
         offsetOfLastTupleDelimiter = progressTracker.getOffsetOfLastTupleDelimiter();
     }
@@ -468,7 +468,6 @@ void CSVInputFormatter::parseTupleBufferRaw(
         offsetOfFirstTupleDelimiter = 0;
     }
     const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0;
-    const auto numUses = static_cast<uint8_t>(1 + hasTupleDelimiter);
 
     if (hasTupleDelimiter)
     {
@@ -478,8 +477,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
                 .buffer = rawTB,
                 .sizeOfBufferInBytes = numBytesInRawTB,
                 .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
-                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
-                .uses = numUses},
+                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter},
             sequenceNumberOfBuffer);
         /// Skip, if there is only a single buffer, with a single tuple delimiter, since there are no possible tuples to parse
         if (buffersToFormat.size() == 1 and (buffersToFormat[0].offsetOfFirstTupleDelimiter == buffersToFormat[0].offsetOfLastTupleDelimiter))
@@ -526,8 +524,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
                 .buffer = rawTB,
                 .sizeOfBufferInBytes = numBytesInRawTB,
                 .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
-                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
-                .uses = numUses},
+                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter},
             sequenceNumberOfBuffer);
         /// A buffer without a tuple delimiter can only find a spanning tuple, if it can reach a buffer with a spanning tuple to the left and right
         /// [buffer with tuple delimiter (TD)][buffer without TD][buffer with TD] <-- minimal spanning tuple for a buffer without TD

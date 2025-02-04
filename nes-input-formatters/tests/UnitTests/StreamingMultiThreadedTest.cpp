@@ -134,7 +134,6 @@ public:
                 // If the sequence number is not in range yet, busy wait until it is.
                 while (not sequenceShredder.isSequenceNumberInRange(threadLocalSequenceNumber)) {}
 
-                const auto numUses = static_cast<uint8_t>(1 + static_cast<uint8_t>(tupleDelimiter));
                 // auto testBuffer = testBufferManager->getBufferBlocking(); // Todo: is this call thread safe? otherwise lock or have thread-local bufferpools!
                 // testBuffer.setSequenceNumber(NES::SequenceNumber(threadLocalSequenceNumber));
                 // Todo: abuse sizeOfBufferInBytes as SequenceNumber?
@@ -143,8 +142,7 @@ public:
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = threadLocalSequenceNumber,
                     .offsetOfFirstTupleDelimiter = 0,
-                    .offsetOfLastTupleDelimiter = 0,
-                    .uses = numUses};
+                    .offsetOfLastTupleDelimiter = 0};
                 if (tupleDelimiter) {
                     // Todo: pass dummy buffer to sequence shredder
                     const auto stagedBuffers = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;

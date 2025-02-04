@@ -132,9 +132,9 @@ public:
     {
         NES::Memory::TupleBuffer buffer;
         size_t sizeOfBufferInBytes;
-        size_t offsetOfFirstTupleDelimiter;
-        size_t offsetOfLastTupleDelimiter;
-        uint8_t uses;
+        uint32_t offsetOfFirstTupleDelimiter;
+        uint32_t offsetOfLastTupleDelimiter;
+        int uses = 1;
     };
 
     struct StagedBufferResult //Todo: rename
@@ -184,7 +184,7 @@ public:
         //      - first initialization: tupDel, with no data (implicit tupDel of first buffer)
         //      - other initializations: noTupDel, no data (connects next buffer to prior buffer, without interfering)
         tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0, 1};
+        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
     };
 
     explicit SequenceShredder(const size_t initialTail, const size_t sizeOfTupleDelimiter)
@@ -200,7 +200,7 @@ public:
         this->seenAndUsedBitmaps.shrink_to_fit();
 
         tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0, 1};
+        stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
     }
 
     [[nodiscard]] size_t getTail() const { return this->tail; }
@@ -247,15 +247,14 @@ public:
                 const auto numberOfNotSeenSequenceNumbersInBitmap = std::countl_zero(seenAndUsedBitmap | tupleDelimiterBitmap);
                 const auto offsetToNextLargerSequenceNumber = SIZE_OF_BITMAP_IN_BITS - numberOfNotSeenSequenceNumbersInBitmap;
                 const auto nextLargestSequenceNumber = firstSequenceNumberOfBitmap + offsetToNextLargerSequenceNumber;
-                const auto dummyStagedBuffer = StagedBuffer{
+                auto dummyStagedBuffer = StagedBuffer{
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = 0,
                     .offsetOfFirstTupleDelimiter = 0,
-                    .offsetOfLastTupleDelimiter = 0,
-                    .uses = 1};
+                    .offsetOfLastTupleDelimiter = 0};
                 readWriteMutex.unlock();
                 // Todo: test correctness, when next largest sequence number is in next bitmap
-                return processSequenceNumber<true>(dummyStagedBuffer, nextLargestSequenceNumber);
+                return processSequenceNumber<true>(std::move(dummyStagedBuffer), nextLargestSequenceNumber);
             }
         }
         readWriteMutex.unlock();
@@ -294,6 +293,7 @@ public:
         /// Set the bit in the correct bitmap, depending on whether it contains a tuple delimiter or not.
         if constexpr (HasTupleDelimiter)
         {
+            ++stagedBuffers.at(sequenceNumberBufferPosition).uses;
             tupleDelimiterBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
         }
         else
@@ -698,13 +698,28 @@ private:
         std::vector<StagedBuffer> spanningTupleBuffers{};
         const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
         const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot * SIZE_OF_BITMAP_IN_BITS) - 1;
+
+        // const auto firstIndex = spanningTuple.spanStart & stagedBufferSizeModulo;
+        // const auto newUses = --stagedBuffers[firstIndex].uses;
+        // auto firstBuffer = (newUses == 0) ? std::move(stagedBuffers[firstIndex]) : stagedBuffers[firstIndex];
+        // spanningTupleBuffers.emplace_back(std::move(firstBuffer));
+        // for (auto spanningTupleIndex = spanningTuple.spanStart + 1; spanningTupleIndex < spanningTuple.spanEnd; ++spanningTupleIndex)
+        // {
+        //     const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+        //     spanningTupleBuffers.emplace_back(std::move(stagedBuffers[adjustedSpanningTupleIndex]));
+        // }
+        // const auto lastIndex = spanningTuple.spanEnd & stagedBufferSizeModulo;
+        // const auto newUsesLastIndex = --stagedBuffers[lastIndex].uses;
+        // auto lastBuffer =  (newUsesLastIndex == 0) ? std::move(stagedBuffers[lastIndex]) : stagedBuffers[lastIndex];;
+        // spanningTupleBuffers.emplace_back(std::move(lastBuffer));
         for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
         {
             const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-            auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
+            auto currentBuffer = std::move(stagedBuffers[adjustedSpanningTupleIndex]);
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            --currentBuffer.uses;
-            auto returnBuffer = (currentBuffer.uses == 0) ? std::move(currentBuffer) : currentBuffer;
+            std::atomic_ref<int> atomicUses(currentBuffer.uses);
+            const auto newUses = --atomicUses;
+            auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
             spanningTupleBuffers.emplace_back(std::move(returnBuffer));
         }
 
@@ -761,7 +776,8 @@ private:
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
             //Todo: two threads may concurrently process a spanning tuple that uses the same buffer (e.g., one spanning tuple ends in it, the other starts in it)
             // -> both threads may concurrently try to decrease the use count
-            currentBuffer.uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
+            std::atomic_ref<int> atomicUses(currentBuffer.uses);
+            atomicUses -= returningMoreThanOnlyBufferOfSequenceNumber;
             auto returnBuffer = (currentBuffer.uses == 0) ? std::move(currentBuffer) : currentBuffer;
             returnBuffers.emplace_back(std::move(returnBuffer));
         }
