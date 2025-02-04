@@ -65,6 +65,8 @@ class OperatorHandler : public virtual Reconfigurable, public virtual Migratable
 
     std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
 
+    virtual std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t);
+
     /**
      * @brief Merges migrated slices
      * @param buffer

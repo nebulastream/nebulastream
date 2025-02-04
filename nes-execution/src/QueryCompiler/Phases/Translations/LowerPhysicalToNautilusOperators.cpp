@@ -66,6 +66,8 @@
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
+#include <Execution/Operators/ReorderTupleBuffersOperator.hpp>
+#include <Execution/Operators/ReorderTupleBuffersOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -102,6 +104,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalReorderTupleBuffersOperator.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -183,6 +186,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto filter = lowerFilter(pipeline, operatorNode);
         parentOperator->setChild(filter);
         return filter;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalReorderTupleBuffersOperator>()) {
+        auto reorder = lowerReorder(pipeline, operatorNode, operatorHandlers);
+        pipeline.setRootOperator(reorder);
+        return reorder;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
         auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(limit);
@@ -1065,6 +1072,16 @@ LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Exec
     } else {
         NES_NOT_IMPLEMENTED();
     }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator>
+LowerPhysicalToNautilusOperators::lowerReorder(Runtime::Execution::PhysicalOperatorPipeline&,
+                                               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto reorderOperator = physicalOperator->as<PhysicalOperators::PhysicalReorderTupleBuffersOperator>();
+    const auto handler = std::make_shared<Runtime::Execution::Operators::ReorderTupleBuffersOperatorHandler>();
+    operatorHandlers.push_back(handler);
+    return std::make_shared<Runtime::Execution::Operators::ReorderTupleBuffersOperator>(operatorHandlers.size() - 1);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>

@@ -28,7 +28,9 @@ namespace NES::Runtime::Execution::Operators {
 void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate();
+    auto* nljHandler = dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler);
+    NES_ASSERT2_FMT(nljHandler != nullptr, "dynamic_cast to NLJOperatorHandlerSlicing failed!");
+    return nljHandler->getCurrentSliceOrCreate();
 }
 
 void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {

@@ -17,6 +17,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -177,7 +178,9 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
 
     candidateTopologyNode->occupySlots(1);
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
-
+    if (logicalOperator->as_if<ReorderTupleBuffersLogicalOperator>()) {
+        logicalOperator->addProperty(PINNED_WORKER_ID, WorkerId(1));
+    }
     auto isOperatorAPinnedDownStreamOperator =
         std::find_if(pinnedDownStreamOperators.begin(),
                      pinnedDownStreamOperators.end(),

@@ -20,6 +20,12 @@ std::vector<Runtime::TupleBuffer> OperatorHandler::serializeOperatorHandlerForMi
     NES_WARNING("No state inside abstract operator handler");
     return {};
 }
+
+std::vector<Runtime::TupleBuffer> OperatorHandler::getSerializedPortion(uint64_t) {
+    NES_WARNING("No state inside abstract operator handler");
+    return {};
+}
+
 std::vector<Runtime::TupleBuffer> OperatorHandler::getStateToMigrate(uint64_t, uint64_t) {
     NES_WARNING("No state inside abstract operator handler");
     return {};

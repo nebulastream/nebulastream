@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -167,6 +168,8 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<Statistic::LogicalStatisticWindowOperator>()) {
         // Serialize map udf operator
         serializeStatisticWindowOperator(*operatorNode->as<Statistic::LogicalStatisticWindowOperator>(), serializedOperator);
+    } else if (operatorNode->instanceOf<ReorderTupleBuffersLogicalOperator>()) {
+
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
     }
@@ -335,6 +338,8 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         SerializableOperator_StatisticWindowDetails statisticWindowDetails;
         details.UnpackTo(&statisticWindowDetails);
         operatorNode = deserializeStatisticWindowOperator(statisticWindowDetails);
+    } else if (operatorNode == nullptr) {
+        operatorNode = LogicalOperatorFactory::createReorderTuplesOperator();
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }

@@ -36,6 +36,7 @@
 #include <Operators/Operator.hpp>
 #include <Execution/Operators/ReorderTupleBuffersOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
@@ -170,12 +171,16 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                       .sink(nullOutputSinkDescriptor, WorkerId(2));
             auto queryPlan = migrationQuery.getQueryPlan();
             auto join = queryPlan->getOperatorByType<LogicalJoinOperator>()[0];
-            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file.bin";
+            auto reorderBuffers = LogicalOperatorFactory::createReorderTuplesOperator();
+            reorderBuffers->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
+//            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file.bin";
+            std::string recreationFileName = "recreation_file.bin";
             auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(
                 FileSinkDescriptor::create(recreationFileName, "MIGRATION_FORMAT", "OVERWRITE"));
+            reorderBuffers->addParent(migrateSinkOperator);
             migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
             migrateSinkOperator->addProperty("MIGRATION_SINK", true);
-            join->addParent(migrateSinkOperator);
+            join->addParent(reorderBuffers);
             join->addProperty("MIGRATION_FLAG", true);
             queryPlan->addRootOperator(migrateSinkOperator);
 
@@ -204,7 +209,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("POST", "/place-recreation-join", placeRecreationJoin) {
         try {
             auto nullOutputSinkDescriptor = NullOutputSinkDescriptor::create();
-            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file";
+//            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file";
+            std::string recreationFileName = "recreation_file.bin";
             auto query = Query::from("source_1_cord")
                              .joinWith(Query::from("source_2_cord"))
                              .where(Attribute("value1") == Attribute("value2"))

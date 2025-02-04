@@ -24,8 +24,11 @@ ReorderTupleBuffersOperatorHandler::ReorderTupleBuffersOperatorHandler() {
 void ReorderTupleBuffersOperatorHandler::processBuffer(PipelineExecutionContext* ctx,
                                                        WorkerContext& wc,
                                                        TupleBuffer& inputBuffer) {
+
+    NES_DEBUG("got new buffer {}", inputBuffer.getSequenceNumber());
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+    bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
 
@@ -37,22 +40,37 @@ void ReorderTupleBuffersOperatorHandler::processBuffer(PipelineExecutionContext*
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
 
-    bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
-
     // TODO: #5033 check this logic
     // check if top value in the queue has changed after adding new sequence number
     if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
         // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-        while ((lastWritten + 1) <= currentSeqNumberAfterAdding) {
-            auto bufferStorageLocked = *bufferStorage.rlock();
-            // get tuple buffer with next sequence number after lastWritten and update lastWritten
-            auto nextTupleBufferToBeEmitted = bufferStorageLocked[++lastWritten];
-            // emit next tuple buffer
-            // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
-            ctx->emitBuffer(nextTupleBufferToBeEmitted, wc);
-            // delete emitted tuple buffer from storage
-            bufferStorage.wlock()->erase(lastWritten);
+        auto wLock = lastWritten.tryWLock();
+        if (wLock) {
+            while ((*wLock + 1) <= seqQueue.getCurrentValue()) {
+                auto bufferStorageLocked = *bufferStorage.rlock();
+                // get tuple buffer with next sequence number after lastWritten and update lastWritten
+                auto nextTupleBufferToBeEmitted = bufferStorageLocked[++*wLock];
+                // emit next tuple buffer
+                // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
+                ctx->emitBuffer(nextTupleBufferToBeEmitted, wc);
+                // delete emitted tuple buffer from storage
+                bufferStorage.wlock()->erase(*wLock);
+            }
         }
     }
+
+//    if (inputBuffer.getSequenceNumber() == inputBuffer.getWatermark()) {
+//        auto wLock = lastWritten.wlock();
+//        while ((*wLock + 1) <= seqQueue.getCurrentValue()) {
+//            auto bufferStorageLocked = *bufferStorage.rlock();
+//            // get tuple buffer with next sequence number after lastWritten and update lastWritten
+//            auto nextTupleBufferToBeEmitted = bufferStorageLocked[++*wLock];
+//            // emit next tuple buffer
+//            // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
+//            ctx->emitBuffer(nextTupleBufferToBeEmitted, wc);
+//            // delete emitted tuple buffer from storage
+//            bufferStorage.wlock()->erase(*wLock);
+//        }
+//    }
 };
 }// namespace NES::Runtime::Execution::Operators

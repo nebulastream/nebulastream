@@ -27,6 +27,7 @@ add_source_files(nes-operators
         LogicalBatchJoinDescriptor.cpp
         LogicalIntervalJoinDescriptor.cpp
         LogicalIntervalJoinOperator.cpp
+        ReorderTupleBuffersLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)

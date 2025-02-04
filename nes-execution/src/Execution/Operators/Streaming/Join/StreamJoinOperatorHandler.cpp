@@ -49,7 +49,7 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     }
 
     auto filePath = recreationFilePath.value();
-
+    NES_ERROR("waiting for recreation file");
     while (!std::filesystem::exists(filePath)) {
         // NES_DEBUG("File {} does not exist yet", filePath);
         std::this_thread::sleep_for(std::chrono::microseconds(500));
@@ -142,8 +142,29 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
         buffer.setWatermark(mergedBuffers.size());
     }
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    stateToTransfer = mergedBuffers;
     NES_ERROR("Finished serializing at {}", endTime);
     return mergedBuffers;
+}
+
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortion(uint64_t id) {
+    if (asked[id]) {
+        return {};
+    }
+    asked[id] = true;
+    auto numberOfThreads = 4;
+    size_t totalSize = stateToTransfer.size();
+    size_t chunkSize = (totalSize + numberOfThreads - 1) / numberOfThreads;
+
+    size_t startIdx = id * chunkSize;
+    size_t endIdx = std::min(startIdx + chunkSize, totalSize);
+
+    std::vector<Runtime::TupleBuffer> portion;
+    if (startIdx < totalSize) {
+        portion.assign(stateToTransfer.begin() + startIdx, stateToTransfer.begin() + endIdx);
+    }
+
+    return portion;
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigrate() {

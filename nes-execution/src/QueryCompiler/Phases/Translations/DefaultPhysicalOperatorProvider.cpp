@@ -43,6 +43,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/IntervalJoin/PhysicalIntervalJoinBuildOperator.hpp>
@@ -80,6 +81,8 @@
 #include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalReorderTupleBuffersOperator.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -178,6 +181,15 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
         lowerWindowOperator(operatorNode);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
         lowerWatermarkAssignmentOperator(operatorNode);
+    } else if (operatorNode->instanceOf<ReorderTupleBuffersLogicalOperator>()) {
+        auto logicalReorderTupleBuffers = operatorNode->as<ReorderTupleBuffersLogicalOperator>();
+        auto physicalReorderTupleBuffers = PhysicalOperators::PhysicalReorderTupleBuffersOperator::create(
+            operatorNode->getStatisticId(),
+            logicalReorderTupleBuffers->getInputSchema(),
+            logicalReorderTupleBuffers->getOutputSchema());
+        physicalReorderTupleBuffers->setOutputSchema(logicalReorderTupleBuffers->getOutputSchema());
+        physicalReorderTupleBuffers->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
+        operatorNode->replace(physicalReorderTupleBuffers);
     } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         lowerMapOperator(operatorNode);
     } else if (operatorNode->instanceOf<InferModel::LogicalInferModelOperator>()) {

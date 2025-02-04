@@ -26,6 +26,7 @@ class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
 
   public:
     explicit LogicalUnaryOperator(OperatorId id);
+    LogicalUnaryOperator();
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

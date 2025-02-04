@@ -223,13 +223,22 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started
             if (event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>() && isMigrationPipeline) {
                 // thread took the work and other threads should not do migration again => reset migration flag
-                isMigrationPipeline = false;
+                //isMigrationPipeline = false;
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    // TODO [#5149]: add start and end timestamps based on watermarks [https://github.com/nebulastream/nebulastream/issues/5149]
-                    auto dataToMigrate = operatorHandler->serializeOperatorHandlerForMigration();
+                    serializeMtx.lock();
+                    if (!serialized) {
+                        operatorHandler->serializeOperatorHandlerForMigration();
+                        serialized = true;
+                    }
+                    serializeMtx.unlock();
+                    auto dataToMigrate = operatorHandler->getSerializedPortion(context.getId().getRawValue() % 4);
+                    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    NES_ERROR("context {} started sending buffers from pipeline at", context.getId(), startTime);
                     for (auto& buffer : dataToMigrate) {
                         pipelineContext->migrateBuffer(buffer, context);
                     }
+                    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    NES_ERROR("context {} finished sending buffers from pipeline", context.getId(), endTime);
                 }
             }
 

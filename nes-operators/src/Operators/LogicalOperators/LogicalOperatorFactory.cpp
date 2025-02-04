@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
@@ -49,6 +50,11 @@ LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr& sinkDescript
         sinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, workerId);
     }
     return sinkOperator;
+}
+
+LogicalUnaryOperatorPtr
+LogicalOperatorFactory::createReorderTuplesOperator(OperatorId id) {
+    return std::make_shared<ReorderTupleBuffersLogicalOperator>(id);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, OperatorId id) {

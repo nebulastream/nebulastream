@@ -29,6 +29,7 @@ add_source_files(nes-execution
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
+        PhysicalReorderTupleBuffersOperator.cpp
 )
 
 add_subdirectory(Windowing)

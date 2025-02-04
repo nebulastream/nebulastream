@@ -32,6 +32,8 @@ class LogicalOperatorFactory {
         return std::shared_ptr<Operator>(std::forward<Arguments>(args)...);
     }
 
+    static LogicalUnaryOperatorPtr createReorderTuplesOperator(OperatorId id = getNextOperatorId());
+
     /**
      * @brief Create a new logical filter operator.
      * @param predicate: the filter predicate is represented as an expression node, which has to return true.

@@ -81,6 +81,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      */
     std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
 
+    std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t id) override;
+
     /**
      * @brief Retrieve the state as a vector of tuple buffers
      * Format of buffers looks like:
@@ -376,6 +378,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     uint64_t currentSliceId = 0;
     bool setForReuse = false;
     SharedJoinApproach approach = SharedJoinApproach::UNSHARED;
+    std::vector<TupleBuffer> stateToTransfer{};
+    std::vector<bool> asked{false, false, false, false};
 };
 
 /**

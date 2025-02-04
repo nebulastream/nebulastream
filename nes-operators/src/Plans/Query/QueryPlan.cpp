@@ -251,8 +251,12 @@ QueryPlanPtr QueryPlan::copy() {
                 auto copyOfOperator = operatorIdToOperatorMap[operatorNode->getId()];
                 copyOfOperator->addParent(parentOperator);
             } else {
-                NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
-                return nullptr;
+                auto parentCopy = parentOperator->copy();
+                parentCopy->addParent(operatorIdToOperatorMap[parentNode->as<Operator>()->getParents()[0]->as<Operator>()->getId()]);
+                operatorIdToOperatorMap[parentOperatorId] = parentCopy;
+                auto copyOfOperator = operatorIdToOperatorMap[operatorNode->getId()];
+                copyOfOperator->addParent(parentCopy);
+                // NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
             }
         }
 

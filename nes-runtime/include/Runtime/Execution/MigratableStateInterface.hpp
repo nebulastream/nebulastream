@@ -23,6 +23,7 @@ namespace NES::Runtime::Execution {
  * @brief Interface that defines operations to migrate an operator state
  */
 class MigratableStateInterface {
+  public:
     /**
      * @brief Gets the state
      * @param startTS
@@ -33,6 +34,7 @@ class MigratableStateInterface {
 
     virtual std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() = 0;
 
+//    virtual std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t) = 0;
     /**
      * @brief Merges migrated slices
      * @param buffers
