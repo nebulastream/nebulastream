@@ -20,6 +20,9 @@
 
 namespace NES
 {
+/// The QueryEngine is fundamentally multithreaded, and events occur asynchronously in its worker threads.
+/// This has the unfortunate side effect of potentially reporting events out of order.
+/// For example, the thread reporting the `Stopped` QueryStatus might overtake the thread reporting the `Running` QueryStatus.
 struct AbstractQueryStatusListener
 {
     virtual ~AbstractQueryStatusListener() noexcept = default;
