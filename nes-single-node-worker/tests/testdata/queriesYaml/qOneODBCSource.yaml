@@ -1,0 +1,59 @@
+query: |
+  SELECT * FROM odbc_source INTO csv_sink
+sink:
+  name: csv_sink
+  type: Print
+  config:
+    inputFormat: CSV
+logical:
+  - name: odbc_source
+    schema:
+      - name: mlife_FallNr
+        type: TEXT
+      - name: timestamp
+        type: UINT64
+      - name: value
+        type: FLOAT32
+physical:
+  - logical: odbc_source
+    parserConfig:
+      type: CSV
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+    sourceConfig:
+      type: ODBC
+      driver: ODBC Driver 18 for SQL Server
+      host: localhost
+      database: master
+      username: sa
+      password: yourStrong(!)Password
+      query: |
+        DECLARE @columns NVARCHAR(MAX);
+        DECLARE @select_columns NVARCHAR(MAX);
+        DECLARE @query NVARCHAR(MAX);
+        
+        SELECT @columns = STRING_AGG(QUOTENAME(Bez), ', ') WITHIN GROUP (ORDER BY Bez)
+        FROM (
+          SELECT DISTINCT Bez
+          FROM MLife
+        ) AS B_values;
+        
+        SELECT @select_columns = STRING_AGG('MAX(' + QUOTENAME(Bez) + ') AS ' + QUOTENAME(Bez), ', ') WITHIN GROUP (ORDER BY Bez)
+        FROM (
+          SELECT DISTINCT Bez
+          FROM MLife
+        ) AS B_values;
+        
+        SET @query = '
+          SELECT mlife_FallNr, DATEDIFF_BIG(MILLISECOND, ''1970-01-01 00:00:00'', Zeitpunkt) AS timestamp, ' + @select_columns + '
+          FROM (
+            SELECT mlife_FallNr, Zeitpunkt, Bez, Wert_float
+            FROM MLife
+          ) AS source
+          PIVOT (
+            MAX(Wert_float) FOR Bez IN (' + @columns + ')
+          ) AS pivoted
+          GROUP BY mlife_FallNr, Zeitpunkt
+        ';
+        
+        EXEC sp_executesql @query;

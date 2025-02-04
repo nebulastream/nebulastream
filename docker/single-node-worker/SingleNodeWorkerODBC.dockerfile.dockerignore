@@ -1,0 +1,8 @@
+build/
+cmake-build*/
+docker/
+docs/
+config/
+.github/
+scripts/
+vcpkg/

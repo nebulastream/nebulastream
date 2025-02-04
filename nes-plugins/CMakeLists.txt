@@ -25,3 +25,8 @@ if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   activate_optional_plugin("Sinks/ChecksumSink" ON)
 endif()
+
+option(ENABLE_ODBC_SOURCE "Enables the ODBC Source" OFF)
+if (ENABLE_ODBC_SOURCE)
+    activate_optional_plugin("Sources/ODBCSource" ON)
+endif ()
