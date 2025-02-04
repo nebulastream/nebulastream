@@ -13,3 +13,4 @@
 add_nes_input_formatter_test(input-formatter-test "SpecificSequenceTest.cpp")
 add_definitions(-DINPUT_FORMATTER_TEST_DATA="${CMAKE_CURRENT_LIST_DIR}/testdata")
 add_nes_input_formatter_test(input-formatter-test-randomized "SmallRandomizedSequenceTest.cpp")
+add_nes_input_formatter_test(input-formatter-streaming-multi-threaded-test "StreamingMultiThreadedTest.cpp")

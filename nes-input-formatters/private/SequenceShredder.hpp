@@ -159,10 +159,10 @@ private:
     /// The spanning tuple(s) tell the thread that called 'processSequenceNumber()', the range of buffers it needs to format.
     struct SpanningTuple
     {
-        SequenceNumberType spanStart;
-        SequenceNumberType spanEnd;
-        bool isStartValid;
-        bool isEndValid;
+        SequenceNumberType spanStart = 0;
+        SequenceNumberType spanEnd = 0;
+        bool isStartValid = false;
+        bool isEndValid = false;
     };
 public:
     explicit SequenceShredder(const size_t sizeOfTupleDelimiter)
@@ -431,8 +431,12 @@ public:
         }
         else
         {
+            if (not(spanningTuple.isStartValid and spanningTuple.isEndValid))
+            {
+                return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = 0, .stagedBuffers = {}};
+            }
             return checkResultsWithoutTupleDelimiter(
-                spanningTuple, sequenceNumber, sequenceNumberBufferPosition, numberOfBitmapsModuloSnapshot);
+                spanningTuple, sequenceNumberBufferPosition, numberOfBitmapsModuloSnapshot);
         }
     }
 
@@ -678,7 +682,6 @@ private:
     /// Both, the start and the end of the spanning tuple must be valid.
     StagedBufferResult checkResultsWithoutTupleDelimiter(
         SpanningTuple spanningTuple,
-        const SequenceNumberType sequenceNumber,
         const size_t sequenceNumberBufferPosition,
         const SequenceNumberType numberOfBitmapsModuloSnapshot)
     {
@@ -687,9 +690,9 @@ private:
         const auto bitmapIndexOfSpanningTupleStart = bitmapOfSpanningTupleStart & numberOfBitmapsModuloSnapshot;
         const auto positionOfSpanningTupleStart = ((spanningTuple.spanStart) & BITMAP_SIZE_MODULO);
         /// Check that both the start and the end of the spanning tuple are valid
-        const auto spanningTupleIsValid = spanningTuple.isStartValid and spanningTuple.isEndValid;
         /// If both are valid, move a '1' to the bit position of the start of the spanning tuple
-        const auto validatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTupleIsValid)) << positionOfSpanningTupleStart;
+        const auto validatedSpanningTupleStartBit = FIRST_BIT_MASK << positionOfSpanningTupleStart;
+        std::vector<StagedBuffer> returnBuffers{}; //Todo: initialize size of array?
 
         readWriteMutex
             .lock(); /// protects: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
@@ -697,32 +700,28 @@ private:
         seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] |= validatedSpanningTupleStartBit;
         /// Check if the spanning tuple completed a bitmap (set the last bit in corresponding the seenAndUsed bitmap)
         const auto completedBitmap = (seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] == MAX_VALUE);
-        const auto completedBitmapAndIsValid = completedBitmap and spanningTupleIsValid;
 
-        // Todo: size array? (spanningTuple.spanEnd & (0 - spanningTupleStartIsValid)) - spanningTuple.spanStart <-- also need to set start to 0 if necessary
-        std::vector<StagedBuffer> returnBuffers{};
-        const auto startIndex = ((spanningTupleIsValid) ? spanningTuple.spanStart : sequenceNumber);
-        const auto endIndex = ((spanningTupleIsValid) ? spanningTuple.spanEnd : sequenceNumber);
-        const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
-        // Todo: remove calculation of exact size (in lock!)?
-        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
+        // Todo: remove calculation of exact size (in lock!)? <---there does not seem to be any dependency
+        //Todo: if we can take snapshot, we can move it out of lock
+        const auto stagedBufferSizeModulo = stagedBuffers.size() - 1;
+        for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
         {
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
-            auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex])
-                                                                              : stagedBuffers[spanningTupleIndex];
+            --currentBuffer.uses;
+            auto returnBuffer = (currentBuffer.uses == 0) ? std::move(currentBuffer) : currentBuffer;
             returnBuffers.emplace_back(std::move(returnBuffer));
         }
-        // sizeOfStagedBuffersInBytes -= stagedBuffers[endIndex - 1].sizeOfBufferInBytes - stagedBuffers[endIndex - 1].offsetOfFirstTupleDelimiter;
 
         /// Check if the bitmap is the current tail-bitmap, if it is, the current thread needs to increment the tail
-        if (completedBitmapAndIsValid and (bitmapOfSpanningTupleStart == this->tail))
+        if (completedBitmap and (bitmapOfSpanningTupleStart == this->tail))
         {
             incrementTail();
         }
         readWriteMutex.unlock();
 
-        const size_t sequenceNumberIndex = sequenceNumberBufferPosition - startIndex;
+        const size_t sequenceNumberIndex = sequenceNumberBufferPosition - spanningTuple.spanStart;
         return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = sequenceNumberIndex, .stagedBuffers = std::move(returnBuffers)};
     }
 
@@ -768,12 +767,15 @@ private:
         const auto endIndex = (spanningTuple.isEndValid) ? spanningTuple.spanEnd : sequenceNumber;
         const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
 
+        //Todo: if we can take snapshot, we can move it out of lock
+        const auto stagedBufferSizeModulo = stagedBuffers.size() - 1;
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex) //Todo: since sequenceNumbers now 1-1 map to stagedBuffers, we need to include endIndex
         {
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            stagedBuffers[spanningTupleIndex].uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
-            auto returnBuffer = (stagedBuffers[spanningTupleIndex].uses == 0) ? std::move(stagedBuffers[spanningTupleIndex])
-                                                                              : stagedBuffers[spanningTupleIndex];
+            currentBuffer.uses -= static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
+            auto returnBuffer = (currentBuffer.uses == 0) ? std::move(currentBuffer) : currentBuffer;
             returnBuffers.emplace_back(std::move(returnBuffer));
         }
 

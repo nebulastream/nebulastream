@@ -235,6 +235,11 @@ public:
      */
     bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
+    detail::BufferControlBlock* getControlBlockRemove() const noexcept
+    {
+        return controlBlock;
+    }
+
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!

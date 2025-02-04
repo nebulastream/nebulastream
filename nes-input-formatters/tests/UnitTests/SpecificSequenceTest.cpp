@@ -46,7 +46,6 @@ public:
 
 TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
-    // Todo: make assignment of tasks to worker ids explicit
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
