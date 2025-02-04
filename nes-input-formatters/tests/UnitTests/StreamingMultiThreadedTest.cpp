@@ -152,15 +152,25 @@ public:
                     {
                         const auto spanStart = stagedBuffers.front().sizeOfBufferInBytes;
                         const auto spanEnd = stagedBuffers.back().sizeOfBufferInBytes;
-                        threadLocalCheckSum.at(threadIdx) += (spanEnd - spanStart);
+                        const auto localCheckSum = spanEnd - spanStart;
+                        threadLocalCheckSum.at(threadIdx) += localCheckSum;
+                        if (spanEnd <= spanStart)
+                        {
+                            std::cout << "tuple delimiter: [" << spanStart << "," << spanEnd << "]" << std::endl;
+                        }
                     }
                 } else {
                     const auto stagedBuffers = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
                     if (stagedBuffers.size() > 1)
                     {
-                        const auto spanStart = stagedBuffers.begin()->sizeOfBufferInBytes;
-                        const auto spanEnd = stagedBuffers.end()->sizeOfBufferInBytes;
-                        threadLocalCheckSum.at(threadIdx) += (spanEnd - spanStart);
+                        const auto spanStart = stagedBuffers.front().sizeOfBufferInBytes;
+                        const auto spanEnd = stagedBuffers.back().sizeOfBufferInBytes;
+                        const auto localCheckSum = spanEnd - spanStart;
+                        threadLocalCheckSum.at(threadIdx) += localCheckSum;
+                        if (spanEnd <= spanStart)
+                        {
+                            std::cout << "no tuple delimiter: " << threadLocalSequenceNumber << ": [" << spanStart << "," << spanEnd << "]" << std::endl;
+                        }
                     }
                 }
             }
@@ -185,6 +195,6 @@ TEST_F(StreamingMultiThreaderAutomatedSequenceShredderTest, multiThreadedExhaust
     constexpr size_t NUM_ITERATIONS = 1;
     for (size_t iteration = 0; iteration < NUM_ITERATIONS; ++iteration) {
         std::cout << "Iteration " << iteration << std::endl;
-        executeTest<1>(10000000, 4726316926588018883); //worked for (64 threads and 10 million upper bound) and (1 thread and 1 billion upper bound)
+        executeTest<64>(10000000, 4726316926588018883); //worked for (64 threads and 10 million upper bound) and (1 thread and 1 billion upper bound)
     }
 }

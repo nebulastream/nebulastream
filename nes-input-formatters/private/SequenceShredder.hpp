@@ -431,7 +431,8 @@ public:
         }
         else
         {
-            if (not(spanningTuple.isStartValid and spanningTuple.isEndValid))
+            const auto spanningTupleIsValid = spanningTuple.isStartValid and spanningTuple.isEndValid;
+            if (not spanningTupleIsValid)
             {
                 return StagedBufferResult{.indexOfSequenceNumberInStagedBuffers = 0, .stagedBuffers = {}};
             }
