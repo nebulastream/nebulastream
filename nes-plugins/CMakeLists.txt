@@ -17,3 +17,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
 activate_optional_plugin("Sources/TCPSource" ON)
+
+option(ENABLE_ODBC_SOURCE "Enables the ODBC Source" OFF)
+if (ENABLE_ODBC_SOURCE)
+    activate_optional_plugin("Sources/ODBCSource" ON)
+endif ()
