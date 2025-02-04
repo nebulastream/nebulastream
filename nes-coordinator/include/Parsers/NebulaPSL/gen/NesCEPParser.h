@@ -28,79 +28,84 @@ class NesCEPParser : public antlr4::Parser {
         T__13 = 14,
         T__14 = 15,
         T__15 = 16,
-        INT = 17,
-        FLOAT = 18,
-        PROTOCOL = 19,
-        FILETYPE = 20,
-        PORT = 21,
-        WS = 22,
-        FROM = 23,
-        PATTERN = 24,
-        WHERE = 25,
-        WITHIN = 26,
-        CONSUMING = 27,
-        SELECT = 28,
-        INTO = 29,
-        ALL = 30,
-        ANY = 31,
-        SEP = 32,
-        COMMA = 33,
-        LPARENTHESIS = 34,
-        RPARENTHESIS = 35,
-        NOT = 36,
-        NOT_OP = 37,
-        SEQ = 38,
-        NEXT = 39,
-        AND = 40,
-        OR = 41,
-        STAR = 42,
-        PLUS = 43,
-        D_POINTS = 44,
-        LBRACKET = 45,
-        RBRACKET = 46,
-        XOR = 47,
-        IN = 48,
-        IS = 49,
-        NULLTOKEN = 50,
-        BETWEEN = 51,
-        BINARY = 52,
-        TRUE = 53,
-        FALSE = 54,
-        UNKNOWN = 55,
-        QUARTER = 56,
-        MONTH = 57,
-        DAY = 58,
-        HOUR = 59,
-        MINUTE = 60,
-        WEEK = 61,
-        SECOND = 62,
-        MICROSECOND = 63,
-        AS = 64,
-        EQUAL = 65,
-        KAFKA = 66,
-        FILE = 67,
-        MQTT = 68,
-        NETWORK = 69,
-        NULLOUTPUT = 70,
-        OPC = 71,
-        PRINT = 72,
-        ZMQ = 73,
-        POINT = 74,
-        QUOTE = 75,
-        AVG = 76,
-        SUM = 77,
-        MIN = 78,
-        MAX = 79,
-        COUNT = 80,
-        IF = 81,
-        LOGOR = 82,
-        LOGAND = 83,
-        LOGXOR = 84,
-        NONE = 85,
-        URL = 86,
-        NAME = 87,
-        ID = 88,
-        PATH = 89
+        T__16 = 17,
+        T__17 = 18,
+        T__18 = 19,
+        T__19 = 20,
+        T__20 = 21,
+        INT = 22,
+        FLOAT = 23,
+        PROTOCOL = 24,
+        FILETYPE = 25,
+        PORT = 26,
+        WS = 27,
+        FROM = 28,
+        PATTERN = 29,
+        WHERE = 30,
+        WITHIN = 31,
+        CONSUMING = 32,
+        SELECT = 33,
+        INTO = 34,
+        ALL = 35,
+        ANY = 36,
+        SEP = 37,
+        COMMA = 38,
+        LPARENTHESIS = 39,
+        RPARENTHESIS = 40,
+        NOT = 41,
+        NOT_OP = 42,
+        SEQ = 43,
+        NEXT = 44,
+        AND = 45,
+        OR = 46,
+        STAR = 47,
+        PLUS = 48,
+        D_POINTS = 49,
+        LBRACKET = 50,
+        RBRACKET = 51,
+        XOR = 52,
+        IN = 53,
+        IS = 54,
+        NULLTOKEN = 55,
+        BETWEEN = 56,
+        BINARY = 57,
+        TRUE = 58,
+        FALSE = 59,
+        UNKNOWN = 60,
+        QUARTER = 61,
+        MONTH = 62,
+        DAY = 63,
+        HOUR = 64,
+        MINUTE = 65,
+        WEEK = 66,
+        SECOND = 67,
+        MICROSECOND = 68,
+        AS = 69,
+        EQUAL = 70,
+        KAFKA = 71,
+        FILE = 72,
+        MQTT = 73,
+        NETWORK = 74,
+        NULLOUTPUT = 75,
+        OPC = 76,
+        PRINT = 77,
+        ZMQ = 78,
+        POINT = 79,
+        QUOTE = 80,
+        AVG = 81,
+        SUM = 82,
+        MIN = 83,
+        MAX = 84,
+        COUNT = 85,
+        IF = 86,
+        LOGOR = 87,
+        LOGAND = 88,
+        LOGXOR = 89,
+        NONE = 90,
+        URL = 91,
+        NAME = 92,
+        ID = 93,
+        PATH = 94
     };
 
     enum {
@@ -110,51 +115,54 @@ class NesCEPParser : public antlr4::Parser {
         RuleInputStream = 3,
         RuleCompositeEventExpressions = 4,
         RuleWhereExp = 5,
-        RuleTimeConstraints = 6,
-        RuleInterval = 7,
-        RuleIntervalType = 8,
-        RuleOption = 9,
-        RuleOutputExpression = 10,
-        RuleOutAttribute = 11,
-        RuleSinkList = 12,
-        RuleListEvents = 13,
-        RuleEventElem = 14,
-        RuleEvent = 15,
-        RuleQuantifiers = 16,
-        RuleIterMax = 17,
-        RuleIterMin = 18,
-        RuleConsecutiveOption = 19,
-        RuleParameterName = 20,
-        RuleOperatorRule = 21,
-        RuleSequence = 22,
-        RuleContiguity = 23,
-        RuleSinkType = 24,
-        RuleNullNotnull = 25,
-        RuleConstant = 26,
-        RuleExpressions = 27,
-        RuleExpression = 28,
-        RulePredicate = 29,
-        RuleExpressionAtom = 30,
-        RuleEventAttribute = 31,
-        RuleEventIteration = 32,
-        RuleMathExpression = 33,
-        RuleAggregation = 34,
-        RuleValue = 35,
-        RuleAttribute = 36,
-        RuleAttVal = 37,
-        RuleBoolRule = 38,
-        RuleCondition = 39,
-        RuleUnaryOperator = 40,
-        RuleComparisonOperator = 41,
-        RuleLogicalOperator = 42,
-        RuleBitOperator = 43,
-        RuleMathOperator = 44,
-        RuleSink = 45,
-        RuleParameters = 46,
-        RuleParameter = 47,
-        RuleFileName = 48,
-        RuleTopic = 49,
-        RuleAddress = 50
+        RuleWindowConstraints = 6,
+        RuleWindowType = 7,
+        RuleTimeConstraints = 8,
+        RuleConstraint = 9,
+        RuleInterval = 10,
+        RuleIntervalType = 11,
+        RuleOption = 12,
+        RuleOutputExpression = 13,
+        RuleOutAttribute = 14,
+        RuleSinkList = 15,
+        RuleListEvents = 16,
+        RuleEventElem = 17,
+        RuleEvent = 18,
+        RuleQuantifiers = 19,
+        RuleIterMax = 20,
+        RuleIterMin = 21,
+        RuleConsecutiveOption = 22,
+        RuleParameterName = 23,
+        RuleOperatorRule = 24,
+        RuleSequence = 25,
+        RuleContiguity = 26,
+        RuleSinkType = 27,
+        RuleNullNotnull = 28,
+        RuleConstant = 29,
+        RuleExpressions = 30,
+        RuleExpression = 31,
+        RulePredicate = 32,
+        RuleExpressionAtom = 33,
+        RuleEventAttribute = 34,
+        RuleEventIteration = 35,
+        RuleMathExpression = 36,
+        RuleAggregation = 37,
+        RuleValue = 38,
+        RuleAttribute = 39,
+        RuleAttVal = 40,
+        RuleBoolRule = 41,
+        RuleCondition = 42,
+        RuleUnaryOperator = 43,
+        RuleComparisonOperator = 44,
+        RuleLogicalOperator = 45,
+        RuleBitOperator = 46,
+        RuleMathOperator = 47,
+        RuleSink = 48,
+        RuleParameters = 49,
+        RuleParameter = 50,
+        RuleFileName = 51,
+        RuleTopic = 52,
+        RuleAddress = 53
     };
 
     explicit NesCEPParser(antlr4::TokenStream* input);
@@ -174,7 +182,10 @@ class NesCEPParser : public antlr4::Parser {
     class InputStreamContext;
     class CompositeEventExpressionsContext;
     class WhereExpContext;
+    class WindowConstraintsContext;
+    class WindowTypeContext;
     class TimeConstraintsContext;
+    class ConstraintContext;
     class IntervalContext;
     class IntervalTypeContext;
     class OptionContext;
@@ -249,7 +260,7 @@ class NesCEPParser : public antlr4::Parser {
         antlr4::tree::TerminalNode* WHERE();
         WhereExpContext* whereExp();
         antlr4::tree::TerminalNode* WITHIN();
-        TimeConstraintsContext* timeConstraints();
+        WindowConstraintsContext* windowConstraints();
         antlr4::tree::TerminalNode* CONSUMING();
         OptionContext* option();
         antlr4::tree::TerminalNode* SELECT();
@@ -316,19 +327,60 @@ class NesCEPParser : public antlr4::Parser {
 
     WhereExpContext* whereExp();
 
-    class TimeConstraintsContext : public antlr4::ParserRuleContext {
+    class WindowConstraintsContext : public antlr4::ParserRuleContext {
       public:
-        TimeConstraintsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        WindowConstraintsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
+        WindowTypeContext* windowType();
         antlr4::tree::TerminalNode* LBRACKET();
-        IntervalContext* interval();
+        TimeConstraintsContext* timeConstraints();
         antlr4::tree::TerminalNode* RBRACKET();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
+    WindowConstraintsContext* windowConstraints();
+
+    class WindowTypeContext : public antlr4::ParserRuleContext {
+      public:
+        WindowTypeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    WindowTypeContext* windowType();
+
+    class TimeConstraintsContext : public antlr4::ParserRuleContext {
+      public:
+        TimeConstraintsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+        antlr4::tree::TerminalNode* NAME();
+        std::vector<antlr4::tree::TerminalNode*> COMMA();
+        antlr4::tree::TerminalNode* COMMA(size_t i);
+        std::vector<ConstraintContext*> constraint();
+        ConstraintContext* constraint(size_t i);
+        std::vector<IntervalContext*> interval();
+        IntervalContext* interval(size_t i);
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
     TimeConstraintsContext* timeConstraints();
+
+    class ConstraintContext : public antlr4::ParserRuleContext {
+      public:
+        ConstraintContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    ConstraintContext* constraint();
 
     class IntervalContext : public antlr4::ParserRuleContext {
       public:

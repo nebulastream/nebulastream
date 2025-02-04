@@ -23,6 +23,19 @@
 
 namespace NES::Parsers {
 
+// Define the Parameter structure
+struct WindowParameter {
+    std::string name;                 // Name of the parameter
+    std::pair<std::string, int> value;// The old pair (string and int)
+};
+
+// Define the Window structure
+struct Window {
+    std::string type;                       // Type of the window
+    std::string timeAttributeName;          // Name of the time attribute
+    std::vector<WindowParameter> parameters;// List of parameters
+};
+
 /**
  * @brief This class represents the results from parsing the ANTLR AST tree
  * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
@@ -34,17 +47,12 @@ class NebulaPSLPattern {
     // Getter and Setter
     const std::map<int32_t, std::string>& getSources() const;
     const std::map<std::string, std::string>& getAliasList() const;
-    void setSources(const std::map<int32_t, std::string>& sources);
     const std::map<int32_t, NebulaPSLOperator>& getOperatorList() const;
-    void setOperatorList(const std::map<int32_t, NebulaPSLOperator>& operatorList);
     const std::list<ExpressionNodePtr>& getExpressions() const;
-    void setExpressions(const std::list<ExpressionNodePtr>& expressions);
     const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-    void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
     const std::list<SinkDescriptorPtr>& getSinks() const;
-    void setSinks(const std::list<SinkDescriptorPtr>& sinks);
-    const std::pair<std::string, int>& getWindow() const;
-    void setWindow(const std::pair<std::string, int>& window);
+    Window getWindow() const;
+    void setWindow(Window window);
 
     /**
      * @brief inserts a new source into the source map (FROM-Clause)
@@ -89,8 +97,8 @@ class NebulaPSLPattern {
     std::map<int32_t, NebulaPSLOperator> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinkList; // INTO
-    std::pair<std::string, int32_t> window;// WITHIN
+    std::list<SinkDescriptorPtr> sinkList;// INTO
+    Window window;                        // WITHIN
 };
 
 }// namespace NES::Parsers

@@ -33,8 +33,17 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterWhereExp(NesCEPParser::WhereExpContext* ctx) = 0;
     virtual void exitWhereExp(NesCEPParser::WhereExpContext* ctx) = 0;
 
+    virtual void enterWindowConstraints(NesCEPParser::WindowConstraintsContext* ctx) = 0;
+    virtual void exitWindowConstraints(NesCEPParser::WindowConstraintsContext* ctx) = 0;
+
+    virtual void enterWindowType(NesCEPParser::WindowTypeContext* ctx) = 0;
+    virtual void exitWindowType(NesCEPParser::WindowTypeContext* ctx) = 0;
+
     virtual void enterTimeConstraints(NesCEPParser::TimeConstraintsContext* ctx) = 0;
     virtual void exitTimeConstraints(NesCEPParser::TimeConstraintsContext* ctx) = 0;
+
+    virtual void enterConstraint(NesCEPParser::ConstraintContext* ctx) = 0;
+    virtual void exitConstraint(NesCEPParser::ConstraintContext* ctx) = 0;
 
     virtual void enterInterval(NesCEPParser::IntervalContext* ctx) = 0;
     virtual void exitInterval(NesCEPParser::IntervalContext* ctx) = 0;

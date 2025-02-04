@@ -32,9 +32,19 @@
 namespace NES::Parsers {
 
 void NesCEPQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* context) {
-    NES_DEBUG("NesCEPQueryPlanCreator : enterListEvents: init tree walk and initialize read out of AST ");
+    NES_DEBUG("init tree walk and initialize read out of AST ");
     this->nodeId++;
     NesCEPBaseListener::enterListEvents(context);
+}
+
+void NesCEPQueryPlanCreator::enterCepPattern(NesCEPParser::CepPatternContext* cxt) {
+    NES_DEBUG("Triggers the parsing of the WITHIN clause before reading the PATTERN clause");
+    if (cxt->windowConstraints() != nullptr) {
+        NES_DEBUG("Window constraints detected, invoking enterWindowConstraints...");
+        NesCEPQueryPlanCreator::enterWindowConstraints(cxt->windowConstraints());
+    } else {
+        NES_DEBUG("No window constraints found in the CEP pattern.");
+    }
 }
 
 void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt) {
@@ -42,7 +52,7 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
         // Handle parentheses
         NesCEPQueryPlanCreator::handleParenthesizedExpression(cxt->listEvents());
     } else {
-        NES_DEBUG("NesCEPQueryPlanCreator : enterEventElem: found a stream source  {}", cxt->event()->getText());
+        NES_DEBUG(" Add new stream source  {}", cxt->event()->getText());
         //create sources pair, e.g., <identifier,SourceName>
         pattern.addSource(std::make_pair(sourceCounter, cxt->getStart()->getText()));
         this->lastSeenSourcePtr = sourceCounter;
@@ -53,21 +63,19 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
 }
 
 void NesCEPQueryPlanCreator::handleParenthesizedExpression(NesCEPParser::ListEventsContext* context) {
+    NES_DEBUG(" Handle the following subquery  {}", context->getText());
     // Save current state
     uint32_t savedSourceCounter = sourceCounter;
     uint32_t savedNodeId = nodeId;
     uint32_t savedLastSeenSourcePtr = lastSeenSourcePtr;
 
+    // Save the current pattern state
+    NebulaPSLPattern savedPattern = pattern;
     // Create new sub-pattern for the nested expression
     NebulaPSLPattern subPattern;
-    NebulaPSLPattern* savedPattern = &pattern;
-    auto SavedPattern = pattern;
-    subPattern.setWindow(savedPattern->getWindow());
+    subPattern.setWindow(savedPattern.getWindow());
+    // Assign new pattern
     pattern = subPattern;
-    auto window = pattern.getWindow();
-    NES_DEBUG("NesCEPQueryPlanCreator : handleParenthesizedExpression: Window - Time unit: '{}', Time value: {}",
-              window.first,
-              window.second);
 
     // Process the nested expression
     for (auto eventElem : context->eventElem()) {
@@ -79,8 +87,9 @@ void NesCEPQueryPlanCreator::handleParenthesizedExpression(NesCEPParser::ListEve
     // Create subquery from nested expression
     QueryPlanPtr subQueryPlan = createQueryFromPatternList();
 
-    // Restore original state of pattern
-    pattern = SavedPattern;
+    // Restore original pattern state
+    pattern = savedPattern;
+
     sourceCounter = savedSourceCounter;
     nodeId = savedNodeId;
     lastSeenSourcePtr = savedLastSeenSourcePtr;
@@ -92,11 +101,11 @@ void NesCEPQueryPlanCreator::handleParenthesizedExpression(NesCEPParser::ListEve
     sourceCounter++;
     // Store the subquery plan for later
     subQueries[subQueryName] = subQueryPlan;
-    NES_DEBUG("NesCEPQueryPlanCreator : handleParenthesizedExpression: finished processing nested expression");
+    NES_DEBUG("Finished processing nested expression");
 }
 
 void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext* context) {
-    NES_DEBUG("NesCEPQueryPlanCreator : exitOperatorRule: create a node for the operator  {}", context->getText());
+    NES_DEBUG("Create a node for the operator  {}", context->getText());
     //create Operator node and set attributes with context information
     NebulaPSLOperator node = NebulaPSLOperator(nodeId);
     node.setParentNodeId(-1);
@@ -110,7 +119,7 @@ void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext*
 }
 
 void NesCEPQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* context) {
-    NES_DEBUG("NesCEPQueryPlanCreator : exitInputStream: replace alias with streamName  {}", context->getText());
+    NES_DEBUG(" Replace alias with streamName  {}", context->getText());
     std::string sourceName = context->getStart()->getText();
     std::string aliasName = context->getStop()->getText();
     //replace alias in the list of sources with actual sources name
@@ -137,18 +146,25 @@ void NesCEPQueryPlanCreator::exitWhereExp(NesCEPParser::WhereExpContext* context
     NesCEPBaseListener::exitWhereExp(context);
 }
 
-// WITHIN clause
-void NesCEPQueryPlanCreator::exitInterval(NesCEPParser::IntervalContext* cxt) {
-    NES_DEBUG("NesCEPQueryPlanCreator : exitInterval with : time {} timeUnit: {}",
-              cxt->getStart()->getText(),
-              cxt->intervalType()->getText());
-    // get window definitions
-    std::string timeUnit = cxt->intervalType()->getText();
-    NES_DEBUG("NesCEPQueryPlanCreator : timeUnit:  {}", cxt->intervalType()->getText());
-    int32_t time = std::stoi(cxt->getStart()->getText());
-    NES_DEBUG("NesCEPQueryPlanCreator : exitInterval: Time unit: '{}', Time value: {}", timeUnit, time);
-    pattern.setWindow(std::make_pair(timeUnit, time));
-    NesCEPBaseListener::exitInterval(cxt);
+void NesCEPQueryPlanCreator::enterWindowConstraints(NesCEPParser::WindowConstraintsContext* cxt) {
+    NES_DEBUG(" enterWindowConstraints with {}, {}", cxt->windowType()->getText(), cxt->timeConstraints()->NAME()->getText());
+    Window window;
+    window.type = cxt->windowType()->getText();// i.e., SLIDING, INTERVAL, or TUMBLING
+    window.timeAttributeName = cxt->timeConstraints()->NAME()->getText();
+
+    for (size_t i = 0; i < cxt->timeConstraints()->constraint().size(); ++i) {
+        std::string paramName = cxt->timeConstraints()->constraint().at(i)->getText();
+        // get time specifications
+        std::string timeUnit = cxt->timeConstraints()->interval(i)->intervalType()->getText();
+        int32_t time = std::stoi(cxt->timeConstraints()->interval(i)->INT()->getText());
+        NES_DEBUG(" Param: {}, Time unit: '{}', Time value: {}", paramName, timeUnit, time);
+
+        // Add parameters
+        WindowParameter param = {paramName, {timeUnit, time}};
+        window.parameters.push_back(param);
+    }
+    this->pattern.setWindow(window);
+    NesCEPBaseListener::exitWindowConstraints(cxt);
 }
 
 void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext* context) {
@@ -159,21 +175,20 @@ void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext
 
 void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* context) {
     std::string sinkType = context->sinkType()->getText();
-    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink with Type: {}", sinkType)
+    NES_DEBUG("Specify Sink with Type: {}", sinkType)
     SinkDescriptorPtr sinkDescriptor;
 
     if (sinkType == "FILE") {
         // get fileName
         if (context->parameters()->parameter().at(0)->getText() == "fileName") {
             sinkDescriptor = NES::FileSinkDescriptor::create(context->parameters()->value(0)->getText());
-            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for File Sink with name : {}",
-                      context->parameters()->value(0)->getText());
+            NES_DEBUG(" Create sinkDescriptor for File Sink with name : {}", context->parameters()->value(0)->getText());
         } else {
             NES_THROW_RUNTIME_ERROR("Unknown parameter(s) for FileSink {}", context->parameters()->getText());
         }
     } else if (sinkType == "MQTT") {
         // get topic and address
-        NES_DEBUG("NesCEPQueryPlanCreator : number of parameters : {}", context->parameters()->parameter().size());
+        NES_DEBUG(" number of parameters : {}", context->parameters()->parameter().size());
         if (context->parameters()->parameter().size() == 2) {
             if (context->parameters()->parameter().at(0)->getStart()->getText() == "address") {
                 sinkDescriptor = NES::MQTTSinkDescriptor::create(context->parameters()->value(0)->getText(),
@@ -182,7 +197,7 @@ void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParam
                 sinkDescriptor = NES::MQTTSinkDescriptor::create(context->parameters()->value(1)->getText(),
                                                                  context->parameters()->value(0)->getText());
             }
-            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for MQTT Sink with address : {} and topic {}",
+            NES_DEBUG(" Create sinkDescriptor for MQTT Sink with address : {} and topic {}",
                       context->parameters()->value(0)->getText(),
                       context->parameters()->value(1)->getText());
         } else {
@@ -200,7 +215,7 @@ void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParam
 void NesCEPQueryPlanCreator::enterSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* context) {
     // collect specified sinks
     std::string sinkType = context->sinkType()->getText();
-    NES_DEBUG("NesCEPQueryPlanCreator : found Sink Type: {}", sinkType)
+    NES_DEBUG(" Found Sink Type: {}", sinkType)
     SinkDescriptorPtr sinkDescriptor;
 
     if (sinkType == "PRINT") {
@@ -210,14 +225,14 @@ void NesCEPQueryPlanCreator::enterSinkWithoutParameters(NesCEPParser::SinkWithou
     } else if (sinkType == "NULLOUTPUT") {
         sinkDescriptor = NES::NullOutputSinkDescriptor::create();
     } else {
-        NES_THROW_RUNTIME_ERROR("Unkown sink was specified");
+        NES_THROW_RUNTIME_ERROR("Unknown sink was specified");
     }
     pattern.addSink(sinkDescriptor);
     NesCEPBaseListener::exitSinkWithoutParameters(context);
 }
 
 void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* context) {
-    NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: {}", context->getText())
+    NES_DEBUG(" enterQuantifiers: {}", context->getText())
     //method that specifies the times operator which has several cases
     //create Operator node and add specification
     NebulaPSLOperator timeOperator = NebulaPSLOperator(nodeId);
@@ -226,7 +241,7 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     timeOperator.setLeftChildId(lastSeenSourcePtr);
     if (context->LBRACKET()) {    // context contains []
         if (context->D_POINTS()) {//e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
-            NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: {} and Max {}",
+            NES_DEBUG(" Times with Min: {} and Max {}",
                       context->iterMin()->INT()->getText(),
                       context->iterMin()->INT()->getText());
             timeOperator.setMinMax(
@@ -237,8 +252,7 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     } else if (context->PLUS()) {//e.g., A+, means a occurs at least once
         timeOperator.setMinMax(std::make_pair(0, 0));
     } else if (context->STAR()) {//[]*   //TODO unbounded iteration variant not yet implemented #866
-        NES_THROW_RUNTIME_ERROR(
-            "NesCEPQueryPlanCreator : enterQuantifiers: NES currently does not support the iteration variant *");
+        NES_THROW_RUNTIME_ERROR(" NES currently does not support the iteration variant *");
     }
     pattern.addOperator(timeOperator);
     //update pointer
@@ -288,12 +302,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
     if (this->pattern.getOperatorList().empty() && this->pattern.getSources().size() == 0) {
         NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreator: createQueryFromPatternList: Received an empty pattern");
     }
-    NES_DEBUG("NesCEPQueryPlanCreator: createQueryFromPatternList: create query from AST elements");
-
-    auto window = pattern.getWindow();
-    NES_DEBUG("NesCEPQueryPlanCreator : addBinaryOperatorToQueryPlan: Window - Time unit: '{}', Time value: {}",
-              window.first,
-              window.second);
+    NES_DEBUG(" Create query from AST elements");
 
     QueryPlanPtr queryPlan;
     // if for simple patterns without binary CEP operators
@@ -308,17 +317,17 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
             auto operatorName = operatorNode->second.getOperatorName();
 
             if (pattern.getSinks().size() > 0) {
-                if (this->pattern.getWindow().first.empty() && this->pattern.getWindow().second == 0 && operatorName != "OR") {
+                if (this->pattern.getWindow().type.empty() && this->pattern.getWindow().parameters.empty()
+                    && operatorName != "OR") {
                     // window must be specified for an operator, throw exception
-                    NES_THROW_RUNTIME_ERROR(
-                        "NesCEPQueryPlanCreator: WITHIN keyword for time interval missing but must be specified for operators.");
+                    NES_THROW_RUNTIME_ERROR("WITHIN keyword for time interval missing but must be specified for operators.");
                 }
             }
             // add binary operators
             if (operatorName == "OR" || operatorName == "SEQ" || operatorName == "AND") {
                 queryPlan = addBinaryOperatorToQueryPlan(operatorName, operatorNode, queryPlan);
             } else if (operatorName == "TIMES") {//add times operator
-                NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add unary operator {}", operatorName)
+                NES_DEBUG("CreateQueryFromPatternList: add unary operator {}", operatorName)
                 auto sourceName = pattern.getSources().at(operatorNode->second.getLeftChildId());
                 queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add times operator{}",
@@ -326,12 +335,10 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
 
                 queryPlan = QueryPlanBuilder::addMap(Attribute("Count") = 1, queryPlan);
 
-                //create window
-                auto timeMeasurements = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
-                if (timeMeasurements.first.getTime() != TimeMeasure(0).getTime()) {
-                    auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")),
-                                                                   timeMeasurements.first,
-                                                                   timeMeasurements.second);
+                auto windowType = createTimeBasedWindow();
+
+                if (windowType) {
+
                     // check and add watermark
                     queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, windowType);
 
@@ -367,12 +374,10 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                         queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
                     }
                 } else {
-                    NES_THROW_RUNTIME_ERROR(
-                        "NesCEPQueryPlanCreator: createQueryFromPatternList: The Iteration operator requires a time window.");
+                    NES_THROW_RUNTIME_ERROR("CreateQueryFromPatternList: The Iteration operator requires a time window.");
                 }
             } else {
-                NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreator: createQueryFromPatternList: Unkown CEP operator"
-                                        << operatorName);
+                NES_THROW_RUNTIME_ERROR("CreateQueryFromPatternList: Unknown CEP operator" << operatorName);
             }
         }
     }
@@ -404,30 +409,25 @@ QueryPlanPtr NesCEPQueryPlanCreator::addFilters(QueryPlanPtr queryPlan) const {
     return queryPlan;
 }
 
-std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                              int32_t timeValue) const {
-    if (timeMeasure == "MILLISECOND") {
-        TimeMeasure size = Minutes(timeValue);
-        TimeMeasure slide = Minutes(1);
-        return std::pair<TimeMeasure, TimeMeasure>(size, slide);
-    } else if (timeMeasure == "SECOND") {
-        TimeMeasure size = Seconds(timeValue);
-        TimeMeasure slide = Seconds(1);
-        return std::pair<TimeMeasure, TimeMeasure>(size, slide);
-    } else if (timeMeasure == "MINUTE") {
-        TimeMeasure size = Minutes(timeValue);
-        TimeMeasure slide = Minutes(1);
-        return std::pair<TimeMeasure, TimeMeasure>(size, slide);
-    } else if (timeMeasure == "HOUR") {
-        TimeMeasure size = Hours(timeValue);
-        TimeMeasure slide = Hours(1);
-        return std::pair<TimeMeasure, TimeMeasure>(size, slide);
+TimeMeasure NesCEPQueryPlanCreator::transformWindowToTimeMeasurements(std::pair<std::string, int> timeMeasure) const {
+    if (timeMeasure.first == "MILLISECOND") {
+        TimeMeasure measure = Milliseconds(timeMeasure.second);
+        return measure;
+    } else if (timeMeasure.first == "SECOND") {
+        TimeMeasure measure = Seconds(timeMeasure.second);
+        return measure;
+    } else if (timeMeasure.first == "MINUTE") {
+        TimeMeasure measure = Minutes(timeMeasure.second);
+        return measure;
+    } else if (timeMeasure.first == "HOUR") {
+        TimeMeasure measure = Hours(timeMeasure.second);
+        return measure;
     } else {
         // when we have a subquery we don't expect it to already include a timeMeasure since that comes at the end of the query
-        NES_DEBUG("NesCEPQueryPlanCreator: transformWindowToTimeMeasurements: Unknown time measure: {}", timeMeasure);
-        return std::pair<TimeMeasure, TimeMeasure>(Minutes(0), Minutes(0));
+        NES_DEBUG("NesCEPQueryPlanCreator: transformWindowToTimeMeasurements: Unknown time measure: {}", timeMeasure.first);
+        return Minutes(0);
     }
-    return std::pair<TimeMeasure, TimeMeasure>(TimeMeasure(0), TimeMeasure(0));
+    return Minutes(0);
 }
 
 QueryPlanPtr NesCEPQueryPlanCreator::addProjections(QueryPlanPtr queryPlan) const {
@@ -517,12 +517,54 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
     if (operaterName == "OR") {
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: addUnionOperator")
         leftQueryPlan = QueryPlanBuilder::addUnion(leftQueryPlan, rightQueryPlan);
+    } else if (pattern.getWindow().type == "INTERVAL") {
+        //Next, we add artificial key attributes to the sources in order to reuse the join-logic later
+        std::string cepLeftKey = keyAssignment("cep_leftKey");
+        std::string cepRightKey = keyAssignment("cep_rightKey");
+
+        //next: add Map operator that maps the attributes with value 1 to the left and right source
+        leftQueryPlan = QueryPlanBuilder::addMap(Attribute(cepLeftKey) = 1, leftQueryPlan);
+        rightQueryPlan = QueryPlanBuilder::addMap(Attribute(cepRightKey) = 1, rightQueryPlan);
+
+        //then, define the artificial attributes as key attributes
+        NES_DEBUG("NesCEPQueryPlanCreater: add name cepLeftKey {} and name cepRightKey {}", cepLeftKey, cepRightKey);
+        ExpressionItem onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
+        ExpressionItem onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+        auto joinExpression = onLeftKey == onRightKey;
+        auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
+
+        Window window = pattern.getWindow();
+        auto measure = createIntervalWindow();
+        if (operaterName == "AND") {
+            leftQueryPlan = QueryPlanBuilder::addIntervalJoin(leftQueryPlan,
+                                                              rightQueryPlan,
+                                                              joinExpression,
+                                                              EventTime(Attribute(window.timeAttributeName)),
+                                                              measure.first,
+                                                              measure.second,
+                                                              true,
+                                                              measure.first,
+                                                              measure.second,
+                                                              true);
+
+        } else if (operaterName == "SEQ") {
+            leftQueryPlan = QueryPlanBuilder::addIntervalJoin(leftQueryPlan,
+                                                              rightQueryPlan,
+                                                              joinExpression,
+                                                              EventTime(Attribute(window.timeAttributeName)),
+                                                              0,
+                                                              measure.second,
+                                                              true,
+                                                              measure.first,
+                                                              measure.second,
+                                                              true);
+        }
     } else {
         // Seq and And require a window, so first we create and check the window operator
-        auto timeMeasurements = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
-        if (timeMeasurements.first.getTime() != TimeMeasure(0).getTime() || pattern.getSinks().size() < 1) {
-            auto windowType =
-                Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), timeMeasurements.first, timeMeasurements.second);
+        auto windowType = createTimeBasedWindow();
+        NES_DEBUG("NesCEPQueryPlanCreater: windowType {}", windowType->toString())
+        if (windowType || pattern.getSinks().size() < 1) {
 
             //Next, we add artificial key attributes to the sources in order to reuse the join-logic later
             std::string cepLeftKey = keyAssignment("cep_leftKey");
@@ -595,15 +637,14 @@ QueryPlanPtr NesCEPQueryPlanCreator::checkIfSourceIsAlreadyConsumedSource(std::b
     QueryPlanPtr rightQueryPlan = nullptr;
     if (queryPlan->getSourceConsumed().find(leftSourceName) != std::string::npos
         && queryPlan->getSourceConsumed().find(rightSourceName) != std::string::npos) {
-        NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreater: checkIfSourceIsAlreadyConsumedSource: Both sources are already consumed "
-                                "and combined with a binary operator");
+        NES_THROW_RUNTIME_ERROR("Both sources are already consumed and combined with a binary operator");
     } else if (queryPlan->getSourceConsumed().find(leftSourceName) == std::string::npos) {
         // right queryplan
-        NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from {}", leftSourceName)
+        NES_DEBUG(" Create subqueryRight from {}", leftSourceName)
         return rightQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
     } else if (queryPlan->getSourceConsumed().find(rightSourceName) == std::string::npos) {
         // right queryplan
-        NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from {}", rightSourceName)
+        NES_DEBUG(" Create subqueryRight from {}", rightSourceName)
         return rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
     }
     return rightQueryPlan;
@@ -643,12 +684,87 @@ ExpressionNodePtr NesCEPQueryPlanCreator::getExpressionItem(std::string contextV
 
         if (inWhere) {
             expressionNode = NES::Attribute(attributeWithFullQualifiedName).getExpressionNode();
-            NES_DEBUG("NesCEPQueryPlanCreator: add left expression with full qualified name for attributes: {}",
-                      attributeWithFullQualifiedName);
+            NES_DEBUG("Add left expression with full qualified name for attributes: {}", attributeWithFullQualifiedName);
         }
     }
 
     return expressionNode;
+}
+WindowTypePtr NesCEPQueryPlanCreator::createTimeBasedWindow() const {
+    Window window = pattern.getWindow();
+    NES_DEBUG(" addBinaryOperatorToQueryPlan: Window Type {}", window.type);
+
+    // Find the parameter size using std::find_if
+    auto it = std::find_if(window.parameters.begin(), window.parameters.end(), [](const WindowParameter& param) {
+        return param.name == "SIZE";
+    });
+    if (it == window.parameters.end()) {
+        NES_THROW_RUNTIME_ERROR("WINDOW SIZE NOT SPECIFIED.");
+    }
+
+    if (window.type == "SLIDING") {
+        if (window.parameters.size() == 2) {
+            int indexSize = std::distance(window.parameters.begin(), it);
+            int indexSlide = window.parameters.size() - indexSize - 1;
+            TimeMeasure size = TimeMeasure(transformWindowToTimeMeasurements(window.parameters.at(indexSize).value));
+            if (size.getTime() == TimeMeasure(0).getTime()) {
+                return nullptr;
+            }
+            return Windowing::SlidingWindow::of(
+                EventTime(Attribute(window.timeAttributeName)),
+                size,
+                TimeMeasure(transformWindowToTimeMeasurements(window.parameters.at(indexSlide).value)));
+
+        } else {
+            NES_THROW_RUNTIME_ERROR("Unknown Parameters in Sliding Window, expects only SIZE and SLIDE.");
+        }
+    } else if (window.type == "TUMBLING") {
+        if (window.parameters.size() == 1) {
+            int indexSize = std::distance(window.parameters.begin(), it);
+            TimeMeasure size = TimeMeasure(transformWindowToTimeMeasurements(window.parameters.at(indexSize).value));
+            if (size.getTime() == TimeMeasure(0).getTime()) {
+                return nullptr;
+            }
+            return Windowing::TumblingWindow::of(EventTime(Attribute(window.timeAttributeName)), size);
+        } else {
+            NES_THROW_RUNTIME_ERROR("Unknown Parameters in Tumbling Window Type, expect only SIZE.");
+        }
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown Window Type, expect SLIDING, TUMBLING, INTERVAL.");
+    }
+    return nullptr;
+}
+
+std::pair<uint64_t, TimeUnit> NesCEPQueryPlanCreator::createIntervalWindow() const {
+    Window window = pattern.getWindow();
+    NES_DEBUG("Window Type {}", window.type);
+    // Find the parameter size using std::find_if
+    auto it = std::find_if(window.parameters.begin(), window.parameters.end(), [](const WindowParameter& param) {
+        return param.name == "INTERVAL";
+    });
+    if (it == window.parameters.end()) {
+        NES_THROW_RUNTIME_ERROR("INTERVAL for INTERVAL JOIN IS NOT SPECIFIED.");
+    }
+
+    if (window.parameters.size() == 1) {
+        int indexSize = std::distance(window.parameters.begin(), it);
+        auto timeMeasure = window.parameters.at(indexSize).value;
+        auto timeUnit = Windowing::TimeUnit::Milliseconds();
+        if (timeMeasure.second == 0) {
+            NES_THROW_RUNTIME_ERROR("Window Length is zero, but must be greater than 0.");
+        } else if (timeMeasure.first == "MILLISECOND") {
+            timeUnit = Milliseconds();
+        } else if (timeMeasure.first == "SECOND") {
+            timeUnit = Seconds();
+        } else if (timeMeasure.first == "MINUTE") {
+            timeUnit = Minutes();
+        } else if (timeMeasure.first == "HOUR") {
+            timeUnit = Hours();
+        }
+        return std::pair<uint64_t, TimeUnit>(window.parameters.at(indexSize).value.second, timeUnit);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown Parameters in INTERVAL WINDOW Type, expect only INTERVAL.");
+    }
 }
 
 }// namespace NES::Parsers

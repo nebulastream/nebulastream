@@ -10,7 +10,7 @@ cepPattern
 	PATTERN NAME SEP compositeEventExpressions
 	FROM inputStreams
 	(WHERE whereExp)?
-	(WITHIN timeConstraints)?
+	(WITHIN windowConstraints)?
 	(CONSUMING option)?
 	(SELECT outputExpression)?
 	INTO sinkList
@@ -32,9 +32,23 @@ whereExp
 	: expression
 	;
 
-timeConstraints
-	: LBRACKET interval RBRACKET
+windowConstraints
+	: windowType LBRACKET timeConstraints RBRACKET
 	;
+
+windowType
+    : 'SLIDING' | 'INTERVAL' | 'TUMBLING'
+    ;
+
+timeConstraints
+   : NAME COMMA constraint interval (COMMA constraint interval)*
+   ;
+
+constraint
+  : 'SIZE'
+  | 'SLIDE'
+  | 'INTERVAL'
+   ;
 
 interval
 	:

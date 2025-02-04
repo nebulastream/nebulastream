@@ -35,8 +35,17 @@ class NesCEPBaseListener : public NesCEPListener {
     virtual void enterWhereExp(NesCEPParser::WhereExpContext* /*ctx*/) override {}
     virtual void exitWhereExp(NesCEPParser::WhereExpContext* /*ctx*/) override {}
 
+    virtual void enterWindowConstraints(NesCEPParser::WindowConstraintsContext* /*ctx*/) override {}
+    virtual void exitWindowConstraints(NesCEPParser::WindowConstraintsContext* /*ctx*/) override {}
+
+    virtual void enterWindowType(NesCEPParser::WindowTypeContext* /*ctx*/) override {}
+    virtual void exitWindowType(NesCEPParser::WindowTypeContext* /*ctx*/) override {}
+
     virtual void enterTimeConstraints(NesCEPParser::TimeConstraintsContext* /*ctx*/) override {}
     virtual void exitTimeConstraints(NesCEPParser::TimeConstraintsContext* /*ctx*/) override {}
+
+    virtual void enterConstraint(NesCEPParser::ConstraintContext* /*ctx*/) override {}
+    virtual void exitConstraint(NesCEPParser::ConstraintContext* /*ctx*/) override {}
 
     virtual void enterInterval(NesCEPParser::IntervalContext* /*ctx*/) override {}
     virtual void exitInterval(NesCEPParser::IntervalContext* /*ctx*/) override {}
