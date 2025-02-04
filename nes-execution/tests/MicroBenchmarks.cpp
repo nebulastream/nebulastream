@@ -21,6 +21,8 @@
 /// NOTE: Comment out define if measurements are taken
 //#define LOGGING
 
+#define MEASUREMENT_DIR "05-02"
+
 namespace NES
 {
 
@@ -623,9 +625,12 @@ public:
         {
             pagedVector = newPagedVector;
         }
-        else if (payloadSize != 0)
+        else
         {
-            pagedVector = newPagedVector;
+            if (payloadSize != 0)
+            {
+                pagedVector = newPagedVector;
+            }
         }
 
         timer.pause();
@@ -706,7 +711,7 @@ public:
             separateKeys = "SEPARATE_FILES_PAYLOAD";
         }
 
-        filename << "../../../measurements/data/03-02/micro_benchmarks_" << testName << "_" << separateKeys;
+        filename << "../../../measurements/data/" << MEASUREMENT_DIR << "/micro_benchmarks_" << testName << "_" << separateKeys;
         filename << "_bufferSize_" << bufferSize;
         filename << "_fileBufferSizePercent_" << fileBufferSizePercent;
         if (!keyFieldNames.empty())
@@ -754,10 +759,10 @@ public:
         const auto fileBufferSize
             = std::max(1UL, static_cast<uint64_t>(std::round(fileBufferSizePercent / 100.0 * numBuffers))) * bufferSize;
 
-        std::vector<std::string> fileNames = {"../../../measurements/micro_benchmarks_payload.dat"};
+        std::vector<std::string> fileNames = {"../../../measurements/data/micro_benchmarks_payload.dat"};
         if constexpr (SeparateKeys == SEPARATE_FILES_KEYS)
         {
-            fileNames.emplace_back("../../../measurements/micro_benchmarks_keys.dat");
+            fileNames.emplace_back("../../../measurements/data/micro_benchmarks_keys.dat");
         }
 
         const auto testSchema = createSchema();
@@ -822,7 +827,6 @@ TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadAndKey)
 
 TEST_F(MicroBenchmarksTest, bulkWriteTest)
 {
-    std::vector<double> execTimesInMs;
     const std::vector<uint64_t> dataSizes
         = {8 * 1024,
            32 * 1024,
@@ -834,9 +838,10 @@ TEST_F(MicroBenchmarksTest, bulkWriteTest)
            128 * 1024 * 1024,
            512 * 1024 * 1024,
            1 * 1024 * 1024 * 1024,
+           2147483648,
+           3221225472,
            4294967296};
-    const std::vector<uint64_t> bufferSizes
-        = {1 * 1024, 4 * 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024};
+    const std::vector<uint64_t> bufferSizes = {1 * 1024, 4 * 1024, 8 * 1024, 16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024};
 
     for (const auto dataSize : dataSizes)
     {
@@ -847,8 +852,9 @@ TEST_F(MicroBenchmarksTest, bulkWriteTest)
                 continue;
             }
 
+            std::vector<double> execTimesInMs;
             const auto numBuffers = dataSize / bufferSize;
-            std::vector<std::string> fileNames = {"../../../measurements/micro_benchmarks_bulk.dat"};
+            std::vector<std::string> fileNames = {"../../../measurements/data/micro_benchmarks_bulk.dat"};
 
             const auto testSchema = createSchema()->addField("f0", BasicType::UINT64);
             const auto bufferManager = Memory::BufferManager::create(bufferSize, numBuffers);
@@ -861,7 +867,6 @@ TEST_F(MicroBenchmarksTest, bulkWriteTest)
             }
 
             createMeasurementsCSV(execTimesInMs, 8, createMeasurementsFileName<NO_SEPARATION>("BulkWriteTest", bufferSize, dataSize, {}));
-            execTimesInMs.clear();
         }
     }
 }
