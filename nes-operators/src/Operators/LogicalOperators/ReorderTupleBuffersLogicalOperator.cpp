@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/ReorderBuffersLogicalOperator.hpp>
+#include <sstream>
 
 namespace NES {
 
