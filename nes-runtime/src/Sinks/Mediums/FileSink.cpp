@@ -52,7 +52,9 @@ FileSink::FileSink(SinkFormatPtr format,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  numberOfOrigins),
-      filePath(filePath), append(append), timestampAndWriteToSocket(timestampAndWriteToSocket) {}
+      filePath(filePath), append(append), timestampAndWriteToSocket(true) {
+    (void) timestampAndWriteToSocket;
+}
 
 std::string FileSink::toString() const {
     std::stringstream ss;
@@ -63,7 +65,7 @@ std::string FileSink::toString() const {
 }
 
 void FileSink::setup() {
-    NES_DEBUG("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
+    NES_ERROR("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
               filePath,
               sinkFormat->getSchemaPtr()->toString(),
               sinkFormat->toString(),
@@ -121,46 +123,16 @@ if (!timestampAndWriteToSocket) {
     //        return;
     //    }
 
-    NES_INFO("Connecting to tcp socket")
+    NES_ERROR("Connecting to tcp socket on worker {}", nodeEngine->getNodeId());
     //todo: this will not work for multiple sinks
-    if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
-        NES_INFO("No existing tcp descriptor, opening one now")
-
-        std::stringstream ss(filePath);
-        std::string portString;
-        while(std::getline(ss, portString, ':')) {
-            NES_INFO("Port string {}", portString)
-        }
-        auto port = std::stoi(portString);
-
-        // Create a TCP socket
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd == -1) {
-            NES_ERROR("could not open socket for tcp sink");
-            perror("could not open socket for tcp sink");
-            return;
-        }
-
-        // Specify the address and port of the server
-        struct sockaddr_in server_addr;
-        memset(&server_addr, 0, sizeof(server_addr));
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Example IP address
-        server_addr.sin_port = htons(port);                 // Example port number
-
-        // Connect to the server
-        if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
-            NES_ERROR("could not connect to socket for tcp sink")
-            perror("could not connect to socket for tcp sink");
-            close(sockfd);
-            return;
-        }
-        this->nodeEngine->setTcpDescriptor(filePath, sockfd);
-        NES_ERROR("Created new tcp descriptor {} for {}", sockfd, filePath)
-    } else {
-        sockfd = this->nodeEngine->getTcpDescriptor(filePath).value();
-        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
-    }
+//    if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
+////    if (true) {
+//    } else {
+//        sockfd = this->nodeEngine->getTcpDescriptor(filePath).value();
+//        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
+//    }
+    //get it once
+        auto sockfd = nodeEngine->getTcpDescriptor(filePath);
 }
 }
 
@@ -183,8 +155,9 @@ struct Record {
 };
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    auto sockfd = nodeEngine->getTcpDescriptor(filePath);
     if (timestampAndWriteToSocket) {
-        NES_DEBUG("write data to sink with descriptor {} for {}", sockfd, filePath)
+        NES_DEBUG("write data to sink with descriptor {} for {}", *sockfd, filePath)
         std::unique_lock lock(writeMutex);
 //        std::string bufferContent;
         //auto schema = sinkFormat->getSchemaPtr();
@@ -200,18 +173,20 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
         }
-        ssize_t bytes_written = write(sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
+//        NES_ERROR("Writing to tcp sink");
+        ssize_t bytes_written = write(*sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
+//        NES_ERROR("{} bytes written to tcp sink", bytes_written);
         if (bytes_written == -1) {
             NES_ERROR("Could not write to socket in sink")
             perror("write");
-            close(sockfd);
+            close(*sockfd);
             return 1;
         }
 
         //        receivedBuffers.push_back(bufferContent);
         //        arrivalTimestamps.push_back(getTimestamp());
 
-        NES_DEBUG("finished writing to sink with descriptor {} for {}", sockfd, filePath)
+        NES_DEBUG("finished writing to sink with descriptor {} for {}", *sockfd, filePath)
         return true;
     }
     return writeDataToFile(inputBuffer);

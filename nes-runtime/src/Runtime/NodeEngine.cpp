@@ -40,6 +40,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
 
 namespace NES::Runtime {
 
@@ -501,7 +504,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         bufferManager->destroy();
     }
     for (auto [name, descriptor] : tcpDescriptor) {
-        close(descriptor);
+        close(*descriptor.wlock());
     }
     // if (tcpDescriptor.has_value()) {
     //     close(tcpDescriptor.value());
@@ -838,21 +841,54 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
 
-std::optional<int> NodeEngine::getTcpDescriptor(std::string sourceName) {
+folly::Synchronized<int>::LockedPtr NodeEngine::getTcpDescriptor(std::string filePath) {
     std::unique_lock lock(tcpDescriptorMutex);
-    if (tcpDescriptor.contains(sourceName)) {
-        return tcpDescriptor.at(sourceName);
+    if (tcpDescriptor.contains(filePath)) {
+        return tcpDescriptor.at(filePath).wlock();
     }
-    return std::nullopt;
+    NES_INFO("No existing tcp descriptor, opening one now")
+
+    std::stringstream ss(filePath);
+    std::string portString;
+    while(std::getline(ss, portString, ':')) {
+        NES_ERROR("Port string {}", portString)
+    }
+    auto port = std::stoi(portString);
+
+    // Create a TCP socket
+    auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        NES_ERROR("could not open socket for tcp sink");
+        perror("could not open socket for tcp sink");
+        NES_FATAL_ERROR("could not open sockfd")
+    }
+
+    // Specify the address and port of the server
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Example IP address
+    server_addr.sin_port = htons(port);                 // Example port number
+
+    // Connect to the server
+    if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+        NES_ERROR("could not connect to socket for tcp sink")
+        perror("could not connect to socket for tcp sink");
+        close(sockfd);
+        NES_FATAL_ERROR("could not connect sockfd")
+    }
+    NES_ERROR("Created new tcp descriptor {} for {}", sockfd, filePath);
+    tcpDescriptor.insert({filePath, folly::Synchronized(sockfd)});
+    return tcpDescriptor.at(filePath).wlock();
 }
 
-void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
-    std::unique_lock lock(tcpDescriptorMutex);
-    if (this->tcpDescriptor.contains(sourceName)) {
-        NES_ERROR("NodeEngine: TCP descriptor already set");
-    }
-    this->tcpDescriptor.insert({sourceName, tcpDescriptor});
-}
+//void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
+//    std::unique_lock lock(tcpDescriptorMutex);
+//    if (this->tcpDescriptor.contains(sourceName)) {
+//        NES_ERROR("NodeEngine: TCP descriptor already set");
+//    }
+//    this->tcpDescriptor.insert({sourceName, tcpDescriptor});
+//}
 
 const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
@@ -937,6 +973,7 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
             }
         }
     }
+    NES_ERROR("finished adding marker, status = {}", addedMarker);
     return addedMarker;
 }
 

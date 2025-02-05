@@ -157,6 +157,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
         monitoringAgent->addMonitoringStreams(workerConfig);
 
+        //todo: remove
+        //workerConfig->numWorkerThreads.setValue(1);
+
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
         if (metricStore != nullptr) {

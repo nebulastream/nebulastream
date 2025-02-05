@@ -38,8 +38,10 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                bool shouldPropagateMarker,
                                const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
 
+    NES_ERROR("closing network channel")
     auto events = 0;
     if (terminationType == Runtime::QueryTerminationType::Reconfiguration && !isEventOnly) {
+        NES_ERROR("reconfiguration set and marker = ", reconfigurationMarker.has_value());
         NES_ASSERT((reconfigurationMarker.has_value()),
                    "Reconfiguration marker must be provided for reconfiguration of data channels");
         if (shouldPropagateMarker) {
@@ -48,6 +50,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
     } else {
         NES_ASSERT(!reconfigurationMarker.has_value(), "Reconfiguration marker must not be provided for non-reconfiguration");
     }
+    NES_ERROR("events = {}", events)
 
     if (isClosed) {
         return;
@@ -93,7 +96,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
                 SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
                 DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
                 DecomposedQueryPlanVersion decomposedQueryPlanVersion;
-                std::vector<NetworkSinkUpdateInfo> sinkUpdates;
+                std::vector<NetworkSinkUpdateInfo> sinkUpdates = {};
 
                 auto metadata = msg->reconfigurationMetadata;
                 if (metadata->instanceOf<DrainQueryMetadata>()) {
@@ -121,7 +124,8 @@ void BaseNetworkChannel::close(bool isEventOnly,
                 }
 
                 //check if we reached the last element
-                if (count < events - 1) {
+                if ((count + 1) < events) {
+                    NES_ERROR("Inserting event {}/{}, more messages (events) to follow", count, events)
                     //if this is not the last message, send with send more flag
                     sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
                                                                                              key,
@@ -134,11 +138,20 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                              decomposedQueryPlanVersion,
                                                                                              sinkUpdates.size());
 
-                    for (auto& update : sinkUpdates) {
-                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
-                    }
+//                    for (auto& update : sinkUpdates) {
+//                        NES_ERROR("Inserting update, more messages (updates and events) to follow")
+//                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+//                                                                                 update.nodeLocation,
+//                                                                                 update.nesPartition,
+//                                                                                 update.waitTime,
+//                                                                                 update.retryTimes,
+//                                                                                 update.version,
+//                                                                                 update.uniqueNetworkSinkId,
+//                                                                                 update.numberOfOrigins);
+//                    }
                 } else {
-                    if (sinkUpdates.empty()) {
+//                    if (sinkUpdates.empty()) {
+                        NES_ERROR("Inserting event {}/{}, no more messages to follow", count, events)
                         //send the last element without send more flag
                         sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
                                                                                    key,
@@ -150,28 +163,45 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                    decomposedQueryId,
                                                                                    decomposedQueryPlanVersion,
                                                                                    sinkUpdates.size());
-                    } else {
-                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
-                                                                                                 key,
-                                                                                                 queryState,
-                                                                                                 metadataType,
-                                                                                                 numberOfSources,
-                                                                                                 workerId,
-                                                                                                 sharedQueryId,
-                                                                                                 decomposedQueryId,
-                                                                                                 decomposedQueryPlanVersion,
-                                                                                                 sinkUpdates.size());
-
-                        auto updateCount = 0;
-                        for (auto& update : sinkUpdates) {
-                            if (count < events - 1) {
-                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
-                            } else {
-                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket, update);
-                            }
-                            updateCount++;
-                        }
-                    }
+//                    } else {
+//                        NES_ERROR("Inserting event {}/{}, last event but updates to follwo", count, events)
+//                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
+//                                                                                                 key,
+//                                                                                                 queryState,
+//                                                                                                 metadataType,
+//                                                                                                 numberOfSources,
+//                                                                                                 workerId,
+//                                                                                                 sharedQueryId,
+//                                                                                                 decomposedQueryId,
+//                                                                                                 decomposedQueryPlanVersion,
+//                                                                                                 sinkUpdates.size());
+//
+//                        uint64_t updateCount = 0;
+//                        for (auto& update : sinkUpdates) {
+//                            if ((updateCount + 1) < (sinkUpdates.size())) {
+//                                NES_ERROR("Inserting update {}/{}, more updates to follwo", count, sinkUpdates.size())
+//                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+//                                                                                         update.nodeLocation,
+//                                                                                         update.nesPartition,
+//                                                                                         update.waitTime,
+//                                                                                         update.retryTimes,
+//                                                                                         update.version,
+//                                                                                         update.uniqueNetworkSinkId,
+//                                                                                         update.numberOfOrigins);
+//                            } else {
+//                                NES_ERROR("Inserting update {}/{}, last message", count, sinkUpdates.size())
+//                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket,
+//                                                                           update.nodeLocation,
+//                                                                           update.nesPartition,
+//                                                                           update.waitTime,
+//                                                                           update.retryTimes,
+//                                                                           update.version,
+//                                                                           update.uniqueNetworkSinkId,
+//                                                                           update.numberOfOrigins);
+//                            }
+//                            updateCount++;
+//                        }
+//                    }
                 }
                 ++count;
             }
@@ -179,7 +209,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
     }
 
     zmqSocket.close();
-    NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
+    NES_ERROR("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;
 }
 }// namespace NES::Network::detail

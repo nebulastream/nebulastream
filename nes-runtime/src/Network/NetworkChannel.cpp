@@ -16,6 +16,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NesThread.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <future>
 
 namespace NES::Network {
@@ -35,139 +36,175 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         uint8_t retryTimes,
                                         DecomposedQueryPlanVersion version = 0,
                                         std::optional<std::future<bool>> abortConnection = std::nullopt) {
-    NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
-                    "Cannot use indefinite retries without supplying a future to abort connection");
-    std::chrono::milliseconds backOffTime = waitTime;
-    constexpr auto nameHelper = []() {
-        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
-            return "EventOnlyNetworkChannel";
-        } else {
-            return "DataChannel";
-        }
-    };
-    constexpr auto channelName = nameHelper();
     try {
-        const int linger = DEFAULT_LINGER_VALUE;
-        const int rcvtimeo = DEFAULT_RCVTIMEO_VALUE;
-        ChannelId channelId(nesPartition, Runtime::NesThread::getId());
-        zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
-        zmqSocket.set(zmq::sockopt::linger, linger);
-        // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
-        // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
-        // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
-        zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
-        // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
-        // until more space is available
-        if (highWaterMark > 0) {
-            zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
-        }
-        zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
-        zmqSocket.connect(socketAddr);
-        int i = 0;
-        constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
-                                                                   : Network::Messages::ChannelType::DataChannel;
-        //if retry times are set to 0, keep retrying indefinitely
-        while (i < retryTimes || retryTimes == 0) {
-            //if the thread creater requested to abort, return nullptr
-            if (abortConnection.has_value()
-                && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-                NES_DEBUG("Aborting network channel connection process on caller request");
-                return nullptr;
+
+        NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
+                        "Cannot use indefinite retries without suppliying a future to abort connection");
+        std::chrono::milliseconds backOffTime = waitTime;
+        constexpr auto nameHelper = []() {
+            if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
+                return "EventOnlyNetworkChannel";
+            } else {
+                return "DataChannel";
             }
+        };
+        constexpr auto channelName = nameHelper();
+        try {
+            const int linger = DEFAULT_LINGER_VALUE;
+            const int rcvtimeo = DEFAULT_RCVTIMEO_VALUE;
+            ChannelId channelId(nesPartition, Runtime::NesThread::getId());
+            zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
+            zmqSocket.set(zmq::sockopt::linger, linger);
+            // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
+            // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
+            // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
+            zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
+            // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
+            // until more space is available
+            if (highWaterMark > 0) {
+                zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
+            }
+            zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
+            zmqSocket.connect(socketAddr);
+            int i = 0;
+            constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
+                                                                       : Network::Messages::ChannelType::DataChannel;
+            //if retry times are set to 0, keep retrying indefinitely
+            while (i < retryTimes || retryTimes == 0) {
+                //if the thread creater requested to abort, return nullptr
+                if (abortConnection.has_value()
+                    && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                    NES_DEBUG("Aborting network channel connection process on caller request");
+                    return nullptr;
+                }
 
-            sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode, version);
+                sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode, version);
 
-            zmq::message_t recvHeaderMsg;
-            auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
-            if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                zmq::message_t recvHeaderMsg;
+                auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
+                //if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                 if (!optRecvStatus.has_value()) {
-                    NES_DEBUG("recv failed on network channel");
-                    return nullptr;
-                }
-            }
-            NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
-
-            auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
-
-            if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
-                NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
-            }
-
-            switch (recvHeader->getMsgType()) {
-                case Messages::MessageType::ServerReady: {
-                    zmq::message_t recvMsg;
-                    auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
-                    NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
-                    auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
-                    // check if server responds with a ServerReadyMessage
-                    // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-                    if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
-                        NES_ERROR("{}: Connection failed with server {} for {}"
-                                  "->Wrong server ready message! Reason: Partitions are not matching",
-                                  channelName,
-                                  socketAddr,
-                                  channelId.getNesPartition().toString());
-                        break;
+                    NES_DEBUG("recv failed on network channel {}", magic_enum::enum_name(mode));
+                    if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                        zmqSocket.close();
+                        return nullptr;
                     }
-                    NES_DEBUG("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
-                    return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
+                    backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                    continue;
                 }
-                case Messages::MessageType::ErrorMessage: {
-                    // if server receives a message that an error occurred
-                    zmq::message_t errorEnvelope;
-                    auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
-                    NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
-                    auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
-                    if (errorMsg.isPartitionDeleted()) {
-                        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
-                            // for an event-only channel it's ok to get this message
-                            // it means the producer is already done so, it won't be able
-                            // to receive any event. We should figure out if this case must be
-                            // handled somewhere else. For instance, what does this mean for FT and upstream backup?
-                            NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
-                            return nullptr;
+                //}
+                NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
+
+                auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
+
+                if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+                    NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
+                }
+
+                switch (recvHeader->getMsgType()) {
+                    case Messages::MessageType::ServerReady: {
+                        zmq::message_t recvMsg;
+                        auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
+                        //todo: failure here, make this more robust?
+                        if (!optRecvStatus2.has_value()) {
+                            NES_DEBUG("recv failed on network channel");
+                            if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                zmqSocket.close();
+                                return nullptr;
+                            }
+                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                            continue;
                         }
+                        NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
+                        auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
+                        // check if server responds with a ServerReadyMessage
+                        // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
+                        if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
+                            NES_ERROR("{}: Connection failed with server {} for {}"
+                                      "->Wrong server ready message! Reason: Partitions are not matching",
+                                      channelName,
+                                      socketAddr,
+                                      channelId.getNesPartition().toString());
+                            break;
+                        }
+                        NES_DEBUG("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
+                        return std::make_unique<T>(std::move(zmqSocket),
+                                                   channelId,
+                                                   std::move(socketAddr),
+                                                   std::move(bufferManager));
                     }
-                    if (errorMsg.isVersionMismatch()) {
-                        NES_INFO("Receiver version does not match. Keep retrying until the new version has been started on the "
-                                 "receiver side",
-                                 socketAddr);
+                    case Messages::MessageType::ErrorMessage: {
+                        // if server receives a message that an error occurred
+                        zmq::message_t errorEnvelope;
+                        auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
+                        if (!optRecvStatus3.has_value()) {
+                            NES_DEBUG("recv failed on network channel");
+                            if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                zmqSocket.close();
+                                return nullptr;
+                            }
+                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                            continue;
+                        }
+                        NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
+                        auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
+                        if (errorMsg.isPartitionDeleted()) {
+                            if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
+                                // for an event-only channel it's ok to get this message
+                                // it means the producer is already done so it wont be able
+                                // to receive any event. We should figure out if this case must be
+                                // handled somewhere else. For instance, what does this mean for FT and upstream backup?
+                                NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
+                                zmqSocket.close();
+                                return nullptr;
+                            }
+                        }
+                        if (errorMsg.isVersionMismatch()) {
+                            NES_INFO(
+                                "Receiver version does not match. Keep retrying until the new version has been started on the "
+                                "receiver side",
+                                socketAddr);
+                            break;
+                        }
+
+                        NES_WARNING("{}: Received error from server-> {}", channelName, errorMsg.getErrorTypeAsString());
+                        protocol.onChannelError(errorMsg);
                         break;
                     }
-
-                    NES_WARNING("{}: Received error from server-> {}", channelName, errorMsg.getErrorTypeAsString());
-                    protocol.onChannelError(errorMsg);
-                    break;
+                    default: {
+                        // got a wrong message type!
+                        NES_ERROR("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
+                        zmqSocket.close();
+                        return nullptr;
+                    }
                 }
-                default: {
-                    // got a wrong message type!
-                    NES_ERROR("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
-                    return nullptr;
-                }
+                NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} of {} backoff time {}",
+                          channelName,
+                          i,
+                          retryTimes,
+                          std::to_string(backOffTime.count()));
+                std::this_thread::sleep_for(backOffTime);// TODO make this async
+                backOffTime *= 2;
+                backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                i++;
             }
-            NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} of {} backoff time {}",
-                      channelName,
-                      i,
-                      retryTimes,
-                      std::to_string(backOffTime.count()));
-            std::this_thread::sleep_for(backOffTime);// TODO make this async
-            backOffTime *= 2;
-            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
-            i++;
+            NES_ERROR("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);
+            zmqSocket.close();
+            return nullptr;
+        } catch (zmq::error_t& err) {
+            if (err.num() == ETERM) {
+                NES_DEBUG("{}: Zmq context closed!", channelName);
+            } else {
+                NES_ERROR("{}: Zmq error {}", channelName, err.what());
+                throw;
+            }
+            return nullptr;
         }
-        NES_ERROR("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);
-        zmqSocket.close();
         return nullptr;
-    } catch (zmq::error_t& err) {
-        if (err.num() == ETERM) {
-            NES_DEBUG("{}: Zmq context closed!", channelName);
-        } else {
-            NES_ERROR("{}: Zmq error {}", channelName, err.what());
-            throw;
-        }
+    } catch (std::exception& e) {
+        NES_DEBUG("could not create network channel: {}", e.what());
         return nullptr;
     }
-    return nullptr;
 }
 
 }// namespace detail
@@ -178,7 +215,12 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
                                Runtime::BufferManagerPtr bufferManager)
     : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {}
 
-NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId); }
+NetworkChannel::~NetworkChannel() {
+    if (!this->isClosed) {
+        NES_ERROR("trying to destroy non closed channel");
+    }
+    NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId);
+}
 
 void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
                            uint16_t numSendingThreads,

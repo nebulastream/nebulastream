@@ -413,7 +413,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief get the opened tcp descriptor if there is one
      */
-    std::optional<int> getTcpDescriptor(std::string sourceName);
+    folly::Synchronized<int>::LockedPtr getTcpDescriptor(std::string sourceName);
     void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
     bool isSimulatingBuffering();
@@ -458,7 +458,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool timestampOutPutSources;
-    std::map<std::string, int> tcpDescriptor;
+    std::map<std::string, folly::Synchronized<int>> tcpDescriptor;
     std::mutex tcpDescriptorMutex;
     std::mutex parentMutex;
     uint64_t parentId;

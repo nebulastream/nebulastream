@@ -104,7 +104,7 @@ class FileSink : public SinkMedium {
     bool isOpen{false};
     std::vector<std::basic_string<char>> receivedBuffers;
     std::vector<uint64_t> arrivalTimestamps;
-    int sockfd;
+//    int sockfd;
     bool timestampAndWriteToSocket;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
