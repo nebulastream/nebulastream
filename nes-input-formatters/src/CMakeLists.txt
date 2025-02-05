@@ -15,4 +15,5 @@ add_source_files(nes-input-formatters
         CSVInputFormatter.cpp
         InputFormatterProvider.cpp
         InputFormatterOperatorHandler.cpp
+        SequenceShredder.cpp
 )
