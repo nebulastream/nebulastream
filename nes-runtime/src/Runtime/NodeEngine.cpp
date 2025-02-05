@@ -958,7 +958,8 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                                                            sinkUpdateInfo.retryTimes,
                                                                            sinkUpdateInfo.version,
                                                                            sinkUpdateInfo.numberOfOrigins,
-                                                                           sinkUpdateInfo.uniqueNetworkSinkId)
+                                                                           sinkUpdateInfo.uniqueNetworkSinkId,
+                                                                           networkSink->getDownstreamLogicalOperatorId())//FIXME this should not be the old one
                                         ->as<Network::NetworkSinkDescriptor>();
                                 if (networkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
                                     updateExecutablePlanVersion(idAndVersion, updateEvent->decomposedQueryPlanVersion);

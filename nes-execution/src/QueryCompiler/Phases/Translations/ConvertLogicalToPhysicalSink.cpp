@@ -201,7 +201,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getVersion(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
-                                 networkSinkDescriptor->getRetryTimes());
+                                 networkSinkDescriptor->getRetryTimes(),
+                                 networkSinkDescriptor->getDownstreamOperatorId());
     } else if (sinkDescriptor->instanceOf<Statistic::StatisticSinkDescriptor>()) {
         const auto statisticSinkDescriptor = sinkDescriptor->as<Statistic::StatisticSinkDescriptor>();
         return createStatisticSink(schema,

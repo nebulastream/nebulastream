@@ -243,7 +243,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               DecomposedQueryPlanVersion version,
                               uint64_t numberOfOrigins,
-                              uint8_t retryTimes) {
+                              uint8_t retryTimes,
+                              OperatorId downstreamLogicalOperatorId) {
     return std::make_shared<Network::NetworkSink>(schema,
                                                   uniqueNetworkSinkDescriptorId,
                                                   sharedQueryId,
@@ -256,7 +257,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   waitTime,
                                                   retryTimes,
                                                   numberOfOrigins,
-                                                  version);
+                                                  version,
+                                                  downstreamLogicalOperatorId);
 }
 
 DataSinkPtr createStatisticSink(const SchemaPtr& schema,

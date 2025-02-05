@@ -611,7 +611,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 14. create network sink operator to attach.
                             auto networkSinkOperator = createNetworkSinkOperator(sharedQueryId,
                                                                                  networkSourceOperatorId,
-                                                                                 topologyNodesBetween[pathIndex + 1]);
+                                                                                 topologyNodesBetween[pathIndex + 1],
+                                                                                 downStreamNonSystemOperatorId);
 
                             // 14. Find the upstream operator to connect in the matched query sub plan
                             //set properties on new sink
@@ -678,7 +679,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 15. create network sink operator to attach.
                             auto networkSinkOperator = createNetworkSinkOperator(sharedQueryId,
                                                                                  networkSourceOperatorId,
-                                                                                 topologyNodesBetween[pathIndex + 1]);
+                                                                                 topologyNodesBetween[pathIndex + 1],
+                                                                                 downStreamNonSystemOperatorId);
 
                             // 16. add network source as the child
                             networkSinkOperator->addChild(networkSourceOperator);
@@ -953,7 +955,8 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     SINK_RETRIES,
                                                     decomposedQueryPlanVersion,
                                                     newNetworkSinkDescriptor->getNumberOfOrigins(),
-                                                    newId);
+                                                    newId,
+                                                    newNetworkSinkDescriptor->getDownstreamOperatorId());
                                                 sinkOperator->setSinkDescriptor(mergedNetworkSinkDescriptor);
                                                 sinkOperator->setId(getNextOperatorId());
                                             }
@@ -1138,7 +1141,8 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVer
                                                        SINK_RETRIES,
                                                        querySubPlanVersion,
                                                        newNetworkSinkDescriptor->getNumberOfOrigins(),
-                                                       existingNetworkSinkDescriptor->getUniqueId());
+                                                       existingNetworkSinkDescriptor->getUniqueId(),
+                                                       newNetworkSinkDescriptor->getDownstreamOperatorId());
             existingSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
             computedQuerySubPlan->removeAsRootOperator(newNetworkSinkOperator->getId());
             replacedOperator = true;
@@ -1162,7 +1166,8 @@ TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId
 
 LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(SharedQueryId sharedQueryId,
                                                                             OperatorId sourceOperatorId,
-                                                                            const TopologyNodePtr& sourceTopologyNode) {
+                                                                            const TopologyNodePtr& sourceTopologyNode,
+                                                                            OperatorId downstreamLogicalOperatorId) {
 
     NES_TRACE("create Network Sink operator");
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
@@ -1181,7 +1186,7 @@ LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(Shar
                                                                                              SINK_RETRIES,
                                                                                              sinkVersion,
                                                                                              numberOfOrigins,
-                                                                                             id),
+                                                                                             id, downstreamLogicalOperatorId),
                                                       INVALID_WORKER_NODE_ID,
                                                       id);
 }

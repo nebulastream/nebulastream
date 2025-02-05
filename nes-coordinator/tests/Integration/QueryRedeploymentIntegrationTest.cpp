@@ -430,7 +430,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
                                                                                 retryTimes,
                                                                                 0,
                                                                                 0,
-                                                                                OperatorId(networkSinkWrk3Id));
+                                                                                OperatorId(networkSinkWrk3Id),
+                                                                                OperatorId(8888));
         auto networkSinkOperatorNodeWrk3 =
             std::make_shared<SinkLogicalOperator>(networkSinkDescriptorWrk3, OperatorId(networkSinkWrk3Id));
         queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
@@ -450,7 +451,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
                                                                         retryTimes,
                                                                         0,
                                                                         0,
-                                                                        OperatorId(0));
+                                                                        OperatorId(0),
+                                                                        OperatorId(8888));
         auto newNetworkSinkDescriptor = std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(newSinkDescriptor);
 
         //create marker with events to undeploy obsolete plans
@@ -1032,7 +1034,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
                                                                                     retryTimes,
                                                                                     0,
                                                                                     0,
-                                                                                    OperatorId(networkSinkWrk3Id));
+                                                                                    OperatorId(networkSinkWrk3Id),
+                                                                                    OperatorId(8888));
             auto networkSinkOperatorNodeWrk3 =
                 std::make_shared<SinkLogicalOperator>(networkSinkDescriptorWrk3, OperatorId(networkSinkWrk3Id));
             queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
@@ -1052,7 +1055,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
                                                                             retryTimes,
                                                                             0,
                                                                             0,
-                                                                            OperatorId(0));
+                                                                            OperatorId(0),
+                                                                            OperatorId(8888));
             newNetworkSinkDescriptor = std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(newSinkDescriptor);
 
             //create marker with events to undeploy obsolete plans

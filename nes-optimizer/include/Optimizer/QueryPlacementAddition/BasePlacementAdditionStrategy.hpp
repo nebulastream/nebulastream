@@ -209,7 +209,8 @@ class BasePlacementAdditionStrategy {
      */
     static LogicalOperatorPtr createNetworkSinkOperator(SharedQueryId sharedQueryId,
                                                         OperatorId sourceOperatorId,
-                                                        const TopologyNodePtr& sourceTopologyNode);
+                                                        const TopologyNodePtr& sourceTopologyNode,
+                                                        OperatorId downstreamLogicalOperatorId);
 
     /**
      * @brief create a new network source operator

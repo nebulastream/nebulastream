@@ -324,6 +324,7 @@ message SerializableOperator{
       uint32 retryTimes = 4;
       uint64 uniqueNetworkSinkDescriptorId = 5;
       uint64 version = 6;
+      uint64 downstreamLogicalId = 7;
     }
 
     message StatisticSinkDescriptor {

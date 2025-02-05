@@ -54,7 +54,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         DecomposedQueryPlanVersion version);
+                         DecomposedQueryPlanVersion version,
+                         OperatorId downstreamLogicalOperatorId);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -173,6 +174,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
+    OperatorId getDownstreamLogicalOperatorId();
+
   private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
@@ -215,6 +218,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+    OperatorId downstreamOperatorId;
     bool checkParentDiff(int64_t receiver, int64_t parent);
 };
 }// namespace NES::Network

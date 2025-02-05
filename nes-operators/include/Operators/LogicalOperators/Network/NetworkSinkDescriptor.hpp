@@ -44,7 +44,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     uint32_t retryTimes,
                                     DecomposedQueryPlanVersion version,
                                     uint64_t numberOfOrigins,
-                                    OperatorId uniqueId);
+                                    OperatorId uniqueId,
+                                    OperatorId downstreamLogicalOperatorId);
 
     /**
      * @brief returns the string representation of the network sink
@@ -95,6 +96,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     OperatorId getUniqueId() const;
 
+    OperatorId getDownstreamOperatorId() const;
+
   private:
     explicit NetworkSinkDescriptor(const NodeLocation& nodeLocation,
                                    const NesPartition& nesPartition,
@@ -102,7 +105,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    uint32_t retryTimes,
                                    DecomposedQueryPlanVersion version,
                                    uint64_t numberOfOrigins,
-                                   OperatorId uniqueId);
+                                   OperatorId uniqueId,
+                                   OperatorId downstreamLogicalOperatorId);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
@@ -110,6 +114,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint32_t retryTimes;
     DecomposedQueryPlanVersion version;
     OperatorId uniqueNetworkSinkId;
+    OperatorId downstreamLogicalOperatorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

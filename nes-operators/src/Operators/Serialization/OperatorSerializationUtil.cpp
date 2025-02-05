@@ -1431,6 +1431,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         serializedSinkDescriptor.set_version(networkSinkDescriptor->getVersion());
         serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueId().getRawValue());
+        serializedSinkDescriptor.set_downstreamlogicalid(networkSinkDescriptor->getDownstreamOperatorId().getRawValue());
         //pack to output
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
@@ -1571,7 +1572,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                                       serializedSinkDescriptor.retrytimes(),
                                                       serializedSinkDescriptor.version(),
                                                       deserializedNumberOfOrigins,
-                                                      OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()));
+                                                      OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()),
+                                                      OperatorId(serializedSinkDescriptor.downstreamlogicalid()));
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();

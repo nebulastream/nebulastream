@@ -252,7 +252,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               DecomposedQueryPlanVersion version,
                               uint64_t numberOfOrigins = 1,
-                              uint8_t retryTimes = 5);
+                              uint8_t retryTimes = 5,
+                              OperatorId downstreamLogicalOperatorId = INVALID_OPERATOR_ID);
 
 /**
  * @brief create a monitoring data sink

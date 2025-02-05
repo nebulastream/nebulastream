@@ -24,9 +24,10 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(const NodeLocation& nodeLocation,
                                              uint32_t retryTimes,
                                              DecomposedQueryPlanVersion version,
                                              uint64_t numberOfOrigins,
-                                             OperatorId uniqueId)
+                                             OperatorId uniqueId,
+                                             OperatorId downstreamLogicalOperatorId)
     : SinkDescriptor(numberOfOrigins), nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime),
-      retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
+      retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId), downstreamLogicalOperatorId(downstreamLogicalOperatorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(const NodeLocation& nodeLocation,
                                                 const NesPartition& nesPartition,
@@ -34,9 +35,10 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(const NodeLocation& nodeLocation
                                                 uint32_t retryTimes,
                                                 DecomposedQueryPlanVersion version,
                                                 uint64_t numberOfOrigins,
-                                                OperatorId uniqueId) {
+                                                OperatorId uniqueId,
+                                                OperatorId downstreamLogicalOperatorId) {
     return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId));
+        NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId, downstreamLogicalOperatorId));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -67,4 +69,7 @@ uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 uint16_t NetworkSinkDescriptor::getVersion() const { return version; }
 
 OperatorId NetworkSinkDescriptor::getUniqueId() const { return uniqueNetworkSinkId; }
+
+OperatorId NetworkSinkDescriptor::getDownstreamOperatorId() const { return downstreamLogicalOperatorId; }
+
 }// namespace NES::Network
