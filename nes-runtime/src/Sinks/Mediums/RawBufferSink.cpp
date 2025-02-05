@@ -42,7 +42,10 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  numberOfOrigins),
-      filePath(filePath), append(append) {}
+      filePath(filePath), append(append) {
+    lastWritten = 0;
+//    bufferStorage.reserve(1000);
+}
 
 RawBufferSink::~RawBufferSink() {}
 
@@ -101,6 +104,9 @@ void RawBufferSink::shutdown() {
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
+
+    // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
@@ -117,6 +123,10 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
 
+//    if (bufferStorage.capacity() <= bufferSeqNumber) {
+//        bufferStorage.reserve(bufferStorage.capacity() * 2);
+//    }
+
     // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
     const auto seqData = SequenceData(bufferSeqNumber, 1, true);
     // insert input buffer sequence number to the queue
@@ -131,14 +141,20 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // check if top value in the queue has changed after adding new sequence number
     if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
         // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-        while ((lastWritten + 1) <= currentSeqNumberAfterAdding) {
-            // get tuple buffer with next sequence number after lastWritten and update lastWritten
-            auto nextTupleBufferToBeEmitted = bufferStorage[++lastWritten];
-            // emit next tuple buffer
-            // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
-            writeToTheFile(nextTupleBufferToBeEmitted);
-            // delete emitted tuple buffer from storage
+        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+
+        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
+        for (auto it = bufferStorage.lower_bound(lastWritten + 1);
+             it != bufferStorage.upper_bound(currentSeqNumberAfterAdding);
+             ++it) {
+            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
         }
+
+        // Write all buffers at once
+        writeBulkToFile(bulkWriteBatch);
+
+        // Update lastWritten to the latest sequence number
+        lastWritten = currentSeqNumberAfterAdding;
     }
 
     return true;
@@ -171,5 +187,55 @@ bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
     }
     return true;
 }
+
+bool RawBufferSink::writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers) {
+    // NES_ERROR("buffers size {}", buffers.size());
+    if (buffers.empty()) {
+        return false;
+    }
+
+    // Precompute total size needed for bulk write
+    uint64_t totalSize = 0;
+    for (const auto& buf : buffers) {
+        totalSize += (sizeof(uint64_t) * 2) + buf.getBufferSize();
+    }
+
+    // Allocate a single large buffer
+    std::vector<char> bulkBuffer(totalSize);
+    char* writePtr = bulkBuffer.data();
+
+    // Fill the bulk buffer
+    for (const auto& buf : buffers) {
+        uint64_t size = buf.getBufferSize();
+        uint64_t numberOfTuples = buf.getNumberOfTuples();
+
+        std::memcpy(writePtr, &size, sizeof(uint64_t));
+        writePtr += sizeof(uint64_t);
+
+        std::memcpy(writePtr, &numberOfTuples, sizeof(uint64_t));
+        writePtr += sizeof(uint64_t);
+
+        std::memcpy(writePtr, buf.getBuffer(), size);
+        writePtr += size;
+    }
+
+    // Perform a single large file write
+    outputFile.write(bulkBuffer.data(), bulkBuffer.size());
+
+    numberOfWrittenBuffers += buffers.size();
+
+    // Optional: Flush or shutdown logic
+    if (numberOfWrittenBuffers == buffers.front().getWatermark()) {
+        shutdown();
+        isClosed = true;
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                            ).count();
+        NES_ERROR("Finished transferring {} at {}", time, numberOfWrittenBuffers);
+    }
+
+    return true;
+}
+
 
 }// namespace NES
