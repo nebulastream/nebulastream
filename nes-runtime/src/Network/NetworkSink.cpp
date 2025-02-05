@@ -136,7 +136,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         //check if connection was established and buffer it has not yest been established
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
             NES_TRACE("context {} buffering data", workerContext.getId());
-            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+            workerContext.insertIntoReconnectBufferStorage(getDownstreamLogicalOperatorId(), inputBuffer);
             return true;
         }
 
@@ -157,7 +157,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
                   parent,
                   changeCount,
                   actualReconnectCount);
-        workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+        workerContext.insertIntoReconnectBufferStorage(getDownstreamLogicalOperatorId(), inputBuffer);
         return true;
     }
 
@@ -558,7 +558,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
-    auto topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+    auto topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getDownstreamLogicalOperatorId());
 
     NES_INFO("sending buffered data");
     auto numBuffers = 0;
@@ -567,9 +567,9 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
             NES_DEBUG("could not send all data from buffer");
             break;
         }
-        workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+        workerContext.removeBufferFromReconnectBufferStorage(getDownstreamLogicalOperatorId());
         NES_TRACE("buffer sent");
-        topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+        topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getDownstreamLogicalOperatorId());
         numBuffers++;
     }
     NES_DEBUG("Sent {} buffers to node {}", numBuffers, nodeEngine->getParentId());

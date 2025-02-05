@@ -220,6 +220,12 @@ void AbstractQueryManager::destroy() {
     NES_ASSERT2_FMT(successful, "Cannot stop running queryIdAndCatalogEntryMapping upon query manager destruction");
     // 2. attempt transition from Stopped -> Destroyed
     expected = QueryManagerStatus::Stopped;
+
+
+    for (auto [name, info] : tcpSourceInfos) {
+        close(info.wlock()->sockfd);
+    }
+
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Destroyed)) {
         {
             std::scoped_lock locks(queryMutex, statisticsMutex);

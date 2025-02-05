@@ -25,10 +25,14 @@
 #include <Runtime/ThreadPool.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+//#include <bits/socket.h>
 #include <iostream>
 #include <memory>
 #include <utility>
 #include <variant>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 namespace NES::Runtime {
 void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
@@ -232,5 +236,57 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
             .push_back(sourceid);
     }
     sourceToQEPMapping[sourceid] = std::move(newPlans);
+}
+
+folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSourceInfo(std::string sourceName, std::string filePath) {
+    std::unique_lock lock(tcpSourceMutex);
+    if (tcpSourceInfos.contains(sourceName)) {
+        auto locked =  tcpSourceInfos.at(sourceName).wlock();
+//        NES_ASSERT(locked->port == std::stol(filePath))
+        return tcpSourceInfos.at(sourceName).wlock();
+    }
+
+    uint64_t port = std::stol(filePath);
+    // Create a TCP socket
+    if (port != 0) {
+        // Create a TCP socket
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            NES_ERROR("Could not open socket in source")
+            perror("socket");
+            NES_FATAL_ERROR("could not open socket in source");
+        }
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+        // Specify the server address and port
+        struct sockaddr_in server_addr;
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Server IP address
+        server_addr.sin_port = htons(port);
+
+        // Connect to the server
+        if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+            NES_ERROR("Could not connect to socket in source")
+            perror("connect");
+            ::close(sockfd);
+            NES_FATAL_ERROR("could not open socket in source");
+        }
+
+        TcpSourceInfo info {
+            port,
+            sockfd,
+            {},
+            {}
+        };
+
+        tcpSourceInfos.insert({filePath, folly::Synchronized(info)});
+        return tcpSourceInfos.at(filePath).wlock();
+    }
+//    NES_ERROR("Created new tcp descriptor {} for {}", sockfd, filePath);
+    NES_FATAL_ERROR("invalid port");
+    return tcpSourceInfos.at(filePath).wlock();
 }
 }// namespace NES::Runtime

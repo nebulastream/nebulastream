@@ -67,6 +67,13 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this a
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
+struct TcpSourceInfo {
+    uint64_t port;
+    int sockfd;
+    std::vector<uint8_t> incomingBuffer;
+    std::vector<uint8_t> leftOverBytes;
+    uint16_t leftoverByteCount = 0;
+};
 class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>,
                              public Reconfigurable {
   public:
@@ -389,9 +396,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                                                          const ReconfigurationMarker& marker) const;
     std::unordered_set<DecomposedQueryIdWithVersion> getExecutablePlanIdsForSource(DataSourcePtr source) const;
 
+    folly::Synchronized<TcpSourceInfo>::LockedPtr getTcpSourceInfo(std::string sourceName, std::string filePath);
+
     // Map containing persistent source properties
     folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<BasePersistentSourceProperties>>>
         persistentSourceProperties;
+
+    std::mutex tcpSourceMutex;
+    std::map<std::string, folly::Synchronized<TcpSourceInfo>> tcpSourceInfos;
 
   private:
     friend class ThreadPool;

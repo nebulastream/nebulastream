@@ -1048,40 +1048,4 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
-folly::Synchronized<TcpSourceInfo>::LockedPtr NodeEngine::getTcpSourceInfo(std::string sourceName) {
-    std::unique_lock lock(tcpSourceMutex);
-    if (tcpSourceInfos.contains(sourceName)) {
-        return tcpSourceInfos.at(sourceName).wlock();
-    }
-
-    port = std::stol(filePath);
-    // Create a TCP socket
-    if (port != 0) {
-        // Create a TCP socket
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd == -1) {
-            NES_ERROR("Could not open socket in source")
-            perror("socket");
-            return;
-        }
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-
-        // Specify the server address and port
-        struct sockaddr_in server_addr;
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Server IP address
-        server_addr.sin_port = htons(port);
-
-        // Connect to the server
-        if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
-            NES_ERROR("Could not connect to socket in source")
-            perror("connect");
-            ::close(sockfd);
-            return;
-        }
-    }
-}
 }// namespace NES::Runtime
