@@ -113,10 +113,10 @@ class CSVSource : public DataSource {
     uint64_t nextLinesIndex = 0;
     bool addTimeStampsAndReadOnStartup;
     uint64_t port;
-    int sockfd;
-    std::vector<uint8_t> incomingBuffer;
-    std::vector<uint8_t> leftOverBytes;
-    uint16_t leftoverByteCount = 0;
+//    int sockfd;
+//    std::vector<uint8_t> incomingBuffer;
+//    std::vector<uint8_t> leftOverBytes;
+//    uint16_t leftoverByteCount = 0;
     //uint64_t totalTupleCount = 0;
 };
 

@@ -53,6 +53,14 @@ using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 
 namespace Runtime {
 
+struct TcpSourceInfo {
+    uint64_t port;
+    int sockfd;
+    std::vector<uint8_t> incomingBuffer;
+    std::vector<uint8_t> leftOverBytes;
+    uint16_t leftoverByteCount = 0;
+};
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -414,7 +422,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief get the opened tcp descriptor if there is one
      */
     folly::Synchronized<int>::LockedPtr getTcpDescriptor(std::string sourceName);
-    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
+
+    folly::Synchronized<TcpSourceInfo>::LockedPtr getTcpSourceInfo(std::string sourceName);
+//    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
     bool isSimulatingBuffering();
 
@@ -459,7 +469,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool sourceSharing;
     bool timestampOutPutSources;
     std::map<std::string, folly::Synchronized<int>> tcpDescriptor;
+    std::map<std::string, folly::Synchronized<TcpSourceInfo>> tcpSourceInfos;
     std::mutex tcpDescriptorMutex;
+    std::mutex tcpSourceMutex;
     std::mutex parentMutex;
     uint64_t parentId;
     bool connected = true;
