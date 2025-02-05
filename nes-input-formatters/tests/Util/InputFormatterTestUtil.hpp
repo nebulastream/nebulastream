@@ -18,6 +18,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/TestUtil.hpp>
 #include <TestTaskQueue.hpp>
+#include "API/Schema.hpp"
 
 #pragma once
 
@@ -295,7 +296,6 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
     /// validate: actual results vs expected results
-    // auto intPtr = testHandle.resultBuffers->at(0).at(0).template getBuffer<int32_t>();
     const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
     ASSERT_TRUE(validationResult);
     /// clean up

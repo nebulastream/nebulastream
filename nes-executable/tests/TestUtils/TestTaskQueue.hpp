@@ -132,8 +132,9 @@ public:
     NES::WorkerThreadId workerThreadId;
     NES::SequenceNumber sequenceNumber;
     std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
-private:
     NES::Memory::TupleBuffer tupleBuffer;
+
+private:
     std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
 };
 
@@ -278,6 +279,19 @@ public:
 
     ~TestTaskQueue() = default;
 
+
+    void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
+    {
+        enqueueTasks(std::move(pipelineTasks));
+        startProcessing();
+    }
+
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
+    {
+        return std::move(resultBuffers);
+    }
+
+private:
     void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
         for (auto& pipelineTask : pipelineTasks)
@@ -329,17 +343,6 @@ public:
         {
             resultBuffers->at(idxOfWorkerThreadForFlushTask).emplace_back(resultBuffer);
         }
-    }
-
-    void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
-    {
-        enqueueTasks(std::move(pipelineTasks));
-        startProcessing();
-    }
-
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const
-    {
-        return std::move(resultBuffers);
     }
 
 private:

@@ -127,7 +127,7 @@ public:
         }
     }
 
-    void checkAndHandleFullBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+    void checkAndHandleFullBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, const SequenceNumber sequenceNumber)
     {
         const auto availableBytes = tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted;
         const auto isFull = availableBytes < tupleSizeInBytes;
@@ -139,7 +139,7 @@ public:
             /// true triggers adding sequence number, etc.
             pipelineExecutionContext.emitBuffer(
                 getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-            setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+            setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), sequenceNumber);
             currentFieldOffsetTBFormatted = 0;
             numTuplesInTBFormatted = 0;
         }
@@ -149,13 +149,14 @@ public:
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         const std::string& fieldDelimiter,
         const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
-        const std::vector<size_t>& fieldSizes)
+        const std::vector<size_t>& fieldSizes,
+        const SequenceNumber sequenceNumber)
     {
         while (hasOneMoreTupleInRawTB())
         {
             /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
             /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            checkAndHandleFullBuffer(pipelineExecutionContext);
+            checkAndHandleFullBuffer(pipelineExecutionContext, sequenceNumber);
 
             /// Get next tuple
             const auto currentTuple = getNextTuple();
@@ -186,8 +187,9 @@ public:
         return this->tupleBufferRawSV.substr(currentTupleStartrawTB, sizeOfCurrentTuple());
     }
 
-    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
+    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted, const SequenceNumber sequenceNumber)
     {
+        tupleBufferFormatted.setSequenceNumber(sequenceNumber);
         this->tupleBufferFormatted = std::move(tupleBufferFormatted);
     }
 
@@ -454,20 +456,11 @@ void CSVInputFormatter::parseTupleBufferRaw(
     progressTracker.resetForNewRawTB(numBytesInRawTB, rawTB.getBuffer<const char>(), 0, 0, 0);
     const auto sequenceNumberOfBuffer = rawTB.getSequenceNumber().getRawValue();
     constexpr auto maxSequenceNumber = std::numeric_limits<uint64_t>::max();
-    uint32_t offsetOfFirstTupleDelimiter = 0;
-    uint32_t offsetOfLastTupleDelimiter = numBytesInRawTB;
-    offsetOfFirstTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter();
+    const auto hasTupleDelimiter = progressTracker.getOffsetOfFirstTupleDelimiter() != maxSequenceNumber;
+    const uint32_t offsetOfFirstTupleDelimiter = (hasTupleDelimiter) ? progressTracker.getOffsetOfFirstTupleDelimiter() : 0;
+    const uint32_t offsetOfLastTupleDelimiter = (hasTupleDelimiter) ? progressTracker.getOffsetOfLastTupleDelimiter() : numBytesInRawTB;
     /// If the buffer contains a tuple delimiter, find the last tuple delimiter
     /// (0 is a valid index for a first tuple delimiter)
-    if (static_cast<uint64_t>(offsetOfFirstTupleDelimiter) != maxSequenceNumber)
-    {
-        offsetOfLastTupleDelimiter = progressTracker.getOffsetOfLastTupleDelimiter();
-    }
-    else
-    {
-        offsetOfFirstTupleDelimiter = 0;
-    }
-    const auto hasTupleDelimiter = offsetOfFirstTupleDelimiter != 0;
 
     if (hasTupleDelimiter)
     {
@@ -485,7 +478,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
             return;
         }
         /// 0. Allocate formatted buffer to write formatted tuples into.
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), rawTB.getSequenceNumber());
 
         /// 1. Process leading partial tuple if exists
         const auto hasLeadingPartialTuple = (indexOfBuffer != 0);
@@ -502,14 +495,14 @@ void CSVInputFormatter::parseTupleBufferRaw(
             bufferOfSequenceNumber.buffer.getBuffer<const char>(),
             bufferOfSequenceNumber.offsetOfFirstTupleDelimiter + tupleDelimiter.size(),
             bufferOfSequenceNumber.offsetOfLastTupleDelimiter);
-        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes, rawTB.getSequenceNumber());
 
         /// 3. Process trailing  partial tuple if exists
         const auto hasTrailingPartialTuple = indexOfBuffer < buffersToFormat.size() - 1;
         if (hasTrailingPartialTuple)
         {
             /// We first need to check if the tuple can fit into the current formatted buffer
-            progressTracker.checkAndHandleFullBuffer(pipelineExecutionContext);
+            progressTracker.checkAndHandleFullBuffer(pipelineExecutionContext, rawTB.getSequenceNumber());
             processPartialTuple(indexOfBuffer, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
@@ -534,7 +527,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
 
         /// Allocate formatted buffer to write formatted tuples into and process partial tuple.
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), rawTB.getSequenceNumber());
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
@@ -556,7 +549,7 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(const
         firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
     partialTuple.append(firstPartialTuple);
     /// 2. Process all buffers in-between the first and the last
-    for (size_t bufferIndex = 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
+    for (size_t bufferIndex = partialTupleStartIdx + 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
     {
         const auto& currentBuffer = buffersToFormat[bufferIndex];
         const std::string_view intermediatePartialTuple
@@ -587,7 +580,7 @@ void CSVInputFormatter::flushFinalTuple(
         return;
     }
     /// Allocate formatted buffer to write formatted tuples into.
-    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), SequenceNumber(10000)); //Todo: change
     const auto formattedTupleIs = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
     /// Emit formatted buffer with single flushed tuple
     if (formattedTupleIs == FormattedTupleIs::NOT_EMPTY)

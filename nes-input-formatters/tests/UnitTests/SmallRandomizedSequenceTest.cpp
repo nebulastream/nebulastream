@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <utility>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterOperatorHandler.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
@@ -26,9 +27,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
+#include <bits/random.h>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
+#include "Runtime/BufferManager.hpp"
+#include "Sources/SourceHandle.hpp"
 
 
 namespace NES
@@ -80,20 +84,31 @@ public:
         return validParserConfig;
     }
 
-    std::unique_ptr<Sources::SourceHandle> createFileSource(const std::string& filePath, const size_t sizeOfBuffers, const size_t numberOfRequiredBuffers)
+    std::unique_ptr<Sources::SourceHandle>
+    createFileSource(const std::string& filePath, std::shared_ptr<Memory::BufferManager> sourceBufferPool)
     {
         std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
-        std::unordered_map<std::string, std::string> parserConfiguration{{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
         auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
+
+        const auto sourceDescriptor
+            = Sources::SourceDescriptor(schema, "TestSource", "File", std::move(validatedSourceConfiguration));
+
+        return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool));
+    }
+
+    std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask()
+    {
+        std::unordered_map<std::string, std::string> parserConfiguration{
+            {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
         auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-        const auto schema = InputFormatterTestUtil::createSchema(
-            {InputFormatterTestUtil::TestDataTypes::INT32, InputFormatterTestUtil::TestDataTypes::INT32});
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+            validatedParserConfiguration.parserType,
+            schema,
+            validatedParserConfiguration.tupleDelimiter,
+            validatedParserConfiguration.fieldDelimiter);
 
-        const auto sourceDescriptor = Sources::SourceDescriptor(std::move(schema), "TestSource", "File", std::move(validatedSourceConfiguration));
-
-        std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(sizeOfBuffers, numberOfRequiredBuffers);
-        return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, testBufferManager);
+        return std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
     }
 
     void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -125,6 +140,37 @@ public:
             }
         };
     }
+
+    template <bool DEBUG_LOG>
+    void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks) {
+        auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::cout << "Using seed: " << seed << std::endl;
+        // std::mt19937 rng(1738763204471438434);
+        std::mt19937 rng(seed);
+        std::shuffle(pipelineTasks.begin(), pipelineTasks.end(), rng);
+
+        if (DEBUG_LOG)
+        {
+            for (const auto& pipelineTask : pipelineTasks)
+            {
+                auto charBuffer = pipelineTask.tupleBuffer.getBuffer();
+                std::stringstream stringStream;
+                const auto bufferIdx = pipelineTask.tupleBuffer.getSequenceNumber().getRawValue();
+                stringStream << "Start Buffer: " << bufferIdx << std::endl;
+                for (size_t i = 0; i < pipelineTask.tupleBuffer.getNumberOfTuples(); i++)
+                {
+                    stringStream << charBuffer[i];
+                }
+                stringStream << "\nEnd Buffer: " << bufferIdx << std::endl;
+                std::cout << stringStream.str();
+            }
+            std::cout << std::endl;
+        }
+    }
+
+public:
+    std::shared_ptr<Schema> schema = InputFormatterTestUtil::createSchema(
+        {InputFormatterTestUtil::TestDataTypes::INT32, InputFormatterTestUtil::TestDataTypes::INT32});
 };
 
 
@@ -150,38 +196,64 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
 {
     // Todo: read data from `.csv` file (using source?)
     // - planning to use: https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/samples/Bimbo_1.sample.csv
+    constexpr size_t NUM_THREADS = 1;
     constexpr size_t BUFFER_SIZE = 16;
-    constexpr size_t NUM_EXPECTED_RAW_BUFFERS = 8;
+    constexpr size_t NUM_EXPECTED_RAW_BUFFERS = 9;
     constexpr size_t NUM_REQUIRED_BUFFERS = 64; //min required to create fixed size pool for sources (numSourceLocalBuffers)
 
     const auto theFilePath = INPUT_FORMATTER_TEST_DATA + std::string("/twoIntegerColumns.csv");
 
     /// Create vector for result buffers and create emit function to collect buffers from source
-    std::vector<NES::Memory::TupleBuffer> resultBuffers(NUM_EXPECTED_RAW_BUFFERS);
-    const auto emitFunction = getEmitFunction(resultBuffers);
+    std::vector<NES::Memory::TupleBuffer> rawBuffers;
+    rawBuffers.reserve(NUM_EXPECTED_RAW_BUFFERS);
+    const auto emitFunction = getEmitFunction(rawBuffers);
 
     /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
-    const auto fileSource = createFileSource(theFilePath, BUFFER_SIZE, NUM_REQUIRED_BUFFERS);
+
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool = Memory::BufferManager::create(BUFFER_SIZE, NUM_REQUIRED_BUFFERS);
+    const auto fileSource = createFileSource(theFilePath, std::move(sourceBufferPool));
     fileSource->start(std::move(emitFunction));
-    waitForSource(resultBuffers, NUM_EXPECTED_RAW_BUFFERS);
+    waitForSource(rawBuffers, NUM_EXPECTED_RAW_BUFFERS);
+    ASSERT_EQ(rawBuffers.size(), NUM_EXPECTED_RAW_BUFFERS);
 
-    // Todo:
-    // - create parser
-
-    /// Format all result buffers
-    for (size_t bufferIdx = 0; const auto& buffer : resultBuffers)
+    auto inputFormatterTask = createInputFormatterTask();
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_THREADS);
+    std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(schema->getSchemaSizeInBytes(), 1024);
+    std::unique_ptr<TestTaskQueue> taskQueue = std::make_unique<TestTaskQueue>(NUM_THREADS, testBufferManager, resultBuffers);
+    // Todo: create task vector from rawBuffers
+    std::vector<TestablePipelineTask> pipelineTasks;
+    pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
+    for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
     {
-        auto charBuffer = buffer.getBuffer();
-        std::stringstream stringStream;
-        stringStream << "Start Buffer: " << bufferIdx << std::endl;
-        for (size_t i = 0; i < buffer.getNumberOfTuples(); i++)
-        {
-            stringStream << charBuffer[i];
-        }
-        stringStream << "\nEnd Buffer: " << bufferIdx++ << std::endl;
-        std::cout << stringStream.str();
+        // Todo: assign different worker threads
+        const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
+        rawBuffer.setSequenceNumber(currentSequenceNumber);
+        auto pipelineTask = TestablePipelineTask(WorkerThreadId(0), currentSequenceNumber, std::move(rawBuffer), inputFormatterTask, {});
+        pipelineTasks.emplace_back(std::move(pipelineTask));
+        ++bufferIdx;
     }
-    std::cout << std::endl;
+    shuffleWithSeed<false>(pipelineTasks);
+    taskQueue->processTasks(std::move(pipelineTasks));
+
+    for (auto& resultBufferVector : *resultBuffers)
+    {
+        // Todo: fix setting sequence numbers in InputFormatterTask
+        // std::ranges::sort(resultBufferVector.begin(), resultBufferVector.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        // {
+        //     return left.getSequenceNumber() < right.getSequenceNumber();
+        // });
+
+        for (const auto& buffer : resultBufferVector)
+        {
+            auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+            actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+            std::cout << actualResultTestBuffer.toString(schema, false);
+            // NES_DEBUG("\n Actual result buffer:\n{}", actualResultTestBuffer.toString(schema, false));
+        }
+    }
+    /// Todo: make sure to destroy all data structures that own the BufferManager, before destroying the buffer manager
+    taskQueue.release();
+    ASSERT_TRUE(fileSource->stop());
 }
 
 }
