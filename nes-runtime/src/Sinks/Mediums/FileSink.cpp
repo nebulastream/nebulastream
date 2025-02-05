@@ -132,6 +132,7 @@ if (!timestampAndWriteToSocket) {
 //        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
 //    }
     //get it once
+    NES_ERROR("creating socket for file sink")
         auto sockfd = nodeEngine->getTcpDescriptor(filePath);
 }
 }

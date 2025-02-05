@@ -66,8 +66,10 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
+    NES_ERROR("Starting tcp source")
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
-        auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        NES_ERROR("Creating source info")
+        auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         return;
     }
     struct Deleter {
