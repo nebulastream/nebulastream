@@ -72,6 +72,8 @@ struct TcpSourceInfo {
     int sockfd;
     std::vector<uint8_t> incomingBuffer;
     std::vector<uint8_t> leftOverBytes;
+    std::vector<std::string> readLines;
+    uint64_t nextLinesIndex = 0;
     uint16_t leftoverByteCount = 0;
 };
 class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>,

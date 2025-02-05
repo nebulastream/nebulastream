@@ -109,10 +109,10 @@ class CSVSource : public DataSource {
     bool skipHeader;
     CSVParserPtr inputParser;
     //std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> readLines;
-    std::vector<std::string> readLines;
-    uint64_t nextLinesIndex = 0;
+//    std::vector<std::string> readLines;
+//    uint64_t nextLinesIndex = 0;
     bool addTimeStampsAndReadOnStartup;
-    uint64_t port;
+//    uint64_t port;
 //    int sockfd;
 //    std::vector<uint8_t> incomingBuffer;
 //    std::vector<uint8_t> leftOverBytes;

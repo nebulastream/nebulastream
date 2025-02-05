@@ -279,7 +279,8 @@ folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSource
             port,
             sockfd,
             {},
-            {}
+            {},
+            {},
         };
 
         tcpSourceInfos.insert({filePath, folly::Synchronized(info)});

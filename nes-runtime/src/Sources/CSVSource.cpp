@@ -134,7 +134,8 @@ CSVSource::CSVSource(SchemaPtr schema,
             }
 
             std::getline(input, line);
-            readLines.push_back(line);
+            NES_NOT_IMPLEMENTED();
+//            readLines.push_back(line);
             NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         }
     }
@@ -160,7 +161,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         auto* records = buffer.getBuffer().getBuffer<Record>();
         //if port was set, use tcp as input
         if (numberOfTuplesToProducePerBuffer == 0) {
-            if (port != 0) {
+            if (sourceInfo->port != 0) {
                 //init flush interval value
                 bool flushIntervalPassed = false;
                 auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -330,12 +331,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
         uint64_t tupleCount = 0;
         while (tupleCount < generatedTuplesThisPass) {
-            if (nextLinesIndex == readLines.size()) {
+            if (sourceInfo->nextLinesIndex == sourceInfo->readLines.size()) {
                 break;
             }
-            auto line = readLines[nextLinesIndex];
+            auto line = sourceInfo->readLines[sourceInfo->nextLinesIndex];
             inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
-            nextLinesIndex++;
+            sourceInfo->nextLinesIndex++;
             ++tupleCount;
         }
         buffer.setNumberOfTuples(tupleCount);
