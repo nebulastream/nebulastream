@@ -91,7 +91,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
         NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
@@ -149,7 +149,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
         NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
@@ -553,7 +553,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                         true,
                                         reconfigurationMarker);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
-    workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
+    workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
     NES_ERROR("succesfully increased reconnect count");
 }
 

@@ -355,6 +355,7 @@ bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return data
 bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return reverseEventChannels.contains(operatorId); }
 
 void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
+    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when increasing reconnect count");
     if (reconnectCounts.contains(operatorId)) {
         NES_ERROR("WorkerContext: increasing existing reconnect count for operator {} for context {}", operatorId, workerId);
         reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
@@ -365,6 +366,7 @@ void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
 }
 
 uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
+    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when accessing reconnect count");
 //    NES_ERROR("WorkerContext: getting reconnect count for operator {} for context {}", operatorId, workerId);
     if (reconnectCounts.contains(operatorId)) {
         return reconnectCounts[operatorId];
