@@ -316,8 +316,8 @@ private:
             testTasks.pop();
             auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
             pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(responsibleWorkerThread);
-            pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
             pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
+            pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
 
             const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(currentTestTask), .pipelineExecutionContext = pipelineExecutionContext};
             workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
@@ -331,6 +331,7 @@ private:
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
         pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(idxOfWorkerThreadForFlushTask);
         pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
+        pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
 
         const auto flushTask = TestablePipelineTask{true, NES::WorkerThreadId(idxOfWorkerThreadForFlushTask), std::move(pointerToSharedExecutablePipelineStage)};
         const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(flushTask), .pipelineExecutionContext = pipelineExecutionContext};

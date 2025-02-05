@@ -86,7 +86,7 @@ public:
     }
 
     std::unique_ptr<Sources::SourceHandle>
-    createFileSource(const std::string& filePath, std::shared_ptr<Memory::BufferManager> sourceBufferPool)
+    createFileSource(const std::string& filePath, std::shared_ptr<Schema> schema, std::shared_ptr<Memory::BufferManager> sourceBufferPool)
     {
         std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
         auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
@@ -97,7 +97,7 @@ public:
         return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool));
     }
 
-    std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask()
+    std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
     {
         std::unordered_map<std::string, std::string> parserConfiguration{
             {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
@@ -167,10 +167,6 @@ public:
             std::cout << std::endl;
         }
     }
-
-public:
-    std::shared_ptr<Schema> schema = InputFormatterTestUtil::createSchema(
-        {InputFormatterTestUtil::TestDataTypes::INT32, InputFormatterTestUtil::TestDataTypes::INT32});
 };
 
 
@@ -192,14 +188,94 @@ public:
 //      - Todo: how to check correctness?
 // - Todo: use sequence queue for processing?
 
-TEST_F(SmallRandomizedSequenceTest, testPrintingData)
+// 10 INT, 1 FLOAT, 1 INT
+// "Agencia_ID" smallint NOT NULL,
+//   "Canal_ID" smallint NOT NULL,
+//   "Cliente_ID" integer NOT NULL,
+//   "Demanda_uni_equil" smallint NOT NULL,
+//   "Dev_proxima" double NOT NULL,
+//   "Dev_uni_proxima" integer NOT NULL,
+//   "Number of Records" smallint NOT NULL,
+//   "Producto_ID" integer NOT NULL,
+//   "Ruta_SAK" smallint NOT NULL,
+//   "Semana" smallint NOT NULL,
+//   "Venta_hoy" double NOT NULL,
+//   "Venta_uni_hoy" smallint NOT NULL
+// int16, int16, int, int16, double, int, int1, int, int16, int16, double, int16
+TEST_F(SmallRandomizedSequenceTest, testBimboData)
 {
     // Todo: read data from `.csv` file (using source?)
     // - planning to use: https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/samples/Bimbo_1.sample.csv
     constexpr size_t NUM_THREADS = 4;
     constexpr size_t BUFFER_SIZE = 16;
+    constexpr size_t NUM_EXPECTED_RAW_BUFFERS = 54;
+    constexpr size_t NUM_REQUIRED_BUFFERS = 64; //min required to create fixed size pool for sources (numSourceLocalBuffers)
+
+    using enum InputFormatterTestUtil::TestDataTypes;
+    auto schema = InputFormatterTestUtil::createSchema(
+        {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16});
+
+    const auto theFilePath = INPUT_FORMATTER_TEST_DATA + std::string("/Bimbo.csv");
+
+    /// Create vector for result buffers and create emit function to collect buffers from source
+    std::vector<NES::Memory::TupleBuffer> rawBuffers;
+    rawBuffers.reserve(NUM_EXPECTED_RAW_BUFFERS);
+    const auto emitFunction = getEmitFunction(rawBuffers);
+
+    /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool = Memory::BufferManager::create(BUFFER_SIZE, NUM_REQUIRED_BUFFERS);
+    const auto fileSource = createFileSource(theFilePath, schema, std::move(sourceBufferPool));
+    fileSource->start(std::move(emitFunction));
+    waitForSource(rawBuffers, NUM_EXPECTED_RAW_BUFFERS);
+    ASSERT_EQ(rawBuffers.size(), NUM_EXPECTED_RAW_BUFFERS);
+
+    auto inputFormatterTask = createInputFormatterTask(schema);
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_THREADS);
+    std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(schema->getSchemaSizeInBytes(), 1024);
+    std::unique_ptr<TestTaskQueue> taskQueue = std::make_unique<TestTaskQueue>(NUM_THREADS, std::move(testBufferManager), resultBuffers);
+    // Todo: create task vector from rawBuffers
+    std::vector<TestablePipelineTask> pipelineTasks;
+    pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
+    for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
+    {
+        // Todo: assign different worker threads
+        const auto currentWorkerThreadId = bufferIdx % NUM_THREADS;
+        const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
+        rawBuffer.setSequenceNumber(currentSequenceNumber);
+        auto pipelineTask = TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), currentSequenceNumber, std::move(rawBuffer), inputFormatterTask, {});
+        pipelineTasks.emplace_back(std::move(pipelineTask));
+        ++bufferIdx;
+    }
+    // Todo: don't shuffle, but let threads process buffers async (no waiting)
+    // shuffleWithSeed<true>(pipelineTasks, 1738768165034398667); /// 1738768165034398667
+    taskQueue->processTasks(std::move(pipelineTasks), TestTaskQueue::ProcessingMode::ASYNCHRONOUS);
+
+    /// Combine results and sort
+    auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
+    std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+
+    /// log sorted results
+    for (const auto& buffer : resultBufferVec)
+    {
+        auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+        std::cout << "buffer " << buffer.getSequenceNumber() << ": " << actualResultTestBuffer.toString(schema, false);
+    }
+
+    /// Destroy task queue first, to assure that it does not hold references to buffers anymore
+    taskQueue.release();
+    ASSERT_TRUE(fileSource->stop());
+}
+
+TEST_F(SmallRandomizedSequenceTest, testPrintingData)
+{
+    constexpr size_t NUM_THREADS = 4;
+    constexpr size_t BUFFER_SIZE = 16;
     constexpr size_t NUM_EXPECTED_RAW_BUFFERS = 9;
     constexpr size_t NUM_REQUIRED_BUFFERS = 64; //min required to create fixed size pool for sources (numSourceLocalBuffers)
+
+    auto schema = InputFormatterTestUtil::createSchema(
+        {InputFormatterTestUtil::TestDataTypes::INT32, InputFormatterTestUtil::TestDataTypes::INT32});
 
     const auto theFilePath = INPUT_FORMATTER_TEST_DATA + std::string("/twoIntegerColumns.csv");
 
@@ -210,12 +286,12 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
 
     /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
     std::shared_ptr<Memory::BufferManager> sourceBufferPool = Memory::BufferManager::create(BUFFER_SIZE, NUM_REQUIRED_BUFFERS);
-    const auto fileSource = createFileSource(theFilePath, std::move(sourceBufferPool));
+    const auto fileSource = createFileSource(theFilePath, schema, std::move(sourceBufferPool));
     fileSource->start(std::move(emitFunction));
     waitForSource(rawBuffers, NUM_EXPECTED_RAW_BUFFERS);
     ASSERT_EQ(rawBuffers.size(), NUM_EXPECTED_RAW_BUFFERS);
 
-    auto inputFormatterTask = createInputFormatterTask();
+    auto inputFormatterTask = createInputFormatterTask(schema);
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_THREADS);
     std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(schema->getSchemaSizeInBytes(), 1024);
     std::unique_ptr<TestTaskQueue> taskQueue = std::make_unique<TestTaskQueue>(NUM_THREADS, std::move(testBufferManager), resultBuffers);
