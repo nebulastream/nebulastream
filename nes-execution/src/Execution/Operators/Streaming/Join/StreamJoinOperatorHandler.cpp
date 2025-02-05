@@ -447,6 +447,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
                     emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
                 }
             }
+            numberOfTriggeredWindows++;
         }
     }
 }

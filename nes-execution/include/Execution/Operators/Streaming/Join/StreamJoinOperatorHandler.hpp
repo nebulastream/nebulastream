@@ -317,6 +317,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) = 0;
 
   protected:
+    std::atomic<uint64_t> numberOfTriggeredWindows{0};
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
     uint64_t lastMigratedSeqNumber = 0;
