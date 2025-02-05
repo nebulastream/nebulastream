@@ -232,20 +232,21 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
         pipelineTasks.emplace_back(std::move(pipelineTask));
         ++bufferIdx;
     }
-    shuffleWithSeed<false>(pipelineTasks, std::nullopt); /// 1738768165034398667
-    taskQueue->processTasks(std::move(pipelineTasks));
+    // Todo: don't shuffle, but let threads process buffers async (no waiting)
+    // shuffleWithSeed<false>(pipelineTasks, std::nullopt); /// 1738768165034398667
+    taskQueue->processTasks(std::move(pipelineTasks), TestTaskQueue::ProcessingMode::ASYNCHRONOUS);
 
     /// Combine results and sort
     auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
     std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-    std::ranges::sort(resultBufferVec.begin(), resultBufferVec.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
-    {
-        if (left.getSequenceNumber() == right.getSequenceNumber())
-        {
-            return left.getChunkNumber() < right.getChunkNumber();
-        }
-        return left.getSequenceNumber() < right.getSequenceNumber();
-    });
+    // std::ranges::sort(resultBufferVec.begin(), resultBufferVec.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+    // {
+    //     if (left.getSequenceNumber() == right.getSequenceNumber())
+    //     {
+    //         return left.getChunkNumber() < right.getChunkNumber();
+    //     }
+    //     return left.getSequenceNumber() < right.getSequenceNumber();
+    // });
 
     /// log sorted results
     for (const auto& buffer : resultBufferVec)
