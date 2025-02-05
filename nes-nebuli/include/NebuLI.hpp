@@ -21,15 +21,19 @@
 #include <unordered_map>
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::CLI
 {
 
 struct SchemaField
 {
+    SchemaField(std::string name, std::string typeName);
+    SchemaField(std::string name, std::shared_ptr<DataType> type);
+    SchemaField() = default;
+
     std::string name;
-    BasicType type;
+    std::shared_ptr<DataType> type;
 };
 
 struct Sink
