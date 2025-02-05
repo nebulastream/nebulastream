@@ -44,15 +44,15 @@ public:
 
     template <size_t NUM_THREADS>
     class TestThreadPool {
+        static constexpr size_t INITIAL_NUM_BITMAPS = 16;
       public:
         TestThreadPool(
               const SequenceShredder::SequenceNumberType upperBound, std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
-              : sequenceShredder(SequenceShredder{1}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
+              : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             if (fixedSeed.has_value())
             {
               sequenceNumberGen = std::mt19937_64{fixedSeed.value()};
-              // std::cout << "Initializing StreamingSequenceNumberGenerator with fixed seed: " << fixedSeed.value() << std::endl;
             }
             else
             {
@@ -88,7 +88,6 @@ public:
         }
       private:
         SequenceShredder sequenceShredder;
-        // std::shared_ptr<NES::Memory::BufferManager> testBufferManager;
         std::atomic<size_t> currentSequenceNumber;
         std::atomic<SequenceShredder::SequenceNumberType> indexOfLastDetectedTupleDelimiter; //Todo: rename to highlight index character
         std::array<std::jthread, NUM_THREADS> threads;
@@ -110,22 +109,8 @@ public:
             for (auto threadLocalSequenceNumber = currentSequenceNumber.fetch_add(1); threadLocalSequenceNumber <= upperBound; threadLocalSequenceNumber = currentSequenceNumber.fetch_add(1))
             {
                 /// Force a tuple delimiter for the first and the last sequence number, to guarantee the check sum.
-                // bool tupleDelimiter = true;
-                bool tupleDelimiter = boolDistribution(sequenceNumberGen) or (threadLocalSequenceNumber == 1) or (threadLocalSequenceNumber == upperBound);
-                // bool tupleDelimiter = (threadLocalSequenceNumber % 5) == 0 or (threadLocalSequenceNumber == 1) or (threadLocalSequenceNumber == upperBound);
+                const bool tupleDelimiter = boolDistribution(sequenceNumberGen) or (threadLocalSequenceNumber == 1) or (threadLocalSequenceNumber == upperBound);
                 auto tupleDelimiterIndex = indexOfLastDetectedTupleDelimiter.load();
-                // const auto tailBitmap = (tupleDelimiterIndex - 1) / SequenceShredder::SIZE_OF_BITMAP_IN_BITS;
-                // const auto targetBitmap = (threadLocalSequenceNumber - 1) / SequenceShredder::SIZE_OF_BITMAP_IN_BITS;
-                /// If the current thread writes into the bitmap right behind the bitmap that contains the last known
-                /// tuple delimiter, we set a tuple delimiter, to avoid spanning tuples that would wrap back into the tail
-                // Todo: the thread might still be slow to set the bit, causing another thread to continue with sequence numbers
-                //  from the tail bitmap
-                // - it does guarantee that the current thread finds a SpanningTuple connecting at least to the previous tail,
-                //   because we only increase the currentSequenceNumber, AFTER we processed it, so all sequence numbers up to
-                //   the tail are reflected in the SequenceShredder bitmaps already.
-                // if ((targetBitmap > tailBitmap) and ((targetBitmap - tailBitmap) == (numBitmaps - 1))) {
-                //     tupleDelimiter = true;
-                // }
 
                 while (tupleDelimiterIndex > threadLocalSequenceNumber and not(indexOfLastDetectedTupleDelimiter.compare_exchange_weak(tupleDelimiterIndex, threadLocalSequenceNumber))) {
                     /// CAS loop implementing std::atomic_max
@@ -134,17 +119,12 @@ public:
                 // If the sequence number is not in range yet, busy wait until it is.
                 while (not sequenceShredder.isSequenceNumberInRange(threadLocalSequenceNumber)) {}
 
-                // auto testBuffer = testBufferManager->getBufferBlocking(); // Todo: is this call thread safe? otherwise lock or have thread-local bufferpools!
-                // testBuffer.setSequenceNumber(NES::SequenceNumber(threadLocalSequenceNumber));
-                // Todo: abuse sizeOfBufferInBytes as SequenceNumber?
-                // const auto dummyBuffer = NES::Memory::TupleBuffer{};
                 const auto dummyStagedBuffer = SequenceShredder::StagedBuffer{
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = threadLocalSequenceNumber,
                     .offsetOfFirstTupleDelimiter = 0,
                     .offsetOfLastTupleDelimiter = 0};
                 if (tupleDelimiter) {
-                    // Todo: pass dummy buffer to sequence shredder
                     const auto stagedBuffers = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
                     if (stagedBuffers.size() > 1)
                     {
