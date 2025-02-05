@@ -112,9 +112,9 @@ void startCoordinator(uint64_t numberOfBuffersToProduce, uint64_t bufferSize) {
     std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
     coordinatorConfiguration->worker.configPath = configPath;
     if (numberOfBuffersToProduce > 1024) {
-        coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 10 * numberOfBuffersToProduce + 50;
-        coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
-        coordinatorConfiguration->worker.numberOfBuffersPerWorker = numberOfBuffersToProduce + 50;
+        coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 300000;
+        coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 20000;
+        coordinatorConfiguration->worker.numberOfBuffersPerWorker = 20000;
     } else {
         coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = 10 * 1024 + 50;
         coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = 5 * 1024 + 50;
@@ -152,9 +152,9 @@ NesWorkerPtr startSourceWorker(uint64_t bufferSize, uint64_t numberOfBuffersToPr
     wrkConf->configPath = configPath;
     wrkConf->numberOfBuffersToProduce = numberOfBuffersToProduce;
     if (numberOfBuffersToProduce > 1024) {
-        wrkConf->numberOfBuffersInGlobalBufferManager = 10 * numberOfBuffersToProduce + 50;
-        wrkConf->numberOfBuffersInSourceLocalBufferPool = 5 * numberOfBuffersToProduce + 50;
-        wrkConf->numberOfBuffersPerWorker = numberOfBuffersToProduce + 50;
+        wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
+        wrkConf->numberOfBuffersInSourceLocalBufferPool = 20000;
+        wrkConf->numberOfBuffersPerWorker = 20000;
     } else {
         wrkConf->numberOfBuffersInGlobalBufferManager = 10 * 1024 + 50;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 5 * 1024 + 50;
@@ -621,7 +621,7 @@ int main(int argc, const char* argv[]) {
             auto minNumberOfBuffersToProduce = configs["MinNumberOfBuffersToProduce"].As<uint64_t>();
             auto maxNumberOfBuffersToProduce = configs["MaxNumberOfBuffersToProduce"].As<uint64_t>();
 
-            runDataBenchmark(1, 1024, 1024, 1024);
+            runDataBenchmark(1, 8192, 8192, 1024);
         } else if (benchmarkType->second == "nodes") {
             auto minNUmberOfIntermediateNodes = configs["MinNumberOfIntermediateNodes"].As<uint64_t>();
             auto maxNUmberOfIntermediateNodes = configs["MaxNumberOfIntermediateNodes"].As<uint64_t>();

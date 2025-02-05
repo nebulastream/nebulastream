@@ -580,7 +580,10 @@ void DataSource::runningRoutineWithGatheringInterval() {
     }
     propagateShouldUnbufferMarker();
     if (numberOfBuffersToProduce > 2048) {
-        sleep(20);
+        sleep(10);
+        if (numberOfBuffersProduced > 4096) {
+            sleep(5);
+        }
     }
     sleep(10);
     NES_WARNING("DataSource {} call close", operatorId);
