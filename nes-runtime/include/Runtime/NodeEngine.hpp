@@ -466,7 +466,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t parentId;
     bool connected = true;
     // uint64_t receiverChangeCount = 0;
-    uint64_t parentChangeCount = 0;
+    uint64_t parentChangeCount = 1;
 
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
     std::atomic<bool> activeBufferingSimulation = false;

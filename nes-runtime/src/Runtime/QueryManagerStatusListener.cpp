@@ -287,6 +287,7 @@ folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSource
             {},
         };
 
+        NES_ERROR("inserting source info for name {}, path {}", sourceName, filePath)
         tcpSourceInfos.insert({sourceName, folly::Synchronized(info)});
         return tcpSourceInfos.at(sourceName).wlock();
     }

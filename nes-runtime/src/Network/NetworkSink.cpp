@@ -223,6 +223,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 //workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(pair));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
+                workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
             } else {
                 //synchronous connecting is configured. let this thread wait on the connection being established
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
