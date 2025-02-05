@@ -394,7 +394,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
                                                          DEFAULT_NUMBER_OF_ORIGINS,
-                                                         INITIAL_VERSION);
+                                                         INITIAL_VERSION, INVALID_OPERATOR_ID);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
@@ -610,7 +610,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
                                                          DEFAULT_NUMBER_OF_ORIGINS,
-                                                         INITIAL_VERSION);
+                                                         INITIAL_VERSION, INVALID_OPERATOR_ID);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
         auto decomposedQueryPlan2 = DecomposedQueryPlan::create(DecomposedQueryId(subPlanId++),
@@ -958,7 +958,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
                                                          DEFAULT_NUMBER_OF_ORIGINS,
-                                                         INITIAL_VERSION);
+                                                         INITIAL_VERSION, INVALID_OPERATOR_ID);
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,

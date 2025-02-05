@@ -124,7 +124,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
                                                                               retryTimes,
                                                                               version,
                                                                               numberOfOrigins,
-                                                                              uniqueId);
+                                                                              uniqueId, INVALID_OPERATOR_ID);
 
     SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     testSink->setOutputSchema(schema);

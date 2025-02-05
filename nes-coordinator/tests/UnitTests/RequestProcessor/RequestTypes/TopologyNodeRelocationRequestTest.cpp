@@ -235,7 +235,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                    DATA_CHANNEL_RETRY_TIMES,
                                                                    version,
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+                                                                   networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
@@ -295,7 +295,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                    DATA_CHANNEL_RETRY_TIMES,
                                                                    version,
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+                                                                   networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -354,7 +354,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
         DATA_CHANNEL_RETRY_TIMES,
         version,
         DEFAULT_NUMBER_OF_ORIGINS,
-        networkSinkId);
+        networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
@@ -390,7 +390,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                    DATA_CHANNEL_RETRY_TIMES,
                                                                    version,
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+                                                                   networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
@@ -419,7 +419,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
         DATA_CHANNEL_RETRY_TIMES,
         version,
         DEFAULT_NUMBER_OF_ORIGINS,
-        networkSinkId);
+        networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
@@ -455,7 +455,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                    DATA_CHANNEL_RETRY_TIMES,
                                                                    version,
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+                                                                   networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
@@ -499,7 +499,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                    DATA_CHANNEL_RETRY_TIMES,
                                                                    version,
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+                                                                   networkSinkId, INVALID_OPERATOR_ID);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, 7);
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, 20);

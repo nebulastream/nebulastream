@@ -393,7 +393,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
                                                            retryTimes,
                                                            version,
                                                            numberOfOrigins,
-                                                           uniqueId);
+                                                           uniqueId, INVALID_OPERATOR_ID);
         SerializableOperator_SinkDetails sinkDescriptor;
         OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
