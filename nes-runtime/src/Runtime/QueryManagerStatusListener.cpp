@@ -287,11 +287,11 @@ folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSource
             {},
         };
 
-        tcpSourceInfos.insert({filePath, folly::Synchronized(info)});
-        return tcpSourceInfos.at(filePath).wlock();
+        tcpSourceInfos.insert({sourceName, folly::Synchronized(info)});
+        return tcpSourceInfos.at(sourceName).wlock();
     }
 //    NES_ERROR("Created new tcp descriptor {} for {}", sockfd, filePath);
     NES_FATAL_ERROR("invalid port");
-    return tcpSourceInfos.at(filePath).wlock();
+    return tcpSourceInfos.at(sourceName).wlock();
 }
 }// namespace NES::Runtime
