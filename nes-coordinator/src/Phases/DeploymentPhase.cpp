@@ -166,22 +166,27 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 } else if (requestType == RequestType::RestartQuery) {
                     sharedQueryState = QueryState::STOPPED;
                     //TODO:  remove stop call (is handled by marker now
-//                    workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
-//                                                              sharedQueryId,
-//                                                              decomposedQueryId,
-//                                                              Runtime::QueryTerminationType::Graceful,
-//                                                              queueForDeploymentContext);
-//                    workerRPCClient->stopDecomposedQuery(grpcAddress,
-//                                                              sharedQueryId,
-//                                                              decomposedQueryId,
-//                                                              Runtime::QueryTerminationType::Graceful);
+#ifdef ASYNC_DEPLOYMENT
+                    workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
+                                                              sharedQueryId,
+                                                              decomposedQueryId,
+                                                              Runtime::QueryTerminationType::Graceful,
+                                                              queueForDeploymentContext);
+#else
+                    workerRPCClient->stopDecomposedQuery(grpcAddress,
+                                                              sharedQueryId,
+                                                              decomposedQueryId,
+                                                              Runtime::QueryTerminationType::Graceful);
+#endif
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_SOFT_STOP,
                                                                   workerId);
-//                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
+#ifdef ASYNC_DEPLOYMENT
+                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
+#endif
                 } else if (requestType == RequestType::FailQuery) {
                     sharedQueryState = QueryState::FAILED;
                     //TODO: fail is always performed synchronously
