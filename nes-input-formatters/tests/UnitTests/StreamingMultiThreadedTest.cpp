@@ -21,7 +21,7 @@
 #include <vector>
 #include <Runtime/BufferManager.hpp>
 #include <gtest/gtest.h>
-#include "../../private/SequenceShredder.hpp"
+#include <SequenceShredder.hpp>
 
 class StreamingMultiThreaderAutomatedSequenceShredderTest : public ::testing::Test {
 private:

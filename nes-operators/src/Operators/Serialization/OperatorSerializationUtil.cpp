@@ -986,13 +986,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
 
-    /// Serialize parser config.
-    auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
-    serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
-
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : sourceDescriptor.config)
     {
@@ -1041,13 +1034,6 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto logicalSourceName = sourceDescriptor.logicalsourcename();
     auto sourceType = sourceDescriptor.sourcetype();
 
-    /// Deserialize the parser config.
-    const auto& serializedParserConfig = sourceDescriptor.parserconfig();
-    auto deserializedParserConfig = Sources::ParserConfig{};
-    deserializedParserConfig.parserType = serializedParserConfig.type();
-    deserializedParserConfig.tupleDelimiter = serializedParserConfig.tupledelimiter();
-    deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
-
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
     for (const auto& [key, value] : sourceDescriptor.config())
@@ -1059,7 +1045,6 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
-        std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));
 }
 

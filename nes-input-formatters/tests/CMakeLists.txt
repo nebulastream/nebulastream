@@ -13,10 +13,14 @@
 include(ExternalProject)
 include(GoogleTest)
 
+add_library(nes-input-formatters-test-utils INTERFACE)
+target_link_libraries(nes-input-formatters-test-utils INTERFACE nes-input-formatters nes-executable-test-utils)
+target_include_directories(nes-input-formatters-test-utils INTERFACE ${CMAKE_SOURCE_DIR}/nes-input-formatters/private ${CMAKE_CURRENT_SOURCE_DIR}/Util/)
+
 function(add_nes_input_formatter_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-input-formatters nes-executable-test-utils)
+    target_link_libraries(${TARGET_NAME} nes-input-formatters-test-utils)
 endfunction()
 
 add_subdirectory(UnitTests)
