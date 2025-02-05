@@ -90,10 +90,10 @@ class RawBufferSink : public SinkMedium {
   protected:
     Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
     // keep unordered tuple buffers with sequence number as key
-    folly::Synchronized<std::map<uint64_t, Runtime::TupleBuffer>> bufferStorage;
+    std::map<uint64_t, Runtime::TupleBuffer> bufferStorage;
 
     // sequence number of last written tuple buffer
-    std::atomic<uint64_t> lastWritten;
+    uint64_t lastWritten;
 
     /// The output file path of the file sink.
     std::string filePath;

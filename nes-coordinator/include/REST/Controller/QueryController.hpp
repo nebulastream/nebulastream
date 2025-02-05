@@ -171,16 +171,16 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                       .sink(nullOutputSinkDescriptor, WorkerId(2));
             auto queryPlan = migrationQuery.getQueryPlan();
             auto join = queryPlan->getOperatorByType<LogicalJoinOperator>()[0];
-            auto reorderBuffers = LogicalOperatorFactory::createReorderTuplesOperator();
-            reorderBuffers->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
+//            auto reorderBuffers = LogicalOperatorFactory::createReorderTuplesOperator();
+//            reorderBuffers->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
 //            std::string recreationFileName = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file.bin";
             std::string recreationFileName = "recreation_file.bin";
             auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(
                 FileSinkDescriptor::create(recreationFileName, "MIGRATION_FORMAT", "OVERWRITE"));
-            reorderBuffers->addParent(migrateSinkOperator);
+//            reorderBuffers->addParent(migrateSinkOperator);
             migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, WorkerId(1));
             migrateSinkOperator->addProperty("MIGRATION_SINK", true);
-            join->addParent(reorderBuffers);
+            join->addParent(migrateSinkOperator);
             join->addProperty("MIGRATION_FLAG", true);
             queryPlan->addRootOperator(migrateSinkOperator);
 

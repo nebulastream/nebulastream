@@ -112,7 +112,34 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
         return false;
     }
 
-    writeToTheFile(inputBuffer);
+    // get sequence number of received buffer
+    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+    // save the highest consecutive sequence number in the queue
+    auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
+
+    // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
+    const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+    // insert input buffer sequence number to the queue
+    seqQueue.emplace(seqData, bufferSeqNumber);
+
+    // get the highest consecutive sequence number in the queue after adding new value
+    auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
+
+    bufferStorage[bufferSeqNumber] = inputBuffer;
+
+    // TODO: #5033 check this logic
+    // check if top value in the queue has changed after adding new sequence number
+    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
+        while ((lastWritten + 1) <= currentSeqNumberAfterAdding) {
+            // get tuple buffer with next sequence number after lastWritten and update lastWritten
+            auto nextTupleBufferToBeEmitted = bufferStorage[++lastWritten];
+            // emit next tuple buffer
+            // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
+            writeToTheFile(nextTupleBufferToBeEmitted);
+            // delete emitted tuple buffer from storage
+        }
+    }
 
     return true;
 }
