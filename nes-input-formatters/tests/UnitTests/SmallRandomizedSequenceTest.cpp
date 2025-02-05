@@ -14,8 +14,9 @@
 
 #include <cstdint>
 #include <memory>
-#include <vector>
+#include <ranges>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterOperatorHandler.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
@@ -195,7 +196,7 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
 {
     // Todo: read data from `.csv` file (using source?)
     // - planning to use: https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/samples/Bimbo_1.sample.csv
-    constexpr size_t NUM_THREADS = 1;
+    constexpr size_t NUM_THREADS = 4;
     constexpr size_t BUFFER_SIZE = 16;
     constexpr size_t NUM_EXPECTED_RAW_BUFFERS = 9;
     constexpr size_t NUM_REQUIRED_BUFFERS = 64; //min required to create fixed size pool for sources (numSourceLocalBuffers)
@@ -208,7 +209,6 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
     const auto emitFunction = getEmitFunction(rawBuffers);
 
     /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
-
     std::shared_ptr<Memory::BufferManager> sourceBufferPool = Memory::BufferManager::create(BUFFER_SIZE, NUM_REQUIRED_BUFFERS);
     const auto fileSource = createFileSource(theFilePath, std::move(sourceBufferPool));
     fileSource->start(std::move(emitFunction));
@@ -218,43 +218,44 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
     auto inputFormatterTask = createInputFormatterTask();
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_THREADS);
     std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(schema->getSchemaSizeInBytes(), 1024);
-    std::unique_ptr<TestTaskQueue> taskQueue = std::make_unique<TestTaskQueue>(NUM_THREADS, testBufferManager, resultBuffers);
+    std::unique_ptr<TestTaskQueue> taskQueue = std::make_unique<TestTaskQueue>(NUM_THREADS, std::move(testBufferManager), resultBuffers);
     // Todo: create task vector from rawBuffers
     std::vector<TestablePipelineTask> pipelineTasks;
     pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
     for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
     {
         // Todo: assign different worker threads
+        const auto currentWorkerThreadId = bufferIdx % NUM_THREADS;
         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
         rawBuffer.setSequenceNumber(currentSequenceNumber);
-        auto pipelineTask = TestablePipelineTask(WorkerThreadId(0), currentSequenceNumber, std::move(rawBuffer), inputFormatterTask, {});
+        auto pipelineTask = TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), currentSequenceNumber, std::move(rawBuffer), inputFormatterTask, {});
         pipelineTasks.emplace_back(std::move(pipelineTask));
         ++bufferIdx;
     }
-    shuffleWithSeed<false>(pipelineTasks, std::nullopt);
-    // shuffleWithSeed<false>(pipelineTasks, 1738768165034398667);
+    shuffleWithSeed<false>(pipelineTasks, std::nullopt); /// 1738768165034398667
     taskQueue->processTasks(std::move(pipelineTasks));
 
-    for (auto& resultBufferVector : *resultBuffers)
+    /// Combine results and sort
+    auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
+    std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+    std::ranges::sort(resultBufferVec.begin(), resultBufferVec.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
     {
-        // Todo: fix setting sequence numbers in InputFormatterTask
-        std::ranges::sort(resultBufferVector.begin(), resultBufferVector.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        if (left.getSequenceNumber() == right.getSequenceNumber())
         {
-            if (left.getSequenceNumber() == right.getSequenceNumber())
-            {
-                return left.getChunkNumber() < right.getChunkNumber();
-            }
-            return left.getSequenceNumber() < right.getSequenceNumber();
-        });
-
-        for (const auto& buffer : resultBufferVector)
-        {
-            auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-            actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-            std::cout << "buffer " << buffer.getSequenceNumber() << ": " << actualResultTestBuffer.toString(schema, false);
+            return left.getChunkNumber() < right.getChunkNumber();
         }
+        return left.getSequenceNumber() < right.getSequenceNumber();
+    });
+
+    /// log sorted results
+    for (const auto& buffer : resultBufferVec)
+    {
+        auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+        std::cout << "buffer " << buffer.getSequenceNumber() << ": " << actualResultTestBuffer.toString(schema, false);
     }
-    /// Todo: make sure to destroy all data structures that own the BufferManager, before destroying the buffer manager
+
+    /// Destroy task queue first, to assure that it does not hold references to buffers anymore
     taskQueue.release();
     ASSERT_TRUE(fileSource->stop());
 }
