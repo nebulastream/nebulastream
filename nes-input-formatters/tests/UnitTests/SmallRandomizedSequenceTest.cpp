@@ -142,11 +142,10 @@ public:
     }
 
     template <bool DEBUG_LOG>
-    void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks) {
+    void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks, std::optional<size_t> fixedSeed) {
         auto seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::cout << "Using seed: " << seed << std::endl;
-        // std::mt19937 rng(1738763204471438434);
-        std::mt19937 rng(seed);
+        std::mt19937 rng = (fixedSeed.has_value()) ? std::mt19937(fixedSeed.value()) : std::mt19937(seed);
         std::shuffle(pipelineTasks.begin(), pipelineTasks.end(), rng);
 
         if (DEBUG_LOG)
@@ -232,23 +231,27 @@ TEST_F(SmallRandomizedSequenceTest, testPrintingData)
         pipelineTasks.emplace_back(std::move(pipelineTask));
         ++bufferIdx;
     }
-    shuffleWithSeed<false>(pipelineTasks);
+    shuffleWithSeed<false>(pipelineTasks, std::nullopt);
+    // shuffleWithSeed<false>(pipelineTasks, 1738768165034398667);
     taskQueue->processTasks(std::move(pipelineTasks));
 
     for (auto& resultBufferVector : *resultBuffers)
     {
         // Todo: fix setting sequence numbers in InputFormatterTask
-        // std::ranges::sort(resultBufferVector.begin(), resultBufferVector.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
-        // {
-        //     return left.getSequenceNumber() < right.getSequenceNumber();
-        // });
+        std::ranges::sort(resultBufferVector.begin(), resultBufferVector.end(), [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        {
+            if (left.getSequenceNumber() == right.getSequenceNumber())
+            {
+                return left.getChunkNumber() < right.getChunkNumber();
+            }
+            return left.getSequenceNumber() < right.getSequenceNumber();
+        });
 
         for (const auto& buffer : resultBufferVector)
         {
             auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
             actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-            std::cout << actualResultTestBuffer.toString(schema, false);
-            // NES_DEBUG("\n Actual result buffer:\n{}", actualResultTestBuffer.toString(schema, false));
+            std::cout << "buffer " << buffer.getSequenceNumber() << ": " << actualResultTestBuffer.toString(schema, false);
         }
     }
     /// Todo: make sure to destroy all data structures that own the BufferManager, before destroying the buffer manager

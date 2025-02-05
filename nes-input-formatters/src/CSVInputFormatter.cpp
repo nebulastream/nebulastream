@@ -65,8 +65,8 @@ struct PartialTuple
 class ProgressTracker
 {
 public:
-    ProgressTracker(std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) { };
+    ProgressTracker(SequenceNumber sequenceNumber, std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
+        : sequenceNumber(sequenceNumber), chunkNumber(ChunkNumber(1)), tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) { };
 
     ~ProgressTracker() = default;
 
@@ -127,7 +127,7 @@ public:
         }
     }
 
-    void checkAndHandleFullBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, const SequenceNumber sequenceNumber)
+    void checkAndHandleFullBuffer(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
     {
         const auto availableBytes = tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted;
         const auto isFull = availableBytes < tupleSizeInBytes;
@@ -139,9 +139,10 @@ public:
             /// true triggers adding sequence number, etc.
             pipelineExecutionContext.emitBuffer(
                 getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-            setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), sequenceNumber);
+            setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
             currentFieldOffsetTBFormatted = 0;
             numTuplesInTBFormatted = 0;
+            chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
         }
     }
 
@@ -149,14 +150,13 @@ public:
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         const std::string& fieldDelimiter,
         const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
-        const std::vector<size_t>& fieldSizes,
-        const SequenceNumber sequenceNumber)
+        const std::vector<size_t>& fieldSizes)
     {
         while (hasOneMoreTupleInRawTB())
         {
             /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
             /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            checkAndHandleFullBuffer(pipelineExecutionContext, sequenceNumber);
+            checkAndHandleFullBuffer(pipelineExecutionContext);
 
             /// Get next tuple
             const auto currentTuple = getNextTuple();
@@ -187,9 +187,10 @@ public:
         return this->tupleBufferRawSV.substr(currentTupleStartrawTB, sizeOfCurrentTuple());
     }
 
-    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted, const SequenceNumber sequenceNumber)
+    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
     {
         tupleBufferFormatted.setSequenceNumber(sequenceNumber);
+        tupleBufferFormatted.setChunkNumber(chunkNumber);
         this->tupleBufferFormatted = std::move(tupleBufferFormatted);
     }
 
@@ -238,6 +239,8 @@ public:
     size_t currentFieldOffsetTBFormatted{0};
 
 private:
+    SequenceNumber sequenceNumber;
+    ChunkNumber chunkNumber;
     std::string tupleDelimiter;
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
@@ -440,7 +443,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     PRECONDITION(rawTB.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
 
     /// Creating a ProgressTracker on each call makes the CSVInputFormatter stateless // Todo: instantiate ProgressTracker only if needed, perform prior calculations outside of it
-    auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    auto progressTracker = ProgressTracker(rawTB.getSequenceNumber(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
 
     const auto isInRange = sequenceShredder.isSequenceNumberInRange(rawTB.getSequenceNumber().getRawValue());
     if (not(isInRange))
@@ -478,7 +481,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
             return;
         }
         /// 0. Allocate formatted buffer to write formatted tuples into.
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), rawTB.getSequenceNumber());
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
         /// 1. Process leading partial tuple if exists
         const auto hasLeadingPartialTuple = (indexOfBuffer != 0);
@@ -495,14 +498,14 @@ void CSVInputFormatter::parseTupleBufferRaw(
             bufferOfSequenceNumber.buffer.getBuffer<const char>(),
             bufferOfSequenceNumber.offsetOfFirstTupleDelimiter + tupleDelimiter.size(),
             bufferOfSequenceNumber.offsetOfLastTupleDelimiter);
-        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes, rawTB.getSequenceNumber());
+        progressTracker.processCurrentBuffer(pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
 
         /// 3. Process trailing  partial tuple if exists
         const auto hasTrailingPartialTuple = indexOfBuffer < buffersToFormat.size() - 1;
         if (hasTrailingPartialTuple)
         {
             /// We first need to check if the tuple can fit into the current formatted buffer
-            progressTracker.checkAndHandleFullBuffer(pipelineExecutionContext, rawTB.getSequenceNumber());
+            progressTracker.checkAndHandleFullBuffer(pipelineExecutionContext);
             processPartialTuple(indexOfBuffer, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
@@ -527,7 +530,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
 
         /// Allocate formatted buffer to write formatted tuples into and process partial tuple.
-        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), rawTB.getSequenceNumber());
+        progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
@@ -574,13 +577,14 @@ void CSVInputFormatter::flushFinalTuple(
 {
     const auto [bufferIndex, flushedBuffers] = sequenceShredder.flushFinalPartialTuple();
 
-    auto progressTracker = ProgressTracker(tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     if (flushedBuffers.size() == 1)
     {
         return;
     }
+    const auto sequenceNumberOfLastBuffer = flushedBuffers.at(flushedBuffers.size() - 2).buffer.getSequenceNumber();
+    auto progressTracker = ProgressTracker(sequenceNumberOfLastBuffer, tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     /// Allocate formatted buffer to write formatted tuples into.
-    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer(), SequenceNumber(10000)); //Todo: change
+    progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer()); //Todo: change
     const auto formattedTupleIs = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
     /// Emit formatted buffer with single flushed tuple
     if (formattedTupleIs == FormattedTupleIs::NOT_EMPTY)
