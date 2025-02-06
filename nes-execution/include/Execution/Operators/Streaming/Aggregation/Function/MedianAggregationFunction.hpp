@@ -38,16 +38,14 @@ public:
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        PipelineMemoryProvider& pipelineMemoryProvider,
         const Nautilus::Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
-    Nautilus::Record
-    lower(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
-    void
-    reset(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
+        PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MedianAggregationFunction() override = default;
 

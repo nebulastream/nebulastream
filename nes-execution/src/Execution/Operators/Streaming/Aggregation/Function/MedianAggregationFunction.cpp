@@ -17,13 +17,13 @@
 #include <memory>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
@@ -46,19 +46,19 @@ MedianAggregationFunction::MedianAggregationFunction(
 
 void MedianAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, bufferProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 
 void MedianAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    PipelineMemoryProvider&)
 {
     /// Getting the paged vectors from the aggregation states
     const auto memArea1 = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState1);
@@ -72,12 +72,12 @@ void MedianAggregationFunction::combine(
         memArea2);
 }
 
-Nautilus::Record MedianAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+Nautilus::Record
+MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, bufferProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
     const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema()->getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
@@ -105,13 +105,13 @@ Nautilus::Record MedianAggregationFunction::lower(
         nautilus::val<int64_t> countLessThan = 0;
         nautilus::val<int64_t> countEqual = 0;
         const auto candidateRecord = *candidateIt;
-        const auto candidateValue = inputFunction->execute(candidateRecord);
+        const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
 
         /// Counting how many items are smaller or equal for the current candidate
         for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
         {
             const auto itemRecord = *itemIt;
-            const auto itemValue = inputFunction->execute(itemRecord);
+            const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
             if (itemValue < candidateValue)
             {
                 countLessThan = countLessThan + 1;
@@ -142,8 +142,8 @@ Nautilus::Record MedianAggregationFunction::lower(
     const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
     const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
 
-    const auto medianValue1 = inputFunction->execute(medianRecord1);
-    const auto medianValue2 = inputFunction->execute(medianRecord2);
+    const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
+    const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
     const auto medianValue = (medianValue1.castToType(resultType) + medianValue2.castToType(resultType)) / two.castToType(resultType);
 
@@ -154,8 +154,7 @@ Nautilus::Record MedianAggregationFunction::lower(
     return resultRecord;
 }
 
-void MedianAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void MedianAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     nautilus::invoke(
         +[](AggregationState* pagedVectorMemArea) -> void

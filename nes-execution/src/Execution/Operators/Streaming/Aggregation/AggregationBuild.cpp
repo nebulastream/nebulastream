@@ -65,13 +65,13 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId(), ctx.bufferProvider);
+        getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId(), ctx.pipelineMemoryProvider.bufferProvider);
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
     for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
     {
-        const auto value = function->execute(record);
+        const auto value = function->execute(record, ctx.pipelineMemoryProvider.arena);
         record.write(field.fieldIdentifier, value);
     }
 
@@ -86,11 +86,11 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
             auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
             {
-                aggFunction->reset(state, ctx.bufferProvider);
+                aggFunction->reset(state, ctx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
-        ctx.bufferProvider);
+        ctx.pipelineMemoryProvider.bufferProvider);
 
 
     /// Updating the aggregation states
@@ -98,7 +98,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
-        aggFunction->lift(state, ctx.bufferProvider, record);
+        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

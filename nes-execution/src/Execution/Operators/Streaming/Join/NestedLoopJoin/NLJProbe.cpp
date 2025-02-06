@@ -134,8 +134,10 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         workerThreadIdForPages,
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
 
-    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider, executionCtx.bufferProvider);
-    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider, executionCtx.bufferProvider);
+    const Interface::PagedVectorRef leftPagedVector(
+        leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef rightPagedVector(
+        rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
 
     const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
     const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
@@ -149,7 +151,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
         {
             auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields))
+            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
             {
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
