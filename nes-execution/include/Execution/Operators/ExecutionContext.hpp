@@ -34,6 +34,39 @@ namespace NES::Runtime::Execution
 using namespace Nautilus;
 
 
+
+struct Arena
+{
+    Arena(std::shared_ptr<Memory::AbstractBufferProvider> provider) : provider(std::move(provider)) { }
+
+    void* allocate(size_t segmentSize)
+    {
+        if (provider->getBufferSize() < segmentSize)
+        {
+            unpooled.push_back(provider->getUnpooledBuffer(segmentSize).value());
+            return unpooled.back().getBuffer<int8_t>();
+        }
+
+        if (buffers.empty())
+        {
+            buffers.push_back(provider->getBufferBlocking());
+        }
+
+        if (buffers.back().getBufferSize() - buffers.back().getNumberOfTuples() < segmentSize)
+        {
+            buffers.push_back(provider->getBufferBlocking());
+        }
+
+        auto currentOffset = buffers.back().getNumberOfTuples();
+        buffers.back().setNumberOfTuples(currentOffset + segmentSize);
+        return buffers.back().getBuffer<int8_t>() + currentOffset;
+    }
+
+    std::shared_ptr<Memory::AbstractBufferProvider> provider;
+    std::vector<Memory::TupleBuffer> buffers;
+    std::vector<Memory::TupleBuffer> unpooled;
+};
+
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.
 /// We differentiate between local and global operator state.
@@ -44,18 +77,21 @@ using namespace Nautilus;
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext);
+    ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, nautilus::val<Arena*> arena);
+    nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
 
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
-    [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
 
+    [[nodiscard]] FixedScratchMemory allocate(size_t sizeInBytes) const;
+    [[nodiscard]] ScratchMemory allocate(nautilus::val<size_t> sizeInBytes) const;
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
+    nautilus::val<Memory::AbstractBufferProvider*> getBufferProvider() const;
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     nautilus::val<PipelineExecutionContext*> pipelineContext;
@@ -66,6 +102,7 @@ struct ExecutionContext final
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
+    nautilus::val<Arena*> memoryArena;
 };
 
 }

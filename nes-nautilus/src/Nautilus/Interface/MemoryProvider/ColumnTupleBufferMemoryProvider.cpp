@@ -70,7 +70,7 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
 }
 
 void ColumnTupleBufferMemoryProvider::writeRecord(
-    nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const
+    nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const
 {
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
@@ -78,7 +78,7 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
         const auto value = rec.read(schema->getFieldByIndex(i)->getName());
-        storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value);
+        storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }
 

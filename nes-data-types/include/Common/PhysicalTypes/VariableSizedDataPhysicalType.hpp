@@ -45,7 +45,7 @@ public:
     [[nodiscard]] std::string toString() const noexcept override;
 
 private:
-    static constexpr size_t sizeVal = sizeof(uint32_t);
+    static constexpr size_t sizeVal = sizeof(void*) + sizeof(size_t);
 };
 
 

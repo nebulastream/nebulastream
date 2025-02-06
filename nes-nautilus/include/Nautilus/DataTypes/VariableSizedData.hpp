@@ -20,46 +20,45 @@
 namespace NES::Nautilus
 {
 
-/// Forward declaring the class here, so that we can declare the operator==(const VariableSizedData, const nautilus::val<bool>) for it
-class VariableSizedData;
-nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
-nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData);
+struct FixedScratchMemory
+{
+    nautilus::val<int8_t*> data = nullptr;
+    size_t size = 0;
+
+    bool operator==(const FixedScratchMemory&) const = default;
+    operator nautilus::val<bool>() const { return data != nullptr; }
+};
+
+struct ScratchMemory
+{
+    nautilus::val<int8_t*> data = nullptr;
+    nautilus::val<size_t> size = 0;
+
+    bool operator==(const ScratchMemory&) const = default;
+    operator nautilus::val<bool>() const { return data != nullptr; }
+};
 
 /// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data
 /// This class should not be used as standalone. Rather it should be used via the VarVal class
 class VariableSizedData
 {
 public:
-    explicit VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size);
-    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
-    VariableSizedData(const VariableSizedData& other);
-    VariableSizedData& operator=(const VariableSizedData& other) noexcept;
-    VariableSizedData(VariableSizedData&& other) noexcept;
-    VariableSizedData& operator=(VariableSizedData&& other) noexcept;
+    explicit VariableSizedData(ScratchMemory memory);
 
-    [[nodiscard]] nautilus::val<uint32_t> getSize() const;
+    [[nodiscard]] nautilus::val<size_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
     /// In other words, this returns the pointer to the actual data, not the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
 
-    /// Returns the pointer to the variable sized data, this means the pointer to the size + data
-    [[nodiscard]] nautilus::val<int8_t*> getReference() const;
-
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
-    friend nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
-    friend nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData);
 
     /// Performing an equality check between two VariableSizedData objects. Two VariableSizedData objects are equal if their size and
     /// content are byte-wise equal. To check the equality of the content, we compare the content byte-wise via a memcmp.
-    nautilus::val<bool> operator==(const VariableSizedData&) const;
-    nautilus::val<bool> operator!=(const VariableSizedData&) const;
-    nautilus::val<bool> operator!() const;
-    [[nodiscard]] nautilus::val<bool> isValid() const;
+    friend nautilus::val<bool> operator==(const VariableSizedData& lhs, const VariableSizedData& rhs);
 
 private:
-    nautilus::val<uint32_t> size;
-    nautilus::val<int8_t*> ptrToVarSized;
+    ScratchMemory memory;
 };
 
 

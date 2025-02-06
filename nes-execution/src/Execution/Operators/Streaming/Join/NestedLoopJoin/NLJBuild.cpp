@@ -99,7 +99,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(localJoinState->nljPagedVectorMemRef, memoryProvider, executionCtx.bufferProvider);
-    pagedVectorRef.writeRecord(record);
+    pagedVectorRef.writeRecord(record, executionCtx.getBufferProvider());
 }
 
 NLJBuild::LocalNestedLoopJoinState*

@@ -18,6 +18,8 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <ErrorHandling.hpp>
+#include <ranges>
+#include <fmt/ranges.h>
 #include <static.hpp>
 
 namespace NES::Nautilus
@@ -30,12 +32,7 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
 {
     if (not recordFields.contains(recordFieldIdentifier))
     {
-        const std::string allFields = std::accumulate(
-            recordFields.begin(),
-            recordFields.end(),
-            std::string{},
-            [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
-        throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
+        throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, fmt::join(std::views::keys(recordFields), ", "));
     }
     return recordFields.at(recordFieldIdentifier);
 }

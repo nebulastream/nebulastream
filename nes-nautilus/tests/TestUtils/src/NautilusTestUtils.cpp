@@ -227,7 +227,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData)));
+                    record.write(fieldName, VarVal(VariableSizedData(ScratchMemory{pointerToVarSizedData, sizeVarSizedDataVal})));
                 }
                 else
                 {
@@ -235,7 +235,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record);
+            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
             recordBuffer.setNumRecords(i + 1);
         }
     };

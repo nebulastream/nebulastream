@@ -40,14 +40,14 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
+const uint8_t* loadAssociatedVariableSizeData(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
     auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
 }
 
 VarVal TupleBufferMemoryProvider::loadValue(
-    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+    const std::shared_ptr<PhysicalType>& type, const RecordBuffer&, const nautilus::val<int8_t*>& fieldReference)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -55,21 +55,50 @@ VarVal TupleBufferMemoryProvider::loadValue(
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
+        auto entry = Util::readVariableSizeDataEntry(fieldReference);
+        return VariableSizedData(entry);
     }
+
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, const int8_t* textValue)
+void storeAssociatedTextValueProxy(
+    const Memory::TupleBuffer* tupleBuffer, int8_t* fieldReference, Memory::AbstractBufferProvider* provider, void* data, size_t size)
 {
-    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
-    return tupleBuffer->storeChildBuffer(textBuffer);
+    if (provider->getBufferSize() < size)
+    {
+        auto unpooled = provider->getUnpooledBuffer(size).value();
+        ::memcpy(unpooled.getBuffer<int8_t>(), data, size);
+        unpooled.setNumberOfTuples(size);
+        *reinterpret_cast<Util::VariableSizeDataEntry*>(fieldReference) = {unpooled.getBuffer<int8_t>(), size};
+        auto _ = tupleBuffer->storeChildBuffer(unpooled);
+        return;
+    }
+
+    auto spaceLeft = tupleBuffer->getNumberOfChildrenBuffer() == 0
+        ? 0
+        : tupleBuffer->loadChildBuffer(tupleBuffer->getNumberOfChildrenBuffer() - 1).getBufferSize()
+            - tupleBuffer->loadChildBuffer(tupleBuffer->getNumberOfChildrenBuffer() - 1).getNumberOfTuples();
+
+    if (spaceLeft < size)
+    {
+        auto newBuffer = provider->getBufferBlocking();
+        auto _ = tupleBuffer->storeChildBuffer(newBuffer);
+    }
+
+    auto destinationBuffer = tupleBuffer->loadChildBuffer(tupleBuffer->getNumberOfChildrenBuffer() - 1);
+
+    auto destination = destinationBuffer.getBuffer<int8_t>() + destinationBuffer.getNumberOfTuples();
+    memcpy(destination, data, size);
+    destinationBuffer.setNumberOfTuples(destinationBuffer.getNumberOfTuples() + size);
 }
 
 VarVal TupleBufferMemoryProvider::storeValue(
-    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
+    const std::shared_ptr<PhysicalType>& type,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<int8_t*>& fieldReference,
+    VarVal value,
+    nautilus::val<Memory::AbstractBufferProvider*> provider)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -85,10 +114,14 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
-        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        *fieldReferenceCastedU32 = childIndex;
+        auto variableSizeDataValue = value.cast<VariableSizedData>();
+        nautilus::invoke(
+            storeAssociatedTextValueProxy,
+            recordBuffer.getReference(),
+            fieldReference,
+            provider,
+            variableSizeDataValue.getContent(),
+            variableSizeDataValue.getSize());
         return value;
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());

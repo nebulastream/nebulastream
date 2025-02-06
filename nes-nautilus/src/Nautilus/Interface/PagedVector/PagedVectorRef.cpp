@@ -69,11 +69,11 @@ PagedVectorRef::PagedVectorRef(
 {
 }
 
-void PagedVectorRef::writeRecord(const Record& record) const
+void PagedVectorRef::writeRecord(const Record& record, nautilus::val<Memory::AbstractBufferProvider*> provider) const
 {
     auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
-    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record);
+    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, provider);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
 }
 

@@ -47,10 +47,11 @@ void CompiledExecutablePipelineStage::execute(
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    compiledPipelineFunction(&pipelineExecutionContext, std::addressof(inputTupleBuffer));
+    Arena arena(pipelineExecutionContext.getBufferManager());
+    compiledPipelineFunction(&pipelineExecutionContext, std::addressof(inputTupleBuffer), &arena);
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     Timer timer("compiler");
@@ -59,9 +60,9 @@ CompiledExecutablePipelineStage::compilePipeline() const
     /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     const std::function compiledFunction
-        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::TupleBuffer*> recordBufferRef)
+        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::TupleBuffer*> recordBufferRef, nautilus::val<Arena*> arena)
     {
-        auto ctx = ExecutionContext(pipelineExecutionContext);
+        auto ctx = ExecutionContext(pipelineExecutionContext, arena);
         RecordBuffer recordBuffer(recordBufferRef);
         physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
         physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
@@ -78,7 +79,9 @@ CompiledExecutablePipelineStage::compilePipeline() const
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    auto ctx = ExecutionContext(&pipelineExecutionContext);
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    Arena arena(pipelineExecutionContext.getBufferManager());
+    auto ctx = ExecutionContext(&pipelineExecutionContext, &arena);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
 }
 
@@ -90,7 +93,9 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    auto ctx = ExecutionContext(std::addressof(pipelineExecutionContext));
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    Arena arena(pipelineExecutionContext.getBufferManager());
+    auto ctx = ExecutionContext(std::addressof(pipelineExecutionContext), &arena);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
 }

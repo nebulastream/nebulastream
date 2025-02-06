@@ -36,7 +36,7 @@ Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionCo
     return pipelineCtx->getBufferManager().get();
 }
 
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext)
+ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, nautilus::val<Arena*> arena)
     : pipelineContext(pipelineContext)
     , bufferProvider(invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
@@ -45,6 +45,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , memoryArena(arena)
 {
 }
 
@@ -85,6 +86,11 @@ void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
 
+nautilus::val<Memory::AbstractBufferProvider*> ExecutionContext::getBufferProvider() const
+{
+    return nautilus::invoke(+[](PipelineExecutionContext* pec) { return pec->getBufferManager().get(); }, pipelineContext);
+}
+
 WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 {
     return pec->getId();
@@ -93,6 +99,23 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
 {
     return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
+}
+
+FixedScratchMemory ExecutionContext::allocate(size_t sizeInBytes) const
+{
+    auto memory = nautilus::invoke(
+        +[](Arena* arena, size_t sizeInBytes) { return arena->allocate(sizeInBytes); },
+        this->memoryArena,
+        nautilus::val<size_t>(sizeInBytes));
+
+    return FixedScratchMemory(memory, sizeInBytes);
+}
+
+ScratchMemory ExecutionContext::allocate(nautilus::val<size_t> sizeInBytes) const
+{
+    auto memory
+        = nautilus::invoke(+[](Arena* arena, size_t sizeInBytes) { return arena->allocate(sizeInBytes); }, this->memoryArena, sizeInBytes);
+    return ScratchMemory(memory, sizeInBytes);
 }
 
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)

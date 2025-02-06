@@ -36,9 +36,29 @@ nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T:
 }
 
 template <typename T>
+requires(!std::is_pointer_v<T>)
 nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 {
     return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
+}
+
+template <typename T>
+requires(std::is_pointer_v<T>)
+nautilus::val<T*> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
+{
+    return nautilus::invoke(+[](int8_t* ptr) { return *reinterpret_cast<T**>(ptr); }, memRef);
+}
+
+
+struct VariableSizeDataEntry
+{
+    void* ptr;
+    size_t size;
+};
+
+inline ScratchMemory readVariableSizeDataEntry(const nautilus::val<int8_t*>& memRef)
+{
+    return ScratchMemory{readValueFromMemRef<void*>(memRef), readValueFromMemRef<size_t>(memRef + nautilus::val<size_t>(sizeof(void*)))};
 }
 
 

@@ -23,106 +23,29 @@
 namespace NES::Nautilus
 {
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size)
-    : size(size), ptrToVarSized(content)
+VariableSizedData::VariableSizedData(ScratchMemory memory) : memory(memory)
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
+nautilus::val<bool> operator==(const VariableSizedData& lhs, const VariableSizedData& rhs)
 {
+    return lhs.memory == rhs.memory;
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+[[nodiscard]] nautilus::val<size_t> VariableSizedData::getSize() const
 {
-}
-
-VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    size = other.size;
-    ptrToVarSized = other.ptrToVarSized;
-    return *this;
-}
-
-VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
-{
-}
-
-VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    size = std::move(other.size);
-    ptrToVarSized = std::move(other.ptrToVarSized);
-    return *this;
-}
-
-nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other)
-{
-    return varSizedData.isValid() == other;
-}
-
-nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData)
-{
-    return varSizedData.isValid() == other;
-}
-
-nautilus::val<bool> VariableSizedData::isValid() const
-{
-    PRECONDITION(size > 0 && ptrToVarSized != nullptr, "VariableSizedData has a size of 0 but  a nullptr pointer to the data.");
-    PRECONDITION(size == 0 && ptrToVarSized == nullptr, "VariableSizedData has a size of 0 so there should be no pointer to the data.");
-    return size > 0 && ptrToVarSized != nullptr;
-}
-
-nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
-{
-    if (size != rhs.size)
-    {
-        return {false};
-    }
-
-    const auto compareResult = (nautilus::memcmp(ptrToVarSized, rhs.ptrToVarSized, size) == 0);
-    return {compareResult};
-}
-
-nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
-{
-    return !(*this == rhs);
-}
-
-nautilus::val<bool> VariableSizedData::operator!() const
-{
-    return !isValid();
-}
-
-[[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getSize() const
-{
-    return size;
+    return memory.size;
 }
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
-    return ptrToVarSized + nautilus::val<uint64_t>(sizeof(uint32_t));
-}
-
-[[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
-{
-    return ptrToVarSized;
+    return memory.data;
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)
 {
-    oss << "Size(" << variableSizedData.size << "): ";
-    for (nautilus::val<uint32_t> i = 0; i < variableSizedData.size; ++i)
+    oss << "Size(" << variableSizedData.memory.size << "): ";
+    for (nautilus::val<uint32_t> i = 0; i < variableSizedData.memory.size; ++i)
     {
         const nautilus::val<int> byte = Util::readValueFromMemRef<int8_t>((variableSizedData.getContent() + i)) & nautilus::val<int>(0xff);
         oss << nautilus::hex;
