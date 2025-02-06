@@ -199,7 +199,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         return false;
     }
 
-    NES_DEBUG("SourceThread  {} : start source", originId);
+    NES_DEBUG("Starting source with originId: {}", originId);
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
