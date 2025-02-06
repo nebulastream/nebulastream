@@ -15,12 +15,14 @@ jobs:
   fetch-current-main-commit:
     runs-on: [ self-hosted ]
     outputs:
-      sha: ${{ steps.fetch-sha.sha }}
+      sha: ${{ steps.fetch-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Fetch SHA
+        id: fetch-sha
+        run: |
+          git rev-parse --verify HEAD
           echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
-        name: fetch-sha
 
   get-dev-images:
     needs: fetch-current-main-commit
