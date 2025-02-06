@@ -30,6 +30,7 @@
 #include <Util/DeploymentContext.hpp>
 #include <Util/QueryState.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 namespace NES::Optimizer {
 
@@ -101,6 +102,9 @@ void PlacementAmendmentInstance::execute() {
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
         auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+
+
+        NES_ERROR("Deployment started: {}", getTimestamp())
         // 5. Call the deployment phase to dispatch the updated decomposed query plans for deployment, un-deployment, or migration
         if (deploymentUnit.containsDeploymentContext()) {
             //Undeploy all removed or migrating deployment contexts
@@ -117,6 +121,7 @@ void PlacementAmendmentInstance::execute() {
                 updateReconfigurationMarker(deploymentUnit, reconfigurationMarker);
                 deploymentPhase->execute(deploymentUnit.reconfigurationMarkerUnits, reconfigurationMarker);
             }
+            NES_ERROR("Deployment finished: {}", getTimestamp())
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
             NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")
