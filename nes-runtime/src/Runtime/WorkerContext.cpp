@@ -212,16 +212,16 @@ bool WorkerContext::releaseEventOnlyChannel(OperatorId id, Runtime::QueryTermina
 }
 
 std::pair<Network::NetworkChannel*, WorkerId> WorkerContext::getNetworkChannel(NES::OperatorId ownerId) {
-    NES_ERROR("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
+    NES_DEBUG("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     if (it == dataChannels.end()) {
-        NES_ERROR("WorkerContext: no channel for operator {} for context {}, returning nullptr", ownerId, workerId);
+        NES_DEBUG("WorkerContext: no channel for operator {} for context {}, returning nullptr", ownerId, workerId);
         return {nullptr, INVALID_WORKER_NODE_ID};
     }
-    NES_ERROR("WorkerContext: found channel for operator {} for context {}, retrieving data", ownerId, workerId);
+    NES_DEBUG("WorkerContext: found channel for operator {} for context {}, retrieving data", ownerId, workerId);
 //    return {(*it).second.first.get(), WorkerId ((*it).second.second)};
     std::pair p = {(*it).second.first.get(), WorkerId ((*it).second.second)};
-    NES_ERROR("WorkerContext: retrieved data for  channel for operator {} for context {}, returning", ownerId, workerId);
+    NES_DEBUG("WorkerContext: retrieved data for  channel for operator {} for context {}, returning", ownerId, workerId);
     return p;
 }
 
