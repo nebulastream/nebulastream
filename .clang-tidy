@@ -167,7 +167,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-pro-type-vararg,
   -misc-unconventional-assign-operator,
   -modernize-use-auto,
-  -modernize-use-emplace,
   -readability-duplicate-include,
   -cert-dcl21-cpp,
   -fuchsia-trailing-return,
