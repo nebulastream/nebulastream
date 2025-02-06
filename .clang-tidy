@@ -176,7 +176,6 @@ WarningsAsErrors: '
   -clang-analyzer-deadcode.DeadStores,
   -readability-container-data-pointer,
   -bugprone-implicit-widening-of-multiplication-result,
-  -modernize-loop-convert,
   -performance-noexcept-move-constructor,
   -bugprone-branch-clone,
   -cppcoreguidelines-virtual-class-destructor,
