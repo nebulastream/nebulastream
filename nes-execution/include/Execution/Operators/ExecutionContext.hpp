@@ -126,6 +126,24 @@ struct ArenaRef
     nautilus::val<int8_t*> spacePointer;
 };
 
+/// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider, allowing the operator to allocate two different types of memory, in regard to their lifetime and ease-of-use.
+/// 1. Memory for a pipeline invocation: Arena
+/// 2. Memory for a query: bufferProvider
+struct PipelineMemory
+{
+    explicit PipelineMemory(const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        : arena(arena), bufferProvider(bufferProvider)
+    {
+    }
+    explicit PipelineMemory(const ArenaRef& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        : arena(arena), bufferProvider(bufferProvider)
+    {
+    }
+
+    ArenaRef arena;
+    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
+};
+
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.
@@ -153,8 +171,7 @@ struct ExecutionContext final
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     nautilus::val<PipelineExecutionContext*> pipelineContext;
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
-    ArenaRef arena;
+    PipelineMemory pipelineMemory;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function

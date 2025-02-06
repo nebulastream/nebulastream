@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -38,8 +39,7 @@ Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionCo
 
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
-    , bufferProvider(invoke(getBufferProviderProxy, pipelineContext))
-    , arena(arena)
+    , pipelineMemory(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
@@ -49,27 +49,27 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-Memory::TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
-{
-    PRECONDITION(pec, "pipeline execution context should not be null");
-    /// We allocate a new tuple buffer for the runtime.
-    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-    /// This increases the reference counter in the buffer.
-    /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-    auto buffer = pec->allocateTupleBuffer();
-    auto* tb = new Memory::TupleBuffer(buffer);
-    return tb;
-}
-
 nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
+    auto bufferPtr = nautilus::invoke(
+        +[](PipelineExecutionContext* pec)
+        {
+            PRECONDITION(pec, "pipeline execution context should not be null");
+            /// We allocate a new tuple buffer for the runtime.
+            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+            /// This increases the reference counter in the buffer.
+            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+            const auto buffer = pec->allocateTupleBuffer();
+            auto* tb = new Memory::TupleBuffer(buffer);
+            return tb;
+        },
+        pipelineContext);
     return bufferPtr;
 }
 
 nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
 {
-    return arena.allocateMemory(sizeInBytes);
+    return pipelineMemory.arena.allocateMemory(sizeInBytes);
 }
 
 void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)
