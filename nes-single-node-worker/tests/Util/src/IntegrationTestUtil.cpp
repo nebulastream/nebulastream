@@ -170,7 +170,6 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
-                    auto value = static_cast<uint16_t>(std::stoul(inputString));
                     tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
                     break;
                 }
