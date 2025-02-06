@@ -28,8 +28,8 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: Configure CMake
         run: cmake -B build
-      - name: Generate grpc headers
-        run: cmake --build build --target nes-grpc
+      - name: Generate grpc, ANTLR headers
+        run: cmake --build build --target nes-grpc --target nes-sql-parser
       - name: Run clang-tidy
         id: run-clang-tidy
         run: run-clang-tidy-18 -p build 2> /dev/null > clang-tidy.log
