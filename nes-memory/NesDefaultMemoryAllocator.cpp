@@ -29,7 +29,7 @@ void* NesDefaultMemoryAllocator::do_allocate(const size_t bytes, const size_t al
 
 void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t)
 {
-    std::free(p);
+    std::free(p); /// NOLINT(cppcoreguidelines-no-malloc)
 }
 
 }

@@ -160,7 +160,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-interfaces-global-init,
   -cppcoreguidelines-pro-type-const-cast,
   -misc-throw-by-value-catch-by-reference,
-  -cppcoreguidelines-no-malloc,
   -readability-suspicious-call-argument,
   -bugprone-throw-keyword-missing,
   -modernize-use-bool-literals,
