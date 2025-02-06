@@ -36,9 +36,10 @@ Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionCo
     return pipelineCtx->getBufferManager().get();
 }
 
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext)
+ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
     , bufferProvider(invoke(getBufferProviderProxy, pipelineContext))
+    , arena(arena)
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
@@ -64,6 +65,11 @@ nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
     return bufferPtr;
+}
+
+nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
+{
+    return arena.allocateMemory(sizeInBytes);
 }
 
 void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)

@@ -16,6 +16,7 @@
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -44,9 +45,10 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline() const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+    compilePipeline() const;
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compiledPipelineFunction;
+    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
