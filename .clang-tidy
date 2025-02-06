@@ -192,7 +192,6 @@ WarningsAsErrors: '
   -readability-make-member-function-const,
   -cppcoreguidelines-macro-usage,
   -google-readability-avoid-underscore-in-googletest-name,
-  -bugprone-use-after-move,
   -fuchsia-virtual-inheritance,
   -readability-simplify-boolean-expr,
   -google-build-using-namespace,
