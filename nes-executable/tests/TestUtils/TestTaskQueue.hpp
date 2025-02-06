@@ -30,6 +30,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
+
+class TestablePipelineTask;
 class TestPipelineExecutionContext : public NES::Runtime::Execution::PipelineExecutionContext
 {
 public:
@@ -41,9 +43,16 @@ public:
     {
     }
 
-    void emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, ContinuationPolicy) override
+    void emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, ContinuationPolicy continuationPolicy) override
     {
-        resultBufferPtr->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
+        if (continuationPolicy == ContinuationPolicy::REPEAT)
+        {
+            repeatTaskCallback();
+        }
+        else
+        {
+            resultBufferPtr->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
+        }
     }
 
     NES::Memory::TupleBuffer allocateTupleBuffer() override
@@ -57,6 +66,10 @@ public:
     void setTemporaryResultBuffers(std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBufferPtr)
     {
         this->resultBufferPtr = std::move(resultBufferPtr);
+    }
+    void setRepeatTaskCallback(std::function<void()> repeatTaskCallback)
+    {
+        this->repeatTaskCallback = std::move(repeatTaskCallback);
     }
 
     [[nodiscard]] NES::WorkerThreadId getId() const override { return workerThreadId; };
@@ -73,6 +86,7 @@ public:
     NES::PipelineId pipelineId;
 
 private:
+    std::function<void()> repeatTaskCallback;
     std::shared_ptr<NES::Memory::BufferManager> bufferManager; //Sharing resource with TestTaskQueue
     std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers; //Todo: what to do with OperatorHandlers?
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBufferPtr;
@@ -309,8 +323,14 @@ private:
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
         while (not(testTasks.empty()))
         {
-            // std::vector<NES::Memory::TupleBuffer> temporaryResultBuffers;
             auto currentTestTask = std::move(testTasks.front());
+            /// Create a callback that allows to thread-safely add a task back to the task queue
+            auto repeatTaskCallback = [this, currentTestTask]()
+            {
+                std::scoped_lock lock(addNewTaskMutex);
+                testTasks.emplace(std::move(currentTestTask));
+            };
+
             lastWorkerThread = currentTestTask.workerThreadId;
             const auto responsibleWorkerThread = currentTestTask.workerThreadId;
             testTasks.pop();
@@ -318,6 +338,7 @@ private:
             pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(responsibleWorkerThread);
             pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
             pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
+            pipelineExecutionContext->setRepeatTaskCallback(std::move(repeatTaskCallback));
 
             const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(currentTestTask), .pipelineExecutionContext = pipelineExecutionContext};
             workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
@@ -343,6 +364,7 @@ private:
 private:
     uint64_t numberOfWorkerThreads;
     uint64_t numPipelines;
+    std::mutex addNewTaskMutex;
     std::queue<TestablePipelineTask> testTasks;
     TestWorkerThreadPool workerThreads;
     std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?

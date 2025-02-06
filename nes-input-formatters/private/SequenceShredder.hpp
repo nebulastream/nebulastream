@@ -117,7 +117,7 @@ class SequenceShredder
 public:
     // Todo: get rid of sequence number type?
     using SequenceNumberType = uint64_t;
-    static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(SequenceNumberType) * 8;
+    static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(SequenceNumberType) * 8; /// 8 bits in one byte
     static constexpr size_t INITIAL_NUM_BITMAPS = 4;
     using BitmapVectorType = std::vector<SequenceNumberType>;
 

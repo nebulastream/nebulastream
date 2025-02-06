@@ -448,9 +448,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const auto isInRange = sequenceShredder.isSequenceNumberInRange(rawTB.getSequenceNumber().getRawValue());
     if (not(isInRange))
     {
+        NES_WARNING("CSVInputFormatter::parseTupleBufferRaw: SequenceNumber out of range.");
         pipelineExecutionContext.emitBuffer(
             rawTB,
-            NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::NEVER); /// Todo: emit buffer with RE_EMIT policy
+            NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT);
         return;
     }
     /// Reset all values that are tied to a specific rawTB.
