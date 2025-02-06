@@ -63,6 +63,17 @@ void threadRoutine(
                         taskStartEvent.queryId,
                         taskStartEvent.numberOfTuples);
                 },
+                [&](TaskEmit emitEvent)
+                {
+                    file << fmt::format(
+                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
+                        emitEvent.timestamp,
+                        emitEvent.taskId,
+                        emitEvent.fromPipeline,
+                        emitEvent.toPipeline,
+                        emitEvent.queryId,
+                        emitEvent.numberOfTuples);
+                },
                 [&](TaskExecutionComplete taskStopEvent)
                 {
                     file << fmt::format(
