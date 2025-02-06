@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -36,6 +37,7 @@ bool FuseNonPipelineBreakerPolicy::isFusible(std::shared_ptr<PhysicalOperators::
         || NES::Util::instanceOf<PhysicalOperators::PhysicalSelectionOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationBuild>(physicalOperator));
 }
 }
