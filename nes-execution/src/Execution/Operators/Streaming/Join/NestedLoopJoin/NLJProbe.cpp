@@ -134,8 +134,8 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         workerThreadIdForPages,
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
 
-    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider, executionCtx.bufferProvider);
-    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider, executionCtx.bufferProvider);
+    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemory.bufferProvider);
+    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemory.bufferProvider);
 
     const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
     const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();

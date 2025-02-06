@@ -41,9 +41,7 @@ CountAggregationFunction::CountAggregationFunction(
 }
 
 void CountAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
-    const Nautilus::Record&)
+    const nautilus::val<AggregationState*>& aggregationState, const PipelineMemory&, const Nautilus::Record&)
 {
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -59,7 +57,7 @@ void CountAggregationFunction::lift(
 void CountAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    const PipelineMemory&)
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -76,8 +74,7 @@ void CountAggregationFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Nautilus::Record CountAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+Nautilus::Record CountAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -90,8 +87,7 @@ Nautilus::Record CountAggregationFunction::lower(
     return record;
 }
 
-void CountAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void CountAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

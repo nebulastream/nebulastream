@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <memory>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
@@ -46,29 +47,23 @@ public:
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
-    virtual void lift(
-        const nautilus::val<AggregationState*>& aggregationState,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
-        const Nautilus::Record& record)
+    virtual void
+    lift(const nautilus::val<AggregationState*>& aggregationState, const PipelineMemory& bufferProvider, const Nautilus::Record& record)
         = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
     virtual void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        const PipelineMemory& pipelineMemory)
         = 0;
 
     /// Returns the aggregation state as a nautilus record. The record will contain the aggregation state in the field specified by resultFieldIdentifier
     /// It will NOT contain any other metadata fields, e.g., window start and end fields
-    virtual Nautilus::Record
-    lower(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-        = 0;
+    virtual Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, const PipelineMemory& pipelineMemory) = 0;
 
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
-    virtual void
-    reset(nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-        = 0;
+    virtual void reset(nautilus::val<AggregationState*> aggregationState, const PipelineMemory& pipelineMemory) = 0;
 
     /// Returns the size of the aggregation state in bytes
     [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;

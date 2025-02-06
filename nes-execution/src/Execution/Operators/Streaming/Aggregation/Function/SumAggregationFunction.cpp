@@ -40,9 +40,7 @@ SumAggregationFunction::SumAggregationFunction(
 }
 
 void SumAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, const PipelineMemory&, const Nautilus::Record& record)
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -59,7 +57,7 @@ void SumAggregationFunction::lift(
 void SumAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    const PipelineMemory&)
 {
     /// Reading the sum from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -76,8 +74,7 @@ void SumAggregationFunction::combine(
     newSum.writeToMemory(memAreaSum1);
 }
 
-Nautilus::Record SumAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+Nautilus::Record SumAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -90,8 +87,7 @@ Nautilus::Record SumAggregationFunction::lower(
     return record;
 }
 
-void SumAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void SumAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

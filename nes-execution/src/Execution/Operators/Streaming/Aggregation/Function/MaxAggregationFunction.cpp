@@ -39,9 +39,7 @@ MaxAggregationFunction::MaxAggregationFunction(
 }
 
 void MaxAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, const PipelineMemory&, const Nautilus::Record& record)
 {
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -58,7 +56,7 @@ void MaxAggregationFunction::lift(
 void MaxAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    const PipelineMemory&)
 {
     /// Reading the max value from the first aggregation state
     const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -75,8 +73,7 @@ void MaxAggregationFunction::combine(
     }
 }
 
-Nautilus::Record MaxAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+Nautilus::Record MaxAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -88,8 +85,7 @@ Nautilus::Record MaxAggregationFunction::lower(
     return record;
 }
 
-void MaxAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Resetting the max value to the minimum value
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);

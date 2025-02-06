@@ -43,9 +43,7 @@ AvgAggregationFunction::AvgAggregationFunction(
 }
 
 void AvgAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, const PipelineMemory&, const Nautilus::Record& record)
 {
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -66,7 +64,7 @@ void AvgAggregationFunction::lift(
 void AvgAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    const PipelineMemory&)
 {
     /// Reading the sum and count from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -89,8 +87,7 @@ void AvgAggregationFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Nautilus::Record AvgAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+Nautilus::Record AvgAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Reading the sum and count from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -103,8 +100,7 @@ Nautilus::Record AvgAggregationFunction::lower(
     return Nautilus::Record({{resultFieldIdentifier, avg}});
 }
 
-void AvgAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void AvgAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, const PipelineMemory&)
 {
     /// Resetting the sum and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
