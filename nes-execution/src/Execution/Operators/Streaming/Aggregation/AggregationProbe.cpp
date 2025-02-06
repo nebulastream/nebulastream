@@ -94,7 +94,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                     auto entryRefState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
                     {
-                        aggFunction->combine(globalState, entryRefState, executionCtx.bufferProvider);
+                        aggFunction->combine(globalState, entryRefState, executionCtx.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
@@ -110,13 +110,13 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
                     {
                         /// In contrast to the lambda method above, we have to reset the aggregation state before combining it with the other state
-                        aggFunction->reset(globalState, executionCtx.bufferProvider);
-                        aggFunction->combine(globalState, entryRefStatePtr, executionCtx.bufferProvider);
+                        aggFunction->reset(globalState, executionCtx.pipelineMemoryProvider);
+                        aggFunction->combine(globalState, entryRefStatePtr, executionCtx.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefStatePtr = entryRefStatePtr + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                executionCtx.bufferProvider);
+                executionCtx.pipelineMemoryProvider.bufferProvider);
         }
     }
 
@@ -129,7 +129,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         auto finalStatePtr = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
         for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
         {
-            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.bufferProvider));
+            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
         }
 

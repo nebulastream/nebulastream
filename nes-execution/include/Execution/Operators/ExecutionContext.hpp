@@ -121,9 +121,29 @@ struct ArenaRef
         return result;
     }
 
+private:
     nautilus::val<Arena*> arenaRef;
     nautilus::val<size_t> availableSpaceForPointer;
     nautilus::val<int8_t*> spacePointer;
+};
+
+/// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider, allowing the operator to allocate two different types of memory, in regard to their lifetime and ease-of-use.
+/// 1. Memory for a pipeline invocation: Arena
+/// 2. Memory for a query: bufferProvider
+struct PipelineMemoryProvider
+{
+    explicit PipelineMemoryProvider(
+        const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        : arena(arena), bufferProvider(bufferProvider)
+    {
+    }
+    explicit PipelineMemoryProvider(const ArenaRef& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        : arena(arena), bufferProvider(bufferProvider)
+    {
+    }
+
+    ArenaRef arena;
+    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
 
 
@@ -144,7 +164,12 @@ struct ExecutionContext final
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
+    /// Use allocateBuffer if you want to allocate spacey that lives for multiple pipeline invocations, i.e., query lifetime.
+    /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+
+    /// Use allocateMemory if you want to allocate memory that lives for one pipeline invocation, i.e., tuple buffer lifetime.
+    /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.
     [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
 
@@ -153,8 +178,7 @@ struct ExecutionContext final
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     nautilus::val<PipelineExecutionContext*> pipelineContext;
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
-    ArenaRef arena;
+    PipelineMemoryProvider pipelineMemoryProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function

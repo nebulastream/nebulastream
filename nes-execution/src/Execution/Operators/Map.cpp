@@ -14,9 +14,11 @@
 
 #include <memory>
 #include <utility>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction)
@@ -27,7 +29,7 @@ Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function
-    const auto value = mapFunction->execute(record);
+    const auto value = mapFunction->execute(record, ctx.pipelineMemoryProvider.arena);
     /// write the result to the record
     record.write(fieldToWriteTo, value);
     /// call next operator
