@@ -119,7 +119,6 @@ WarningsAsErrors: '
   -google-runtime-operator,
   -hicpp-exception-baseclass,
   -misc-header-include-cycle,
-  -modernize-raw-string-literal,
   -modernize-use-std-numbers,
   -modernize-use-transparent-functors,
   -readability-non-const-parameter,
