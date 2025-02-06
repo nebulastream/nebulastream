@@ -38,7 +38,7 @@ class TupleBuffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
 
-static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
+static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(10000000);
 
 
 /**

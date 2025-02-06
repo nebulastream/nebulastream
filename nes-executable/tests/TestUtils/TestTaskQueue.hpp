@@ -156,6 +156,7 @@ public:
     {
         TestablePipelineTask task;
         std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
+        std::function<void()> reduceInFlightTasks;
     };
 
     TestWorkerThreadPool(const size_t num_threads) : threadData(num_threads)
@@ -270,6 +271,7 @@ private:
                 {
                     task.task.getExecutablePipelineStage()->stop(*task.pipelineExecutionContext);
                 }
+                task.reduceInFlightTasks();
                 lock.lock();
             }
             data.is_working = false;
@@ -321,32 +323,49 @@ private:
     {
         auto lastWorkerThread = NES::WorkerThreadId(NES::WorkerThreadId::INITIAL);
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
-        while (not(testTasks.empty()))
-        {
+
+        do {
+            ++numInFlightTasks;
             auto currentTestTask = std::move(testTasks.front());
             /// Create a callback that allows to thread-safely add a task back to the task queue
             auto repeatTaskCallback = [this, currentTestTask]()
             {
                 std::scoped_lock lock(addNewTaskMutex);
+                ++numInFlightTasks;
                 testTasks.emplace(std::move(currentTestTask));
+            };
+            auto reduceInFlightTasks = [this]()
+            {
+                --numInFlightTasks;
             };
 
             lastWorkerThread = currentTestTask.workerThreadId;
             const auto responsibleWorkerThread = currentTestTask.workerThreadId;
+            addNewTaskMutex.lock();
             testTasks.pop();
+            addNewTaskMutex.unlock();
             auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
             pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(responsibleWorkerThread);
             pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
             pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
             pipelineExecutionContext->setRepeatTaskCallback(std::move(repeatTaskCallback));
 
-            const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(currentTestTask), .pipelineExecutionContext = pipelineExecutionContext};
+            const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(currentTestTask), .pipelineExecutionContext = pipelineExecutionContext, .reduceInFlightTasks = std::move(reduceInFlightTasks)};
             workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
             if (processingMode == ProcessingMode::SEQUENTIAL)
             {
                 workerThreads.wait();
             }
-        }
+        } while (numInFlightTasks.load() != 0 and not(testTasks.empty()));
+
+
+        auto reduceInFlightTasks = [this]()
+        {
+            --numInFlightTasks;
+        };
+        // std::cout << "num tasks left: " << testTasks.size() << std::endl;
+        // Todo: there might still be in-flight buffers <-- remove?
+        workerThreads.wait();
         /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
         const auto idxOfWorkerThreadForFlushTask = lastWorkerThread.getRawValue();
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
@@ -355,14 +374,14 @@ private:
         pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
 
         const auto flushTask = TestablePipelineTask{true, NES::WorkerThreadId(idxOfWorkerThreadForFlushTask), std::move(pointerToSharedExecutablePipelineStage)};
-        const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(flushTask), .pipelineExecutionContext = pipelineExecutionContext};
+        const auto workTask = TestWorkerThreadPool::WorkTask{.task = std::move(flushTask), .pipelineExecutionContext = pipelineExecutionContext, .reduceInFlightTasks = std::move(reduceInFlightTasks)};
         workerThreads.assign_work(idxOfWorkerThreadForFlushTask, std::move(workTask));
         workerThreads.wait();
-
     }
 
 private:
     uint64_t numberOfWorkerThreads;
+    std::atomic<uint32_t> numInFlightTasks{0};
     uint64_t numPipelines;
     std::mutex addNewTaskMutex;
     std::queue<TestablePipelineTask> testTasks;

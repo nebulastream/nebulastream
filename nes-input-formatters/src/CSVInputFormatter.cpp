@@ -442,18 +442,18 @@ void CSVInputFormatter::parseTupleBufferRaw(
 {
     PRECONDITION(rawTB.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
 
-    /// Creating a ProgressTracker on each call makes the CSVInputFormatter stateless // Todo: instantiate ProgressTracker only if needed, perform prior calculations outside of it
-    auto progressTracker = ProgressTracker(rawTB.getSequenceNumber(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
-
     const auto isInRange = sequenceShredder.isSequenceNumberInRange(rawTB.getSequenceNumber().getRawValue());
     if (not(isInRange))
     {
-        NES_WARNING("CSVInputFormatter::parseTupleBufferRaw: SequenceNumber out of range.");
+        // NES_WARNING("CSVInputFormatter::parseTupleBufferRaw: SequenceNumber {} out of range.", rawTB.getSequenceNumber().getRawValue());
         pipelineExecutionContext.emitBuffer(
             rawTB,
             NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT);
         return;
     }
+
+    /// Creating a ProgressTracker on each call makes the CSVInputFormatter stateless // Todo: instantiate ProgressTracker only if needed, perform prior calculations outside of it
+    auto progressTracker = ProgressTracker(rawTB.getSequenceNumber(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     /// Reset all values that are tied to a specific rawTB.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     // Todo: get of resetting and perform calculations in place

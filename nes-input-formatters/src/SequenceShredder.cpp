@@ -467,19 +467,30 @@ SequenceShredder::StagedBufferResult SequenceShredder::checkResultsWithoutTupleD
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot << BITMAP_SIZE_BIT_SHIFT) - 1;
 
-    const auto firstIndex = spanningTuple.spanStart & stagedBufferSizeModulo;
-    auto firstBuffer
-        = (--std::atomic_ref(stagedBuffers[firstIndex].uses) == 0) ? std::move(stagedBuffers[firstIndex]) : stagedBuffers[firstIndex];
-    spanningTupleBuffers.emplace_back(std::move(firstBuffer));
-    for (auto spanningTupleIndex = spanningTuple.spanStart + 1; spanningTupleIndex < spanningTuple.spanEnd; ++spanningTupleIndex)
+    // const auto firstIndex = spanningTuple.spanStart & stagedBufferSizeModulo;
+    // auto firstBuffer
+    //     = (--std::atomic_ref(stagedBuffers[firstIndex].uses) == 0) ? std::move(stagedBuffers[firstIndex]) : stagedBuffers[firstIndex];
+    // spanningTupleBuffers.emplace_back(std::move(firstBuffer));
+    // for (auto spanningTupleIndex = spanningTuple.spanStart + 1; spanningTupleIndex < spanningTuple.spanEnd; ++spanningTupleIndex)
+    // {
+    //     const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+    //     const auto currentBuffer = std::move(stagedBuffers[adjustedSpanningTupleIndex]);
+    //     spanningTupleBuffers.emplace_back(std::move(currentBuffer));
+    // }
+    // const auto lastIndex = spanningTuple.spanEnd & stagedBufferSizeModulo;
+    // auto lastBuffer
+    //     = (--std::atomic_ref(stagedBuffers[lastIndex].uses) == 0) ? std::move(stagedBuffers[lastIndex]) : stagedBuffers[lastIndex];
+    // spanningTupleBuffers.emplace_back(std::move(lastBuffer));
+    for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
     {
         const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        spanningTupleBuffers.emplace_back(std::move(stagedBuffers[adjustedSpanningTupleIndex]));
+        auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
+        /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
+        std::atomic_ref<int> atomicUses(currentBuffer.uses);
+        --atomicUses;
+        auto returnBuffer = (currentBuffer.uses == 0) ? std::move(currentBuffer) : currentBuffer;
+        spanningTupleBuffers.emplace_back(std::move(returnBuffer));
     }
-    const auto lastIndex = spanningTuple.spanEnd & stagedBufferSizeModulo;
-    auto lastBuffer
-        = (--std::atomic_ref(stagedBuffers[lastIndex].uses) == 0) ? std::move(stagedBuffers[lastIndex]) : stagedBuffers[lastIndex];
-    spanningTupleBuffers.emplace_back(std::move(lastBuffer));
 
     readWriteMutex
         .lock(); /// protects: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)

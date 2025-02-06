@@ -146,7 +146,7 @@ private:
     static constexpr size_t MAX_NUMBER_OF_BITMAPS = 256;
     static constexpr size_t SHIFT_TO_SECOND_BIT = 1;
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
-    static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
+    static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 500000;
 
     /// The sequence shredder returns 0, 1, or 2 SpanningTuples
     /// The spanning tuple(s) tell the thread that called 'processSequenceNumber()', the range of buffers it needs to format.
