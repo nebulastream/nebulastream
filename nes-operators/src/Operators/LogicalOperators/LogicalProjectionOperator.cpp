@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -129,11 +130,8 @@ bool LogicalProjectionOperator::inferSchema()
 
 std::shared_ptr<Operator> LogicalProjectionOperator::copy()
 {
-    std::vector<std::shared_ptr<NodeFunction>> copyOfProjectionFunctions;
-    for (const auto& originalFunction : functions)
-    {
-        copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
-    }
+    auto copyOfProjectionFunctions
+        = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | ranges::to<std::vector>();
     auto copy = std::make_shared<LogicalProjectionOperator>(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
