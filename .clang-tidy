@@ -171,7 +171,6 @@ WarningsAsErrors: '
   -readability-duplicate-include,
   -cert-dcl21-cpp,
   -fuchsia-trailing-return,
-  -readability-container-size-empty,
   -clang-analyzer-deadcode.DeadStores,
   -readability-container-data-pointer,
   -bugprone-implicit-widening-of-multiplication-result,

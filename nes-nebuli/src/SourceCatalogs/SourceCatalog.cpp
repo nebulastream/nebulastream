@@ -73,7 +73,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
         return false;
     }
     NES_DEBUG("SourceCatalog: remove logical source {}", logicalSourceName);
-    if (logicalToPhysicalSourceMapping[logicalSourceName].size() != 0)
+    if (not logicalToPhysicalSourceMapping[logicalSourceName].empty())
     {
         NES_DEBUG("SourceCatalog: cannot remove {} because there are physical entries for this source", logicalSourceName);
         return false;
