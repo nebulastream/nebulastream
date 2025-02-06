@@ -40,7 +40,7 @@ jobs:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   compile-time-regression:
-    needs: [ fetch-current-main-commit, get-dev-images, full-clang-tidy ]
+    needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/compile_time_regression.yml
     secrets: inherit
     with:
