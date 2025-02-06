@@ -95,6 +95,7 @@ void OperatorPipeline::addSuccessor(const std::shared_ptr<OperatorPipeline>& pip
 std::vector<std::shared_ptr<OperatorPipeline>> OperatorPipeline::getPredecessors() const
 {
     std::vector<std::shared_ptr<OperatorPipeline>> predecessors;
+    predecessors.reserve(predecessorPipelines.size());
     for (const auto& predecessor : predecessorPipelines)
     {
         predecessors.emplace_back(predecessor.lock());
