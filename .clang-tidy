@@ -139,7 +139,6 @@ WarningsAsErrors: '
   -bugprone-move-forwarding-reference,
   -cert-env33-c,
   -clang-analyzer-optin.cplusplus.VirtualCall,
-  -modernize-deprecated-headers,
   -modernize-use-nullptr,
   -readability-redundant-string-init,
   -bugprone-exception-escape,

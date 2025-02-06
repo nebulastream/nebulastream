@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
 #include <unistd.h>
 #include <Util/FileMutex.hpp>
 #include <Util/Logger/Logger.hpp>
