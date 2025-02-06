@@ -349,7 +349,8 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
-                    pool.statistic->onEvent(TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId});
+                    pool.statistic->onEvent(
+                        TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
@@ -400,7 +401,6 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
-    INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
     INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {
