@@ -559,7 +559,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
         test.startQuery(std::move(query));
 
         DataGenerator<FailAfter<numberOfBuffersBeforeFailure, 0>> dataGenerator;
-        dataGenerator.start(std::move(sourcesCtrls));
+        dataGenerator.start(sourcesCtrls);
         EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         dataGenerator.stop();
     }
