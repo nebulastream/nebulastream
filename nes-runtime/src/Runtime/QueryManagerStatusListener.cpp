@@ -239,10 +239,10 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
 }
 
 folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSourceInfo(std::string sourceName, std::string filePath) {
-    NES_ERROR("getting source info for name {}, path {}", sourceName, filePath)
+    NES_DEBUG("getting source info for name {}, path {}", sourceName, filePath)
     std::unique_lock lock(tcpSourceMutex);
     if (tcpSourceInfos.contains(sourceName)) {
-        NES_ERROR("source info for name {}, path {} exists", sourceName, filePath)
+        NES_DEBUG("source info for name {}, path {} exists", sourceName, filePath)
 //        auto locked =  tcpSourceInfos.at(sourceName).wlock();
 //        NES_ASSERT(locked->port == std::stol(filePath))
         return tcpSourceInfos.at(sourceName).wlock();
