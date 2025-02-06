@@ -250,6 +250,7 @@ void Schema::setLayoutType(const Schema::MemoryLayoutType layoutType)
 std::vector<std::string> Schema::getFieldNames() const
 {
     std::vector<std::string> fieldNames;
+    fieldNames.reserve(fields.size());
     /// Check if the size of the fields vector is within a reasonable range
     INVARIANT(fields.size() < (1U ^ 32), "Schema is corrupted: unreasonable number of fields.");
     for (const auto& attribute : fields)
