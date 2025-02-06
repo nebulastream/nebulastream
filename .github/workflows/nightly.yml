@@ -37,7 +37,7 @@ jobs:
     secrets: inherit
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   compile-time-regression:
     needs: [ fetch-current-main-commit, get-dev-images, full-clang-tidy ]
@@ -45,7 +45,7 @@ jobs:
     secrets: inherit
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   build-and-test:
     name: "Run build and test"
@@ -53,7 +53,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long-running-tests:
