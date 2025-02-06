@@ -775,7 +775,7 @@ bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
                                    DecomposedQueryPlanVersion decomposedQueryVersion,
                                    OperatorId uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
-    NES_ERROR("NodeEngine: Received request to update Network Sink");
+    NES_DEBUG("NodeEngine: Received request to update Network Sink");
     auto executablePlanId = DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion);
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
@@ -851,7 +851,7 @@ folly::Synchronized<int>::LockedPtr NodeEngine::getTcpDescriptor(std::string fil
     std::stringstream ss(filePath);
     std::string portString;
     while(std::getline(ss, portString, ':')) {
-        NES_ERROR("Port string {}", portString)
+        NES_DEBUG("Port string {}", portString)
     }
     auto port = std::stoi(portString);
 
@@ -877,7 +877,7 @@ folly::Synchronized<int>::LockedPtr NodeEngine::getTcpDescriptor(std::string fil
         close(sockfd);
         NES_FATAL_ERROR("could not connect sockfd")
     }
-    NES_ERROR("Created new tcp descriptor {} for {}", sockfd, filePath);
+    NES_DEBUG("Created new tcp descriptor {} for {}", sockfd, filePath);
     tcpDescriptor.insert({filePath, folly::Synchronized(sockfd)});
     return tcpDescriptor.at(filePath).wlock();
 }

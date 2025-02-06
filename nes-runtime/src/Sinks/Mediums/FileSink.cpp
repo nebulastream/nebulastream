@@ -123,7 +123,7 @@ if (!timestampAndWriteToSocket) {
     //        return;
     //    }
 
-    NES_ERROR("Connecting to tcp socket on worker {}", nodeEngine->getNodeId());
+    NES_DEBUG("Connecting to tcp socket on worker {}", nodeEngine->getNodeId());
     //todo: this will not work for multiple sinks
 //    if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
 ////    if (true) {
@@ -132,7 +132,7 @@ if (!timestampAndWriteToSocket) {
 //        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
 //    }
     //get it once
-    NES_ERROR("creating socket for file sink")
+    NES_DEBUG("creating socket for file sink")
         auto sockfd = nodeEngine->getTcpDescriptor(filePath);
 }
 }
