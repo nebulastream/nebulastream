@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
