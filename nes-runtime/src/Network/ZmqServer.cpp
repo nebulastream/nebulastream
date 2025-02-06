@@ -442,18 +442,15 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 }
                 case MessageType::EndOfStream: {
                     // if server receives a message that the source did terminate
-                    NES_ERROR("received end of stream")
                     zmq::message_t eosEnvelope;
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
                     auto reconfigurationEvents = eosMsg.getReconfigurationEventCount();
                     std::optional<ReconfigurationMarkerPtr> marker = std::nullopt;
-                    NES_ERROR("found marker with {} events", reconfigurationEvents)
                     if (reconfigurationEvents > 0) {
                         marker = ReconfigurationMarker::create();
                         for (auto i = 0; i < reconfigurationEvents; ++i) {
-                            NES_ERROR("processing event {}", i);
                             zmq::message_t reconfigEnvelope;
                             optRetSize = dispatcherSocket.recv(reconfigEnvelope, kZmqRecvDefault);
                             NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
@@ -461,7 +458,6 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
 
                             switch (reconfigMsg.metadataType) {
                                 case ReconfigurationMetadataType::DrainQuery:
-                                    NES_ERROR("processing event {}, of type drain query", i);
                                     marker.value()->addReconfigurationEvent(
                                         reconfigMsg.decomposedQueryIdWithVersion.id,
                                         reconfigMsg.decomposedQueryIdWithVersion.version,
@@ -482,7 +478,6 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                                                                           reconfigMsg.numberOfSources)));
                                     break;
                                 case ReconfigurationMetadataType::UpdateQuery:
-                                    NES_ERROR("processing event {} of {}, of type update query", i, reconfigurationEvents);
                                     auto sinkUpdateCount = reconfigMsg.sinkReconfigurationCount;
                                     std::vector<NetworkSinkUpdateInfo> updateInfos;
 //                                    for (auto j = 0; j < sinkUpdateCount; ++j) {
@@ -507,7 +502,6 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                                                                   reconfigMsg.decomposedQueryId,
                                                                                   reconfigMsg.decomposedQueryPlanVersion,
                                                                                   updateInfos)));
-                                    NES_ERROR("added event {} to marker", i);
                                     break;
                             }
                         }

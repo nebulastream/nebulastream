@@ -925,7 +925,6 @@ void NodeEngine::setParentId(int64_t newParent) {
 bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                       DecomposedQueryId decomposedQueryid,
                                       ReconfigurationMarkerPtr reconfigurationMarker) {
-    NES_ERROR("Inserting reconfig markers for decomposed query {}", decomposedQueryid);
     auto addedMarker = false;
     for (const auto& [idAndVersion, event] : reconfigurationMarker->getAllReconfigurationMarkerEvents()) {
         if (idAndVersion.id == decomposedQueryid) {
@@ -974,7 +973,6 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
             }
         }
     }
-    NES_ERROR("finished adding marker, status = {}", addedMarker);
     return addedMarker;
 }
 

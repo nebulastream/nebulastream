@@ -580,7 +580,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     }
 
     //check if channel connected successfully
-    if (newNetworkChannelFutureOptional.value() == nullptr) {
+    if (newNetworkChannelFutureOptional.value().first == nullptr) {
         NES_DEBUG("NetworkSink: reconfigure() network channel retrieved from future is null for operator {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
