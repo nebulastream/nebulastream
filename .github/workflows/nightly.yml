@@ -71,3 +71,20 @@ jobs:
     with:
       ref: "main"
       dockerhub-tag: "nightly"
+
+  send-zulip-msg-on-failure:
+    needs: [ compile-time-regression, create-nightly-image, long-running-tests, full-clang-tidy ]
+    runs-on: [ self-hosted ]
+    if: ${{ failure() && !github.event.act }}
+    steps:
+    - name: Notify Zulip
+      uses: zulip/github-actions-zulip/send-message@v1
+      with:
+        api-key: ${{ secrets.PRBOT_API_KEY }}
+        email: "pr-reminder-bot@nebulastream.zulipchat.com"
+        organization-url: "https://nebulastream.zulipchat.com"
+        to: "development"
+        topic: "nightly ci status"
+        type: "stream"
+        content: |
+          [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
