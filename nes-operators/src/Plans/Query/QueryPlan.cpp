@@ -369,7 +369,7 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
     std::stack<std::pair<std::shared_ptr<Operator>, std::shared_ptr<Operator>>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
-        stack.push(std::make_pair(leftRootOperators[i], rightRootOperators[i]));
+        stack.emplace(leftRootOperators[i], rightRootOperators[i]);
     }
 
     /// iterate over stack
@@ -392,7 +392,7 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
             auto rightChild = NES::Util::as<Operator>(rightChildren[j]);
             if (!leftChild || !rightChild)
                 return false;
-            stack.push(std::make_pair(leftChild, rightChild));
+            stack.emplace(leftChild, rightChild);
         }
 
         /// comparison of both operators
