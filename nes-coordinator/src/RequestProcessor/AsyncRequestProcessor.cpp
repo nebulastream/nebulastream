@@ -56,20 +56,14 @@ AsyncRequestProcessor::AsyncRequestProcessor(StorageDataStructures& storageDataS
 }
 
 RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
-    NES_ERROR("Queueing request in executor");
     if (!running) {
         NES_WARNING("Cannot execute request, Async request executor is not running");
         return INVALID_REQUEST_ID;
     }
-    NES_ERROR("Generating request id");
     RequestId requestId = storageHandler->generateRequestId();
     request->setId(requestId);
-    {
-        NES_ERROR("Getting lock and emplacing request in queue");
-        std::unique_lock lock(workMutex);
-        asyncRequestQueue.emplace_back(std::move(request));
-        NES_ERROR("Request added to queue. {} requests in queue", asyncRequestQueue.size());
-    }
+    std::unique_lock lock(workMutex);
+    asyncRequestQueue.emplace_back(std::move(request));
     cv.notify_all();
     return requestId;
 }
@@ -105,11 +99,9 @@ void AsyncRequestProcessor::runningRoutine() {
     while (true) {
         std::unique_lock lock(workMutex);
         while (asyncRequestQueue.empty()) {
-            NES_ERROR("Async request queue is empty, waiting for requests")
             cv.wait(lock);
         }
         if (running) {
-            NES_ERROR("Queue not empty, executing request")
             AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
 
             auto multiRequest = std::dynamic_pointer_cast<AbstractMultiRequest>(abstractRequest);
@@ -120,30 +112,24 @@ void AsyncRequestProcessor::runningRoutine() {
                     asyncRequestQueue.pop_front();
                     lock.unlock();
                     cv.notify_all();
-                    NES_ERROR("Multi request removed from queue. {} remain requests in queue", asyncRequestQueue.size());
                     continue;
                 }
-                NES_ERROR("Multi request selected in queue, request will remaing in queue. {} remain requests in queue", asyncRequestQueue.size());
             } else {
                 // if the request is not a multirequest it will not have to acquire more threads than the current one.
                 // it can be removed from the queue
                 asyncRequestQueue.pop_front();
-                NES_ERROR("Uni request retrieved from queue. {} remain requests in queue", asyncRequestQueue.size());
             }
 
             lock.unlock();
             cv.notify_all();
 
-            NES_ERROR("Executing request {}", abstractRequest->getId())
             //execute request logic
             std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);
-            NES_ERROR("Finished Executing request {}, {} follow up requests", abstractRequest->getId(), nextRequests.size())
 
             //queue follow up requests
             for (auto followUpRequest : nextRequests) {
                 runAsync(std::move(followUpRequest));
             }
-            NES_DEBUG("Follow up requests queued")
         } else {
             cv.notify_all();
             break;

@@ -64,7 +64,6 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string,
 }
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig) {
-    NES_ERROR("Creating physical source type from yaml config");
     std::vector<PhysicalSourceTypePtr> physicalSources;
     //Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
@@ -141,7 +140,6 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 
-    NES_ERROR("Creating physical source type from yaml config");
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
         case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);

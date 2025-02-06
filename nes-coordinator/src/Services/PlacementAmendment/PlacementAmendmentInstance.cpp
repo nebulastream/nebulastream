@@ -101,21 +101,16 @@ void PlacementAmendmentInstance::execute() {
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
         auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-        NES_ERROR("Amendment phase executed successfully for shared query {}", sharedQueryPlan->getId());
         // 5. Call the deployment phase to dispatch the updated decomposed query plans for deployment, un-deployment, or migration
         if (deploymentUnit.containsDeploymentContext()) {
             //Undeploy all removed or migrating deployment contexts
             deploymentPhase->execute(deploymentUnit.deploymentRemovalContexts, requestType);
-            NES_ERROR("Deployment phase executed successfully for shared query {}", sharedQueryPlan->getId());
             //Remove all queries marked for removal from shared query plan
             sharedQueryPlan->removeQueryMarkedForRemoval();
-            NES_ERROR("Queries marked for removal removed from shared query plan {}", sharedQueryPlan->getId());
             //Deploy all newly placed deployment contexts
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
-            NES_ERROR("Deployment phase number 2 executed successfully for shared query {}", sharedQueryPlan->getId());
 
             NES_ERROR("Incremental placement: {}", incrementalPlacement);
-            NES_ERROR("Reconfiguration marker count {}", deploymentUnit.reconfigurationMarkerUnits.size());
             if (incrementalPlacement && !deploymentUnit.reconfigurationMarkerUnits.empty()) {
                 // Compute reconfiguration marker based on deployment contexts
                 auto reconfigurationMarker = ReconfigurationMarker::create();
@@ -124,7 +119,7 @@ void PlacementAmendmentInstance::execute() {
             }
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
-            NES_ERROR("Update global execution plan to reflect state of decomposed query plans")
+            NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")
             auto sharedQueryId = sharedQueryPlan->getId();
             // Iterate over deployment context and update execution plan
             for (const auto& deploymentContext : deploymentUnit.getAllDeploymentContexts()) {

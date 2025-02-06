@@ -35,12 +35,11 @@ DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCa
 
 void DeploymentPhase::execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType) {
     if (!deploymentContexts.empty()) {
-        NES_ERROR("Register or unregister {} decomposed queries.", deploymentContexts.size());
+        NES_INFO("Register or unregister {} decomposed queries.", deploymentContexts.size());
         registerOrStopDecomposedQueryPlan(deploymentContexts, requestType);
 
-        NES_ERROR("Start or stop {} decomposed queries.", deploymentContexts.size());
+        NES_INFO("Start or stop {} decomposed queries.", deploymentContexts.size());
         startOrUnregisterDecomposedQueryPlan(deploymentContexts, requestType);
-        NES_ERROR("Deployment phase finished.");
     }
 }
 
@@ -68,7 +67,6 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
     QueryState sharedQueryState = QueryState::REGISTERED;
     SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
 #ifdef ASYNC_DEPLOYMENT
-    NES_ERROR("Async deployment enabled")
     std::vector<RpcAsyncRequest> asyncRequests;
 #endif
 
@@ -82,12 +80,6 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlan = deploymentContext->getDecomposedQueryPlan();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-        NES_ERROR("Deployment context {} of {} for in status {} with decomposed query {}, request type {}",
-                  count++,
-                  deploymentContexts.size(),
-                  magic_enum::enum_name(decomposedQueryPlanState),
-                  decomposedQueryId,
-                  magic_enum::enum_name(requestType));
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_DEPLOYMENT: {
                 if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED

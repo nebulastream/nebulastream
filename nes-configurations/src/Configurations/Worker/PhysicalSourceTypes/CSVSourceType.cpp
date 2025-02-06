@@ -137,7 +137,6 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
             magic_enum::enum_cast<GatheringMode>(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>())
                 .value());
     }
-    NES_ERROR("CSVSourceType: read yaml file.");
 }
 
 std::string CSVSourceType::toString() {
