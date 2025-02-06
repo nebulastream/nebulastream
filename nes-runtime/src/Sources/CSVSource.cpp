@@ -68,7 +68,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     NES_DEBUG("Starting tcp source")
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
-        NES_ERROR("Creating source info")
+        NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         return;
     }
