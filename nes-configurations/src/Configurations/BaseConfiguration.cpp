@@ -117,10 +117,9 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
 void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams)
 {
     std::unordered_map<std::string, std::unordered_map<std::string, std::string>> groupedIdentifiers;
-    for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm)
+    for (const auto& [id, value] : inputParams)
     {
-        auto identifier = parm->first;
-        auto value = parm->second;
+        std::string identifier{id};
         const std::string identifierStart = "--";
         if (identifier.starts_with(identifierStart))
         {
