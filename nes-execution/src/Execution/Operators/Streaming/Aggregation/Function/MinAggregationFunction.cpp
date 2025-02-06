@@ -26,6 +26,7 @@
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -41,7 +42,7 @@ MinAggregationFunction::MinAggregationFunction(
 
 void MinAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    const nautilus::val<Memory::AbstractBufferProvider*>&,
+    PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
     /// Reading the old min value from the aggregation state.
@@ -49,7 +50,7 @@ void MinAggregationFunction::lift(
     const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction->execute(record);
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);
@@ -59,7 +60,7 @@ void MinAggregationFunction::lift(
 void MinAggregationFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    const nautilus::val<Memory::AbstractBufferProvider*>&)
+    PipelineMemoryProvider&)
 {
     /// Reading the min value from the first aggregation state
     const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -76,8 +77,7 @@ void MinAggregationFunction::combine(
     }
 }
 
-Nautilus::Record MinAggregationFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+Nautilus::Record MinAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -90,8 +90,7 @@ Nautilus::Record MinAggregationFunction::lower(
     return record;
 }
 
-void MinAggregationFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, const nautilus::val<Memory::AbstractBufferProvider*>&)
+void MinAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the min value to the maximum value
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);

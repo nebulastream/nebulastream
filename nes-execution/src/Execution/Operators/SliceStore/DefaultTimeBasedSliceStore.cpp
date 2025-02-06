@@ -106,7 +106,9 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     }
 
     /// We assume that only one slice is created per timestamp
-    auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
+    const auto newSlices = createNewSlice(sliceStart, sliceEnd);
+    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our default time-based slice store.");
+    auto newSlice = newSlices[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
