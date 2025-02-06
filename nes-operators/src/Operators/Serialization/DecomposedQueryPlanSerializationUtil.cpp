@@ -91,7 +91,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlanSerializationUtil::deser
     }
 
     ///set properties of the query plan
-    QueryId queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
+    auto queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, INVALID_WORKER_NODE_ID, rootOperators);
     return decomposedQueryPlan;

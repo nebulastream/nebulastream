@@ -47,7 +47,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         /// check if config is empty
         if (node.IsScalar())
         {
-            std::string value = node.as<std::string>();
+            auto value = node.as<std::string>();
             if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
             {
                 throw InvalidConfigParameter("Value for: {} is empty.", identifier);
