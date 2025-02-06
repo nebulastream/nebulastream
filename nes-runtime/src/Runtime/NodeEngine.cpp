@@ -48,6 +48,7 @@ class QueryTracker
 public:
     QueryId registerQuery(std::unique_ptr<Execution::ExecutableQueryPlan> qep)
     {
+        NES_INFO("Register {}", qep->queryId);
         QueryId queryId = qep->queryId;
         queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
         return queryId;

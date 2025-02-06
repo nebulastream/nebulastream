@@ -47,10 +47,15 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
+                        ENGINE_LOG_DEBUG("Source Emitted Data to sucessor: {}-{}", queryId, successor->id);
                         emitter.emitWork(queryId, successor, data.buffer, {}, {});
                     }
                 },
-                [&](Sources::SourceReturnType::EoS) { controller.initializeSourceStop(queryId, sourceId, source); },
+                [&](Sources::SourceReturnType::EoS)
+                {
+                    ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
+                    controller.initializeSourceStop(queryId, sourceId, source);
+                },
                 [&](Sources::SourceReturnType::Error error)
                 { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
             std::move(event));
