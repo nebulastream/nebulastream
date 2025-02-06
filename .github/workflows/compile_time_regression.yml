@@ -4,6 +4,16 @@
 # branch
 name: Compile Time Regression
 on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        required: true
+        description: "target commit"
+        type: string
   workflow_dispatch:
     inputs:
       dev_image_tag:
