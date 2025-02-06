@@ -83,7 +83,6 @@ std::string getFieldName(const NodeFunction& function)
 std::string LogicalProjectionOperator::toString() const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
-    std::stringstream ss;
     if (not outputSchema->getFieldNames().empty())
     {
         return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
