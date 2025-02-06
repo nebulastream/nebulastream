@@ -143,7 +143,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
               workerConfig->dataPort.getValue(),
               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
 
-    NES_ERROR("NesWorker::start: start Runtime");
+    NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
@@ -157,21 +157,18 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
         monitoringAgent->addMonitoringStreams(workerConfig);
 
-        //todo: remove
-        //workerConfig->numWorkerThreads.setValue(1);
-
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }
-        NES_ERROR("NesWorker: Node engine started successfully");
+        NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started with error {}", err.what());
         throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
-    NES_ERROR("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
+    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
     auto promRPC = std::make_shared<std::promise<int>>();
@@ -191,25 +188,21 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = workerConfig->localWorkerHost.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
-    NES_ERROR("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
+    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
 
-    NES_ERROR("NesWorker: Checking if the worker should connect to the coordinator");
     if (withConnect) {
-        NES_ERROR("NesWorker: start with connect");
+        NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
-        NES_ERROR("Connected");
         NES_ASSERT(con, "cannot connect");
     }
 
     if (parentId.getRawValue() > NES_COORDINATOR_ID.getRawValue()) {
-        NES_ERROR("NesWorker: add parent id={}", parentId);
+        NES_DEBUG("NesWorker: add parent id={}", parentId);
         bool success = replaceParent(NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= {}", success);
         NES_ASSERT(success, "cannot addParent");
-    } else {
-        NES_ERROR("NesWorker: no parent to add");
     }
 
     if (withConnect && locationProvider
@@ -332,7 +325,7 @@ bool NesWorker::connect() {
 
     std::string coordinatorAddress =
         workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
-    NES_ERROR("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
+    NES_DEBUG("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = CoordinatorRPCClient::create(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
@@ -366,14 +359,14 @@ bool NesWorker::connect() {
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
-    NES_ERROR("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
+    NES_DEBUG("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
     workerId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
         if (workerId != workerConfig->workerId) {
             if (workerConfig->workerId == INVALID_WORKER_NODE_ID) {
                 // workerId value is written in the yaml for the first time
-                NES_ERROR("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
+                NES_DEBUG("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
                 bool success =
                     getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, false);
                 if (!success) {
@@ -383,7 +376,7 @@ bool NesWorker::connect() {
                 }
             } else {
                 // a value was in the yaml file but it's being overwritten, because the coordinator assigns a new value
-                NES_ERROR("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file",
+                NES_DEBUG("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file",
                           workerId);
                 bool success =
                     getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, true);
@@ -401,7 +394,7 @@ bool NesWorker::connect() {
         healthCheckService = std::make_unique<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
-        NES_ERROR("NesWorker start health check");
+        NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
         auto configPhysicalSourceTypes = workerConfig->physicalSourceTypes.getValues();
@@ -410,14 +403,14 @@ bool NesWorker::connect() {
             for (const auto& physicalSourceType : configPhysicalSourceTypes) {
                 physicalSourceTypes.push_back(physicalSourceType);
             }
-            NES_ERROR("NesWorker: start with register source");
+            NES_DEBUG("NesWorker: start with register source");
             bool success = registerPhysicalSources(physicalSourceTypes);
-            NES_ERROR("registered= {}", success);
+            NES_DEBUG("registered= {}", success);
             NES_ASSERT(success, "cannot register");
         }
         return true;
     }
-    NES_ERROR("NesWorker::registerWorker rpc register failed");
+    NES_DEBUG("NesWorker::registerWorker rpc register failed");
     connected = false;
     return connected;
 }
