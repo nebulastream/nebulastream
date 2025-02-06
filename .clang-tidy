@@ -143,7 +143,6 @@ WarningsAsErrors: '
   -modernize-use-nullptr,
   -readability-redundant-string-init,
   -bugprone-exception-escape,
-  -bugprone-unhandled-self-assignment,
   -bugprone-unused-return-value,
   -google-global-names-in-headers,
   -performance-no-int-to-ptr,
