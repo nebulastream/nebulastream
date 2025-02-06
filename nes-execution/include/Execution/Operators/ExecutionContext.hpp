@@ -16,22 +16,115 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
 {
 using namespace Nautilus;
+
+/// The arena is a memory management system that provides memory to the operators during a pipeline invocation.
+/// As the memory is destroyed / returned to the arena after the pipeline invocation, the memory is not persistent and thus, it is not
+/// suitable for storing state across pipeline invocations. For storing state across pipeline invocations, the operator handler should be used.
+struct Arena
+{
+    explicit Arena(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
+        : bufferProvider(std::move(bufferProvider)), lastAllocationSize(0), currentOffset(0)
+    {
+    }
+
+    /// Allocating memory by the buffer provider. There are three cases:
+    /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
+    /// 2. The required size is larger than the last buffer size. In this case, we allocate a new buffer of fixed size.
+    /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
+    int8_t* allocateMemory(const size_t sizeInBytes)
+    {
+        /// Case 1
+        if (bufferProvider->getBufferSize() < sizeInBytes)
+        {
+            const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
+            if (not unpooledBufferOpt.has_value())
+            {
+                throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
+            }
+            unpooledBuffers.emplace_back(unpooledBufferOpt.value());
+            lastAllocationSize = sizeInBytes;
+            return unpooledBuffers.back().getBuffer();
+        }
+
+
+        if (fixedSizeBuffers.empty())
+        {
+            fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
+            lastAllocationSize = bufferProvider->getBufferSize();
+            return fixedSizeBuffers.back().getBuffer();
+        }
+
+        /// Case 2
+        if (lastAllocationSize < currentOffset + sizeInBytes)
+        {
+            fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
+        }
+
+        /// Case 3
+        auto& lastBuffer = fixedSizeBuffers.back();
+        lastAllocationSize = lastBuffer.getBufferSize();
+        const auto result = lastBuffer.getBuffer() + currentOffset;
+        currentOffset += sizeInBytes;
+        return result;
+    }
+
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::vector<Memory::TupleBuffer> fixedSizeBuffers;
+    std::vector<Memory::TupleBuffer> unpooledBuffers;
+    size_t lastAllocationSize;
+    size_t currentOffset;
+};
+
+/// Nautilus Wrapper for the Arena
+struct ArenaRef
+{
+    explicit ArenaRef(const nautilus::val<Arena*>& arenaRef) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr) { }
+
+    /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
+    nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes)
+    {
+        /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
+        /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
+        /// Further, we set the space pointer to the beginning of the new buffer.
+        if (availableSpaceForPointer < sizeInBytes)
+        {
+            spacePointer = nautilus::invoke(
+                +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); },
+                arenaRef,
+                sizeInBytes);
+            availableSpaceForPointer
+                = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::lastAllocationSize));
+        }
+        availableSpaceForPointer -= sizeInBytes;
+        auto result = spacePointer;
+        spacePointer += sizeInBytes;
+        return result;
+    }
+
+    nautilus::val<Arena*> arenaRef;
+    nautilus::val<size_t> availableSpaceForPointer;
+    nautilus::val<int8_t*> spacePointer;
+};
 
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
@@ -44,7 +137,7 @@ using namespace Nautilus;
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext);
+    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
@@ -52,6 +145,7 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
@@ -60,6 +154,7 @@ struct ExecutionContext final
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
+    ArenaRef arena;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function
