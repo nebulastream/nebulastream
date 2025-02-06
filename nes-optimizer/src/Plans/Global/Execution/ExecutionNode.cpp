@@ -77,7 +77,7 @@ DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId share
         if (decomposedQueryPlanMap.contains(decomposedQueryId)) {
             return decomposedQueryPlanMap[decomposedQueryId];
         }
-        NES_ERROR("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryId);
+        NES_DEBUG("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryId);
         return nullptr;
     }
     NES_ERROR("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
