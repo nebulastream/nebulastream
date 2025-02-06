@@ -120,11 +120,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
         NES_DEBUG("Writing the schema is not supported for NES_FORMAT");
     } else {
-        NES_DEBUG("Schema already written");
+        // NES_DEBUG("Schema already written");
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
+    // NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
     return true;

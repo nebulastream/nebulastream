@@ -61,11 +61,11 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
-    NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-              this->tupleSize,
-              this->gatheringInterval.count(),
-              this->numberOfBuffersToProduce,
-              this->numberOfTuplesToProducePerBuffer);
+    // NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+//              this->tupleSize,
+//              this->gatheringInterval.count(),
+//              this->numberOfBuffersToProduce,
+//              this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema->fields) {
@@ -91,7 +91,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
 void CSVSource::openFile() {
     while (!std::filesystem::exists(filePath)) {
-        NES_DEBUG("File {} does not exist yet", filePath);
+        // NES_DEBUG("File {} does not exist yet", filePath);
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 

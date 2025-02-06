@@ -438,7 +438,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
                 continue;
             }
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
-            NES_INFO("Emitting all slices for window {}", windowInfo.toString());
+            NES_ERROR("Emitting all slices for window {}", windowInfo.toString());
 
             // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
             // For bucketing, this should be only done once
