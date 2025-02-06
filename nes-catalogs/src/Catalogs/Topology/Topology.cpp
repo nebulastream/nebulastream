@@ -337,7 +337,7 @@ bool Topology::occupySlots(WorkerId workerId, uint16_t amountToOccupy) {
 bool Topology::releaseSlots(WorkerId workerId, uint16_t amountToRelease) {
 
     if (workerIdToTopologyNode.contains(workerId)) {
-        NES_ERROR("Increase {} resources from node with id {}", amountToRelease, workerId);
+        NES_DEBUG("Increase {} resources from node with id {}", amountToRelease, workerId);
         return (*workerIdToTopologyNode.at(workerId).wlock())->releaseSlots(amountToRelease);
     }
     NES_WARNING("Unable to release slots as the node with id {} do not exists.", workerId);

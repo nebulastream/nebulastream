@@ -67,7 +67,7 @@ bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodePropert
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
 bool TopologyNode::releaseSlots(uint16_t freedSlots) {
-    NES_ERROR("Releasing slots {} on topology node {}. Currently occupied {} of {}",
+    NES_DEBUG("Releasing slots {} on topology node {}. Currently occupied {} of {}",
               freedSlots,
               workerId,
               occupiedSlots,

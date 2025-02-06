@@ -172,38 +172,38 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
         try {
-            NES_ERROR("Processing topology update")
+            NES_DEBUG("Processing topology update")
             std::string req = request.getValue("{}");
             //check if json is valid
             if (!nlohmann::json::accept(req)) {
                 NES_ERROR("Invalid json")
                 return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
             };
-            NES_ERROR("Parse json")
+            NES_DEBUG("Parse json")
             nlohmann::json reqJson = nlohmann::json::parse(req);
-            NES_ERROR("{}", reqJson.dump());
+            NES_DEBUG("{}", reqJson.dump());
             auto completionQueue = std::make_shared<CompletionQueue>();
             auto bufferJson = reqJson["events"];
-            NES_ERROR("number of events {}", bufferJson.size())
+            NES_DEBUG("number of events {}", bufferJson.size())
             //startBufferingOnAllSources(reqJson, completionQueue);
             startBufferingOnAllSources(bufferJson, completionQueue);
-            NES_ERROR("Sent buffering messges666666666666666666666666666666666666666666666666666666")
+            NES_DEBUG("Sent buffering messges666666666666666666666666666666666666666666666666666666")
             //todo: check if proactive is enabled here
             std::vector<RequestProcessor::ISQPEventPtr> events;
 //            if (coordinatorConfiguration->enableProactiveDeployment) {
             if (false) {
-                NES_ERROR("Inserting predictions")
+                NES_DEBUG("Inserting predictions")
                 events = createEvents(reqJson["predictions"]);
             } else {
-                NES_ERROR("Inserting events")
+                NES_DEBUG("Inserting events")
                 events = createEvents(bufferJson);
             }
             // auto events = createEvents(reqJson);
-            NES_ERROR("Processing {} events", events.size());
+            NES_DEBUG("Processing {} events", events.size());
             if (!events.empty()) {
                 requestHandlerService->queueISQPRequest(events, false);
             }
-            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
+            NES_DEBUG("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
             //            if (success) {
             //                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
@@ -213,12 +213,12 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             //            }
             //Prepare the response
             if (bufferJson.size() != 0) {
-                NES_ERROR("waiting for async calls")
+                NES_DEBUG("waiting for async calls")
                 std::vector<RpcAsyncRequest> asyncRequests;
                 asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
                 workerRPCClient->checkAsyncResult(asyncRequests);
             }
-            NES_ERROR("received results messges666666666666666666666666666666666666666666666666666666")
+            NES_DEBUG("received results messges666666666666666666666666666666666666666666666666666666")
 
             nlohmann::json response;
             //            response["success"] = success;
@@ -292,7 +292,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     //start buffering at all child nodes from the json
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
 
-        NES_ERROR("Buffer on moving devices")
+        NES_DEBUG("Buffer on moving devices")
         // std::set<uint64_t> buffer_only;
         std::set<WorkerId> moving;
         for (const auto& worker : reqJson) {
@@ -300,19 +300,19 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             if (action == "add" || action == "buffer") {
                 WorkerId childId (worker["childId"].get<uint64_t>());
                 WorkerId parentId(worker["parentId"].get<uint64_t>());
-                NES_ERROR("Buffering on child {} until connected to parent {}", childId, parentId);
+                NES_DEBUG("Buffering on child {} until connected to parent {}", childId, parentId);
                 auto node = topology->getCopyOfTopologyNodeWithId(childId);
-                NES_ERROR("retrieved topology node, getting address");
+                NES_DEBUG("retrieved topology node, getting address");
                 //get the adress of the node
                 auto ipAddress = node->getIpAddress();
-                NES_ERROR("got address, getting grpc port");
+                NES_DEBUG("got address, getting grpc port");
                 //get the grpc port
                 auto grpcPort = node->getGrpcPort();
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
-                NES_ERROR("send buffering request to {}", address);
+                NES_DEBUG("send buffering request to {}", address);
                 workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
-                NES_ERROR("sent bufering request")
+                NES_DEBUG("sent bufering request")
 
                 moving.insert(childId);
                 //buffer_only.insert(sourceNodeMaps[childId].begin(), sourceNodeMaps[parentId].end());
@@ -322,13 +322,13 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         auto mockParent = INVALID_WORKER_NODE_ID;
         //if ((requestHandlerService->isIncrementalPlacementEnabled() && !coordinatorConfiguration->enableProactiveDeployment) || moving.empty()) {
         if (requestHandlerService->isIncrementalPlacementEnabled() || moving.empty()) {
-            NES_ERROR("incremental placement is enabled, no futher buffering needed")
+            NES_DEBUG("incremental placement is enabled, no futher buffering needed")
             // mockParent = 0;
             return;
         }
 
         if (!sourceNodeMapInitialized) {
-            NES_ERROR("initializing source node map")
+            NES_DEBUG("initializing source node map")
             for (const auto& [logicalSourceName, _] : sourceCatalog->getAllLogicalSource()) {
                 auto sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
                 for (const auto& sourceNode : sourceNodes) {
@@ -348,15 +348,15 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
 
         std::set<WorkerId> buffering;
-        NES_ERROR("send buffering requests to non moving workers")
+        NES_DEBUG("send buffering requests to non moving workers")
         for (const auto& worker : moving) {
             for (const auto& sourceNode : sourceNodeMap[worker]) {
 
                 if (moving.contains(sourceNode) || buffering.contains(sourceNode)) {
-                    NES_ERROR("worker {} is moving or buffering, do not send another buffering request", sourceNode);
+                    NES_DEBUG("worker {} is moving or buffering, do not send another buffering request", sourceNode);
                     continue;
                 }
-                NES_ERROR("worker {} is not moving, send buffering request", sourceNode);
+                NES_DEBUG("worker {} is not moving, send buffering request", sourceNode);
                 //auto node = topology->lockTopologyNode(sourceNode);
                 auto node = topology->getCopyOfTopologyNodeWithId(sourceNode);
                 //get the adress of the node

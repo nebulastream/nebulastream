@@ -221,7 +221,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             //iterate over list in json and create requests
             for (auto& requestJson : requestListJson) {
-                NES_ERROR("adding query to list of queries to deploy");
+                NES_DEBUG("adding query to list of queries to deploy");
 
                 auto error = validateUserRequest(requestJson);
                 if (error.has_value()) {
@@ -256,7 +256,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 queryStrings.push_back(userQuery);
             }
 
-            //            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
+//                        QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
             requestHandlerService->validateAndQueueMultiQueryRequestParallel(queryStrings);
             //Prepare the response
             nlohmann::json response;

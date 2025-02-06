@@ -66,7 +66,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
-    NES_ERROR("Starting tcp source")
+    NES_DEBUG("Starting tcp source")
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_ERROR("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
@@ -152,9 +152,9 @@ struct Record {
 };
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
-    if (generatedBuffers == 0) {
-        NES_ERROR("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
-    }
+//    if (generatedBuffers == 0) {
+//        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
+//    }
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);

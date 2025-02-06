@@ -110,7 +110,7 @@ void PlacementAmendmentInstance::execute() {
             //Deploy all newly placed deployment contexts
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
 
-            NES_ERROR("Incremental placement: {}", incrementalPlacement);
+            NES_DEBUG("Incremental placement: {}", incrementalPlacement);
             if (incrementalPlacement && !deploymentUnit.reconfigurationMarkerUnits.empty()) {
                 // Compute reconfiguration marker based on deployment contexts
                 auto reconfigurationMarker = ReconfigurationMarker::create();

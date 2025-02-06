@@ -296,7 +296,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::ReconfigurationType::ConnectionEstablished: {
             //if the callback was triggered by the channel for another thread becoming ready, we cannot do anything
             if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                NES_ERROR("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
+                NES_DEBUG("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
                 break;

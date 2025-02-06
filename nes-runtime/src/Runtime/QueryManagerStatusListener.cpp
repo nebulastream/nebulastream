@@ -247,12 +247,12 @@ folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSource
 //        NES_ASSERT(locked->port == std::stol(filePath))
         return tcpSourceInfos.at(sourceName).wlock();
     }
-    NES_ERROR("source info for name {}, path {} does not exist", sourceName, filePath)
+    NES_DEBUG("source info for name {}, path {} does not exist", sourceName, filePath)
 
     uint64_t port = std::stol(filePath);
     // Create a TCP socket
     if (port != 0) {
-        NES_ERROR("port is not 0 , creating source info for name {}, path {}", sourceName, filePath)
+        NES_DEBUG("port is not 0 , creating source info for name {}, path {}", sourceName, filePath)
         // Create a TCP socket
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1) {
@@ -287,7 +287,7 @@ folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSource
             {},
         };
 
-        NES_ERROR("inserting source info for name {}, path {}", sourceName, filePath)
+        NES_DEBUG("inserting source info for name {}, path {}", sourceName, filePath)
         tcpSourceInfos.insert({sourceName, folly::Synchronized(info)});
         return tcpSourceInfos.at(sourceName).wlock();
     }

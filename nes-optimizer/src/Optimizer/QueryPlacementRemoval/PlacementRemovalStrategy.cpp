@@ -438,7 +438,7 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                std::set<LogicalOperatorPtr>& upStreamPinnedOperators) {
 
-    NES_ERROR("Updeting execution nodes to reflect placement removal");
+    NES_DEBUG("Updeting execution nodes to reflect placement removal");
     std::map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {

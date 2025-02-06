@@ -65,7 +65,7 @@ std::string FileSink::toString() const {
 }
 
 void FileSink::setup() {
-    NES_ERROR("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
+    NES_DEBUG("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
               filePath,
               sinkFormat->getSchemaPtr()->toString(),
               sinkFormat->toString(),
