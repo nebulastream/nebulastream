@@ -348,6 +348,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                       topology,
                                                                                       typeInferencePhase,
                                                                                       coordinatorConfiguration,
+                                                                                      queryCatalog,
                                                                                       deploymentPhase);
         placementAmendmentHandler->enqueueRequest(amendmentInstance);
     } catch (RequestExecutionException& exception) {

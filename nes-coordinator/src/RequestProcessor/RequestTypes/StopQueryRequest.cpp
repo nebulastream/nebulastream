@@ -110,6 +110,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                                                       topology,
                                                                                       typeInferencePhase,
                                                                                       coordinatorConfiguration,
+                                                                                      queryCatalog,
                                                                                       deploymentPhase);
         placementAmendmentHandler->enqueueRequest(amendmentInstance);
 
