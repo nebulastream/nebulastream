@@ -283,6 +283,7 @@ class PlacementAmendmentHandlerTest : public Testing::BaseUnitTest {
                                                                                           topology,
                                                                                           typeInferencePhase,
                                                                                           coordinatorConfiguration,
+                                                                                          queryCatalog,
                                                                                           mockedDeploymentPhase);
             completedAmendments.emplace_back(amendmentInstance->getFuture());
             placementAmendmentHandler->enqueueRequest(amendmentInstance);
