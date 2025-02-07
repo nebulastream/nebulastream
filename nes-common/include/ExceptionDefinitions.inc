@@ -118,3 +118,6 @@ EXCEPTION(NotImplemented, 9005, "not implemented")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
+
+/// Test Exception is thrown in testing related code, to differentiate between system errors and errors during test setup/cleanup
+EXCEPTION(TestException, 10000, "exception in test code")

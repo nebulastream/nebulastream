@@ -13,23 +13,25 @@
 */
 
 #include <atomic>
+#include <cerrno>
 #include <cstddef>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
 
+#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
@@ -40,8 +42,9 @@
 
 namespace NES::Systest
 {
+
 std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& workingDir, const std::string& testFileName)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -82,7 +85,6 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
-    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
@@ -100,26 +102,28 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     return schema;
                 }()});
 
+            const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}}});
 
-            /// Write the tuples to a tmp file
-            std::ofstream fileSource(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
-            if (!fileSource)
-            {
-                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
-                return;
-            }
-            ++sourceIndex;
 
-            /// Write tuples to csv file
-            for (const auto& tuple : source.tuples)
             {
-                fileSource << tuple << '\n';
+                std::ofstream testFile(sourceFile);
+                if (!testFile.is_open())
+                {
+                    throw TestException("Could not open source file \"{}\"", sourceFile);
+                }
+
+                for (const auto& tuple : source.tuples)
+                {
+                    testFile << tuple << "\n";
+                }
+                testFile.flush();
             }
-            fileSource.flush();
+
+            NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
         });
 
     /// We create a new query plan from our config when finding a query
@@ -184,7 +188,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
-            const auto resultFile = Query::resultFile(resultDir, testFileName, currentQueryNumber);
+            const auto resultFile = Query::resultFile(workingDir, testFileName, currentQueryNumber);
             auto sinkCLI = CLI::Sink{
                 sinkForQuery,
                 "File",

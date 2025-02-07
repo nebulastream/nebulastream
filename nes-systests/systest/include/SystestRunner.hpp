@@ -50,7 +50,7 @@ static constexpr auto padSizeQueryCounter = 3;
 /// Load query plan objects by parsing an SLT file for queries and lowering it
 /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
 [[nodiscard]] std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName);
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& workingDir, const std::string& testFileName);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect
