@@ -133,6 +133,25 @@ std::string formatFloat(double value)
     return formatted.substr(0, lastNonZero + 1);
 }
 
+std::string formatFloat(float value)
+{
+    std::string formatted = fmt::format("{:.2f}", value);
+    const size_t decimalPos = formatted.find('.');
+    if (decimalPos == std::string_view::npos)
+    {
+        return formatted;
+    }
+
+    const size_t lastNonZero = formatted.find_last_not_of('0');
+    if (lastNonZero == decimalPos)
+    {
+        return formatted.substr(0, decimalPos + 2);
+    }
+
+    return formatted.substr(0, lastNonZero + 1);
+}
+
+// Todo: make configurable (float stuff)
 std::string DynamicTuple::toString(const SchemaPtr& schema) const
 {
     std::stringstream ss;
@@ -149,8 +168,9 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) const
         }
         else if (NES::Util::instanceOf<Float>(dataType))
         {
-            const auto floatValue = currentField.read<double>();
-            const auto formattedFloatValue = formatFloat(floatValue);
+            const auto numBits = NES::Util::as<Float>(dataType)->getBits();
+            const auto formattedFloatValue
+                = (numBits == 64) ? formatFloat(currentField.read<double>()) : formatFloat(currentField.read<float>());
             ss << formattedFloatValue << fieldEnding;
         }
         else
@@ -322,13 +342,12 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, const bool showHe
     }
 
     auto tupleIterator = this->begin();
-    DynamicTuple firstTuple = *tupleIterator;
-    str << firstTuple.toString(schema);
+    str << (*tupleIterator).toString(schema);
     ++tupleIterator;
     while (tupleIterator != this->end())
     {
         str << std::endl;
-        DynamicTuple dynamicTuple = *tupleIterator;
+        auto dynamicTuple = *tupleIterator;
         str << dynamicTuple.toString(schema);
         ++tupleIterator;
     }

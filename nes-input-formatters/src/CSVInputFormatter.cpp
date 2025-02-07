@@ -426,7 +426,6 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                     const auto index = tupleBufferFormatted.storeChildBuffer(childBufferVal);
                     auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
                     *childBufferIndexPointer = index;
-                    return sizeof(uint32_t);
                 });
         }
     }

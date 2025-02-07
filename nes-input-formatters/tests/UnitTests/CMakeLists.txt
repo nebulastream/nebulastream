@@ -11,7 +11,9 @@
 # limitations under the License.
 
 add_definitions(-DINPUT_FORMATTER_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testdata")
-add_definitions(-DINPUT_FORMATTER_TMP_RESULT_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tmpResults")
+set(TEMP_RESULTS_PATH "${CMAKE_CURRENT_BINARY_DIR}/tmpResults")
+add_definitions(-DINPUT_FORMATTER_TMP_RESULT_DATA="${TEMP_RESULTS_PATH}")
+file(MAKE_DIRECTORY ${TEMP_RESULTS_PATH})
 
 add_nes_input_formatter_test(input-formatter-test "SpecificSequenceTest.cpp")
 add_nes_input_formatter_test(input-formatter-test-randomized "SmallRandomizedSequenceTest.cpp")

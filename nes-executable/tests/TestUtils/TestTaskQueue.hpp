@@ -293,6 +293,8 @@ private:
 class TestTaskQueue
 {
 public:
+    /// Sequential means that threads wait for each other and execute the tasks in order.
+    /// Asynchronous means threads process their tasks as fast as they can.
     enum class ProcessingMode : uint8_t
     {
         SEQUENTIAL,

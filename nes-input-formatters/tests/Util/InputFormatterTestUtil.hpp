@@ -301,4 +301,141 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// clean up
     testHandle.destroy();
 }
+
+auto getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers)
+{
+    return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
+    {
+        if (std::holds_alternative<Sources::SourceReturnType::Data>(returnType))
+        {
+            resultBuffers.emplace_back(std::get<Sources::SourceReturnType::Data>(returnType).buffer);
+        }
+        else if (std::holds_alternative<Sources::SourceReturnType::EoS>(returnType))
+        {
+            NES_DEBUG("Reached EoS in source");
+        }
+        else
+        {
+            const auto errorMessage = std::get<Sources::SourceReturnType::Error>(returnType);
+            throw errorMessage.ex;
+        }
+    };
+}
+
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+{
+    auto validParserConfig = Sources::ParserConfig{};
+    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    {
+        validParserConfig.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    {
+        /// Todo #651: Add full support for tuple delimiters that are larger than one byte.
+        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
+        validParserConfig.tupleDelimiter = tupleDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        validParserConfig.tupleDelimiter = '\n';
+    }
+    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    {
+        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        validParserConfig.fieldDelimiter = ",";
+    }
+    return validParserConfig;
+}
+
+std::unique_ptr<Sources::SourceHandle> createFileSource(
+    const std::string& filePath,
+    std::shared_ptr<Schema> schema,
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    const int numberOfLocalBuffersInSource)
+{
+    std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
+    auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
+
+    const auto sourceDescriptor = Sources::SourceDescriptor(schema, "TestSource", "File", std::move(validatedSourceConfiguration));
+
+    return Sources::SourceProvider::lower(
+        NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
+}
+
+std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
+{
+    std::unordered_map<std::string, std::string> parserConfiguration{
+                {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+    auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+        validatedParserConfiguration.parserType,
+        schema,
+        validatedParserConfiguration.tupleDelimiter,
+        validatedParserConfiguration.fieldDelimiter);
+
+    return std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
+}
+
+void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
+{
+    /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
+    const auto timeout = std::chrono::seconds(1);
+    const auto startTime = std::chrono::steady_clock::now();
+    while (resultBuffers.size() < numExpectedBuffers and (std::chrono::steady_clock::now() - startTime < timeout))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
+{
+    if (std::filesystem::file_size(file1) != std::filesystem::file_size(file2))
+    {
+        NES_ERROR("File sizes do not match: {} vs. {}.", std::filesystem::file_size(file1), std::filesystem::file_size(file2));
+        return false;
+    }
+
+    std::ifstream f1(file1, std::ifstream::binary);
+    std::ifstream f2(file2, std::ifstream::binary);
+
+    return std::equal(
+        std::istreambuf_iterator<char>(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator<char>(f2.rdbuf()));
+}
+
+template <bool DEBUG_LOG>
+void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks, std::optional<size_t> fixedSeed)
+{
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::cout << "Using seed: " << seed << std::endl;
+    std::mt19937 rng = (fixedSeed.has_value()) ? std::mt19937(fixedSeed.value()) : std::mt19937(seed);
+    std::shuffle(pipelineTasks.begin(), pipelineTasks.end(), rng);
+
+    if (DEBUG_LOG)
+    {
+        for (const auto& pipelineTask : pipelineTasks)
+        {
+            auto charBuffer = pipelineTask.tupleBuffer.getBuffer();
+            std::stringstream stringStream;
+            const auto bufferIdx = pipelineTask.tupleBuffer.getSequenceNumber().getRawValue();
+            stringStream << "Start Buffer: " << bufferIdx << std::endl;
+            for (size_t i = 0; i < pipelineTask.tupleBuffer.getNumberOfTuples(); i++)
+            {
+                stringStream << charBuffer[i];
+            }
+            stringStream << "\nEnd Buffer: " << bufferIdx << std::endl;
+            std::cout << stringStream.str();
+        }
+        std::cout << std::endl;
+    }
+}
 }
