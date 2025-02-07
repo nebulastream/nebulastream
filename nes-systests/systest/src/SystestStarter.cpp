@@ -17,6 +17,7 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -57,7 +58,9 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     program.add_argument("-q", "--queryCompilerConfig").help("load query compiler config file (.yaml)");
 
     /// result dir
-    program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/nes-systests/result/");
+    program.add_argument("--workingDir")
+        .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
+              "/nes-systests/");
 
     /// server/remote mode
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
@@ -221,14 +224,10 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
     }
 
-    if (program.is_used("--resultDir"))
+    /// Setup Working Directory
+    if (program.is_used("--workingDir"))
     {
-        config.resultDir = program.get<std::string>("--resultDir");
-        if (not std::filesystem::is_directory(config.resultDir.getValue()))
-        {
-            std::filesystem::create_directory(config.resultDir.getValue());
-            std::cout << "Created result directory: " << config.resultDir.getValue() << "\n";
-        }
+        config.workingDir = program.get<std::string>("--workingDir");
     }
 
     if (program.is_used("--list"))
@@ -282,9 +281,11 @@ int main(int argc, const char** argv)
     {
         /// Read the configuration
         auto config = Systest::readConfiguration(argc, argv);
+        std::filesystem::remove_all(config.workingDir.getValue());
+        std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
+        const auto queries = loadQueries(testMap, config.workingDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
         if (queries.empty())
         {
@@ -295,8 +296,6 @@ int main(int argc, const char** argv)
             std::exit(1);
         }
 
-        std::filesystem::remove_all(config.resultDir.getValue());
-        std::filesystem::create_directory(config.resultDir.getValue());
 
         if (config.randomQueryOrder)
         {
