@@ -76,10 +76,6 @@ public:
     explicit BufferControlBlock(
         MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
-    BufferControlBlock(const BufferControlBlock&);
-
-    BufferControlBlock& operator=(const BufferControlBlock&);
-
     MemorySegment* getOwner() const;
     void resetBufferRecycler(BufferRecycler* recycler);
 

@@ -46,10 +46,8 @@ MemorySegment::MemorySegment(
     BufferRecycler* recycler,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock)
-    : size(size)
+    : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction)))
 {
-    this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
-    this->ptr = ptr;
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
 }
@@ -103,29 +101,6 @@ BufferControlBlock::BufferControlBlock(
     : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback))
 {
     /// nop
-}
-
-BufferControlBlock::BufferControlBlock(const BufferControlBlock& that)
-{
-    referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples;
-    creationTimestamp = that.creationTimestamp;
-    recycleCallback = that.recycleCallback;
-    owner = that.owner;
-    watermark = that.watermark;
-    originId = that.originId;
-}
-
-BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that)
-{
-    referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples;
-    recycleCallback = that.recycleCallback;
-    owner = that.owner;
-    watermark = that.watermark;
-    creationTimestamp = that.creationTimestamp;
-    originId = that.originId;
-    return *this;
 }
 
 MemorySegment* BufferControlBlock::getOwner() const
