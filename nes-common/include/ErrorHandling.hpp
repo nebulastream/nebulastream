@@ -17,13 +17,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <optional>
+#include <ranges>
 #include <string>
+#include <unordered_map>
+#include <Util/Ranges.hpp>
 #include <cpptrace/cpptrace.hpp>
 #include <fmt/core.h>
 
 namespace NES
 {
-
 /// This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
 /// We use cpptrace's lazy stacktrace collection because the eager stacktrace collection became too slow with static project linking.
 class Exception final : public cpptrace::lazy_exception
@@ -39,6 +41,73 @@ public:
 private:
     std::string message;
     uint64_t errorCode;
+};
+
+template <uint64_t errorCode>
+class ExceptionRegistration
+{
+public:
+    static constexpr std::string_view exceptionName = "";
+    static constexpr std::string_view errorMessage = "";
+    constexpr ExceptionRegistration() noexcept;
+    static constexpr uint64_t getErrorCode() { return errorCode; }
+    static constexpr std::string getMessage();
+    static constexpr std::string getName();
+};
+
+class ExceptionType
+{
+    uint64_t code;
+    std::string_view name;
+    std::string_view message;
+
+public:
+    constexpr ExceptionType() : code(0), name(""), message("") { }
+    constexpr ExceptionType(const uint64_t code, const std::string_view name, const std::string_view message)
+        : code(code), name(name), message(message)
+    {
+    }
+
+    constexpr ExceptionType(const ExceptionType& other) = default;
+    constexpr ExceptionType(ExceptionType&& other) noexcept = default;
+    constexpr ExceptionType& operator=(const ExceptionType& other) = default;
+    constexpr ExceptionType& operator=(ExceptionType&& other) noexcept = default;
+
+    inline Exception create() const { return Exception{std::string{message}, code}; }
+    inline Exception create(const std::string& msg) const { return Exception{std::string(message) + "; " + msg, code}; }
+    template <typename... Args>
+    inline Exception create(fmt::format_string<Args...> fmt_msg, Args&&... args)
+    {
+        return Exception(fmt::format("{}; {}", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code);
+    }
+
+    [[nodiscard]] constexpr uint64_t getErrorCode() const { return code; }
+    [[nodiscard]] constexpr std::string_view getName() const { return name; }
+    [[nodiscard]] constexpr std::string_view getErrorMessage() const { return message; }
+};
+
+
+struct ErrorCodeDefined
+{
+private:
+    template <uint64_t errorCode, class Dummy = decltype(ExceptionRegistration<errorCode>{})>
+    static constexpr bool exist(int)
+    {
+        return true;
+    }
+
+    template <uint64_t errorCode>
+    static constexpr bool exist(char)
+    {
+        return false;
+    }
+
+public:
+    template <uint64_t errorCode>
+    static constexpr bool check()
+    {
+        return exist<errorCode>(69);
+    }
 };
 
 /**
@@ -63,6 +132,24 @@ private:
     { \
         return Exception(fmt::format("{}; {}", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
     } \
+    template <> \
+    class ExceptionRegistration<code> \
+    { \
+    public: \
+        static constexpr std::string_view exceptionName = #name; \
+        static constexpr std::string_view errorMessage = message; \
+        constexpr ExceptionRegistration<code>() \
+        { \
+        } \
+        static constexpr std::string getName() \
+        { \
+            return #name; \
+        } \
+        static constexpr std::string getMessage() \
+        { \
+            return message; \
+        } \
+    }; \
     namespace ErrorCode \
     { \
     enum \
@@ -124,5 +211,65 @@ Exception wrapExternalException();
  * @warning This function should be used only in a catch block.
  */
 [[nodiscard]] uint64_t getCurrentExceptionCode();
+
+template <auto start, auto end, class F>
+constexpr void constexprFor(F&& f)
+{
+    if constexpr (start < end)
+    {
+        f(std::integral_constant<decltype(start), start>());
+        constexprFor<start + 1, end>(f);
+    }
+}
+
+template <uint64_t rangeEnd>
+constexpr std::array<ExceptionType, rangeEnd> findExceptionRegistrations()
+{
+    std::vector<ExceptionType> registrations{};
+
+    [&]<uint64_t... errorCode>(std::integer_sequence<uint64_t, errorCode...>)
+    {
+        (
+            [&]
+            {
+                if (ErrorCodeDefined::check<errorCode>())
+                {
+                    const std::string_view name = ExceptionRegistration<errorCode>::exceptionName;
+                    const std::string_view message = ExceptionRegistration<errorCode>::errorMessage;
+                    const uint64_t code = errorCode;
+                    registrations.emplace_back(code, name, message);
+                }
+            }(),
+            ...);
+    }(std::make_integer_sequence<uint64_t, rangeEnd>());
+
+    std::array<ExceptionType, rangeEnd> registrationArray;
+    std::copy(registrations.begin(), registrations.end(), registrationArray.begin());
+    return registrationArray;
+}
+
+constexpr auto exceptions = findExceptionRegistrations<10000>();
+static const std::vector<std::pair<uint64_t, ExceptionType>> EXCEPTIONS_BY_ERROR_CODES_V
+    = exceptions | std::ranges::views::filter([](auto exception) { return exception.getErrorCode() != 0; })
+    | std::ranges::views::transform(
+          [](auto exceptionType)
+          { return std::pair<uint64_t, ExceptionType>{static_cast<uint64_t>(exceptionType.getErrorCode()), exceptionType}; })
+
+    | ranges::to<std::vector>();
+static const std::unordered_map<uint64_t, ExceptionType> EXCEPTIONS_BY_ERROR_CODES
+    = std::unordered_map<uint64_t, ExceptionType>{EXCEPTIONS_BY_ERROR_CODES_V.begin(), EXCEPTIONS_BY_ERROR_CODES_V.end()};
+
+namespace ErrorCode
+{
+[[maybe_unused]] static ExceptionType typeFromCode(uint64_t code)
+{
+    auto found = EXCEPTIONS_BY_ERROR_CODES.find(code);
+    if (found == EXCEPTIONS_BY_ERROR_CODES.end())
+    {
+        return EXCEPTIONS_BY_ERROR_CODES.at(UnknownException);
+    }
+    return found->second;
+}
+}
 
 }
