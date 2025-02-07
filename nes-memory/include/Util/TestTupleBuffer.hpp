@@ -289,7 +289,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(const SchemaPtr& schema, bool showHeader = true);
+    std::string toString(const SchemaPtr& schema, bool showHeader = true, bool endInNewline = true);
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  

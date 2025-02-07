@@ -139,10 +139,10 @@ public:
             /// true triggers adding sequence number, etc.
             pipelineExecutionContext.emitBuffer(
                 getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+            chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
             setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
             currentFieldOffsetTBFormatted = 0;
             numTuplesInTBFormatted = 0;
-            chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
         }
     }
 
@@ -576,14 +576,15 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(const
 void CSVInputFormatter::flushFinalTuple(
     NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
 {
-    const auto [bufferIndex, flushedBuffers] = sequenceShredder.flushFinalPartialTuple();
-
+    const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder.flushFinalPartialTuple();
+    const auto flushedBuffers = std::move(resultBuffers.stagedBuffers);
     if (flushedBuffers.size() == 1)
     {
         return;
     }
-    const auto sequenceNumberOfLastBuffer = flushedBuffers.at(flushedBuffers.size() - 2).buffer.getSequenceNumber();
-    auto progressTracker = ProgressTracker(sequenceNumberOfLastBuffer, tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    /// Get the final buffer (size - 1 is dummy buffer that just contains tuple delimiter)
+    const auto finalBuffer = flushedBuffers.at(flushedBuffers.size() - 2);
+    auto progressTracker = ProgressTracker(SequenceNumber(sequenceNumberToUseForFlushedTuple), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     /// Allocate formatted buffer to write formatted tuples into.
     progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer()); //Todo: change
     const auto formattedTupleIs = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);
@@ -592,6 +593,7 @@ void CSVInputFormatter::flushFinalTuple(
     {
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        // Todo: the chunk number may be wrong for the current buffer
         pipelineExecutionContext.emitBuffer(
             finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }

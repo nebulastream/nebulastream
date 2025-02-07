@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <bit>
 #include <cmath>
 #include <cstdint>
@@ -118,7 +119,7 @@ public:
     // Todo: get rid of sequence number type?
     using SequenceNumberType = uint64_t;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(SequenceNumberType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 4;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 16;
     using BitmapVectorType = std::vector<SequenceNumberType>;
 
     struct StagedBuffer
@@ -127,7 +128,6 @@ public:
         size_t sizeOfBufferInBytes;
         uint32_t offsetOfFirstTupleDelimiter;
         uint32_t offsetOfLastTupleDelimiter;
-        int uses = 1;
     };
 
     struct StagedBufferResult //Todo: rename
@@ -146,7 +146,7 @@ private:
     static constexpr size_t MAX_NUMBER_OF_BITMAPS = 256;
     static constexpr size_t SHIFT_TO_SECOND_BIT = 1;
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
-    static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 500000;
+    static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
 
     /// The sequence shredder returns 0, 1, or 2 SpanningTuples
     /// The spanning tuple(s) tell the thread that called 'processSequenceNumber()', the range of buffers it needs to format.
@@ -172,7 +172,7 @@ public:
     /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
     /// The artificial tuple is a buffer with a sequence number (SN) that is exactly one larger than the largest seen SN.
     /// We configure the buffer to 'contain' a tuple delimiter as its first and only content.
-    [[nodiscard]] StagedBufferResult flushFinalPartialTuple();
+    [[nodiscard]] std::pair<StagedBufferResult, SequenceShredder::SequenceNumberType> flushFinalPartialTuple();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a vector with either zero, one or two spanning tuples if the sequence number is in range.
@@ -191,6 +191,7 @@ private:
     size_t numberOfBitmapsModulo;
     size_t resizeRequestCount;
     std::vector<StagedBuffer> stagedBuffers;
+    std::vector<std::atomic<int8_t>> stagedBufferUses;
 
     struct BitmapSnapshot
     {
