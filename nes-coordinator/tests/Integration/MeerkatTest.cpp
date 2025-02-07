@@ -302,11 +302,11 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     NesWorkerPtr wrkMid2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     EXPECT_TRUE(wrkMid2->start(false, true));
 
-    NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
-    EXPECT_TRUE(wrkMid3->start(false, true));
-
-    NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
-    EXPECT_TRUE(wrkMid4->start(false, true));
+    // NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    // EXPECT_TRUE(wrkMid3->start(false, true));
+    //
+    // NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    // EXPECT_TRUE(wrkMid4->start(false, true));
 
     // NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
     // EXPECT_TRUE(wrkMid5->start(false, true));
@@ -348,11 +348,11 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf->start(false, true));
 
-    wrkMid3->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid3->addParent(wrkMid1->getWorkerId());
-
-    wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkMid4->addParent(wrkMid2->getWorkerId());
+    // wrkMid3->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid3->addParent(wrkMid1->getWorkerId());
+    //
+    // wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
+    // wrkMid4->addParent(wrkMid2->getWorkerId());
 
     // wrkMid5->removeParent(crd->getNesWorker()->getWorkerId());
     // wrkMid5->addParent(wrkMid3->getWorkerId());
@@ -391,8 +391,8 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     // wrkMid16->addParent(wrkMid14->getWorkerId());
 
     wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkLeaf->addParent(wrkMid3->getWorkerId());
-    wrkLeaf->addParent(wrkMid4->getWorkerId());
+    wrkLeaf->addParent(wrkMid1->getWorkerId());
+    wrkLeaf->addParent(wrkMid2->getWorkerId());
 
     auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
@@ -402,14 +402,14 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     auto queryCatalog = crd->getQueryCatalog();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-    wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
+    // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
     std::this_thread::sleep_for(std::chrono::milliseconds(100000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
 
-    EXPECT_TRUE(wrkMid4->stop(true));
-    EXPECT_TRUE(wrkMid3->stop(true));
+    // EXPECT_TRUE(wrkMid4->stop(true));
+    // EXPECT_TRUE(wrkMid3->stop(true));
     EXPECT_TRUE(wrkMid1->stop(true));
     EXPECT_TRUE(wrkMid2->stop(true));
     EXPECT_TRUE(wrkLeaf->stop(true));

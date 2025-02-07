@@ -37,7 +37,18 @@ PrintSink::PrintSink(SinkFormatPtr format,
                  decomposedQueryId,
                  decomposedQueryVersion, faultToleranceType,
                  numberOfOrigins, std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
-      outputStream(pOutputStream) {}
+      outputStream(pOutputStream) {
+    if (faultToleranceType == FaultToleranceType::M) {
+        duplicateDetectionCallback = [this](Runtime::TupleBuffer& inputBuffer){
+            return watermarkProcessor->isDuplicate(inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+        };
+    }
+    else {
+        duplicateDetectionCallback = [](Runtime::TupleBuffer&){
+            return false;
+        };
+    }
+      }
 
 PrintSink::~PrintSink() = default;
 
@@ -51,9 +62,9 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_TRACE("PrintSink::getData: write data");
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
-    outputStream << buffer << std::endl;
-    if (faultToleranceType == FaultToleranceType::UB) {
-        updateWatermark(inputBuffer);
+    if(!duplicateDetectionCallback(inputBuffer)) {
+        updateWatermarkCallback(inputBuffer);
+        outputStream << buffer << std::endl;
     }
     return true;
 }

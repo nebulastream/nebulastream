@@ -54,11 +54,28 @@ NullOutputSink::~NullOutputSink() = default;
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    // workerContext.printStatistics(inputBuffer);
-    if(!duplicateDetectionCallback(inputBuffer)) {
+    if (!duplicateDetectionCallback(inputBuffer)) {
         updateWatermarkCallback(inputBuffer);
-        return true;
+        processedCount.fetch_add(1, std::memory_order_relaxed);
     }
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(now - lastMeasureTime).count();
+    if (elapsedSec >= LOG_INTERVAL_SECONDS) {
+        lastMeasureTime = now;
+
+        auto count = processedCount.exchange(0, std::memory_order_relaxed);
+
+        auto msNow = std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::steady_clock::now().time_since_epoch())
+                         .count();
+
+        if (throughputFile.is_open()) {
+            throughputFile << msNow << "," << count << "\n";
+            throughputFile.flush();
+        }
+    }
+
     return true;
 }
 
@@ -70,10 +87,19 @@ std::string NullOutputSink::toString() const {
 }
 
 void NullOutputSink::setup() {
-    // currently not required
-}
-void NullOutputSink::shutdown() {
-    // currently not required
+
+    throughputFile.open("null_output_sink_throughput.csv", std::ios::out);
+
+    if (throughputFile.is_open()) {
+        throughputFile << "timestamp_ms,throughput_tuples_sec\n";
+    }
+    lastMeasureTime = std::chrono::steady_clock::now();
 }
 
+void NullOutputSink::shutdown() {
+    if (throughputFile.is_open()) {
+        throughputFile.flush();
+        throughputFile.close();
+    }
+}
 }// namespace NES
