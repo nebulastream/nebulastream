@@ -40,9 +40,7 @@ public:
 
     int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide);
     void allocateSliceCacheEntries(
-      const uint64_t sizeOfEntry,
-      const uint64_t numberOfEntries,
-      Memory::AbstractBufferProvider *bufferProvider) override;
+        const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
 
 protected:
     void triggerSlices(

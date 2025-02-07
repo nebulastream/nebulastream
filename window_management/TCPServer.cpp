@@ -132,7 +132,7 @@ public:
             {
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
-                int const clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
+                const int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
                 ClientHandler client(clientSocket, clientAddress, countLimit, timeStep);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();

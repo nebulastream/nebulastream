@@ -15,21 +15,28 @@
 #pragma once
 #include <Execution/Operators/SliceCache/SliceCache.hpp>
 
-namespace NES::Runtime::Execution {
-struct SliceCacheEntryLRU : SliceCacheEntry {
-  /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
-  uint32_t ageBits;
-  ~SliceCacheEntryLRU() override = default;
+namespace NES::Runtime::Execution
+{
+struct SliceCacheEntryLRU : SliceCacheEntry
+{
+    /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
+    uint32_t ageBits;
+    ~SliceCacheEntryLRU() override = default;
 };
 
-class SliceCacheLRU final : public SliceCache {
+class SliceCacheLRU final : public SliceCache
+{
 public:
-  SliceCacheLRU(const uint64_t numberOfEntries, const uint64_t sizeOfEntry, const nautilus::val<int8_t*>& startOfEntries, const nautilus::val<int8_t*>& startOfDataEntry);
-  ~SliceCacheLRU() override = default;
-  nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp> &timestamp,
-                                              const SliceCache::SliceCacheReplacement &replacementFunction) override;
+    SliceCacheLRU(
+        const uint64_t numberOfEntries,
+        const uint64_t sizeOfEntry,
+        const nautilus::val<int8_t*>& startOfEntries,
+        const nautilus::val<int8_t*>& startOfDataEntry);
+    ~SliceCacheLRU() override = default;
+    nautilus::val<int8_t*>
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
 
 private:
-  nautilus::val<uint64_t*> getAgeBit(const nautilus::val<uint64_t>& pos);
+    nautilus::val<uint64_t*> getAgeBit(const nautilus::val<uint64_t>& pos);
 };
 }

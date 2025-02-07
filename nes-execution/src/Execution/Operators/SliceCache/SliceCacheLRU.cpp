@@ -33,9 +33,8 @@ nautilus::val<uint64_t*> SliceCacheLRU::getAgeBit(const nautilus::val<uint64_t>&
     return ageBitRef;
 }
 
-nautilus::val<int8_t*> SliceCacheLRU::getDataStructureRef(
-    const nautilus::val<Timestamp>& timestamp,
-    const SliceCache::SliceCacheReplacement& replacementFunction)
+nautilus::val<int8_t*>
+SliceCacheLRU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.
     nautilus::val<uint64_t> maxAge = 0;

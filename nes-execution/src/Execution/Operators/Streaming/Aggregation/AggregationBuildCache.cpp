@@ -16,19 +16,19 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -38,7 +38,7 @@ namespace NES::Runtime::Execution::Operators
 AggregationBuildCache::AggregationBuildCache(
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::unique_ptr<Functions::Function> > keyFunctions,
+    std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
     WindowAggregationOperator windowAggregationOperator,
     const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions)
     : WindowAggregationOperator(std::move(windowAggregationOperator))
@@ -57,9 +57,7 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
         +[](AggregationOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
-        {
-            opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
-        },
+        { opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads()); },
         globalOperatorHandler,
         executionCtx.pipelineContext);
 
@@ -78,14 +76,10 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             break;
     }
     nautilus::invoke(
-        +[](
-        AggregationOperatorHandler* opHandler,
-        Memory::AbstractBufferProvider* bufferProvider,
-        const uint64_t sizeOfEntry,
-        const uint64_t numberOfEntries)
-        {
-            opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider);
-        },
+        +[](AggregationOperatorHandler* opHandler,
+            Memory::AbstractBufferProvider* bufferProvider,
+            const uint64_t sizeOfEntry,
+            const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider); },
         globalOperatorHandler,
         executionCtx.bufferProvider,
         sizeOfEntry,
@@ -100,16 +94,16 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto startOfSliceEntries = nautilus::invoke(
         +[](AggregationOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
-        {
-            return opHandler->getStartOfSliceCacheEntries(workerThreadId);
-        },
+        { return opHandler->getStartOfSliceCacheEntries(workerThreadId); },
         globalOperatorHandler,
         executionCtx.getWorkerThreadId());
-    const auto startOfDataEntry = nautilus::invoke(+[](const SliceCacheEntry* sliceCacheEntry)
-    {
-        const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
-        return startOfDataStructure;
-    }, startOfSliceEntries);
+    const auto startOfDataEntry = nautilus::invoke(
+        +[](const SliceCacheEntry* sliceCacheEntry)
+        {
+            const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
+            return startOfDataStructure;
+        },
+        startOfSliceEntries);
 
     switch (sliceCacheOptions.sliceCacheType)
     {
@@ -119,12 +113,14 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
 
             executionCtx.setLocalOperatorState(
                 this,
-                std::make_unique<SliceCacheFIFO>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
+                std::make_unique<SliceCacheFIFO>(
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
             break;
         case QueryCompilation::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
-                std::make_unique<SliceCacheLRU>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
+                std::make_unique<SliceCacheLRU>(
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
             break;
     }
 }
@@ -139,9 +135,8 @@ int8_t* createNewAggregationSliceProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     const auto* opHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
     const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
-    const auto newAggregationSlice = dynamic_cast<AggregationSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp,
-        createFunction)[0].get());
+    const auto newAggregationSlice
+        = dynamic_cast<AggregationSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
 
     /// Updating the slice cache entry with the new slice
     sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
@@ -199,7 +194,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
 
 
     /// Updating the aggregation states
-    Interface::ChainedHashMapRef::ChainedEntryRef const entryRef(hashMapEntry, fieldKeys, fieldValues);
+    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {

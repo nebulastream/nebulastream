@@ -13,61 +13,64 @@
 */
 
 #pragma once
-#include <nautilus/val.hpp>
 #include <functional>
-#include <nautilus/val_ptr.hpp>
-#include <Time/Timestamp.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 /// Represents the C++ struct that is stored in the operator handler vector
-struct SliceCacheEntry {
-  SliceCacheEntry(Timestamp slice_start, Timestamp slice_end)
-    : sliceStart(std::move(slice_start)),
-      sliceEnd(std::move(slice_end)), dataStructure(nullptr) {
-  }
+struct SliceCacheEntry
+{
+    SliceCacheEntry(Timestamp slice_start, Timestamp slice_end)
+        : sliceStart(std::move(slice_start)), sliceEnd(std::move(slice_end)), dataStructure(nullptr)
+    {
+    }
 
-  virtual ~SliceCacheEntry() = default;
-  Timestamp sliceStart;
-  Timestamp sliceEnd;
-  int8_t *dataStructure;
+    virtual ~SliceCacheEntry() = default;
+    Timestamp sliceStart;
+    Timestamp sliceEnd;
+    int8_t* dataStructure;
 };
 
-class SliceCache : public Operators::OperatorState {
+class SliceCache : public Operators::OperatorState
+{
 public:
-  explicit SliceCache(uint64_t numberOfEntries,
-                      uint64_t sizeOfEntry,
-                      const nautilus::val<int8_t *> &startOfEntries,
-                      const nautilus::val<int8_t *> &startOfDataEntry);
-  ~SliceCache() override = default;
+    explicit SliceCache(
+        uint64_t numberOfEntries,
+        uint64_t sizeOfEntry,
+        const nautilus::val<int8_t*>& startOfEntries,
+        const nautilus::val<int8_t*>& startOfDataEntry);
+    ~SliceCache() override = default;
 
-  using SliceCacheReplacement = std::function<nautilus::val<int8_t *>(
-    const nautilus::val<SliceCacheEntry *> &sliceCacheEntryToReplace)>;
+    using SliceCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace)>;
 
-  virtual nautilus::val<int8_t *> getDataStructureRef(const nautilus::val<Timestamp> &timestamp,
-                                                      const SliceCache::SliceCacheReplacement &replacementFunction) = 0;
+    virtual nautilus::val<int8_t*>
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) = 0;
 
 protected:
-  virtual nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t> &pos);
-  virtual nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t> &pos);
-  virtual nautilus::val<int8_t *> getDataStructure(const nautilus::val<uint64_t> &pos);
+    virtual nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
 
-  /// Helper function to search for a timestamp in the cache. If the timestamp is found, a pointer to the cache entry is returned. Otherwise, nullptr is returned.
-  nautilus::val<int8_t *> searchInCache(const nautilus::val<Timestamp> &timestamp);
+    /// Helper function to search for a timestamp in the cache. If the timestamp is found, a pointer to the cache entry is returned. Otherwise, nullptr is returned.
+    nautilus::val<int8_t*> searchInCache(const nautilus::val<Timestamp>& timestamp);
 
-  /// Members for iterating over the cache
-  nautilus::val<int8_t *> startOfEntries;
-  nautilus::val<int8_t *> startOfDataEntry; /// This stores the first data entry in the cache
-  nautilus::val<uint64_t> numberOfEntries;
-  uint64_t sizeOfEntry;
+    /// Members for iterating over the cache
+    nautilus::val<int8_t*> startOfEntries;
+    nautilus::val<int8_t*> startOfDataEntry; /// This stores the first data entry in the cache
+    nautilus::val<uint64_t> numberOfEntries;
+    uint64_t sizeOfEntry;
 
-  /// Members for the current entry. We assume that each entry has a fixed size and the layout is the same as in the SliceCacheEntry struct.
-  nautilus::val<Timestamp> sliceStart;
-  nautilus::val<Timestamp> sliceEnd;
+    /// Members for the current entry. We assume that each entry has a fixed size and the layout is the same as in the SliceCacheEntry struct.
+    nautilus::val<Timestamp> sliceStart;
+    nautilus::val<Timestamp> sliceEnd;
 
-  /// Statistics of how many hits and misses we have. This is useful to see how efficient the cache is by comparing the hits and misses for a clairvoyant cache.
-  nautilus::val<uint64_t> numberOfHits;
-  nautilus::val<uint64_t> numberOfMisses;
+    /// Statistics of how many hits and misses we have. This is useful to see how efficient the cache is by comparing the hits and misses for a clairvoyant cache.
+    nautilus::val<uint64_t> numberOfHits;
+    nautilus::val<uint64_t> numberOfMisses;
 };
 }

@@ -13,25 +13,27 @@
 */
 
 #include <cstdint>
+#include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
-#include <nautilus/val.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
-#include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <nautilus/static.hpp>
+#include <nautilus/val.hpp>
 
 namespace NES::Runtime::Execution
 {
-SliceCacheFIFO::SliceCacheFIFO(const uint64_t numberOfEntries, const uint64_t sizeOfEntry, const nautilus::val<int8_t*>& startOfEntries, const nautilus::val<int8_t*>& startOfDataEntry)
-    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry)
-    , replacementIndex(0)
+SliceCacheFIFO::SliceCacheFIFO(
+    const uint64_t numberOfEntries,
+    const uint64_t sizeOfEntry,
+    const nautilus::val<int8_t*>& startOfEntries,
+    const nautilus::val<int8_t*>& startOfDataEntry)
+    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry), replacementIndex(0)
 {
 }
 
-nautilus::val<int8_t*> SliceCacheFIFO::getDataStructureRef(
-    const nautilus::val<Timestamp>& timestamp,
-    const SliceCache::SliceCacheReplacement& replacementFunction)
+nautilus::val<int8_t*>
+SliceCacheFIFO::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
     if (const auto dataStructure = SliceCache::searchInCache(timestamp); dataStructure != nullptr)

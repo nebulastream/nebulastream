@@ -12,12 +12,16 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Execution/Operators/SliceCache/SliceCache.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 
 namespace NES::Runtime::Execution
 {
-SliceCache::SliceCache(const uint64_t numberOfEntries, const uint64_t sizeOfEntry, const nautilus::val<int8_t*>& startOfEntries, const nautilus::val<int8_t*>& startOfDataEntry)
+SliceCache::SliceCache(
+    const uint64_t numberOfEntries,
+    const uint64_t sizeOfEntry,
+    const nautilus::val<int8_t*>& startOfEntries,
+    const nautilus::val<int8_t*>& startOfDataEntry)
     : startOfEntries(startOfEntries)
     , startOfDataEntry(startOfDataEntry)
     , numberOfEntries(numberOfEntries)
@@ -49,10 +53,8 @@ nautilus::val<int8_t*> SliceCache::getDataStructure(const nautilus::val<uint64_t
 {
     // const auto dataStructure = startOfDataEntry + pos * sizeOfEntry;
     const auto sliceEntry = startOfEntries + pos * sizeOfEntry;
-    const auto dataStructure = nautilus::invoke(+[](const SliceCacheEntry* sliceCacheEntry)
-    {
-        return sliceCacheEntry->dataStructure;
-    }, sliceEntry);
+    const auto dataStructure
+        = nautilus::invoke(+[](const SliceCacheEntry* sliceCacheEntry) { return sliceCacheEntry->dataStructure; }, sliceEntry);
     return dataStructure;
 }
 

@@ -15,5 +15,6 @@ add_source_files(nes-execution
         NLJBuildCache.cpp
         NLJOperatorHandler.cpp
         NLJProbe.cpp
+        NLJProbeNoProbing.cpp
         NLJSlice.cpp
 )

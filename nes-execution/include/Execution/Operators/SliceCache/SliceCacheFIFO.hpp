@@ -15,17 +15,24 @@
 #pragma once
 #include <Execution/Operators/SliceCache/SliceCache.hpp>
 
-namespace NES::Runtime::Execution {
-struct SliceCacheEntryFIFO : SliceCacheEntry {
+namespace NES::Runtime::Execution
+{
+struct SliceCacheEntryFIFO : SliceCacheEntry
+{
     ~SliceCacheEntryFIFO() override = default;
 };
 
-class SliceCacheFIFO final : public SliceCache {
+class SliceCacheFIFO final : public SliceCache
+{
 public:
-    SliceCacheFIFO(const uint64_t numberOfEntries, const uint64_t sizeOfEntry, const nautilus::val<int8_t*>& startOfEntries, const nautilus::val<int8_t*>& startOfDataEntry);
+    SliceCacheFIFO(
+        const uint64_t numberOfEntries,
+        const uint64_t sizeOfEntry,
+        const nautilus::val<int8_t*>& startOfEntries,
+        const nautilus::val<int8_t*>& startOfDataEntry);
     ~SliceCacheFIFO() override = default;
-  nautilus::val<int8_t *> getDataStructureRef(const nautilus::val<Timestamp> &timestamp,
-                                              const SliceCache::SliceCacheReplacement& replacementFunction) override;
+    nautilus::val<int8_t*>
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
 
 private:
     /// Stores the index of the entry that should be replaced next

@@ -149,14 +149,14 @@ int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThre
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
     const auto pos = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size();
-    INVARIANT(pos < sliceCacheEntriesBufferForWorkerThreads.size(), "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
+    INVARIANT(
+        pos < sliceCacheEntriesBufferForWorkerThreads.size(),
+        "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
     return sliceCacheEntriesBufferForWorkerThreads[pos].getBuffer();
 }
 
 void AggregationOperatorHandler::allocateSliceCacheEntries(
-    const uint64_t sizeOfEntry,
-    const uint64_t numberOfEntries,
-    Memory::AbstractBufferProvider* bufferProvider)
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// If the slice cache has already been created, we simply return
     if (hasSliceCacheCreated.exchange(true))

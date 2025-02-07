@@ -62,19 +62,21 @@ void StreamJoinOperatorHandler::triggerSlices(
     }
 }
 
-int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide)
+int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
+    const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide)
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
-    const auto pos = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size() + numberOfWorkerThreads * static_cast<uint64_t>(joinBuildSide);
-    INVARIANT(pos < sliceCacheEntriesBufferForWorkerThreads.size(), "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
+    const auto pos
+        = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size() + numberOfWorkerThreads * static_cast<uint64_t>(joinBuildSide);
+    INVARIANT(
+        pos < sliceCacheEntriesBufferForWorkerThreads.size(),
+        "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
     return sliceCacheEntriesBufferForWorkerThreads[pos].getBuffer();
 }
 
 
 void StreamJoinOperatorHandler::allocateSliceCacheEntries(
-    const uint64_t sizeOfEntry,
-    const uint64_t numberOfEntries,
-    Memory::AbstractBufferProvider* bufferProvider)
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// If the slice cache has already been created, we simply return
     if (hasSliceCacheCreated.exchange(true))

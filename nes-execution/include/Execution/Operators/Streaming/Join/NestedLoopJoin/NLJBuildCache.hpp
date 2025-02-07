@@ -24,12 +24,14 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
 /// corresponding slice one after the other. Afterward, the second phase (NLJProbe) will start joining the tuples
 /// via two nested loops. This class uses a slice cache to cache previously used slices.
-class NLJBuildCache final : public StreamJoinBuild {
+class NLJBuildCache final : public StreamJoinBuild
+{
 public:
     NLJBuildCache(
         uint64_t operatorHandlerIndex,

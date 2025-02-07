@@ -55,9 +55,8 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRef(
-    const WorkerThreadId workerThreadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide) const
+Nautilus::Interface::PagedVector*
+NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {

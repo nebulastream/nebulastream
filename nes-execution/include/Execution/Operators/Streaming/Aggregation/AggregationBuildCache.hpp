@@ -22,9 +22,11 @@
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class AggregationBuildCache final : public WindowAggregationOperator, public WindowOperatorBuild {
+class AggregationBuildCache final : public WindowAggregationOperator, public WindowOperatorBuild
+{
 public:
     AggregationBuildCache(
         uint64_t operatorHandlerIndex,

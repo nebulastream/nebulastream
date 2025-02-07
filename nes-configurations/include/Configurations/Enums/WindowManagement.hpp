@@ -29,6 +29,12 @@ enum class SliceCacheType : uint8_t
     LRU
 };
 
+enum class ProbeType : uint8_t
+{
+    PROBING,
+    NO_PROBING
+};
+
 enum class DelayStrategy : uint8_t
 {
     BUFFER,

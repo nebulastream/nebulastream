@@ -13,11 +13,11 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuildCache.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <nautilus/std/cstdlib.h>
 #include <nautilus/val_enum.hpp>
 
@@ -29,8 +29,7 @@ NLJBuildCache::NLJBuildCache(
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions)
-    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
-    , sliceCacheOptions(sliceCacheOptions)
+    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider), sliceCacheOptions(sliceCacheOptions)
 {
 }
 
@@ -43,9 +42,7 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
         +[](NLJOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
-        {
-            opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
-        },
+        { opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads()); },
         globalOperatorHandler,
         executionCtx.pipelineContext);
 
@@ -65,14 +62,11 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     }
 
     nautilus::invoke(
-        +[](
-        NLJOperatorHandler* opHandler,
-        Memory::AbstractBufferProvider* bufferProvider,
-        const uint64_t sizeOfEntryVal,
-        const uint64_t numberOfEntriesVal)
-        {
-            opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider);
-        },
+        +[](NLJOperatorHandler* opHandler,
+            Memory::AbstractBufferProvider* bufferProvider,
+            const uint64_t sizeOfEntryVal,
+            const uint64_t numberOfEntriesVal)
+        { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
         globalOperatorHandler,
         executionCtx.bufferProvider,
         sizeOfEntry,
@@ -87,17 +81,17 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto startOfSliceEntries = nautilus::invoke(
         +[](NLJOperatorHandler* opHandler, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
-        {
-            return opHandler->getStartOfSliceCacheEntries(workerThreadId, joinBuildSide);
-        },
+        { return opHandler->getStartOfSliceCacheEntries(workerThreadId, joinBuildSide); },
         globalOperatorHandler,
         executionCtx.getWorkerThreadId(),
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
-    const auto startOfDataEntry = nautilus::invoke(+[](const SliceCacheEntry* sliceCacheEntry)
-    {
-        const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
-        return startOfDataStructure;
-    }, startOfSliceEntries);
+    const auto startOfDataEntry = nautilus::invoke(
+        +[](const SliceCacheEntry* sliceCacheEntry)
+        {
+            const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
+            return startOfDataStructure;
+        },
+        startOfSliceEntries);
     switch (sliceCacheOptions.sliceCacheType)
     {
         case QueryCompilation::SliceCacheType::NONE:
@@ -105,12 +99,14 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
         case QueryCompilation::SliceCacheType::FIFO:
             executionCtx.setLocalOperatorState(
                 this,
-                std::make_unique<SliceCacheFIFO>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
+                std::make_unique<SliceCacheFIFO>(
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
             break;
         case QueryCompilation::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
-                std::make_unique<SliceCacheLRU>(sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
+                std::make_unique<SliceCacheLRU>(
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
             break;
     }
 }
@@ -126,8 +122,8 @@ int8_t* createNewNLJSliceProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
     const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
-    const auto newNLJSlice = dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].
-        get());
+    const auto newNLJSlice
+        = dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
 
     /// Updating the slice cache entry with the new slice
     sliceCacheEntry->sliceStart = newNLJSlice->getSliceStart();
