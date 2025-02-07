@@ -320,6 +320,23 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
     return true;
 }
 
+QueryState QueryCatalog::getDecomposedQueryPlanSatus(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+    //Fetch shared query and query catalogs
+    auto lockedSharedQueryCatalogEntryMapping = sharedQueryCatalogEntryMapping.wlock();
+    if (!lockedSharedQueryCatalogEntryMapping->contains(sharedQueryId)) {
+        NES_ERROR("Unable to find the shared query plan with id {}", sharedQueryId);
+        throw Exceptions::QueryNotFoundException(fmt::format("Unable to find the shared query plan with id {}", sharedQueryId));
+    }
+
+    //Fetch the shared query plan
+    auto sharedQueryCatalogEntry = (*lockedSharedQueryCatalogEntryMapping)[sharedQueryId];
+    //Get the decomposed query plan
+    auto decomposedQueryPlanMetaData = sharedQueryCatalogEntry->getDecomposedQueryPlanMetaData(decomposedQueryId);
+    //check the decomposed query plan status
+    return  decomposedQueryPlanMetaData->getDecomposedQueryPlanStatus();
+}
+
+
 bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId,
                                                               DecomposedQueryId decomposedQueryId,
                                                               DecomposedQueryPlanVersion decomposedQueryVersion) {

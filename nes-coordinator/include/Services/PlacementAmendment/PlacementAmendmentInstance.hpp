@@ -15,7 +15,6 @@
 #ifndef NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
 #define NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
 
-#include <Util/RequestType.hpp>
 #include <future>
 #include <memory>
 
@@ -32,6 +31,17 @@ using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
 class ReconfigurationMarker;
 using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+
+namespace Catalogs::Query {
+class QueryCatalogEntry;
+using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
+
+class SharedQueryCatalogEntry;
+using SharedQueryCatalogEntryPtr = std::shared_ptr<SharedQueryCatalogEntry>;
+
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}
 
 namespace Configurations {
 class CoordinatorConfiguration;
@@ -67,6 +77,7 @@ class PlacementAmendmentInstance {
      * @param topology
      * @param typeInferencePhase
      * @param coordinatorConfiguration
+     * @param queryCatalog
      * @param deploymentPhase
      * @return a shared pointer to the placement amendment instance
      */
@@ -75,6 +86,7 @@ class PlacementAmendmentInstance {
                                                 TopologyPtr topology,
                                                 TypeInferencePhasePtr typeInferencePhase,
                                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                Catalogs::Query::QueryCatalogPtr queryCatalog,
                                                 DeploymentPhasePtr deploymentPhase);
 
     PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
@@ -82,6 +94,7 @@ class PlacementAmendmentInstance {
                                TopologyPtr topology,
                                TypeInferencePhasePtr typeInferencePhase,
                                Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                               Catalogs::Query::QueryCatalogPtr queryCatalog,
                                DeploymentPhasePtr deploymentPhase);
 
     /**
@@ -115,6 +128,7 @@ class PlacementAmendmentInstance {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     DeploymentPhasePtr deploymentPhase;
     std::promise<bool> completionPromise;
 

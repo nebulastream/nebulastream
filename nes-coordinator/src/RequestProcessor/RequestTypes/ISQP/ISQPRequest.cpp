@@ -158,6 +158,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                                           topology,
                                                                                           typeInferencePhase,
                                                                                           coordinatorConfiguration,
+                                                                                          queryCatalog,
                                                                                           deploymentPhase);
             completedAmendments.emplace_back(amendmentInstance->getFuture());
             placementAmendmentHandler->enqueueRequest(amendmentInstance);
@@ -269,8 +270,7 @@ void ISQPRequest::handleRemoveNodeRequest(NES::RequestProcessor::ISQPRemoveNodeE
     //1. If the removed execution nodes does not have any shared query plan placed then skip rest of the operation
     auto impactedSharedQueryIds = globalExecutionPlan->getPlacedSharedQueryIds(removedNodeId);
     if (impactedSharedQueryIds.empty()) {
-        NES_INFO("Removing node {} has no effect on the running queries as there are no queries placed "
-                 "on the node.",
+        NES_INFO("Removing node {} has no effect on the running queries as there are no queries placed on the node.",
                  removedNodeId);
         return;
     }
