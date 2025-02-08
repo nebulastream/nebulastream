@@ -32,36 +32,33 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Optimizer {
-    PlacementAmendmentInstancePtr
-    PlacementAmendmentInstance::create(SharedQueryPlanPtr sharedQueryPlan,
-                                       Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                       TopologyPtr topology,
-                                       Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                       Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                       DeploymentPhasePtr deploymentPhase) {
-        return std::make_unique<PlacementAmendmentInstance>(sharedQueryPlan,
-                                                            globalExecutionPlan,
-                                                            topology,
-                                                            typeInferencePhase,
-                                                            coordinatorConfiguration,
-                                                            queryCatalog,
-                                                            deploymentPhase);
-    }
+PlacementAmendmentInstancePtr
+PlacementAmendmentInstance::create(SharedQueryPlanPtr sharedQueryPlan,
+                                   Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+                                   TopologyPtr topology,
+                                   Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                   Catalogs::Query::QueryCatalogPtr queryCatalog,
+                                   DeploymentPhasePtr deploymentPhase) {
+    return std::make_unique<PlacementAmendmentInstance>(sharedQueryPlan,
+                                                        globalExecutionPlan,
+                                                        topology,
+                                                        typeInferencePhase,
+                                                        coordinatorConfiguration,
+                                                        queryCatalog,
+                                                        deploymentPhase);
+}
 
-    PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
-                                                           GlobalExecutionPlanPtr globalExecutionPlan,
-                                                           TopologyPtr topology,
-                                                           TypeInferencePhasePtr typeInferencePhase,
-                                                           Configurations::CoordinatorConfigurationPtr
-                                                           coordinatorConfiguration,
-                                                           Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                                           DeploymentPhasePtr deploymentPhase)
-        : sharedQueryPlan(sharedQueryPlan), globalExecutionPlan(globalExecutionPlan), topology(topology),
-          typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration),
-          queryCatalog(queryCatalog),
-          deploymentPhase(deploymentPhase) {
-    };
+PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
+                                                       GlobalExecutionPlanPtr globalExecutionPlan,
+                                                       TopologyPtr topology,
+                                                       TypeInferencePhasePtr typeInferencePhase,
+                                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                       Catalogs::Query::QueryCatalogPtr queryCatalog,
+                                                       DeploymentPhasePtr deploymentPhase)
+    : sharedQueryPlan(sharedQueryPlan), globalExecutionPlan(globalExecutionPlan), topology(topology),
+      typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog),
+      deploymentPhase(deploymentPhase){};
 
 void PlacementAmendmentInstance::execute() {
     try {
@@ -114,7 +111,9 @@ void PlacementAmendmentInstance::execute() {
             // Wait for all DQPs to get into the status stopped when performing holistic deployment.
             if (!incrementalPlacement) {
                 for (auto deploymentRemovalContext : deploymentUnit.deploymentRemovalContexts) {
-                    while (queryCatalog->getDecomposedQueryPlanSatus(deploymentRemovalContext->getSharedQueryId(), deploymentRemovalContext->getDecomposedQueryId()) != QueryState::STOPPED) {
+                    while (queryCatalog->getDecomposedQueryPlanSatus(deploymentRemovalContext->getSharedQueryId(),
+                                                                     deploymentRemovalContext->getDecomposedQueryId())
+                           != QueryState::STOPPED) {
                         sleep(.1);
                     }
                 }

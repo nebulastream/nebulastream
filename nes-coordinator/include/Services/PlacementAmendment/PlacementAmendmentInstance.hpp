@@ -41,7 +41,7 @@ using SharedQueryCatalogEntryPtr = std::shared_ptr<SharedQueryCatalogEntry>;
 
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}
+}// namespace Catalogs::Query
 
 namespace Configurations {
 class CoordinatorConfiguration;
