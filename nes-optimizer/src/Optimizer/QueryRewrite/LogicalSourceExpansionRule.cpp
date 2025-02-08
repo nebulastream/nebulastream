@@ -59,7 +59,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         for (const auto& rootOperator : queryPlan->getRootOperators()) {
             DepthFirstNodeIterator depthFirstNodeIterator(rootOperator);
             for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-                NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
+                NES_TRACE("LogicalSourceExpansionRule: Iterate and find the predicate with FieldAccessExpression Node");
                 auto operatorToIterate = (*itr)->as<Operator>();
                 if (isBlockingOperator(operatorToIterate)) {
                     blockingOperators[operatorToIterate->getId()] = operatorToIterate;

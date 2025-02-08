@@ -448,7 +448,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkDetails();
     if (sinkOperator.hasProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID)) {
-        auto listOfSourceOperators = std::any_cast<std::vector<uint32_t>>( sinkOperator.getProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID));
+        auto listOfSourceOperators = std::any_cast<std::vector<uint64_t>>( sinkOperator.getProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID));
         for (auto sourceWorkerId : listOfSourceOperators) {
             sinkDetails.add_listofsourcelocations(sourceWorkerId);
         }
