@@ -22,6 +22,8 @@
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
 #include <queue>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 
 namespace NES {
 
@@ -129,9 +131,23 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() cons
 QueryState DecomposedQueryPlan::getState() const { return currentState; }
 
 void DecomposedQueryPlan::refreshOperatorIds() {
+    auto shouldSetFileName = false;
+
     for (const auto& logicalOperator : getAllOperators()) {
         logicalOperator->addProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY, logicalOperator->getId());
         logicalOperator->setId(getNextOperatorId());
+        if (logicalOperator->as_if<SinkLogicalOperator>() && logicalOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->as_if<FileSinkDescriptor>()) {
+            shouldSetFileName = true;
+        }
+    }
+
+    for (const auto& logicalOperator : getAllOperators()) {
+        if (shouldSetFileName) {
+            if (logicalOperator->as_if<LogicalJoinOperator>()) {
+                std::string file = "final_file_completed.bin";
+                logicalOperator->addProperty("MIGRATION_FILE", file);
+            }
+        }
     }
 }
 

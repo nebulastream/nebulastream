@@ -72,23 +72,24 @@ using namespace NES;
         }
     };
 
-    std::vector<std::vector<std::string>> intermediateSourceNames;
+    std::vector<std::string> intermediateSourceNames;
 
-    void setupSourceNames(uint64_t numberOfSources, uint64_t numOfIntermediateNodes) {
+    void setupSourceNames(uint64_t, uint64_t numOfIntermediateNodes) {
         intermediateSourceNames.clear();
-        intermediateSourceNames.emplace_back(std::vector<std::string>());
         // auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
-            intermediateSourceNames.emplace_back(std::vector<std::string>());
-            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes + 1; interNodeId++) {
-                const auto& logicalSourceName = "example_source_" + std::to_string(sourceIdx) + "_node_" + std::to_string(interNodeId);
-                intermediateSourceNames[sourceIdx].push_back(logicalSourceName);
+//        for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
+            // intermediateSourceNames.emplace_back(std::vector<std::string>());
+
+            for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes; interNodeId++) {
+                const auto& logicalSourceName = "recreation_file_node_" + std::to_string(interNodeId);
+                intermediateSourceNames.push_back(logicalSourceName);
             }
-        }
+            intermediateSourceNames.push_back("final_file");
+//        }
     }
 
-    void setupLogicalSources(uint64_t numberOfSources, RequestHandlerServicePtr requestHandlerService, uint64_t numOfIntermediateNodes) {
+    void setupLogicalSources(uint64_t, RequestHandlerServicePtr requestHandlerService, uint64_t numOfIntermediateNodes) {
         std::cout << "set up logical sources" << std::endl;
         NES::SchemaPtr schema1 = NES::Schema::create()
                                      ->addField("id1", BasicType::UINT64)
@@ -102,15 +103,20 @@ using namespace NES;
                                      ->addField("secretValue2", BasicType::UINT64)
                                      ->addField("timestamp", BasicType::UINT64);
 
-        for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
+//        for (uint64_t sourceIdx = 1; sourceIdx <= numberOfSources; sourceIdx++) {
             for (uint64_t interNodeId = 0; interNodeId <= numOfIntermediateNodes + 1; interNodeId++) {
-                if (sourceIdx == 1) {
-                    requestHandlerService->queueRegisterLogicalSourceRequest(intermediateSourceNames[sourceIdx][interNodeId], schema1);
-                } else {
-                    requestHandlerService->queueRegisterLogicalSourceRequest(intermediateSourceNames[sourceIdx][interNodeId], schema2);
-                }
+//                if (sourceIdx == 1) {
+                    requestHandlerService->queueRegisterLogicalSourceRequest(intermediateSourceNames[interNodeId], schema1);
+//                } else {
+//                    requestHandlerService->queueRegisterLogicalSourceRequest(intermediateSourceNames[interNodeId], schema2);
+//                }
             }
-        }
+
+            requestHandlerService->queueRegisterLogicalSourceRequest("start_source_1", schema1);
+            requestHandlerService->queueRegisterLogicalSourceRequest("start_source_2", schema2);
+            requestHandlerService->queueRegisterLogicalSourceRequest("fake_source_1", schema1);
+            requestHandlerService->queueRegisterLogicalSourceRequest("fake_source_2", schema2);
+//        }
     }
 
     NES::Testing::BorrowedPortPtr rpcCoordinatorPort;
@@ -171,15 +177,15 @@ using namespace NES;
 //        }
 
         for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
-            const auto& logicalSourceName = intermediateSourceNames[originId][intermediateSourceNames[originId].size() - 1];
+            const auto& logicalSourceName = "fake_source_" + std::to_string(originId);
             const auto physicalSourceName = "phy_" + logicalSourceName;
             std::map<std::string, std::string> sourceConfig {
-                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.bin"},
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + ".csv"},
                 {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
                 {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
             };
-            auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-            coordinatorConfiguration->worker.physicalSourceTypes.add(binarySourceType);
+            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            coordinatorConfiguration->worker.physicalSourceTypes.add(csvSourceType);
         }
 
         NES::Configurations::OptimizerConfiguration optimizerConfiguration;
@@ -194,7 +200,7 @@ using namespace NES;
         std::cout << "coordinator started" << std::endl;
     }
 
-    std::vector<NesWorkerPtr> sourceNodes;
+    NesWorkerPtr migrationJoinWorker;
 
     NesWorkerPtr startSourceWorker(std::atomic<bool>&, uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t originId) {
         std::cout << "start source node " << originId << std::endl;
@@ -248,15 +254,27 @@ using namespace NES;
 //                                                         GatheringMode::INTERVAL_MODE);
 //        wrkConf->physicalSourceTypes.add(lambdaSourceType);
 
-        const auto& logicalSourceName = intermediateSourceNames[originId][0];
-        const auto physicalSourceName = "phy_" + logicalSourceName;
-        std::map<std::string, std::string> sourceConfig {
-            {Configurations::FILE_PATH_CONFIG, "start_source.bin"},
+        for (auto originId = 1; originId <=2; originId++) {
+            const auto& logicalSourceName = "start_source_" + std::to_string(originId);
+            const auto physicalSourceName = "phy_" + logicalSourceName;
+            std::map<std::string, std::string> sourceConfig{
+                {Configurations::FILE_PATH_CONFIG, "start_source.csv"},
+                {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
+                {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}};
+            auto csvSourceType = CSVSourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
+            wrkConf->physicalSourceTypes.add(csvSourceType);
+        }
+
+        const auto& binSourceName = intermediateSourceNames[0];
+        const auto physicalBinSourceName = "phy_" + binSourceName;
+        std::map<std::string, std::string> binSourceConfig {
+            {Configurations::FILE_PATH_CONFIG, "recreation_file_node_0_completed.bin"},
             {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
-            {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)}
+            {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, "0"},
+                 {Configurations::SKIP_HEADER_CONFIG, "true"}
         };
-        auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
-        wrkConf->physicalSourceTypes.add(binarySourceType);
+        auto binSourceType = BinarySourceType::create(binSourceName, physicalBinSourceName, binSourceConfig);
+        wrkConf->physicalSourceTypes.add(binSourceType);
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -264,13 +282,13 @@ using namespace NES;
         if (!resStart) {
             NES_ERROR("intermediate worker {} failed to start", originId);
         }
-        sourceNodes.push_back(wrk);
+        migrationJoinWorker = wrk;
         return wrk;
     }
 
     std::vector<NesWorkerPtr> intermediateNodes;
 
-    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t numberOfBuffersToProduce, uint64_t numOfOrigins, uint64_t interIndex) {
+    NesWorkerPtr startIntermediateWorker(uint64_t bufferSize, uint64_t, uint64_t, uint64_t interIndex) {
         std::cout << "start intermediate node " << interIndex << std::endl;
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -286,20 +304,20 @@ using namespace NES;
         wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 5000;
         wrkConf->numberOfBuffersPerWorker = 10000;
-        wrkConf->numberOfBuffersToProduce = numberOfBuffersToProduce;
+        // wrkConf->numberOfBuffersToProduce = numberOfBuffersToProduce;
 
-        for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
-            const auto& logicalSourceName = intermediateSourceNames[originId][interIndex];
+//        for (uint64_t originId = 1; originId <= numOfOrigins; originId++) {
+            const auto& logicalSourceName = intermediateSourceNames[interIndex];
             const auto physicalSourceName = "phy_" + logicalSourceName;
             std::map<std::string, std::string> sourceConfig {
-                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_finished.bin"},
+                {Configurations::FILE_PATH_CONFIG, logicalSourceName + "_completed.bin"},
                 {Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, "0"},
-                {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, std::to_string(numberOfBuffersToProduce)},
+                {Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, "0"},
                 {Configurations::SKIP_HEADER_CONFIG, "true"}
             };
             auto binarySourceType = BinarySourceType::create(logicalSourceName, physicalSourceName, sourceConfig);
             wrkConf->physicalSourceTypes.add(binarySourceType);
-        }
+//        }
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -315,9 +333,8 @@ using namespace NES;
         startCoordinator(bufferSize, numberOfBuffersToProduce, 2, numberOfIntermediateNodes);
 
         // start sources
-        std::vector<NesWorkerPtr> sourceWorkers;
-        sourceWorkers.push_back(startSourceWorker(shouldProduce, bufferSize, numberOfBuffersToProduce, 1));
-        sourceWorkers.push_back(startSourceWorker(shouldProduce, bufferSize, numberOfBuffersToProduce, 2));
+        NesWorkerPtr sourceWorker;
+        sourceWorker = startSourceWorker(shouldProduce, bufferSize, numberOfBuffersToProduce, 1);
 
         // start intermediate nodes
         std::vector<NesWorkerPtr> intermediateWorkers;
@@ -333,9 +350,7 @@ using namespace NES;
             }
 
             // replace parent for sources
-            for (const auto& wrk: sourceWorkers) {
-                wrk->replaceParent(crd->getNesWorker()->getWorkerId(), intermediateWorkers[0]->getWorkerId());
-            }
+            sourceWorker->replaceParent(crd->getNesWorker()->getWorkerId(), intermediateWorkers[0]->getWorkerId());
         }
     }
 
@@ -474,16 +489,35 @@ using namespace NES;
 
         std::cout << "Setting up nodes." << std::endl;
         std::atomic<bool> shouldProduce{false};
-        setUp(shouldProduce, bufferSize, 1024, numberOfIntermediateNodes);
+        setUp(shouldProduce, bufferSize, 2048, 0);
 
         auto requestHandlerService = crd->getRequestHandlerService();
         auto topology = crd->getTopology();
         std::cout << topology->toString();
-        std::cout << "start main query" << std::endl;
+        std::cout << "start migration join query" << std::endl;
+        // main query
+        auto nullOutputSinkDescriptor = NullOutputSinkDescriptor::create(2);
+        std::string joinFirstSourceName = "start_source_1";
+        std::string joinSecondSourceName = "start_source_2";
+        auto joinQuery = Query::from(joinFirstSourceName)
+                         .joinWith(Query::from(joinSecondSourceName))
+                         .where(Attribute("value1") == Attribute("value2"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                         .sink(nullOutputSinkDescriptor, WorkerId(2));
+
+        std::string joinQueryString = "Query::from(\"" + joinFirstSourceName + "\").joinWith(Query::from(\"" + joinSecondSourceName + "\")).where(Attribute(\"value1\") == Attribute(\"value2\"))"
+                                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000)))"
+                                   ".sink(NullOutputSinkDescriptor::create(2));";
+
+        QueryId joinQueryId =
+            requestHandlerService->validateAndQueueAddQueryRequest(joinQuery.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        waitForQueryStatus(joinQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
+
+        std::cout << "start migration join query" << std::endl;
         // main query
         auto fileSinkDescriptor = FileSinkDescriptor::create("benchmark_output.csv", "CSV_FORMAT", "OVERWRITE");
-        auto firstSourceName = intermediateSourceNames[1][intermediateSourceNames[1].size() - 1];
-        auto secondSourceName = intermediateSourceNames[2][intermediateSourceNames[2].size() - 1];
+        std::string firstSourceName = "fake_source_1";
+        std::string secondSourceName = "fake_source_2";
         auto query = Query::from(firstSourceName)
                          .joinWith(Query::from(secondSourceName))
                          .where(Attribute("value1") == Attribute("value2"))
@@ -491,20 +525,19 @@ using namespace NES;
                          .sink(fileSinkDescriptor);
 
         std::string queryString = "Query::from(\"" + firstSourceName + "\").joinWith(Query::from(\"" + secondSourceName + "\")).where(Attribute(\"value1\") == Attribute(\"value2\"))"
-                                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000)))"
-                                   ".sink(FileSinkDescriptor::create(\"benchmark_output.csv\", \"CSV_FORMAT\", \"OVERWRITE\"));";
+                                                                                                                          ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000)))"
+                                                                                                                          ".sink(FileSinkDescriptor::create(\"benchmark_output.csv\", \"CSV_FORMAT\", \"OVERWRITE\"));";
 
         QueryId mainQueryId =
             requestHandlerService->validateAndQueueAddQueryRequest(queryString, Optimizer::PlacementStrategy::TopDown);
-        waitForQueryStatus(mainQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
 
         auto interNodes = intermediateNodes;
         std::cout << "start intermediate queries" << std::endl;
         std::vector<QueryId> peerToPeerIds;
-        for (uint64_t originId = 1; originId <= 2; originId++) {
+//        for (uint64_t originId = 1; originId <= 2; originId++) {
             for (uint64_t interNodeId = numberOfIntermediateNodes; interNodeId >= 1; interNodeId--) {
-                auto sourceName = intermediateSourceNames[originId][interNodeId];
-                auto sinkName = intermediateSourceNames[originId][interNodeId + 1];
+                auto sourceName = intermediateSourceNames[interNodeId];
+                auto sinkName = intermediateSourceNames[interNodeId + 1];
                 auto destinationWorkerId = INVALID_WORKER_NODE_ID;
                 if (interNodeId == numberOfIntermediateNodes) {
                     destinationWorkerId = crd->getNesWorker()->getWorkerId();
@@ -513,10 +546,10 @@ using namespace NES;
                 }
 
                 auto fileSinkDescriptor =
-                    FileSinkDescriptor::create(sinkName + ".bin", "NES_FORMAT", "OVERWRITE");
+                    FileSinkDescriptor::create(sinkName + ".bin", "MIGRATION_FORMAT", "OVERWRITE");
                 auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
                 auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
-                std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"NES_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
+                std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"MIGRATION_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
                 sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
                 QueryId addedQueryId =
                     requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString,
@@ -524,13 +557,13 @@ using namespace NES;
                 waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
                 peerToPeerIds.push_back(addedQueryId);
             }
-        }
+//        }
         std::cout << "start last source query" << std::endl;
         // peer-to-peer queries
-        for (auto originId = 1; originId <= 2; originId++) {
-            auto sourceName = intermediateSourceNames[originId][0];
-            auto sinkName = intermediateSourceNames[originId][1];
-            auto fileSinkDescriptor = FileSinkDescriptor::create(sinkName + ".bin", "NES_FORMAT", "OVERWRITE");
+//        for (auto originId = 1; originId <= 2; originId++) {
+            auto sourceName = intermediateSourceNames[0];
+            auto sinkName = intermediateSourceNames[1];
+            fileSinkDescriptor = FileSinkDescriptor::create(sinkName + ".bin", "MIGRATION_FORMAT", "OVERWRITE");
             auto sourceQuery = Query::from(sourceName).sink(fileSinkDescriptor);
             auto sink = sourceQuery.getQueryPlan()->getSinkOperators().front();
             auto destinationWorkerId = INVALID_WORKER_NODE_ID;
@@ -540,23 +573,23 @@ using namespace NES;
                 destinationWorkerId = intermediateNodes[0]->getWorkerId();
             }
             sink->addProperty(Optimizer::PINNED_WORKER_ID, destinationWorkerId);
-            std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"CSV_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
+            std::string sourceQueryString = "Query::from(\"" + sourceName + "\").sink(FileSinkDescriptor::create(\"" + sinkName +".bin" + "\", \"MIGRATION_FORMAT\", \"OVERWRITE\"),WorkerId(" + std::to_string(destinationWorkerId.getRawValue())+"));";
             QueryId addedQueryId =
                 requestHandlerService->validateAndQueueAddQueryRequest(sourceQueryString, Optimizer::PlacementStrategy::TopDown);
             waitForQueryStatus(addedQueryId, crd->getQueryCatalog(), NES::QueryState::RUNNING, std::chrono::seconds(120));
             peerToPeerIds.push_back(addedQueryId);
-        }
+//        }
 
         std::cout << "start producing" << std::endl;
         // shouldProduce.store(true);
 
-        for (auto& id: peerToPeerIds) {
-             waitForQueryStatus(id, crd->getQueryCatalog(), NES::QueryState::STOPPED, std::chrono::seconds(120));
-        }
+//        for (auto& id: peerToPeerIds) {
+//             waitForQueryStatus(id, crd->getQueryCatalog(), NES::QueryState::STOPPED, std::chrono::seconds(120));
+//        }
 
         // std::cout << crd->getGlobalQueryPlan()->get<< std::endl;
 
-        sleep(10);
+        sleep(100);
         auto decompPlanIds = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(SharedQueryId(mainQueryId.getRawValue()));
         auto [decompPlanIdToCheck, decompPlanVersionToCheck] = decompPlanIds.front();
 //        auto reconfigMarker = ReconfigurationMarker::create();
@@ -570,26 +603,22 @@ using namespace NES;
         // requestHandlerService->validateAndQueueStopQueryRequest(mainQueryId);
         // checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCheck, decompPlanVersionToCheck, crd->getNesWorker(), std::chrono::seconds(60));
         sleep(5);
-        for (auto source: intermediateSourceNames) {
-            for (auto name: source) {
-                std::string fileName = name + "_finished.bin";
-                remove(fileName.c_str());
-            }
+        for (auto name: intermediateSourceNames) {
+            std::string fileName = name + "_completed.bin";
+            remove(fileName.c_str());
         }
 
         remove("start_source.bin");
 
         std::cout << "Stop source nodes" << std::endl;
-        for (auto& wrk : sourceNodes) {
-            wrk->stop(true);
-        }
+            //->stop(true);
         std::cout << "Stop intermediate nodes" << std::endl;
         for (auto& wrk : intermediateNodes) {
             wrk->stop(true);
         }
         std::cout << "Stop coordinator" << std::endl;
         crd->stopCoordinator(true);
-        sourceNodes.clear();
+        //sourceNodes.clear();
         intermediateNodes.clear();
         sleep(10);
     }
@@ -642,9 +671,9 @@ using namespace NES;
         auto minNUmberOfIntermediateNodes = configs["MinNUmberOfIntermediateNodes"].As<uint64_t>();
         auto maxNUmberOfIntermediateNodes = configs["MaxNUmberOfIntermediateNodes"].As<uint64_t>();
 
-        runNodesBenchmark(defaultNumberOfBuffersToProduce, numNodes, bufferSize);
+        runNodesBenchmark(2048, 0, bufferSize);
         for (uint64_t numberOfIntermediateNodes = minNUmberOfIntermediateNodes, tries = 1; numberOfIntermediateNodes <= maxNUmberOfIntermediateNodes; numberOfIntermediateNodes *= (1 + (tries++ % 3 == 0))) {
-            runNodesBenchmark(defaultNumberOfBuffersToProduce, numberOfIntermediateNodes, bufferSize);
+            runNodesBenchmark(2048, 0, bufferSize);
         }
 
         sleep(5);

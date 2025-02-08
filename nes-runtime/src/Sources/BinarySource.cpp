@@ -35,7 +35,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                            bool shouldDelayEOS,
-                           uint64_t numberOfBuffersToProduce)
+                           uint64_t)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -48,7 +48,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  false,
                  shouldDelayEOS,
                  std::move(successors)), filePath(pathToFile) {
-    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+    this->numberOfBuffersToProduce = 0;
 }
 
 void BinarySource::openFile() {
@@ -61,7 +61,7 @@ void BinarySource::openFile() {
         return;
     }
 
-    if (filePath.find("start_source") != std::string::npos) {
+    if (filePath.find("recreation_file_node_0_completed") != std::string::npos) {
         auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         NES_ERROR("started sending from {}", startTime)
     }
@@ -102,12 +102,23 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
     if (input.tellg() > 0 && (unsigned) input.tellg() == fileSize) {
         input.seekg(0, std::ifstream::beg);
     }
-    uint64_t uint64_to_read = buf.getBufferSize() < (uint64_t) fileSize ? buf.getBufferSize() : fileSize;
-    input.read(buf.getBuffer<char>(), uint64_to_read);
-    uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;
-    buf.setNumberOfTuples(generated_tuples_this_pass);
+    uint64_t size;
+    uint64_t numberOfTuples;
+    uint64_t seqNumber;
+    uint64_t watermark;
+    input.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    input.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+    input.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
+    input.read(reinterpret_cast<char*>(&watermark), sizeof(uint64_t));
 
-    generatedTuples += generated_tuples_this_pass;
+    uint64_t uint64_to_read = buf.getBufferSize();
+    input.read(buf.getBuffer<char>(), uint64_to_read);
+    // uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;
+    // buf.setNumberOfTuples(generated_tuples_this_pass);
+    buf.setNumberOfTuples(numberOfTuples);
+    buf.setSequenceNumber(seqNumber);
+    buf.setWatermark(watermark);
+    // generatedTuples += generated_tuples_this_pass;
     generatedBuffers++;
 }
 SourceType BinarySource::getType() const { return SourceType::BINARY_SOURCE; }

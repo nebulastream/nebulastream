@@ -1454,6 +1454,8 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
             serializedSinkDescriptor.set_sinkformat("NES_FORMAT");
         } else if (format == "TEXT_FORMAT") {
             serializedSinkDescriptor.set_sinkformat("TEXT_FORMAT");
+        } else if (format == "MIGRATION_FORMAT") {
+            serializedSinkDescriptor.set_sinkformat("MIGRATION_FORMAT");
         } else {
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }

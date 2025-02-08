@@ -42,7 +42,10 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  numberOfOrigins),
-      filePath(filePath), append(append) {}
+      filePath(filePath), append(append) {
+    lastWritten = 0;
+//    bufferStorage.reserve(1000);
+}
 
 RawBufferSink::~RawBufferSink() {}
 
@@ -69,7 +72,7 @@ void RawBufferSink::setup() {
 
     // Open the file stream
     if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::out);
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
     isOpen = outputFile.is_open() && outputFile.good();
     if (!isOpen) {
@@ -83,8 +86,12 @@ void RawBufferSink::setup() {
 void RawBufferSink::shutdown() {
     NES_DEBUG("Closing file sink, filePath={}", filePath);
     // rename file after dumping completed
+    if (isClosed) {
+        return;
+    }
+
     auto dotPosition = filePath.find_last_of('.');
-    auto completedPath = filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
+    auto completedPath = filePath.substr(0, dotPosition) + "_completed" + filePath.substr(dotPosition);
     outputFile.close();
 
     if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
@@ -97,6 +104,9 @@ void RawBufferSink::shutdown() {
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
+
+    // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
@@ -108,17 +118,75 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
         return false;
     }
 
-    NES_DEBUG("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
-    // 1. write buffer size
-    auto size = inputBuffer.getBufferSize();
-    outputFile.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    // 2. write number of tuples in buffer
-    auto numberOfTuples = inputBuffer.getNumberOfTuples();
-    outputFile.write(reinterpret_cast<char*>((&numberOfTuples)), sizeof(uint64_t));
-    // 3. write buffer content
-    outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), size);
-    outputFile.flush();
+    // get sequence number of received buffer
+    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+    // save the highest consecutive sequence number in the queue
+    auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
+
+//    if (bufferStorage.capacity() <= bufferSeqNumber) {
+//        bufferStorage.reserve(bufferStorage.capacity() * 2);
+//    }
+
+    // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
+    const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+    // insert input buffer sequence number to the queue
+    seqQueue.emplace(seqData, bufferSeqNumber);
+
+    // get the highest consecutive sequence number in the queue after adding new value
+    auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
+
+    bufferStorage[bufferSeqNumber] = inputBuffer;
+
+    // TODO: #5033 check this logic
+    // check if top value in the queue has changed after adding new sequence number
+    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
+
+        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
+        for (auto it = bufferStorage.lower_bound(lastWritten + 1);
+             it != bufferStorage.upper_bound(currentSeqNumberAfterAdding);
+             ++it) {
+            writeToTheFile(it->second);  // Collect the value (TupleBuffer) into the batch
+        }
+
+        // Update lastWritten to the latest sequence number
+        lastWritten = currentSeqNumberAfterAdding;
+    }
+
     return true;
 }
+
+bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
+
+    auto numberOfBuffers = inputBuffer.getWatermark();
+
+    uint64_t size = inputBuffer.getBufferSize();
+    uint64_t numberOfTuples = inputBuffer.getNumberOfTuples();
+    uint64_t seqNumber = inputBuffer.getSequenceNumber();
+    uint64_t watermark = inputBuffer.getWatermark();
+
+    // Create a temporary buffer to batch writes
+    std::vector<char> buffer(sizeof(uint64_t) * 4 + size);
+
+    // NES_ERROR("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
+    std::memcpy(buffer.data(), &size, sizeof(uint64_t));
+    std::memcpy(buffer.data() + sizeof(uint64_t), &numberOfTuples, sizeof(uint64_t));
+    std::memcpy(buffer.data() + 2 * sizeof(uint64_t), &seqNumber, sizeof(uint64_t));
+    std::memcpy(buffer.data() + 3 * sizeof(uint64_t), &watermark, sizeof(uint64_t));
+    std::memcpy(buffer.data() + 4 * sizeof(uint64_t), inputBuffer.getBuffer(), size);
+    outputFile.write(buffer.data(), buffer.size());
+
+    numberOfWrittenBuffers++;
+    // outputFile.flush();
+
+    if (numberOfWrittenBuffers == watermark) {
+        shutdown();
+        isClosed = true;
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_ERROR("finished transferring {} at {} {}", numberOfWrittenBuffers, time, filePath);
+    }
+    return true;
+}
+
 
 }// namespace NES

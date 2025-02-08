@@ -43,18 +43,20 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
 }
 
 void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
+
     NES_INFO("Start of recreation from file");
     if (!recreationFilePath.has_value()) {
         NES_ERROR("Error: file path for recreation is not set");
     }
 
     auto filePath = recreationFilePath.value();
-
+    NES_ERROR("waiting for recreation file");
     while (!std::filesystem::exists(filePath)) {
         NES_DEBUG("File {} does not exist yet", filePath);
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
-
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("started recreating at {}", time);
     NES_DEBUG("File exists. Start of recreation from file");
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
 
@@ -89,6 +91,8 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     restoreState(recreatedStateBuffers);
     restoreWindowInfo(recreatedWindowInfoBuffers);
     // reset recreation flag and delete file
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("State finished recreating at {}", endTime);
     shouldBeRecreated = false;
     if (std::remove(recreationFilePath->c_str()) == 0) {
         NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
@@ -98,6 +102,8 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHandlerForMigration() {
+    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Started serializing at {}", startTime);
     // get timestamp of not probed slices
     auto migrationTimestamp =
         std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
@@ -133,6 +139,11 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
                          std::make_move_iterator(windowInfoBuffers.begin()),
                          std::make_move_iterator(windowInfoBuffers.end()));
     NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
+    for (auto& buffer: mergedBuffers) {
+        buffer.setWatermark(mergedBuffers.size());
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Finished serializing at {}", endTime);
     return mergedBuffers;
 }
 
@@ -186,7 +197,6 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     for (auto& buffer : watermarksBuffers) {
         buffer.setSequenceNumber(++lastMigratedSeqNumber);
     }
-
     return watermarksBuffers;
 }
 
@@ -639,11 +649,15 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::readBuffers(std::ifstream& s
     std::vector<TupleBuffer> readBuffers = {};
 
     for (auto currBuffer = 0ULL; currBuffer < numberOfBuffers; currBuffer++) {
-        uint64_t size = 0, numberOfTuples = 0;
+        uint64_t size = 0, numberOfTuples = 0, stuff_to_transfer;
         // 1. read size of current buffer
         stream.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
         // 2. read number of tuples in current buffer
         stream.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+
+        stream.read(reinterpret_cast<char*>(&stuff_to_transfer), sizeof(uint64_t));
+
+        stream.read(reinterpret_cast<char*>(&stuff_to_transfer), sizeof(uint64_t));
 
         // if size of the read buffer is more than size of pooled buffers in buffer manager
         if (size > bufferManager->getBufferSize()) {

@@ -16,6 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJOPERATORHANDLERSLICING_HPP_
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
+#include <fstream>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -78,6 +79,12 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
     ~NLJOperatorHandlerSlicing() override = default;
 
   private:
+    /// The output file path of the file sink.
+//    std::string filePath = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file_node_0_completed.bin";
+    std::string filePath = "recreation_file_node_0.bin";
+
+    /// The output file stream.
+    std::ofstream outputFile;
     /**
      * Calculates the slice end of this slice which might have changed since this join is now shared by an additional query deployed
      * at a different time. Regardless if the end changed the slice then gets added to each window that was added by this new query.

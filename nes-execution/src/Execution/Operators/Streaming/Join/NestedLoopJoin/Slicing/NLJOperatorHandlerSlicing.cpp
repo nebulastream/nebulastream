@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+#include <fstream>
+#include <filesystem>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -197,9 +199,49 @@ void NLJOperatorHandlerSlicing::addQueryToSharedJoinApproachDeleting(QueryId que
 
 void NLJOperatorHandlerSlicing::checkAndLogTimestamp(uint64_t joinBuildSideInt) {
     NES_DEBUG("got buffer {} for {}", numberOfRecreatedBuffers[joinBuildSideInt].load(), joinBuildSideInt);
-    if (numberOfRecreatedBuffers[joinBuildSideInt].fetch_add(1, std::memory_order_relaxed) == numberOfBuffersToRecreate - 1) {
+    numberOfRecreatedBuffers[joinBuildSideInt]++;
+    if (numberOfRecreatedBuffers[0] == numberOfBuffersToRecreate && numberOfRecreatedBuffers[1] == numberOfBuffersToRecreate) {
+        auto buffersToSerialize = serializeOperatorHandlerForMigration();
+        if (std::filesystem::exists(filePath.c_str())) {
+            std::error_code ec;
+            if (!std::filesystem::remove(filePath.c_str(), ec)) {
+                NES_ERROR("Could not remove existing output file: filePath={}, error={}", filePath, ec.message());
+                return;
+            }
+        }
+
+        if (!outputFile.is_open()) {
+            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        }
+
+        for (auto& inputBuffer: buffersToSerialize) {
+            uint64_t size = inputBuffer.getBufferSize();
+            uint64_t numberOfTuples = inputBuffer.getNumberOfTuples();
+            uint64_t seqNumber = inputBuffer.getSequenceNumber();
+            uint64_t watermark = inputBuffer.getWatermark();
+
+            // Create a temporary buffer to batch writes
+            std::vector<char> buffer(sizeof(uint64_t) * 4 + size);
+
+            // NES_ERROR("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
+            std::memcpy(buffer.data(), &size, sizeof(uint64_t));
+            std::memcpy(buffer.data() + sizeof(uint64_t), &numberOfTuples, sizeof(uint64_t));
+            std::memcpy(buffer.data() + 2 * sizeof(uint64_t), &seqNumber, sizeof(uint64_t));
+            std::memcpy(buffer.data() + 3 * sizeof(uint64_t), &watermark, sizeof(uint64_t));
+            std::memcpy(buffer.data() + 4 * sizeof(uint64_t), inputBuffer.getBuffer(), size);
+            outputFile.write(buffer.data(), buffer.size());
+        }
         auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_ERROR("thread finished recreating at {}", endTime);
+        NES_ERROR("finished writing {} at {}", buffersToSerialize.size(), endTime)
+
+        auto dotPosition = filePath.find_last_of('.');
+        auto completedPath = filePath.substr(0, dotPosition) + "_completed" + filePath.substr(dotPosition);
+        outputFile.close();
+        if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
+            NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
+        } else {
+            NES_ERROR("Can't rename file after dumping");
+        }
     }
 }
 }// namespace NES::Runtime::Execution::Operators
