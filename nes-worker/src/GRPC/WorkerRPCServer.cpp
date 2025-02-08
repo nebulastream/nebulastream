@@ -276,6 +276,8 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 
 Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
     //todo
+    (void) request;
+    (void) reply;
     return Status::OK;
 }
 }// namespace NES
