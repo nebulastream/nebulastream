@@ -90,7 +90,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
         NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
@@ -147,7 +147,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
         NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
@@ -221,7 +221,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 //workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(pair));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
-                workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
+                workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
             } else {
                 //synchronous connecting is configured. let this thread wait on the connection being established
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
@@ -546,7 +546,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                         true,
                                         reconfigurationMarker);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
-    workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
+    workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
