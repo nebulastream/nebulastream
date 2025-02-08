@@ -72,8 +72,8 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
-#include <fstream>
 #include <Util/Placement/PlacementConstants.hpp>
+#include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -448,7 +448,8 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkDetails();
     if (sinkOperator.hasProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID)) {
-        auto listOfSourceOperators = std::any_cast<std::vector<uint64_t>>( sinkOperator.getProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID));
+        auto listOfSourceOperators =
+            std::any_cast<std::vector<uint64_t>>(sinkOperator.getProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID));
         for (auto sourceWorkerId : listOfSourceOperators) {
             sinkDetails.add_listofsourcelocations(sourceWorkerId);
         }

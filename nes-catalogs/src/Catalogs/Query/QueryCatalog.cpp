@@ -333,9 +333,8 @@ QueryState QueryCatalog::getDecomposedQueryPlanSatus(SharedQueryId sharedQueryId
     //Get the decomposed query plan
     auto decomposedQueryPlanMetaData = sharedQueryCatalogEntry->getDecomposedQueryPlanMetaData(decomposedQueryId);
     //check the decomposed query plan status
-    return  decomposedQueryPlanMetaData->getDecomposedQueryPlanStatus();
+    return decomposedQueryPlanMetaData->getDecomposedQueryPlanStatus();
 }
-
 
 bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId,
                                                               DecomposedQueryId decomposedQueryId,
