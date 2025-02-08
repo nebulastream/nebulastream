@@ -18,6 +18,7 @@ import "SerializableExpression.proto";
 import "SerializableReconfigurationMarker.proto";
 import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
+import "Checkpoint.proto";
 
 service WorkerRPCService {
     rpc DeployDecomposedQuery (DeployDecomposedQueryRequest) returns (DeployDecomposedQueryReply) {}
@@ -48,6 +49,8 @@ service WorkerRPCService {
     rpc UploadMlModelServerStream (MlModelFileUploadRequest) returns (stream MlModelFileUploadResponse) {}
 
     rpc ProbeStatistics (ProbeStatisticsRequest) returns (ProbeStatisticsReply) {}
+
+    rpc SendCheckpointToSource (CheckPointList) returns (CheckPointRespone) {}
 }
 
 message DeployDecomposedQueryRequest {

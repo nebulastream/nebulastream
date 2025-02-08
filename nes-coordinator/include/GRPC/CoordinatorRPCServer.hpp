@@ -256,6 +256,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) override;
 
+    Status NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply);
+
   private:
     RequestHandlerServicePtr requestHandlerService;
     TopologyPtr topology;

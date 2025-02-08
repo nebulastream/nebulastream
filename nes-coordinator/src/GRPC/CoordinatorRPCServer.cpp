@@ -531,13 +531,13 @@ CoordinatorRPCServer::NotifyCheckPoint(ServerContext*, const CheckPointList* req
     //todo: send only to the nods that need it
     for (auto nodeId : topology->getAllRegisteredNodeIds()) {
         auto node = topology->getCopyOfTopologyNodeWithId(nodeId);
-
     }
 
     // auto isqpRequestResponse = requestHandlerService->queueISQPRequest(isqpEvents);
     // reply->set_success(isqpRequestResponse->success);
-    if (isqpRequestResponse) {
-        return Status::OK;
-    }
-    return Status::CANCELLED;
+    // if (isqpRequestResponse) {
+    //     return Status::OK;
+    // }
+    // return Status::CANCELLED;
+    return Status::OK;
 }
