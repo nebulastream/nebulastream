@@ -185,13 +185,12 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         return Status::CANCELLED;
     }
 }
-Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
-                                                 const StartBufferingRequest* request,
-                                                 StartBufferingReply* reply) {
+Status
+WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRequest* request, StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
     // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
     nodeEngine->setParentId(request->parent());
-//    nodeEngine->tryApplyingNewDescriptors();
+    //    nodeEngine->tryApplyingNewDescriptors();
     auto success = true;
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartBufferingOnAllSinks: success");
@@ -202,7 +201,6 @@ Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
         reply->set_success(false);
         return Status::CANCELLED;
     }
-
 }
 
 Status
@@ -273,6 +271,11 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
         protoStat->set_statisticvalue(stat.getValue());
     }
 
+    return Status::OK;
+}
+
+Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
+    //todo
     return Status::OK;
 }
 }// namespace NES
