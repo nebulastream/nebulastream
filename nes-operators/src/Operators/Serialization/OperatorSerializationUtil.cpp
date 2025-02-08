@@ -63,7 +63,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
@@ -74,6 +73,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <fstream>
+#include <Util/Placement/PlacementConstants.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -447,6 +447,12 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
                                                       SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkDetails();
+    if (sinkOperator.hasProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID)) {
+        auto listOfSourceOperators = std::any_cast<std::vector<uint32_t>>( sinkOperator.getProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID));
+        for (auto sourceWorkerId : listOfSourceOperators) {
+            sinkDetails.add_listofsourcelocations(sourceWorkerId);
+        }
+    }
     auto sinkDescriptor = sinkOperator.getSinkDescriptor();
     serializeSinkDescriptor(*sinkDescriptor, sinkDetails, sinkOperator.getInputOriginIds().size());
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
@@ -454,7 +460,13 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
-    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
+    std::vector<uint32_t> physicalSourceLocation;
+    for (auto sourcelocation : sinkDetails.listofsourcelocations()) {
+        physicalSourceLocation.emplace_back(sourcelocation);
+    };
+    sinkOperator->addProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID, physicalSourceLocation);
+    return sinkOperator;
 }
 
 void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& mapOperator,

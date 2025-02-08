@@ -177,7 +177,7 @@ class Operator : public Node {
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getProperty(const std::string& key);
+    std::any getProperty(const std::string& key) const;
 
     /**
      * @brief Remove a property string from the stored properties map

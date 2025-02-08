@@ -14,6 +14,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
@@ -33,9 +34,17 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     this->queryPlan = queryPlan->copy();
     this->queryPlan->setQueryId(
         UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));//overwrite the query id with shared query plan id
+
+    //Extract worker ids where the source operator is located
+    std::vector<uint64_t> workerIds;
+    for (auto sourceOperator : this->queryPlan->getSourceOperators()) {
+        workerIds.emplace_back(std::any_cast<uint64_t>(sourceOperator->getProperty(Optimizer::PINNED_WORKER_ID)));
+    }
+
     //Compute sink operators
     std::set<LogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : this->queryPlan->getRootOperators()) {
+        rootOperator->addProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID, workerIds);
         sinkOperators.insert(rootOperator->as<LogicalOperator>());
     }
     auto queryId = queryPlan->getQueryId();
