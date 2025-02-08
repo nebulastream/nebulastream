@@ -38,7 +38,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     //Extract worker ids where the source operator is located
     std::vector<uint64_t> workerIds;
     for (auto sourceOperator : this->queryPlan->getSourceOperators()) {
-        workerIds.emplace_back(std::any_cast<uint64_t>(sourceOperator->getProperty(Optimizer::PINNED_WORKER_ID)));
+        workerIds.emplace_back(std::any_cast<WorkerId>(sourceOperator->getProperty(Optimizer::PINNED_WORKER_ID)).getRawValue());
     }
 
     //Compute sink operators
