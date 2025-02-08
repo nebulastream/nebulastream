@@ -157,12 +157,13 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 #endif
                 } else if (requestType == RequestType::RestartQuery) {
                     sharedQueryState = QueryState::STOPPED;
+                    NES_ERROR("restarting query")
                     //TODO:  remove stop call (is handled by marker now
 #ifdef ASYNC_DEPLOYMENT
                     workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
                                                               sharedQueryId,
                                                               decomposedQueryId,
-                                                              Runtime::QueryTerminationType::Graceful,
+                                                              Runtime::QueryTerminationType::HardStop,
                                                               queueForDeploymentContext);
 #else
                     workerRPCClient->stopDecomposedQuery(grpcAddress,
