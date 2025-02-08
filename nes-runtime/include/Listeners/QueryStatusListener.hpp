@@ -44,6 +44,8 @@ class AbstractQueryStatusListener {
     virtual void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) = 0;
 
     virtual void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) = 0;
+
+  virtual bool requestSubQueryRemoval(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) = 0;
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 }// namespace NES

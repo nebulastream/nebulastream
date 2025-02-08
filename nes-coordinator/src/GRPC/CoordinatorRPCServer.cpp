@@ -183,6 +183,38 @@ Status CoordinatorRPCServer::RequestQueryOffload(ServerContext*,
     return Status::OK;
 }
 
+Status CoordinatorRPCServer::RequestSubQueryRemoval(ServerContext*,
+                                                 const RequestSubQueryRemovalRequest* request,
+                                                 RequestSubQueryRemovalResponse* reply) {
+    NES_DEBUG("CoordinatorRPCServer::requestSubQueryRemoval: Received request for shared_query_id={}", request->sharedqueryid());
+
+    WorkerId originWorkerId = WorkerId(request->originworkerid());
+    SharedQueryId sharedQueryId(request->sharedqueryid());
+    DecomposedQueryId decomposedQueryId(request->decomposedqueryid());
+
+
+    bool offloadSuccess = false;
+    std::string offloadMessage;
+
+    try {
+        auto event = NES::RequestProcessor::ISQPRemoveSubQueryEvent::create(originWorkerId, sharedQueryId, decomposedQueryId);
+        auto responseFuture = requestHandlerService->queueISQPRequest({event});
+
+        offloadMessage = "Offload request accepted and scheduled.";
+        offloadSuccess = true;
+        NES_INFO("CoordinatorRPCServer::RequestQueryOffload: offload successful for query {}", sharedQueryId);
+    } catch (const std::exception& ex) {
+        offloadSuccess = false;
+        offloadMessage = std::string("Exception while attempting offload: ") + ex.what();
+        NES_ERROR("CoordinatorRPCServer::RequestQueryOffload: exception: {}", ex.what());
+    }
+
+    reply->set_success(offloadSuccess);
+    reply->set_message(offloadMessage);
+
+    return Status::OK;
+}
+
 Status
 CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request ={}", request->DebugString());

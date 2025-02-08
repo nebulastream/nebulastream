@@ -58,7 +58,6 @@ bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
         updateWatermarkCallback(inputBuffer);
         processedCount.fetch_add(1, std::memory_order_relaxed);
     }
-
     auto now = std::chrono::steady_clock::now();
     auto elapsedSec = std::chrono::duration_cast<std::chrono::seconds>(now - lastMeasureTime).count();
     if (elapsedSec >= LOG_INTERVAL_SECONDS) {

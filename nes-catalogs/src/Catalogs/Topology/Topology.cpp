@@ -217,39 +217,39 @@ bool Topology::addTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWor
 bool Topology::unregisterWorker(WorkerId topologyNodeId) {
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", topologyNodeId);
-
-    if (!workerIdToTopologyNode.contains(topologyNodeId)) {
-        NES_WARNING("The physical node {} doesn't exists in the system.", topologyNodeId);
-        return false;
-    }
-
-    auto found = std::find(rootWorkerIds.begin(), rootWorkerIds.end(), topologyNodeId);
-    if (found != rootWorkerIds.end()) {
-        NES_WARNING("Removing the root node {}.", topologyNodeId);
-        rootWorkerIds.erase(found);
-    }
-    std::string nodeAddress = "";
-    {
-        // Fetch topology node and clear parent child nodes
-        auto lockedTopologyNode = workerIdToTopologyNode.at(topologyNodeId).wlock();
-        if ((*lockedTopologyNode)->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-            auto lockedLocationIndex = locationIndex.wlock();
-            if (!(*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId)) {
-                NES_ERROR("Unable to remove the topology node from the spatial index.");
-                return false;
-            }
-        }
-
-        (*lockedTopologyNode)->removeAllParent();
-        (*lockedTopologyNode)->removeChildren();
-        nodeAddress = (*lockedTopologyNode)->getFullRPCAddress();
-        // ULTRA IMPORTANT COMMON SENSE: Release the lock on the object before its deletion.
-        lockedTopologyNode.unlock();
-        // Delete the object
-        workerIdToTopologyNode.erase(topologyNodeId);
-        NES_DEBUG("Successfully removed the node {}.", topologyNodeId);
-    }
-    informNeighborsOfNode(topologyNodeId, nodeAddress);
+    //TODO: fix worker deregistration
+    // if (!workerIdToTopologyNode.contains(topologyNodeId)) {
+    //     NES_WARNING("The physical node {} doesn't exists in the system.", topologyNodeId);
+    //     return false;
+    // }
+    //
+    // auto found = std::find(rootWorkerIds.begin(), rootWorkerIds.end(), topologyNodeId);
+    // if (found != rootWorkerIds.end()) {
+    //     NES_WARNING("Removing the root node {}.", topologyNodeId);
+    //     rootWorkerIds.erase(found);
+    // }
+    // std::string nodeAddress = "";
+    // {
+    //     // Fetch topology node and clear parent child nodes
+    //     auto lockedTopologyNode = workerIdToTopologyNode.at(topologyNodeId).wlock();
+    //     if ((*lockedTopologyNode)->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
+    //         auto lockedLocationIndex = locationIndex.wlock();
+    //         if (!(*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId)) {
+    //             NES_ERROR("Unable to remove the topology node from the spatial index.");
+    //             return false;
+    //         }
+    //     }
+    //
+    //     (*lockedTopologyNode)->removeAllParent();
+    //     (*lockedTopologyNode)->removeChildren();
+    //     nodeAddress = (*lockedTopologyNode)->getFullRPCAddress();
+    //     // ULTRA IMPORTANT COMMON SENSE: Release the lock on the object before its deletion.
+    //     lockedTopologyNode.unlock();
+    //     // Delete the object
+    //     workerIdToTopologyNode.erase(topologyNodeId);
+    //     NES_DEBUG("Successfully removed the node {}.", topologyNodeId);
+    // }
+    // informNeighborsOfNode(topologyNodeId, nodeAddress);
     return true;
 }
 

@@ -497,7 +497,8 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                         newDecomposedQueryPlan = DecomposedQueryPlan::create(existingDecomposedQueryPlan->getDecomposedQueryId(),
                                                                              sharedQueryId,
                                                                              pinnedWorkerId,
-                                                                             existingDecomposedQueryPlan->getRootOperators());
+                                                                             existingDecomposedQueryPlan->getRootOperators(),
+                                                                             existingDecomposedQueryPlan->getFaultToleranceType());
                         newDecomposedQueryPlan->addRootOperator(copyOfPinnedOperator);
                     } else {
                         const auto& rootOperators = existingDecomposedQueryPlan->getRootOperators();
@@ -513,7 +514,8 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                         newDecomposedQueryPlan = DecomposedQueryPlan::create(existingDecomposedQueryPlan->getDecomposedQueryId(),
                                                                              sharedQueryId,
                                                                              pinnedWorkerId,
-                                                                             existingDecomposedQueryPlan->getRootOperators());
+                                                                             existingDecomposedQueryPlan->getRootOperators(),
+                                                                             existingDecomposedQueryPlan->getFaultToleranceType());
                     } else {
                         const auto& rootOperators = existingDecomposedQueryPlan->getRootOperators();
                         //NOTE: Remove the copy Of pinnedOperator as the root operator
@@ -535,12 +537,14 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                     newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                          sharedQueryId,
                                                                          pinnedWorkerId,
-                                                                         {copyOfPinnedOperator});
+                                                                         {copyOfPinnedOperator},
+                                                                         faultTolerance);
                 } else {
                     newDecomposedQueryPlan = DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                                          sharedQueryId,
                                                                          pinnedWorkerId,
-                                                                         {copyOfPinnedOperator});
+                                                                         {copyOfPinnedOperator},
+                                                                         faultTolerance);
                 }
             } else if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 newDecomposedQueryPlan->setDecomposedQueryPlanId(
@@ -559,12 +563,14 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                 newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                      sharedQueryId,
                                                                      pinnedWorkerId,
-                                                                     {copyOfPinnedOperator});
+                                                                     {copyOfPinnedOperator},
+                                                                     faultTolerance);
             } else {
                 newDecomposedQueryPlan = DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                                      sharedQueryId,
                                                                      pinnedWorkerId,
-                                                                     {copyOfPinnedOperator});
+                                                                     {copyOfPinnedOperator},
+                                                                     faultTolerance);
             }
             //2.2.2. Add the new query sub plan to the list
             computedDecomposedQueryPlans[pinnedWorkerId] = {newDecomposedQueryPlan};
@@ -806,7 +812,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                 DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                             sharedQueryId,
                                                             currentWorkerId,
-                                                            {networkSinkOperator});
+                                                            {networkSinkOperator},
+                                                            faultTolerance);
 
                             // 19. Record information about the query plan and worker id
                             connectedSysDecomposedPlanDetails.emplace_back(

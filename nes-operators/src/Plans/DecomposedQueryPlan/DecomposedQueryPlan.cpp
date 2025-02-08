@@ -26,30 +26,35 @@
 namespace NES {
 
 DecomposedQueryPlanPtr
-DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId) {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId);
+DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance) {
+    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, faultTolerance);
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId,
                                                    SharedQueryId sharedQueryId,
                                                    WorkerId workerId,
-                                                   std::vector<OperatorPtr> rootOperators) {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, rootOperators);
+                                                   std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance) {
+    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, rootOperators, faultTolerance);
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId)
+DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance)
     : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
-      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId) {}
+      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId), faultTolerance(faultTolerance) {}
 
 DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
-                                         std::vector<OperatorPtr> rootOperators)
+                                         std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance)
     : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
       decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId),
-      rootOperators(std::move(rootOperators)) {}
+      rootOperators(std::move(rootOperators)), faultTolerance(faultTolerance) {}
 
 void DecomposedQueryPlan::addRootOperator(OperatorPtr newRootOperator) { rootOperators.emplace_back(newRootOperator); }
+
+FaultToleranceType DecomposedQueryPlan::getFaultToleranceType() const { return faultTolerance; };
+
+void DecomposedQueryPlan::setFaultToleranceType(const FaultToleranceType faultToleranceType) { faultTolerance = faultToleranceType; };
+
 
 bool DecomposedQueryPlan::removeAsRootOperator(OperatorId rootOperatorId) {
     NES_WARNING("Remove root operator with id {}", rootOperatorId);
@@ -276,7 +281,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() {
 
     // Create the duplicated decomposed query plan
     auto copiedDecomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, workerId, duplicateRootOperators);
+        DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, workerId, duplicateRootOperators, faultTolerance);
     copiedDecomposedQueryPlan->setState(currentState);
     copiedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
     if (oldVersion) {

@@ -94,6 +94,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         timer.snapshot("AfterNautilusCompilationPhase");
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
+        executableQueryPlan->setFaultToleranceType(request->getDecomposedQueryPlan()->getFaultToleranceType());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();

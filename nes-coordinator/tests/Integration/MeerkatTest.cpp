@@ -403,6 +403,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
     // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
+    EXPECT_TRUE(wrkMid1->stop(true));
     std::this_thread::sleep_for(std::chrono::milliseconds(100000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
@@ -410,7 +411,6 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
 
     // EXPECT_TRUE(wrkMid4->stop(true));
     // EXPECT_TRUE(wrkMid3->stop(true));
-    EXPECT_TRUE(wrkMid1->stop(true));
     EXPECT_TRUE(wrkMid2->stop(true));
     EXPECT_TRUE(wrkLeaf->stop(true));
     EXPECT_TRUE(crd->stopCoordinator(true));

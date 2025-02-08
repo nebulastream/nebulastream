@@ -71,7 +71,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializableDecomposedQueryPlan->DebugString());
     std::vector<OperatorPtr> rootOperators;
     std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
-
+    auto faultTolerance = serializableDecomposedQueryPlan->faulttolerance();
     //Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
@@ -106,7 +106,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
+        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators, FaultToleranceType(faultTolerance));
     decomposedQueryPlan->setVersion(decomposableQueryPlanVersion);
     if (serializableDecomposedQueryPlan->has_state()) {
         auto state = QueryStateSerializationUtil::deserializeQueryState(serializableDecomposedQueryPlan->state());

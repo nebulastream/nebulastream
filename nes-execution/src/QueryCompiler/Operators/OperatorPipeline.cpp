@@ -35,7 +35,7 @@ PipelineId getNextPipelineId() {
 OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType, bool isMigration)
     : id(pipelineId),
       decomposedQueryPlan(
-          DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
+          DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID, FaultToleranceType::INVALID)),
       pipelineType(pipelineType), migration(isMigration) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {

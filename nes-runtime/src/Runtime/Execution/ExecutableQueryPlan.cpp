@@ -344,6 +344,10 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     }
 }
 
+FaultToleranceType ExecutableQueryPlan::getFaultToleranceType() const { return faultTolerance; };
+
+void ExecutableQueryPlan::setFaultToleranceType(const FaultToleranceType faultToleranceType) { faultTolerance = faultToleranceType; };
+
 void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType) {
     NES_ASSERT2_FMT(qepStatus.load() == ExecutableQueryPlanStatus::Running,
                     "Cannot complete sink on non running query plan id=" << decomposedQueryId);

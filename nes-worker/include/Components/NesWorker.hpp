@@ -256,6 +256,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
  uint64_t requestResourceInfoFromNeighbor(WorkerId workerId);
  bool requestOffload(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId bestTarget);
+ bool requestSubQueryRemoval(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
   private:
     /**
      * @brief method to register physical source with the coordinator

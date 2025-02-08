@@ -17,6 +17,7 @@
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPOffloadQueryEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveSubQueryEvent.hpp>
 #include <thread>
 
 namespace z3 {
@@ -159,6 +160,8 @@ class ISQPRequest : public AbstractUniRequest {
      * @param removeLinkEvent
      */
     void handleRemoveLinkRequest(ISQPRemoveLinkEventPtr removeLinkEvent);
+
+  void handleRemoveSubQueryRequest(ISQPRemoveSubQueryEventPtr removeSubQueryEvent);
 
   bool validateTargetNodeForRedundancy(SharedQueryPlanPtr sharedQueryPlan, WorkerId originWorkerId, WorkerId targetWorkerId);
 

@@ -103,6 +103,14 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 };
                 event->response.set_value(std::make_shared<ISQPOffloadQueryResponse>(true));
             }
+            else if (event->instanceOf<ISQPRemoveSubQueryEvent>()) {
+                handleRemoveSubQueryRequest(event->as<ISQPRemoveSubQueryEvent>());
+                struct ISQPRemoveSubQueryEventResponse : ISQPResponse {
+                    explicit ISQPRemoveSubQueryEventResponse(bool success) : success(success) {}
+                    bool success;
+                };
+                event->response.set_value(std::make_shared<ISQPRemoveSubQueryEventResponse>(true));
+            }
             else if (event->instanceOf<ISQPAddLinkEvent>()) {
                 auto addLinkEvent = event->as<ISQPAddLinkEvent>();
                 topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
@@ -363,6 +371,84 @@ void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEven
                     //find the pinned operators for the changelog
                     auto [upstreamOperatorIds, downstreamOperatorIds] =  offloadPlanner.findUpstreamAndDownstreamPinnedOperators(originWorkerId, sharedQueryId, decomposedQueryId, targetWorkerId);
                     //perform re-operator placement on the query plan
+                    sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+                }
+                upstreamExecutionNode->unlock();
+                downstreamExecutionNode->unlock();
+            }
+        }
+    }
+}
+
+
+void ISQPRequest::handleRemoveSubQueryRequest(ISQPRemoveSubQueryEventPtr removeSubQueryEvent) {
+    auto sharedQueryId     = removeSubQueryEvent->getSharedQueryId();
+    auto decomposedQueryId = removeSubQueryEvent->getDecomposedQueryId();
+    auto originWorkerId    = removeSubQueryEvent->getOriginWorkerId();
+
+    NES_DEBUG("ISQPRequest::handleRemoveSubQueryRequest: Handling offload request for shared query plan {}", sharedQueryId);
+
+    // Grab a copy of the sub-plan (this is not strictly necessary but can be useful for debugging)
+    auto decomposedQueryPlanCopy
+        = globalExecutionPlan->getCopyOfDecomposedQueryPlan(originWorkerId,
+                                                            sharedQueryId,
+                                                            decomposedQueryId);
+
+    // 1) If the origin node does not have any subquery plan, skip
+    auto impactedSharedQueryIds = globalExecutionPlan->getPlacedSharedQueryIds(originWorkerId);
+    if (impactedSharedQueryIds.empty()) {
+        NES_INFO("Node {} has no queries placed on it; ignoring remove-subquery request.",
+                 originWorkerId);
+        return;
+    }
+
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    if (!sharedQueryPlan) {
+        NES_WARNING("No SharedQueryPlan found for id={}, skipping request.", sharedQueryId);
+        return;
+    }
+    Optimizer::OffloadPlanner offloadPlanner(globalExecutionPlan, topology, sharedQueryPlan);
+    //2. Find neighbours
+    auto downstreamTopologyNodes = topology->getParentTopologyNodeIds(originWorkerId);
+    auto upstreamTopologyNodes = topology->getChildTopologyNodeIds(originWorkerId);
+    //3. If the topology node either do not have upstream or downstream node then fail the request
+    if (upstreamTopologyNodes.empty() || downstreamTopologyNodes.empty()) {
+        //FIXME: If the node to remove has physical source then we may need to kill the
+        // whole query.
+        NES_NOT_IMPLEMENTED();
+    }
+
+    //todo: capy block and place function above
+    //4. Iterate over all upstream and downstream topology node pairs and try to mark operators for re-placement
+    for (auto const& upstreamTopologyNode : upstreamTopologyNodes) {
+        for (auto const& downstreamTopologyNode : downstreamTopologyNodes) {
+
+            //4.1. Iterate over impacted shared query plan ids to identify the shared query plans placed on the
+            // upstream and downstream execution nodes
+            for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
+
+                auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamTopologyNode);
+                auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamTopologyNode);
+
+                //4.2. If there exists no upstream or downstream execution nodes than skip rest of the operation
+                if (!upstreamExecutionNode || !downstreamExecutionNode) {
+                    continue;
+                }
+
+                //4.3. Only process the upstream and downstream execution node pairs when both have shared query plans
+                // with the impacted shared query id
+                if (upstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)
+                    && downstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)) {
+
+                    //Fetch the shared query plan and update its status
+                    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(impactedSharedQueryId);
+                    sharedQueryPlan->setStatus(SharedQueryPlanStatus::STOPPED);
+
+                    queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::STOPPED, "");
+
+                    //find the pinned operators for the changelog
+                    auto [upstreamOperatorIds, downstreamOperatorIds] =  offloadPlanner.findUpstreamAndDownstreamPinnedOperators(originWorkerId, sharedQueryId, decomposedQueryId, INVALID_WORKER_NODE_ID);
+
                     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
                 }
                 upstreamExecutionNode->unlock();

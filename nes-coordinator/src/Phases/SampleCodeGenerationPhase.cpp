@@ -149,7 +149,8 @@ QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
         DecomposedQueryPlan::create(UNSURE_CONVERSION_TODO_4761(queryPlan->getQueryId(), DecomposedQueryId),
                                     INVALID_SHARED_QUERY_ID,
                                     INVALID_WORKER_NODE_ID,
-                                    queryPlan->getRootOperators());
+                                    queryPlan->getRootOperators(),
+                                    queryPlan->getFaultTolerance());
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);

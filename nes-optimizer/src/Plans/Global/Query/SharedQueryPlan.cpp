@@ -274,6 +274,57 @@ bool SharedQueryPlan::markQueryForRemoval(QueryId queryId) {
     return true;
 }
 
+void SharedQueryPlan::performRemovalOfOperators(const std::set<OperatorId>& upstreamOperatorIds,
+                                                const std::set<OperatorId>& downstreamOperatorIds)
+{
+    // 1) Convert operator IDs to LogicalOperatorPtrs
+    std::set<LogicalOperatorPtr> upstreamLogicalOperators;
+    for (auto opId : upstreamOperatorIds) {
+        if (auto opPtr = queryPlan->getOperatorWithOperatorId(opId)) {
+            if (auto logOp = opPtr->as_if<LogicalOperator>()) {
+                upstreamLogicalOperators.insert(logOp);
+            }
+        }
+    }
+
+    std::set<LogicalOperatorPtr> downstreamLogicalOperators;
+    for (auto opId : downstreamOperatorIds) {
+        if (auto opPtr = queryPlan->getOperatorWithOperatorId(opId)) {
+            if (auto logOp = opPtr->as_if<LogicalOperator>()) {
+                downstreamLogicalOperators.insert(logOp);
+            }
+        }
+    }
+
+    // 2) Find all operators in the subgraph between the downstream set and the upstream set
+
+    std::set<OperatorPtr> downstreamOpPtrs{downstreamLogicalOperators.begin(), downstreamLogicalOperators.end()};
+    std::set<OperatorPtr> upstreamOpPtrs{upstreamLogicalOperators.begin(), upstreamLogicalOperators.end()};
+
+    auto operatorsToRemove = queryPlan->findAllOperatorsBetween(downstreamOpPtrs, upstreamOpPtrs);
+
+    // 3) Mark those operators with OperatorState::TO_BE_REMOVED
+    for (auto& op : operatorsToRemove) {
+        if (auto logOp = op->as_if<LogicalOperator>()) {
+            logOp->setOperatorState(OperatorState::TO_BE_REMOVED);
+        }
+    }
+
+
+    // 5) Insert a ChangeLog entry for whoever is listening
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    ).count();
+
+    changeLog->addChangeLogEntry(
+        now,
+        Optimizer::ChangeLogEntry::create(upstreamLogicalOperators, downstreamLogicalOperators)
+    );
+
+    NES_DEBUG("performRemovalOfOperators: Marked {} operators between {} upstream and {} downstream as TO_BE_REMOVED.",
+              operatorsToRemove.size(), upstreamOperatorIds.size(), downstreamOperatorIds.size());
+}
+
 bool SharedQueryPlan::removeQueryMarkedForRemoval() {
     for (const auto& queryId : queriesMarkedForRemoval) {
         std::set<LogicalOperatorPtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];

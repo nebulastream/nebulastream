@@ -720,6 +720,30 @@ request.set_targetworkerid(targetWorkerId.getRawValue());
     return true;
 }
 
+bool CoordinatorRPCClient::requestSubQueryRemoval(WorkerId originWorkerId, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+    RequestSubQueryRemovalRequest request;
+    request.set_originworkerid(originWorkerId.getRawValue());
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
+    RequestSubQueryRemovalResponse response;
+    ClientContext context;
+
+    Status status = coordinatorStub->RequestSubQueryRemoval(&context, request, &response);
+
+    if (!status.ok()) {
+        NES_ERROR("requestSubQueryRemoval RPC failed with error: {}", status.error_message());
+        return false;
+    }
+
+    if (!response.success()) {
+        NES_WARNING("requestSubQueryRemoval completed but coordinator declined with message: {}", response.message());
+        return false;
+    }
+
+    NES_INFO("requestQueryOffload success.");
+    return true;
+}
+
 bool CoordinatorRPCClient::sendReconnectPrediction(
     const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
     const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {

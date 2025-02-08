@@ -85,6 +85,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
  Status RequestQueryOffload(ServerContext* context,
                                                  const RequestQueryOffloadRequest* request,
                                                  RequestQueryOffloadResponse* reply) override;
+
+ Status RequestSubQueryRemoval(ServerContext*,
+ const RequestSubQueryRemovalRequest* request,
+ RequestSubQueryRemovalResponse* reply) override;
     /**
      * @brief RPC Call to unregister a node
      * @param context: the server context

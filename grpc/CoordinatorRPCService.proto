@@ -20,6 +20,8 @@ service CoordinatorRPCService {
   // Sends a request to the coordinator to offload the query with the shared query plan id
   rpc RequestQueryOffload (RequestQueryOffloadRequest) returns (RequestQueryOffloadResponse);
 
+  rpc RequestSubQueryRemoval (RequestSubQueryRemovalRequest) returns (RequestSubQueryRemovalResponse);
+
   // Sends a registration request for new worker to the coordinator
   rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerReply) {}
 
@@ -240,6 +242,17 @@ message RequestQueryOffloadRequest {
 }
 
 message RequestQueryOffloadResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RequestSubQueryRemovalRequest {
+  int64 sharedQueryId = 1;
+  int64 decomposedQueryId = 2;
+  int64 originWorkerId = 3;
+}
+
+message RequestSubQueryRemovalResponse {
   bool success = 1;
   string message = 2;
 }

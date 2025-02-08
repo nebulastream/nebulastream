@@ -498,7 +498,7 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
             }
         }
     }
-    nodeEngine->setSelfStatistics(currentStats);
+    if(nodeEngine) nodeEngine->setSelfStatistics(currentStats);
 }
 
 
@@ -902,6 +902,10 @@ uint64_t NesWorker::requestResourceInfoFromNeighbor(WorkerId workerId) {
 
 bool NesWorker::requestOffload(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId bestTarget) {
     return coordinatorRpcClient->requestQueryOffload(workerId, sharedQueryId, decomposedQueryId, bestTarget);
+}
+
+bool NesWorker::requestSubQueryRemoval(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+    return coordinatorRpcClient->requestSubQueryRemoval(workerId, sharedQueryId, decomposedQueryId);
 }
 
 bool NesWorker::propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>> neighbourInfo) {

@@ -310,12 +310,12 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestampInMS();
         if (static_cast<unsigned long>(now) < creation) {
-            NES_WARNING("Creation timestamp is in the future; skipping statistics update: creation timestamp = {}, buffer origin "
-                        "ID = {}, buffer chunk number = {}, now = {}",
-                        creation,
-                        task.getBufferRef().getOriginId(),
-                        task.getBufferRef().getChunkNumber(),
-                        static_cast<unsigned long>(now));
+            // NES_WARNING("Creation timestamp is in the future; skipping statistics update: creation timestamp = {}, buffer origin "
+            //             "ID = {}, buffer chunk number = {}, now = {}",
+            //             creation,
+            //             task.getBufferRef().getOriginId(),
+            //             task.getBufferRef().getChunkNumber(),
+            //             static_cast<unsigned long>(now));
         } else {
             statistics->incLatencySum(now - creation);
         }

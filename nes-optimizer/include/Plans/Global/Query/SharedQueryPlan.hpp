@@ -244,6 +244,8 @@ class SharedQueryPlan {
 
     [[nodiscard]] FaultToleranceType getFaultToleranceType() const;
 
+ void performRemovalOfOperators(const std::set<OperatorId>& upstreamOperatorIds,
+                                                const std::set<OperatorId>& downstreamOperatorIds);
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 

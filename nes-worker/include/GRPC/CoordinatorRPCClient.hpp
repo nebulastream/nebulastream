@@ -94,6 +94,8 @@ class CoordinatorRPCClient {
     bool registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath);
 
  bool requestQueryOffload(WorkerId originWorkerId, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, WorkerId workerId);
+
+ bool requestSubQueryRemoval(WorkerId originWorkerId, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
     /**
      * @brief this method removes the logical source in the coordinator
      * @param logicalSourceName name of the logical source to be deleted

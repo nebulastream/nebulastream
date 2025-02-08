@@ -128,12 +128,12 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
 }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
-              workerContext.getId(),
-              getUniqueNetworkSinkDescriptorId(),
-              nodeEngine->getNodeId(),
-              inputBuffer.getOriginId(),
-              inputBuffer.getSequenceNumber());
+    // NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
+    //           workerContext.getId(),
+    //           getUniqueNetworkSinkDescriptorId(),
+    //           nodeEngine->getNodeId(),
+    //           inputBuffer.getOriginId(),
+    //           inputBuffer.getSequenceNumber());
 
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
 

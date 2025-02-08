@@ -23,6 +23,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <atomic>
 #include <folly/Synchronized.h>
 #include <future>
@@ -183,6 +184,10 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     SharedQueryId getSharedQueryId() const;
 
+    FaultToleranceType getFaultToleranceType() const;
+
+ void setFaultToleranceType(const FaultToleranceType faultToleranceType);
+
     /**
      * @brief Get the query execution plan id
      * @return the query execution plan id
@@ -301,6 +306,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     folly::Synchronized<ExecutableQueryPlanPtr> successor;
     folly::Synchronized<ReconfigurationMarkerPtr> drainMarker;
     std::vector<OperatorId> sourcesToReuse;
+    FaultToleranceType faultTolerance;
 };
 
 }// namespace NES::Runtime::Execution
