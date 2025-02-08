@@ -15,6 +15,7 @@
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -76,7 +77,7 @@ CoordinatorRPCServer::CoordinatorRPCServer(RequestHandlerServicePtr requestHandl
     : requestHandlerService(std::move(requestHandlerService)), topology(std::move(topology)),
       queryCatalog(std::move(queryCatalog)), monitoringManager(std::move(monitoringManager)),
       queryParsingService(std::move(queryParsingService)),
-      coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
+      coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)), workerRPCClient(WorkerRPCClient::create()) {};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -513,31 +514,22 @@ CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationR
     return Status::CANCELLED;
 }
 
-Status
-CoordinatorRPCServer::NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
-    // std::unordered_map<uint64_t, uint64_t> checkpoints;
-    // for (const auto& removedTopologyLink : request->removedlinks()) {
-    //     isqpEvents.emplace_back(RequestProcessor::ISQPRemoveLinkEvent::create(WorkerId(removedTopologyLink.upstream()),
-    //                                                                           WorkerId(removedTopologyLink.downstream())));
-    // }
-    // for (const auto& addedTopologyLink : request->addedlinks()) {
-    //     isqpEvents.emplace_back(RequestProcessor::ISQPAddLinkEvent::create(WorkerId(addedTopologyLink.upstream()),
-    //                                                                        WorkerId(addedTopologyLink.downstream())));
-    // }
-
+Status CoordinatorRPCServer::NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
     //todo;
     SharedQueryId sharedQueryId(request->sharedqueryid());
     // queryCatalog->getCopyOfExecutedQueryPlan(sharedQueryId);
-    //todo: send only to the nods that need it
-    for (auto nodeId : topology->getAllRegisteredNodeIds()) {
-        auto node = topology->getCopyOfTopologyNodeWithId(nodeId);
-    }
+    //todo: send only to the nodes that need it
 
-    // auto isqpRequestResponse = requestHandlerService->queueISQPRequest(isqpEvents);
-    // reply->set_success(isqpRequestResponse->success);
-    // if (isqpRequestResponse) {
-    //     return Status::OK;
-    // }
+    std::vector<RpcAsyncRequest> asyncRequests;
+    for (auto nodeId : topology->getAllRegisteredNodeIds()) {
+        auto queue = std::make_shared<CompletionQueue>();
+        auto node = topology->getCopyOfTopologyNodeWithId(nodeId);
+        workerRPCClient->sendCheckPointToSource(node->getGrpcAddress(), queue, *request);
+        asyncRequests.emplace_back(RpcAsyncRequest{queue, RpcClientMode::Checkpoint});
+    }
+    workerRPCClient->checkAsyncResult(asyncRequests);
+
     // return Status::CANCELLED;
+    reply->set_success(true);
     return Status::OK;
 }

@@ -19,4 +19,6 @@ message CheckPointList {
   map<uint64, uint64> checkpoints = 2;
 }
 
-message CheckPointRespone {}
+message CheckPointRespone {
+  bool success = 1;
+}

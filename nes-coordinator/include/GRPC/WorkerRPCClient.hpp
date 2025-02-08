@@ -15,6 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
+#include <Checkpoint.pb.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -51,7 +52,7 @@ namespace Spatial::DataTypes::Experimental {
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
-enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop, Reconfiguration };
+enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop, Reconfiguration, Checkpoint };
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -260,6 +261,7 @@ class WorkerRPCClient {
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
     void startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent);
+    void sendCheckPointToSource(std::string address, const CompletionQueuePtr& cq, const CheckPointList& checkPoint);
 
   private:
     WorkerRPCClient() = default;

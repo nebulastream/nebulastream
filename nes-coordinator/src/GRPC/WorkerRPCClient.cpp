@@ -141,6 +141,10 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
             auto* call = static_cast<AsyncClientCall<ReconfigurationMarkerReply>*>(got_tag);
             status = call->status.ok();
             delete call;
+        } else if (requestClientMode == RpcClientMode::Checkpoint) {
+            auto* call = static_cast<AsyncClientCall<CheckPointRespone>*>(got_tag);
+            status = call->status.ok();
+            delete call;
         } else {
             NES_NOT_IMPLEMENTED();
         }
@@ -541,6 +545,21 @@ void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQ
     auto* call = new AsyncClientCall<StartBufferingReply>;
 
     call->responseReader = workerStub->PrepareAsyncStartBufferingOnAllSinks(&call->context, request, cq.get());
+
+    call->responseReader->StartCall();
+
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+}
+
+void WorkerRPCClient::sendCheckPointToSource(std::string address,
+                                             const CompletionQueuePtr& cq,
+                                             const CheckPointList& checkPoint) {
+    std::shared_ptr<Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    auto* call = new AsyncClientCall<CheckPointRespone>;
+
+    call->responseReader = workerStub->PrepareAsyncSendCheckpointToSource(&call->context, checkPoint, cq.get());
 
     call->responseReader->StartCall();
 

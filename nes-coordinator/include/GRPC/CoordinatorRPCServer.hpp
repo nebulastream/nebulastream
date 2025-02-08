@@ -15,6 +15,8 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
+#include "WorkerRPCClient.hpp"
+
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -256,7 +258,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) override;
 
-    Status NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply);
+    Status NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) override;
 
   private:
     RequestHandlerServicePtr requestHandlerService;
@@ -265,6 +267,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Monitoring::MonitoringManagerPtr monitoringManager;
     QueryParsingServicePtr queryParsingService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
+    WorkerRPCClientPtr workerRPCClient;
 };
 }// namespace NES
 

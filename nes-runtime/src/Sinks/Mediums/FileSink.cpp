@@ -174,6 +174,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
 
         auto* records = inputBuffer.getBuffer<Record>();
+        //todo: do not checkpoint if incremental is enabled
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
             auto& checkpoint = sinkInfo->checkpoints[records[i].id];
