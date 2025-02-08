@@ -72,6 +72,8 @@ service CoordinatorRPCService {
   rpc notifySourceStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
+
+//  rpc NotifyCheckPoint (Che) returns (SoftStopCompletionReply) {}
 }
 
 message SerializedOpenCLDeviceInfo {

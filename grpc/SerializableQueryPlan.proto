@@ -34,10 +34,3 @@ message SubmitQueryRequest {
   map<string, google.protobuf.Any> context = 2;
   optional string queryString = 3;
 }
-
-message CheckPointList {
-uint64 sharedQueryid = 1;
-  map<uint64, uint64> checkpoints = 2;
-}
-
-message CheckPointRespone {};

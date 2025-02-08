@@ -178,7 +178,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             records[i].outputTimestamp = getTimestamp();
             auto& checkpoint = sinkInfo->checkpoints[records[i].id];
             if (checkpoint >= records[i].value) {
-                NES_ERROR("Replay cannot work with out of orderness");
+                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
                 NES_ASSERT(false, "Checkpoints not increasing");
             }
             checkpoint = records[i].value;
