@@ -131,6 +131,9 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
             void rpcTrimCheckpoint(uint64_t, uint64_t) override {
                 return;
             }
+            bool requestSubQueryRemoval(SharedQueryId, DecomposedQueryId) override {
+                return true;
+            }
         };
 
         DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");

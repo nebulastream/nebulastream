@@ -82,6 +82,9 @@ class DummyQueryListener : public AbstractQueryStatusListener {
     void rpcTrimCheckpoint(uint64_t, uint64_t) override {
         return;
     }
+    bool requestSubQueryRemoval(SharedQueryId, DecomposedQueryId) override {
+        return true;
+    }
 };
 
 class ComparableNLJOperatorHandlerSlicing;

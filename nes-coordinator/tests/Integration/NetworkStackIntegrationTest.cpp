@@ -206,6 +206,9 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             void rpcTrimCheckpoint(uint64_t, uint64_t) override {
                 return;
             }
+            bool requestSubQueryRemoval(SharedQueryId, DecomposedQueryId) override {
+                return true;
+            }
         };
         auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};
