@@ -191,7 +191,7 @@ NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) const {
 
 void Operator::addProperty(const std::string& key, const std::any value) { properties[key] = value; }
 
-std::any Operator::getProperty(const std::string& key) { return properties[key]; }
+std::any Operator::getProperty(const std::string& key) const { return properties.at(key); }
 
 bool Operator::hasProperty(const std::string& key) const { return properties.contains(key); }
 

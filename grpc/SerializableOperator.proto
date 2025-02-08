@@ -342,6 +342,7 @@ message SerializableOperator{
 
     google.protobuf.Any sinkDescriptor = 1;
     uint64 numberOfOriginIds = 3;
+    repeated uint32 listOfSourceLocations=4;
   }
 
   /**
