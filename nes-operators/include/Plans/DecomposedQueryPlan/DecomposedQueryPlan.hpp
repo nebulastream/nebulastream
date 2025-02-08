@@ -56,7 +56,7 @@ class DecomposedQueryPlan {
      * @param workerId: the worker id
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance);
+    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -70,7 +70,7 @@ class DecomposedQueryPlan {
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
                                          std::vector<OperatorPtr> rootOperators,
-                                         FaultToleranceType faultTolerance);
+                                         FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -78,7 +78,7 @@ class DecomposedQueryPlan {
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      */
-    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance);
+    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -90,7 +90,7 @@ class DecomposedQueryPlan {
     explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                  SharedQueryId sharedQueryId,
                                  WorkerId workerId,
-                                 std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance);
+                                 std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Add the operator as new root operator
