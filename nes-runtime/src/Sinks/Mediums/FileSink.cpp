@@ -156,9 +156,10 @@ struct Record {
 };
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    auto sockfd = nodeEngine->getTcpDescriptor(filePath);
+    // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
+    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
     if (timestampAndWriteToSocket) {
-        NES_DEBUG("write data to sink with descriptor {} for {}", *sockfd, filePath)
+        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
         std::unique_lock lock(writeMutex);
 //        std::string bufferContent;
         //auto schema = sinkFormat->getSchemaPtr();
@@ -173,21 +174,27 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto* records = inputBuffer.getBuffer<Record>();
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
+            auto& checkpoint = sinkInfo->checkpoints[records[i].id];
+            if (checkpoint >= records[i].value) {
+                NES_ERROR("Replay cannot work with out of orderness");
+                NES_ASSERT(false, "Checkpoints not increasing");
+            }
+            checkpoint = records[i].value;
         }
 //        NES_ERROR("Writing to tcp sink");
-        ssize_t bytes_written = write(*sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
+        ssize_t bytes_written = write(sinkInfo->sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
 //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
         if (bytes_written == -1) {
             NES_ERROR("Could not write to socket in sink")
             perror("write");
-            close(*sockfd);
+            close(sinkInfo->sockfd);
             return 1;
         }
 
         //        receivedBuffers.push_back(bufferContent);
         //        arrivalTimestamps.push_back(getTimestamp());
 
-        NES_DEBUG("finished writing to sink with descriptor {} for {}", *sockfd, filePath)
+        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
         return true;
     }
     return writeDataToFile(inputBuffer);

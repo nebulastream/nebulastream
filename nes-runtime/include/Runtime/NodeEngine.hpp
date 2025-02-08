@@ -53,6 +53,16 @@ using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 
 namespace Runtime {
 
+// struct Checkpoint {
+//   uint64_t seqNr;
+//   uint64_t sourceId;
+// };
+
+struct TCPSinkInfo {
+  int sockfd;
+  std::unordered_map<uint64_t, uint64_t> checkpoints;
+};
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -413,7 +423,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief get the opened tcp descriptor if there is one
      */
-    folly::Synchronized<int>::LockedPtr getTcpDescriptor(std::string sourceName);
+    folly::Synchronized<TCPSinkInfo>::LockedPtr getTcpDescriptor(std::string sourceName);
 
 //    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
@@ -459,7 +469,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool timestampOutPutSources;
-    std::map<std::string, folly::Synchronized<int>> tcpDescriptor;
+    std::map<std::string, folly::Synchronized<TCPSinkInfo>> tcpDescriptor;
     std::mutex tcpDescriptorMutex;
     std::mutex parentMutex;
     uint64_t parentId;

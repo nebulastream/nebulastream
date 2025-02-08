@@ -504,7 +504,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         bufferManager->destroy();
     }
     for (auto [name, descriptor] : tcpDescriptor) {
-        close(*descriptor.wlock());
+        close((*descriptor.wlock()).sockfd);
     }
     // if (tcpDescriptor.has_value()) {
     //     close(tcpDescriptor.value());
@@ -841,7 +841,7 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
 
-folly::Synchronized<int>::LockedPtr NodeEngine::getTcpDescriptor(std::string filePath) {
+folly::Synchronized<TCPSinkInfo>::LockedPtr NodeEngine::getTcpDescriptor(std::string filePath) {
     std::unique_lock lock(tcpDescriptorMutex);
     if (tcpDescriptor.contains(filePath)) {
         return tcpDescriptor.at(filePath).wlock();
@@ -878,7 +878,7 @@ folly::Synchronized<int>::LockedPtr NodeEngine::getTcpDescriptor(std::string fil
         NES_FATAL_ERROR("could not connect sockfd")
     }
     NES_DEBUG("Created new tcp descriptor {} for {}", sockfd, filePath);
-    tcpDescriptor.insert({filePath, folly::Synchronized(sockfd)});
+    tcpDescriptor.insert({filePath, folly::Synchronized(TCPSinkInfo{sockfd, {}})});
     return tcpDescriptor.at(filePath).wlock();
 }
 
