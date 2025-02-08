@@ -619,5 +619,5 @@ bool NetworkSink::checkParentDiff(int64_t receiver, int64_t parent) {
     return res;
 }
 
-// OperatorId NetworkSink::getDownstreamLogicalOperatorId() { return downstreamOperatorId; }
+OperatorId NetworkSink::getDownstreamLogicalOperatorId() { return downstreamOperatorId; }
 }// namespace NES::Network

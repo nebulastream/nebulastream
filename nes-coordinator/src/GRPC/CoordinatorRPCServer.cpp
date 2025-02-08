@@ -512,3 +512,32 @@ CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationR
     }
     return Status::CANCELLED;
 }
+
+Status
+CoordinatorRPCServer::NotifyCheckPoint(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
+    // std::unordered_map<uint64_t, uint64_t> checkpoints;
+    // for (const auto& removedTopologyLink : request->removedlinks()) {
+    //     isqpEvents.emplace_back(RequestProcessor::ISQPRemoveLinkEvent::create(WorkerId(removedTopologyLink.upstream()),
+    //                                                                           WorkerId(removedTopologyLink.downstream())));
+    // }
+    // for (const auto& addedTopologyLink : request->addedlinks()) {
+    //     isqpEvents.emplace_back(RequestProcessor::ISQPAddLinkEvent::create(WorkerId(addedTopologyLink.upstream()),
+    //                                                                        WorkerId(addedTopologyLink.downstream())));
+    // }
+
+    //todo;
+    SharedQueryId sharedQueryId(request->sharedqueryid());
+    // queryCatalog->getCopyOfExecutedQueryPlan(sharedQueryId);
+    //todo: send only to the nods that need it
+    for (auto nodeId : topology->getAllRegisteredNodeIds()) {
+        auto node = topology->getCopyOfTopologyNodeWithId(nodeId);
+
+    }
+
+    // auto isqpRequestResponse = requestHandlerService->queueISQPRequest(isqpEvents);
+    // reply->set_success(isqpRequestResponse->success);
+    if (isqpRequestResponse) {
+        return Status::OK;
+    }
+    return Status::CANCELLED;
+}

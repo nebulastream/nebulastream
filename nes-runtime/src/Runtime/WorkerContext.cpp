@@ -247,6 +247,9 @@ WorkerContext::getAsyncConnectionResult(NES::OperatorId operatorId) {
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
 }
+void WorkerContext::dropReconnectBufferStorage(OperatorId operatorId) {
+    reconnectBufferStorage.erase(operatorId);
+}
 
 std::optional<Network::EventOnlyNetworkChannelPtr> WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
