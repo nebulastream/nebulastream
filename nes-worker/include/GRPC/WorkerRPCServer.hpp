@@ -87,7 +87,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
     Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
-    Status SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply);
+    Status SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

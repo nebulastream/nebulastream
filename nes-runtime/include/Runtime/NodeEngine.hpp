@@ -423,13 +423,15 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief get the opened tcp descriptor if there is one
      */
-    folly::Synchronized<TCPSinkInfo>::LockedPtr getTcpDescriptor(std::string sourceName);
+    folly::Synchronized<TCPSinkInfo>::LockedPtr getTcpDescriptor(std::string sinkName);
 
 //    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
     bool isSimulatingBuffering();
 
     bool getTimesStampOutputSources();
+
+    void notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints);
 
   private:
     /**

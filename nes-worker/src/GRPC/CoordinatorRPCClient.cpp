@@ -750,4 +750,17 @@ bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkIn
     coordinatorStub->RelocateTopologyNode(&context, request, &reply);
     return reply.success();
 }
+
+bool CoordinatorRPCClient::notifyCheckpoint(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
+    ClientContext context;
+    CheckPointList checkpointList;
+    CheckPointRespone reply;
+    checkpointList.set_sharedqueryid(sharedQueryId.getRawValue());
+    auto cpts = checkpointList.mutable_checkpoints();
+    cpts->insert(checkpoints.begin(), checkpoints.end());
+
+    coordinatorStub->NotifyCheckPoint(&context, checkpointList, &reply);
+    return reply.success();
+
+}
 }// namespace NES

@@ -279,6 +279,7 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 }
 
 Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
+    NES_ERROR("request to replay received at worker")
 //    //todo
 //    (void) request;
 //    (void) reply;

@@ -243,6 +243,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+    void notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) override;
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -263,6 +264,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool waitForConnect() const;
 
     void handleRpcs(WorkerRPCServer& service);
+
 
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<uint64_t> localWorkerRpcPort;

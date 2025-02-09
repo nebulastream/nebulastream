@@ -140,7 +140,10 @@ if (!timestampAndWriteToSocket) {
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
-        (void)  sharedQueryId;
+        NES_ERROR("sink notifies checkpoints");
+        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+        auto checkpoints = sinkInfo->checkpoints;
+        nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
         //        for (const auto& bufferContent : receivedBuffers) {
         //            outputFile.write(bufferContent.c_str(), bufferContent.size());

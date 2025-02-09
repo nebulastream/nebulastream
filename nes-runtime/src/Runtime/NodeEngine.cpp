@@ -1052,4 +1052,7 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
+void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
+    nesWorker->notifyCheckpointToCoordinator(sharedQueryId, checkpoints);
+}
 }// namespace NES::Runtime
