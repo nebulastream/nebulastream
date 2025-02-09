@@ -158,6 +158,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        if (!sourceInfo->hasCheckedAcknowledgement) {
+            if (sourceInfo->seqReadFromSocketTotal != 0) {
+                auto ack = queryManager->waitForSourceAck(physicalSourceName);
+            }
+            sourceInfo->hasCheckedAcknowledgement = true;
+        }
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
         auto* records = buffer.getBuffer().getBuffer<Record>();
@@ -230,16 +236,22 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                    return std::nullopt;
                 //                }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
+//                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
+//                sourceInfo->records.
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                     auto index = i * incomingTupleSize;
                     auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
                     auto seqenceNr = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + valueSize]));
                     auto ingestionTime = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 2 * valueSize]));
                     //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                    auto timeStamp = getTimestamp();
                     records[i].id = *id;
                     records[i].value = *seqenceNr;
                     records[i].ingestionTimestamp = *ingestionTime;
-                    records[i].processingTimestamp = getTimestamp();
+                    //                    records[i].processingTimestamp = getTimestamp();
+                    records[i].processingTimestamp = timeStamp;
+
+                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
                     //totalTupleCount++;
                 }
                 auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
@@ -252,6 +264,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
+                sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
                 generatedBuffers++;
 //                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
 //                          "New leftover bytes count: {} ",

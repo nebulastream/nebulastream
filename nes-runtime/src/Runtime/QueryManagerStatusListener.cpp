@@ -238,6 +238,33 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
     sourceToQEPMapping[sourceid] = std::move(newPlans);
 }
 
+uint64_t AbstractQueryManager::waitForSourceAck(std::string sourceName) {
+    std::unique_lock lock(tcpAckMutex);
+//    if (tcpSourceAcks.contains(sourceName)) {
+//        auto seq = tcpSourceAcks.at(sourceName).seq;
+//    } else {
+//        auto& ack = tcpSourceAcks[sourceName];
+//    }
+//
+//    tcpSourceAcks.erase(sourceName);
+//    return seq.value();
+
+    auto& ack = tcpSourceAcks[sourceName];
+    while (!ack.seq.has_value()) {
+        tcpSourceAcks[sourceName];
+        ack.cv.wait(lock);
+    }
+    auto seq = ack.seq.value();
+    tcpSourceAcks.erase(sourceName);
+    return seq;
+}
+
+void AbstractQueryManager::waitForSourceAck(std::string sourceName, uint64_t seq) {
+    auto& ack = tcpSourceAcks[sourceName];
+    ack.seq = seq;
+    ack.cv.notify_all();
+}
+
 folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSourceInfo(std::string sourceName, std::string filePath) {
     NES_DEBUG("getting source info for name {}, path {}", sourceName, filePath)
     std::unique_lock lock(tcpSourceMutex);

@@ -67,6 +67,14 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this a
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
+struct Record {
+    uint64_t id;
+    uint64_t value;
+    uint64_t ingestionTimestamp;
+    uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
+};
+
 struct TcpSourceInfo {
     uint64_t port;
     int sockfd;
@@ -75,7 +83,17 @@ struct TcpSourceInfo {
     std::vector<std::string> readLines;
     uint64_t nextLinesIndex = 0;
     uint16_t leftoverByteCount = 0;
+    uint64_t seqReadFromSocketTotal = 0;
+    uint64_t seqAcknowledged = 0;
+    bool hasCheckedAcknowledgement = false;
+    std::vector<Record> records;
 };
+
+struct TcpSourceAcknowledgement {
+    std::optional<uint64_t> seq;
+    std::condition_variable cv;
+};
+
 class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>,
                              public Reconfigurable {
   public:
@@ -407,6 +425,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::mutex tcpSourceMutex;
     std::map<std::string, folly::Synchronized<TcpSourceInfo>> tcpSourceInfos;
 
+    std::mutex tcpAckMutex;
+    std::map<std::string, TcpSourceAcknowledgement> tcpSourceAcks;
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -523,6 +544,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
+    uint64_t waitForSourceAck(std::string sourceName);
 };
 
 class DynamicQueryManager : public AbstractQueryManager {
