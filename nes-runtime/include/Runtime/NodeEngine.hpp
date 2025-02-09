@@ -170,7 +170,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param decomposedQueryId: id of the decomposed query plan to be started
      * @return bool indicating success
      */
-    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount);
+    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount = 0);
 
     /**
      * @brief method to stop a decomposed query plan
