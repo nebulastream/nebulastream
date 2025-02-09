@@ -301,7 +301,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
 //                sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
-                sourceInfo->seqReadFromSocketTotal += records[numCompleteTuplesRead -1].value;
+//                sourceInfo->seqReadFromSocketTotal += records[numCompleteTuplesRead -1].value;
+                sourceInfo->seqReadFromSocketTotal = sourceInfo->records.back().value;
                 generatedBuffers++;
                 //                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
                 //                          "New leftover bytes count: {} ",
