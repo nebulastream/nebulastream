@@ -80,8 +80,8 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
 
   private:
     /// The output file path of the file sink.
-//    std::string filePath = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file_node_0_completed.bin";
-    std::string filePath = "recreation_file_node_0.bin";
+    std::string filePath = "/local-ssd/ankit/sr630-wn-a-09-nes-fer/recreation_file_node_0.bin";
+//    std::string filePath = "recreation_file_node_0.bin";
 
     /// The output file stream.
     std::ofstream outputFile;
