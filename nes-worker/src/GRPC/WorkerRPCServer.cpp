@@ -192,7 +192,7 @@ Status
 WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRequest* request, StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
     // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
-    NES_ERROR("Start buffering request received, count = {}", request->count());
+//    NES_ERROR("Start buffering request received, count = {}", request->count());
     nodeEngine->setParentId(request->parent(), request->count());
     //    nodeEngine->tryApplyingNewDescriptors();
     auto success = true;

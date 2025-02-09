@@ -912,7 +912,7 @@ void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     std::unique_lock lock(parentMutex);
 //    ++parentChangeCount;
     parentChangeCount = count;
-    NES_ERROR("new parent count = {}", parentChangeCount)
+//    NES_ERROR("new parent count = {}", parentChangeCount)
     if (newParent == 0) {
         NES_ERROR("received parent is zero")
         return;
