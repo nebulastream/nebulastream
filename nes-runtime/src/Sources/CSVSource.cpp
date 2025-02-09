@@ -155,8 +155,8 @@ struct Record {
 
 void CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
                                  Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
-    auto replayOffset = sourceInfo->replayedUntil.value();
-    auto totalTuplesToReplay = sourceInfo->seqReadFromSocketTotal - replayOffset;
+    auto replayOffset = sourceInfo->replayedUntil.value() + 1;
+    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
     auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
 
     NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",

@@ -181,11 +181,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
             auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-            if (checkpoint != 0 && checkpoint >= records[i].value) {
-                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
-                NES_ASSERT(false, "Checkpoints not increasing");
+//            if (checkpoint != 0 && checkpoint >= records[i].value) {
+//                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
+//                NES_ASSERT(false, "Checkpoints not increasing");
+//            }
+            if (records[i].value == 0 || checkpoint == records[i].value + 1) {
+                checkpoint = records[i].value;
             }
-            checkpoint = records[i].value;
         }
 //        NES_ERROR("Writing to tcp sink");
         ssize_t bytes_written = write(sinkInfo->sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
