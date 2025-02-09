@@ -145,6 +145,7 @@ void DecomposedQueryPlan::refreshOperatorIds() {
         if (shouldSetFileName) {
             if (logicalOperator->as_if<LogicalJoinOperator>()) {
                 std::string file = "/local-ssd/ankit/sr630-wn-a-10-nes-fer/final_file_completed.bin";
+//                std::string file = "final_file_completed.bin";
                 logicalOperator->addProperty("MIGRATION_FILE", file);
             }
         }

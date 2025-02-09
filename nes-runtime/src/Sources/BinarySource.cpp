@@ -116,6 +116,7 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
     buf.setWatermark(watermark);
     // generatedTuples += generated_tuples_this_pass;
     generatedBuffers++;
+    numberOfBuffersToProduce = watermark;
 }
 SourceType BinarySource::getType() const { return SourceType::BINARY_SOURCE; }
 
