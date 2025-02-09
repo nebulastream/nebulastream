@@ -90,7 +90,7 @@ struct TcpSourceInfo {
 };
 
 struct TcpSourceAcknowledgement {
-    std::optional<uint64_t> seq;
+    std::optional<uint64_t> seq = std::nullopt;
     std::condition_variable cv;
 };
 
