@@ -169,7 +169,7 @@ void CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::Lo
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replay, numTuplesToReplay);
 
-    sourceInfo->replayedUntil = replayOffset + sourceInfo->replayedUntil.value();
+    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
     NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
     if (sourceInfo->replayedUntil == sourceInfo->seqReadFromSocketTotal) {
         sourceInfo->replayedUntil = std::nullopt;
