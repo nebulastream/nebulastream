@@ -228,7 +228,7 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
     }
 }
 
-bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
+bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("startDecomposedQuery= {}", sharedQueryId);
     if (sharedQueryIdToDecomposedQueryPlanIds.contains(sharedQueryId)) {
@@ -255,7 +255,7 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId, Decompose
 
         for (auto planIdWithVersion : decomposedQueryPlansToStart) {
             try {
-                if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[planIdWithVersion])) {
+                if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[planIdWithVersion], reconnectCount)) {
                     NES_DEBUG("start of QEP  {}.{}  succeeded", planIdWithVersion.id, planIdWithVersion.version);
                 } else {
                     NES_DEBUG("start of QEP  {}.{}  failed", planIdWithVersion.id, planIdWithVersion.version);
@@ -906,11 +906,12 @@ bool NodeEngine::isSimulatingBuffering() {
     return activeBufferingSimulation;
 }
 
-void NodeEngine::setParentId(int64_t newParent) {
+void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     activeBufferingSimulation = true;
     NES_DEBUG("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
-    ++parentChangeCount;
+//    ++parentChangeCount;
+    parentChangeCount = count;
     if (newParent == 0) {
         return;
     }
@@ -924,7 +925,8 @@ void NodeEngine::setParentId(int64_t newParent) {
 
 bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                       DecomposedQueryId decomposedQueryid,
-                                      ReconfigurationMarkerPtr reconfigurationMarker) {
+                                      ReconfigurationMarkerPtr reconfigurationMarker,
+                                      uint64_t reconnectCount) {
     auto addedMarker = false;
     for (const auto& [idAndVersion, event] : reconfigurationMarker->getAllReconfigurationMarkerEvents()) {
         if (idAndVersion.id == decomposedQueryid) {
@@ -964,6 +966,7 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                     updateExecutablePlanVersion(idAndVersion, updateEvent->decomposedQueryPlanVersion);
                                     networkSink->configureNewSinkDescriptor(*networkSinkDescriptor,
                                                                             reconfigurationMarker);
+                                    networkSink->setReconnectCount(reconnectCount);
                                     addedMarker = true;
                                 }
                             }
@@ -1005,7 +1008,7 @@ uint64_t NodeEngine::getParenChangeCount() { return parentChangeCount; }
 
 bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                                           DecomposedQueryId decomposedQueryId,
-                                          DecomposedQueryPlanVersion decomposedQueryVersion) {
+                                          DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t reconnectCount) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("startDecomposedQuery= {}", sharedQueryId);
     if (sharedQueryIdToDecomposedQueryPlanIds.contains(sharedQueryId)) {
@@ -1026,7 +1029,7 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
         }
 
         try {
-            if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanIdWithVersion])) {
+            if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanIdWithVersion], reconnectCount)) {
                 NES_DEBUG("start of QEP  {}.{}  succeeded", decomposedQueryId, decomposedQueryVersion);
             } else {
                 NES_DEBUG("start of QEP  {}.{}  failed", decomposedQueryId, decomposedQueryVersion);

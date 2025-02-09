@@ -122,7 +122,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param qep of the query to start
      * @return bool indicating success
      */
-    [[nodiscard]] bool startExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep);
+    [[nodiscard]] bool startExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, uint64_t reconnectCount = 0);
 
     /**
      * @brief method to start a query

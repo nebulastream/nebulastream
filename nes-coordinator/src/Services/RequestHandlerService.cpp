@@ -270,13 +270,13 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
 }
 
 RequestProcessor::ISQPRequestResponsePtr
-RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse) {
+RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse, uint64_t count) {
 
     // 1. Compute an ISQP request for the collection of external change events (ISQP events)
     auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler,
                                                              z3Context,
                                                              isqpEvents,
-                                                             RequestProcessor::DEFAULT_RETRIES);
+                                                             RequestProcessor::DEFAULT_RETRIES, count);
 
     // 2. Execute the request
     asyncRequestExecutor->runAsync(isqpRequest);

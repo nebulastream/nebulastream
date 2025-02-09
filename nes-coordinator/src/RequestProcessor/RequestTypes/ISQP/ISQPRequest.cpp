@@ -50,7 +50,7 @@ namespace NES::RequestProcessor {
 ISQPRequest::ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
                          const z3::ContextPtr& z3Context,
                          std::vector<ISQPEventPtr> events,
-                         uint8_t maxRetries)
+                         uint8_t maxRetries, uint64_t reconnectCounter)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -60,13 +60,14 @@ ISQPRequest::ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placemen
                           ResourceType::CoordinatorConfiguration,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
-      placementAmendmentHandler(placementAmendmentHandler), z3Context(z3Context), events(events) {}
+      placementAmendmentHandler(placementAmendmentHandler), z3Context(z3Context), events(events), reconnectCounter(reconnectCounter) {}
 
 ISQPRequestPtr ISQPRequest::create(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
                                    const z3::ContextPtr& z3Context,
                                    std::vector<ISQPEventPtr> events,
-                                   uint8_t maxRetries) {
-    return std::make_shared<ISQPRequest>(placementAmendmentHandler, z3Context, events, maxRetries);
+                                   uint8_t maxRetries,
+                                   uint64_t reconnectCounter) {
+    return std::make_shared<ISQPRequest>(placementAmendmentHandler, z3Context, events, maxRetries, reconnectCounter);
 }
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
@@ -151,7 +152,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
-        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,

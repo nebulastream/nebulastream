@@ -219,7 +219,7 @@ bool MultiQueueQueryManager::registerExecutableQueryPlan(const Execution::Execut
     return ret;
 }
 
-bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep) {
+bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, uint64_t reconnectCount) {
     NES_DEBUG("AbstractQueryManager::startDecomposedQuery: shared query id  {}  and decomposed query plan id {}",
               qep->getSharedQueryId(),
               qep->getDecomposedQueryId());
@@ -228,6 +228,14 @@ bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQ
                         << qep->getSharedQueryId() << " and decomposed query id " << qep->getDecomposedQueryId());
     //    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
     //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+    for (const auto& sink : qep->getSinks()) {
+        //cast to network sink
+        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+        if (networkSink) {
+            networkSink->setReconnectCount(reconnectCount);
+        }
+
+    }
 
     // 5. start data sources
     for (const auto& source : qep->getSources()) {

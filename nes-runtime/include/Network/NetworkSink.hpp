@@ -176,6 +176,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     OperatorId getDownstreamLogicalOperatorId();
 
+    void setReconnectCount(uint64_t count);
+
   private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
@@ -206,6 +208,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
+
     OperatorId uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
@@ -219,6 +222,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
     OperatorId downstreamOperatorId;
+    uint64_t reconnectCount;
     bool checkParentDiff(int64_t receiver, int64_t parent);
 };
 }// namespace NES::Network

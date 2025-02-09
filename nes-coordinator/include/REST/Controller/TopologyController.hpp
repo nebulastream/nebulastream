@@ -172,6 +172,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
         try {
+            reconnectCounter++;
             NES_DEBUG("Processing topology update")
             std::string req = request.getValue("{}");
             //check if json is valid
@@ -201,7 +202,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             // auto events = createEvents(reqJson);
             NES_DEBUG("Processing {} events", events.size());
             if (!events.empty()) {
-                requestHandlerService->queueISQPRequest(events, false);
+                requestHandlerService->queueISQPRequest(events, false, reconnectCounter);
             }
             NES_DEBUG("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
@@ -311,7 +312,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
                 NES_DEBUG("send buffering request to {}", address);
-                workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
+                workerRPCClient->startBufferingAsync(address, completionQueue, parentId, reconnectCounter);
                 NES_DEBUG("sent bufering request")
 
                 moving.insert(childId);
@@ -426,6 +427,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     bool sourceNodeMapInitialized = false;
     SourceCatalogPtr sourceCatalog;
     std::vector<uint64_t> mobileNodes;
+    std::atomic_uint64_t reconnectCounter;
 };
 }// namespace REST::Controller
 }// namespace NES

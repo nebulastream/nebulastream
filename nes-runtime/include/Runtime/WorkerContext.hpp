@@ -329,8 +329,8 @@ class WorkerContext {
      * @return true if a channel was found
      */
     bool doesEventChannelExist(OperatorId operatorId);
-    void increaseReconnectCount(OperatorId operatorId, WorkerId newWorker);
-    uint64_t getReconnectCount(OperatorId operatorId);
+//    void increaseReconnectCount(OperatorId operatorId, WorkerId newWorker);
+//    uint64_t getReconnectCount(OperatorId operatorId);
     std::pair<Network::NetworkChannel*, WorkerId> getNetworkChannel(OperatorId ownerId);
     std::optional<std::pair<Network::NetworkChannelPtr, WorkerId>> getAsyncConnectionResult(OperatorId operatorId);
     void dropReconnectBufferStorage(OperatorId operatorId);

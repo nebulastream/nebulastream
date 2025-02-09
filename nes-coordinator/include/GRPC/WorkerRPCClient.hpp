@@ -141,7 +141,7 @@ class WorkerRPCClient {
     void startDecomposedQueryAsync(const std::string& address,
                                    SharedQueryId sharedQueryId,
                                    DecomposedQueryId decomposedQueryId,
-                                   const CompletionQueuePtr& cq);
+                                   const CompletionQueuePtr& cq, uint64_t count = 0);
 
     /**
      * @brief method to stop a query
@@ -260,8 +260,9 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
-    void startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent);
     void sendCheckPointToSource(std::string address, const CompletionQueuePtr& cq, const CheckPointList& checkPoint);
+
+    void startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent, uint64_t count);
 
   private:
     WorkerRPCClient() = default;

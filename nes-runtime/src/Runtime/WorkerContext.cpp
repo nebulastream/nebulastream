@@ -357,29 +357,29 @@ bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return data
 
 bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return reverseEventChannels.contains(operatorId); }
 
-void WorkerContext::increaseReconnectCount(OperatorId operatorId, WorkerId newWorker) {
-    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when increasing reconnect count");
-    if (reconnectCounts.contains(operatorId)) {
-        NES_ERROR("WorkerContext: increasing existing reconnect count for operator {} for context {}", operatorId, workerId);
-        NES_ASSERT(reconnectCounts.size() == 1, "More than one reconnect count found");
-//        reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
-        auto& [count, id] = reconnectCounts.at(operatorId);
-        if (id != newWorker) {
-            count += 1;
-            id = newWorker;
-        }
-    } else {
-        NES_ERROR("WorkerContext: creating new reconnect count for operator {} for context {}", operatorId, workerId);
-        reconnectCounts.insert({operatorId, {1, newWorker}});
-    }
-}
-
-uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
-    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when accessing reconnect count");
-//    NES_ERROR("WorkerContext: getting reconnect count for operator {} for context {}", operatorId, workerId);
-    if (reconnectCounts.contains(operatorId)) {
-        return reconnectCounts.at(operatorId).first;
-    }
-    return 0;
-}
+//void WorkerContext::increaseReconnectCount(OperatorId operatorId, WorkerId newWorker) {
+//    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when increasing reconnect count");
+//    if (reconnectCounts.contains(operatorId)) {
+//        NES_ERROR("WorkerContext: increasing existing reconnect count for operator {} for context {}", operatorId, workerId);
+//        NES_ASSERT(reconnectCounts.size() == 1, "More than one reconnect count found");
+////        reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
+//        auto& [count, id] = reconnectCounts.at(operatorId);
+//        if (id != newWorker) {
+//            count += 1;
+//            id = newWorker;
+//        }
+//    } else {
+//        NES_ERROR("WorkerContext: creating new reconnect count for operator {} for context {}", operatorId, workerId);
+//        reconnectCounts.insert({operatorId, {1, newWorker}});
+//    }
+//}
+//
+//uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
+//    NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when accessing reconnect count");
+////    NES_ERROR("WorkerContext: getting reconnect count for operator {} for context {}", operatorId, workerId);
+//    if (reconnectCounts.contains(operatorId)) {
+//        return reconnectCounts.at(operatorId).first;
+//    }
+//    return 0;
+//}
 }// namespace NES::Runtime

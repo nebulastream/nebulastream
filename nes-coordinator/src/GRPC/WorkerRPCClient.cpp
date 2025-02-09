@@ -248,7 +248,7 @@ bool WorkerRPCClient::startDecomposedQuery(const std::string& address,
 void WorkerRPCClient::startDecomposedQueryAsync(const std::string& address,
                                                 SharedQueryId sharedQueryId,
                                                 DecomposedQueryId decomposedQueryId,
-                                                const CompletionQueuePtr& cq) {
+                                                const CompletionQueuePtr& cq, uint64_t count) {
     NES_DEBUG("WorkerRPCClient::startDecomposedQueryAsync address={} shared queryId={} decomposed queryId={}",
               address,
               sharedQueryId,
@@ -257,6 +257,7 @@ void WorkerRPCClient::startDecomposedQueryAsync(const std::string& address,
     StartDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
     request.set_decomposedqueryid(decomposedQueryId.getRawValue());
+    request.set_count(count);
 
     StartDecomposedQueryReply reply;
     ClientContext context;
@@ -532,9 +533,10 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent) {
+void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent, uint64_t count) {
     StartBufferingRequest request;
     request.set_parent(newParent.getRawValue());
+    request.set_count(count);
     StartBufferingReply reply;
     ClientContext context;
 

@@ -61,9 +61,9 @@ class DeploymentPhase {
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static DeploymentPhasePtr create(const Catalogs::Query::QueryCatalogPtr& queryCatalog);
+    static DeploymentPhasePtr create(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter = 0);
 
-    explicit DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog);
+    explicit DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter = 0);
 
     /**
      * @brief method for deploying decomposed query plans in different states
@@ -106,6 +106,7 @@ class DeploymentPhase {
 
     WorkerRPCClientPtr workerRPCClient;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
+    uint64_t reconnectCounter;
 };
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_

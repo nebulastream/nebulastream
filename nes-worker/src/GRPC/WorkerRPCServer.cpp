@@ -93,7 +93,7 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
                                              StartDecomposedQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
     bool success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                        DecomposedQueryId(request->decomposedqueryid()));
+                                                        DecomposedQueryId(request->decomposedqueryid()), request->count());
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
@@ -132,7 +132,7 @@ Status WorkerRPCServer::AddReconfigurationMarker(ServerContext*,
     auto serializableReconfigurationMarker = request->serializablereconfigurationmarker();
     ReconfigurationMarkerSerializationUtil::deserialize(serializableReconfigurationMarker, reconfigurationMarker);
     NES_INFO("Received reconfiguration marker");
-    auto status = nodeEngine->addReconfigureMarker(sharedQueryId, decomposedQueryId, reconfigurationMarker) ? Status::OK
+    auto status = nodeEngine->addReconfigureMarker(sharedQueryId, decomposedQueryId, reconfigurationMarker, request->count()) ? Status::OK
                                                                                                             : Status::CANCELLED;
     return status;
 }
@@ -189,7 +189,7 @@ Status
 WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRequest* request, StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
     // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
-    nodeEngine->setParentId(request->parent());
+    nodeEngine->setParentId(request->parent(), request->count());
     //    nodeEngine->tryApplyingNewDescriptors();
     auto success = true;
     if (success) {

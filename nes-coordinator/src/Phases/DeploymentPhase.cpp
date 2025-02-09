@@ -24,12 +24,12 @@
 
 namespace NES {
 
-DeploymentPhasePtr DeploymentPhase::create(const Catalogs::Query::QueryCatalogPtr& queryCatalog) {
-    return std::make_shared<DeploymentPhase>(queryCatalog);
+DeploymentPhasePtr DeploymentPhase::create(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter) {
+    return std::make_shared<DeploymentPhase>(queryCatalog, reconnectCounter);
 }
 
-DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog)
-    : workerRPCClient(WorkerRPCClient::create()), queryCatalog(queryCatalog) {
+DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter)
+    : workerRPCClient(WorkerRPCClient::create()), queryCatalog(queryCatalog), reconnectCounter(reconnectCounter) {
     NES_INFO("DeploymentPhase()");
 }
 
@@ -244,7 +244,8 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                 workerRPCClient->startDecomposedQueryAsync(grpcAddress,
                                                            sharedQueryId,
                                                            decomposedQueryId,
-                                                           queueForDeploymentContext);
+                                                           queueForDeploymentContext,
+                                                           reconnectCounter);
                 // Update decomposed query plan status
                 queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                               decomposedQueryId,

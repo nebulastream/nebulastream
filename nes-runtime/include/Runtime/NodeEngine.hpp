@@ -170,7 +170,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param decomposedQueryId: id of the decomposed query plan to be started
      * @return bool indicating success
      */
-    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
+    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount);
 
     /**
      * @brief method to stop a decomposed query plan
@@ -368,7 +368,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     //const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
     int64_t getParentId();
-    void setParentId(int64_t newParent);
+    void setParentId(int64_t newParent, int64_t count);
     void setParentIdIfInvalid(WorkerId newParent);
     void initializeParentId(WorkerId newParent);
     uint64_t getParenChangeCount();
@@ -383,7 +383,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool addReconfigureMarker(SharedQueryId sharedQueryId,
                               DecomposedQueryId decomposedQueryid,
-                              ReconfigurationMarkerPtr reconfigurationMarker);
+                              ReconfigurationMarkerPtr reconfigurationMarker, uint64_t reconnectCount = 0);
 
     /**
      * @brief Get the ids of all decomposed query plans with the specified status
@@ -430,6 +430,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool isSimulatingBuffering();
 
     bool getTimesStampOutputSources();
+
   private:
     /**
      * @brief method to start a already deployed query
@@ -441,7 +442,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                                                 DecomposedQueryId decomposedQueryId,
-                                                DecomposedQueryPlanVersion decomposedQueryVersion);
+                                                DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t reconnectCount = 0);
 
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;

@@ -108,7 +108,8 @@ class ISQPRequest : public AbstractUniRequest {
     ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
                 const z3::ContextPtr& z3Context,
                 std::vector<ISQPEventPtr> events,
-                uint8_t maxRetries);
+                uint8_t maxRetries,
+                uint64_t reconnectCounter = 0);
 
     /**
      * @brief Create shared instance of the ISQP request
@@ -121,7 +122,8 @@ class ISQPRequest : public AbstractUniRequest {
     static ISQPRequestPtr create(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
                                  const z3::ContextPtr& z3Context,
                                  std::vector<ISQPEventPtr> events,
-                                 uint8_t maxRetries);
+                                 uint8_t maxRetries,
+                                 uint64_t reconnectCounter = 0);
 
   protected:
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
@@ -170,6 +172,7 @@ class ISQPRequest : public AbstractUniRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     bool enableIncrementalPlacement;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+    uint64_t reconnectCounter;
 };
 
 }// namespace RequestProcessor
