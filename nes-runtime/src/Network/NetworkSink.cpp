@@ -92,8 +92,9 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     auto changeCount = nodeEngine->getParenChangeCount();
     auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
-        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Version {}, Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
+                  version,
                   receiver,
                   parent,
                   changeCount,
@@ -149,8 +150,9 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     auto changeCount = nodeEngine->getParenChangeCount();
     auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount != changeCount)) {
-        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Version: {}, Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
+                  version,
                   receiver,
                   parent,
                   changeCount,
