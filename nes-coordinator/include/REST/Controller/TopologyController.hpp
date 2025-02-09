@@ -173,7 +173,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
         try {
             auto counter = ++reconnectCounter;
-            NES_ERROR("reconnect counter = {}", reconnectCounter);
+            NES_ERROR("reconnect counter = {}", counter);
             NES_DEBUG("Processing topology update")
             std::string req = request.getValue("{}");
             //check if json is valid
