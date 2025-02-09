@@ -84,9 +84,9 @@ struct TcpSourceInfo {
     uint64_t nextLinesIndex = 0;
     uint16_t leftoverByteCount = 0;
     uint64_t seqReadFromSocketTotal = 0;
-    uint64_t seqAcknowledged = 0;
+    std::optional<uint64_t> replayedUntil = 0;
     bool hasCheckedAcknowledgement = false;
-    std::vector<Record> records;
+    std::vector<Record> records = {};
 };
 
 struct TcpSourceAcknowledgement {
@@ -274,6 +274,10 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     void updateSourceToQepMapping(OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlans);
 
+    uint64_t waitForSourceAck(uint64_t id);
+
+    void setSourceAck(uint64_t id, uint64_t seq);
+
   private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -426,7 +430,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::map<std::string, folly::Synchronized<TcpSourceInfo>> tcpSourceInfos;
 
     std::mutex tcpAckMutex;
-    std::map<std::string, TcpSourceAcknowledgement> tcpSourceAcks;
+    std::map<uint64_t, TcpSourceAcknowledgement> tcpSourceAcks;
 
   private:
     friend class ThreadPool;
@@ -544,7 +548,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
-    uint64_t waitForSourceAck(std::string sourceName);
 };
 
 class DynamicQueryManager : public AbstractQueryManager {

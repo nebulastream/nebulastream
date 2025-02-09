@@ -19,6 +19,7 @@
 #include <chrono>
 #include <fstream>
 #include <string>
+#include <folly/Synchronized.h>
 
 namespace NES {
 
@@ -118,6 +119,7 @@ class CSVSource : public DataSource {
 //    std::vector<uint8_t> leftOverBytes;
 //    uint16_t leftoverByteCount = 0;
     //uint64_t totalTupleCount = 0;
+    void fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo, Runtime::MemoryLayouts::TestTupleBuffer& buffer);
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

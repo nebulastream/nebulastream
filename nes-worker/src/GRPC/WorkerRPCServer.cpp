@@ -23,6 +23,7 @@
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Reconfiguration/ReconfigurationMarkerSerializationUtil.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <nlohmann/json.hpp>
@@ -278,9 +279,13 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 }
 
 Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
-    //todo
-    (void) request;
-    (void) reply;
+//    //todo
+//    (void) request;
+//    (void) reply;
+    for (auto [id, seq] : request->checkpoints()) {
+       nodeEngine->getQueryManager()->setSourceAck(id, seq);
+    }
+    reply->set_success(true);
     return Status::OK;
 }
 }// namespace NES

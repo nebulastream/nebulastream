@@ -238,7 +238,7 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
     sourceToQEPMapping[sourceid] = std::move(newPlans);
 }
 
-uint64_t AbstractQueryManager::waitForSourceAck(std::string sourceName) {
+uint64_t AbstractQueryManager::waitForSourceAck(uint64_t id) {
     std::unique_lock lock(tcpAckMutex);
 //    if (tcpSourceAcks.contains(sourceName)) {
 //        auto seq = tcpSourceAcks.at(sourceName).seq;
@@ -249,18 +249,18 @@ uint64_t AbstractQueryManager::waitForSourceAck(std::string sourceName) {
 //    tcpSourceAcks.erase(sourceName);
 //    return seq.value();
 
-    auto& ack = tcpSourceAcks[sourceName];
+    auto& ack = tcpSourceAcks[id];
     while (!ack.seq.has_value()) {
-        tcpSourceAcks[sourceName];
+        tcpSourceAcks[id];
         ack.cv.wait(lock);
     }
     auto seq = ack.seq.value();
-    tcpSourceAcks.erase(sourceName);
+    tcpSourceAcks.erase(id);
     return seq;
 }
 
-void AbstractQueryManager::waitForSourceAck(std::string sourceName, uint64_t seq) {
-    auto& ack = tcpSourceAcks[sourceName];
+void AbstractQueryManager::setSourceAck(uint64_t id, uint64_t seq) {
+    auto& ack = tcpSourceAcks[id];
     ack.seq = seq;
     ack.cv.notify_all();
 }

@@ -22,6 +22,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <algorithm>
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
@@ -137,7 +138,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 
             std::getline(input, line);
             NES_NOT_IMPLEMENTED();
-//            readLines.push_back(line);
+            //            readLines.push_back(line);
             NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         }
     }
@@ -150,19 +151,49 @@ struct Record {
     uint64_t processingTimestamp;
     uint64_t outputTimestamp;
 };
+
+void CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
+                                 Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
+    auto replayOffset = sourceInfo->replayedUntil.value();
+    auto totalTuplesToReplay = sourceInfo->seqReadFromSocketTotal - replayOffset;
+    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
+
+    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
+              numTuplesToReplay,
+              replayOffset,
+              sourceInfo->seqReadFromSocketTotal,
+              totalTuplesToReplay);
+
+    auto replay = &sourceInfo->records[replayOffset];
+    auto* records = buffer.getBuffer().getBuffer<Record>();
+    std::memcpy(records, replay, numTuplesToReplay);
+
+    sourceInfo->replayedUntil = replayOffset + sourceInfo->replayedUntil.value();
+    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
+    if (sourceInfo->replayedUntil == sourceInfo->seqReadFromSocketTotal) {
+        sourceInfo->replayedUntil = std::nullopt;
+    }
+}
+
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
-//    if (generatedBuffers == 0) {
-//        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
-//    }
+    //    if (generatedBuffers == 0) {
+    //        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
+    //    }
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (!sourceInfo->hasCheckedAcknowledgement) {
             if (sourceInfo->seqReadFromSocketTotal != 0) {
-                auto ack = queryManager->waitForSourceAck(physicalSourceName);
+                auto id = sourceInfo->records.front().value;
+                auto ack = queryManager->waitForSourceAck(id);
+                sourceInfo->replayedUntil = ack;
             }
             sourceInfo->hasCheckedAcknowledgement = true;
+        }
+        if (sourceInfo->replayedUntil.has_value()) {
+            fillReplayBuffer(sourceInfo, buffer);
+            return buffer.getBuffer();
         }
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
@@ -199,7 +230,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         // Read data from the socket
                         //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
                         NES_DEBUG("TCPSource::fillBuffer: reading from socket");
-                        int bytesRead = read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                        int bytesRead =
+                            read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
                         NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                         if (bytesRead == 0) {
                             if (byteOffset < incomingTupleSize) {
@@ -236,8 +268,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                    return std::nullopt;
                 //                }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
-//                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
-//                sourceInfo->records.
+                //                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
+                //                sourceInfo->records.
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                     auto index = i * incomingTupleSize;
                     auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
@@ -266,10 +298,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 generatedTuples += numCompleteTuplesRead;
                 sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
                 generatedBuffers++;
-//                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
-//                          "New leftover bytes count: {} ",
-//                          numCompleteTuplesRead,
-//                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
+                //                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
+                //                          "New leftover bytes count: {} ",
+                //                          numCompleteTuplesRead,
+                //                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
                 return buffer.getBuffer();
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
@@ -438,6 +470,6 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
-//    ::close(sockfd);
+    //    ::close(sockfd);
 }
 }// namespace NES
