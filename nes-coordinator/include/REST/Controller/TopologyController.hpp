@@ -172,7 +172,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
         try {
-            reconnectCounter++;
+            auto counter = ++reconnectCounter;
+            NES_ERROR("reconnect counter = {}", reconnectCounter);
             NES_DEBUG("Processing topology update")
             std::string req = request.getValue("{}");
             //check if json is valid
@@ -187,7 +188,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             auto bufferJson = reqJson["events"];
             NES_DEBUG("number of events {}", bufferJson.size())
             //startBufferingOnAllSources(reqJson, completionQueue);
-            startBufferingOnAllSources(bufferJson, completionQueue);
+            startBufferingOnAllSources(bufferJson, completionQueue, counter);
             NES_DEBUG("Sent buffering messges666666666666666666666666666666666666666666666666666666")
             //todo: check if proactive is enabled here
             std::vector<RequestProcessor::ISQPEventPtr> events;
@@ -202,7 +203,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             // auto events = createEvents(reqJson);
             NES_DEBUG("Processing {} events", events.size());
             if (!events.empty()) {
-                requestHandlerService->queueISQPRequest(events, false, reconnectCounter);
+                requestHandlerService->queueISQPRequest(events, false, counter);
             }
             NES_DEBUG("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
@@ -291,7 +292,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     }
 
     //start buffering at all child nodes from the json
-    void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
+    void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue, uint64_t counter) {
 
         NES_DEBUG("Buffer on moving devices")
         // std::set<uint64_t> buffer_only;
@@ -312,7 +313,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
                 NES_DEBUG("send buffering request to {}", address);
-                workerRPCClient->startBufferingAsync(address, completionQueue, parentId, reconnectCounter);
+                workerRPCClient->startBufferingAsync(address, completionQueue, parentId, counter);
                 NES_DEBUG("sent bufering request")
 
                 moving.insert(childId);

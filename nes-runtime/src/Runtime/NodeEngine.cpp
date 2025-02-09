@@ -911,7 +911,6 @@ void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     NES_DEBUG("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
 //    ++parentChangeCount;
-    parentChangeCount = count;
     if (newParent == 0) {
         return;
     }
@@ -920,6 +919,7 @@ void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     } else {
         connected = true;
         parentId = newParent;
+        parentChangeCount = count;
     }
 }
 
