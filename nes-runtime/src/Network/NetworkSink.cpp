@@ -221,7 +221,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 //workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(pair));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
-                workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
+                workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId(), receiverLocation.getNodeId());
             } else {
                 //synchronous connecting is configured. let this thread wait on the connection being established
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
@@ -546,7 +546,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                         true,
                                         reconfigurationMarker);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, INVALID_WORKER_NODE_ID);
-    workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId());
+    workerContext.increaseReconnectCount(getDownstreamLogicalOperatorId(), newNodeLocation.getNodeId());
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
