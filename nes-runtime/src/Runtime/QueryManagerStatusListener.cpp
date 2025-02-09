@@ -249,14 +249,15 @@ uint64_t AbstractQueryManager::waitForSourceAck(uint64_t id) {
 //    tcpSourceAcks.erase(sourceName);
 //    return seq.value();
 
-    auto& ack = tcpSourceAcks[id];
-    while (!ack.seq.has_value()) {
-        tcpSourceAcks[id];
+    auto seq = tcpSourceAcks[id].seq;
+    while (!seq.has_value()) {
+        NES_ERROR("No value for id {}, waiting", id);
+        auto& ack = tcpSourceAcks[id];
         ack.cv.wait(lock);
+        seq = ack.seq;
     }
-    auto seq = ack.seq.value();
     tcpSourceAcks.erase(id);
-    return seq;
+    return seq.value();
 }
 
 void AbstractQueryManager::setSourceAck(uint64_t id, uint64_t seq) {
