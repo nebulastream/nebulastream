@@ -98,10 +98,6 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
      * advance internal file pointer, if we reach the file end, set to file begin
      */
 
-    // 'std::streamoff' (aka 'long') and 'size_t' (aka 'unsigned long')
-    if (input.tellg() > 0 && (unsigned) input.tellg() == fileSize) {
-        input.seekg(0, std::ifstream::beg);
-    }
     uint64_t size;
     uint64_t numberOfTuples;
     uint64_t seqNumber;
