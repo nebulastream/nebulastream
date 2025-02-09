@@ -92,10 +92,12 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
                                              const StartDecomposedQueryRequest* request,
                                              StartDecomposedQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
+    NES_ERROR("Start query, count = {}", request->count())
     bool success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
                                                         DecomposedQueryId(request->decomposedqueryid()), request->count());
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
+        NES_ERROR("Start query success , count = {}", request->count())
         reply->set_success(true);
         return Status::OK;
     }
@@ -189,6 +191,7 @@ Status
 WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRequest* request, StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
     // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
+    NES_ERROR("Start buffering request received, count = {}", request->count());
     nodeEngine->setParentId(request->parent(), request->count());
     //    nodeEngine->tryApplyingNewDescriptors();
     auto success = true;

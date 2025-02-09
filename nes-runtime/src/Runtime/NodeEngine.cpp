@@ -911,15 +911,18 @@ void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     NES_DEBUG("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
 //    ++parentChangeCount;
+    parentChangeCount = count;
+    NES_ERROR("new parent count = {}", parentChangeCount)
     if (newParent == 0) {
+        NES_ERROR("received parent is zero")
         return;
     }
     if (newParent == -1) {
+        NES_ERROR("received parent is negative")
         connected = false;
     } else {
         connected = true;
         parentId = newParent;
-        parentChangeCount = count;
     }
 }
 
