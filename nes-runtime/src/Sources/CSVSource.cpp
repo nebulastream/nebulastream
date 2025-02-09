@@ -71,6 +71,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        sourceInfo->hasCheckedAcknowledgement = false;
         return;
     }
     struct Deleter {
@@ -184,7 +185,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (!sourceInfo->hasCheckedAcknowledgement) {
+            NES_ERROR("has checked acknowledgement is false")
             if (sourceInfo->seqReadFromSocketTotal != 0) {
+                NES_ERROR("tuples were read before from this descriptor")
                 auto id = sourceInfo->records.front().value;
                 auto ack = queryManager->waitForSourceAck(id);
                 sourceInfo->replayedUntil = ack;

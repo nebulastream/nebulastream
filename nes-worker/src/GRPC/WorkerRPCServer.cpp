@@ -284,6 +284,7 @@ Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointL
 //    (void) request;
 //    (void) reply;
     for (auto [id, seq] : request->checkpoints()) {
+        NES_ERROR("notifying checkpoint id {}, seq {}", id, seq)
        nodeEngine->getQueryManager()->setSourceAck(id, seq);
     }
     reply->set_success(true);
