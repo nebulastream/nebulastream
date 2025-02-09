@@ -361,6 +361,7 @@ void WorkerContext::increaseReconnectCount(OperatorId operatorId, WorkerId newWo
     NES_ASSERT(operatorId != INVALID_OPERATOR_ID, "Invalid operator id supplied when increasing reconnect count");
     if (reconnectCounts.contains(operatorId)) {
         NES_ERROR("WorkerContext: increasing existing reconnect count for operator {} for context {}", operatorId, workerId);
+        NES_ASSERT(reconnectCounts.size() == 1, "More than one reconnect count found");
 //        reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
         auto& [count, id] = reconnectCounts.at(operatorId);
         if (id != newWorker) {
