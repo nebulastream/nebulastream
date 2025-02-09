@@ -349,26 +349,26 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
         std::set<WorkerId> buffering;
         NES_DEBUG("send buffering requests to non moving workers")
-        for (const auto& worker : moving) {
-            for (const auto& sourceNode : sourceNodeMap[worker]) {
-
-                if (moving.contains(sourceNode) || buffering.contains(sourceNode)) {
-                    NES_DEBUG("worker {} is moving or buffering, do not send another buffering request", sourceNode);
-                    continue;
-                }
-                NES_DEBUG("worker {} is not moving, send buffering request", sourceNode);
-                //auto node = topology->lockTopologyNode(sourceNode);
-                auto node = topology->getCopyOfTopologyNodeWithId(sourceNode);
-                //get the adress of the node
-                auto ipAddress = node->getIpAddress();
-                //get the grpc port
-                auto grpcPort = node->getGrpcPort();
-                //construct the adress
-                std::string address = ipAddress + ":" + std::to_string(grpcPort);
-                workerRPCClient->startBufferingAsync(address, completionQueue, mockParent);
-                buffering.insert(sourceNode);
-            }
-        }
+//        for (const auto& worker : moving) {
+//            for (const auto& sourceNode : sourceNodeMap[worker]) {
+//
+//                if (moving.contains(sourceNode) || buffering.contains(sourceNode)) {
+//                    NES_DEBUG("worker {} is moving or buffering, do not send another buffering request", sourceNode);
+//                    continue;
+//                }
+//                NES_DEBUG("worker {} is not moving, send buffering request", sourceNode);
+//                //auto node = topology->lockTopologyNode(sourceNode);
+//                auto node = topology->getCopyOfTopologyNodeWithId(sourceNode);
+//                //get the adress of the node
+//                auto ipAddress = node->getIpAddress();
+//                //get the grpc port
+//                auto grpcPort = node->getGrpcPort();
+//                //construct the adress
+//                std::string address = ipAddress + ":" + std::to_string(grpcPort);
+//                workerRPCClient->startBufferingAsync(address, completionQueue, mockParent);
+//                buffering.insert(sourceNode);
+//            }
+//        }
     }
 
     //create an add or remove event
