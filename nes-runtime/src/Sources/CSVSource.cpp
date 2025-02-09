@@ -187,9 +187,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (!sourceInfo->hasCheckedAcknowledgement) {
             NES_ERROR("has checked acknowledgement is false")
             if (sourceInfo->seqReadFromSocketTotal != 0) {
-                NES_ERROR("tuples were read before from this descriptor")
+                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto id = sourceInfo->records.front().value;
                 auto ack = queryManager->waitForSourceAck(id);
+                NES_ERROR("received ack");
                 sourceInfo->replayedUntil = ack;
             }
             sourceInfo->hasCheckedAcknowledgement = true;

@@ -84,7 +84,7 @@ struct TcpSourceInfo {
     uint64_t nextLinesIndex = 0;
     uint16_t leftoverByteCount = 0;
     uint64_t seqReadFromSocketTotal = 0;
-    std::optional<uint64_t> replayedUntil = 0;
+    std::optional<uint64_t> replayedUntil = std::nullopt;
     bool hasCheckedAcknowledgement = false;
     std::vector<Record> records = {};
 };
