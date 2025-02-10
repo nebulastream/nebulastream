@@ -135,70 +135,70 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                              sinkUpdates.size());
 
                     //TODO #5183: reactivate
-//                    for (auto& update : sinkUpdates) {
-//                        NES_ERROR("Inserting update, more messages (updates and events) to follow")
-//                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
-//                                                                                 update.nodeLocation,
-//                                                                                 update.nesPartition,
-//                                                                                 update.waitTime,
-//                                                                                 update.retryTimes,
-//                                                                                 update.version,
-//                                                                                 update.uniqueNetworkSinkId,
-//                                                                                 update.numberOfOrigins);
-//                    }
+                    //                    for (auto& update : sinkUpdates) {
+                    //                        NES_ERROR("Inserting update, more messages (updates and events) to follow")
+                    //                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+                    //                                                                                 update.nodeLocation,
+                    //                                                                                 update.nesPartition,
+                    //                                                                                 update.waitTime,
+                    //                                                                                 update.retryTimes,
+                    //                                                                                 update.version,
+                    //                                                                                 update.uniqueNetworkSinkId,
+                    //                                                                                 update.numberOfOrigins);
+                    //                    }
                 } else {
-//                    if (sinkUpdates.empty()) {
-                        //send the last element without send more flag
-                        sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
-                                                                                   key,
-                                                                                   queryState,
-                                                                                   metadataType,
-                                                                                   numberOfSources,
-                                                                                   workerId,
-                                                                                   sharedQueryId,
-                                                                                   decomposedQueryId,
-                                                                                   decomposedQueryPlanVersion,
-                                                                                   sinkUpdates.size());
+                    //                    if (sinkUpdates.empty()) {
+                    //send the last element without send more flag
+                    sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
+                                                                               key,
+                                                                               queryState,
+                                                                               metadataType,
+                                                                               numberOfSources,
+                                                                               workerId,
+                                                                               sharedQueryId,
+                                                                               decomposedQueryId,
+                                                                               decomposedQueryPlanVersion,
+                                                                               sinkUpdates.size());
                     //TODO #5183: reactivate
-//                    } else {
-//                        NES_ERROR("Inserting event {}/{}, last event but updates to follwo", count, events)
-//                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
-//                                                                                                 key,
-//                                                                                                 queryState,
-//                                                                                                 metadataType,
-//                                                                                                 numberOfSources,
-//                                                                                                 workerId,
-//                                                                                                 sharedQueryId,
-//                                                                                                 decomposedQueryId,
-//                                                                                                 decomposedQueryPlanVersion,
-//                                                                                                 sinkUpdates.size());
-//
-//                        uint64_t updateCount = 0;
-//                        for (auto& update : sinkUpdates) {
-//                            if ((updateCount + 1) < (sinkUpdates.size())) {
-//                                NES_ERROR("Inserting update {}/{}, more updates to follwo", count, sinkUpdates.size())
-//                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
-//                                                                                         update.nodeLocation,
-//                                                                                         update.nesPartition,
-//                                                                                         update.waitTime,
-//                                                                                         update.retryTimes,
-//                                                                                         update.version,
-//                                                                                         update.uniqueNetworkSinkId,
-//                                                                                         update.numberOfOrigins);
-//                            } else {
-//                                NES_ERROR("Inserting update {}/{}, last message", count, sinkUpdates.size())
-//                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket,
-//                                                                           update.nodeLocation,
-//                                                                           update.nesPartition,
-//                                                                           update.waitTime,
-//                                                                           update.retryTimes,
-//                                                                           update.version,
-//                                                                           update.uniqueNetworkSinkId,
-//                                                                           update.numberOfOrigins);
-//                            }
-//                            updateCount++;
-//                        }
-//                    }
+                    //                    } else {
+                    //                        NES_ERROR("Inserting event {}/{}, last event but updates to follwo", count, events)
+                    //                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
+                    //                                                                                                 key,
+                    //                                                                                                 queryState,
+                    //                                                                                                 metadataType,
+                    //                                                                                                 numberOfSources,
+                    //                                                                                                 workerId,
+                    //                                                                                                 sharedQueryId,
+                    //                                                                                                 decomposedQueryId,
+                    //                                                                                                 decomposedQueryPlanVersion,
+                    //                                                                                                 sinkUpdates.size());
+                    //
+                    //                        uint64_t updateCount = 0;
+                    //                        for (auto& update : sinkUpdates) {
+                    //                            if ((updateCount + 1) < (sinkUpdates.size())) {
+                    //                                NES_ERROR("Inserting update {}/{}, more updates to follwo", count, sinkUpdates.size())
+                    //                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+                    //                                                                                         update.nodeLocation,
+                    //                                                                                         update.nesPartition,
+                    //                                                                                         update.waitTime,
+                    //                                                                                         update.retryTimes,
+                    //                                                                                         update.version,
+                    //                                                                                         update.uniqueNetworkSinkId,
+                    //                                                                                         update.numberOfOrigins);
+                    //                            } else {
+                    //                                NES_ERROR("Inserting update {}/{}, last message", count, sinkUpdates.size())
+                    //                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket,
+                    //                                                                           update.nodeLocation,
+                    //                                                                           update.nesPartition,
+                    //                                                                           update.waitTime,
+                    //                                                                           update.retryTimes,
+                    //                                                                           update.version,
+                    //                                                                           update.uniqueNetworkSinkId,
+                    //                                                                           update.numberOfOrigins);
+                    //                            }
+                    //                            updateCount++;
+                    //                        }
+                    //                    }
                 }
                 ++count;
             }

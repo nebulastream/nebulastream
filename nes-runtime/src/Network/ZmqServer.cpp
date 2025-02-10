@@ -481,17 +481,17 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                     auto sinkUpdateCount = reconfigMsg.sinkReconfigurationCount;
                                     std::vector<NetworkSinkUpdateInfo> updateInfos;
                                     //TODO #5183: reactivate
-//                                    for (auto j = 0; j < sinkUpdateCount; ++j) {
-//                                        NES_ERROR("processing sink update {}", j);
-//                                        zmq::message_t reconfigEnvelope;
-//                                        optRetSize = dispatcherSocket.recv(reconfigEnvelope, kZmqRecvDefault);
-//                                        NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
-//                                        NES_ERROR("received sink update message");
-//                                        auto sinkUpdate = *reconfigEnvelope.data<NetworkSinkUpdateInfo>();
-//                                        NES_ERROR("retrieve update from message");
-//                                        updateInfos.push_back(sinkUpdate);
-//                                        NES_ERROR("inserted into vector of update infos");
-//                                    }
+                                    //                                    for (auto j = 0; j < sinkUpdateCount; ++j) {
+                                    //                                        NES_ERROR("processing sink update {}", j);
+                                    //                                        zmq::message_t reconfigEnvelope;
+                                    //                                        optRetSize = dispatcherSocket.recv(reconfigEnvelope, kZmqRecvDefault);
+                                    //                                        NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                                    //                                        NES_ERROR("received sink update message");
+                                    //                                        auto sinkUpdate = *reconfigEnvelope.data<NetworkSinkUpdateInfo>();
+                                    //                                        NES_ERROR("retrieve update from message");
+                                    //                                        updateInfos.push_back(sinkUpdate);
+                                    //                                        NES_ERROR("inserted into vector of update infos");
+                                    //                                    }
 
                                     marker.value()->addReconfigurationEvent(
                                         reconfigMsg.decomposedQueryIdWithVersion.id,
