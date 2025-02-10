@@ -92,6 +92,7 @@ void RawBufferSink::shutdown() {
 
     auto dotPosition = filePath.find_last_of('.');
     auto completedPath = filePath.substr(0, dotPosition) + "_completed" + filePath.substr(dotPosition);
+    outputFile.flush();
     outputFile.close();
 
     if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
