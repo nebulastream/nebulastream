@@ -111,6 +111,7 @@ void AsyncRequestProcessor::runningRoutine() {
                 if (multiRequest->isDone()) {
                     asyncRequestQueue.pop_front();
                     lock.unlock();
+                    cv.notify_all();
                     continue;
                 }
             } else {
@@ -120,6 +121,7 @@ void AsyncRequestProcessor::runningRoutine() {
             }
 
             lock.unlock();
+            cv.notify_all();
 
             //execute request logic
             std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);

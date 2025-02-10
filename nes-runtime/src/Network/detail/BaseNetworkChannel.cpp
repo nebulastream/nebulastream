@@ -121,7 +121,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
                 }
 
                 //check if we reached the last element
-                if (count < events - 1) {
+                if ((count + 1) < events) {
                     //if this is not the last message, send with send more flag
                     sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
                                                                                              key,
@@ -134,11 +134,20 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                              decomposedQueryPlanVersion,
                                                                                              sinkUpdates.size());
 
-                    for (auto& update : sinkUpdates) {
-                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
-                    }
+                    //TODO #5183: reactivate
+//                    for (auto& update : sinkUpdates) {
+//                        NES_ERROR("Inserting update, more messages (updates and events) to follow")
+//                        sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+//                                                                                 update.nodeLocation,
+//                                                                                 update.nesPartition,
+//                                                                                 update.waitTime,
+//                                                                                 update.retryTimes,
+//                                                                                 update.version,
+//                                                                                 update.uniqueNetworkSinkId,
+//                                                                                 update.numberOfOrigins);
+//                    }
                 } else {
-                    if (sinkUpdates.empty()) {
+//                    if (sinkUpdates.empty()) {
                         //send the last element without send more flag
                         sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
                                                                                    key,
@@ -150,28 +159,46 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                                                    decomposedQueryId,
                                                                                    decomposedQueryPlanVersion,
                                                                                    sinkUpdates.size());
-                    } else {
-                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
-                                                                                                 key,
-                                                                                                 queryState,
-                                                                                                 metadataType,
-                                                                                                 numberOfSources,
-                                                                                                 workerId,
-                                                                                                 sharedQueryId,
-                                                                                                 decomposedQueryId,
-                                                                                                 decomposedQueryPlanVersion,
-                                                                                                 sinkUpdates.size());
-
-                        auto updateCount = 0;
-                        for (auto& update : sinkUpdates) {
-                            if (count < events - 1) {
-                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket, update);
-                            } else {
-                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket, update);
-                            }
-                            updateCount++;
-                        }
-                    }
+                    //TODO #5183: reactivate
+//                    } else {
+//                        NES_ERROR("Inserting event {}/{}, last event but updates to follwo", count, events)
+//                        sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
+//                                                                                                 key,
+//                                                                                                 queryState,
+//                                                                                                 metadataType,
+//                                                                                                 numberOfSources,
+//                                                                                                 workerId,
+//                                                                                                 sharedQueryId,
+//                                                                                                 decomposedQueryId,
+//                                                                                                 decomposedQueryPlanVersion,
+//                                                                                                 sinkUpdates.size());
+//
+//                        uint64_t updateCount = 0;
+//                        for (auto& update : sinkUpdates) {
+//                            if ((updateCount + 1) < (sinkUpdates.size())) {
+//                                NES_ERROR("Inserting update {}/{}, more updates to follwo", count, sinkUpdates.size())
+//                                sendMessageNoHeader<NetworkSinkUpdateInfo, kZmqSendMore>(zmqSocket,
+//                                                                                         update.nodeLocation,
+//                                                                                         update.nesPartition,
+//                                                                                         update.waitTime,
+//                                                                                         update.retryTimes,
+//                                                                                         update.version,
+//                                                                                         update.uniqueNetworkSinkId,
+//                                                                                         update.numberOfOrigins);
+//                            } else {
+//                                NES_ERROR("Inserting update {}/{}, last message", count, sinkUpdates.size())
+//                                sendMessageNoHeader<NetworkSinkUpdateInfo>(zmqSocket,
+//                                                                           update.nodeLocation,
+//                                                                           update.nesPartition,
+//                                                                           update.waitTime,
+//                                                                           update.retryTimes,
+//                                                                           update.version,
+//                                                                           update.uniqueNetworkSinkId,
+//                                                                           update.numberOfOrigins);
+//                            }
+//                            updateCount++;
+//                        }
+//                    }
                 }
                 ++count;
             }
