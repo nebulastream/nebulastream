@@ -36,7 +36,7 @@ public:
     virtual ~ReadingVisitor() = default;
     /// visits the value of a TypedBaseOption
     template <typename T>
-    void visit(TypedBaseOption<T>& option)
+    void visit(const TypedBaseOption<T>& option)
     {
         visitLeaf(option);
         /// bool before 'unsigned integral', because bool would be treated as an unsigned integral otherwise
@@ -91,23 +91,26 @@ public:
     /// pop(A)"
     ///
     /// Start working on a BaseOption. All subsequent visits are part of the BaseOption.
-    virtual void push(BaseOption& option) = 0;
+    virtual void push(const BaseOption& option) = 0;
     /// When finishing a BaseOption.
-    virtual void pop(BaseOption& option) = 0;
+    virtual void pop(const BaseOption& option) = 0;
+
+    virtual void push(const ISequenceOption& sequenceOption) = 0;
+    virtual void pop(const ISequenceOption& sequenceOption) = 0;
 
 protected:
     /// Called for every leaf element. This is called before calling the typed visit functions
-    virtual void visitLeaf(BaseOption& option) = 0;
+    virtual void visitLeaf(const BaseOption& option) = 0;
 
     /// Typed visit functions:
 
     /// we lose the concrete enum type, but sometimes we want to present the human-readable enum value,
     /// so the visitEnum provides both: string value and underlying value.
-    virtual void visitEnum(std::string_view enumName, size_t& value) = 0;
-    virtual void visitUnsignedInteger(size_t&) = 0;
-    virtual void visitSignedInteger(ssize_t&) = 0;
-    virtual void visitDouble(double&) = 0;
-    virtual void visitBool(bool&) = 0;
-    virtual void visitString(std::string&) = 0;
+    virtual void visitEnum(std::string_view enumName, const size_t& value) = 0;
+    virtual void visitUnsignedInteger(const size_t&) = 0;
+    virtual void visitSignedInteger(const ssize_t&) = 0;
+    virtual void visitDouble(const double&) = 0;
+    virtual void visitBool(const bool&) = 0;
+    virtual void visitString(const std::string&) = 0;
 };
 }

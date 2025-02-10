@@ -56,16 +56,6 @@ public:
             reflections.push(reflection);
             messages.push(message);
             descriptors.push(message->GetDescriptor());
-
-            if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
-            {
-                for (size_t i = 0; i < sequenceOption->size(); ++i)
-                {
-                    push(sequenceOption->operator[](i));
-                    sequenceOption->operator[](i).accept(*this);
-                    pop(sequenceOption->operator[](i));
-                }
-            }
             return;
         }
         throw InvalidConfigParameter("Field not found: {}", option.getName());
@@ -78,28 +68,105 @@ public:
         descriptors.pop();
     }
 
-protected:
-    void visitLeaf(BaseOption& option) override { fieldDescriptor = descriptors.top()->FindFieldByName(option.getName()); }
-    void visitEnum(std::string_view, size_t& value) override
+    size_t push(ISequenceOption& option) override
     {
-        const uint64_t temp = reflections.top()->GetUInt64(*messages.top(), fieldDescriptor);
-        if (temp > std::numeric_limits<size_t>::max())
-        {
-            throw std::overflow_error("Value exceeds size_t limits");
-        }
-        value = static_cast<size_t>(temp);
+        const auto* message = messages.top();
+        inSequence.push(true);
+        sequenceIndex.push(0);
+
+        fieldDescriptor = descriptors.top()->FindFieldByName(option.getName());
+        return reflections.top()->FieldSize(*message, fieldDescriptor);
     }
-    void visitUnsignedInteger(size_t& value) override { value = reflections.top()->GetUInt64(*messages.top(), fieldDescriptor); }
-    void visitSignedInteger(ssize_t& value) override { value = reflections.top()->GetInt64(*messages.top(), fieldDescriptor); }
-    void visitDouble(double& value) override { value = reflections.top()->GetDouble(*messages.top(), fieldDescriptor); }
-    void visitBool(bool& value) override { value = reflections.top()->GetBool(*messages.top(), fieldDescriptor); }
-    void visitString(std::string& value) override { value = reflections.top()->GetString(*messages.top(), fieldDescriptor); }
+
+
+    void pop(ISequenceOption&) override
+    {
+        sequenceIndex.pop();
+        inSequence.pop();
+    }
+
+protected:
+    void visitLeaf(BaseOption& option) override
+    {
+        if (!inSequence.top())
+        {
+            fieldDescriptor = descriptors.top()->FindFieldByName(option.getName());
+        }
+    }
+    void visitEnum(std::string_view, size_t& value) override { visitUnsignedInteger(value); }
+
+
+    void visitUnsignedInteger(size_t& value) override
+    {
+        if (inSequence.top())
+        {
+            value = reflections.top()->GetRepeatedUInt64(*messages.top(), fieldDescriptor, sequenceIndex.top()++);
+        }
+        else
+        {
+            value = reflections.top()->GetUInt64(*messages.top(), fieldDescriptor);
+        }
+    }
+
+
+    void visitSignedInteger(ssize_t& value) override
+    {
+        if (inSequence.top())
+        {
+            value = reflections.top()->GetRepeatedInt64(*messages.top(), fieldDescriptor, sequenceIndex.top()++);
+        }
+        else
+        {
+            value = reflections.top()->GetInt64(*messages.top(), fieldDescriptor);
+        }
+    }
+
+
+    void visitDouble(double& value) override
+    {
+        if (inSequence.top())
+        {
+            value = reflections.top()->GetRepeatedDouble(*messages.top(), fieldDescriptor, sequenceIndex.top()++);
+        }
+        else
+        {
+            value = reflections.top()->GetDouble(*messages.top(), fieldDescriptor);
+        }
+    }
+
+
+    void visitBool(bool& value) override
+    {
+        if (inSequence.top())
+        {
+            value = reflections.top()->GetRepeatedBool(*messages.top(), fieldDescriptor, sequenceIndex.top()++);
+        }
+        else
+        {
+            value = reflections.top()->GetBool(*messages.top(), fieldDescriptor);
+        }
+    }
+
+
+    void visitString(std::string& value) override
+    {
+        if (inSequence.top())
+        {
+            value = reflections.top()->GetRepeatedString(*messages.top(), fieldDescriptor, sequenceIndex.top()++);
+        }
+        else
+        {
+            value = reflections.top()->GetString(*messages.top(), fieldDescriptor);
+        }
+    }
 
 private:
     const google::protobuf::FieldDescriptor* fieldDescriptor{};
     std::stack<const google::protobuf::Message*> messages;
     std::stack<const google::protobuf::Reflection*> reflections;
     std::stack<const google::protobuf::Descriptor*> descriptors;
+    std::stack<bool> inSequence;
+    std::stack<size_t> sequenceIndex;
 };
 
 }

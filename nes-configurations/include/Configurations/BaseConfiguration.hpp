@@ -44,9 +44,10 @@ public:
     /// clears all options and set the default values
     void clear() override;
 
-    void accept(ReadingVisitor& visitor) override;
+    void accept(ReadingVisitor& visitor) const override;
 
     void accept(WritingVisitor& visitor) override;
+    bool operator==(const BaseOption& other) const override;
 
     std::string toString() override;
 
@@ -57,6 +58,7 @@ protected:
     void parseFromYAMLNode(const YAML::Node config) override;
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
     virtual std::vector<BaseOption*> getOptions() = 0;
+    [[nodiscard]] std::vector<const BaseOption*> getOptions() const;
     std::unordered_map<std::string, BaseOption*> getOptionMap();
 };
 }

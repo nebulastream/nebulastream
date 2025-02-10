@@ -53,7 +53,7 @@ public:
         return os.str();
     };
 
-    void accept(ReadingVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ReadingVisitor& visitor) const override { visitor.visit(*this); }
 
     void accept(WritingVisitor& visitor) override { visitor.visit(*this); }
 

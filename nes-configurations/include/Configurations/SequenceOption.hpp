@@ -14,7 +14,7 @@
 #pragma once
 
 #include "ISequenceOption.hpp"
-
+#include "ScalarOption.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -53,8 +53,21 @@ public:
 
     std::string toString() override;
 
-    void accept(ReadingVisitor&) override;
+    void accept(ReadingVisitor&) const override;
     void accept(WritingVisitor&) override;
+
+    bool operator==(const BaseOption& other) const override
+    {
+        if (const auto* otherOfSameType = dynamic_cast<const SequenceOption*>(&other))
+        {
+            return *this == *otherOfSameType;
+        }
+        return false;
+    }
+
+    std::unique_ptr<BaseOption> defaultValue() const override { return std::make_unique<T>(this->name, this->description); }
+
+    bool operator==(const SequenceOption& other) const { return options == other.options; }
 
 protected:
     void parseFromYAMLNode(YAML::Node node) override;
@@ -86,13 +99,26 @@ void SequenceOption<T>::parseFromString(std::string, std::unordered_map<std::str
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(ReadingVisitor&)
+void SequenceOption<T>::accept(ReadingVisitor& visitor) const
 {
+    visitor.push(static_cast<const ISequenceOption&>(*this));
+    for (auto& option : options)
+    {
+        visitor.visit(option);
+    }
+    visitor.pop(static_cast<const ISequenceOption&>(*this));
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(WritingVisitor&)
+void SequenceOption<T>::accept(WritingVisitor& visitor)
 {
+    size_t numberOfItems = visitor.push(static_cast<ISequenceOption&>(*this));
+    options = std::vector<T>(numberOfItems, {this->getName(), this->getDescription()});
+    for (auto& option : options)
+    {
+        visitor.visit(option);
+    }
+    visitor.pop(static_cast<ISequenceOption&>(*this));
 }
 
 template <DerivedBaseOption T>
