@@ -82,10 +82,6 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
-if (NES_ENABLE_CXA_THROW_HOOK)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
-endif ()
-
 # enables tracing of stack traces if operator / function nodes are created
 if (NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
