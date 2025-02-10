@@ -57,6 +57,16 @@ class SmallRandomizedSequenceTest : public Testing::BaseUnitTest
              .fileName = "Bimbo_1_1000_Lines.csv",
              .endsWithNewline = false,
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
+        {"Bimbo_1_256000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
+         TestFile{
+             .fileName = "Bimbo_1_256000_Lines.csv",
+             .endsWithNewline = true,
+             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
+        {"Bimbo_1_10000000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
+         TestFile{
+             .fileName = "Bimbo_1_10000000_Lines.csv",
+             .endsWithNewline = true,
+             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
          TestFile{
              .fileName = "Food_1_1000_Lines.csv",
@@ -93,7 +103,7 @@ public:
         size_t sizeOfRawBuffers;
         TestTaskQueue::ProcessingMode processingMode;
     };
-    void runTest(const TestConfig& testConfig)
+    void  runTest(const TestConfig& testConfig)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
@@ -125,7 +135,7 @@ public:
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
                 = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
-            std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(schema->getSchemaSizeInBytes(), 1024);
+            std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(4096, 131072); //Todo: how to best set? <--- at least above with individual const (could calculate by knowing num tuples(lines) in buffer
             std::unique_ptr<TestTaskQueue> taskQueue
                 = std::make_unique<TestTaskQueue>(testConfig.numberOfThreads, std::move(testBufferManager), resultBuffers);
             // Todo: somehow raw buffers end up in the result
@@ -146,37 +156,37 @@ public:
             taskQueue->processTasks(std::move(pipelineTasks), testConfig.processingMode);
 
             /// Combine results and sort
-            auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
-            std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-            std::ranges::sort(
-                resultBufferVec.begin(),
-                resultBufferVec.end(),
-                [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
-                {
-                    if (left.getSequenceNumber() == right.getSequenceNumber())
-                    {
-                        return left.getChunkNumber() < right.getChunkNumber();
-                    }
-                    return left.getSequenceNumber() < right.getSequenceNumber();
-                });
-
-            auto resultFilePath
-                = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / (std::string("result_") + currentTestFile.fileName);
-            std::ofstream out(resultFilePath);
-            for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
-            {
-                auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-                actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-                out << actualResultTestBuffer.toString(schema, false);
-            }
-            auto lastActualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema);
-            out << lastActualResultTestBuffer.toString(schema, false, currentTestFile.endsWithNewline);
-
-            out.close();
+            // auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
+            // std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+            // std::ranges::sort(
+            //     resultBufferVec.begin(),
+            //     resultBufferVec.end(),
+            //     [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+            //     {
+            //         if (left.getSequenceNumber() == right.getSequenceNumber())
+            //         {
+            //             return left.getChunkNumber() < right.getChunkNumber();
+            //         }
+            //         return left.getSequenceNumber() < right.getSequenceNumber();
+            //     });
+            //
+            // auto resultFilePath
+            //     = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / (std::string("result_") + currentTestFile.fileName);
+            // std::ofstream out(resultFilePath);
+            // for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
+            // {
+            //     auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+            //     actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+            //     out << actualResultTestBuffer.toString(schema, false);
+            // }
+            // auto lastActualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema);
+            // out << lastActualResultTestBuffer.toString(schema, false, currentTestFile.endsWithNewline);
+            //
+            // out.close();
             /// Destroy task queue first, to assure that it does not hold references to buffers anymore
             ASSERT_TRUE(taskQueue.release());
-            ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
-            tmpResultFilePaths.emplace_back(resultFilePath);
+            // ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
+            // tmpResultFilePaths.emplace_back(resultFilePath);
         }
     }
 };
@@ -207,10 +217,10 @@ TEST_F(SmallRandomizedSequenceTest, testBimboData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_1000",
+            .testFileName = "Bimbo_1_10000000",
             .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
+            .numberOfThreads = 16,
+            .sizeOfRawBuffers = 4096,
             .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }
 

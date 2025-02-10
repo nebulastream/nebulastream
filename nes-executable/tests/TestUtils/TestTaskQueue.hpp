@@ -26,6 +26,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -339,6 +340,8 @@ private:
         auto lastWorkerThread = NES::WorkerThreadId(NES::WorkerThreadId::INITIAL);
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
         numInFlightTasks = testTasks.size();
+        NES::Timer<std::chrono::microseconds> timer("Task execution timer");
+        timer.start();
         do
         {
             addNewTaskMutex.lock();
@@ -378,7 +381,6 @@ private:
             }
         } while (numInFlightTasks.load() != 0);
 
-
         auto reduceInFlightTasks = [this]() { --numInFlightTasks; };
         // std::cout << "num tasks left: " << testTasks.size() << std::endl;
         // Todo: there might still be in-flight buffers <-- remove?
@@ -398,6 +400,9 @@ private:
             .reduceInFlightTasks = std::move(reduceInFlightTasks)};
         workerThreads.assign_work(idxOfWorkerThreadForFlushTask, std::move(workTask));
         workerThreads.wait();
+        timer.pause();
+
+        NES_DEBUG("Total execution time: {}ms", (timer.getRuntime() / 1000.0));
     }
 
 private:

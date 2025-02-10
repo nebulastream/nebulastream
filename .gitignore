@@ -1,3 +1,6 @@
+#Todo: remove
+nes-input-formatters/tests/UnitTests/testdata
+
 # IDE specific Files
 .idea
 .settings

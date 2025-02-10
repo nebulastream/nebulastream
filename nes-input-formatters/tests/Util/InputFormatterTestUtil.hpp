@@ -252,7 +252,7 @@ std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTempla
         testHandle.schema,
         testHandle.testConfig.parserConfig.tupleDelimiter,
         testHandle.testConfig.parserConfig.fieldDelimiter);
-    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
+    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
     std::vector<TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
@@ -383,7 +383,7 @@ std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(st
         validatedParserConfiguration.tupleDelimiter,
         validatedParserConfiguration.fieldDelimiter);
 
-    return std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
+    return std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
