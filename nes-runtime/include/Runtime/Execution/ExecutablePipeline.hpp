@@ -233,6 +233,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     void propagateEndOfStream(ReconfigurationMessage& task);
 
+    void sendBuffers(OperatorHandlerPtr operatorHandler, WorkerContext& context);
+
     const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
@@ -242,7 +244,9 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
     std::atomic<bool> isMigrationPipeline;
-    // ThreadBarrierPtr barrier = std::make_shared<ThreadBarrier>(4);
+    ThreadBarrierPtr preSerBarrier = std::make_shared<ThreadBarrier>(4);
+    std::condition_variable conditionSerialized;
+    std::once_flag serializeOnceFlag;
     std::mutex serializeMtx;
     std::atomic<bool> serialized = false;
     std::atomic<PipelineStatus> pipelineStatus;
