@@ -47,8 +47,8 @@ namespace NES::Systest
 std::vector<LoadedQueryPlan> loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
-    const std::string& testFileName,
-    const std::string& testDataDir)
+    std::string_view testFileName,
+    const std::filesystem::path& testDataDir)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};

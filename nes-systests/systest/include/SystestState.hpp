@@ -41,7 +41,7 @@ using TestGroup = std::string;
 struct Query
 {
     static std::filesystem::path
-    resultFile(const std::filesystem::path& workingDir, const TestName& testName, const uint64_t queryIdInTestFile)
+    resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
     {
         auto resultDir = workingDir / "results";
         if (not is_directory(resultDir))
@@ -53,7 +53,7 @@ struct Query
         return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
     }
 
-    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, const TestName& testName, const uint64_t sourceId)
+    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
     {
         auto sourceDir = workingDir / "sources";
         if (not is_directory(sourceDir))
