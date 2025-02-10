@@ -365,7 +365,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
 
-    const auto sourceDescriptor = Sources::SourceDescriptor(schema, "TestSource", "File", std::move(validatedSourceConfiguration));
+    const auto sourceDescriptor = Sources::SourceDescriptor(schema, "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
 
     return Sources::SourceProvider::lower(
         NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);

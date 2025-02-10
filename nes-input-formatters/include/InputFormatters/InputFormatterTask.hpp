@@ -66,7 +66,7 @@ using EmitFunction = std::function<void(const OriginId, InputFormatterTaskReturn
 class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    explicit InputFormatterTask(std::unique_ptr<InputFormatter> inputFormatter);
+    explicit InputFormatterTask(OriginId originId, std::unique_ptr<InputFormatter> inputFormatter);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;
@@ -88,6 +88,7 @@ public:
         return os;
     };
 private:
+    OriginId originId;
     std::unique_ptr<SequenceShredder> sequenceShredder;
     std::unique_ptr<InputFormatter> inputFormatter;
 };

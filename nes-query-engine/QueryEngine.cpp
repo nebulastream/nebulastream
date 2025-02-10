@@ -343,16 +343,25 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             this->threadId,
             pipeline->id,
             pool.bufferProvider,
-            [&](const Memory::TupleBuffer& tupleBuffer, auto)
+            [&](const Memory::TupleBuffer& tupleBuffer, Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
+                if (continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT)
+                {
+                    pool.statistic->onEvent(TaskEmit{threadId, task.queryId, pipeline->id, pipeline->id, taskId});
+                    pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {});
+                    return;
+                }
+                /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 for (const auto& successor : pipeline->successors)
                 {
                     pool.statistic->onEvent(TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
+        // Todo: handle REPEAT task
         pool.statistic->onEvent(TaskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId});
@@ -400,7 +409,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
-    INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
+    // INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
     INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {

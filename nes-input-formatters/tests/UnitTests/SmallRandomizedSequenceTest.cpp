@@ -189,7 +189,7 @@ public:
 //  -> requires different way to handle state
 
 
-// [ ] 5. new design for Informar (chunk/synchronize/parse)
+// [ ] 5. new design for InputFormatter (chunk/synchronize/parse)
 // [ ] 6. multiple stages per task (allow splitting tasks)
 
 TEST_F(SmallRandomizedSequenceTest, testTwoIntegerColumns)

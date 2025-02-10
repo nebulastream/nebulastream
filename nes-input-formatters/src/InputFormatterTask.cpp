@@ -147,14 +147,14 @@ namespace NES::InputFormatters {
 //  - emits TupleBuffer
 //  - initiates END_SYNCHRONIZATION
 
-InputFormatterTask::InputFormatterTask(std::unique_ptr<InputFormatter> inputFormatter)
-    :  sequenceShredder(std::make_unique<SequenceShredder>(inputFormatter->getSizeOfTupleDelimiter())), inputFormatter(std::move(inputFormatter))
+InputFormatterTask::InputFormatterTask(OriginId originId, std::unique_ptr<InputFormatter> inputFormatter)
+    : originId(originId), sequenceShredder(std::make_unique<SequenceShredder>(inputFormatter->getSizeOfTupleDelimiter())), inputFormatter(std::move(inputFormatter))
 {
 }
 InputFormatterTask::~InputFormatterTask() = default;
 void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-    inputFormatter->flushFinalTuple(pipelineExecutionContext, *sequenceShredder);
+    inputFormatter->flushFinalTuple(originId, pipelineExecutionContext, *sequenceShredder);
 }
 // Todo: think about layouts
 // Todo: do we create a new InputFormatterTask everytime we execute the pipeline?

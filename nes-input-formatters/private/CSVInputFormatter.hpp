@@ -42,6 +42,7 @@ private:
         EMTPY = 0,
         NOT_EMPTY = 1,
     };
+
 public:
     using CastFunctionSignature = std::function<void(
         std::string inputString,
@@ -58,15 +59,17 @@ public:
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
     void parseTupleBufferRaw(
-        const Memory::TupleBuffer& tbRaw,
+        const Memory::TupleBuffer& rawTB,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder) override;
 
     /// Currently always allocates new buffer. Would require keeping state between potentially different states otherwise, since the
     /// stop call of the InputFormatterTask (pipeline) triggers the flush call.
-    void
-    flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) override;
+    void flushFinalTuple(
+        OriginId originId,
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        SequenceShredder& sequenceShredder) override;
 
     size_t getSizeOfTupleDelimiter() override;
     size_t getSizeOfFieldDelimiter() override;

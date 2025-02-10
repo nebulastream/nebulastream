@@ -65,8 +65,8 @@ struct PartialTuple
 class ProgressTracker
 {
 public:
-    ProgressTracker(SequenceNumber sequenceNumber, std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : sequenceNumber(sequenceNumber), chunkNumber(ChunkNumber(1)), tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) { };
+    ProgressTracker(SequenceNumber sequenceNumber, OriginId originId, std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
+        : sequenceNumber(sequenceNumber), chunkNumber(ChunkNumber(1)), originId(originId), tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) { };
 
     ~ProgressTracker() = default;
 
@@ -191,6 +191,7 @@ public:
     {
         tupleBufferFormatted.setSequenceNumber(sequenceNumber);
         tupleBufferFormatted.setChunkNumber(chunkNumber);
+        tupleBufferFormatted.setOriginId(originId);
         this->tupleBufferFormatted = std::move(tupleBufferFormatted);
     }
 
@@ -241,6 +242,7 @@ public:
 private:
     SequenceNumber sequenceNumber;
     ChunkNumber chunkNumber;
+    OriginId originId;
     std::string tupleDelimiter;
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
@@ -452,7 +454,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
 
     /// Creating a ProgressTracker on each call makes the CSVInputFormatter stateless // Todo: instantiate ProgressTracker only if needed, perform prior calculations outside of it
-    auto progressTracker = ProgressTracker(rawTB.getSequenceNumber(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    auto progressTracker = ProgressTracker(rawTB.getSequenceNumber(), rawTB.getOriginId(), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     /// Reset all values that are tied to a specific rawTB.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     // Todo: get of resetting and perform calculations in place
@@ -573,7 +575,7 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(const
 }
 
 void CSVInputFormatter::flushFinalTuple(
-    NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+    OriginId originId, NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
 {
     const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder.flushFinalPartialTuple();
     const auto flushedBuffers = std::move(resultBuffers.stagedBuffers);
@@ -583,7 +585,7 @@ void CSVInputFormatter::flushFinalTuple(
     }
     /// Get the final buffer (size - 1 is dummy buffer that just contains tuple delimiter)
     const auto finalBuffer = flushedBuffers.at(flushedBuffers.size() - 2);
-    auto progressTracker = ProgressTracker(SequenceNumber(sequenceNumberToUseForFlushedTuple), tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
+    auto progressTracker = ProgressTracker(SequenceNumber(sequenceNumberToUseForFlushedTuple), originId, tupleDelimiter, schema.getSchemaSizeInBytes(), schema.getFieldCount());
     /// Allocate formatted buffer to write formatted tuples into.
     progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer()); //Todo: change
     const auto formattedTupleIs = processPartialTuple(0, flushedBuffers.size() - 1, flushedBuffers, progressTracker, pipelineExecutionContext);

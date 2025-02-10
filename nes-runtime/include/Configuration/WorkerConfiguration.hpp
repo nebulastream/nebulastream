@@ -62,7 +62,7 @@ public:
      */
     UIntOption numberOfBuffersInGlobalBufferManager
         = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-           "1024",
+           "2048",
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
