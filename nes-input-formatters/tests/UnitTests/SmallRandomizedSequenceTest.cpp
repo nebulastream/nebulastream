@@ -44,40 +44,27 @@ class SmallRandomizedSequenceTest : public Testing::BaseUnitTest
     struct TestFile
     {
         std::string fileName;
-        size_t fileSizeInBytes;
         bool endsWithNewline;
         std::vector<InputFormatterTestUtil::TestDataTypes> schemaFieldTypes;
-
-        size_t getNumRequiredBuffers(const size_t sizeOfBuffer) const
-        {
-            return (fileSizeInBytes / sizeOfBuffer) + (fileSizeInBytes % sizeOfBuffer != 0);
-        }
     };
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
         {"TwoIntegerColumns",
-         TestFile{
-             .fileName = "TwoIntegerColumns_20_Lines.csv",
-             .fileSizeInBytes = 131,
-             .endsWithNewline = true,
-             .schemaFieldTypes = {INT32, INT32}}},
+         TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .endsWithNewline = true, .schemaFieldTypes = {INT32, INT32}}},
         {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
              .fileName = "Bimbo_1_1000_Lines.csv",
-             .fileSizeInBytes = 41931,
              .endsWithNewline = false,
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
          TestFile{
              .fileName = "Food_1_1000_Lines.csv",
-             .fileSizeInBytes = 31684,
              .endsWithNewline = true,
              .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
          TestFile{
              .fileName = "Spacecraft_Telemetry_1000_Lines.csv",
-             .fileSizeInBytes = 38853,
              .endsWithNewline = true,
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
@@ -93,7 +80,7 @@ public:
     {
         for (const auto& tmpResultFilePath : tmpResultFilePaths)
         {
-            // std::filesystem::remove(tmpResultFilePath);
+            std::filesystem::remove(tmpResultFilePath);
         }
         BaseUnitTest::TearDown();
     }
@@ -111,10 +98,12 @@ public:
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
 
-        const size_t NUM_EXPECTED_RAW_BUFFERS = currentTestFile.getNumRequiredBuffers(testConfig.sizeOfRawBuffers);
+        const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
+        const auto fileSizeInBytes = std::filesystem::file_size(testFilePath);
+        const auto NUM_EXPECTED_RAW_BUFFERS = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
+            + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
         /// Sources sometimes need an extra buffer (reason currently unknown)
         const size_t NUM_REQUIRED_SOURCE_BUFFERS = NUM_EXPECTED_RAW_BUFFERS + 1;
-        const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
 
         /// Create vector for result buffers and create emit function to collect buffers from source
         std::vector<NES::Memory::TupleBuffer> rawBuffers;
@@ -185,7 +174,7 @@ public:
 
             out.close();
             /// Destroy task queue first, to assure that it does not hold references to buffers anymore
-            taskQueue.release();
+            ASSERT_TRUE(taskQueue.release());
             ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
             tmpResultFilePaths.emplace_back(resultFilePath);
         }
@@ -193,9 +182,11 @@ public:
 };
 
 // Todo:
-// Clean up tests:
-// - create more test files, using the map above
-// - create a test with var-sized/Text data
+// - [ ] use InputFormatterTask in SLTs
+// - [ ] clean up TestTaskQueue
+// - [ ] clean up InputFormatterUtils
+// - [ ] clean up CSVInputFormatter (get rid of ProgressTracker and replace with free functions)
+//  -> requires different way to handle state
 
 
 // [ ] 5. new design for Informar (chunk/synchronize/parse)
@@ -203,42 +194,46 @@ public:
 
 TEST_F(SmallRandomizedSequenceTest, testTwoIntegerColumns)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testBimboData)
 {
-    runTest(TestConfig{
-        .testFileName = "Bimbo_1_1000",
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo_1_1000",
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testFoodData)
 {
-    runTest(TestConfig{
-        .testFileName = "Food_1",
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+    runTest(
+        TestConfig{
+            .testFileName = "Food_1",
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testSpaceCraftTelemetryData)
 {
-    runTest(TestConfig{
-        .testFileName = "Spacecraft_Telemetry",
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+    runTest(
+        TestConfig{
+            .testFileName = "Spacecraft_Telemetry",
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }
 
 }
