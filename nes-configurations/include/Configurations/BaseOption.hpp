@@ -36,18 +36,18 @@ public:
     virtual void clear() = 0;
 
     /// Checks if the option is equal to another option.
-    virtual bool operator==(const BaseOption& other);
+    virtual bool operator==(const BaseOption& other) const = 0;
 
-    std::string getName();
+    const std::string& getName() const;
 
-    std::string getDescription();
+    const std::string& getDescription() const;
 
     ///TODO(#336): Overload operator
     /// We want something like friend std::ostream& operator<<(std::ostream& out, const BaseOption& baseOption);
     virtual std::string toString() = 0;
 
     /// Allows the visitor to work on the option
-    virtual void accept(ReadingVisitor&) = 0;
+    virtual void accept(ReadingVisitor&) const = 0;
 
     virtual void accept(WritingVisitor&) = 0;
 

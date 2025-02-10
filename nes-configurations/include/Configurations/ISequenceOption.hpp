@@ -23,5 +23,6 @@ class ISequenceOption : public NES::Configurations::BaseOption
 public:
     ISequenceOption(const std::string& name, const std::string& description) : NES::Configurations::BaseOption(name, description) { }
     virtual BaseOption& operator[](size_t index) = 0;
+    virtual std::unique_ptr<BaseOption> defaultValue() const = 0;
     [[nodiscard]] virtual size_t size() const = 0;
 };

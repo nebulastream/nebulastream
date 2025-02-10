@@ -40,8 +40,9 @@ public:
 
     ScalarOption<T>& operator=(const T& value);
 
-    bool operator==(const BaseOption& other) override;
-    bool operator==(const T& other);
+    bool operator==(const BaseOption& other) const override;
+    bool operator==(const ScalarOption& other) const;
+    bool operator==(const T& other) const;
 
     /// Operator to directly access the value of this option.
     operator T() { return this->value; }
@@ -145,13 +146,20 @@ ScalarOption<T>& ScalarOption<T>::operator=(const T& value)
 }
 
 template <class T>
-bool ScalarOption<T>::operator==(const BaseOption& other)
+bool ScalarOption<T>::operator==(const BaseOption& other) const
 {
     return TypedBaseOption<T>::operator==(other);
 }
 
+
 template <class T>
-bool ScalarOption<T>::operator==(const T& other)
+bool ScalarOption<T>::operator==(const ScalarOption& other) const
+{
+    return this->value == other.value;
+}
+
+template <class T>
+bool ScalarOption<T>::operator==(const T& other) const
 {
     return this->value == other;
 }

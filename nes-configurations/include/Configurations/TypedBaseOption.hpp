@@ -57,6 +57,14 @@ public:
     void setValue(T newValue);
 
     [[nodiscard]] const T& getDefaultValue() const;
+    bool operator==(const BaseOption& other) const override
+    {
+        if (const auto* otherTypeBaseValue = dynamic_cast<const TypedBaseOption*>(&other))
+        {
+            return value == otherTypeBaseValue->value;
+        }
+        return false;
+    }
 
 protected:
     T value;
@@ -67,7 +75,7 @@ protected:
     void isValid(std::string);
 
 public:
-    void accept(ReadingVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ReadingVisitor& visitor) const override { visitor.visit(*this); }
 
     void accept(WritingVisitor& visitor) override { visitor.visit(*this); }
 };

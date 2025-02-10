@@ -42,50 +42,116 @@ public:
         descriptors.push(descriptor);
     }
 
-    void push(BaseOption& option) override
+
+    void push(const ISequenceOption& option) override
     {
-        const auto* descriptor = descriptors.top()->FindFieldByName(option.getName());
+        inSequence.push(true);
+        fieldDescriptor = descriptors.top()->FindFieldByName(option.getName());
+    }
+    void pop(const ISequenceOption&) override
+    {
+        inSequence.pop();
+    }
+    void push(const BaseOption& option) override
+    {
+        /// The top level configuration name is meaning less. Thus we always use root
+        auto optionName = option.getName();
+        if (descriptors.size() == 1)
+        {
+            optionName = "root";
+        }
+
+        const auto* descriptor = descriptors.top()->FindFieldByName(optionName);
         if (descriptor == nullptr)
         {
-            throw InvalidConfigParameter("Field not found: {}", option.getName());
+            throw InvalidConfigParameter("Field not found: {}", optionName);
         }
 
         auto* message = reflections.top()->MutableMessage(messages.top(), descriptor);
         reflections.push(message->GetReflection());
         messages.push(message);
         descriptors.push(message->GetDescriptor());
-
-        if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
+        inSequence.push(false);
     }
 
-    void pop(BaseOption&) override
+    void pop(const BaseOption&) override
     {
+        inSequence.pop();
         reflections.pop();
         messages.pop();
         descriptors.pop();
     }
 
 protected:
-    void visitLeaf(BaseOption& option) override { fieldDescriptor = descriptors.top()->FindFieldByName(option.getName()); }
-    void visitEnum(std::string_view, size_t& value) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value); }
-    void visitUnsignedInteger(size_t& value) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value); }
-    void visitSignedInteger(ssize_t& value) override { reflections.top()->SetInt64(messages.top(), fieldDescriptor, value); }
-    void visitDouble(double& value) override { reflections.top()->SetDouble(messages.top(), fieldDescriptor, value); }
-    void visitBool(bool& value) override { reflections.top()->SetBool(messages.top(), fieldDescriptor, value); }
-    void visitString(std::string& value) override { reflections.top()->SetString(messages.top(), fieldDescriptor, value); }
+    void visitLeaf(const BaseOption& option) override
+    {
+        if (!inSequence.top())
+        {
+            fieldDescriptor = descriptors.top()->FindFieldByName(option.getName());
+        }
+    }
+    void visitEnum(std::string_view, const size_t& value) override { visitUnsignedInteger(value); }
+    void visitUnsignedInteger(const size_t& value) override
+    {
+        if (inSequence.top())
+        {
+            reflections.top()->AddUInt64(messages.top(), fieldDescriptor, value);
+        }
+        else
+        {
+            reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value);
+        }
+    }
+    void visitSignedInteger(const ssize_t& value) override
+    {
+        if (inSequence.top())
+        {
+            reflections.top()->AddInt64(messages.top(), fieldDescriptor, value);
+        }
+        else
+        {
+            reflections.top()->SetInt64(messages.top(), fieldDescriptor, value);
+        }
+    }
+    void visitDouble(const double& value) override
+    {
+        if (inSequence.top())
+        {
+            reflections.top()->AddDouble(messages.top(), fieldDescriptor, value);
+        }
+        else
+        {
+            reflections.top()->SetDouble(messages.top(), fieldDescriptor, value);
+        }
+    }
+    void visitBool(const bool& value) override
+    {
+        if (inSequence.top())
+        {
+            reflections.top()->AddBool(messages.top(), fieldDescriptor, value);
+        }
+        else
+        {
+            reflections.top()->SetBool(messages.top(), fieldDescriptor, value);
+        }
+    }
+    void visitString(const std::string& value) override
+    {
+        if (inSequence.top())
+        {
+            reflections.top()->AddString(messages.top(), fieldDescriptor, value);
+        }
+        else
+        {
+            reflections.top()->SetString(messages.top(), fieldDescriptor, value);
+        }
+    }
 
 private:
     const google::protobuf::FieldDescriptor* fieldDescriptor{};
     std::stack<google::protobuf::Message*> messages;
     std::stack<const google::protobuf::Reflection*> reflections;
     std::stack<const google::protobuf::Descriptor*> descriptors;
+    std::stack<bool> inSequence;
 };
 }

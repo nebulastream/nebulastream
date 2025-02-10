@@ -14,17 +14,22 @@
 
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ReadingVisitor.hpp>
 #include <Configurations/WritingVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
+
 namespace NES::Configurations
 {
+
+
 
 BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) { };
 
@@ -162,25 +167,42 @@ void BaseConfiguration::clear()
     }
 };
 
-void BaseConfiguration::accept(ReadingVisitor& visitor)
+void BaseConfiguration::accept(ReadingVisitor& visitor) const
 {
+    visitor.push(*this);
     for (auto& option : getOptions())
     {
-        visitor.push(*option);
         option->accept(visitor);
-        visitor.pop(*option);
     }
+    visitor.pop(*this);
 };
 
 void BaseConfiguration::accept(WritingVisitor& visitor)
 {
+    visitor.push(*this);
     for (auto& option : getOptions())
     {
-        visitor.push(*option);
         option->accept(visitor);
-        visitor.pop(*option);
     }
+    visitor.pop(*this);
+}
+
+bool BaseConfiguration::operator==(const BaseOption& other) const
+{
+    if (const auto* otherBaseConfiguration = dynamic_cast<const BaseConfiguration*>(&other))
+    {
+        return std::ranges::equal(
+            getOptions(), otherBaseConfiguration->getOptions(), [](const auto& lhs, const auto& rhs) { return *lhs == *rhs; });
+    }
+    return false;
 };
+
+std::vector<const BaseOption*> BaseConfiguration::getOptions() const
+{
+    return const_cast<BaseConfiguration*>(this)->getOptions()
+        | std::views::transform([](const auto& ptr) -> const BaseOption* { return ptr; }) | ranges::to<std::vector>();
+}
+
 
 std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
 {

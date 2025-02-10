@@ -22,6 +22,9 @@
 
 #include <Configurations/ProtobufMessageTypeBuilderOptionVisitor.hpp>
 
+#include "ProtobufDeserializeVisitor.hpp"
+#include "ProtobufSerializeOptionVisitor.hpp"
+
 /// We do not want rebuild every protobuf message type whenever we want to serialize a configuration.
 /// This class caches protobuf message types and provides a convenient way to create a new protobuf message based on a configuration class.
 class ProtobufConfigCache
@@ -45,6 +48,24 @@ public:
         configuration.accept(visitor);
         typeIndexToConfigClassTypeName[std::type_index(typeid(ConfigurationClass))] = typeid(ConfigurationClass).name();
         return getEmptyMessage<ConfigurationClass>();
+    }
+
+    template <typename ConfigurationClass>
+    ConfigurationClass deserialize(google::protobuf::Message* message)
+    {
+        ConfigurationClass configuration("root", "");
+        NES::Configurations::ProtobufDeserializeVisitor serializer(message);
+        configuration.accept(serializer);
+        return configuration;
+    }
+
+    template <typename ConfigurationClass>
+    google::protobuf::Message* serialize(const ConfigurationClass& config)
+    {
+        auto* message = getEmptyMessage<ConfigurationClass>();
+        NES::Configurations::ProtobufSerializeOptionVisitor serializer(message);
+        config.accept(serializer);
+        return message;
     }
 
     void printFile()

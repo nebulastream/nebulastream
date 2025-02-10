@@ -101,6 +101,10 @@ public:
     /// When finishing a BaseOption.
     virtual void pop(BaseOption& option) = 0;
 
+    virtual size_t push(ISequenceOption& option) = 0;
+
+    virtual void pop(ISequenceOption& option) = 0;
+
 protected:
     /// Called for every leaf element. This is called before calling the typed visit functions
     virtual void visitLeaf(BaseOption& option) = 0;

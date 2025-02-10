@@ -53,7 +53,17 @@ public:
         std::cout << "=== Schema in JSON Format ===\n" << jsonFormat << "\n\n";
     }
 
-    void push(BaseOption& option) override
+    std::stack<bool> inSequence;
+    void push(const ISequenceOption& sequenceOption) override
+    {
+        auto defaultValue = sequenceOption.defaultValue();
+        defaultValue->accept(*this);
+        currentField.top()->set_label(google::protobuf::FieldDescriptorProto_Label_LABEL_REPEATED);
+        inSequence.push(true);
+    }
+    void pop(const ISequenceOption&) override { inSequence.pop(); }
+
+    void push(const BaseOption& option) override
     {
         std::string fieldName = option.getName();
         std::string typeName = option.getName() + "_type_name";
@@ -71,42 +81,42 @@ public:
         current.push(type);
         fieldNumber.push(INITIAL_FIELD_NUMBER);
 
-        if (auto* sequenceOption = dynamic_cast<ISequenceOption*>(&option))
-        {
-            for (size_t i = 0; i < sequenceOption->size(); ++i)
-            {
-                push(sequenceOption->operator[](i));
-                sequenceOption->operator[](i).accept(*this);
-                pop(sequenceOption->operator[](i));
-            }
-        }
+        inSequence.push(false);
     }
 
-    void pop(BaseOption&) override
+    void pop(const BaseOption&) override
     {
+        inSequence.pop();
         currentField.pop();
         current.pop();
         fieldNumber.pop();
     }
 
 protected:
-    void visitLeaf(BaseOption& option) override
+    void visitLeaf(const BaseOption& option) override
     {
+        if (inSequence.top())
+        {
+            /// We don't actually care about concrete values of the sequence.
+            /// push(Sequence) will create a single default value which is used to determine the schema.
+            return;
+        }
+
         auto* child = current.top();
         currentField.push(child->add_field());
         currentField.top()->set_name(option.getName());
         currentField.top()->set_number(fieldNumber.top()++);
     }
 
-    void visitEnum(std::string_view, size_t&) override
+    void visitEnum(std::string_view, const size_t&) override
     {
         currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_UINT64);
     }
-    void visitUnsignedInteger(size_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_UINT64); }
-    void visitSignedInteger(ssize_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_INT64); }
-    void visitDouble(double&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_DOUBLE); }
-    void visitBool(bool&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_BOOL); }
-    void visitString(std::string&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_STRING); }
+    void visitUnsignedInteger(const size_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_UINT64); }
+    void visitSignedInteger(const ssize_t&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_INT64); }
+    void visitDouble(const double&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_DOUBLE); }
+    void visitBool(const bool&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_BOOL); }
+    void visitString(const std::string&) override { currentField.top()->set_type(google::protobuf::FieldDescriptorProto_Type_TYPE_STRING); }
 
 
 private:
