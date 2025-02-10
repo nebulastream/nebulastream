@@ -42,7 +42,7 @@ def plot_measurements():
         method = m.group("method")
         buffer_size_str = m.group("buffer_size")
         file_buffer_size_str = m.group("file_buffer_size")
-        keys_str = m.group("keys") or ""
+        keys_str = m.group("keys") or "no_keys"
 
         # Filter out files
         if method == "SAME_FILE_KEYS" or method == "SAME_FILE_PAYLOAD" or buffer_size_str == "262144" or file_buffer_size_str != "0" or keys_str == "":
