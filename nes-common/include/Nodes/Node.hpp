@@ -29,7 +29,6 @@ namespace NES
 class Node : public std::enable_shared_from_this<Node>
 {
 public:
-    Node();
     virtual ~Node() = default;
 
     /**
@@ -373,12 +372,6 @@ private:
      */
     bool visited{false};
     bool recStack{false};
-
-    /**
-     * @brief Stores the stacktrace while node creation.
-     * It is empty if NES_TRACE_NODE_CREATION == false.
-     */
-    std::string stackTrace;
 };
 inline std::ostream& operator<<(std::ostream& os, const Node& node)
 {
