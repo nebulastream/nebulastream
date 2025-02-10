@@ -25,11 +25,10 @@ pattern = re.compile(
     r"micro_benchmarks_SeparationTest_(?P<sep_method>.+)_bufferSize_(?P<buffer_size>\d+)_fileBufferSizePercent_(?P<file_buffer_size>\d+)(?:_keys_(?P<keys>.+))?\.csv"
 )
 
-# Tolerance for the validation of the relation between columns
-tolerance = 0.1
 # Container to hold data from all files
 data_frames = []
 
+# Process each file
 for file in files:
     basename = os.path.basename(file)
     match = pattern.match(basename)
@@ -43,7 +42,7 @@ for file in files:
     file_buffer_size = int(metadata['file_buffer_size'])
     keys = metadata.get('keys') if metadata.get('keys') is not None else "no_keys"
 
-    # Read CSV without header
+    # Read CSV file
     df = pd.read_csv(file, header=None)
 
     # Verify that we have the expected 17 columns
@@ -51,34 +50,40 @@ for file in files:
         print(f"File {basename} does not have 17 columns. Skipping.")
         continue
 
+    df.columns = [f'col{i}' for i in range(1, 18)]
+
+    # Rename columns to clarify their roles
+    df = df.rename(columns={
+        'col1': 'generate_data',
+        'col2': 'write_exec_time',
+        'col3': 'def_var_write',
+        'col4': 'alloc_mem_write',
+        'col5': 'open_file_write',
+        'col6': 'write_buf_write',
+        'col7': 'write_file_write',
+        'col8': 'close_file_write',
+        'col9': 'truncate_file',
+        'col10': 'read_exec_time',
+        'col11': 'def_var_read',
+        'col12': 'alloc_mem_read',
+        'col13': 'open_file_read',
+        'col14': 'write_buf_read',
+        'col15': 'write_mem_read',
+        'col16': 'close_file_read',
+        'col17': 'compare_data'
+    })
+
     # Calculate time to write to file without memory allocation
-    writing_time_option1 = df[1] - df[3]
-    writing_time_option2 = df[2] + df[4] + df[5] + df[6] + df[7]
-    writing_error = np.abs(writing_time_option1 - writing_time_option2)
-    invalid_rows = writing_error > tolerance
-    if invalid_rows.any():
-        num_invalid = invalid_rows.sum()
-        print(f"Warning: Writing phase sanity check failed for {num_invalid} rows for {basename}")
-
-    df["writing_time"] = writing_time_option2
-
-    # Add time to truncate data
-    df["truncating_time"] = df[8]
+    writing_time = df['write_exec_time'] - df['alloc_mem_write']
+    df["writing_time"] = writing_time / 1000
 
     # Calculate time to read from file without memory allocation
-    reading_time_option1 = df[9] - df[11]
-    reading_time_option2 = df[10] + df[12] + df[13] + df[14] + df[15]
-    reading_error = np.abs(reading_time_option1 - reading_time_option2) / reading_time_option1
-    invalid_rows = reading_error > tolerance
-    if invalid_rows.any():
-        num_invalid = invalid_rows.sum()
-        print(f"Warning: Reading phase sanity check failed for {num_invalid} rows for {basename}")
-
-    df["reading_time"] = reading_time_option2
+    reading_time = df['read_exec_time'] - df['alloc_mem_read']
+    df["reading_time"] = reading_time / 1000
 
     # Attach Metadata to each row
     df["sep_method"] = sep_method
-    df["buffer_size"] = buffer_size
+    df["buffer_size"] = int(buffer_size / 1024)
     df["file_buffer_size"] = file_buffer_size
     df["keys"] = keys
 
@@ -91,24 +96,47 @@ if data_frames:
 else:
     raise RuntimeError("No valid CSV files found!")
 
+# Calculate the percentage of execution time for defining variables
+combined_df['def_var_write_percent'] = ((combined_df['def_var_write'] / 1000) / combined_df['write_exec_time']) * 100
+combined_df['def_var_read_percent'] = ((combined_df['def_var_read'] / 1000) / combined_df['read_exec_time']) * 100
+
 # Sort the combined values
 #combined_df = combined_df.sort_values(by="keys", key=lambda x: x.str.len())
 combined_df = combined_df.sort_values(["sep_method", "buffer_size", "file_buffer_size"])
 
-# Select only the columns of interest for plotting
-plot_df = combined_df[["sep_method", "buffer_size", "file_buffer_size", "keys",
-                   "writing_time", "truncating_time", "reading_time"]]
+# Ensure buffer_size is treated as a string for discrete grouping
+#combined_df['buffer_size'] = combined_df['buffer_size'].astype(str)
+
+#%% Remove outliers
+
+multiplier = 1.5
+columns = ["writing_time", "truncate_file", "reading_time"]
+
+mask = pd.Series(True, index=combined_df.index)
+for col in columns:
+    Q1 = combined_df[col].quantile(0.25)
+    Q3 = combined_df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - multiplier * IQR
+    upper_bound = Q3 + multiplier * IQR
+    # Create a mask for rows where the value is within the acceptable range
+    mask &= combined_df[col].between(lower_bound, upper_bound)
+
+filtered_outliers_df = combined_df[mask]
+
+#%%
 
 # ----------------------------
 # 5. Visualization Using Seaborn
 # ----------------------------
+plot_df = combined_df
 sns.set(style="whitegrid")
 
 # Example 1: Bar plots comparing execution times by separation method (with/without keys)
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 sns.barplot(data=plot_df, x="sep_method", y="writing_time", hue="keys", ax=axes[0], estimator=np.mean)
 axes[0].set_title("Writing Time by Separation Method")
-sns.barplot(data=plot_df, x="sep_method", y="truncating_time", hue="keys", ax=axes[1], estimator=np.mean)
+sns.barplot(data=plot_df, x="sep_method", y="truncate_file", hue="keys", ax=axes[1], estimator=np.mean)
 axes[1].set_title("Truncating Time by Separation Method")
 sns.barplot(data=plot_df, x="sep_method", y="reading_time", hue="keys", ax=axes[2], estimator=np.mean)
 axes[2].set_title("Reading Time by Separation Method")
@@ -131,4 +159,25 @@ g2 = sns.relplot(
     style="keys", kind="scatter", height=5, aspect=1.2
 )
 g2.fig.suptitle("Reading Time vs. File Buffer Percentage", y=0.95)
+plt.show()
+
+# Assuming plot_df is your combined DataFrame
+# Plot histograms for each timing column
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+sns.histplot(plot_df["writing_time"], kde=True, ax=axes[0])
+axes[0].set_title("Distribution of Writing Time")
+
+sns.histplot(plot_df["truncate_file"], kde=True, ax=axes[1])
+axes[1].set_title("Distribution of Truncating Time")
+
+sns.histplot(plot_df["reading_time"], kde=True, ax=axes[2])
+axes[2].set_title("Distribution of Reading Time")
+
+plt.tight_layout()
+plt.show()
+
+# Additionally, boxplots can quickly highlight outliers
+sns.boxplot(data=plot_df[["writing_time", "truncate_file", "reading_time"]])
+plt.title("Boxplots of Execution Times")
 plt.show()
