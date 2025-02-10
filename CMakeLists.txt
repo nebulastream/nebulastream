@@ -22,7 +22,6 @@ option(NES_BUILD_NATIVE "Override mtune/march to load native support (might impr
 
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(CODE_COVERAGE "Compute test coverage" OFF)
@@ -76,12 +75,6 @@ endif ()
 
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
-endif ()
-
-# enables tracing of stack traces if operator / function nodes are created
-if (NES_TRACE_NODE_CREATION)
-    add_compile_definitions(NES_TRACE_NODE_CREATION)
-    message(STATUS "Trace node creation")
 endif ()
 
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
