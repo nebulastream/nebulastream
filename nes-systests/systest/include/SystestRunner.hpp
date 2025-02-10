@@ -52,8 +52,8 @@ static constexpr auto padSizeQueryCounter = 3;
 [[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
-    const std::string& testFileName,
-    const std::string& testDataDir);
+    std::string_view testFileName,
+    const std::filesystem::path& testDataDir);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect
