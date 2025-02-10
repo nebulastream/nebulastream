@@ -24,17 +24,6 @@
 namespace NES
 {
 
-Node::Node()
-{
-/// The NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
-/// This can be useful for the debugging of optimizations, but could lead to a substantial performance impact.
-#ifdef NES_TRACE_NODE_CREATION
-    stackTrace = collectAndPrintStacktrace();
-#else
-    stackTrace = "No source location set. Build in debug mode.";
-#endif
-}
-
 bool Node::addChildWithEqual(const std::shared_ptr<Node>& newNode)
 {
     if (newNode.get() == this)
