@@ -152,8 +152,8 @@ void DecomposedQueryPlan::refreshOperatorIds() {
             logicalOperator->addProperty("MIGRATION_FLAG", true);
         }
         if (numberOfSinks == 1 && logicalOperator->as_if<LogicalJoinOperator>()) {
-            std::string file = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file_completed.bin";
-//            std::string file = "recreation_file_completed.bin";
+//            std::string file = "/local-ssd/ankit/sr630-wn-a-10-nes-apr/recreation_file_completed.bin";
+            std::string file = "recreation_file_completed.bin";
             logicalOperator->addProperty("MIGRATION_FILE", file);
         }
         logicalOperator->setId(getNextOperatorId());

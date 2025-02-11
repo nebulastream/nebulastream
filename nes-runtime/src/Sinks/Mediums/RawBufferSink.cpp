@@ -156,6 +156,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
 
         // Update lastWritten to the latest sequence number
         lastWritten = currentSeqNumberAfterAdding;
+        NES_ERROR("last written {}", lastWritten)
     }
 
     return true;
@@ -224,6 +225,8 @@ bool RawBufferSink::writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers) 
     outputFile.write(bulkBuffer.data(), bulkBuffer.size());
 
     numberOfWrittenBuffers += buffers.size();
+
+    NES_ERROR("number of written: {}", numberOfWrittenBuffers);
 
     // Optional: Flush or shutdown logic
     if (numberOfWrittenBuffers == buffers.front().getWatermark()) {
