@@ -337,12 +337,12 @@ void SequenceShredder::incrementTail()
         const auto isResizeInAllowedRange = (nextNumberOfBitmaps <= MAX_NUMBER_OF_BITMAPS);
         if (nextSizePreservesPlacementsOfTail and isResizeInAllowedRange)
         {
-            std::cout << "Resizing: " << numberOfBitmaps << " -> " << (numberOfBitmaps << 1) << std::endl;
+            std::cout << "Resizing: " << numberOfBitmaps << " -> " << (numberOfBitmaps << FIRST_BIT_MASK) << std::endl;
             numberOfBitmaps = nextNumberOfBitmaps;
             numberOfBitmapsModulo = numberOfBitmaps - 1;
             this->tupleDelimiterBitmaps.resize(numberOfBitmaps);
             this->seenAndUsedBitmaps.resize(numberOfBitmaps);
-            this->stagedBuffers.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT); //Todo: no need to erase buffers?
+            this->stagedBuffers.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
             this->tupleDelimiterBitmaps.shrink_to_fit();
             this->seenAndUsedBitmaps.shrink_to_fit();
             this->stagedBuffers.shrink_to_fit();
