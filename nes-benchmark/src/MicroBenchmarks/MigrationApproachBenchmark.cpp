@@ -481,8 +481,8 @@ using namespace NES;
 //            return -1;
 //        }
 
-        auto numberOfIntermediateNodes = 0;
-        auto numberOfBuffersToProduce = 1024;
+        auto numberOfIntermediateNodes = 8;
+        auto numberOfBuffersToProduce = 4096;
         auto defaultBufferSize = 1024;
         //    auto numberOfIntermediateNodes = 1;
         //    auto numberOfBuffersToProduce = 500;
