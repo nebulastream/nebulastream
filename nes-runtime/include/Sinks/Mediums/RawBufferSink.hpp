@@ -92,10 +92,11 @@ class RawBufferSink : public SinkMedium {
   protected:
     Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
     // keep unordered tuple buffers with sequence number as key
-    std::map<uint64_t, Runtime::TupleBuffer> bufferStorage;
+    folly::Synchronized<std::map<uint64_t, Runtime::TupleBuffer>> bufferStorage;
 
     // sequence number of last written tuple buffer
-    uint64_t lastWritten{0};
+    std::atomic<uint64_t> lastWritten{0};
+    std::mutex lastWrittenMtx;
 
     /// The output file path of the file sink.
     std::string filePath;
@@ -110,6 +111,7 @@ class RawBufferSink : public SinkMedium {
     bool isOpen{false};
 
     uint64_t numberOfWrittenBuffers{0};
+    std::atomic<uint64_t> numberOfReceivedBuffers{0};
     uint64_t isClosed{false};
 };
 }// namespace NES

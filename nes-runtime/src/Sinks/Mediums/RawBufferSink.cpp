@@ -105,14 +105,14 @@ void RawBufferSink::shutdown() {
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
+    numberOfReceivedBuffers++;
 
-    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+    // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
     }
-    std::unique_lock lock(writeMutex);
 
     if (!inputBuffer) {
         NES_ERROR("Invalid input buffer");
@@ -121,12 +121,9 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
 
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+    bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
-
-//    if (bufferStorage.capacity() <= bufferSeqNumber) {
-//        bufferStorage.reserve(bufferStorage.capacity() * 2);
-//    }
 
     // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
     const auto seqData = SequenceData(bufferSeqNumber, 1, true);
@@ -136,27 +133,37 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
 
-    bufferStorage[bufferSeqNumber] = inputBuffer;
-
     // TODO: #5033 check this logic
     // check if top value in the queue has changed after adding new sequence number
     if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
-
-        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
-        for (auto it = bufferStorage.lower_bound(lastWritten + 1);
-             it != bufferStorage.upper_bound(currentSeqNumberAfterAdding);
-             ++it) {
-            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
+        if (lastWrittenMtx.try_lock()) {
+            auto bufferStorageLocked = *bufferStorage.rlock();
+            while ((lastWritten + 1) <= currentSeqNumberAfterAdding) {
+                // get tuple buffer with next sequence number after lastWritten and update lastWritten
+                auto nextTupleBufferToBeEmitted = bufferStorageLocked[++lastWritten];
+                // emit next tuple buffer
+                // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
+                writeToTheFile(nextTupleBufferToBeEmitted);
+                // delete emitted tuple buffer from storage
+                 bufferStorage.wlock()->erase(lastWritten);
+            }
+            lastWrittenMtx.unlock();
         }
+    }
 
-        // Write all buffers at once
-        writeBulkToFile(bulkWriteBatch);
-
-        // Update lastWritten to the latest sequence number
-        lastWritten = currentSeqNumberAfterAdding;
-        NES_ERROR("last written {}", lastWritten)
+    if (numberOfReceivedBuffers == inputBuffer.getWatermark()) {
+        lastWrittenMtx.lock();
+        auto bufferStorageLocked = *bufferStorage.rlock();
+        while ((lastWritten + 1) <= inputBuffer.getWatermark()) {
+            // get tuple buffer with next sequence number after lastWritten and update lastWritten
+            auto nextTupleBufferToBeEmitted = bufferStorageLocked[++lastWritten];
+            // emit next tuple buffer
+            // NOTE: emit buffer must be called, as dispatch buffer will put buffer to the task queue and won't guarantee the order
+            writeToTheFile(nextTupleBufferToBeEmitted);
+            // delete emitted tuple buffer from storage
+            bufferStorage.wlock()->erase(lastWritten);
+        }
+        lastWrittenMtx.unlock();
     }
 
     return true;
@@ -179,13 +186,14 @@ bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
     outputFile.write(buffer.data(), buffer.size());
 
     numberOfWrittenBuffers++;
-    // outputFile.flush();
+
+    // NES_ERROR("number of written: {}", numberOfWrittenBuffers);
 
     if (numberOfWrittenBuffers == numberOfBuffers) {
         shutdown();
         isClosed = true;
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_ERROR("finished transferring {} at {}", time, numberOfWrittenBuffers);
+        // NES_ERROR("finished transferring {} at {}", time, numberOfWrittenBuffers);
     }
     return true;
 }
