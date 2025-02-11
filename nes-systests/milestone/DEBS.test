@@ -3,7 +3,13 @@
 # groups: [milestone, benchmark]
 
 # Source definitions
-TODO: add missing sources from IoTropolis.tar.gz
+SourceCSV solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp SOLAR_PANELS_TOPIC.csv
+SourceCSV windTurbines INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp WIND_TURBINES_TOPIC.csv
+SourceCSV households INT32 consumerId INT32 sectorId FLOAT64 consumedPower STRING consumerType UINT64 timestamp HOUSEHOLDS_TOPIC.csv
+SourceCSV factories INT32 consumerId INT32 sectorId FLOAT64 consumedPower STRING consumerType UINT64 timestamp FACTORIES_TOPIC.CSV
+SourceCSV offices INT32 consumerId INT32 sectorId FLOAT64 consumedPower STRING consumerType UINT64 timestamp OFFICES_TOPIC.CSV
+SourceCSV streetLights INT32 consumerId INT32 sectorId FLOAT64 consumedPower STRING consumerType UINT64 timestamp STREET_LIGHTS-TOPIC.csv
+
 
 # Query 1 - Filter tuples
 SELECT * FROM consumers WHERE consumedPower >= 400 INTO SINK;

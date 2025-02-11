@@ -23,7 +23,37 @@ SELECT * FROM bid WHERE auctionId % 123 = 0 INTO CHECKSUM;
 
 
 # Query 5
-TODO: Implement this query as it is missing
+SELECT L.auctionId, L.num
+FROM (
+    SELECT
+        auctionId,
+        COUNT(*) AS num,
+        WINDOW_START AS start
+    FROM bid
+    GROUP BY auctionId
+    WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+) AS L
+JOIN (
+    SELECT
+        auctionId,
+        MAX(num) AS max,
+        WINDOW_START AS start
+    FROM (
+        SELECT
+            auctionId,
+            COUNT(*) AS num,
+            WINDOW_START AS start
+        FROM bid
+        GROUP BY auctionId
+        WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)
+    ) AS temp
+    GROUP BY auctionId
+    WINDOW TUMBLING(start, SIZE 10 SEC)
+) AS R
+  ON L.start = R.start
+WINDOW SLIDING(L.start, SIZE 10 SEC, ADVANCE BY 2 SEC)
+WHERE L.num >= R.max
+INTO SINK;
 ----
 
 
