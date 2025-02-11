@@ -134,7 +134,7 @@ public:
         {
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
-            auto testBufferManager = Memory::BufferManager::create(4096, 131072);
+            auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 131072);
 
             std::vector<TestablePipelineTask> pipelineTasks;
             pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
@@ -190,7 +190,7 @@ TEST_F(SmallRandomizedSequenceTest, testBimboData)
         TestConfig{
             .testFileName = "Bimbo_1_10000000",
             .numberOfIterations = 1,
-            .numberOfThreads = 1,
+            .numberOfThreads = 32,
             .sizeOfRawBuffers = 4096,
             .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }

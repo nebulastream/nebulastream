@@ -156,7 +156,7 @@ public:
         {
             /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
             /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            checkAndHandleFullBuffer(pipelineExecutionContext);
+            checkAndHandleFullBuffer(pipelineExecutionContext); // Todo: can count number tuples and simply iterate for as long as possible (or breakt
 
             /// Get next tuple
             const auto currentTuple = getNextTuple();

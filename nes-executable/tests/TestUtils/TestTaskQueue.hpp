@@ -379,8 +379,6 @@ private:
         } while (numInFlightTasks.load() != 0);
 
         auto reduceInFlightTasks = [this]() { --numInFlightTasks; };
-        // std::cout << "num tasks left: " << testTasks.size() << std::endl;
-        // Todo: there might still be in-flight buffers <-- remove?
         workerThreads.wait();
         /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
         const auto idxOfWorkerThreadForFlushTask = lastWorkerThread.getRawValue();
