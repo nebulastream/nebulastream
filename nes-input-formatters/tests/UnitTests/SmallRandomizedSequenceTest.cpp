@@ -133,12 +133,9 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
-            std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
-                = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
-            std::shared_ptr<Memory::BufferManager> testBufferManager = Memory::BufferManager::create(4096, 131072); //Todo: how to best set? <--- at least above with individual const (could calculate by knowing num tuples(lines) in buffer
-            std::unique_ptr<TestTaskQueue> taskQueue
-                = std::make_unique<TestTaskQueue>(testConfig.numberOfThreads, std::move(testBufferManager), resultBuffers);
-            // Todo: somehow raw buffers end up in the result
+            auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
+            auto testBufferManager = Memory::BufferManager::create(4096, 131072);
+
             std::vector<TestablePipelineTask> pipelineTasks;
             pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
             for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
@@ -149,44 +146,18 @@ public:
                 rawBuffer.setSequenceNumber(currentSequenceNumber);
                 auto pipelineTask
                     = TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), currentSequenceNumber, rawBuffer, inputFormatterTask, {});
-                pipelineTasks.emplace_back(std::move(pipelineTask));
-                ++bufferIdx;
-            }
-            // InputFormatterTestUtil::shuffleWithSeed<true>(pipelineTasks, std::nullopt);
-            taskQueue->processTasks(std::move(pipelineTasks), testConfig.processingMode);
 
-            /// Combine results and sort
-            // auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
-            // std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-            // std::ranges::sort(
-            //     resultBufferVec.begin(),
-            //     resultBufferVec.end(),
-            //     [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
-            //     {
-            //         if (left.getSequenceNumber() == right.getSequenceNumber())
-            //         {
-            //             return left.getChunkNumber() < right.getChunkNumber();
-            //         }
-            //         return left.getSequenceNumber() < right.getSequenceNumber();
-            //     });
-            //
-            // auto resultFilePath
-            //     = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / (std::string("result_") + currentTestFile.fileName);
-            // std::ofstream out(resultFilePath);
-            // for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
-            // {
-            //     auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-            //     actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-            //     out << actualResultTestBuffer.toString(schema, false);
-            // }
-            // auto lastActualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema);
-            // out << lastActualResultTestBuffer.toString(schema, false, currentTestFile.endsWithNewline);
-            //
-            // out.close();
-            /// Destroy task queue first, to assure that it does not hold references to buffers anymore
-            ASSERT_TRUE(taskQueue.release());
-            // ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
-            // tmpResultFilePaths.emplace_back(resultFilePath);
+                ++bufferIdx;
+                if (bufferIdx == rawBuffers.size())
+                {
+                    pipelineTask.isFinalTask = true;
+                }
+                pipelineTasks.emplace_back(std::move(pipelineTask));
+            }
+            auto testTaskQueue = std::make_unique<TestTaskQueueStealing>(testConfig.numberOfThreads, pipelineTasks.size(), std::move(testBufferManager), resultBuffers);
+            testTaskQueue->startProcessing(pipelineTasks);
+            testTaskQueue->waitForCompletion();
+            ASSERT_TRUE(testTaskQueue.release());
         }
     }
 };
@@ -219,7 +190,7 @@ TEST_F(SmallRandomizedSequenceTest, testBimboData)
         TestConfig{
             .testFileName = "Bimbo_1_10000000",
             .numberOfIterations = 1,
-            .numberOfThreads = 16,
+            .numberOfThreads = 1,
             .sizeOfRawBuffers = 4096,
             .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }

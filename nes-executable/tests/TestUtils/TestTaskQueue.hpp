@@ -17,6 +17,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <condition_variable>
 #include <functional>
 #include <future>
+#include <latch>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -110,17 +111,14 @@ private:
 
     /// Member functions
     std::ostream& toString(std::ostream& os) const override { return os; } //Todo
-    void start(NES::Runtime::Execution::PipelineExecutionContext&) override
-    { /* noop */
-    }
-    void stop(NES::Runtime::Execution::PipelineExecutionContext&) override
-    { /* noop */
-    }
+    void start(NES::Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
+    void stop(NES::Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
 };
 
 class TestablePipelineTask
 {
 public:
+    TestablePipelineTask() : isFinalTask(false), workerThreadId(NES::WorkerThreadId(NES::WorkerThreadId::INVALID)), sequenceNumber(NES::SequenceNumber::INVALID) {};
     TestablePipelineTask(
         NES::WorkerThreadId workerThreadId,
         NES::SequenceNumber sequenceNumber,
@@ -336,7 +334,6 @@ private:
 
     void startProcessing(const ProcessingMode processingMode)
     {
-        // Todo: convert testTask to MPMC quue to get rid of lock?
         auto lastWorkerThread = NES::WorkerThreadId(NES::WorkerThreadId::INITIAL);
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
         numInFlightTasks = testTasks.size();
@@ -414,4 +411,66 @@ private:
     TestWorkerThreadPool workerThreads;
     std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
+};
+
+class TestTaskQueueStealing
+{
+public:
+    struct WorkTask
+    {
+        TestablePipelineTask task;
+        std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
+    };
+
+    TestTaskQueueStealing(
+        const size_t numThreads,
+        const size_t numTasks,
+        std::shared_ptr<NES::Memory::BufferManager> bufferProvider,
+        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
+        : numberOfWorkerThreads(numThreads), bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers)), threadTasks(numTasks), completionLatch(numThreads)
+    {
+    }
+
+    void startProcessing(const std::vector<TestablePipelineTask>& testTasks)
+    {
+        for (const auto& testTask : testTasks)
+        {
+            auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider);
+            pipelineExecutionContext->setTemporaryResultBuffers(this->resultBuffers);
+
+            threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
+        }
+        for (size_t i = 0; i < numberOfWorkerThreads; ++i)
+        {
+            threads.emplace_back([this, i] { thread_function(i); });
+        }
+    }
+
+    /// Wait for all threads to complete
+    void waitForCompletion() {
+        completionLatch.wait();
+    }
+
+private:
+    uint64_t numberOfWorkerThreads;
+    std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?
+    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
+    folly::MPMCQueue<WorkTask> threadTasks;
+    std::latch completionLatch;
+    std::vector<std::jthread> threads;
+
+    void thread_function(size_t threadIdx)
+    {
+        WorkTask task{};
+        while (threadTasks.readIfNotEmpty(task))
+        {
+            task.pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(threadIdx);
+            task.task.execute(*task.pipelineExecutionContext);
+            if (task.task.isFinalTask)
+            {
+                task.task.getExecutablePipelineStage()->stop(*task.pipelineExecutionContext);
+            }
+        }
+        completionLatch.count_down();
+    }
 };
