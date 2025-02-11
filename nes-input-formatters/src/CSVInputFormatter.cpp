@@ -119,10 +119,11 @@ public:
         const boost::tokenizer tupleTokenizer{currentTuple.begin(), currentTuple.end(), sep};
         /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
         // size_t currentFieldOffset = currentFieldOffsetTBFormatted;
+        auto& bufferManager = *pipelineExecutionContext.getBufferManager();
         for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
         {
             const auto fieldPointer = this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted;
-            parseFunction(token, fieldPointer, *pipelineExecutionContext.getBufferManager(), getTupleBufferFormatted());
+            parseFunction(token, fieldPointer, bufferManager, getTupleBufferFormatted());
             currentFieldOffsetTBFormatted += fieldSize;
         }
     }
