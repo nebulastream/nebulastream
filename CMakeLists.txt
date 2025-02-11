@@ -176,16 +176,6 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 # folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
-# jemalloc
-option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
-message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
-if (CMAKE_ENABLE_JEMALLOC)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(JEMALLOC jemalloc)
-    pkg_search_module(JEMALLOC REQUIRED jemalloc)
-    include_directories(${JEMALLOC_INCLUDE_DIRS})
-    set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
-endif ()
 # lcryto is required for asio to communicate
 if (APPLE)
     find_library(SSL_LIB libssl.a REQUIRED)
