@@ -154,11 +154,6 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
                 const auto& groups = testfile.groups;
                 return std::any_of(groups.begin(), groups.end(), [&expectedGroup](const auto& group) { return group == expectedGroup; });
             });
-        if (!found)
-        {
-            std::cerr << "Unknown group '" << expectedGroup << "'!" << std::endl;
-            std::exit(1);
-        }
         config.testGroup = expectedGroup;
     }
 
