@@ -26,6 +26,7 @@ RUN apt update -y && apt install \
     openssl \
     ccache \
     ninja-build \
+    autoconf \
     -y
 
 # install llvm based toolchain

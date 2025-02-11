@@ -36,6 +36,7 @@
     "folly",
     "grpc",
     "gtest",
+    "jemalloc",
     "libcuckoo",
     "magic-enum",
     "nlohmann-json",

@@ -67,6 +67,13 @@ find_package(yaml-cpp   CONFIG REQUIRED)
 find_package(folly      CONFIG REQUIRED)
 target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly)
 
+# broken, c.f. TODO #669: jemalloc conflicts with folly
+option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
+if (CMAKE_ENABLE_JEMALLOC)
+    find_library(JEMALLOC_LIB jemalloc REQUIRED)
+    target_link_libraries(nes-common PUBLIC ${JEMALLOC_LIB})
+endif ()
+
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
