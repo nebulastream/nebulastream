@@ -106,7 +106,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
 
-    // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
