@@ -81,9 +81,11 @@ for file in files:
     reading_time = df['read_exec_time'] - df['alloc_mem_read']
     df["reading_time"] = reading_time / 1000
 
+    df["truncating_time"] = df['truncate_file'] / 1000
+
     # Attach Metadata to each row
     df["sep_method"] = sep_method
-    df["buffer_size"] = int(buffer_size / 1024)
+    df["buffer_size"] = buffer_size
     df["file_buffer_size"] = file_buffer_size
     df["keys"] = keys
 
@@ -96,22 +98,24 @@ if data_frames:
 else:
     raise RuntimeError("No valid CSV files found!")
 
+# Add total execution time
+combined_df['execution_time'] = combined_df["writing_time"] + combined_df["reading_time"] + combined_df["truncating_time"]
+
 # Calculate the percentage of execution time for defining variables
-combined_df['def_var_write_percent'] = ((combined_df['def_var_write'] / 1000) / combined_df['write_exec_time']) * 100
-combined_df['def_var_read_percent'] = ((combined_df['def_var_read'] / 1000) / combined_df['read_exec_time']) * 100
+combined_df['def_var_write_percent'] = ((combined_df['def_var_write'] / 1000) / combined_df['writing_time']) * 100
+combined_df['def_var_read_percent'] = ((combined_df['def_var_read'] / 1000) / combined_df['reading_time']) * 100
+
+# Calculate the assumed percentage of creating pagedVector of defining variables for reading
+combined_df["alloc_pv_read_percent"] = ((combined_df["def_var_read"] - combined_df["def_var_write"]) / combined_df['def_var_read']) * 100
 
 # Sort the combined values
-#combined_df = combined_df.sort_values(by="keys", key=lambda x: x.str.len())
 combined_df = combined_df.sort_values(["sep_method", "buffer_size", "file_buffer_size"])
-
-# Ensure buffer_size is treated as a string for discrete grouping
-#combined_df['buffer_size'] = combined_df['buffer_size'].astype(str)
 
 #%% Remove outliers
 
 multiplier = 1.5
 filtered_outliers_groups = []
-columns_to_clean = ["writing_time", "truncate_file", "reading_time"]
+columns_to_clean = ["writing_time", "truncating_time", "reading_time"]
 group_columns = ["sep_method", "buffer_size", "file_buffer_size", "keys"]
 
 # Loop over each group and remove outliers
@@ -132,124 +136,288 @@ for group_name, group in combined_df.groupby(group_columns):
     
 filtered_outliers_df = pd.concat(filtered_outliers_groups, ignore_index=True)
 
-#%%
+#%% General overview using stacked barplot
 
-# --- Step 1: Select Representative Buffer Sizes and File Buffer Sizes ---
 plot_df = filtered_outliers_df
 
 # Choose three representative values for each
-selected_buffer_sizes = [1, 4, 16]
-selected_file_buffer_sizes = [0, 60, 100]
-selected_keys = ["no_keys", "f0_f1", "f0_f1_f2_f3_f4", "f0_f5", "f0_f2_f4_f6_f8"]
+selected_buffer_sizes = [1024, 4096, 16384]
+selected_file_buffer_sizes = [0, 100]
+selected_keys = ["no_keys", "f0_f1_f2_f3_f4", "f0_f2_f4_f6_f8"]
 
 # Filter the DataFrame for only these values:
-subset_plot_df = plot_df[
+subset1= plot_df[
     (plot_df['buffer_size'].isin(selected_buffer_sizes)) &
     (plot_df['file_buffer_size'].isin(selected_file_buffer_sizes) &
     (plot_df['keys'].isin(selected_keys)))
 ].copy()
 
-# --- Step 2: Aggregate by Separation Method ---
-# For the overall view, let’s group by separation method (ignoring keys for now)
-# and compute the mean execution times of the phases.
-grouped = subset_plot_df.groupby("sep_method").agg({
-    "writing_time": "mean",
-    "truncate_file": "mean",
-    "reading_time": "mean"
+#############################################
+# Group and Aggregate Data
+#############################################
+
+# Group by all four configuration columns and compute the mean of each timing metric.
+grouped = subset1.groupby(['sep_method', 'buffer_size', 'file_buffer_size', 'keys']).agg({
+    'writing_time': 'mean',
+    'truncating_time': 'mean',
+    'reading_time': 'mean'
 }).reset_index()
 
-# --- Step 3: Create a Stacked Barplot using matplotlib ---
+# Sort for consistency (first by sep_method, then buffer_size, then file_buffer, then keys)
+grouped = grouped.sort_values(['sep_method', 'buffer_size', 'file_buffer_size', 'keys']).reset_index(drop=True)
 
-# We want a stacked bar where:
-# - The bottom segment is writing_time,
-# - Then truncating_time is stacked on top,
-# - Then reading_time is on top.
-labels = grouped['sep_method']
-writing = grouped['writing_time']
-truncating = grouped['truncate_file']
-reading = grouped['reading_time']
+#############################################
+# Determine x Positions and Prepare Tiered Labels
+#############################################
 
-x = np.arange(len(labels))  # label locations
-width = 0.6  # width of the bars
+# We will create three tiers:
+#   Tier 1 (top): sep_method
+#   Tier 2 (middle): buffer_size
+#   Tier 3 (bottom): file_buffer and keys (we combine these for the final tick labels)
 
-fig, ax = plt.subplots(figsize=(10, 6))
+positions = []           # x positions for each bar
+tick_labels = []         # bottom-tier label (file_buffer & keys)
+buffer_labels = {}       # For each (sep_method, buffer_size), store center x position
+sep_labels = {}          # For each sep_method, store center x position
 
-# Plot the three segments of the stacked bar
-bar1 = ax.bar(x, writing, width, label='Writing Time')
-bar2 = ax.bar(x, truncating, width, bottom=writing, label='Truncating Time')
-bar3 = ax.bar(x, reading, width, bottom=writing+truncating, label='Reading Time')
+current_x = 0
+# Iterate over sep_method groups.
+for sep in grouped['sep_method'].unique():
+    df_sep = grouped[grouped['sep_method'] == sep]
+    sep_positions = []  # positions for this sep_method group
+    # Within each sep_method, group by buffer_size.
+    for buf in df_sep['buffer_size'].unique():
+        df_sep_buf = df_sep[df_sep['buffer_size'] == buf]
+        buf_positions = []  # positions for this buffer_size group
+        # For each row (file_buffer, keys) in this group:
+        for _, row in df_sep_buf.iterrows():
+            positions.append(current_x)
+            sep_positions.append(current_x)
+            buf_positions.append(current_x)
+            # Create a label combining file_buffer and keys.
+            tick_labels.append(f"F:{int(row['file_buffer_size'])} K:{row['keys']}")
+            current_x += 1
+        # Leave a small gap after each buffer_size group.
+        # Record the center position for the buffer_size label.
+        buffer_labels[(sep, buf)] = np.mean(buf_positions)
+        current_x += 0.5
+    # Record the center position for the sep_method group.
+    sep_labels[sep] = np.mean(sep_positions)
+    # Leave a larger gap between sep_method groups.
+    current_x += 1
 
+#############################################
+# Create the Stacked Bar Plot
+#############################################
+
+# Prepare the values for the three timing metrics.
+# (Ensure that the order in 'grouped' matches the order of positions.)
+writing = grouped['writing_time'].values
+truncating = grouped['truncating_time'].values
+reading = grouped['reading_time'].values
+
+fig, ax = plt.subplots(figsize=(24, 8))
+width = 0.8
+
+# Plot the stacked bars.
+bar1 = ax.bar(positions, writing, width, label='Writing Time')
+bar2 = ax.bar(positions, truncating, width, bottom=writing, label='Truncating Time')
+bar3 = ax.bar(positions, reading, width, bottom=writing+truncating, label='Reading Time')
+
+# Set the bottom (tier 3) x-tick labels.
+ax.set_xticks(positions)
+ax.set_xticklabels(tick_labels, rotation=45, ha='right')
+
+#############################################
+# Add Tiered Labels Above the x-axis
+#############################################
+
+ymax = ax.get_ylim()[1]
+y_offset = ymax * 0.02  # offset for text above the axis
+
+# Tier 2: buffer_size labels (placed below the top tier but above the tick labels)
+for (sep, buf), pos in buffer_labels.items():
+    ax.text(pos, -y_offset*14, f"BufferSize: {int(buf)}", ha='center', va='top', fontsize=10, fontweight='medium')
+
+# Tier 1: sep_method labels (placed at the very top)
+for sep, pos in sep_labels.items():
+    ax.text(pos, -y_offset*16, sep, ha='center', va='top', fontsize=12, fontweight='bold')
+
+# Adjust the bottom margin to make room for the multi-tier labels.
+plt.subplots_adjust(bottom=0.25)
 ax.set_ylabel('Execution Time')
-ax.set_title('Average Execution Times (Stacked) by Separation Method\n(for 3 representative buffer sizes and file buffer sizes)')
-ax.set_xticks(x)
-ax.set_xticklabels(labels, rotation=45)
+ax.set_title('Overview: Execution Times by Configuration\n(Selected BufferSizes, FileBufferSizes, and Keys)')
 ax.legend()
 
-plt.tight_layout()
 plt.show()
 
-#%%
+#%% Impact of bufferSize and fileBufferSize on execution times
 
-# Create a new column for the accumulated execution time:
-plot_df['total_time'] = plot_df['writing_time'] + plot_df['truncate_file'] + plot_df['reading_time']
+subset2 = plot_df[
+    (plot_df['buffer_size'] != 131072) &
+    (plot_df['file_buffer_size'] == 0) &
+    (plot_df['keys'].isin(selected_keys))
+].copy()
 
-# Plot writing time vs. buffer_size with separation method as hue, and facet by keys.
-sns.relplot(
-    data=plot_df, 
-    x="buffer_size", y="writing_time", 
-    hue="sep_method", 
-    col="keys", 
-    kind="line", 
-    marker="o", 
+# Melt the DataFrame so that we have one column for phase and one for its execution time
+melted2 = pd.melt(subset2,
+                  id_vars=['buffer_size', 'sep_method', 'keys'],
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
+
+# Create a line plots
+g2 = sns.relplot(
+    data=melted2,
+    x='buffer_size', y='time', hue='sep_method',
+    col='phase', style='keys',
+    kind='line', marker='o',
     facet_kws={'sharey': False, 'sharex': True},
-    height=4, aspect=1.2, 
-    estimator=np.mean  # using mean values; you could also try median
+    height=4, aspect=1.2,
+    estimator=np.mean
 )
-plt.suptitle("Writing Time vs. Buffer Size", y=1.05)
+g2.set_titles("{col_name}")
+g2.fig.suptitle('Impact of buffer_size on Execution Times', y=1.03)
 plt.show()
 
-# Similarly, you could plot total_time or reading_time vs. buffer_size.
+subset3 = plot_df[
+    (plot_df['buffer_size'] == 4096) &
+    (plot_df['keys'].isin(selected_keys))
+].copy()
+
+# Melt the DataFrame so that we have one column for phase and one for its execution time
+melted3 = pd.melt(subset3,
+                  id_vars=['file_buffer_size', 'sep_method', 'keys'],
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
+
+# Create a line plots
+g3 = sns.relplot(
+    data=melted3,
+    x='file_buffer_size', y='time', hue='sep_method',
+    col='phase', style='keys',
+    kind='line', marker='o',
+    facet_kws={'sharey': False, 'sharex': True},
+    height=4, aspect=1.2,
+    estimator=np.mean
+)
+g3.set_titles("{col_name}")
+g3.fig.suptitle('Impact of file_buffer_size on Execution Times', y=1.03)
+plt.show()
+
+subset4 = plot_df[
+    (plot_df['buffer_size'] == 4096) &
+    (plot_df['file_buffer_size'] == 0)
+].copy()
+
+# Melt the DataFrame so that we have one column for phase and one for its execution time
+melted4 = pd.melt(subset4,
+                  id_vars=['keys', 'sep_method'],
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
+
+# Create a line plots
+g4 = sns.relplot(
+    data=melted4,
+    x='keys', y='time', hue='sep_method',
+    col='phase',
+    kind='line', marker='o',
+    facet_kws={'sharey': False, 'sharex': True},
+    height=4, aspect=2,
+    estimator=np.mean
+)
+for ax in g4.axes.flat:
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+g4.set_titles("{col_name}")
+g4.fig.suptitle('Impact of file_buffer_size on Execution Times', y=1.03)
+plt.show()
 
 #%%
 
-sns.relplot(
-    data=plot_df, 
-    x="file_buffer_size", y="total_time", 
-    hue="sep_method", 
-    style="keys", 
-    kind="scatter", 
-    height=5, aspect=1.2
-)
-plt.title("Total Execution Time vs. File Buffer Size")
-plt.show()
+subset3 = plot_df[
+    (plot_df['buffer_size'] == 4096) &
+    (plot_df['file_buffer_size'] == 0) &
+    (plot_df['keys'] == "f0_f1")
+].copy()
 
-#%%
+# Group by separation method.
+grouped_sep = subset3.groupby('sep_method').agg({
+    'writing_time': 'mean',
+    'truncating_time': 'mean',
+    'reading_time': 'mean'
+}).reset_index()
+
+# Melt the DataFrame for a grouped (side-by-side) bar plot.
+melted3 = pd.melt(grouped_sep,
+                  id_vars='sep_method',
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
 
 plt.figure(figsize=(10,6))
-sns.boxplot(data=plot_df, x="sep_method", y="total_time", hue="keys")
-plt.title("Total Execution Time by Separation Method\n(comparing configurations with/without keys)")
-plt.xticks(rotation=45)
+sns.barplot(data=melted3, x='sep_method', y='time', hue='phase')
+plt.title('Execution Times by Separation Method\n(buffer_size = 4096, file_buffer = 0, keys = f0_f1)')
+plt.ylabel('Execution Time')
+plt.xlabel('Separation Method')
 plt.tight_layout()
 plt.show()
 
 #%%
 
-# Melt the DataFrame so that timing columns are in one column
-melted = pd.melt(plot_df, 
-                 id_vars=["sep_method", "buffer_size", "file_buffer_size", "keys"],
-                 value_vars=["writing_time", "truncate_file", "reading_time"],
-                 var_name="phase", value_name="time")
+subset4 = plot_df[
+    (plot_df['buffer_size'] == 4096) &
+    (plot_df['file_buffer_size'] == 0) &
+    (plot_df['keys'].isin(selected_keys))
+].copy()
 
-# Plot a barplot showing the average time per phase for each separation method:
-sns.catplot(
-    data=melted, 
-    x="sep_method", y="time", hue="phase", 
-    kind="bar", height=6, aspect=1.2,
-    ci="sd"
+# Group by separation method and keys.
+grouped_sep_keys = subset4.groupby(['sep_method', 'keys']).agg({
+    'writing_time': 'mean',
+    'truncating_time': 'mean',
+    'reading_time': 'mean'
+}).reset_index()
+
+# Melt the data for a grouped bar plot.
+melted4 = pd.melt(grouped_sep_keys,
+                  id_vars=['sep_method', 'keys'],
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
+
+# Use a facet grid to show each phase separately.
+g4 = sns.catplot(
+    data=melted4, x='sep_method', y='time', hue='keys', col='phase',
+    kind='bar', height=4, aspect=1.2, ci="sd"
 )
-plt.title("Average Execution Time per Phase by Separation Method")
-plt.xticks(rotation=45)
-plt.tight_layout()
+g4.fig.suptitle('Execution Times by Separation Method & Keys\n(buffer_size = 4096, file_buffer = 0)', y=1.05)
+plt.show()
+
+#%%
+
+subset5 = plot_df[
+    (plot_df['buffer_size'] == 4096) &
+    (plot_df['keys'].isin(selected_keys))
+].copy()
+
+# Melt for plotting.
+melted5 = pd.melt(subset5,
+                  id_vars=['file_buffer_size', 'sep_method', 'keys'],
+                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
+                  var_name='phase',
+                  value_name='time')
+
+# Create a line plot with separate facets for each phase.
+g5 = sns.relplot(
+    data=melted5,
+    x='file_buffer_size', y='time', hue='sep_method', style='keys',
+    col='phase', kind='line', marker='o',
+    facet_kws={'sharey': False, 'sharex': True},
+    height=4, aspect=1.2, estimator=np.mean
+)
+g5.set_titles("{col_name}")
+g5.fig.suptitle('Impact of file_buffer (buffer_size = 4096) on Execution Times', y=1.03)
 plt.show()
 
 # for group_key, group_data in combined_df.groupby(group_columns):
