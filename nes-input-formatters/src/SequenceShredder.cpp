@@ -36,13 +36,14 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter)
     , numberOfBitmapsModulo(INITIAL_NUM_BITMAPS - 1)
     , resizeRequestCount(0)
     , stagedBuffers(std::vector<StagedBuffer>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
-    , stagedBufferUses(std::vector<std::atomic<int8_t>>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
+    , stagedBufferUses(std::vector<std::shared_ptr<std::atomic<int8_t>>>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
 {
     this->tupleDelimiterBitmaps.shrink_to_fit();
     this->seenAndUsedBitmaps.shrink_to_fit();
 
     tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
     stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
+    stagedBufferUses[0] = std::make_shared<std::atomic<int8_t>>(1);
 }
 
 SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size_t initialNumBitmaps)
@@ -53,13 +54,14 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size
         , numberOfBitmapsModulo(initialNumBitmaps - 1)
         , resizeRequestCount(0)
         , stagedBuffers(std::vector<StagedBuffer>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
-        , stagedBufferUses(std::vector<std::atomic<int8_t>>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
+        , stagedBufferUses(std::vector<std::shared_ptr<std::atomic<int8_t>>>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
 {
     this->tupleDelimiterBitmaps.shrink_to_fit();
     this->seenAndUsedBitmaps.shrink_to_fit();
 
     tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
     stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
+    stagedBufferUses[0] = std::make_shared<std::atomic<int8_t>>(1);
 };
 
 bool SequenceShredder::isSequenceNumberInRange(const SequenceNumberType sequenceNumber)
@@ -109,7 +111,7 @@ std::pair<SequenceShredder::StagedBufferResult, SequenceShredder::SequenceNumber
             const auto bitOfLastSequenceNumber = FIRST_BIT_MASK << (offsetToNextLargerSequenceNumber - 1);
             const auto hasTupleDelimiter = static_cast<bool>(tupleDelimiterBitmap & bitOfLastSequenceNumber);
             const auto bufferIdxOfLargestSequenceNumber = largestSequenceNumber & (stagedBuffers.size() - 1);
-            const auto numUsesOfLastSequenceNumber = stagedBufferUses[bufferIdxOfLargestSequenceNumber].load();
+            const auto numUsesOfLastSequenceNumber = stagedBufferUses[bufferIdxOfLargestSequenceNumber]->load();
             const auto largestSequenceNumberProducedBufferAlready = hasTupleDelimiter and numUsesOfLastSequenceNumber != 2;
             /// We can safely use the next larger sequence number, if the there is at least one formatted buffer, with the current largest sequence number
             const auto sequenceNumberToUseForFlushedTuple = (largestSequenceNumberProducedBufferAlready) ? nextLargestSequenceNumber : largestSequenceNumber;
@@ -149,12 +151,12 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
     /// Set the bit in the correct bitmap, depending on whether it contains a tuple delimiter or not.
     if constexpr (HasTupleDelimiter)
     {
-        stagedBufferUses[sequenceNumberBufferPosition] = 2;
+        stagedBufferUses[sequenceNumberBufferPosition] = std::make_shared<std::atomic<int8_t>>(2);
         tupleDelimiterBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
     }
     else
     {
-        stagedBufferUses[sequenceNumberBufferPosition] = 1;
+        stagedBufferUses[sequenceNumberBufferPosition] = std::make_shared<std::atomic<int8_t>>(1);
         seenAndUsedBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
     }
 
@@ -343,6 +345,7 @@ void SequenceShredder::incrementTail()
             this->tupleDelimiterBitmaps.resize(numberOfBitmaps);
             this->seenAndUsedBitmaps.resize(numberOfBitmaps);
             this->stagedBuffers.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
+            this->stagedBufferUses.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
             this->tupleDelimiterBitmaps.shrink_to_fit();
             this->seenAndUsedBitmaps.shrink_to_fit();
             this->stagedBuffers.shrink_to_fit();
@@ -500,7 +503,7 @@ SequenceShredder::StagedBufferResult SequenceShredder::checkResultsWithoutTupleD
         const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
         auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
         /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = --stagedBufferUses[adjustedSpanningTupleIndex];
+        const auto newUses = --(*stagedBufferUses[adjustedSpanningTupleIndex]);
         auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
         spanningTupleBuffers.emplace_back(std::move(returnBuffer));
     }
@@ -551,7 +554,7 @@ SequenceShredder::StagedBufferResult SequenceShredder::checkResultsWithTupleDeli
         const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
         auto currentBuffer = stagedBuffers[adjustedSpanningTupleIndex];
         /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --stagedBufferUses[adjustedSpanningTupleIndex] : stagedBufferUses[adjustedSpanningTupleIndex].load();
+        const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --(*stagedBufferUses[adjustedSpanningTupleIndex]) : stagedBufferUses[adjustedSpanningTupleIndex]->load();
         // std::atomic_ref<int> atomicUses(currentBuffer.uses);
         // atomicUses -= returningMoreThanOnlyBufferOfSequenceNumber;
         auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;

@@ -191,7 +191,7 @@ private:
     size_t numberOfBitmapsModulo;
     size_t resizeRequestCount;
     std::vector<StagedBuffer> stagedBuffers;
-    std::vector<std::atomic<int8_t>> stagedBufferUses;
+    std::vector<std::shared_ptr<std::atomic<int8_t>>> stagedBufferUses;
 
     struct BitmapSnapshot
     {
