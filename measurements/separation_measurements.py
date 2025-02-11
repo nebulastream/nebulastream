@@ -110,74 +110,169 @@ combined_df = combined_df.sort_values(["sep_method", "buffer_size", "file_buffer
 #%% Remove outliers
 
 multiplier = 1.5
-columns = ["writing_time", "truncate_file", "reading_time"]
+filtered_outliers_groups = []
+columns_to_clean = ["writing_time", "truncate_file", "reading_time"]
+group_columns = ["sep_method", "buffer_size", "file_buffer_size", "keys"]
 
-mask = pd.Series(True, index=combined_df.index)
-for col in columns:
-    Q1 = combined_df[col].quantile(0.25)
-    Q3 = combined_df[col].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - multiplier * IQR
-    upper_bound = Q3 + multiplier * IQR
-    # Create a mask for rows where the value is within the acceptable range
-    mask &= combined_df[col].between(lower_bound, upper_bound)
+# Loop over each group and remove outliers
+for group_name, group in combined_df.groupby(group_columns):
+    mask = pd.Series(True, index=group.index)
 
-filtered_outliers_df = combined_df[mask]
+    for col in columns_to_clean:
+        Q1 = group[col].quantile(0.25)
+        Q3 = group[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - multiplier * IQR
+        upper_bound = Q3 + multiplier * IQR
+
+        # Create a mask for rows where the value is within the acceptable range
+        mask &= group[col].between(lower_bound, upper_bound)
+
+    filtered_outliers_groups.append(group[mask])
+    
+filtered_outliers_df = pd.concat(filtered_outliers_groups, ignore_index=True)
 
 #%%
 
-# ----------------------------
-# 5. Visualization Using Seaborn
-# ----------------------------
-plot_df = combined_df
-sns.set(style="whitegrid")
+# --- Step 1: Select Representative Buffer Sizes and File Buffer Sizes ---
+plot_df = filtered_outliers_df
 
-# Example 1: Bar plots comparing execution times by separation method (with/without keys)
-fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-sns.barplot(data=plot_df, x="sep_method", y="writing_time", hue="keys", ax=axes[0], estimator=np.mean)
-axes[0].set_title("Writing Time by Separation Method")
-sns.barplot(data=plot_df, x="sep_method", y="truncate_file", hue="keys", ax=axes[1], estimator=np.mean)
-axes[1].set_title("Truncating Time by Separation Method")
-sns.barplot(data=plot_df, x="sep_method", y="reading_time", hue="keys", ax=axes[2], estimator=np.mean)
-axes[2].set_title("Reading Time by Separation Method")
+# Choose three representative values for each
+selected_buffer_sizes = [1, 4, 16]
+selected_file_buffer_sizes = [0, 60, 100]
+selected_keys = ["no_keys", "f0_f1", "f0_f1_f2_f3_f4", "f0_f5", "f0_f2_f4_f6_f8"]
+
+# Filter the DataFrame for only these values:
+subset_plot_df = plot_df[
+    (plot_df['buffer_size'].isin(selected_buffer_sizes)) &
+    (plot_df['file_buffer_size'].isin(selected_file_buffer_sizes) &
+    (plot_df['keys'].isin(selected_keys)))
+].copy()
+
+# --- Step 2: Aggregate by Separation Method ---
+# For the overall view, let’s group by separation method (ignoring keys for now)
+# and compute the mean execution times of the phases.
+grouped = subset_plot_df.groupby("sep_method").agg({
+    "writing_time": "mean",
+    "truncate_file": "mean",
+    "reading_time": "mean"
+}).reset_index()
+
+# --- Step 3: Create a Stacked Barplot using matplotlib ---
+
+# We want a stacked bar where:
+# - The bottom segment is writing_time,
+# - Then truncating_time is stacked on top,
+# - Then reading_time is on top.
+labels = grouped['sep_method']
+writing = grouped['writing_time']
+truncating = grouped['truncate_file']
+reading = grouped['reading_time']
+
+x = np.arange(len(labels))  # label locations
+width = 0.6  # width of the bars
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plot the three segments of the stacked bar
+bar1 = ax.bar(x, writing, width, label='Writing Time')
+bar2 = ax.bar(x, truncating, width, bottom=writing, label='Truncating Time')
+bar3 = ax.bar(x, reading, width, bottom=writing+truncating, label='Reading Time')
+
+ax.set_ylabel('Execution Time')
+ax.set_title('Average Execution Times (Stacked) by Separation Method\n(for 3 representative buffer sizes and file buffer sizes)')
+ax.set_xticks(x)
+ax.set_xticklabels(labels, rotation=45)
+ax.legend()
+
 plt.tight_layout()
 plt.show()
 
-# Example 2: Line plot showing the impact of buffer size on writing time.
-g = sns.relplot(
-    data=plot_df, x="buffer_size", y="writing_time", hue="sep_method",
-    col="keys", kind="line", marker="o", facet_kws={'sharey': False, 'sharex': True},
-    height=4, aspect=1.2, estimator=np.mean
+#%%
+
+# Create a new column for the accumulated execution time:
+plot_df['total_time'] = plot_df['writing_time'] + plot_df['truncate_file'] + plot_df['reading_time']
+
+# Plot writing time vs. buffer_size with separation method as hue, and facet by keys.
+sns.relplot(
+    data=plot_df, 
+    x="buffer_size", y="writing_time", 
+    hue="sep_method", 
+    col="keys", 
+    kind="line", 
+    marker="o", 
+    facet_kws={'sharey': False, 'sharex': True},
+    height=4, aspect=1.2, 
+    estimator=np.mean  # using mean values; you could also try median
 )
-g.set_titles("Keys: {col_name}")
-g.fig.suptitle("Writing Time vs. Buffer Size", y=1.05)
+plt.suptitle("Writing Time vs. Buffer Size", y=1.05)
 plt.show()
 
-# Example 3: Scatter plot showing the impact of file-buffer percentage on reading time.
-g2 = sns.relplot(
-    data=plot_df, x="file_buffer_size", y="reading_time", hue="sep_method",
-    style="keys", kind="scatter", height=5, aspect=1.2
+# Similarly, you could plot total_time or reading_time vs. buffer_size.
+
+#%%
+
+sns.relplot(
+    data=plot_df, 
+    x="file_buffer_size", y="total_time", 
+    hue="sep_method", 
+    style="keys", 
+    kind="scatter", 
+    height=5, aspect=1.2
 )
-g2.fig.suptitle("Reading Time vs. File Buffer Percentage", y=0.95)
+plt.title("Total Execution Time vs. File Buffer Size")
 plt.show()
 
-# Assuming plot_df is your combined DataFrame
-# Plot histograms for each timing column
-fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+#%%
 
-sns.histplot(plot_df["writing_time"], kde=True, ax=axes[0])
-axes[0].set_title("Distribution of Writing Time")
-
-sns.histplot(plot_df["truncate_file"], kde=True, ax=axes[1])
-axes[1].set_title("Distribution of Truncating Time")
-
-sns.histplot(plot_df["reading_time"], kde=True, ax=axes[2])
-axes[2].set_title("Distribution of Reading Time")
-
+plt.figure(figsize=(10,6))
+sns.boxplot(data=plot_df, x="sep_method", y="total_time", hue="keys")
+plt.title("Total Execution Time by Separation Method\n(comparing configurations with/without keys)")
+plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
 
-# Additionally, boxplots can quickly highlight outliers
-sns.boxplot(data=plot_df[["writing_time", "truncate_file", "reading_time"]])
-plt.title("Boxplots of Execution Times")
+#%%
+
+# Melt the DataFrame so that timing columns are in one column
+melted = pd.melt(plot_df, 
+                 id_vars=["sep_method", "buffer_size", "file_buffer_size", "keys"],
+                 value_vars=["writing_time", "truncate_file", "reading_time"],
+                 var_name="phase", value_name="time")
+
+# Plot a barplot showing the average time per phase for each separation method:
+sns.catplot(
+    data=melted, 
+    x="sep_method", y="time", hue="phase", 
+    kind="bar", height=6, aspect=1.2,
+    ci="sd"
+)
+plt.title("Average Execution Time per Phase by Separation Method")
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.show()
+
+# for group_key, group_data in combined_df.groupby(group_columns):
+#     # For the corresponding cleaned group, filter clean_df using the same configuration.
+#     subset_filtered = filtered_outliers_df.copy()
+#     for col, val in zip(group_columns, group_key):
+#         subset_filtered = subset_filtered[subset_filtered[col] == val]
+
+#     # Create a figure with two subplots: left = original, right = cleaned.
+#     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+#     fig.suptitle(f"Configuration: {group_key}", fontsize=14)
+
+#     # Plot boxplots for the original group data.
+#     sns.boxplot(data=group_data[columns_to_clean], ax=axes[0])
+#     axes[0].set_title("Before Outlier Removal")
+#     axes[0].set_ylabel("Execution Time")
+#     axes[0].set_xlabel("Timing Metric")
+
+#     # Plot boxplots for the cleaned group data.
+#     sns.boxplot(data=subset_filtered[columns_to_clean], ax=axes[1])
+#     axes[1].set_title("After Outlier Removal")
+#     axes[1].set_ylabel("Execution Time")
+#     axes[1].set_xlabel("Timing Metric")
+
+#     plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust layout so the suptitle is visible.
+#     plt.show()
