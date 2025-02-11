@@ -110,9 +110,9 @@ class RawBufferSink : public SinkMedium {
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
 
-    uint64_t numberOfWrittenBuffers{0};
+    std::atomic<uint64_t> numberOfWrittenBuffers{0};
     std::atomic<uint64_t> numberOfReceivedBuffers{0};
-    uint64_t isClosed{false};
+    std::atomic<bool> isClosed{false};
 };
 }// namespace NES
 
