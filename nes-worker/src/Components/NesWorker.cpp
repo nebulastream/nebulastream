@@ -360,16 +360,16 @@ Runtime::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
 void NesWorker::runDecisionManager() {
     NES_DEBUG("Decision Manager thread started.");
+    int sleepPeriodMs = workerConfig->loadBalancing;
     while (decisionManagerRunning.load()) {
         auto now = std::chrono::steady_clock::now();
         auto elapsedSec = std::chrono::duration<double>(now - lastMeasurementTime).count();
 
-        auto allQueryStats = nodeEngine->getQueryStatistics(true);
+        auto allQueryStats = nodeEngine->getQueryStatistics(false);
         computePerSecondMetricsAndDecide(allQueryStats, elapsedSec);
 
         lastMeasurementTime = now;
 
-        int sleepPeriodMs = workerConfig->loadBalancing;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepPeriodMs));
     }
     NES_DEBUG("Decision Manager thread stopped.");
