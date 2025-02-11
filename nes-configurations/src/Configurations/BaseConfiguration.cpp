@@ -78,10 +78,9 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
     {
         throw InvalidConfigParameter("Identifier for: {} is not known.", identifier);
     }
-    auto option = optionMap[identifier];
-    if (dynamic_cast<BaseConfiguration*>(option))
+    if (auto* option = dynamic_cast<BaseConfiguration*>(optionMap[identifier]))
     {
-        dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
+        option->overwriteConfigWithCommandLineInput(inputParams);
     }
     else
     {
