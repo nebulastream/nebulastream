@@ -181,7 +181,6 @@ TEST_F(ConfigSerializationTest, SequenceToStringTest)
 
 TEST_F(ConfigSerializationTest, SequenceSerializationTest)
 {
-
     ProtobufConfigCache cache;
 
     struct TestConfig : BaseConfiguration
@@ -225,6 +224,42 @@ TEST_F(ConfigSerializationTest, SequenceSerializationTest)
     auto targetConfig = cache.deserialize<TestConfig>(message);
 
     EXPECT_EQ(sourceConfig, targetConfig);
+}
+
+TEST_F(ConfigSerializationTest, NestedTypeTest)
+{
+    ProtobufConfigCache cache;
+    struct InnerConfig : BaseConfiguration
+    {
+        InnerConfig(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
+        SequenceOption<ScalarOption<uint64_t>> howMany{"HowMany", "HowMany"};
+
+    protected:
+        std::vector<BaseOption*> getOptions() override { return {&howMany}; };
+    };
+    struct TestConfig : BaseConfiguration
+    {
+        TestConfig(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
+
+        SequenceOption<ScalarOption<uint64_t>> howMany{"HowMany", "HowMany"};
+        InnerConfig innerConfig{"inner", "this is inner config"};
+
+    protected:
+        std::vector<BaseOption*> getOptions() override { return {&howMany, &innerConfig}; };
+    };
+
+
+    TestConfig sourceConfig("test", "test");
+    sourceConfig.howMany.add(22);
+    sourceConfig.innerConfig.howMany.add(32);
+    sourceConfig.innerConfig.howMany.add(42);
+
+    auto message = cache.serialize(sourceConfig);
+
+    auto targetConfig = cache.deserialize<TestConfig>(message);
+    EXPECT_EQ(sourceConfig, targetConfig);
+    EXPECT_EQ(targetConfig.howMany[0], 22);
+    EXPECT_EQ(targetConfig.innerConfig.howMany[0], 32);
 }
 
 TEST_F(ConfigSerializationTest, SerializationTest)

@@ -72,25 +72,30 @@ TEST_F(ConfigHelpMessageTest, GenerateHelpMessageForDifferentTypes)
         SequenceOption<InnerConfiguration> e{"E", "This is Option E"};
         InnerConfiguration f{"F", "This is Option F"};
         ScalarOption<float> g{"G", "1.25", "This is Option G"};
+        TestConfig() : BaseConfiguration("TestConfig", "A Description") {}
 
     protected:
         std::vector<BaseOption*> getOptions() override { return {&a, &b, &c, &d, &e, &f, &g}; }
     };
 
+    TestConfig config;
+
+    config.a.setValue("123123");
+
     std::stringstream helpMessage;
-    Configurations::generateHelp<TestConfig>(helpMessage);
+    Configurations::print(config, helpMessage);
 
     EXPECT_EQ(
         helpMessage.str(),
-        R"(
-A: This is Option A (False, String)
-B: This is Option B (42, Unsigned Integer)
-C: This is Option C (YES, Enum)
-D: This is Option D (-42, Signed Integer)
-E: This is Option E (Multiple)
-F: This is Option F
-    B: This is Inner Option B (54, Unsigned Integer)
-G: This is Option G (1.25, Float))");
+        R"(TestConfig: A Description
+    A: 123123
+    B: This is Option B (42, Unsigned Integer)
+    C: This is Option C (YES, Enum)
+    D: This is Option D (-42, Signed Integer)
+    E: This is Option E (Multiple)
+    F: This is Option F
+        B: This is Inner Option B (54, Unsigned Integer)
+    G: This is Option G (1.25, Float))");
 }
 
 TEST_F(ConfigHelpMessageTest, GenerateHelpMessageSequence)
@@ -115,7 +120,7 @@ TEST_F(ConfigHelpMessageTest, GenerateHelpMessageSequence)
             sequenceOfIntegers.add(UIntOption{"second", "2", "second int"});
             sequenceOfIntegers.add(UIntOption{"third", "3", "third int"});
         }
-        Config() : Config("DefaultName", "DefaultDescription") { }
+        Config() : Config("Config", "DefaultDescription") { }
 
         std::vector<BaseOption*> getOptions() override
         {
@@ -131,23 +136,12 @@ TEST_F(ConfigHelpMessageTest, GenerateHelpMessageSequence)
     Configurations::generateHelp<Config>(helpMessage);
     EXPECT_EQ(
         helpMessage.str(),
-        R"(
-Strings: A sequence of strings. (Multiple)
-    first: first string (Are, String)
-    second: second string (we, String)
-    third: third string (testing, String)
-Floats: A sequence of floats. (Multiple)
-    first: first float (2.1, Float)
-    second: second float (2.2, Float)
-    third: third float (2.3, Float)
-Booleans: A sequence of booleans. (Multiple)
-    first: first bool (True, Bool)
-    second: second bool (False, Bool)
-    third: third bool (True, Bool)
-Integers: A sequence of integers. (Multiple)
-    first: first int (1, Unsigned Integer)
-    second: second int (2, Unsigned Integer)
-    third: third int (3, Unsigned Integer))");
+        R"(Config: DefaultDescription
+    Strings: A sequence of strings. (Multiple)
+    Floats: A sequence of floats. (Multiple)
+    Booleans: A sequence of booleans. (Multiple)
+    Integers: A sequence of integers. (Multiple)
+)");
 }
 
 }

@@ -104,7 +104,7 @@ void SequenceOption<T>::accept(ReadingVisitor& visitor) const
     visitor.push(static_cast<const ISequenceOption&>(*this));
     for (auto& option : options)
     {
-        visitor.visit(option);
+        option.accept(visitor);
     }
     visitor.pop(static_cast<const ISequenceOption&>(*this));
 }
@@ -116,7 +116,7 @@ void SequenceOption<T>::accept(WritingVisitor& visitor)
     options = std::vector<T>(numberOfItems, {this->getName(), this->getDescription()});
     for (auto& option : options)
     {
-        visitor.visit(option);
+        option.accept(visitor);
     }
     visitor.pop(static_cast<ISequenceOption&>(*this));
 }
