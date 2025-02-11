@@ -158,34 +158,6 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-# folly relies on boost so we set the right configuration flag
-set(Boost_NO_WARN_NEW_VERSIONS TRUE)
-
-# jemalloc
-option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
-message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
-if (CMAKE_ENABLE_JEMALLOC)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(JEMALLOC jemalloc)
-    pkg_search_module(JEMALLOC REQUIRED jemalloc)
-    include_directories(${JEMALLOC_INCLUDE_DIRS})
-    set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
-endif ()
-# lcryto is required for asio to communicate
-if (APPLE)
-    find_library(SSL_LIB libssl.a REQUIRED)
-    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
-    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif ()
-if (UNIX AND NOT APPLE)
-    find_package(OpenSSL REQUIRED)
-    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
-endif ()
-
-# GRPC and protobuf
-set(gRPC_RELEASE "v1.28.1")
-# This assumes that gRPC and all its dependencies are already installed
-# on this system, so they can be located by find_package().
 
 # Find Protobuf installation
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
