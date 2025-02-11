@@ -62,6 +62,46 @@ jobs:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
+  test-other-configs:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    name: "Build and tests: ${{matrix.cmake_args.name}}"
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake_args:
+          - name: tupleBuffer_debugging
+            arg: -DCMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS=ON
+        stdlib: [ libcxx, libstdcxx ]
+        build_type: [ RelWithDebInfo, Debug ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      - name: Configure NebulaStream
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }}
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}.xml
+          path: /junit.xml
+
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long-running-tests:
     needs: [ build-and-test ]
