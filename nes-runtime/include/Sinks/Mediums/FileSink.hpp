@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 
 namespace NES {
 
@@ -91,6 +92,9 @@ class FileSink : public SinkMedium {
      */
     bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
   protected:
+
+    bool writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite);
+
     /// The output file path of the file sink.
     std::string filePath;
 
@@ -106,6 +110,15 @@ class FileSink : public SinkMedium {
     std::vector<uint64_t> arrivalTimestamps;
 //    int sockfd;
     bool timestampAndWriteToSocket;
+    std::atomic<uint64_t> numberOfWrittenBuffers{0};
+    std::atomic<uint64_t> numberOfReceivedBuffers{0};
+    Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
+    // keep unordered tuple buffers with sequence number as key
+    folly::Synchronized<std::map<uint64_t, Runtime::TupleBuffer>> bufferStorage;
+
+    // sequence number of last written tuple buffer
+    std::atomic<uint64_t> lastWritten{0};
+    std::mutex lastWrittenMtx;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
