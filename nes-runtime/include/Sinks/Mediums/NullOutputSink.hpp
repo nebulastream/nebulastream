@@ -81,10 +81,8 @@ class NullOutputSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
- std::atomic<uint64_t> processedCount{0};
- std::chrono::steady_clock::time_point lastMeasureTime;
- std::ofstream throughputFile;
- static constexpr int LOG_INTERVAL_SECONDS = 1;
+
+ std::ofstream statisticsFile;
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES

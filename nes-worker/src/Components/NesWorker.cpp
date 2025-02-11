@@ -369,7 +369,8 @@ void NesWorker::runDecisionManager() {
 
         lastMeasurementTime = now;
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        int sleepPeriodMs = workerConfig->loadBalancing;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepPeriodMs));
     }
     NES_DEBUG("Decision Manager thread stopped.");
 }

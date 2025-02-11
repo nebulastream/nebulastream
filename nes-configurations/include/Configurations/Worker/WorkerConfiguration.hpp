@@ -306,10 +306,10 @@ class WorkerConfiguration : public BaseConfiguration {
  * @brief Number of buffers per epoch
  * Set trimming frequency for upstream backup
  */
- BoolOption loadBalancing = {LOAD_BALANCING,
-                                       "false",
-                                       "Is load balancing enabled.",
-                                       {std::make_shared<BooleanValidation>()}};
+ UIntOption loadBalancing = {LOAD_BALANCING,
+                                       "1000",
+                                       "Load balancing frequency.",
+                                       {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief Configuration queryManagerMode

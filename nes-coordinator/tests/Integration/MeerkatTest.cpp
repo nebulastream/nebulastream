@@ -117,98 +117,98 @@ public:
 
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->numberOfBuffersPerEpoch = 2;
-        coordinatorConfig->worker.loadBalancing = true;
+        coordinatorConfig->worker.loadBalancing = 1000;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 2;
         workerConfig1->numWorkerThreads = 1;
-        workerConfig1->loadBalancing = true;
+        workerConfig1->loadBalancing = 1000;
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 2;
         workerConfig2->numWorkerThreads = 1;
         workerConfig2->numberOfBuffersInGlobalBufferManager = 1024;
-        workerConfig2->loadBalancing = true;
+        workerConfig2->loadBalancing = 1000;
 
         workerConfig3 = WorkerConfiguration::create();
         workerConfig3->numberOfBuffersPerEpoch = 2;
         workerConfig3->numWorkerThreads = 1;
-        workerConfig3->loadBalancing = true;
+        workerConfig3->loadBalancing = 1000;
 
         workerConfig4 = WorkerConfiguration::create();
         workerConfig4->numberOfBuffersPerEpoch = 2;
         workerConfig4->numWorkerThreads = 1;
-        workerConfig4->loadBalancing = true;
+        workerConfig4->loadBalancing = 1000;
 
         workerConfig5 = WorkerConfiguration::create();
         workerConfig5->numberOfBuffersPerEpoch = 2;
         workerConfig5->numWorkerThreads = 1;
-        workerConfig5->loadBalancing = true;
+        workerConfig5->loadBalancing = 1000;
 
         workerConfig6 = WorkerConfiguration::create();
         workerConfig6->numberOfBuffersPerEpoch = 2;
         workerConfig6->numWorkerThreads = 1;
-        workerConfig6->loadBalancing = true;
+        workerConfig6->loadBalancing = 1000;
 
         workerConfig7 = WorkerConfiguration::create();
         workerConfig7->numberOfBuffersPerEpoch = 2;
         workerConfig7->numWorkerThreads = 1;
-        workerConfig7->loadBalancing = true;
+        workerConfig7->loadBalancing = 1000;
 
         workerConfig8 = WorkerConfiguration::create();
         workerConfig8->numberOfBuffersPerEpoch = 2;
         workerConfig8->numWorkerThreads = 1;
-        workerConfig8->loadBalancing = true;
+        workerConfig8->loadBalancing = 1000;
 
         workerConfig9 = WorkerConfiguration::create();
         workerConfig9->numberOfBuffersPerEpoch = 2;
         workerConfig9->numWorkerThreads = 1;
-        workerConfig9->loadBalancing = true;
+        workerConfig9->loadBalancing = 1000;
 
         workerConfig10 = WorkerConfiguration::create();
         workerConfig10->numberOfBuffersPerEpoch = 2;
         workerConfig10->numWorkerThreads = 1;
-        workerConfig10->loadBalancing = true;
+        workerConfig10->loadBalancing = 1000;
 
         workerConfig11 = WorkerConfiguration::create();
         workerConfig11->numberOfBuffersPerEpoch = 2;
         workerConfig11->numWorkerThreads = 1;
-        workerConfig11->loadBalancing = true;
+        workerConfig11->loadBalancing = 1000;
 
         workerConfig12 = WorkerConfiguration::create();
         workerConfig12->numberOfBuffersPerEpoch = 2;
         workerConfig12->numWorkerThreads = 1;
-        workerConfig12->loadBalancing = true;
+        workerConfig12->loadBalancing = 1000;
 
         workerConfig13 = WorkerConfiguration::create();
         workerConfig13->numberOfBuffersPerEpoch = 2;
         workerConfig13->numWorkerThreads = 1;
-        workerConfig13->loadBalancing = true;
+        workerConfig13->loadBalancing = 1000;
 
         workerConfig14 = WorkerConfiguration::create();
         workerConfig14->numberOfBuffersPerEpoch = 2;
         workerConfig14->numWorkerThreads = 1;
-        workerConfig14->loadBalancing = true;
+        workerConfig14->loadBalancing = 1000;
 
         workerConfig15 = WorkerConfiguration::create();
         workerConfig15->numberOfBuffersPerEpoch = 2;
         workerConfig15->numWorkerThreads = 1;
-        workerConfig15->loadBalancing = true;
+        workerConfig15->loadBalancing = 1000;
 
         workerConfig16 = WorkerConfiguration::create();
         workerConfig16->numberOfBuffersPerEpoch = 2;
         workerConfig16->numWorkerThreads = 1;
-        workerConfig16->loadBalancing = true;
+        workerConfig16->loadBalancing = 1000;
 
         workerConfig17 = WorkerConfiguration::create();
         workerConfig17->numberOfBuffersPerEpoch = 2;
         workerConfig17->numWorkerThreads = 1;
-        workerConfig17->loadBalancing = true;
+        workerConfig17->loadBalancing = 1000;
 
         workerConfig18 = WorkerConfiguration::create();
         workerConfig18->numberOfBuffersPerEpoch = 2;
         workerConfig18->numWorkerThreads = 1;
-        workerConfig18->loadBalancing = true;
+        workerConfig18->loadBalancing = 1000;
 
         inputSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -403,7 +403,6 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
     // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
-    EXPECT_TRUE(wrkMid1->stop(true));
     std::this_thread::sleep_for(std::chrono::milliseconds(100000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
@@ -411,6 +410,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
 
     // EXPECT_TRUE(wrkMid4->stop(true));
     // EXPECT_TRUE(wrkMid3->stop(true));
+    EXPECT_TRUE(wrkMid1->stop(true));
     EXPECT_TRUE(wrkMid2->stop(true));
     EXPECT_TRUE(wrkLeaf->stop(true));
     EXPECT_TRUE(crd->stopCoordinator(true));
@@ -463,7 +463,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopologyWithTwoSources) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersPerEpoch = 2;
         workerConfig->numWorkerThreads = 1;
-        workerConfig->loadBalancing = true;
+        workerConfig->loadBalancing = 1000;
 
         NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
         wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
