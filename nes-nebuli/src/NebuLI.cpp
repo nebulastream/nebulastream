@@ -42,7 +42,6 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
-#include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
