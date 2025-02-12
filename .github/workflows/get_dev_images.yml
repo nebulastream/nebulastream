@@ -108,9 +108,9 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
+          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ inputs.branch-name != '' && inputs.branch-name || inputs.ref }}-${{matrix.arch}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-base-cache:${{ inputs.branch-name != '' && inputs.branch-name || inputs.ref }}-${{matrix.arch}}
             type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
           context: .
           file: docker/dependency/Base.dockerfile
