@@ -21,6 +21,7 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <sys/time.h>
 
 namespace NES::Runtime {
 
@@ -39,9 +40,9 @@ WorkerContext::WorkerContext(WorkerThreadId workerId,
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
     NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
     currentEpoch = 0;
-    // statisticsFile.open("latency" + std::to_string(workerId.getRawValue()) + ".csv", std::ios::out);
+    statisticsFile.open("latency" + std::to_string(workerId.getRawValue()) + ".csv", std::ios::out);
     // storageFile.open("storage" + std::to_string(workerId.getRawValue()) + ".csv", std::ios::out);
-    // statisticsFile << "time, latency\n";
+    statisticsFile << "time, latency\n";
     // storageFile << "time, numberOfBuffers\n";
 }
 
@@ -49,8 +50,8 @@ WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
     localBufferPoolTLS.reset(nullptr);
     // storageFile.clear();
-    // statisticsFile.flush();
-    // statisticsFile.close();
+    statisticsFile.flush();
+    statisticsFile.close();
     // storageFile.close();
     /*if (hdfsClient) {
         delete hdfsClient;
@@ -65,15 +66,60 @@ size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
     return 0;
 }
 
-void WorkerContext::printStatistics(Runtime::TupleBuffer&) {
+void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer, std::string str) {
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    // statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    // statisticsFile << value.count() - inputBuffer.getCreationTimestampInMS() << "\n";
+    char buffer[26];
+    int millisec;
+    struct tm* tm_info;
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    millisec = lrint(tv.tv_usec / 1000.0);// Round to nearest millisec
+    if (millisec >= 1000) {               // Allow for rounding up to nearest second
+        millisec -= 1000;
+        tv.tv_sec++;
+    }
+
+    tm_info = localtime(&tv.tv_sec);
+
+    strftime(buffer, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ".";
+    if (millisec < 10)
+        statisticsFile << "00" << millisec << ",";
+    else if (millisec < 100)
+        statisticsFile << "0" << millisec << ",";
+    else
+        statisticsFile << millisec << ",";
+    unsigned lastDelimPos = str.find_last_of("|");
+    unsigned firstDelimPos = str.find("|");
+    unsigned nextDelimPosition = firstDelimPos;
+    while (nextDelimPosition != lastDelimPos) {
+        std::cout << "firstDelimPos" << firstDelimPos;
+        firstDelimPos = nextDelimPosition;
+        nextDelimPosition = str.find_first_of("|", nextDelimPosition + 2);
+        std::cout << "nextDelimPosition" << nextDelimPosition;
+    }
+    if (!str.empty()) {
+        std::string creationTimestamp = str.substr(firstDelimPos + 1, nextDelimPosition - firstDelimPos - 1);
+        std::string::const_iterator it = creationTimestamp.begin();
+        while (it != creationTimestamp.end() && std::isdigit(*it)) ++it;
+        if (it == creationTimestamp.end()) {
+            statisticsFile << value.count() - std::atoll(creationTimestamp.c_str()) << "\n";
+            statisticsFile.flush();
+        }
+    }
+    else {
+        statisticsFile << value.count() - inputBuffer.getCreationTimestampInMS() << "\n";
+    }
 }
 
 WorkerThreadId WorkerContext::getId() const { return workerId; }

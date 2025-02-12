@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -54,7 +55,7 @@ PrintSink::~PrintSink() = default;
 
 SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
-bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(writeMutex);
     if (!inputBuffer) {
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
@@ -64,6 +65,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
     if(!duplicateDetectionCallback(inputBuffer)) {
         updateWatermarkCallback(inputBuffer);
+        workerContext.printStatistics(inputBuffer, buffer);
         outputStream << buffer << std::endl;
     }
     return true;

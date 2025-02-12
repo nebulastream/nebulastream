@@ -152,7 +152,7 @@ class WorkerContext {
 
     bool containsNetworkChannel(OperatorId id);
 
-    void printStatistics(TupleBuffer& inputBuffer);
+ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer, std::string str);
 
     /**
      * @brief This method creates a network storage for a thread
