@@ -801,7 +801,7 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
         controlBlockSize);
     auto dataSegment = detail::DataSegment{detail::InMemoryLocation{ptr + controlBlockSize}, bufferSize};
     auto* controlBlock = reinterpret_cast<detail::BufferControlBlock*>(ptr);
-    *controlBlock = detail::BufferControlBlock{dataSegment, this};
+    new (controlBlock) detail::BufferControlBlock{dataSegment, this};
     std::unique_lock allBuffersLock{allBuffersMutex};
     allBuffers.push_back(controlBlock);
     return PinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());

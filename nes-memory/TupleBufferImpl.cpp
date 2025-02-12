@@ -53,40 +53,48 @@ BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMe
 #endif
 }
 
-BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) : data(that.data.load())
-{
-    pinnedCounter.store(that.pinnedCounter.load());
-    dataCounter.store(that.dataCounter.load());
-    numberOfTuples = that.numberOfTuples;
-    creationTimestamp = that.creationTimestamp;
-    watermark = that.watermark;
-    originId = that.originId;
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer and track which function obtained the buffer
-    std::unique_lock lock(owningThreadsMutex);
-    ThreadOwnershipInfo info;
-    fillThreadOwnershipInfo(info.threadName, info.callstack);
-    owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
-}
-
-BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that)
-{
-    pinnedCounter.store(that.pinnedCounter.load());
-    numberOfTuples = that.numberOfTuples;
-    data = that.data.load();
-    watermark = that.watermark;
-    creationTimestamp = that.creationTimestamp;
-    originId = that.originId;
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer and track which function obtained the buffer
-    std::unique_lock lock(owningThreadsMutex);
-    ThreadOwnershipInfo info;
-    fillThreadOwnershipInfo(info.threadName, info.callstack);
-    owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
-    return *this;
-}
+// BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) : data(that.data.load())
+// {
+//     pinnedCounter.store(that.pinnedCounter.load());
+//     dataCounter.store(that.dataCounter.load());
+//     numberOfTuples = that.numberOfTuples;
+//     creationTimestamp = that.creationTimestamp;
+//     watermark = that.watermark;
+//     originId = that.originId;
+//
+//     std::shared_lock thatChildMutex{that.childMutex};
+//     children = std::vector{that.children};
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+//     /// store the current thread that owns the buffer and track which function obtained the buffer
+//     std::unique_lock lock(owningThreadsMutex);
+//     ThreadOwnershipInfo info;
+//     fillThreadOwnershipInfo(info.threadName, info.callstack);
+//     owningThreads[std::this_thread::get_id()].emplace_back(info);
+// #endif
+// }
+//
+// BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that);
+// {
+//     pinnedCounter.store(that.pinnedCounter.load());
+//     numberOfTuples = that.numberOfTuples;
+//     data = that.data.load();
+//     watermark = that.watermark;
+//     creationTimestamp = that.creationTimestamp;
+//     originId = that.originId;
+//     owningBufferRecycler.store(that.owningBufferRecycler.load());
+//
+//     std::shared_lock thatChildMutex{that.childMutex};
+//     children = std::vector{that.children};
+//
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+//     /// store the current thread that owns the buffer and track which function obtained the buffer
+//     std::unique_lock lock(owningThreadsMutex);
+//     ThreadOwnershipInfo info;
+//     fillThreadOwnershipInfo(info.threadName, info.callstack);
+//     owningThreads[std::this_thread::get_id()].emplace_back(info);
+// #endif
+//     return *this;
+// }
 
 DataSegment<DataLocation> BufferControlBlock::getData() const
 {
@@ -133,6 +141,7 @@ BufferControlBlock* BufferControlBlock::pinnedRetain()
     int32_t old;
     do
     {
+        //Could I move this load before the loop?
         old = pinnedCounter.load();
     } while (old < 0 || !pinnedCounter.compare_exchange_weak(old, old + 1));
     return this;
