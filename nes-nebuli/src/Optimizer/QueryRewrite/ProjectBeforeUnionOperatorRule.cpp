@@ -71,8 +71,8 @@ std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjec
         sourceSchema->toString(),
         destinationSchema->toString());
     /// Fetch source and destination schema fields
-    auto sourceFields = sourceSchema;
-    auto destinationFields = destinationSchema;
+    const auto& sourceFields = sourceSchema;
+    const auto& destinationFields = destinationSchema;
     std::vector<std::shared_ptr<NodeFunction>> projectFunctions;
     /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
