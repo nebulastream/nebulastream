@@ -20,10 +20,3 @@ target_link_libraries(nes-functions PUBLIC nes-data-types)
 target_include_directories(nes-functions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-#Add the nes functions and headers to cpack
-install(TARGETS nes-functions
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
