@@ -18,19 +18,17 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterOperatorHandler.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
-#include <bits/random.h>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
@@ -56,16 +54,6 @@ class SmallRandomizedSequenceTest : public Testing::BaseUnitTest
          TestFile{
              .fileName = "Bimbo_1_1000_Lines.csv",
              .endsWithNewline = false,
-             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Bimbo_1_256000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
-         TestFile{
-             .fileName = "Bimbo_1_256000_Lines.csv",
-             .endsWithNewline = true,
-             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Bimbo_1_10000000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
-         TestFile{
-             .fileName = "Bimbo_1_10000000_Lines.csv",
-             .endsWithNewline = true,
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
          TestFile{
@@ -101,46 +89,50 @@ public:
         size_t numberOfIterations;
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
-        TestTaskQueue::ProcessingMode processingMode;
+        size_t sizeOfFormattedBuffers;
     };
-    void  runTest(const TestConfig& testConfig)
+    void runTest(const TestConfig& testConfig)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
+        PRECONDITION(
+            testConfig.sizeOfFormattedBuffers >= schema->getSchemaSizeInBytes(),
+            "The formatted buffer must be large enough to hold at least one tuple.");
 
         const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
         const auto fileSizeInBytes = std::filesystem::file_size(testFilePath);
-        const auto NUM_EXPECTED_RAW_BUFFERS = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
+        const auto numberOfExpectedRawBuffers = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
             + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
         /// Sources sometimes need an extra buffer (reason currently unknown)
-        const size_t NUM_REQUIRED_SOURCE_BUFFERS = NUM_EXPECTED_RAW_BUFFERS + 1;
+        const size_t numberOfRequiredSourceBuffers = numberOfExpectedRawBuffers + 1;
 
         /// Create vector for result buffers and create emit function to collect buffers from source
         std::vector<NES::Memory::TupleBuffer> rawBuffers;
-        rawBuffers.reserve(NUM_EXPECTED_RAW_BUFFERS);
+        rawBuffers.reserve(numberOfExpectedRawBuffers);
         const auto emitFunction = InputFormatterTestUtil::getEmitFunction(rawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
         std::shared_ptr<Memory::BufferManager> sourceBufferPool
-            = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, NUM_REQUIRED_SOURCE_BUFFERS);
+            = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
         const auto fileSource
-            = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), NUM_REQUIRED_SOURCE_BUFFERS);
+            = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(std::move(emitFunction));
-        InputFormatterTestUtil::waitForSource(rawBuffers, NUM_EXPECTED_RAW_BUFFERS);
-        ASSERT_EQ(rawBuffers.size(), NUM_EXPECTED_RAW_BUFFERS);
+        InputFormatterTestUtil::waitForSource(rawBuffers, numberOfExpectedRawBuffers);
+        ASSERT_EQ(rawBuffers.size(), numberOfExpectedRawBuffers);
         ASSERT_TRUE(fileSource->stop());
 
+        /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
+        const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2;
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
-            auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 131072);
+            auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestablePipelineTask> pipelineTasks;
-            pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
+            pipelineTasks.reserve(numberOfExpectedRawBuffers);
             for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
             {
-                // Todo: assign different worker threads
                 const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                 const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                 rawBuffer.setSequenceNumber(currentSequenceNumber);
@@ -154,11 +146,45 @@ public:
                 }
                 pipelineTasks.emplace_back(std::move(pipelineTask));
             }
-            auto testTaskQueue = std::make_unique<TestTaskQueueStealing>(testConfig.numberOfThreads, pipelineTasks.size(), testBufferManager, resultBuffers);
-            testTaskQueue->startProcessing(pipelineTasks);
-            testTaskQueue->waitForCompletion();
-            ASSERT_TRUE(testTaskQueue.release());
+            auto taskQueue = std::make_unique<TestTaskQueueStealing>(
+                testConfig.numberOfThreads, pipelineTasks.size(), testBufferManager, resultBuffers);
+            taskQueue->startProcessing(pipelineTasks);
+            taskQueue->waitForCompletion();
+
+            /// Combine results and sort
+            auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
+            std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+            std::ranges::sort(
+                resultBufferVec.begin(),
+                resultBufferVec.end(),
+                [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+                {
+                    if (left.getSequenceNumber() == right.getSequenceNumber())
+                    {
+                        return left.getChunkNumber() < right.getChunkNumber();
+                    }
+                    return left.getSequenceNumber() < right.getSequenceNumber();
+                });
+
+            auto resultFilePath
+                = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / (std::string("result_") + currentTestFile.fileName);
+            std::ofstream out(resultFilePath);
+            for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
+            {
+                auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+                actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+                out << actualResultTestBuffer.toString(schema, false);
+            }
+            out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                       .toString(schema, false, currentTestFile.endsWithNewline);
+
+            out.close();
+            /// Destroy task queue first, to assure that it does not hold references to buffers anymore
+            ASSERT_TRUE(taskQueue.release());
+            ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
+            tmpResultFilePaths.emplace_back(resultFilePath);
             resultBuffers->clear();
+            resultBufferVec.clear();
             testBufferManager->destroy();
         }
     }
@@ -183,18 +209,18 @@ TEST_F(SmallRandomizedSequenceTest, testTwoIntegerColumns)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+            .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testBimboData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_10000000",
+            .testFileName = "Bimbo_1_1000",
             .numberOfIterations = 1,
-            .numberOfThreads = 48,
-            .sizeOfRawBuffers = 4096,
-            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testFoodData)
@@ -205,7 +231,7 @@ TEST_F(SmallRandomizedSequenceTest, testFoodData)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+            .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallRandomizedSequenceTest, testSpaceCraftTelemetryData)
@@ -216,7 +242,7 @@ TEST_F(SmallRandomizedSequenceTest, testSpaceCraftTelemetryData)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
+            .sizeOfFormattedBuffers = 4096});
 }
 
 }
