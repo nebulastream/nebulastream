@@ -130,9 +130,8 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
         });
 }
 
-TestSourceNameHelper::TestSourceNameHelper()
+TestSourceNameHelper::TestSourceNameHelper() : srcCnt(1)
 {
-    srcCnt = 1;
 }
 
 std::string TestSourceNameHelper::operator*()
