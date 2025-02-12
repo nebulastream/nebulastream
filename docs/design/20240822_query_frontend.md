@@ -66,7 +66,7 @@ https://github.com/pganalyze/libpg_query
 https://github.com/duckdb/duckdb/tree/main/third_party/libpg_query
 - based on the PostgreSQL parser, written in C++
 - "stripped down and generally cleaned up to make it easier to modify and extend" (see link above)
-- this parser is integrated into DuckDB, i.e., it is no off-the-shelf library; we would have to extract it, e.g., in a system-agnostic library (which is straight-forward but takes time) https://github.com/klauck/nebulastream-frontend
+- this parser is integrated into DuckDB, i.e., it is no off-the-shelf library; we would have to extract it, e.g., in a system-agnostic library: we started doing this in the following repositories: https://github.com/nebulastream/sql-parser, https://github.com/klauck/nebulastream-frontend
 
 ### A3: Hyrise parser
 https://github.com/hyrise/sql-parser
