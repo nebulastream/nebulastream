@@ -8,7 +8,7 @@ on:
       branch-name:
         required: false
         type: string
-        default: ''
+        default: ${{ inputs.ref }}
         description: "Branch name to tag the docker image with"
       ref:
         required: true
