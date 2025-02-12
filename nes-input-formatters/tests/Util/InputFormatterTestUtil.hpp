@@ -20,6 +20,7 @@
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/TestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -206,7 +207,7 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
     return isValid;
 }
 
-template <typename TupleSchemaTemplate>
+template <typename TupleSchemaTemplate, bool PrintDebug>
 std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(testHandle.testConfig.numThreads);
@@ -217,7 +218,7 @@ std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHa
         {
             expectedTupleBuffers.at(workerThreadResultVector.workerThreadId)
                 .emplace_back(
-                    TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, true>(
+                    TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
                         testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
         }
     }
@@ -297,7 +298,7 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     // Todo: we need to flush, to get the last buffers
     testHandle.testTaskQueue.processTasks(std::move(tasks));
     /// create expected results from supplied in test config
-    testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
+    testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate, PrintDebug>(testHandle);
     /// validate: actual results vs expected results
     const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
     ASSERT_TRUE(validationResult);
@@ -400,7 +401,7 @@ void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, c
     }
 }
 
-bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
+inline bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
 {
     if (std::filesystem::file_size(file1) != std::filesystem::file_size(file2))
     {
@@ -415,30 +416,11 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
         std::istreambuf_iterator<char>(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator<char>(f2.rdbuf()));
 }
 
-template <bool DEBUG_LOG>
-void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks, std::optional<size_t> fixedSeed)
+inline void shuffleWithSeed(std::vector<TestablePipelineTask>& pipelineTasks, const std::optional<size_t> fixedSeed)
 {
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::cout << "Using seed: " << seed << std::endl;
+    NES_DEBUG("Using seed: {}", seed);
     std::mt19937 rng = (fixedSeed.has_value()) ? std::mt19937(fixedSeed.value()) : std::mt19937(seed);
-    std::shuffle(pipelineTasks.begin(), pipelineTasks.end(), rng);
-
-    if (DEBUG_LOG)
-    {
-        for (const auto& pipelineTask : pipelineTasks)
-        {
-            auto charBuffer = pipelineTask.tupleBuffer.getBuffer();
-            std::stringstream stringStream;
-            const auto bufferIdx = pipelineTask.tupleBuffer.getSequenceNumber().getRawValue();
-            stringStream << "Start Buffer: " << bufferIdx << std::endl;
-            for (size_t i = 0; i < pipelineTask.tupleBuffer.getNumberOfTuples(); i++)
-            {
-                stringStream << charBuffer[i];
-            }
-            stringStream << "\nEnd Buffer: " << bufferIdx << std::endl;
-            std::cout << stringStream.str();
-        }
-        std::cout << std::endl;
-    }
+    std::ranges::shuffle(pipelineTasks, rng);
 }
 }

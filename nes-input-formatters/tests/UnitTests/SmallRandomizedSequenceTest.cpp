@@ -146,7 +146,7 @@ public:
                 }
                 pipelineTasks.emplace_back(std::move(pipelineTask));
             }
-            auto taskQueue = std::make_unique<TestTaskQueueStealing>(
+            auto taskQueue = std::make_unique<TestTaskQueueWorkStealing>(
                 testConfig.numberOfThreads, pipelineTasks.size(), testBufferManager, resultBuffers);
             taskQueue->startProcessing(pipelineTasks);
             taskQueue->waitForCompletion();
@@ -236,13 +236,13 @@ TEST_F(SmallRandomizedSequenceTest, testFoodData)
 
 TEST_F(SmallRandomizedSequenceTest, testSpaceCraftTelemetryData)
 {
+    // Todo: fix static formatting in utility functions (float)
     runTest(
-        TestConfig{
-            .testFileName = "Spacecraft_Telemetry",
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .sizeOfFormattedBuffers = 4096});
+        {.testFileName = "Spacecraft_Telemetry",
+         .numberOfIterations = 1,
+         .numberOfThreads = 8,
+         .sizeOfRawBuffers = 16,
+         .sizeOfFormattedBuffers = 4096});
 }
 
 }

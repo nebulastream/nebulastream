@@ -17,13 +17,16 @@
 #include <atomic>
 #include <bit>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::InputFormatters
 {
@@ -116,10 +119,9 @@ namespace NES::InputFormatters
 class SequenceShredder
 {
 public:
-    // Todo: get rid of sequence number type?
-    using SequenceNumberType = uint64_t;
+    using SequenceNumberType = SequenceNumber::Underlying;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(SequenceNumberType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 1024;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 8;
     using BitmapVectorType = std::vector<SequenceNumberType>;
 
     struct StagedBuffer
@@ -130,7 +132,7 @@ public:
         uint32_t offsetOfLastTupleDelimiter;
     };
 
-    struct StagedBufferResult //Todo: rename
+    struct SpanningTupleBuffers
     {
         size_t indexOfSequenceNumberInStagedBuffers;
         std::vector<StagedBuffer> stagedBuffers;
@@ -172,14 +174,14 @@ public:
     /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
     /// The artificial tuple is a buffer with a sequence number (SN) that is exactly one larger than the largest seen SN.
     /// We configure the buffer to 'contain' a tuple delimiter as its first and only content.
-    [[nodiscard]] std::pair<StagedBufferResult, SequenceShredder::SequenceNumberType> flushFinalPartialTuple();
+    [[nodiscard]] std::pair<SpanningTupleBuffers, SequenceNumberType> flushFinalPartialTuple();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a vector with either zero, one or two spanning tuples if the sequence number is in range.
     /// Returns a vector with three empty spanning tuples if the sequence number is out of range.
     /// For details on the inner workings of this function, read the description of the class above.
     template <bool HasTupleDelimiter>
-    StagedBufferResult
+    SpanningTupleBuffers
     processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, SequenceNumberType sequenceNumber);
 
 private:
@@ -255,12 +257,12 @@ private:
     /// Checks results in the absence of a tuple delimiter.
     /// If a buffer does not contain a tuple delimiter, it is only possible to find one spanning tuple.
     /// Both, the start and the end of the spanning tuple must be valid.
-    StagedBufferResult checkResultsWithoutTupleDelimiter(
+    SpanningTupleBuffers checkResultsWithoutTupleDelimiter(
         SpanningTuple spanningTuple, SequenceNumberType sequenceNumber, SequenceNumberType numberOfBitmapsModuloSnapshot);
 
     /// Checks results in the presence of a tuple delimiter.
     /// If a buffer contains a tuple delimiter, it is possible to find two spanning tuples, one ending in the sequence number and one starting with it.
-    StagedBufferResult checkResultsWithTupleDelimiter(
+    SpanningTupleBuffers checkResultsWithTupleDelimiter(
         SpanningTuple spanningTuple, SequenceNumberType sequenceNumber, SequenceNumberType numberOfBitmapsModuloSnapshot);
 };
 }

@@ -172,7 +172,7 @@ void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory
      auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *bufferManager,
          TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 */
-template <bool containsVarSized = false, bool printBuffer = false, typename... Tuples>
+template <bool containsVarSized = false, bool PrintDebug = false, typename... Tuples>
 auto createTestTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const Tuples&... tuples)
 {
     auto rowLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
@@ -180,14 +180,14 @@ auto createTestTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::Buf
     (std::apply([&](const auto&... values) { createTuple<containsVarSized>(testTupleBuffer.get(), bufferManager, values...); }, tuples),
      ...);
 
-    if constexpr (printBuffer)
+    if constexpr (PrintDebug)
     {
         NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
     }
     return testTupleBuffer->getBuffer();
 }
 
-template <typename TupleSchema, bool containsVarSized = false, bool printBuffer = false>
+template <typename TupleSchema, bool containsVarSized = false, bool PrintDebug = false>
 auto createTestTupleBufferFromTuples(
     std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
@@ -206,7 +206,7 @@ auto createTestTupleBufferFromTuples(
         }
     }
 
-    if constexpr (printBuffer)
+    if constexpr (PrintDebug)
     {
         NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
     }

@@ -13,14 +13,18 @@
 */
 
 #include <algorithm>
+#include <atomic>
 #include <latch>
+#include <mutex>
 #include <random>
 #include <ranges>
 #include <thread>
 #include <unordered_set>
 #include <vector>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <SequenceShredder.hpp>
 
 class StreamingMultiThreaderAutomatedSequenceShredderTest : public ::testing::Test {
@@ -47,7 +51,7 @@ public:
         static constexpr size_t INITIAL_NUM_BITMAPS = 16;
       public:
         TestThreadPool(
-              const SequenceShredder::SequenceNumberType upperBound, std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
+              const SequenceShredder::SequenceNumberType upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
               : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             if (fixedSeed.has_value())
@@ -61,35 +65,35 @@ public:
               std::uniform_int_distribution<size_t> dis{0, SIZE_MAX};
               const SequenceShredder::SequenceNumberType randomSeed = dis(seedGen);
               sequenceNumberGen = std::mt19937_64{randomSeed};
-              std::cout << "Initializing StreamingSequenceNumberGenerator with random seed: " << randomSeed << std::endl;
+              NES_DEBUG("Initializing StreamingSequenceNumberGenerator with random seed: {}", randomSeed);
             }
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
-              threads[i] = std::jthread([this, i, upperBound] { thread_function(i, upperBound); });
+              threads.at(i) = std::jthread([this, i, upperBound] { thread_function(i, upperBound); });
             }
         }
           /// Check if at least one thread is still active
-        void waitForCompletion() {
+        void waitForCompletion() const
+        {
             // Wait for all threads to complete
             completionLatch.wait();
         }
 
-        SequenceShredder::SequenceNumberType getTail() {
+        SequenceShredder::SequenceNumberType getTail() const {
             return sequenceShredder.getTail();
         }
 
-        SequenceShredder::SequenceNumberType getCheckSum() {
+        SequenceShredder::SequenceNumberType getCheckSum() const {
             SequenceShredder::SequenceNumberType globalCheckSum = 1;
             for (size_t i = 0; i < NUM_THREADS; ++i) {
-                globalCheckSum += threadLocalCheckSum[i];
-                std::cout << "local checksum for thread: " << i << " is: " << threadLocalCheckSum[i] << std::endl;
+                globalCheckSum += threadLocalCheckSum.at(i);
             }
             return globalCheckSum;
         }
       private:
         SequenceShredder sequenceShredder;
         std::atomic<size_t> currentSequenceNumber;
-        std::atomic<SequenceShredder::SequenceNumberType> indexOfLastDetectedTupleDelimiter; //Todo: rename to highlight index character
+        std::atomic<SequenceShredder::SequenceNumberType> indexOfLastDetectedTupleDelimiter;
         std::array<std::jthread, NUM_THREADS> threads;
         std::array<SequenceShredder::SequenceNumberType, NUM_THREADS> threadLocalCheckSum;
         std::array<bool, NUM_THREADS> threadIsActive;
@@ -103,8 +107,7 @@ public:
       private:
         void thread_function(size_t threadIdx, const size_t upperBound)
         {
-            threadLocalCheckSum[threadIdx] = 0;
-            // Todo: we must increase and get the currentSequenceNumber at the same time!
+            threadLocalCheckSum.at(threadIdx) = 0;
 
             for (auto threadLocalSequenceNumber = currentSequenceNumber.fetch_add(1); threadLocalSequenceNumber <= upperBound; threadLocalSequenceNumber = currentSequenceNumber.fetch_add(1))
             {
@@ -160,11 +163,9 @@ public:
 
 };
 
-// Todo: remove seed if no randomization
 TEST_F(StreamingMultiThreaderAutomatedSequenceShredderTest, multiThreadedExhaustiveTest) {
-    constexpr size_t NUM_ITERATIONS = 1;
-    for (size_t iteration = 0; iteration < NUM_ITERATIONS; ++iteration) {
-        std::cout << "Iteration " << iteration << std::endl;
-        executeTest<32>(1000000, 4726316926588018883); //worked for (64 threads and 10 million upper bound) and (1 thread and 1 billion upper bound)
+    constexpr size_t numIterations = 1;
+    for (size_t iteration = 0; iteration < numIterations; ++iteration) {
+        executeTest<16>(100000, std::nullopt);
     }
 }

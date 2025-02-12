@@ -17,6 +17,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <condition_variable>
 #include <functional>
 #include <future>
+#include <utility>
 #include <latch>
 #include <memory>
 #include <mutex>
@@ -28,6 +29,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
+#include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -38,8 +40,18 @@ class TestPipelineExecutionContext : public NES::Runtime::Execution::PipelineExe
 {
 public:
     /// Setting invalid values for ids, since we set the values later.
-    explicit TestPipelineExecutionContext(std::shared_ptr<NES::Memory::BufferManager> bufferManager)
+    explicit TestPipelineExecutionContext(std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferManager)
         : workerThreadId(NES::WorkerThreadId(0)), pipelineId(NES::PipelineId(0)), bufferManager(std::move(bufferManager))
+    {
+    }
+    /// Setting invalid values for ids, since we set the values later.
+    explicit TestPipelineExecutionContext(
+        std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferManager,
+        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBufferPtr)
+        : workerThreadId(NES::WorkerThreadId(0))
+        , pipelineId(NES::PipelineId(0))
+        , bufferManager(std::move(bufferManager))
+        , resultBufferPtr(std::move(resultBufferPtr))
     {
     }
 
@@ -84,7 +96,7 @@ public:
 
 private:
     std::function<void()> repeatTaskCallback;
-    std::shared_ptr<NES::Memory::BufferManager> bufferManager; //Sharing resource with TestTaskQueue
+    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferManager; //Sharing resource with TestTaskQueue
     std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers; //Todo: what to do with OperatorHandlers?
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBufferPtr;
 };
@@ -118,7 +130,10 @@ private:
 class TestablePipelineTask
 {
 public:
-    TestablePipelineTask() : isFinalTask(false), workerThreadId(NES::WorkerThreadId(NES::WorkerThreadId::INVALID)), sequenceNumber(NES::SequenceNumber::INVALID) {};
+    TestablePipelineTask()
+        : isFinalTask(false)
+        , workerThreadId(NES::WorkerThreadId(NES::WorkerThreadId::INVALID))
+        , sequenceNumber(NES::SequenceNumber::INVALID) { };
     TestablePipelineTask(
         NES::WorkerThreadId workerThreadId,
         NES::SequenceNumber sequenceNumber,
@@ -163,7 +178,6 @@ public:
     {
         TestablePipelineTask task;
         std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
-        std::function<void()> reduceInFlightTasks;
     };
 
     TestWorkerThreadPool(const size_t num_threads) : threadData(num_threads)
@@ -186,7 +200,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(data.mtx);
             data.tasks.push(std::move(task));
-            data.is_working = true;
+            data.isWorking = true;
         }
         data.cv.notify_one();
     }
@@ -197,14 +211,14 @@ public:
         bool all_done;
         do
         {
-            std::unique_lock<std::mutex> wait_lock(wait_mtx);
+            std::unique_lock<std::mutex> wait_lock(waitMutex);
             all_done = true;
 
             // Check if any thread is still working
             for (auto& data : threadData)
             {
                 std::lock_guard<std::mutex> lock(data.mtx);
-                if (data.is_working || !data.tasks.empty())
+                if (data.isWorking || !data.tasks.empty())
                 {
                     all_done = false;
                     break;
@@ -214,7 +228,7 @@ public:
             if (!all_done)
             {
                 // Wait for notification from any thread completing work
-                wait_cv.wait(wait_lock);
+                waitCV.wait(wait_lock);
             }
         } while (!all_done);
     }
@@ -239,51 +253,50 @@ private:
         std::condition_variable cv;
         std::queue<WorkTask> tasks;
         bool stop = false;
-        bool is_working = false;
+        bool isWorking = false;
     };
 
     std::vector<ThreadData> threadData;
     std::vector<std::jthread> threads;
 
-    std::mutex wait_mtx;
-    std::condition_variable wait_cv;
+    std::mutex waitMutex;
+    std::condition_variable waitCV;
 
 private:
-    void thread_function(size_t thread_idx)
+    void thread_function(const size_t threadIdx)
     {
-        auto& data = threadData[thread_idx];
+        auto& data = threadData[threadIdx];
 
         while (true)
         {
             std::unique_lock<std::mutex> lock(data.mtx);
-            data.cv.wait(lock, [&data] { return !data.tasks.empty() || data.stop; });
+            data.cv.wait(lock, [&data] { return not(data.tasks.empty()) or data.stop; });
 
-            if (data.stop && data.tasks.empty())
+            if (data.stop and data.tasks.empty())
             {
                 break;
             }
 
-            while (!data.tasks.empty())
+            while (not data.tasks.empty())
             {
-                WorkTask task = std::move(data.tasks.front());
+                auto [task, pipelineExecutionContext] = std::move(data.tasks.front());
                 data.tasks.pop();
 
                 // Release lock while processing
                 lock.unlock();
-                if (not(task.task.isFinalTask))
+                if (not(task.isFinalTask))
                 {
-                    task.task.execute(*task.pipelineExecutionContext);
+                    task.execute(*pipelineExecutionContext);
                 }
                 else
                 {
-                    task.task.getExecutablePipelineStage()->stop(*task.pipelineExecutionContext);
+                    task.getExecutablePipelineStage()->stop(*pipelineExecutionContext);
                 }
-                task.reduceInFlightTasks();
                 lock.lock();
             }
-            data.is_working = false;
+            data.isWorking = false;
             lock.unlock();
-            wait_cv.notify_all();
+            waitCV.notify_all();
         }
     }
 };
@@ -292,14 +305,6 @@ private:
 class TestTaskQueue
 {
 public:
-    /// Sequential means that threads wait for each other and execute the tasks in order.
-    /// Asynchronous means threads process their tasks as fast as they can.
-    enum class ProcessingMode : uint8_t
-    {
-        SEQUENTIAL,
-        ASYNCHRONOUS
-    };
-
     TestTaskQueue(
         const size_t numThreads,
         std::shared_ptr<NES::Memory::BufferManager> bufferProvider,
@@ -315,13 +320,11 @@ public:
     ~TestTaskQueue() = default;
 
 
-    void processTasks(std::vector<TestablePipelineTask> pipelineTasks, const ProcessingMode processingMode)
+    void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
         enqueueTasks(std::move(pipelineTasks));
-        startProcessing(processingMode);
+        startProcessing();
     }
-
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> takeResultBuffers() const { return std::move(resultBuffers); }
 
 private:
     void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
@@ -332,32 +335,20 @@ private:
         }
     }
 
-    void startProcessing(const ProcessingMode processingMode)
+    void startProcessing()
     {
         auto lastWorkerThread = NES::WorkerThreadId(NES::WorkerThreadId::INITIAL);
         auto pointerToSharedExecutablePipelineStage = testTasks.front().getExecutablePipelineStage();
-        numInFlightTasks = testTasks.size();
-        NES::Timer<std::chrono::microseconds> timer("Task execution timer");
-        timer.start();
-        do
-        {
-            addNewTaskMutex.lock();
-            if (testTasks.empty())
-            {
-                addNewTaskMutex.unlock();
-                continue;
-            }
+
+        while (not testTasks.empty()) {
             auto currentTestTask = std::move(testTasks.front());
             testTasks.pop();
-            addNewTaskMutex.unlock();
-            /// Create a callback that allows to thread-safely add a task back to the task queue
+
+            /// Create a callback that allows threads to put back a task.
             auto repeatTaskCallback = [this, currentTestTask]()
             {
-                std::scoped_lock lock(addNewTaskMutex);
-                testTasks.emplace(std::move(currentTestTask));
-                ++numInFlightTasks;
+                testTasks.emplace(currentTestTask);
             };
-            auto reduceInFlightTasks = [this]() { const auto newReducedInflightTasks = --numInFlightTasks; };
 
             lastWorkerThread = currentTestTask.workerThreadId;
             const auto responsibleWorkerThread = currentTestTask.workerThreadId;
@@ -369,49 +360,37 @@ private:
 
             const auto workTask = TestWorkerThreadPool::WorkTask{
                 .task = std::move(currentTestTask),
-                .pipelineExecutionContext = pipelineExecutionContext,
-                .reduceInFlightTasks = std::move(reduceInFlightTasks)};
-            workerThreads.assign_work(responsibleWorkerThread.getRawValue(), std::move(workTask));
-            if (processingMode == ProcessingMode::SEQUENTIAL)
-            {
-                workerThreads.wait();
-            }
-        } while (numInFlightTasks.load() != 0);
+                .pipelineExecutionContext = pipelineExecutionContext};
+            workerThreads.assign_work(responsibleWorkerThread.getRawValue(), workTask);
+            workerThreads.wait();
+        }
 
-        auto reduceInFlightTasks = [this]() { --numInFlightTasks; };
-        workerThreads.wait();
-        /// Process final 'dummy' task that flushes pipeline <--- Todo: overly specific for formatter? make optional
+        /// Flush residual data by stopping the task
         const auto idxOfWorkerThreadForFlushTask = lastWorkerThread.getRawValue();
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(bufferProvider);
         pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(idxOfWorkerThreadForFlushTask);
-        pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines++);
+        pipelineExecutionContext->pipelineId = NES::PipelineId(numPipelines);
         pipelineExecutionContext->setTemporaryResultBuffers(resultBuffers);
 
         const auto flushTask = TestablePipelineTask{
             true, NES::WorkerThreadId(idxOfWorkerThreadForFlushTask), std::move(pointerToSharedExecutablePipelineStage)};
         const auto workTask = TestWorkerThreadPool::WorkTask{
-            .task = std::move(flushTask),
-            .pipelineExecutionContext = pipelineExecutionContext,
-            .reduceInFlightTasks = std::move(reduceInFlightTasks)};
-        workerThreads.assign_work(idxOfWorkerThreadForFlushTask, std::move(workTask));
+            .task = flushTask,
+            .pipelineExecutionContext = pipelineExecutionContext};
+        workerThreads.assign_work(idxOfWorkerThreadForFlushTask, workTask);
         workerThreads.wait();
-        timer.pause();
-
-        NES_DEBUG("Total execution time: {}ms", (timer.getRuntime() / 1000.0));
     }
 
 private:
     uint64_t numberOfWorkerThreads;
-    std::atomic<uint32_t> numInFlightTasks{0};
     uint64_t numPipelines;
-    std::mutex addNewTaskMutex;
     std::queue<TestablePipelineTask> testTasks;
     TestWorkerThreadPool workerThreads;
-    std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?
+    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
 };
 
-class TestTaskQueueStealing
+class TestTaskQueueWorkStealing
 {
 public:
     struct WorkTask
@@ -420,21 +399,31 @@ public:
         std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
     };
 
-    TestTaskQueueStealing(
+    TestTaskQueueWorkStealing(
         const size_t numThreads,
         const size_t numTasks,
-        std::shared_ptr<NES::Memory::BufferManager> bufferProvider,
+        std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider,
         std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-        : numberOfWorkerThreads(numThreads), bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers)), threadTasks(numTasks), completionLatch(numThreads)
+        : numberOfWorkerThreads(numThreads)
+        , bufferProvider(std::move(bufferProvider))
+        , resultBuffers(std::move(resultBuffers))
+        , threadTasks(numTasks)
+        , completionLatch(numThreads)
     {
     }
 
     void startProcessing(const std::vector<TestablePipelineTask>& testTasks)
     {
+        PRECONDITION(not testTasks.empty(), "Test tasks must not be empty.");
+        this->eps = testTasks.front().getExecutablePipelineStage();
+
         for (const auto& testTask : testTasks)
         {
             auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider);
+            auto repeatTaskCallback = [this, testTask, pipelineExecutionContext]()
+            { threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext}); };
             pipelineExecutionContext->setTemporaryResultBuffers(this->resultBuffers);
+            pipelineExecutionContext->setRepeatTaskCallback(repeatTaskCallback);
 
             threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
         }
@@ -446,32 +435,33 @@ public:
     }
 
     /// Wait for all threads to complete
-    void waitForCompletion() {
+    void waitForCompletion()
+    {
         completionLatch.wait();
+        const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
+        eps->stop(*pipelineExecutionContext);
         timer.pause();
         NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
     }
 
 private:
     uint64_t numberOfWorkerThreads;
-    std::shared_ptr<NES::Memory::BufferManager> bufferProvider; //Todo: change to AbstractBufferProvider?
+    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
     folly::MPMCQueue<WorkTask> threadTasks;
     std::latch completionLatch;
     std::vector<std::jthread> threads;
-    NES::Timer<std::chrono::microseconds> timer{"TestTaskQueueStealing"};
+    std::shared_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
+    NES::Timer<std::chrono::microseconds> timer{"TestTaskQueueWorkStealing"};
 
-    void thread_function(size_t threadIdx)
+    void thread_function(const size_t threadIdx)
     {
+        // Todo: allow threads to resubmit tasks to task queue
         WorkTask task{};
         while (threadTasks.readIfNotEmpty(task))
         {
             task.pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(threadIdx);
             task.task.execute(*task.pipelineExecutionContext);
-            if (task.task.isFinalTask)
-            {
-                task.task.getExecutablePipelineStage()->stop(*task.pipelineExecutionContext);
-            }
         }
         completionLatch.count_down();
     }

@@ -16,7 +16,6 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterOperatorHandler.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -100,7 +99,7 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple, true>(TestConfig<TestTuple>{
+    runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
         .bufferSize = 16,
@@ -116,7 +115,7 @@ TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple, true>(TestConfig<TestTuple>{
+    runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
         .bufferSize = 16,
@@ -132,7 +131,7 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple, true>(TestConfig<TestTuple>{
+    runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, // 2 buffers for raw data, 4 buffers for results
         .numThreads = 1,
         .bufferSize = 16,
