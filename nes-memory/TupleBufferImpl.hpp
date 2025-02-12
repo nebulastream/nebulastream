@@ -86,9 +86,9 @@ public:
         BufferRecycler* recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
 
 
-    BufferControlBlock(const BufferControlBlock&);
+    BufferControlBlock(const BufferControlBlock&) = delete;
 
-    BufferControlBlock& operator=(const BufferControlBlock&);
+    BufferControlBlock& operator=(const BufferControlBlock&) = delete;
 
     [[nodiscard]] DataSegment<DataLocation> getData() const;
     void resetBufferRecycler(BufferRecycler* recycler);
@@ -172,11 +172,14 @@ private:
     ///Not thread safe
     ///Max size is max uint32 - 2.
     ///When accessing, make sure to use the the index stored in the buffers - 2.
-    ///0 is used in the buffers to indicate that it points to the main data.
-    ///1 is used to indicate that its origin is unknown (mostly to avoid unnecessary search over this vector).
-    std::vector<DataSegment<DataLocation>> children;
+    ///See ChildKey and ChildOrMainDataKey
+    std::vector<DataSegment<DataLocation>> children{};
+    ///Not thread safe, to be used in second chance to avoid initiating spilling for the same segment multiple times
+    ///Unknown indicates that no spilling was attempted yet, >= 2 indicates that for up to (inclusive) that child spilling was initiated,
+    ///Main indicates spilling was initiated for all children and the main data segment.
+    ChildOrMainDataKey spillingInitiatedUpTo = ChildOrMainDataKey::UNKNOWN();
 
-    std::atomic<DataSegment<DataLocation>> data;
+    std::atomic<DataSegment<DataLocation>> data{};
     std::atomic<BufferRecycler*> owningBufferRecycler{};
     //std::function<void(DataSegment<InMemoryLocation>&, BufferRecycler*)> recycleCallback;
 

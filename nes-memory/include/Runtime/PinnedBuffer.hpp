@@ -128,11 +128,6 @@ public:
     /// @dev Accessible via ADL in an unqualified call.
     friend void swap(PinnedBuffer& lhs, PinnedBuffer& rhs) noexcept;
 
-    /// @brief Increases the internal reference counter by one and return this.
-    PinnedBuffer& retain() noexcept;
-
-    /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
-    void release() noexcept;
 
     int8_t* getBuffer() noexcept;
 

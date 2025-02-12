@@ -86,6 +86,8 @@ private:
     static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
+    static constexpr auto DEFAULT_CHECKS_ADDED_PER_NEW_BUFFER = 2;
+    static constexpr auto DEFAULT_BUFFER_CHECKS_THRESHOLD = 128;
     static constexpr auto DEFAULT_URING_RING_SIZE = 2048;
     static constexpr auto DEFAULT_SPILL_BATCH_SIZE = 128;
     static constexpr auto DEFAULT_MAX_CONCURRENT_MEMORY_REQS = DEFAULT_URING_RING_SIZE;
@@ -104,6 +106,8 @@ public:
         uint32_t numOfBuffers,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
         uint32_t withAlignment,
+        uint32_t checksAddedPerNewBuffer,
+        uint64_t bufferChecksThreshold,
         uint32_t uringRingSize,
         uint32_t uringBatchSize,
         uint32_t maxConcurrentMemoryReqs,
@@ -122,6 +126,8 @@ public:
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
         uint32_t withAlignment = DEFAULT_ALIGNMENT,
+        uint32_t checksAddedPerNewBuffer = DEFAULT_CHECKS_ADDED_PER_NEW_BUFFER,
+        uint64_t bufferChecksThreshold = DEFAULT_BUFFER_CHECKS_THRESHOLD,
         uint32_t uringRingSize = DEFAULT_URING_RING_SIZE,
         uint32_t spillBatchSize = DEFAULT_SPILL_BATCH_SIZE,
         uint32_t maxConcurrentMemoryReqs = DEFAULT_MAX_CONCURRENT_MEMORY_REQS,
@@ -203,25 +209,15 @@ public:
    * @brief Recycle a pooled buffer by making it available to others
    * @param buffer
    */
-    void recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& segment) override;
+    void recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& segment) override;
 
-    /**
-  * @brief Recycle an unpooled buffer by making it available to others
-  * @param buffer
-  */
-    void recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&& segment) override;
 
     /**
    * @brief Recycle a pooled buffer by making it available to others
    * @param buffer
    */
-    bool recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) override;
+    bool recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) override;
 
-    /**
-  * @brief Recycle an unpooled buffer by making it available to others
-  * @param buffer
-  */
-    bool recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) override;
     /**
    * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager
    */
@@ -233,10 +229,15 @@ private:
     mutable std::shared_mutex allBuffersMutex;
     //All pooled buffers
     std::vector<detail::BufferControlBlock*> allBuffers;
-    size_t currentCleanupIndex = 0;
+    ///How many buffer checks (for example with cleanupAllBuffers) are outstanding.
+    ///Increased by checksAddedPerNewBuffer for each new BCB added, and reset either when reaching bufferCheckThreshold and calling all buffer cleanup,
+    ///Or when spilling by the amount of buffers passed while doing 2nd chance.
+    std::atomic<size_t> buffersToCheck{0};
+    const uint32_t checksAddedPerNewBuffer;
+    const size_t bufferChecksThreshold;
+
 
     folly::MPMCQueue<detail::DataSegment<detail::InMemoryLocation>> availableBuffers;
-    std::atomic<size_t> numOfAvailableInMemorySegments;
     std::vector<detail::BufferControlBlock*> unpooledBuffers;
 
     mutable std::recursive_mutex availableBuffersMutex;
@@ -271,7 +272,7 @@ private:
     std::map<uint8_t, detail::File> files;
     uint64_t fileOffset{0};
     uint32_t spillBatchSize;
-    int clockAt{0};
+    uint64_t clockAt{0};
     int writeErrorCounter{0};
 
     //Reading from disk
@@ -347,7 +348,6 @@ private:
     size_t processReadCompletionEvents() noexcept;
 
     static detail::File prepareFile(const std::filesystem::path& dirPath, uint8_t id);
-    bool recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment);
 
     detail::PunchHoleFuture punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept;
 

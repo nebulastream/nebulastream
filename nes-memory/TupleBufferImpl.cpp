@@ -220,10 +220,10 @@ bool BufferControlBlock::dataRelease()
         for (auto& child : children)
         {
             //TODO add flag for unpooled into segment
-            bufferRecycler->recyclePooledSegment(std::exchange(child, emptySegment));
+            bufferRecycler->recycleSegment(std::exchange(child, emptySegment));
         }
         children.clear();
-        bufferRecycler->recyclePooledSegment(data.exchange(emptySegment));
+        bufferRecycler->recycleSegment(data.exchange(emptySegment));
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
@@ -399,7 +399,7 @@ bool BufferControlBlock::deleteChild(DataSegment<DataLocation>&& child)
     std::unique_lock writeLock{childMutex};
     if (std::erase(children, child) != 0)
     {
-        owningBufferRecycler.load()->recycleUnpooledSegment(std::move(child));
+        owningBufferRecycler.load()->recycleSegment(std::move(child));
         return true;
     }
     return false;

@@ -20,10 +20,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
+#include <Runtime/BufferManagerImpl.hpp>
+#include <Runtime/DataSegment.hpp>
 #include <google/protobuf/text_format.h>
 #include <gtest/gtest.h>
-#include "BufferManagerImpl.hpp"
-#include "Runtime/DataSegment.hpp"
 
 #include <BaseUnitTest.hpp>
 
@@ -42,13 +42,13 @@ public:
 
 TEST_F(BufferManagerTest, RunsOutOfBuffers)
 {
-    std::shared_ptr<BufferManager> const manager = BufferManager::create(1024, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(1024, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
     {
         ASSERT_EQ(manager->getAvailableBuffers(), 1);
-        auto const validBuffer = manager->getBufferNoBlocking();
+        const auto validBuffer = manager->getBufferNoBlocking();
         ASSERT_EQ(manager->getAvailableBuffers(), 0);
-        auto const invalidBuffer = manager->getBufferNoBlocking();
+        const auto invalidBuffer = manager->getBufferNoBlocking();
         ASSERT_EQ(manager->getAvailableBuffers(), 0);
         ASSERT_TRUE(validBuffer.has_value());
         ASSERT_FALSE(invalidBuffer.has_value());
@@ -57,13 +57,12 @@ TEST_F(BufferManagerTest, RunsOutOfBuffers)
 
 TEST_F(BufferManagerTest, GetDifferentBuffers)
 {
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(1024, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(1024, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
     ASSERT_EQ(manager->getAvailableBuffers(), 2);
-    auto const buffer1 = manager->getBufferNoBlocking();
+    const auto buffer1 = manager->getBufferNoBlocking();
     ASSERT_EQ(manager->getAvailableBuffers(), 1);
-    auto const buffer2 = manager->getBufferNoBlocking();
+    const auto buffer2 = manager->getBufferNoBlocking();
     ASSERT_EQ(manager->getAvailableBuffers(), 0);
 
     ASSERT_NE(buffer1->getBuffer(), buffer2->getBuffer());
@@ -71,10 +70,9 @@ TEST_F(BufferManagerTest, GetDifferentBuffers)
 
 TEST_F(BufferManagerTest, ReleaseBuffer)
 {
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(1024, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(1024, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
     {
-        auto const buffer = manager->getBufferNoBlocking();
+        const auto buffer = manager->getBufferNoBlocking();
         ASSERT_EQ(manager->getAvailableBuffers(), 0);
     }
     ASSERT_EQ(manager->getAvailableBuffers(), 1);
@@ -82,13 +80,12 @@ TEST_F(BufferManagerTest, ReleaseBuffer)
 
 TEST_F(BufferManagerTest, FixedSizePoolRunsOut)
 {
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(1024, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(1024, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
-    auto const fixedSizeBufferPool = *manager->createFixedSizeBufferPool(1);
+    const auto fixedSizeBufferPool = *manager->createFixedSizeBufferPool(1);
 
-    auto const validBuffer = fixedSizeBufferPool->getBufferNoBlocking();
-    auto const invalidBuffer = fixedSizeBufferPool->getBufferNoBlocking();
+    const auto validBuffer = fixedSizeBufferPool->getBufferNoBlocking();
+    const auto invalidBuffer = fixedSizeBufferPool->getBufferNoBlocking();
 
     ASSERT_TRUE(validBuffer.has_value());
     ASSERT_FALSE(invalidBuffer.has_value());
@@ -97,8 +94,7 @@ TEST_F(BufferManagerTest, FixedSizePoolRunsOut)
 TEST_F(BufferManagerTest, SpillBuffer)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
     {
         auto buffer1 = manager->getBufferNoBlocking().value();
@@ -113,7 +109,7 @@ TEST_F(BufferManagerTest, SpillBuffer)
             ASSERT_EQ(buffer2.getBuffer(), rawData);
         }
 
-        auto const rePinned = manager->pinBuffer(std::move(floating));
+        const auto rePinned = manager->pinBuffer(std::move(floating));
         bool restoredData
             = std::all_of(rePinned.getBuffer(), rePinned.getBuffer() + (bufferSize / sizeof(int8_t)), [](int8_t i) { return i == 2; });
         ASSERT_TRUE(restoredData);
@@ -124,8 +120,7 @@ TEST_F(BufferManagerTest, SpillBuffer)
 TEST_F(BufferManagerTest, StealChildBuffer)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
     {
         auto futureChildBuffer = manager->getBufferBlocking();
         auto parentBuffer = manager->getBufferBlocking();
@@ -138,8 +133,7 @@ TEST_F(BufferManagerTest, StealChildBuffer)
 TEST_F(BufferManagerTest, CannotStealChildBuffer)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
     {
         auto futureChildBuffer = manager->getBufferBlocking();
         auto childCopy = PinnedBuffer{futureChildBuffer};
@@ -153,8 +147,7 @@ TEST_F(BufferManagerTest, CannotStealChildBuffer)
 TEST_F(BufferManagerTest, SpillChildBuffer)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
     {
         auto futureChildBuffer = manager->getBufferBlocking();
         auto* rawData = futureChildBuffer.getBuffer();
@@ -182,8 +175,8 @@ TEST_F(BufferManagerTest, SpillChildBuffer)
 TEST_F(BufferManagerTest, SpillChildBufferClock)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, 64, 4);
+    const std::shared_ptr<BufferManager> manager
+        = BufferManager::create(bufferSize, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 128, 64, 3);
     {
         auto parentBuffer = manager->getBufferNoBlocking().value();
         auto* rawData = parentBuffer.getBuffer();
@@ -200,52 +193,129 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
         }
         floatingBuffers.push_back(FloatingBuffer(std::move(parentBuffer)));
 
+        ASSERT_EQ(manager->allBuffers.size(), 8);
         {
-            auto buffer1 = manager->getBufferBlocking();
-            rawData = buffer1.getBuffer();
+            std::vector<PinnedBuffer> pinnedBuffers{};
+            pinnedBuffers.push_back(manager->getBufferBlocking());
+            rawData = pinnedBuffers[0].getBuffer();
             std::fill_n(rawData, bufferSize / sizeof(int8_t), 9);
 
             bool spilled = false;
             //While spilling should be initiated for the first 4, it might not have processed all completion events
-            for (int i = 0; i < 4; ++i)
+            //At least one must have been spilled
+            for (int i = 0; i < 3; ++i)
             {
                 if (floatingBuffers[i].isSpilled())
                 {
                     spilled = true;
                 }
             }
+            ASSERT_TRUE(spilled);
+            //The segments getting spilled are all children, so the clock should go around once,
+            //stop again at 0 and not move until all associated segments are spilled
+            ASSERT_EQ(manager->clockAt, 0);
             //last for buffers should definitively not be spilled
-            for (int i = 4; i < 8; ++i)
+            for (int i = 3; i < 8; ++i)
             {
                 ASSERT_FALSE(floatingBuffers[i].isSpilled());
             }
 
-            std::vector<PinnedBuffer> pinnedBuffers{};
-            for (int i = 0; i < 4; ++i)
+            //Second chance spilling should also clean up unused BCBs (the ones which data segment we attached as children to the first one)
+            //in its first pass
+            ASSERT_EQ(manager->allBuffers.size(), 2);
+
+            for (int i = 0; i < 3; ++i)
             {
-                //The first three request will be satisfied with the previously spilled batch, but the fourth request should trigger spilling again.
                 auto nextBuffer = manager->getBufferBlocking();
                 rawData = nextBuffer.getBuffer();
                 std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 10);
                 pinnedBuffers.push_back(nextBuffer);
             }
-            for (int i = 0; i < 5; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 ASSERT_TRUE(floatingBuffers[i].isSpilled());
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            manager->waitForWriteCompletionEventsOnce();
-            std::ranges::for_each(floatingBuffers, [](auto it) { ASSERT_TRUE(it.isSpilled()); });
+            spilled = false;
+            for (int i = 3; i < 8; ++i)
+            {
+                if (floatingBuffers[i].isSpilled())
+                {
+                    spilled = true;
+                }
+            }
+            ASSERT_TRUE(spilled);
+            ASSERT_EQ(manager->clockAt, 0);
+            ASSERT_EQ(manager->allBuffers.size(), 5);
+
+            //Spill the rest of the child buffers
+            for (int i = 0; i < 4; ++i)
+            {
+                auto nextBuffer = manager->getBufferBlocking();
+                rawData = nextBuffer.getBuffer();
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 13);
+                pinnedBuffers.push_back(nextBuffer);
+            }
+            std::ranges::for_each(floatingBuffers, [](const auto& it) { ASSERT_TRUE(it.isSpilled()); });
+            //All children and the parent are spilled, so the clock should move forward
+            ASSERT_EQ(manager->clockAt, 1);
+            ASSERT_EQ(manager->allBuffers.size(), 9);
+
+            //Unpin last four buffers, then initiate spilling once, where second chance should take pinned (starting at zero) 4, 5, 6 and tag 7,
+            //Offset of these buffers in allBuffers are 5, 6, 7, tag 8.
+            for (int i = 4; i < 8; ++i)
+            {
+                floatingBuffers.emplace_back(std::move(pinnedBuffers[i]));
+            }
+            pinnedBuffers.erase(pinnedBuffers.begin() + 4, pinnedBuffers.end());
+
+            for (int i = 0; i < 3; ++i)
+            {
+                auto nextBuffer = manager->getBufferBlocking();
+                rawData = nextBuffer.getBuffer();
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 17);
+                pinnedBuffers.push_back(nextBuffer);
+            }
+
+            std::ranges::for_each(floatingBuffers.begin(), floatingBuffers.end() - 1, [](const auto& it) { ASSERT_TRUE(it.isSpilled()); });
+            ASSERT_FALSE(floatingBuffers[11].isSpilled());
+            ASSERT_EQ(manager->clockAt, 8);
+
+            //Unpin (by allBuffers offset), 1, 2, 3
+            //Spilled should be 8, 1, 2, because 8 was already tagged before
+            floatingBuffers.emplace_back(std::move(pinnedBuffers[0]));
+            floatingBuffers.emplace_back(std::move(pinnedBuffers[1]));
+            floatingBuffers.emplace_back(std::move(pinnedBuffers[2]));
+            pinnedBuffers.erase(pinnedBuffers.begin(), pinnedBuffers.begin() + 3); //End index is exclusive
+
+            for (int i = 0; i < 3; ++i)
+            {
+                auto nextBuffer = manager->getBufferBlocking();
+                rawData = nextBuffer.getBuffer();
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 20);
+                pinnedBuffers.push_back(nextBuffer);
+            }
+
+            ASSERT_EQ(manager->clockAt, 3);
+            ASSERT_EQ(manager->allBuffers.size(), 15);
+
+            ASSERT_TRUE(floatingBuffers[11].isSpilled());
+            //floatingBuffers[14] is allBuffers[3]
+            ASSERT_FALSE(floatingBuffers[14].isSpilled());
         }
     }
 }
 
+TEST_F(BufferManagerTest, BufferCleanupClock)
+{
+    constexpr int bufferSize = 1024;
+    const std::shared_ptr<BufferManager> manager
+        = BufferManager::create(bufferSize, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 4);
+}
 
 TEST_F(BufferManagerTest, GetFreeSegment)
 {
     constexpr int bufferSize = 1024;
-    std::shared_ptr<BufferManager> const manager
-        = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
     auto segmentFuture = manager->getInMemorySegment();
     auto segment = *segmentFuture.waitUntilDone();
@@ -259,8 +329,8 @@ TEST_F(BufferManagerTest, OnDiskSegmentSpilled)
     constexpr uint8_t fileID = 2;
     constexpr unsigned long int offset = 100;
     constexpr unsigned long size = 16 * 1024;
-    auto unionSegment = Memory::detail::DataSegment<detail::DataLocation>{
-        detail::DataSegment{detail::OnDiskLocation{fileID, offset}, size}};
+    auto unionSegment
+        = Memory::detail::DataSegment<detail::DataLocation>{detail::DataSegment{detail::OnDiskLocation{fileID, offset}, size}};
     auto segment = unionSegment.get<detail::OnDiskLocation>();
     ASSERT_TRUE(segment.has_value());
     ASSERT_EQ(segment->getLocation().getFileID(), fileID);

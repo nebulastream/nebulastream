@@ -39,8 +39,8 @@
 #include <LocalBufferPool.hpp>
 #include <TupleBufferImpl.hpp>
 
-#include <Runtime/BufferManagerImpl.hpp>
 #include <liburing.h>
+#include <Runtime/BufferManagerImpl.hpp>
 
 #include <Runtime/FloatingBuffer.hpp>
 #include <gmock/gmock-actions.h>
@@ -52,6 +52,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
     uint32_t numOfBuffers,
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
     uint32_t withAlignment,
+    uint32_t checksAddedPerNewBuffer,
+    uint64_t bufferChecksThreshold,
     uint32_t uringRingSize,
     uint32_t spillBatchSize,
     uint32_t maxConcurrentMemoryReqs,
@@ -65,6 +67,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
         numOfBuffers,
         memoryResource,
         withAlignment,
+        checksAddedPerNewBuffer,
+        bufferChecksThreshold,
         uringRingSize,
         spillBatchSize,
         maxConcurrentMemoryReqs,
@@ -80,14 +84,17 @@ BufferManager::BufferManager(
     const uint32_t numOfBuffers,
     const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
     const uint32_t withAlignment,
+    const uint32_t checksAddedPerNewBuffer,
+    const uint64_t bufferChecksThreshold,
     const uint32_t uringRingSize,
     const uint32_t spillBatchSize,
     const uint32_t maxConcurrentMemoryReqs,
     const uint32_t maxConcurrentReadSubmissions,
     const uint32_t maxConcurrentHolePunchSubmissions,
     const std::filesystem::path& spillDirectory)
-    : availableBuffers(numOfBuffers)
-    , numOfAvailableInMemorySegments(numOfBuffers)
+    : checksAddedPerNewBuffer(checksAddedPerNewBuffer)
+    , bufferChecksThreshold(bufferChecksThreshold)
+    , availableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , memoryResource(memoryResource)
@@ -180,7 +187,7 @@ void BufferManager::initialize(uint32_t withAlignment)
 
 detail::File BufferManager::prepareFile(const std::filesystem::path& dirPath, const uint8_t id)
 {
-    std::filesystem::path const filePath = dirPath / std::to_string(id);
+    const std::filesystem::path filePath = dirPath / std::to_string(id);
     std::filesystem::create_directories(dirPath);
     //Not using O_DIRECT for now because apparently buffers need to be aligned, which the unpooled buffers are not
     auto fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_RDWR);
@@ -273,7 +280,7 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     //Second intervall if first intervall goes to end: Beginning till maxiter BCBs have been checked, or all BCBs have been checked.
     //Then, we can use the normal remove-erase idiom to remove elements from the container
 
-    auto begin = allBuffers.begin() + currentCleanupIndex;
+    auto begin = allBuffers.begin() + clockAt;
     //exclusive end indices
     decltype(begin) firstEnd;
     decltype(begin) secondEnd;
@@ -289,15 +296,15 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     }
 
     //Strictly less than, because if all buffers are processed we must wrap around the index for the next time
-    if (currentCleanupIndex + maxIter < allBuffers.size())
+    if (clockAt + maxIter < allBuffers.size())
     {
-        firstEnd = allBuffers.begin() + (currentCleanupIndex + maxIter);
+        firstEnd = allBuffers.begin() + (clockAt + maxIter);
         secondEnd = firstEnd;
     }
     else
     {
         firstEnd = allBuffers.end();
-        secondEnd = allBuffers.begin() + ((currentCleanupIndex + maxIter) - allBuffers.size());
+        secondEnd = allBuffers.begin() + ((clockAt + maxIter) - allBuffers.size());
     }
 
     auto check = [](const detail::BufferControlBlock* bcb)
@@ -320,7 +327,7 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     }
     allBuffers.shrink_to_fit();
 
-    currentCleanupIndex = erased - allBuffers.begin();
+    clockAt = erased - allBuffers.begin();
 }
 
 PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
@@ -366,7 +373,6 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
     auto inMemorySegment = detail::DataSegment<detail::InMemoryLocation>{};
     if (availableBuffers.read(inMemorySegment))
     {
-        numOfAvailableInMemorySegments.fetch_sub(1);
         co_return inMemorySegment;
     }
 
@@ -458,18 +464,48 @@ int64_t BufferManager::secondChancePass() noexcept
         }
     };
 
+    bool spilledLastFully = false;
     //We only do two rounds over the buffers to avoid looping forever in case there are less than spillBatchSize spillable buffers
-    for (size_t i = clockAt, clockStart = clockAt; ((i - clockStart) / allBuffers.size()) < 2 && currentBatchSize < spillBatchSize; i++)
+    //The starting point can be hit three times, but we explicitly move the clock behind the last fully spilled buffer, so that it is guaranteed that its last in the next round.
+    for (size_t i = clockAt, clockStart = clockAt;
+         (((i - (clockStart)) + allBuffers.size() - 1) / allBuffers.size()) < 3 && currentBatchSize < spillBatchSize;
+         i++)
     {
         //We only move the clock forward inside the loop, so if not all segments of a buffer where spilled it doesn't move forward
         clockAt = i % allBuffers.size();
         detail::BufferControlBlock* const currentBCB = allBuffers[clockAt];
-        if (currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0 && currentBCB->clockReference.test_and_set())
+        //Do cleanup of unused BCBs as we go
+        if (currentBCB->getDataReferenceCount() == 0)
+        {
+            delete currentBCB;
+            allBuffers.erase(allBuffers.begin() + clockAt);
+            --i;
+        }
+        else if (
+            currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
+            && currentBCB->clockReference.test_and_set())
         {
             uint32_t childrenToTake = std::min(spillBatchSize - currentBatchSize, static_cast<uint32_t>(currentBCB->children.size()));
-            for (auto child = currentBCB->children.begin(); child != currentBCB->children.end() && childrenToTake != 0; ++child)
+            uint32_t startAt;
+            if (auto startChild = currentBCB->spillingInitiatedUpTo.asChildKey())
             {
-                if (!child->isSpilled())
+                startAt = *startChild + 1;
+            }
+            else if (currentBCB->spillingInitiatedUpTo == detail::ChildOrMainDataKey::UNKNOWN())
+            {
+                startAt = 0;
+            }
+            else
+            {
+                //currentBCB->spillingInitiatedUpTo == detail::ChildOrMainDataKey::MAIN()
+                //Spilling is already initiated for all children and the main segment;
+                spilledLastFully = true;
+                continue;
+            }
+            auto child = currentBCB->children.begin();
+            for (child = child + startAt; child != currentBCB->children.end() && childrenToTake != 0; ++child)
+            {
+                if (!child->isSpilled() && !child->isNotPreAllocated())
                 {
                     addToBatch(
                         currentBCB,
@@ -478,15 +514,30 @@ int64_t BufferManager::secondChancePass() noexcept
                     childrenToTake--;
                 }
             }
+            //When all children are spilled, spill also the main data segment
             if (spillBatchSize - currentBatchSize > 0)
             {
                 auto segment = currentBCB->data.load().get<detail::InMemoryLocation>();
-                if (segment && segment->getLocation().getPtr() != nullptr)
+                if (segment && segment->getLocation().getPtr() != nullptr && !segment->isNotPreAllocated())
                 {
                     addToBatch(currentBCB, *segment, detail::ChildOrMainDataKey::MAIN());
                 }
+                spilledLastFully = true;
+                currentBCB->spillingInitiatedUpTo = detail::ChildOrMainDataKey::MAIN();
+            }
+            else
+            {
+                spilledLastFully = false;
+                currentBCB->spillingInitiatedUpTo
+                    = detail::ChildOrMainDataKey{ChildKey{static_cast<unsigned long>(child - currentBCB->children.begin()) - 1}};
             }
         }
+    }
+    //Move clock one forward if the last buffer was spilled completely.
+    //spilledLastFully is false when we spilled children, but then not the parent.
+    if (spilledLastFully)
+    {
+        clockAt = (clockAt + 1) % allBuffers.size();
     }
 
     return io_uring_submit(&uringWriteRing);
@@ -494,7 +545,7 @@ int64_t BufferManager::secondChancePass() noexcept
 
 void BufferManager::pollWriteCompletionEventsOnce() noexcept
 {
-    std::unique_lock sqeLock{writeSqeMutex, std::defer_lock};
+    std::unique_lock sqeLock{writeCqeMutex, std::defer_lock};
     if (sqeLock.try_lock())
     {
         processWriteCompletionEvents();
@@ -502,7 +553,7 @@ void BufferManager::pollWriteCompletionEventsOnce() noexcept
 }
 void BufferManager::waitForWriteCompletionEventsOnce() noexcept
 {
-    std::unique_lock sqeLock{writeSqeMutex};
+    std::unique_lock sqeLock{writeCqeMutex};
     processWriteCompletionEvents();
 }
 
@@ -711,7 +762,6 @@ PinnedBuffer BufferManager::getBufferBlocking()
     {
         if (availableBuffers.read(inMemorySegment))
         {
-            numOfAvailableInMemorySegments.fetch_sub(1);
             return makeBufferAndRegister(inMemorySegment);
         }
         //If another thread is spilling, wait for new buffers in availableBuffers
@@ -720,7 +770,6 @@ PinnedBuffer BufferManager::getBufferBlocking()
             auto deadline = std::chrono::steady_clock::now() + GET_BUFFER_TIMEOUT;
             if (availableBuffers.tryReadUntil(deadline, inMemorySegment))
             {
-                numOfAvailableInMemorySegments.fetch_sub(1);
                 return makeBufferAndRegister(inMemorySegment);
             }
         }
@@ -741,7 +790,6 @@ std::optional<PinnedBuffer> BufferManager::getBufferNoBlocking()
     {
         return std::nullopt;
     }
-    numOfAvailableInMemorySegments.fetch_sub(1);
     return makeBufferAndRegister(inMemorySegment);
 }
 
@@ -753,7 +801,6 @@ std::optional<PinnedBuffer> BufferManager::getBufferWithTimeout(const std::chron
     {
         return std::nullopt;
     }
-    numOfAvailableInMemorySegments.fetch_sub(1);
     return makeBufferAndRegister(inMemorySegment);
 }
 
@@ -799,7 +846,7 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
         alignedBufferSize,
         alignedBufferSizePlusControlBlock,
         controlBlockSize);
-    auto dataSegment = detail::DataSegment{detail::InMemoryLocation{ptr + controlBlockSize}, bufferSize};
+    auto dataSegment = detail::DataSegment{detail::InMemoryLocation{ptr + controlBlockSize, true}, bufferSize};
     auto* controlBlock = reinterpret_cast<detail::BufferControlBlock*>(ptr);
     new (controlBlock) detail::BufferControlBlock{dataSegment, this};
     std::unique_lock allBuffersLock{allBuffersMutex};
@@ -807,27 +854,18 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
     return PinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
 }
 
-void BufferManager::recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& segment)
+void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& segment)
 {
-    availableBuffers.write(std::move(segment));
-    numOfAvailableInMemorySegments.fetch_add(1);
+    if (segment.isNotPreAllocated())
+    {
+        memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
+    }
+    else
+    {
+        availableBuffers.write(std::move(segment));
+    }
 }
 
-void BufferManager::recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&& segment)
-{
-    memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
-}
-
-
-bool BufferManager::recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&& segment)
-{
-    return recycleSegment(std::move(segment));
-}
-
-bool BufferManager::recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&& segment)
-{
-    return recycleSegment(std::move(segment));
-}
 
 bool BufferManager::recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment)
 {
@@ -1042,7 +1080,7 @@ size_t BufferManager::getNumOfUnpooledBuffers() const
 
 size_t BufferManager::getAvailableBuffers() const
 {
-    return numOfAvailableInMemorySegments.load();
+    return availableBuffers.size();
 }
 
 size_t BufferManager::getAvailableBuffersInFixedSizePools() const
@@ -1083,11 +1121,14 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createLoca
     {
         detail::DataSegment<detail::InMemoryLocation> memorySegment = detail::DataSegment<detail::InMemoryLocation>{};
         availableBuffers.blockingRead(memorySegment);
-        numOfAvailableInMemorySegments.fetch_sub(1);
         buffers.emplace_back(memorySegment);
     }
-    std::shared_ptr<AbstractBufferProvider> ret
-        = std::make_shared<LocalBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    std::shared_ptr<AbstractBufferProvider> ret = std::make_shared<LocalBufferPool>(
+        shared_from_this(),
+        buffers,
+        numberOfReservedBuffers,
+        [&](detail::DataSegment<detail::InMemoryLocation>&& segment)
+        { memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize()); });
     {
         std::unique_lock lock(localBufferPoolsMutex);
         localBufferPools.push_back(ret);
@@ -1110,10 +1151,15 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixe
     {
         detail::DataSegment<detail::InMemoryLocation> memorySegment = detail::DataSegment<detail::InMemoryLocation>{};
         availableBuffers.blockingRead(memorySegment);
-        numOfAvailableInMemorySegments.fetch_sub(1);
         buffers.emplace_back(memorySegment);
     }
-    auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+
+    auto ret = std::make_shared<FixedSizeBufferPool>(
+        shared_from_this(),
+        std::move(buffers),
+        numberOfReservedBuffers,
+        [&](detail::DataSegment<detail::InMemoryLocation>&& segment)
+        { memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize()); });
     {
         std::unique_lock lock(localBufferPoolsMutex);
         localBufferPools.push_back(ret);

@@ -41,11 +41,13 @@ public:
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive buffers
+     * @param deallocator functor to free memory that was not a preAllocatedBlock (previously "unpooled" segments)
      */
     explicit FixedSizeBufferPool(
         const std::shared_ptr<BufferManager>& bufferManager,
         std::deque<detail::DataSegment<detail::InMemoryLocation>>&& availableBuffers,
-        size_t numberOfReservedBuffers);
+        size_t numberOfReservedBuffers,
+        const std::function<void(detail::DataSegment<detail::InMemoryLocation>&&)>& deallocator);
 
     ~FixedSizeBufferPool() override;
 
@@ -82,25 +84,14 @@ public:
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment) override;
-
-    /**
-     * @brief This calls is not supported and raises Runtime error
-     * @param buffer
-     */
-    void recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&& buffer) override;
+    void recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment) override;
 
     /**
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    bool recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) override;
+    bool recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) override;
 
-    /**
-     * @brief This calls is not supported and raises Runtime error
-     * @param buffer
-     */
-    bool recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) override;
 
     virtual BufferManagerType getBufferManagerType() const override;
 
@@ -108,6 +99,7 @@ public:
 
 private:
     std::shared_ptr<BufferManager> bufferManager;
+    const std::function<void(detail::DataSegment<detail::InMemoryLocation>)> deallocator;
 
     folly::MPMCQueue<detail::DataSegment<detail::InMemoryLocation>> exclusiveBuffers;
     [[maybe_unused]] size_t numberOfReservedBuffers;

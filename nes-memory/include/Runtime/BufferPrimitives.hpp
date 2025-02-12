@@ -53,7 +53,7 @@ public:
     constexpr ChildOrMainDataKey(const ChildOrMainDataKey& other) = default;
     [[nodiscard]] constexpr inline std::optional<ChildKey> asChildKey() const;
 
-    constexpr explicit operator size_t() const;
+    constexpr size_t getNum() const noexcept;
     constexpr ChildOrMainDataKey(ChildOrMainDataKey&& other) noexcept;
 
     constexpr ChildOrMainDataKey& operator=(const ChildOrMainDataKey& other) noexcept;
@@ -110,7 +110,7 @@ constexpr std::optional<ChildKey> ChildOrMainDataKey::asChildKey() const
     }
     return std::nullopt;
 }
-constexpr ChildOrMainDataKey::operator unsigned long() const
+constexpr size_t ChildOrMainDataKey::getNum() const noexcept
 {
     return num;
 }

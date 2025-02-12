@@ -23,11 +23,19 @@ namespace NES::Memory::detail
 
 static constexpr uint64_t offsetMask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(48)) - 1;
 
-OnDiskLocation::OnDiskLocation(uint8_t file_id, uint64_t offset) noexcept
+OnDiskLocation::OnDiskLocation(uint8_t fileID, uint64_t offset) noexcept
 {
     data = 1;
     data <<= 15;
-    data |= file_id;
+    data |= fileID;
+    data <<= 48;
+    data |= offset;
+}
+OnDiskLocation::OnDiskLocation(uint8_t fileID, uint64_t offset, bool notPreAllocated) noexcept
+{
+    data = 2 + (notPreAllocated ? 1 : 0);
+    data <<= 15;
+    data |= fileID;
     data <<= 48;
     data |= offset;
 }
@@ -46,31 +54,54 @@ OnDiskLocation::OnDiskLocation() noexcept
 //     data = other.data;
 //     return *this;
 // }
-uint64_t OnDiskLocation::getOffset() const
+uint64_t OnDiskLocation::getOffset() const noexcept
 {
     //constexpr uint64_t mask = (1 << 48) - 1;
     return data & offsetMask;
 }
-uint8_t OnDiskLocation::getFileID() const
+uint8_t OnDiskLocation::getFileID() const noexcept
 {
     constexpr uint64_t mask = ((static_cast<uint64_t>(1) << static_cast<uint64_t>(8)) - 1) << static_cast<uint64_t>(48);
     return (data & mask) >> 48;
 }
 
+bool OnDiskLocation::isNotPreAllocated() const noexcept
+{
+    constexpr uint64_t mask = static_cast<uint64_t>(1) << 62;
+    return (data & mask) > 0;
+}
 
-InMemoryLocation::InMemoryLocation(uint8_t* ptr) noexcept
+InMemoryLocation::InMemoryLocation(const uint8_t* ptr) noexcept
 {
     constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
     data = reinterpret_cast<uintptr_t>(ptr) & mask;
+}
+
+InMemoryLocation::InMemoryLocation(const uint8_t* ptr, bool notPreAllocated) noexcept
+{
+    constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
+    data = notPreAllocated ? 1 : 0;
+    data <<= 15;
+    data |= reinterpret_cast<uintptr_t>(ptr) & mask;
 }
 InMemoryLocation::InMemoryLocation() noexcept
 {
     data = 0;
 }
-uint8_t* InMemoryLocation::getPtr() noexcept
+uint8_t* InMemoryLocation::getPtr() const noexcept
 {
     constexpr uintptr_t mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
     return reinterpret_cast<uint8_t*>(data & mask);
+}
+bool InMemoryLocation::isNotPreAllocated() const noexcept
+{
+    constexpr uint64_t mask = static_cast<uint64_t>(1) << 62;
+    return (data & mask) > 0;
+}
+bool DataLocation::isNotPreAllocated() const noexcept
+{
+    constexpr uint64_t mask = static_cast<uint64_t>(1) << 62;
+    return (inMemory.data & mask) > 0;
 }
 
 DataLocation::DataLocation() noexcept : inMemory(InMemoryLocation{})
@@ -245,6 +276,11 @@ bool DataSegment<T>::isSpilled() const
     return cond;
 }
 
+template <DataLocationConcept T>
+bool DataSegment<T>::isNotPreAllocated() const
+{
+    return location.isNotPreAllocated();
+}
 template class DataSegment<InMemoryLocation>;
 template class DataSegment<OnDiskLocation>;
 template class DataSegment<DataLocation>;

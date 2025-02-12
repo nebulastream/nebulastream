@@ -53,7 +53,7 @@ PinnedBuffer::PinnedBuffer(
     controlBlock->dataRetain();
 }
 
-PinnedBuffer::PinnedBuffer(PinnedBuffer const& other) noexcept
+PinnedBuffer::PinnedBuffer(const PinnedBuffer& other) noexcept
     : controlBlock(other.controlBlock), dataSegment(other.dataSegment), childOrMainData(other.childOrMainData)
 {
     controlBlock->pinnedRetain();
@@ -61,7 +61,7 @@ PinnedBuffer::PinnedBuffer(PinnedBuffer const& other) noexcept
 }
 
 
-PinnedBuffer& PinnedBuffer::operator=(PinnedBuffer const& other) noexcept
+PinnedBuffer& PinnedBuffer::operator=(const PinnedBuffer& other) noexcept
 {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
     {
@@ -189,7 +189,7 @@ std::optional<ChildKey> PinnedBuffer::storeReturnChildIndex(PinnedBuffer&& other
     //I haven't figured out yet how to resolve the overload ambiguity
     if (!other.dataSegment.operator==(other.controlBlock->getData()))
     {
-        detail::DataSegment<detail::InMemoryLocation> const childSegment = other.dataSegment;
+        const detail::DataSegment<detail::InMemoryLocation> childSegment = other.dataSegment;
         //other is a child buffer
         if (other.controlBlock->unregisterChild(other.dataSegment))
         {
@@ -204,7 +204,7 @@ std::optional<ChildKey> PinnedBuffer::storeReturnChildIndex(PinnedBuffer&& other
     else
     {
         //Destroy other buffers BCB and steal its data segment
-        if (auto const childSegment
+        if (const auto childSegment
             = other.controlBlock->stealDataSegment().and_then(&detail::DataSegment<detail::DataLocation>::get<detail::InMemoryLocation>))
         {
             other.controlBlock = nullptr;
@@ -217,10 +217,22 @@ std::optional<ChildKey> PinnedBuffer::storeReturnChildIndex(PinnedBuffer&& other
     return std::nullopt;
 }
 
+std::optional<PinnedBuffer> PinnedBuffer::loadChildBuffer(const int8_t* ptr, uint32_t size) const noexcept
+{
+    //We use uint8_t internally
+    auto nonConstPtr = reinterpret_cast<const uint8_t*>(ptr);
+    const auto segment = detail::DataSegment{detail::InMemoryLocation{nonConstPtr}, size};
+    auto childKey = controlBlock->findChild(segment);
+    if (childKey)
+    {
+        return PinnedBuffer{controlBlock, segment, *childKey};
+    }
+    return std::nullopt;
+}
 
 std::optional<PinnedBuffer> PinnedBuffer::storeReturnAsChildBuffer(PinnedBuffer&& buffer) const noexcept
 {
-    detail::DataSegment<detail::InMemoryLocation> const childSegment = buffer.dataSegment;
+    const detail::DataSegment<detail::InMemoryLocation> childSegment = buffer.dataSegment;
     if (auto index = storeReturnChildIndex(std::move(buffer)))
     {
         std::optional<PinnedBuffer>::value_type pinnedBuffer{controlBlock, childSegment, *index};

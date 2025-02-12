@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
 #include <cstddef>
 #include <deque>
 #include <memory>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -26,8 +26,12 @@ namespace NES::Memory
 {
 
 FixedSizeBufferPool::FixedSizeBufferPool(
-    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::DataSegment<detail::InMemoryLocation>>&& buffers, const size_t numberOfReservedBuffers)
+    const std::shared_ptr<BufferManager>& bufferManager,
+    std::deque<detail::DataSegment<detail::InMemoryLocation>>&& buffers,
+    const size_t numberOfReservedBuffers,
+    const std::function<void(detail::DataSegment<detail::InMemoryLocation>&&)>& deallocator)
     : bufferManager(bufferManager)
+    , deallocator(deallocator)
     , exclusiveBuffers(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)
     , isDestroyed(false)
@@ -65,7 +69,7 @@ void FixedSizeBufferPool::destroy()
     while (exclusiveBuffers.read(memSegment))
     {
         /// return exclusive buffers to the global pool
-        bufferManager->recyclePooledSegment(std::move(memSegment));
+        bufferManager->recycleSegment(std::move(memSegment));
     }
 }
 
@@ -102,13 +106,13 @@ PinnedBuffer FixedSizeBufferPool::getBufferBlocking()
     }
 }
 
-void FixedSizeBufferPool::recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment)
+void FixedSizeBufferPool::recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment)
 {
     INVARIANT(memSegment.getLocation().getPtr(), "null memory segment");
     if (isDestroyed)
     {
         /// return recycled buffer to the global pool
-        bufferManager->recyclePooledSegment(std::move(memSegment));
+        bufferManager->recycleSegment(std::move(memSegment));
     }
     else
     {
@@ -119,14 +123,17 @@ void FixedSizeBufferPool::recyclePooledSegment(detail::DataSegment<detail::InMem
         // }
 
         /// add back an exclusive buffer to the local pool
-        exclusiveBuffers.write(memSegment);
+        if (memSegment.isNotPreAllocated())
+        {
+            deallocator(memSegment);
+        }
+        else
+        {
+            exclusiveBuffers.write(memSegment);
+        }
     }
 }
 
-void FixedSizeBufferPool::recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment)
-{
-    bufferManager->recycleUnpooledSegment(std::move(memSegment));
-}
 size_t FixedSizeBufferPool::getBufferSize() const
 {
     return bufferManager->getBufferSize();
@@ -156,11 +163,7 @@ std::optional<PinnedBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
     throw UnsupportedOperation("This function is not supported here");
 }
 
-bool FixedSizeBufferPool::recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&&)
-{
-    throw NotImplemented("Recycling on disk data segments is not supported currently");
-}
-bool FixedSizeBufferPool::recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&&)
+bool FixedSizeBufferPool::recycleSegment(detail::DataSegment<detail::OnDiskLocation>&&)
 {
     throw NotImplemented("Recycling on disk data segments is not supported currently");
 }
