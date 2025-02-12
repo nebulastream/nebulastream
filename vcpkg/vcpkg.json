@@ -42,5 +42,6 @@
     "nautilus",
     "spdlog",
     "yaml-cpp"
+
   ]
 }
