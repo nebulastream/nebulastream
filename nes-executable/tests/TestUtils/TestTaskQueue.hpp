@@ -438,6 +438,7 @@ public:
 
             threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
         }
+        timer.start();
         for (size_t i = 0; i < numberOfWorkerThreads; ++i)
         {
             threads.emplace_back([this, i] { thread_function(i); });
@@ -447,6 +448,8 @@ public:
     /// Wait for all threads to complete
     void waitForCompletion() {
         completionLatch.wait();
+        timer.pause();
+        NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
     }
 
 private:
@@ -456,6 +459,7 @@ private:
     folly::MPMCQueue<WorkTask> threadTasks;
     std::latch completionLatch;
     std::vector<std::jthread> threads;
+    NES::Timer<std::chrono::microseconds> timer{"TestTaskQueueStealing"};
 
     void thread_function(size_t threadIdx)
     {

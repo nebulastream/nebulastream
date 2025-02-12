@@ -132,9 +132,9 @@ public:
 
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
+            auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 131072);
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
-            auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 131072);
 
             std::vector<TestablePipelineTask> pipelineTasks;
             pipelineTasks.reserve(NUM_EXPECTED_RAW_BUFFERS);
@@ -154,10 +154,12 @@ public:
                 }
                 pipelineTasks.emplace_back(std::move(pipelineTask));
             }
-            auto testTaskQueue = std::make_unique<TestTaskQueueStealing>(testConfig.numberOfThreads, pipelineTasks.size(), std::move(testBufferManager), resultBuffers);
+            auto testTaskQueue = std::make_unique<TestTaskQueueStealing>(testConfig.numberOfThreads, pipelineTasks.size(), testBufferManager, resultBuffers);
             testTaskQueue->startProcessing(pipelineTasks);
             testTaskQueue->waitForCompletion();
             ASSERT_TRUE(testTaskQueue.release());
+            resultBuffers->clear();
+            testBufferManager->destroy();
         }
     }
 };
@@ -190,7 +192,7 @@ TEST_F(SmallRandomizedSequenceTest, testBimboData)
         TestConfig{
             .testFileName = "Bimbo_1_10000000",
             .numberOfIterations = 1,
-            .numberOfThreads = 32,
+            .numberOfThreads = 48,
             .sizeOfRawBuffers = 4096,
             .processingMode = TestTaskQueue::ProcessingMode::ASYNCHRONOUS});
 }

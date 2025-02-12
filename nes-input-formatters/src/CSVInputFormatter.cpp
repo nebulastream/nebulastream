@@ -110,20 +110,18 @@ public:
 
     void processCurrentTuple(
         std::string_view currentTuple,
-        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         const std::string& fieldDelimiter,
         const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
-        const std::vector<size_t>& fieldSizes)
+        const std::vector<size_t>& fieldSizes,
+        Memory::AbstractBufferProvider& bufferProvider)
     {
         const boost::char_separator sep{fieldDelimiter.c_str()};
         const boost::tokenizer tupleTokenizer{currentTuple.begin(), currentTuple.end(), sep};
         /// Iterate over all fields, parse the string values and write the formatted data into the TBF.
-        // size_t currentFieldOffset = currentFieldOffsetTBFormatted;
-        auto& bufferManager = *pipelineExecutionContext.getBufferManager();
         for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
         {
             const auto fieldPointer = this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted;
-            parseFunction(token, fieldPointer, bufferManager, getTupleBufferFormatted());
+            parseFunction(token, fieldPointer, bufferProvider, getTupleBufferFormatted());
             currentFieldOffsetTBFormatted += fieldSize;
         }
     }
@@ -153,16 +151,18 @@ public:
         const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
         const std::vector<size_t>& fieldSizes)
     {
+        auto& bufferProvider = *pipelineExecutionContext.getBufferManager();
+
         while (hasOneMoreTupleInRawTB())
         {
             /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
             /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
-            checkAndHandleFullBuffer(pipelineExecutionContext); // Todo: can count number tuples and simply iterate for as long as possible (or breakt
+            checkAndHandleFullBuffer(pipelineExecutionContext); // Todo: can count number tuples and simply iterate for as long as possible (or break)
 
             /// Get next tuple
             const auto currentTuple = getNextTuple();
             /// Parse fields of tuple
-            processCurrentTuple(currentTuple, pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+            processCurrentTuple(currentTuple, fieldDelimiter, fieldParseFunctions, fieldSizes, bufferProvider);
             /// Progress one tuple
             progressOneTuple();
         }
@@ -570,7 +570,7 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(const
     partialTuple.append(lastPartialTuple);
     const auto stateOfPartialTuple = static_cast<FormattedTupleIs>(not(partialTuple.empty()));
     progressTracker.processCurrentTuple(
-        std::move(partialTuple), pipelineExecutionContext, fieldDelimiter, fieldParseFunctions, fieldSizes);
+        std::move(partialTuple), fieldDelimiter, fieldParseFunctions, fieldSizes, *pipelineExecutionContext.getBufferManager());
     progressTracker.progressOneTuple();
     return stateOfPartialTuple;
 }
