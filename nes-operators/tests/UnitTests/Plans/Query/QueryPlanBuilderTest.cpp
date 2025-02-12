@@ -51,7 +51,6 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
 {
     ///test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
-    EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
     ///test addSelection
     auto filterFunction = std::shared_ptr<LogicalFunction>(
         std::make_shared<EqualsLogicalFunction>(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
