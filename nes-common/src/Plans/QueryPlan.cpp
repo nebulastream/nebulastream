@@ -75,14 +75,9 @@ void QueryPlan::appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operato
         PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
-    clearRootOperators();
+    rootOperators.clear();
     NES_DEBUG("QueryPlan: Pushing input operator node as new root.");
     rootOperators.push_back(operatorNode);
-}
-
-void QueryPlan::clearRootOperators()
-{
-    rootOperators.clear();
 }
 
 std::string QueryPlan::toString() const
@@ -287,30 +282,7 @@ std::shared_ptr<QueryPlan> QueryPlan::clone() const
     }
     operatorIdToOperatorMap.clear();
     auto newQueryPlan = QueryPlan::create(queryId, duplicateRootOperators);
-    newQueryPlan->setSourceConsumed(sourceConsumed);
-    newQueryPlan->setPlacementStrategy(placementStrategy);
-    newQueryPlan->setQueryState(currentState);
     return newQueryPlan;
-}
-
-std::string QueryPlan::getSourceConsumed() const
-{
-    return sourceConsumed;
-}
-
-void QueryPlan::setSourceConsumed(std::string_view sourceName)
-{
-    sourceConsumed = sourceName;
-}
-
-Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const
-{
-    return placementStrategy;
-}
-
-void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy)
-{
-    this->placementStrategy = placementStrategy;
 }
 
 std::set<std::shared_ptr<Operator>> QueryPlan::findAllOperatorsBetween(
@@ -437,13 +409,4 @@ std::set<std::shared_ptr<Operator>> QueryPlan::findOperatorsBetweenSourceAndTarg
     return operatorsBetween;
 }
 
-QueryState QueryPlan::getQueryState() const
-{
-    return currentState;
-}
-
-void QueryPlan::setQueryState(QueryState newState)
-{
-    currentState = newState;
-}
 }

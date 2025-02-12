@@ -113,10 +113,6 @@ public:
 
     std::shared_ptr<QueryPlan> clone() const;
 
-    [[nodiscard]] std::string getSourceConsumed() const;
-    /// Set the logical sources used in the query
-    void setSourceConsumed(std::string_view sourceName);
-
     /// Find all operators between given set of downstream and upstream operators
     /// @return all operators between (excluding) downstream and upstream operators
     std::set<std::shared_ptr<Operator>> findAllOperatorsBetween(
@@ -134,6 +130,5 @@ private:
 
     std::vector<std::shared_ptr<Operator>> rootOperators;
     QueryId queryId = INVALID_QUERY_ID;
-    std::string sourceConsumed;
 };
 }
