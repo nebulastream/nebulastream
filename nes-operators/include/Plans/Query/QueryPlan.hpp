@@ -23,8 +23,6 @@
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/QueryState.hpp>
 
 
 namespace NES
@@ -112,31 +110,14 @@ public:
     std::shared_ptr<Operator> getOperatorWithOperatorId(OperatorId operatorId) const;
 
     void setQueryId(QueryId queryId);
-
     [[nodiscard]] QueryId getQueryId() const;
 
     std::shared_ptr<QueryPlan> copy();
-
-    [[nodiscard]] std::string getSourceConsumed() const;
-
-
-    /// Set the logical sources used in the query
-    void setSourceConsumed(std::string_view sourceName);
-
-    void setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy);
-
-    Optimizer::PlacementStrategy getPlacementStrategy() const;
 
     /// Find all operators between given set of downstream and upstream operators
     /// @return all operators between (excluding) downstream and upstream operators
     std::set<std::shared_ptr<Operator>> findAllOperatorsBetween(
         const std::set<std::shared_ptr<Operator>>& downstreamOperators, const std::set<std::shared_ptr<Operator>>& upstreamOperators);
-
-    QueryState getQueryState() const;
-
-    void setQueryState(QueryState newState);
-
-    void clearRootOperators();
 
     /// Comparison to another plan and its children nodes by tree traversal.
     /// @return true, if this and other plan are equal in their structure and operators, false else
@@ -150,9 +131,5 @@ private:
 
     std::vector<std::shared_ptr<Operator>> rootOperators;
     QueryId queryId = INVALID_QUERY_ID;
-    std::string sourceConsumed;
-    QueryState currentState;
-    /// Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
-    Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }

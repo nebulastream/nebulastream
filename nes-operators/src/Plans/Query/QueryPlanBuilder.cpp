@@ -50,7 +50,6 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::createQueryPlan(std::string logical
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
     auto sourceOperator = std::make_shared<SourceNameLogicalOperator>(logicalSourceName);
     auto queryPlan = QueryPlan::create(sourceOperator);
-    queryPlan->setSourceConsumed(logicalSourceName);
     return queryPlan;
 }
 
@@ -236,8 +235,6 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
     NES_TRACE("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
-    auto newSourceName = Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
-    leftQueryPlan->setSourceConsumed(newSourceName);
     return leftQueryPlan;
 }
 
