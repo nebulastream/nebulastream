@@ -1,7 +1,8 @@
 {
   "name": "grpc",
-  "version-semver": "1.68.1",
-  "description": "gRPC is a modern, open source, high-performance remote procedure call (RPC) framework that can run anywhere. gRPC enables client and server applications to communicate transparently, and simplifies the building of connected systems.",
+  "version-semver": "1.60.0",
+  "port-version": 2,
+  "description": "This is based to the 1.60.0 version available via VCPKG, however we required additional patches to support C++23. gRPC is a modern, open source, high-performance remote procedure call (RPC) framework that can run anywhere. gRPC enables client and server applications to communicate transparently, and simplifies the building of connected systems.",
   "homepage": "https://github.com/grpc/grpc",
   "license": "Apache-2.0",
   "dependencies": [
@@ -24,7 +25,7 @@
       "host": true
     },
     "re2",
-    "utf8-range",
+    "upb",
     {
       "name": "vcpkg-cmake",
       "host": true
