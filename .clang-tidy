@@ -121,7 +121,6 @@ WarningsAsErrors: '
   -misc-header-include-cycle,
   -modernize-use-std-numbers,
   -modernize-use-transparent-functors,
-  -readability-non-const-parameter,
   -readability-string-compare,
   -bugprone-multi-level-implicit-pointer-conversion,
   -bugprone-suspicious-string-compare,
