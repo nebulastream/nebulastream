@@ -58,22 +58,3 @@ function(add_nes_test_nebuli)
     target_include_directories(${TARGET_NAME}
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
-
-# Configure CPackage
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_PACKAGE_NAME "Nebuli")
-set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
-set(CPACK_PACKAGE_DESCRIPTION "The Nebuli client interacts with NebulaStream to submit and control queries")
-set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
-set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc++-${LLVM_MAJOR_VERSION}-dev, libc++abi-${LLVM_MAJOR_VERSION}-dev, clang-${LLVM_MAJOR_VERSION}")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
-
-##This allows call to ldconfig to load the configuration after installation
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${PROJECT_SOURCE_DIR}/cmake/triggers")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
-INCLUDE(CPack)
