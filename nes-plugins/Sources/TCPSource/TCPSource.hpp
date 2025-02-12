@@ -134,7 +134,7 @@ struct ConfigParametersTCP
             return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "tcpConnectTimeoutSeconds", 10, [](const std::unordered_map<std::string, std::string>& config) {
+        "connectTimeoutSeconds", 60, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(CONNECT_TIMEOUT, config);
         }};
 

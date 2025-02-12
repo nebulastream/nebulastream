@@ -24,6 +24,7 @@ physical:
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
+      connectTimeoutSeconds: 60
   - logical: tcp_and_csv_source
     parserConfig:
       type: CSV
