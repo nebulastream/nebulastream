@@ -29,7 +29,7 @@ namespace NES::Util
 
 FileMutex::FileMutex(const std::string filePath) : fileName(filePath)
 {
-    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU); /// NOLINT (cppcoreguidelines-prefer-member-initializer)
     if (fd == -1 && errno == EEXIST)
     {
         fd = open(filePath.c_str(), O_RDWR);
