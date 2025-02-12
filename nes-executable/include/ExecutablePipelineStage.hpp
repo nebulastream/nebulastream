@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
@@ -33,7 +33,7 @@ public:
 
     /// Executes the ExecutablePipelineStage with a readonly input tuple buffer.
     /// `execute` should never be called on a pipeline that has not previously been `started`.
-    virtual void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
+    virtual void execute(const Memory::PinnedBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     /// Stops the ExecutablePipelineStage allowing it to flush left over state.
     /// `stop` should never be called on a pipeline that has not previously been `started`.

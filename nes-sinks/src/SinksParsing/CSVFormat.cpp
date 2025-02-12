@@ -19,7 +19,7 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -62,7 +62,7 @@ constexpr auto replaceNewlines(const std::string_view input, const std::string_v
     return result;
 }
 
-std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
+std::string CSVFormat::getFormattedBuffer(const Memory::PinnedBuffer& inputBuffer)
 {
     std::string bufferContent;
     if (addTimestamp)
@@ -81,7 +81,7 @@ std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer
     return bufferContent;
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema)
+std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::PinnedBuffer tbuffer, const std::shared_ptr<Schema>& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

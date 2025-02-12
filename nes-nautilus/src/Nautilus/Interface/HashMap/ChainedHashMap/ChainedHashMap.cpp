@@ -197,12 +197,8 @@ void ChainedHashMap::clear() noexcept
     numberOfTuples = 0;
 
     /// Releasing all memory
-    for (auto& storagePage : storageSpace)
-    {
-        storagePage.release();
-    }
     storageSpace.clear();
-    entrySpace.release();
+    entrySpace = Memory::PinnedBuffer{};
 }
 
 }

@@ -39,7 +39,7 @@ namespace Util
 * @param buffer the tuple buffer
 * @return string of tuple buffer
 */
-std::string printTupleBufferAsText(Memory::TupleBuffer& buffer);
+std::string printTupleBufferAsText(Memory::PinnedBuffer& buffer);
 
 /**
  * @brief create CSV lines from the tuples
@@ -47,7 +47,7 @@ std::string printTupleBufferAsText(Memory::TupleBuffer& buffer);
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema);
+std::string printTupleBufferAsCSV(Memory::PinnedBuffer tbuffer, const std::shared_ptr<Schema>& schema);
 
 /**
 * @brief Returns the physical types of all fields of the schema

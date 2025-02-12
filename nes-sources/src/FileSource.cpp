@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -53,7 +53,7 @@ void FileSource::close()
 {
     this->inputFile.close();
 }
-size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t FileSource::fillTupleBuffer(NES::Memory::PinnedBuffer& tupleBuffer, const std::stop_token&)
 {
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();

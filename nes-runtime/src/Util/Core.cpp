@@ -30,7 +30,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,7 +42,7 @@
 namespace NES
 {
 
-std::string Util::printTupleBufferAsText(Memory::TupleBuffer& buffer)
+std::string Util::printTupleBufferAsText(Memory::PinnedBuffer& buffer)
 {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++)
@@ -52,7 +52,7 @@ std::string Util::printTupleBufferAsText(Memory::TupleBuffer& buffer)
     return ss.str();
 }
 
-std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema)
+std::string Util::printTupleBufferAsCSV(Memory::PinnedBuffer tbuffer, const std::shared_ptr<Schema>& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

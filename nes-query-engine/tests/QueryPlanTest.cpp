@@ -27,7 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -138,13 +138,13 @@ concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value
 struct TestPipelineExecutionContext : Execution::PipelineExecutionContext
 {
     MOCK_METHOD(WorkerThreadId, getId, (), (const, override));
-    MOCK_METHOD(Memory::TupleBuffer, allocateTupleBuffer, (), (override));
+    MOCK_METHOD(Memory::PinnedBuffer, allocateTupleBuffer, (), (override));
     MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (const, override));
     MOCK_METHOD(std::shared_ptr<Memory::AbstractBufferProvider>, getBufferManager, (), (const, override));
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
     MOCK_METHOD(std::vector<std::shared_ptr<Execution::OperatorHandler>>&, getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<Execution::OperatorHandler>>&), (override));
-    MOCK_METHOD(void, emitBuffer, (const Memory::TupleBuffer&, ContinuationPolicy), (override));
+    MOCK_METHOD(void, emitBuffer, (const Memory::PinnedBuffer&, ContinuationPolicy), (override));
 };
 
 struct TerminatePipelineArgs

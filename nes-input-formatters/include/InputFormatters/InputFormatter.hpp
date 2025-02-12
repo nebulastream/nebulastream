@@ -17,7 +17,7 @@
 #include <functional>
 #include <ostream>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 
@@ -37,10 +37,10 @@ public:
     InputFormatter& operator=(InputFormatter&&) = delete;
 
     virtual void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
+        const NES::Memory::PinnedBuffer& tbRaw,
         NES::Memory::AbstractBufferProvider& bufferProvider,
         size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+        const std::function<void(Memory::PinnedBuffer& buffer, bool addBufferMetaData)>& emitFunction)
         = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }

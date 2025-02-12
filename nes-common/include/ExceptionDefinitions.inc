@@ -85,6 +85,10 @@ EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
 EXCEPTION(CannotAccessBuffer, 3008, "cannot access buffer")
 EXCEPTION(CannotAllocateBuffer, 3009, "cannot allocate buffer")
+EXCEPTION(CannotSubmitBufferIO, 3100, "cannot submit buffer IO task to bounded intermediate queue")
+EXCEPTION(CannotReadBufferFromDisk, 3101, "cannot read buffer from disk")
+EXCEPTION(CoroutineContinuedWithoutResult, 3102, "buffer management IO coroutine was resume without result")
+EXCEPTION(FailedToTransferCleanupOwnership, 3110, "failed to transfer ownership of segment hole punching")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

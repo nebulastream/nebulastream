@@ -16,87 +16,87 @@
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES::Nautilus::ProxyFunctions
 {
-inline int8_t* NES_Memory_TupleBuffer_getBuffer(Memory::TupleBuffer* tupleBuffer)
+inline int8_t* NES_Memory_TupleBuffer_getBuffer(Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getBuffer();
 };
 
-inline uint64_t NES_Memory_TupleBuffer_getBufferSize(const Memory::TupleBuffer* tupleBuffer)
+inline uint64_t NES_Memory_TupleBuffer_getBufferSize(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getBufferSize();
 };
 
-inline uint64_t NES_Memory_TupleBuffer_getNumberOfTuples(const Memory::TupleBuffer* tupleBuffer)
+inline uint64_t NES_Memory_TupleBuffer_getNumberOfTuples(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getNumberOfTuples();
 };
 
-void inline NES_Memory_TupleBuffer_setNumberOfTuples(Memory::TupleBuffer* tupleBuffer, const uint64_t numberOfTuples)
+void inline NES_Memory_TupleBuffer_setNumberOfTuples(Memory::PinnedBuffer* tupleBuffer, const uint64_t numberOfTuples)
 {
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 
-inline OriginId NES_Memory_TupleBuffer_getOriginId(const Memory::TupleBuffer* tupleBuffer)
+inline OriginId NES_Memory_TupleBuffer_getOriginId(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getOriginId();
 };
 
-inline void NES_Memory_TupleBuffer_setOriginId(Memory::TupleBuffer* tupleBuffer, const OriginId value)
+inline void NES_Memory_TupleBuffer_setOriginId(Memory::PinnedBuffer* tupleBuffer, const OriginId value)
 {
     tupleBuffer->setOriginId(OriginId(value));
 };
 
-inline Runtime::Timestamp NES_Memory_TupleBuffer_getWatermark(const Memory::TupleBuffer* tupleBuffer)
+inline Runtime::Timestamp NES_Memory_TupleBuffer_getWatermark(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getWatermark();
 };
 
-inline void NES_Memory_TupleBuffer_setWatermark(Memory::TupleBuffer* tupleBuffer, const Runtime::Timestamp value)
+inline void NES_Memory_TupleBuffer_setWatermark(Memory::PinnedBuffer* tupleBuffer, const Runtime::Timestamp value)
 {
     tupleBuffer->setWatermark(Runtime::Timestamp(value));
 };
 
-inline Runtime::Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const Memory::TupleBuffer* tupleBuffer)
+inline Runtime::Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getCreationTimestampInMS();
 };
 
-inline void NES_Memory_TupleBuffer_setSequenceNumber(Memory::TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
+inline void NES_Memory_TupleBuffer_setSequenceNumber(Memory::PinnedBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
 {
     tupleBuffer->setSequenceNumber(sequenceNumber);
 };
 
-inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::TupleBuffer* tupleBuffer)
+inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getSequenceNumber();
 }
 
-inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(Memory::TupleBuffer* tupleBuffer, const Runtime::Timestamp value)
+inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(Memory::PinnedBuffer* tupleBuffer, const Runtime::Timestamp value)
 {
     tupleBuffer->setCreationTimestampInMS(Runtime::Timestamp(value));
 }
 
-inline void NES_Memory_TupleBuffer_setChunkNumber(Memory::TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)
+inline void NES_Memory_TupleBuffer_setChunkNumber(Memory::PinnedBuffer* tupleBuffer, const ChunkNumber chunkNumber)
 {
     tupleBuffer->setChunkNumber(ChunkNumber(chunkNumber));
 };
 
-inline void NES_Memory_TupleBuffer_setLastChunk(Memory::TupleBuffer* tupleBuffer, const bool isLastChunk)
+inline void NES_Memory_TupleBuffer_setLastChunk(Memory::PinnedBuffer* tupleBuffer, const bool isLastChunk)
 {
     tupleBuffer->setLastChunk(isLastChunk);
 };
 
-inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const Memory::TupleBuffer* tupleBuffer)
+inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->getChunkNumber();
 };
 
-inline bool NES_Memory_TupleBuffer_isLastChunk(const Memory::TupleBuffer* tupleBuffer)
+inline bool NES_Memory_TupleBuffer_isLastChunk(const Memory::PinnedBuffer* tupleBuffer)
 {
     return tupleBuffer->isLastChunk();
 };

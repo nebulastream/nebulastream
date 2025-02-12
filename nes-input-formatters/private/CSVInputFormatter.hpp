@@ -25,7 +25,7 @@
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::InputFormatters
 {
@@ -48,10 +48,10 @@ public:
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
     void parseTupleBufferRaw(
-        const Memory::TupleBuffer& tbRaw,
+        const Memory::PinnedBuffer& tbRaw,
         Memory::AbstractBufferProvider& bufferProvider,
         size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        const std::function<void(Memory::PinnedBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

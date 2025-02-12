@@ -23,7 +23,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
@@ -47,7 +47,7 @@ public:
     PrintSink& operator=(PrintSink&&) = delete;
     void start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    execute(const Memory::PinnedBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
     static std::unique_ptr<Configurations::DescriptorConfig::Config>

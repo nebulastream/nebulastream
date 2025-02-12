@@ -32,7 +32,7 @@
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <boost/token_functions.hpp>
@@ -52,7 +52,7 @@ namespace NES::InputFormatters
 struct PartialTuple
 {
     uint64_t offsetInBuffer;
-    Memory::TupleBuffer tbRaw;
+    Memory::PinnedBuffer tbRaw;
 
     [[nodiscard]] std::string_view getStringView() const
     {
@@ -103,12 +103,12 @@ public:
         return this->tupleBufferRawSV.substr(currentTupleStartTBRaw, sizeOfCurrentTuple());
     }
 
-    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
+    void setNewTupleBufferFormatted(NES::Memory::PinnedBuffer&& tupleBufferFormatted)
     {
         this->tupleBufferFormatted = std::move(tupleBufferFormatted);
     }
 
-    void handleResidualBytes(NES::Memory::TupleBuffer tbRawEndingInPartialTuple)
+    void handleResidualBytes(NES::Memory::PinnedBuffer tbRawEndingInPartialTuple)
     {
         if (currentTupleStartTBRaw < numTotalBytesInTBRaw)
         {
@@ -136,7 +136,7 @@ public:
 
     /// Getter & Setter
     [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
-    NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
+    NES::Memory::PinnedBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
     const std::string& getTupleDelimiter() { return this->tupleDelimiter; }
 
@@ -152,7 +152,7 @@ private:
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
-    NES::Memory::TupleBuffer tupleBufferFormatted;
+    NES::Memory::PinnedBuffer tupleBufferFormatted;
 
     size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartTBRaw); }
 };
@@ -320,9 +320,10 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                     auto& childBufferVal = childBuffer.value();
                     *childBufferVal.getBuffer<uint32_t>() = valueLength;
                     std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), inputString.data(), valueLength);
-                    const auto index = progressTracker->getTupleBufferFormatted().storeChildBuffer(childBufferVal);
+                    const auto index = progressTracker->getTupleBufferFormatted().storeReturnChildIndex(std::move(*childBuffer));
+                    INVARIANT(index, "Failed to store child buffer in CSV input formatter");
                     auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
-                    *childBufferIndexPointer = index;
+                    *childBufferIndexPointer = index->getNum();
                     return sizeof(uint32_t);
                 });
         }
@@ -332,10 +333,10 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
 CSVInputFormatter::~CSVInputFormatter() = default;
 
 void CSVInputFormatter::parseTupleBufferRaw(
-    const NES::Memory::TupleBuffer& tbRaw,
+    const NES::Memory::PinnedBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(Memory::PinnedBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
     /// Reset all values that are tied to a specific tbRaw.

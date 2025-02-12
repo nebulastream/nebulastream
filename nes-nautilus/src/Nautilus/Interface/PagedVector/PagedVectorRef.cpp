@@ -23,7 +23,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <val_ptr.hpp>
@@ -36,19 +36,19 @@ uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
     return pagedVector->getTotalNumberOfEntries();
 }
 
-const Memory::TupleBuffer* createNewEntryProxy(
+const Memory::PinnedBuffer* createNewEntryProxy(
     PagedVector* pagedVector, Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
     pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
     return std::addressof(pagedVector->getLastPage());
 }
 
-const Memory::TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
+const Memory::PinnedBuffer* getFirstPageProxy(const PagedVector* pagedVector)
 {
     return std::addressof(pagedVector->getFirstPage());
 }
 
-const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+const Memory::PinnedBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
     return std::addressof(pagedVector->getTupleBufferForEntry(entryPos));
 }

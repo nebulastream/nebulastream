@@ -22,7 +22,6 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Engine.hpp>
@@ -43,14 +42,14 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 }
 
 void CompiledExecutablePipelineStage::execute(
-    const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
+    const Memory::PinnedBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     compiledPipelineFunction(&pipelineExecutionContext, std::addressof(inputTupleBuffer));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::PinnedBuffer*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     Timer timer("compiler");
@@ -59,7 +58,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
     /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     const std::function compiledFunction
-        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::TupleBuffer*> recordBufferRef)
+        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::PinnedBuffer*> recordBufferRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);

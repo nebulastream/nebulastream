@@ -18,7 +18,7 @@
 #include <string>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest-assertion-result.h>
@@ -32,7 +32,7 @@ static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerializ
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
-[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
+[[maybe_unused]] std::vector<Memory::PinnedBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const std::shared_ptr<Schema>& schema,
     Memory::AbstractBufferProvider& bufferProvider,

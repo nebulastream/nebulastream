@@ -14,10 +14,10 @@
 
 #pragma once
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Testing
 {
 /// Used for testing to copy buffers from the pipeline execution context, so that we can both free the original TupleBuffer and keep the copy of the TupleBuffer for later checks.
-Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider);
+Memory::PinnedBuffer copyBuffer(const Memory::PinnedBuffer& buffer, Memory::AbstractBufferProvider& provider);
 }

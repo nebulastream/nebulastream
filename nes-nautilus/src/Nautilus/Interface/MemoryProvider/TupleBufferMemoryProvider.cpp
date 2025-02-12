@@ -27,7 +27,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/function.hpp>
@@ -40,13 +40,7 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
-{
-    auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
-    return childBuffer.getBuffer<uint8_t>();
-}
-
-VarVal TupleBufferMemoryProvider::loadValue(
+Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
@@ -55,21 +49,25 @@ VarVal TupleBufferMemoryProvider::loadValue(
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
+        return Nautilus::VariableSizedData(fieldReference, recordBuffer.getReference());
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, const int8_t* textValue)
+void storeAssociatedTextValueProxy(
+    const Memory::PinnedBuffer* inputBuffer, const Memory::PinnedBuffer* outputBuffer, const int8_t* textValue, const uint32_t size)
 {
-    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
-    return tupleBuffer->storeChildBuffer(textBuffer);
+    auto oldChildBuffer = inputBuffer->loadChildBuffer(textValue, size);
+    if (oldChildBuffer)
+    {
+        const auto storeChildBuffer = outputBuffer->storeReturnAsChildBuffer(std::move(*oldChildBuffer));
+        INVARIANT(storeChildBuffer, "Child buffer could not be stored in buffer");
+    }
+    INVARIANT(oldChildBuffer, "Tried to load invalid child buffer");
 }
 
 VarVal TupleBufferMemoryProvider::storeValue(
-    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
+    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, nautilus::val<int8_t*>& fieldReference, VarVal value)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -85,10 +83,15 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
+        const auto textValue = value.cast<Nautilus::VariableSizedData>();
+        nautilus::invoke(
+            storeAssociatedTextValueProxy,
+            textValue.getPinnedBuffer(),
+            recordBuffer.getReference(),
+            textValue.getReference(),
+            textValue.getSize());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        *fieldReferenceCastedU32 = childIndex;
+        fieldReference = textValue.getReference();
         return value;
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());

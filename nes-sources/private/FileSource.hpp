@@ -23,7 +23,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -43,7 +43,7 @@ public:
     FileSource(FileSource&&) = delete;
     FileSource& operator=(FileSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(NES::Memory::PinnedBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open file socket.
     void open() override;
