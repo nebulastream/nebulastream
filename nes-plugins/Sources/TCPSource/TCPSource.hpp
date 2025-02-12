@@ -116,7 +116,7 @@ struct ConfigParametersTCP
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
             /// User specified value, set if input is valid, throw if not.
-            const auto socketDomainString = config.at(DOMAIN);
+            const auto& socketDomainString = config.at(DOMAIN);
             if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
             {
                 return (AF_INET);

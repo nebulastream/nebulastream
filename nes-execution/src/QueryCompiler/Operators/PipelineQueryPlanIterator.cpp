@@ -83,7 +83,7 @@ PipelineQueryPlanIterator::Iterator& PipelineQueryPlanIterator::Iterator::operat
         const auto children = current->getSuccessors();
         for (int64_t i = children.size() - 1; i >= 0; i--)
         {
-            auto child = children[i];
+            const auto& child = children[i];
             INVARIANT(!child->getPredecessors().empty(), "A child node should have a parent");
 
             /// check if current node is last parent of child.

@@ -509,7 +509,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
     }
 
     std::shared_ptr<LogicalOperator> ptr;
-    const auto serializedJoinFunction = joinDetails.joinfunction();
+    const auto& serializedJoinFunction = joinDetails.joinfunction();
     const auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
     const auto joinDefinition = Join::LogicalJoinDescriptor::create(
@@ -524,7 +524,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
 std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: de-serialize {}", serializedOperator.DebugString());
-    auto details = serializedOperator.details();
+    const auto& details = serializedOperator.details();
     std::shared_ptr<LogicalOperator> operatorNode;
     if (details.Is<SerializableOperator_SourceDescriptorLogicalOperator>())
     {
@@ -703,7 +703,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
 std::shared_ptr<LogicalUnaryOperator>
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
-    const auto serializedSourceDescriptor = sourceDetails.sourcedescriptor();
+    const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
     const auto sourceId = sourceDetails.sourceoriginid();
     return std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceId));
@@ -713,7 +713,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkLogicalOperator();
-    const auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
+    const auto& sinkDescriptor = sinkOperator.getSinkDescriptorRef();
     serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, sinkDetails);
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
@@ -721,7 +721,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 std::shared_ptr<LogicalUnaryOperator>
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
-    const auto serializedSinkDescriptor = sinkDetails.sinkdescriptor();
+    const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
     auto sinkOperator = std::make_shared<SinkLogicalOperator>(getNextOperatorId());
     sinkOperator->sinkDescriptor = std::move(sinkDescriptor);
