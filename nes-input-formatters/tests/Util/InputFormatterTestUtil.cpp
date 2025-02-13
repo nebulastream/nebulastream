@@ -150,19 +150,18 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
 }
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
+std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        OriginId(0),
         validatedParserConfiguration.parserType,
-        schema,
+        std::move(schema),
         validatedParserConfiguration.tupleDelimiter,
         validatedParserConfiguration.fieldDelimiter);
-
-    return std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

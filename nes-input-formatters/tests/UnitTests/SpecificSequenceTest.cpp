@@ -42,7 +42,7 @@ public:
     void TearDown() override { BaseUnitTest::TearDown(); }
 };
 
-TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
+TEST_F(SpecificSequenceTest, dumbFirstTestForNewInputFormatterTask)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -50,7 +50,76 @@ TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .numThreads = 1,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"}}});
+}
+
+TEST_F(SpecificSequenceTest, moreFieldsInNewInputFormatterTask)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
+        .numThreads = 1,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 24,
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32, INT32},
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1234, 1234, 12345)}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1234,1234,12345\n"}}});
+}
+
+TEST_F(SpecificSequenceTest, moreFormattedBuffersThanIndexBuffersRequired)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int64_t, int64_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 6, /// 1 buffer for raw data, 3 buffers for result, 2 buffer for FormattedData
+        .numThreads = 1,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers
+        = 32, /// 24 bytes allows FormatOffsets to represent 2 tuples (2 * 4 bytes for meta data, then 2 * 12  bytes for tuples
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT64, INT64},
+        /// expecting three buffers (first two tuples in first buffer -> full, then a single buffer in second (no tuple delimiter), then the flushed buffer
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1, 2), TestTuple(3, 4)}, {TestTuple(5, 6)}, {TestTuple(7, 89)}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1,2\n3,4\n5,6\n7,89"}}});
+}
+
+TEST_F(SpecificSequenceTest, moreIndexBuffersThanFormattedBuffersRequired)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 6, /// 1 buffer for raw data, 3 buffers for result, 2 buffer for FormattedData
+        .numThreads = 1,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers
+        = 32, /// 32 bytes allows FormatOffsets to represent 2 tuples (2 * 4 bytes for metadata, then 2 * 12  bytes for tuples
+        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .testSchema = {INT32, INT32},
+        /// expecting two buffers (first contains
+        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1, 2), TestTuple(3, 4), TestTuple(5, 6)}, {TestTuple(7, 8)}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "\n1,2\n3,4\n5,6\n7,8"}}});
+}
+
+TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for indexes, 1 buffer for results
+        .numThreads = 1,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20, /// 8 bytes metadata and 12 bytes per tuple (3 * sizeof(uint32_t))
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
@@ -68,7 +137,8 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreads)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .numThreads = 2,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
@@ -86,7 +156,8 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOf
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .numThreads = 2,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
@@ -104,7 +175,8 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
@@ -121,7 +193,8 @@ TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .numThreads = 1,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
@@ -130,15 +203,18 @@ TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
            /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,12345678--"}}});
 }
 
+/// Index buffer can only represent a single tuple. Requires 7 (nested) index buffers for first buffer ("1\n2\n3\n4\n5\n6\n7\n8\n").
 TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
-        .numRequiredBuffers = 6, /// 2 buffers for raw data, 4 buffers for results
+    runTest<TestTuple, true>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 18, /// 2 buffers for raw data, 4 buffers for results, 12 index buffers
         .numThreads = 1,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers
+        = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{
@@ -162,7 +238,8 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
         .numThreads = 3,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
@@ -182,7 +259,8 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
         .numThreads = 3,
-        .bufferSize = 16,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults

@@ -80,7 +80,8 @@ struct TestConfig
 {
     size_t numRequiredBuffers{};
     size_t numThreads{};
-    uint64_t bufferSize{};
+    uint64_t sizeOfRawBuffers{};
+    uint64_t sizeOfFormattedBuffers{};
     Sources::ParserConfig parserConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
@@ -103,7 +104,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema);
+std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
@@ -122,6 +123,7 @@ struct TestHandle
 {
     TestConfig<TupleSchemaTemplate> testConfig;
     std::shared_ptr<Memory::BufferManager> testBufferManager;
+    std::shared_ptr<Memory::BufferManager> formattedBufferManager;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
     std::shared_ptr<Schema> schema;
     std::unique_ptr<Runtime::Execution::SequentialTestTaskQueue> testTaskQueue;
@@ -193,7 +195,7 @@ std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHa
         {
             expectedTupleBuffers.at(workerThreadResultVector.workerThreadId)
                 .emplace_back(TestUtil::createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
-                    testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
+                    testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
         }
     }
     return expectedTupleBuffers;
@@ -203,16 +205,20 @@ template <typename TupleSchemaTemplate>
 TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
     std::shared_ptr<Memory::BufferManager> testBufferManager
-        = Memory::BufferManager::create(testConfig.bufferSize, 2 * testConfig.numRequiredBuffers);
+        = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 2 * testConfig.numRequiredBuffers);
+    std::shared_ptr<Memory::BufferManager> formattedBufferManager
+        = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
+
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numThreads);
     std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
         testBufferManager,
+        formattedBufferManager,
         resultBuffers,
         std::move(schema),
-        std::make_unique<Runtime::Execution::SequentialTestTaskQueue>(testConfig.numThreads, testBufferManager, resultBuffers),
+        std::make_unique<Runtime::Execution::SequentialTestTaskQueue>(testConfig.numThreads, formattedBufferManager, resultBuffers),
         {},
         {}};
 }
@@ -220,12 +226,13 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<Runtime::Execution::TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        testHandle.testConfig.parserConfig.parserType,
-        *testHandle.schema,
-        testHandle.testConfig.parserConfig.tupleDelimiter,
-        testHandle.testConfig.parserConfig.fieldDelimiter);
-    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
+    const std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask
+        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+            OriginId(0),
+            testHandle.testConfig.parserConfig.parserType,
+            testHandle.schema,
+            testHandle.testConfig.parserConfig.tupleDelimiter,
+            testHandle.testConfig.parserConfig.fieldDelimiter);
     std::vector<Runtime::Execution::TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {

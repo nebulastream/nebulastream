@@ -101,13 +101,12 @@ Runtime::Execution::Source processSource(
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        sourceOperator->getOriginId(),
         sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
-        *sourceOperator->getSourceDescriptorRef().schema,
+        sourceOperator->getSourceDescriptorRef().schema,
         sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
         sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
-    auto inputFormatterTask
-        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator->getOriginId(), std::move(inputFormatter));
 
     auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
         pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);

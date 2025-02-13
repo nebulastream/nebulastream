@@ -118,7 +118,7 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(*schema);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<Runtime::Execution::TestablePipelineTask> pipelineTasks;
@@ -185,6 +185,7 @@ public:
         }
     }
 };
+
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {

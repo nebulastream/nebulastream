@@ -64,7 +64,7 @@ std::optional<char> from_chars<char>(const std::string_view input)
 }
 
 template <>
-bool from_chars_with_exception(std::string_view input)
+bool from_chars_with_exception<bool>(std::string_view input)
 {
     if (const auto boolValue = from_chars<bool>(input); boolValue.has_value())
     {
