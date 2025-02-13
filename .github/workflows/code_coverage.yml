@@ -52,8 +52,6 @@ jobs:
       - name: Cache Ref Branch Coverage
         uses: actions/cache@v3
         id: ref-cov-cache
-        env:
-          cache-name: ref-cov-cache
         with:
           path: /tmp/cache/ref-coverage.lcov
           key: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}
@@ -98,8 +96,6 @@ jobs:
       - name: Cache PR Branch Coverage
         uses: actions/cache@v3
         id: pr-cov-cache
-        env:
-          cache-name: pr-cov-cache
         with:
           path: /tmp/cache/pr-coverage.lcov
           key: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}
