@@ -33,7 +33,7 @@ std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType>)
 
 std::string VariableSizedDataType::toString()
 {
-    return "VariableSizedData";
+    return "VARSIZED";
 }
 
 }
