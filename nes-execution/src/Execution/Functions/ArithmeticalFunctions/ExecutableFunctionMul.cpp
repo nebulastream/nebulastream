@@ -19,14 +19,16 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionMul::execute(const Record& record) const
+VarVal ExecutableFunctionMul::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record);
-    const auto rightValue = rightExecutableFunction->execute(record);
+    const auto leftValue = leftExecutableFunction->execute(record, arena);
+    const auto rightValue = rightExecutableFunction->execute(record, arena);
     return leftValue * rightValue;
 }
 

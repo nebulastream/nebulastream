@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <utility>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -24,16 +25,18 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 #include <function.hpp>
+#include <Nautilus/Util.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionEquals::execute(const Record& record) const
+VarVal ExecutableFunctionEquals::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record);
-    const auto rightValue = rightExecutableFunction->execute(record);
-    return leftValue == rightValue;
+    const auto leftValue = leftExecutableFunction->execute(record, arena);
+    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto result = leftValue == rightValue;
+    return result;
 }
 
 ExecutableFunctionEquals::ExecutableFunctionEquals(

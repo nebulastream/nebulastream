@@ -27,7 +27,7 @@ class ExecutableFunctionReadField : public Function
 {
 public:
     explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     const Record::RecordFieldIdentifier field;

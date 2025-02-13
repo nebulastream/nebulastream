@@ -25,7 +25,7 @@ class ExecutableFunctionNegate final : public Function
 {
 public:
     explicit ExecutableFunctionNegate(std::unique_ptr<Function> childFunction);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     const std::unique_ptr<Function> childFunction;

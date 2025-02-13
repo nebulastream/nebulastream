@@ -22,10 +22,10 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionDiv::execute(const Record& record) const
+VarVal ExecutableFunctionDiv::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record);
-    const auto rightValue = rightExecutableFunction->execute(record);
+    const auto leftValue = leftExecutableFunction->execute(record, arena);
+    const auto rightValue = rightExecutableFunction->execute(record, arena);
     return leftValue / rightValue;
 }
 

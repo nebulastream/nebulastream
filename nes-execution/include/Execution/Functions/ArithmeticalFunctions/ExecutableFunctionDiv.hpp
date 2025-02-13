@@ -26,7 +26,7 @@ class ExecutableFunctionDiv final : public Function
 {
 public:
     ExecutableFunctionDiv(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     const std::unique_ptr<Function> leftExecutableFunction;
