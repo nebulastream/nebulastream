@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <Plans/PipelineQueryPlan.hpp>
+#include "PipelinedQueryPlan.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -25,7 +25,7 @@ namespace NES::QueryCompilation
 class AddScanAndEmitPhase
 {
 public:
-    static std::unique_ptr<PipelineQueryPlan> apply(std::unique_ptr<PipelineQueryPlan> pipeline);
-    static std::shared_ptr<OperatorPipeline> process(std::shared_ptr<OperatorPipeline> pipeline);
+    static std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> pipeline);
+    static std::shared_ptr<Pipeline> process(std::shared_ptr<Pipeline> pipeline);
 };
 }

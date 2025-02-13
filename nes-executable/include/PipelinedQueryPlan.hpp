@@ -13,22 +13,27 @@
 */
 #pragma once
 
-#include <memory>
 #include <vector>
-#include <Pipelines/ExecutablePipelineProvider.hpp>
-#include <options.hpp>
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Pipeline.hpp>
 
 namespace NES
 {
 
-/// @brief Creates an executable pipeline stage that can be executed using interpretation
-class InterpretationPipelineProvider : public ExecutablePipelineProvider
+/// @brief Representation of a query plan, which consists of a set of Pipelines.
+struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
 {
-public:
-    std::unique_ptr<ExecutablePipelineStage> create(
-        std::shared_ptr<Pipeline> pipeline,
-        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
-        nautilus::engine::Options& options) override;
+    PipelinedQueryPlan(QueryId queryId = INVALID_QUERY_ID);
+
+    [[nodiscard]] std::string toString() const;
+
+    const QueryId queryId;
+
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const;
+
+    std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }

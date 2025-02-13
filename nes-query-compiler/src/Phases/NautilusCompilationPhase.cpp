@@ -13,23 +13,23 @@
 */
 #include <string>
 #include <utility>
+#include <Phases/NautilusCompilationPhase.hpp>
 #include <Pipelines/CompilationPipelineProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Plans/ExecutableOperator.hpp>
-#include <Plans/PipelineQueryPlan.hpp>
-#include <Phases/NautilusCompilationPhase.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableOperator.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <ExecutablePipelineProviderRegistry.hpp>
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 
-std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan)
+std::shared_ptr<PipelinedQueryPlan> apply(std::shared_ptr<PipelinedQueryPlan> queryPlan)
 {
     for (const auto& pipeline : queryPlan->pipelines)
     {
-        if (pipeline->isOperatorPipeline())
+        if (pipeline->isPipeline())
         {
             apply(pipeline);
         }
@@ -38,7 +38,7 @@ std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> quer
 }
 
 // We expected that the operator pipeline root include a NautilusOperator...
-std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline)
+std::shared_ptr<Pipeline> apply(std::shared_ptr<Pipeline> pipeline)
 {
     //const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     //PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");

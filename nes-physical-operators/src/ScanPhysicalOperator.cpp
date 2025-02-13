@@ -18,10 +18,10 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Plans/ExecutableOperator.hpp>
 #include <Util/StdInt.hpp>
-#include <ScanPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
+#include <ScanPhysicalOperator.hpp>
+#include "ExecutableOperator.hpp"
 
 namespace NES
 {

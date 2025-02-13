@@ -25,7 +25,7 @@
 namespace NES
 {
 std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(
-    std::shared_ptr<OperatorPipeline> pipeline,
+    std::shared_ptr<Pipeline> pipeline,
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options & options)
 {

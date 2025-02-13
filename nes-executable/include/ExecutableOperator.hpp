@@ -13,9 +13,9 @@
 */
 #pragma once
 
-#include <Operators/Operator.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <ExecutablePipelineStage.hpp>
+#include "ExecutablePipelineStage.hpp"
+#include "Operators/Operator.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 namespace NES
 {
@@ -26,17 +26,10 @@ namespace NES
 class ExecutableOperator : public Operator
 {
 public:
-    /// @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers
-    /// @param executablePipelineStage the executable pipeline stage
-    /// @param operatorHandlers a list of operator handlers
-    /// @return std::shared_ptr<Operator>
     static std::shared_ptr<Operator> create(
         std::unique_ptr<ExecutablePipelineStage> executablePipelineStage, std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers);
 
-    /// @brief Gets the executable pipeline stage.
-    /// @return ExecutablePipelineStagePtr
     const ExecutablePipelineStage& getStage() const;
-
     std::unique_ptr<ExecutablePipelineStage> takeStage();
 
     /// @brief Gets the operator handlers, which capture specific operator state.

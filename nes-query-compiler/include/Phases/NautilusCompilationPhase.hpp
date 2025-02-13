@@ -13,13 +13,13 @@
 */
 #pragma once
 #include <functional>
-#include <Plans/PipelineQueryPlan.hpp>
+#include "PipelinedQueryPlan.hpp"
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 /// Generates code for all pipelines in a pipelined query plan.
-std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
+std::shared_ptr<PipelinedQueryPlan> apply(std::shared_ptr<PipelinedQueryPlan> queryPlan);
 
 /// Generates code for a particular pipeline.
-std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+std::shared_ptr<Pipeline> apply(std::shared_ptr<Pipeline> pipeline);
 }

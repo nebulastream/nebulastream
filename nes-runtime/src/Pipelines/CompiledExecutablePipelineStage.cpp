@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "CompiledExecutablePipelineStage.hpp"
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -19,7 +20,6 @@
 #include <utility>
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Plans/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 #include <Runtime/TupleBuffer.hpp>
@@ -31,7 +31,7 @@ namespace NES
 {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    const std::shared_ptr<OperatorPipeline>& operatorPipeline,
+    const std::shared_ptr<Pipeline>& operatorPipeline,
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : options(std::move(options))

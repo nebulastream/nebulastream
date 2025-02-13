@@ -15,9 +15,9 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include <Plans/PipelineQueryPlan.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
+#include "PipelinedQueryPlan.hpp"
 
 namespace NES
 {
@@ -31,7 +31,7 @@ public:
     /// Creates an executable pipeline for the pipeline of physical operators.
     /// Options for the nautilus compilation backend: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
     virtual std::unique_ptr<ExecutablePipelineStage> create(
-        std::shared_ptr<OperatorPipeline> pipeline,
+        std::shared_ptr<Pipeline> pipeline,
         std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
         nautilus::engine::Options& options)
         = 0;

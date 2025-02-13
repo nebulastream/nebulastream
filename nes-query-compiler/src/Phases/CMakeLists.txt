@@ -10,8 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_source_files(nes-query-compiler
-#        NautilusCompilationPhase.cpp
-#)
-
-add_subdirectory(Transitions)
+add_source_files(nes-query-compiler
+        AddScanAndEmitPhase.cpp
+        LowerToExecutableQueryPlanPhase.cpp
+        NautilusCompilationPhase.cpp
+        PipeliningPhase.cpp
+)

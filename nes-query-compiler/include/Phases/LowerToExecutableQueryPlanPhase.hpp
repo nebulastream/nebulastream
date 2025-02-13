@@ -14,11 +14,11 @@
 #pragma once
 
 #include <memory>
-#include "ExecutableQueryPlan.hpp"
-#include "Plans/PipelineQueryPlan.hpp"
+#include <ExecutableQueryPlan.hpp>
+#include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
-/// Phase takes a PipelineQueryPlan and produces an ExecutableQueryPlan
-std::unique_ptr<ExecutableQueryPlan> apply(const std::unique_ptr<PipelineQueryPlan> pipelineQueryPlan);
+/// Phase takes a PipelinedQueryPlan and produces an ExecutableQueryPlan
+std::unique_ptr<ExecutableQueryPlan> apply(const std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan);
 }

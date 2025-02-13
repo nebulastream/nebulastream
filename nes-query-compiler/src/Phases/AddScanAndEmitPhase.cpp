@@ -13,19 +13,19 @@
 */
 
 #include <memory>
-#include <ErrorHandling.hpp>
 #include <Phases/AddScanAndEmitPhase.hpp>
-#include <Plans/PipelineQueryPlan.hpp>
+#include <ErrorHandling.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include "PipelinedQueryPlan.hpp"
 
 namespace NES::QueryCompilation
 {
 
-std::unique_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelineQueryPlan> pipelineQueryPlan)
+std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
 {
     for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
-        if (pipeline->isOperatorPipeline())
+        if (pipeline->isPipeline())
         {
             process(pipeline);
         }
@@ -33,7 +33,7 @@ std::unique_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<Pi
     return pipelineQueryPlan;
 }
 
-std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<OperatorPipeline> pipeline)
+std::shared_ptr<Pipeline> AddScanAndEmitPhase::process(std::shared_ptr<Pipeline> pipeline)
 {
     const auto queryPlan = pipeline->getQueryPlan();
     const auto pipelineRootOperators = queryPlan->getRootOperators();

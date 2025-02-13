@@ -15,7 +15,6 @@
 
 #include <optional>
 #include <unordered_map>
-#include <Plans/PhysicalQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <ExecutableQueryPlan.hpp>
