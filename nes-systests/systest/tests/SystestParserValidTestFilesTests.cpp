@@ -13,11 +13,13 @@
 */
 #include <string>
 #include <vector>
+
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <SystestParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Systest
 {
@@ -43,22 +45,22 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expextedSLTSource = {.name = "e123", .fields = {{BasicType::UINT32, "id"}}, .tuples = {"1", "1", "1", "1"}};
+    SystestParser::SLTSource expextedSLTSource = {.name = "e123", .fields = {{DataTypeFactory::createUInt32(), "id"}}, .tuples = {"1", "1", "1", "1"}};
     SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
-           = {{BasicType::INT8, "i"},
-              {BasicType::UINT8, "i"},
-              {BasicType::INT16, "i"},
-              {BasicType::UINT16, "i"},
-              {BasicType::INT32, "i"},
-              {BasicType::UINT32, "i"},
-              {BasicType::INT64, "i"},
-              {BasicType::FLOAT32, "i"},
-              {BasicType::UINT64, "i"},
-              {BasicType::FLOAT64, "i"},
-              {BasicType::BOOLEAN, "i"},
-              {BasicType::CHAR, "i"}},
+           = {{DataTypeFactory::createInt8(), "i"},
+              {DataTypeFactory::createUInt8(), "i"},
+              {DataTypeFactory::createInt16(), "i"},
+              {DataTypeFactory::createUInt16(), "i"},
+              {DataTypeFactory::createInt32(), "i"},
+              {DataTypeFactory::createUInt32(), "i"},
+              {DataTypeFactory::createInt64(), "i"},
+              {DataTypeFactory::createFloat(), "i"},
+              {DataTypeFactory::createUInt64(), "i"},
+              {DataTypeFactory::createDouble(), "i"},
+              {DataTypeFactory::createBoolean(), "i"},
+              {DataTypeFactory::createChar(), "i"}},
            .csvFilePath = "xyz.txt"};
 
     SystestParser parser{};
@@ -77,7 +79,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
-    expectedSLTSource.fields = {{BasicType::UINT64, "id"}, {BasicType::UINT64, "value"}, {BasicType::UINT64, "timestamp"}};
+    expectedSLTSource.fields = {{DataTypeFactory::createUInt64(), "id"}, {DataTypeFactory::createUInt64(), "value"}, {DataTypeFactory::createUInt64(), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
@@ -136,7 +138,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
-    expectedSLTSource.fields = {{BasicType::UINT64, "id"}, {BasicType::UINT64, "value"}, {BasicType::UINT64, "timestamp"}};
+    expectedSLTSource.fields = {{DataTypeFactory::createUInt64(), "id"}, {DataTypeFactory::createUInt64(), "value"}, {DataTypeFactory::createUInt64(), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",

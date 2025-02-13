@@ -95,7 +95,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 .schema = [&source]()
                 {
                     std::vector<CLI::SchemaField> schema;
-                    for (const auto& field : source.fields)
+                    for (const auto& [type, name] : source.fields)
                     {
                         schema.push_back({.name = field.name, .type = field.type});
                     }

@@ -26,11 +26,14 @@
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <magic_enum.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Systest
 {
@@ -72,14 +75,20 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
+        std::shared_ptr<DataType> dataType;
         if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]); type.has_value())
         {
-            schema.emplace_back(type.value(), arguments[i + 1]);
+            dataType = DataTypeFactory::createType(type.value());
+        }
+        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
+        {
+            dataType = DataTypeFactory::createVariableSizedData();
         }
         else
         {
             throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
+        schema.emplace_back(dataType, arguments[i + 1]);
     }
 
     return schema;
