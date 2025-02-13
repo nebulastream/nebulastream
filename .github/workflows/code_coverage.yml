@@ -130,6 +130,7 @@ jobs:
           cmake --build build --target ccov-all
       - name: Copy code coverage of changed files
         if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
+        id: copy-codecov
         run: |
           dst=/tmp/cov-cache/code-coverage/
           iwd=$(pwd)
@@ -152,17 +153,25 @@ jobs:
           done
 
           cd $iwd
-          
-          /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py \
-            build/ccov/all-merged/index.html \
-            $dst/index.html \
-            changed_files.txt
 
+          # if changed_files.txt wasn't created, there's no relevant coverage
+          if [ -e changed_files.txt ]; then
+            /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py \
+              build/ccov/all-merged/index.html \
+              $dst/index.html \
+              changed_files.txt
+
+            echo "coverage_generated=true"  >> $GITHUB_OUTPUT
+          else
+            echo "coverage_generated=false" >> $GITHUB_OUTPUT
+            echo "In ${{inputs.base_sha}}..${{inputs.head_sha}}, no files with generated code coverage info were changed." >> $GITHUB_STEP_SUMMARY
+          fi
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
+        if: ${{ steps.pr-cov-cache.outputs.cache-hit || steps.copy-codecov.outputs.coverage_generated }}
         with:
           name: code-coverage-${{ matrix.platform }}
-          path: /tmp/cov-cache/code-coverage-${{ matrix.platform }}
+          path: /tmp/cov-cache/code-coverage/
       - name: Upload code coverage for PR branch
         uses: actions/upload-artifact@v4
         with:
