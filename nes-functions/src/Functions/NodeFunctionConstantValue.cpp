@@ -61,7 +61,7 @@ std::string NodeFunctionConstantValue::getConstantValue() const
 void NodeFunctionConstantValue::inferStamp(const Schema&)
 {
     /// the stamp of constant value functions is defined by the constant value type.
-    /// thus ut is already assigned correctly when the function node is created.
+    /// thus it is already assigned correctly when the function node is created.
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConstantValue::deepCopy()

@@ -22,6 +22,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/NodeFunctionConcat.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
@@ -132,6 +133,7 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         serializeFunction(caseNodeFunction->getDefaultExp(), serializedNodeFunction.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
     }
+
     else
     {
         throw CannotSerialize(fmt::format("function: {}", *function));
@@ -281,6 +283,16 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(
         auto serializedNodeFunction = SerializableFunction_FunctionMul();
         serializeFunction(mulNodeFunction->getLeft(), serializedNodeFunction.mutable_left());
         serializeFunction(mulNodeFunction->getRight(), serializedNodeFunction.mutable_right());
+        serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
+    }
+    else if (Util::instanceOf<NodeFunctionConcat>(function))
+    {
+        /// serialize concat function node.
+        NES_TRACE("FunctionSerializationUtil:: serialize concat arithmetical function to SerializableFunction_FunctionConcat");
+        auto concatNodeFunction = Util::as<NodeFunctionConcat>(function);
+        auto serializedNodeFunction = SerializableFunction_FunctionConcat();
+        serializeFunction(concatNodeFunction->getLeft(), serializedNodeFunction.mutable_left());
+        serializeFunction(concatNodeFunction->getRight(), serializedNodeFunction.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
     }
     else if (Util::instanceOf<NodeFunctionDiv>(function))
@@ -499,6 +511,16 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeArithmetical
         auto left = deserializeFunction(serializedNodeFunction.left());
         auto right = deserializeFunction(serializedNodeFunction.right());
         return NodeFunctionMul::create(left, right);
+    }
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionConcat>())
+    {
+        /// de-serialize CONCAT function node.
+        NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as CONCAT function node.");
+        auto serializedNodeFunction = SerializableFunction_FunctionConcat();
+        serializedFunction.details().UnpackTo(&serializedNodeFunction);
+        auto left = deserializeFunction(serializedNodeFunction.left());
+        auto right = deserializeFunction(serializedNodeFunction.right());
+        return NodeFunctionConcat::create(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionDiv>())
     {

@@ -130,6 +130,10 @@ The serializable wrapper definition for function nodes
      SerializableFunction left = 1;
      SerializableFunction right = 2;
   }
+   message FunctionConcat{
+     SerializableFunction left = 1;
+     SerializableFunction right = 2;
+   }
    message FunctionUdfCall{
      FunctionConstantValue udfName = 1;
      repeated SerializableFunction functionArguments = 2;

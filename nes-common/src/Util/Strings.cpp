@@ -29,7 +29,7 @@
 namespace NES::Util
 {
 template <>
-std::optional<float> from_chars<float>(std::string_view input)
+std::optional<float> from_chars<float>(const std::string_view input)
 {
     const std::string str(trimWhiteSpaces(input));
     try
@@ -43,7 +43,7 @@ std::optional<float> from_chars<float>(std::string_view input)
 }
 
 template <>
-std::optional<bool> from_chars<bool>(std::string_view input)
+std::optional<bool> from_chars<bool>(const std::string_view input)
 {
     auto trimmed = trimWhiteSpaces(input);
     if (toLowerCase(trimmed) == "true" || trimmed == "1")
@@ -79,7 +79,7 @@ template std::string formatFloat(float);
 template std::string formatFloat(double);
 
 template <>
-std::optional<double> from_chars<double>(std::string_view input)
+std::optional<double> from_chars<double>(const std::string_view input)
 {
     const std::string str(trimWhiteSpaces(input));
     try
@@ -92,7 +92,7 @@ std::optional<double> from_chars<double>(std::string_view input)
     }
 }
 template <>
-std::optional<std::string> from_chars<std::string>(std::string_view input)
+std::optional<std::string> from_chars<std::string>(const std::string_view input)
 {
     return std::string(input);
 }
@@ -102,7 +102,7 @@ std::optional<std::string_view> from_chars<std::string_view>(std::string_view in
     return input;
 }
 
-std::string replaceAll(std::string_view origin, std::string_view search, std::string_view replace)
+std::string replaceAll(std::string_view origin, const std::string_view search, const std::string_view replace)
 {
     if (search.empty())
     {
@@ -182,6 +182,14 @@ std::string_view trimWhiteSpaces(const std::string_view input)
     const auto start = input.find_first_not_of(" \t\n\r");
     const auto end = input.find_last_not_of(" \t\n\r");
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+}
+
+std::string_view trimCharacters(const std::string_view input, const char c)
+{
+    const auto start = input.find_first_not_of(c);
+    const auto end = input.find_last_not_of(c);
+    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+
 }
 
 std::string_view trimCharsRight(std::string_view input, char character)
