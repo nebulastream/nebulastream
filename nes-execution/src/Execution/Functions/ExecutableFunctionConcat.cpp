@@ -12,14 +12,26 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <memory>
+#include <utility>
 #include <Execution/Functions/ExecutableFunctionConcat.hpp>
+#include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
+#include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
+#include <val.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
 ExecutableFunctionConcat::ExecutableFunctionConcat(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction) : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
@@ -39,8 +51,8 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
     return newVarSizeData;
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
-ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionConcat>(

@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -64,12 +65,8 @@ public:
     {
         std::shared_ptr<DataType> type;
         std::string name;
-        bool operator==(const Field& other) const
-        {
-            return *type == *other.type && name == other.name;
-        }
-        bool operator!=(const Field& other) const
-        = default;
+        bool operator==(const Field& other) const { return *type == *other.type && name == other.name; }
+        bool operator!=(const Field& other) const = default;
     };
     using Schema = std::vector<Field>;
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions

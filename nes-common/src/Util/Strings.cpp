@@ -189,7 +189,6 @@ std::string_view trimCharacters(const std::string_view input, const char c)
     const auto start = input.find_first_not_of(c);
     const auto end = input.find_last_not_of(c);
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
-
 }
 
 std::string_view trimCharsRight(std::string_view input, char character)

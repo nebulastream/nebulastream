@@ -13,9 +13,12 @@
 */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
@@ -32,6 +35,8 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <function.hpp>
+#include <val.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -42,10 +47,7 @@ using namespace Nautilus;
 /// suitable for storing state across pipeline invocations. For storing state across pipeline invocations, the operator handler should be used.
 struct Arena
 {
-    explicit Arena(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
-        : bufferProvider(std::move(bufferProvider)), lastAllocationSize(0), currentOffset(0)
-    {
-    }
+    explicit Arena(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : bufferProvider(std::move(bufferProvider)) { }
 
     /// Allocating memory by the buffer provider. There are three cases:
     /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
@@ -83,7 +85,7 @@ struct Arena
         /// Case 3
         auto& lastBuffer = fixedSizeBuffers.back();
         lastAllocationSize = lastBuffer.getBufferSize();
-        const auto result = lastBuffer.getBuffer() + currentOffset;
+        auto* const result = lastBuffer.getBuffer() + currentOffset;
         currentOffset += sizeInBytes;
         return result;
     }
@@ -91,8 +93,8 @@ struct Arena
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::vector<Memory::TupleBuffer> fixedSizeBuffers;
     std::vector<Memory::TupleBuffer> unpooledBuffers;
-    size_t lastAllocationSize;
-    size_t currentOffset;
+    size_t lastAllocationSize{0};
+    size_t currentOffset{0};
 };
 
 /// Nautilus Wrapper for the Arena
@@ -137,8 +139,8 @@ struct PipelineMemoryProvider
         : arena(arena), bufferProvider(bufferProvider)
     {
     }
-    explicit PipelineMemoryProvider(const ArenaRef& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-        : arena(arena), bufferProvider(bufferProvider)
+    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        : arena(std::move(arena)), bufferProvider(bufferProvider)
     {
     }
 

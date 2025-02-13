@@ -26,7 +26,6 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
@@ -895,13 +894,12 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
             = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
         helper.functionBuilder.push_back(constFunctionItem);
     }
-    else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()))
+    else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)
     {
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
 
         const auto dataType = DataTypeFactory::createVariableSizedData();
-        auto constFunctionItem
-            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
+        auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
 
         helper.functionBuilder.push_back(constFunctionItem);
     }

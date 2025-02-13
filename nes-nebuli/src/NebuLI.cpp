@@ -21,6 +21,7 @@
 #include <memory>
 #include <ranges>
 #include <regex>
+#include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -44,6 +45,7 @@
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace YAML
@@ -316,7 +318,8 @@ std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::pat
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, std::string typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
+SchemaField::SchemaField(std::string name, std::string typeName)
+    : SchemaField(std::move(name), YAML::stringToFieldType(std::move(typeName)))
 {
 }
 
