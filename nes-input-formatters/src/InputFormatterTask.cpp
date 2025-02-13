@@ -61,7 +61,6 @@ size_t estimateNumberOfRequiredBuffers(
 namespace NES::InputFormatters
 {
 
-
 struct RawBufferData
 {
     Memory::TupleBuffer buffer;
@@ -107,6 +106,11 @@ InputFormatterTask::InputFormatterTask(
 
 InputFormatterTask::~InputFormatterTask() = default;
 
+void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext&)
+{
+    sequenceShredder->validateState();
+}
+
 void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec)
 {
     if (rawBuffer.getBufferSize() == 0)
@@ -126,6 +130,7 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::
     auto rawBufferData = RawBufferData{};
     rawBufferData.buffer = rawBuffer;
     ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
+    /// Get a raw pointer to the buffer manager to avoid reference counting of shared pointer and virtual function calls to getBufferManager
 
     /// Construct new FieldOffsets object
     auto fieldOffsets = FieldOffsets(numberOfFieldsInSchema, pec.getBufferManager()->getBufferSize(), pec.getBufferManager());
@@ -172,7 +177,6 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
 
     /// 1. process leading spanning tuple if required
     auto formattedBuffer = bufferProvider->getBufferBlocking();
-    formattedBuffer.setLastChunk(false);
     if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
     {
         processSpanningTuple(
@@ -196,7 +200,6 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
             formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
             pec.emitBuffer(formattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             formattedBuffer = bufferProvider->getBufferBlocking();
-            formattedBuffer.setLastChunk(false);
         }
 
         processSpanningTuple(
@@ -208,7 +211,6 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
     if (formattedBuffer.getNumberOfTuples() != 0)
     {
-        formattedBuffer.setLastChunk(true);
         formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
@@ -235,7 +237,6 @@ void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
     }
     /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
     auto formattedBuffer = bufferProvider->getBufferBlocking();
-    formattedBuffer.setLastChunk(true);
     processSpanningTuple({.spanStart = 0, .spanEnd = stagedBuffers.size() - 1}, stagedBuffers, *bufferProvider, formattedBuffer);
 
     formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
@@ -257,11 +258,9 @@ void InputFormatterTask::processTuple(
     /// including the first and the last field of the tuple
     for (size_t fieldIndex = 0; fieldIndex < numberOfFieldsInSchema; ++fieldIndex)
     {
-        FieldOffsetsType sizeOfCurrentRawField
-            = fieldIndexes[fieldIndex + 1] - fieldIndexes[fieldIndex]; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        auto* const currentFormattedFieldsPtr = formattedBuffer.getBuffer()
-            + fieldOffsetInFormattedData ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            + (formattedBuffer.getNumberOfTuples() * sizeOfTupleInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        FieldOffsetsType sizeOfCurrentRawField = fieldIndexes[fieldIndex + 1] - fieldIndexes[fieldIndex];
+        auto* const currentFormattedFieldsPtr
+            = formattedBuffer.getBuffer() + fieldOffsetInFormattedData + (formattedBuffer.getNumberOfTuples() * sizeOfTupleInBytes);
 
         /// Deduct the size of the field delimiter for all fields except for the last field (which is already adjusted)
         const auto isLastField = fieldIndex == numberOfFieldsInSchema - 1;
@@ -283,6 +282,7 @@ void InputFormatterTask::processSpanningTuple(
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& formattedBuffer) const
 {
+    /// If the buffers are not empty, there are at least three buffers
     std::string spanningTupleString;
     /// 1. Process the first buffer
     const auto& firstBuffer = buffersToFormat[spanningTuple.spanStart];
@@ -298,16 +298,14 @@ void InputFormatterTask::processSpanningTuple(
             or firstBuffer.buffer.getBuffer() != nullptr,
         "Non-initial buffer cannot have 'null' data.");
     const auto sizeOfLeadingSpanningTuple = firstBuffer.sizeOfBufferInBytes - (offsetOfFirstByteInFirstBuffer);
-    const std::string_view firstSpanningTuple = std::string_view(
-        firstBuffer.buffer.getBuffer<const char>() ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            + offsetOfFirstByteInFirstBuffer, ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        sizeOfLeadingSpanningTuple);
+    const std::string_view firstSpanningTuple
+        = std::string_view(firstBuffer.buffer.getBuffer<const char>() + offsetOfFirstByteInFirstBuffer, sizeOfLeadingSpanningTuple);
     spanningTupleString.append(firstSpanningTuple);
     /// 2. Process all buffers in-between the first and the last
     for (size_t bufferIndex = spanningTuple.spanStart + 1; bufferIndex < spanningTuple.spanEnd; ++bufferIndex)
     {
         const auto& currentBuffer = buffersToFormat[bufferIndex];
-        const std::string_view intermediateSpanningTuple
+        const auto intermediateSpanningTuple
             = std::string_view(currentBuffer.buffer.getBuffer<const char>(), currentBuffer.sizeOfBufferInBytes);
         spanningTupleString.append(intermediateSpanningTuple);
     }
@@ -320,8 +318,7 @@ void InputFormatterTask::processSpanningTuple(
         lastBuffer.offsetOfFirstTupleDelimiter,
         lastBuffer.sizeOfBufferInBytes);
     PRECONDITION(lastBuffer.buffer.getBuffer() != nullptr, "Buffer cannot have 'null' data.");
-    const std::string_view lastSpanningTuple
-        = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
+    const auto lastSpanningTuple = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
     spanningTupleString.append(lastSpanningTuple);
 
     /// A spanning tuple may currently be empty (the 'stop' call produces an empty tuple, if the last buffer ends in a tuple delimiter)
@@ -334,11 +331,6 @@ void InputFormatterTask::processSpanningTuple(
         processTuple(spanningTupleString, spanningTupleOffsets.data(), bufferProvider, formattedBuffer);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
     }
-}
-
-void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext&)
-{
-    sequenceShredder->validateState();
 }
 
 void InputFormatterTask::processRawBuffer(
@@ -370,24 +362,22 @@ void InputFormatterTask::processRawBuffer(
             /// The current raw buffer produces more than one formatted buffer.
             /// Each formatted buffer has the sequence number of the raw buffer and a chunk number that uniquely identifies it.
             /// Only the last formatted buffer sets the 'isLastChunk' member to true.
+            formattedBuffer.setLastChunk(false);
             formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
             formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
             formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
             pec.emitBuffer(formattedBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             /// The 'isLastChunk' member of a new buffer is true pre default. If we don't require another buffer, the flag stays true.
             formattedBuffer = bufferProvider->getBufferBlocking();
-            formattedBuffer.setLastChunk(false);
         }
 
         /// Fill current buffer until either full, or we exhausted tuples in raw buffer
         while (formattedBuffer.getNumberOfTuples() < numberOfTuplesToRead)
         {
             const auto* const nextTupleOffsets = fieldOffsets.readOffsetsOfNextTuple();
-            const auto tupleStart = nextTupleOffsets[0]; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            const auto tupleEnd = nextTupleOffsets[numberOfFieldsInSchema]; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            const auto nextTuple = std::string_view(
-                rawBufferData.buffer.getBuffer<char>() + tupleStart, ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-                tupleEnd - tupleStart);
+            const auto tupleStart = nextTupleOffsets[0];
+            const auto tupleEnd = nextTupleOffsets[numberOfFieldsInSchema];
+            const auto nextTuple = std::string_view(rawBufferData.buffer.getBuffer<char>() + tupleStart, tupleEnd - tupleStart);
             processTuple(nextTuple, nextTupleOffsets, *bufferProvider, formattedBuffer);
             formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
         }

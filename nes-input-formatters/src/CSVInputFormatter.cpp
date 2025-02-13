@@ -19,8 +19,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <utility>
-
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -53,7 +51,7 @@ void CSVInputFormatter::indexTuple(
          nextFieldOffset = tuple.find(this->config.fieldDelimiter, nextFieldOffset))
     {
         nextFieldOffset += this->config.fieldDelimiter.size();
-        *(fieldOffsets + fieldIdx) = startIdxOfTuple + nextFieldOffset; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *(fieldOffsets + fieldIdx) = startIdxOfTuple + nextFieldOffset;
         ++fieldIdx;
     }
     if (fieldIdx != numberOfFieldsInSchema)
@@ -91,7 +89,7 @@ CSVInputFormatter::indexBuffer(std::string_view bufferView, FieldOffsets& fieldO
 
         indexTuple(currentTuple, tupleOffsetPtr, startIdxOfCurrentTuple);
         /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
-        *(tupleOffsetPtr + numberOfFieldsInSchema) = endIdxOfCurrentTuple; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *(tupleOffsetPtr + numberOfFieldsInSchema) = endIdxOfCurrentTuple;
 
         startIdxOfCurrentTuple = endIdxOfCurrentTuple + sizeOfTupleDelimiter;
         endIdxOfCurrentTuple = bufferView.find(this->config.tupleDelimiter, startIdxOfCurrentTuple);
@@ -106,8 +104,8 @@ std::ostream& CSVInputFormatter::toString(std::ostream& os) const
                "CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
 }
 
-InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(
-    InputFormatterRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+InputFormatterRegistryReturnType
+InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const InputFormatterRegistryArguments& arguments)
 {
     return std::make_unique<CSVInputFormatter>(arguments);
 }
