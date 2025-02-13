@@ -25,7 +25,7 @@ class ExecutableFunctionConstantValue final : public Function
 {
 public:
     explicit ExecutableFunctionConstantValue(T value) : value(value) { }
-    [[nodiscard]] VarVal execute(const Record&) const override { return VarVal(value); }
+    [[nodiscard]] VarVal execute(const Record&, ArenaRef&) const override { return VarVal(value); }
 
 private:
     const T value;

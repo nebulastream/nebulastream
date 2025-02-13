@@ -21,9 +21,9 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionNegate::execute(const Record& record) const
+VarVal ExecutableFunctionNegate::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction->execute(record);
+    const auto value = childFunction->execute(record, arena);
     return !value;
 }
 
