@@ -41,11 +41,11 @@ public:
                                                              Runtime::WorkEmitter& emitter,
                                                              Memory::AbstractBufferProvider& bufferProvider,
                                                              Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                                             std::chrono::microseconds sleepDurationPerTuple) const;
+                                                             std::chrono::nanoseconds sleepDurationPerTuple) const;
 
 private:
   std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> createFilterPipelineExecutableStage() const;
-  std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> createSleepPipelineExecutableStage(std::chrono::microseconds sleepDurationPerTuple) const;
+  std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> createSleepPipelineExecutableStage(std::chrono::nanoseconds sleepDurationPerTuple) const;
 
 
   uint64_t selectivity;

@@ -37,26 +37,26 @@ static void DoTearDown(const benchmark::State&)
 /// 2. The number of tuples per task
 /// 3. The sleep duration per tuple in microseconds
 /// 4. The selectivity of the filter operator
-/// 5. The buffer size
-/// 6. The index of the provider name in: {"INTERPRETER", "COMPILER"}
-/// 7. The number of worker threads
+/// 5. The index of the provider name in: {"INTERPRETER", "COMPILER"}
+/// 6. The number of worker threads
 static void BM_SleepPipeline(benchmark::State& state)
 {
     /// Extracting the parameters from the state
     const auto numberOfTuples = state.range(0);
     auto numberOfTuplesPerTask = state.range(1);
-    const auto sleepDurationPerTuple = std::chrono::milliseconds(state.range(2));
+    const auto sleepDurationPerTuple = std::chrono::nanoseconds(state.range(2));
     const auto selectivity = state.range(3);
-    const auto bufferSize = state.range(4);
-    const auto providerName = std::array{"Interpreter"s, "Compilation"s}[state.range(5)];
-    const auto numberOfWorkerThreads = state.range(6);
+    const auto providerName = std::array{"Interpreter"s, "Compilation"s}[state.range(4)];
+    const auto numberOfWorkerThreads = state.range(5);
 
-
-    /// Creating some necessary variables for the benchmarking loop
+    /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
         ->addField("id", DataTypeFactory::createUInt64())
         ->addField("value", DataTypeFactory::createUInt64())
         ->addField("ts", DataTypeFactory::createUInt64());
+    const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
+
+    /// Creating some necessary variables for the benchmarking loop
     const auto schemaOutput = schemaInput->copy();
     const auto fieldNameForSelectivity = "id"s;
     const auto maxNumberOfTuples = bufferSize / schemaInput->getSchemaSizeInBytes();
@@ -81,7 +81,14 @@ static void BM_SleepPipeline(benchmark::State& state)
         });
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
-    const auto runningQueryPlanNode = utils.createTasks(taskQueue, numberOfTasks, numberOfTuplesPerTask, emitter, *bufferProvider, pec, sleepDurationPerTuple);
+    const auto runningQueryPlanNode = utils.createTasks(
+        taskQueue,
+        numberOfTasks,
+        numberOfTuplesPerTask,
+        emitter,
+        *bufferProvider,
+        pec,
+        sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
@@ -142,18 +149,18 @@ static void BM_SleepPipeline(benchmark::State& state)
 BENCHMARK(NES::BM_SleepPipeline)
     ->ArgsProduct(
     {
-        {10 * 1000}, /// Number of tuples that should be processed
-        benchmark::CreateDenseRange(25, 400, 25), /// Number of tuples per task.
-        {1}, /// Sleep duration per tuple in microseconds
+        {500 * 1000 * 1000}, /// Number of tuples that should be processed
+        {3000, 2000, 1000, 500, 50, 20, 10, 5, 1}, /// Number of tuples per task/buffer.
+        {100}, /// Sleep duration per tuple in nanoseconds
         {10}, /// Selectivity
-        {16 * 1024}, /// Buffer size
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
-        benchmark::CreateRange(1, 8, 2) /// Number of worker threads
+        benchmark::CreateRange(1, 16, 2) /// Number of worker threads
     })
     ->Setup(NES::DoSetup)
     ->Teardown(NES::DoTearDown)
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond)
-    ->Repetitions(10);
+    ->Iterations(1)
+    ->Repetitions(3);
 
 BENCHMARK_MAIN();

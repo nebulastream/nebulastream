@@ -14,6 +14,7 @@
 
 #include <random>
 #include "../../../nes-client/include/API/Functions/Functions.hpp"
+#include "../../../nes-common/include/Sequencing/SequenceData.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Scan.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Emit.hpp"
 #include "../../../nes-execution/include/Execution/Operators/EmitOperatorHandler.hpp"
@@ -53,7 +54,7 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     Runtime::WorkEmitter& emitter,
     Memory::AbstractBufferProvider& bufferProvider,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-    std::chrono::microseconds sleepDurationPerTuple) const
+    std::chrono::nanoseconds sleepDurationPerTuple) const
 {
     /// Defining the query and pipeline id
     constexpr QueryId queryId(1);
@@ -61,9 +62,9 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
 
 
     /// Creating here the executable pipeline for all tasks
-    // auto pipelineStage = this->createFilterPipelineExecutableStage();
-    // ((void) pipelineStage);
-    auto pipelineStage = this->createSleepPipelineExecutableStage(sleepDurationPerTuple);
+    auto pipelineStage = this->createFilterPipelineExecutableStage();
+    ((void) sleepDurationPerTuple);
+    // auto pipelineStage = this->createSleepPipelineExecutableStage(sleepDurationPerTuple);
     pipelineStage->start(pipelineExecutionContext);
     auto runningQueryPlanNode = Runtime::RunningQueryPlanNode::create(
         queryId,
@@ -77,48 +78,93 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
         Runtime::CallbackRef(),
         Runtime::CallbackRef());
 
-    /// Filling all tuple buffers
-    std::vector<Memory::TupleBuffer> allBuffers;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint64_t> dis(minRange, maxRange);
+    struct InfoForThread
+    {
+        InfoForThread() : sequenceNumber(SequenceNumber::INVALID), startTimestamp(0), numberOfTuples(0) {}
+        InfoForThread(SequenceNumber sequenceNumber, const uint64_t startTimestamp, const uint64_t numberOfTuples) : sequenceNumber(std::move(sequenceNumber)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples) {}
+        SequenceNumber sequenceNumber;
+        uint64_t startTimestamp;
+        uint64_t numberOfTuples;
+    };
+    folly::MPMCQueue<InfoForThread> infoForThreads(numberOfTasks);
+
+    /// First, we are creating the necessary information for the threads and emplacing it into the queue
+    /// Thus, we can then afterwards use the stored information to create tuple buffers concurrently
+    SequenceNumber::Underlying seqNumber = SequenceNumber::INITIAL;
     uint64_t ts = 0;
     for (uint64_t i = 0; i < numberOfTasks; i++)
     {
-        auto tupleBuffer = bufferProvider.getBufferBlocking();
-        Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(
-            tupleBuffer,
-            schemaInput);
-        PRECONDITION(
-            testTupleBuffer.getCapacity() >= numberOfTuplesPerTask,
-            "The tuple buffer does not have enough capacity for the task.");
-        for (uint64_t j = 0; j < numberOfTuplesPerTask; j++)
-        {
-            const uint64_t id = dis(gen);
-            const uint64_t value = j;
-            ts += 1;
-            testTupleBuffer.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, uint64_t>(id, value, ts));
-            testTupleBuffer.setNumberOfTuples(j + 1);
-        }
-        Runtime::WorkTask task(
-            queryId,
-            pipelineId,
-            runningQueryPlanNode,
-            tupleBuffer,
-            []()
-            {
-            },
-            [](auto)
-            {
-            });
-        taskQueue.write(std::move(task));
-
-        // if (constexpr auto loggingInterval = 100; i % loggingInterval == 0)
-        // {
-        //     std::cout << "Created " << i << " tuple buffers of " << numberOfTasks << " with no. tuples " << tupleBuffer.getNumberOfTuples() << " and buffer size " << tupleBuffer.getBufferSize() << std::endl;
-        // }
+        InfoForThread infoForThread{
+            SequenceNumber(seqNumber),
+            ts,
+            numberOfTuplesPerTask};
+        infoForThreads.write(std::move(infoForThread));
+        seqNumber += 1;
+        ts += numberOfTuplesPerTask;
     }
+
+    auto populateTupleBufferFunction = [&taskQueue, &infoForThreads, &runningQueryPlanNode, this, &bufferProvider, &queryId, &pipelineId]()
+    {
+        InfoForThread infoForThread;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<uint64_t> dis(minRange, maxRange);
+        while (infoForThreads.read(infoForThread))
+        {
+            auto tupleBuffer = bufferProvider.getBufferBlocking();
+            tupleBuffer.setChunkNumber(ChunkNumber(1));
+            tupleBuffer.setLastChunk(true);
+            tupleBuffer.setSequenceNumber(infoForThread.sequenceNumber);
+
+            Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(
+                tupleBuffer,
+                schemaInput);
+            PRECONDITION(
+                testTupleBuffer.getCapacity() >= infoForThread.numberOfTuples,
+                "The tuple buffer does not have enough capacity for the task.");
+            for (uint64_t j = 0; j < infoForThread.numberOfTuples; j++)
+            {
+                const uint64_t id = dis(gen);
+                const uint64_t value = j;
+                testTupleBuffer.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, uint64_t>(id, value, infoForThread.startTimestamp + j));
+                testTupleBuffer.setNumberOfTuples(j + 1);
+            }
+            Runtime::WorkTask task(
+                queryId,
+                pipelineId,
+                runningQueryPlanNode,
+                tupleBuffer,
+                []()
+                {
+                },
+                [](auto)
+                {
+                });
+            taskQueue.write(std::move(task));
+        }
+    };
+
+    const auto startTime = std::chrono::high_resolution_clock::now();
+    /// Spawning all threads
+    const auto numberOfWorkerThreads = std::thread::hardware_concurrency() - 2;
+    std::vector<std::thread> threads;
+    threads.reserve(numberOfWorkerThreads);
+    for (auto i = 0UL; i < numberOfWorkerThreads; i++)
+    {
+        threads.emplace_back(populateTupleBufferFunction);
+    }
+
+    /// Waiting for all threads to finish
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+    const auto endTime = std::chrono::high_resolution_clock::now();
+    const auto duration = endTime - startTime;
+
     std::cout << "Created " << numberOfTasks << " tuple buffers with no. tuples " << numberOfTuplesPerTask << " totaling " << (numberOfTasks * numberOfTuplesPerTask) << " tuples with a buffer size of " << bufferSize << std::endl;
+    std::cout << "Taskqueue has " << taskQueue.size() << " elements" << std::endl;
+    std::cout << "Took a total of " << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " s" << " with " << numberOfWorkerThreads << " threads" << std::endl;
 
     return runningQueryPlanNode;
 }
@@ -164,7 +210,7 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
     return pipelineStage;
 }
 
-std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils::createSleepPipelineExecutableStage(std::chrono::microseconds sleepDurationPerTuple) const
+std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils::createSleepPipelineExecutableStage(std::chrono::nanoseconds sleepDurationPerTuple) const
 {
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
 

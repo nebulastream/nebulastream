@@ -20,11 +20,11 @@ namespace NES::Runtime::Execution::Operators {
 
 class SleepOperator final : public ExecutableOperator {
 public:
-    explicit SleepOperator(std::chrono::microseconds sleep_duration);
+    explicit SleepOperator(std::chrono::nanoseconds sleep_duration);
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
 private:
-    std::chrono::microseconds sleepDuration;
+    std::chrono::nanoseconds sleepDuration;
 };
 
 }
