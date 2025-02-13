@@ -23,7 +23,7 @@
 
 namespace NES
 {
-void setThreadName(std::string_view threadName)
+void setThreadName(const std::string_view threadName)
 {
     PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
     std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};

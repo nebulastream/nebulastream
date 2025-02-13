@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MinAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -26,7 +27,6 @@
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -58,9 +58,7 @@ void MinAggregationFunction::lift(
 }
 
 void MinAggregationFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1,
-    const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState1, const nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
 {
     /// Reading the min value from the first aggregation state
     const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);

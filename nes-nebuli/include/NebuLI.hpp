@@ -22,7 +22,6 @@
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::CLI
 {

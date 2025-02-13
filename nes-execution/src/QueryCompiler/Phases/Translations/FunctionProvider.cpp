@@ -130,8 +130,11 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
                 throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", basicType->toString()));
             }
         }
-    } else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType)) {
-        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+    }
+    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
+    {
+        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
+            reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
     }
     throw UnknownPhysicalType(
         fmt::format("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString()));

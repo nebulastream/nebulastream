@@ -17,7 +17,9 @@
 
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
@@ -25,7 +27,6 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 #include <function.hpp>
-#include <Nautilus/Util.hpp>
 
 
 namespace NES::Runtime::Execution::Functions

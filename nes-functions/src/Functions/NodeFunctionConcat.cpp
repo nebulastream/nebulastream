@@ -12,14 +12,24 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionConcat.hpp>
+#include <Nodes/Node.hpp>
+#include <Util/Common.hpp>
+#include <fmt/format.h>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 bool NodeFunctionConcat::validateBeforeLowering() const
 {
-    return NES::Util::instanceOf<VariableSizedDataType>(getLeft()->getStamp()) and NES::Util::instanceOf<VariableSizedDataType>(getRight()->getStamp());
+    return NES::Util::instanceOf<VariableSizedDataType>(getLeft()->getStamp())
+        and NES::Util::instanceOf<VariableSizedDataType>(getRight()->getStamp());
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()
@@ -38,7 +48,9 @@ bool NodeFunctionConcat::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-NodeFunctionConcat::NodeFunctionConcat(std::shared_ptr<DataType> stamp)  : NodeFunctionBinary(std::move(stamp), "Concat") {}
+NodeFunctionConcat::NodeFunctionConcat(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
+{
+}
 
 std::shared_ptr<NodeFunction>
 NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
@@ -51,7 +63,6 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
 std::string NodeFunctionConcat::toString() const
 {
     return fmt::format("Concat({}, {})", *getLeft(), *getRight());
-
 }
 
 }

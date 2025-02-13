@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
@@ -30,7 +32,7 @@ static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
 static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
 
-auto toSpdlogLevel(LogLevel level)
+auto toSpdlogLevel(const LogLevel level)
 {
     auto spdlogLevel = spdlog::level::info;
     switch (level)
@@ -75,7 +77,7 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger>
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-Logger::Logger(const std::string& logFileName, LogLevel level, bool useStdout)
+Logger::Logger(const std::string& logFileName, const LogLevel level, const bool useStdout)
 {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
