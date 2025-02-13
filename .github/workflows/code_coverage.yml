@@ -131,38 +131,32 @@ jobs:
       - name: Copy code coverage of changed files
         if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
         run: |
-          mkdir -p /tmp/cov-cache/code-coverage-${{ matrix.platform }}
-          rm -rf /tmp/cov-cache/code-coverage-${{ matrix.platform }}/*
+          dst=/tmp/cov-cache/code-coverage/
+          iwd=$(pwd)
 
-          filepath_style_css=$(find build -name "style.css" -print)
-          cp --parents "${filepath_style_css}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
-          echo "Copying ${filepath_style_css} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
+          mkdir -p $dst
 
-          # Creating the file that will contain the absolute paths of the changed files
-          changed_file_name="changed_files.txt"
-          touch "${changed_file_name}"
+          cd build/ccov/all-merged
+
+          cp style.css "$dst"
 
           # We only want to copy the html files of the changed files to the cache
           # Otherwise, we would copy all html files, which would be a lot of data and we run into the data limit of github.
-          for file in $(git diff --name-status ${{ inputs.head_sha }} ${{ inputs.base_sha }}); do
-            base_name=$(basename ${file})
-            file_path=$(find build -name "${base_name}.html" -print)
-            echo "Outside of the loop: <${file_path}>"
-            if [ -n "${file_path}" ]; then
-              for found_file in ${file_path}; do
-                echo "Inside the loop: <${found_file}>"
-                cp --parents "${found_file}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
-                echo "Copying ${found_file} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
-                echo ${found_file} >> "${changed_file_name}"
-              done
+          for file in $(git diff --diff-filter=ACMRT --name-only ${{ inputs.base_sha }} ${{ inputs.head_sha }}); do
+            html_file=$(find -wholename "*$file.html" -printf '%P\n') # use %P to not print leading ./
+            # file might not exists since not all changed files (e.g. CMakeLists.txt) end up in coverage report
+            if [ -n "$html_file" ]; then
+              cp --parents "$html_file" "$dst"
+              echo $html_file >> $iwd/changed_files.txt
             fi
           done
+
+          cd $iwd
           
-          # Calling the script that will change the paths in the index.html file
-          index_html_file=$(find build -name "index.html" -print)
-          output_file="/tmp/cache/code-coverage-${{ matrix.platform }}/index.html"
-          echo "Index html file: ${index_html_file} Output file: ${output_file}"
-          /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py "${index_html_file}" "${output_file}" "${changed_file_name}"
+          /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py \
+            build/ccov/all-merged/index.html \
+            $dst/index.html \
+            changed_files.txt
 
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
