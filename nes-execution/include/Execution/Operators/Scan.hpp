@@ -37,13 +37,13 @@ public:
      * @param projections projection vector
      */
     Scan(
-        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
 
 private:
-    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 

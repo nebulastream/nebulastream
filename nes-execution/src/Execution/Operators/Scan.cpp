@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators
 {
 
 Scan::Scan(
-    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {

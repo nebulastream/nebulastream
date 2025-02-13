@@ -17,9 +17,12 @@ include_directories(tests/include)
 add_subdirectory(src)
 get_source(nes-micro-benchmarks NES_MICRO_BENCHMARKS)
 
+#
+find_package(benchmark REQUIRED)
+
 # Add Library
 add_library(nes-micro-benchmarks ${NES_MICRO_BENCHMARKS})
-target_link_libraries(nes-micro-benchmarks PUBLIC nes-common nes-operators nes-data-types nes-memory nes-sources nes-query-engine nes-execution nes-nautilus)
+target_link_libraries(nes-micro-benchmarks PUBLIC nes-common nes-operators nes-data-types nes-memory nes-sources nes-query-engine nes-execution nes-nautilus benchmark::benchmark nes-execution-registry)
 
 target_include_directories(nes-micro-benchmarks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -44,3 +47,5 @@ if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
     target_compile_definitions(nes-micro-benchmarks PRIVATE WRAP_READ_CALL)
     target_link_libraries(nes-micro-benchmarks PRIVATE  "-Wl,--wrap,read")
 endif ()
+
+add_subdirectory(benchmark-executables)

@@ -27,7 +27,8 @@ namespace NES::Runtime::Execution::Operators
 class AggregationProbeNoProbing final : public WindowAggregationOperator, public WindowOperatorProbe
 {
 public:
-    AggregationProbeNoProbing(WindowAggregationOperator windowAggregationOperator, uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);
+    AggregationProbeNoProbing(
+        WindowAggregationOperator windowAggregationOperator, uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 };
 

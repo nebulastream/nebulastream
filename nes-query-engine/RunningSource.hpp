@@ -19,7 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <ErrorHandling.hpp>
-#include <Interfaces.hpp>
+#include "Interfaces.hpp"
 
 namespace NES::Runtime
 {

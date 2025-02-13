@@ -11,22 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <chrono>
+
 #include <thread>
-#include <benchmark/benchmark.h>
-namespace NES {
+#include <Util/SleepOperator.hpp>
 
-static void BM_Test123(benchmark::State& state)
+namespace NES::Runtime::Execution::Operators
 {
-    for (auto _ : state) {
-        /// sleeping randomly via rand()
-        std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 100));
-    }
+SleepOperator::SleepOperator(std::chrono::microseconds sleep_duration)
+    : sleepDuration(std::move(sleep_duration))
+{
 }
 
+void SleepOperator::execute(ExecutionContext& executionCtx, Record& record) const
+{
+    nautilus::invoke(+[](const uint64_t sleepDuration)
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(sleepDuration));
+    }, nautilus::val<uint64_t>(sleepDuration.count()));
+
+    child->execute(executionCtx, record);
 }
-
-/// Registering all benchmark functions
-BENCHMARK(NES::BM_Test123);
-
-BENCHMARK_MAIN();
+}

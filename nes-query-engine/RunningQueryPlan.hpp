@@ -28,8 +28,8 @@
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <Interfaces.hpp>
-#include <RunningSource.hpp>
+#include "Interfaces.hpp"
+#include "RunningSource.hpp"
 
 namespace NES::Runtime
 {

@@ -24,13 +24,12 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <Interfaces.hpp>
-#include <RunningQueryPlan.hpp>
+#include "Interfaces.hpp"
+#include "RunningQueryPlan.hpp"
 
 namespace NES::Runtime
 {
 class QueryCatalog;
-
 class BaseTask
 {
 public:

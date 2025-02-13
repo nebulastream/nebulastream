@@ -33,7 +33,7 @@ namespace NES::Runtime::Execution::Operators
 class Emit : public ExecutableOperator
 {
 public:
-    explicit Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+    explicit Emit(size_t operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -46,7 +46,7 @@ public:
 private:
     size_t operatorHandlerIndex;
     uint64_t maxRecordsPerBuffer;
-    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 }

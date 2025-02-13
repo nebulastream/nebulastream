@@ -109,12 +109,12 @@ TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_p
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferSize);
-        return std::make_unique<RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        return std::make_shared<RowTupleBufferMemoryProvider>(rowMemoryLayout);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
+        return std::make_shared<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }

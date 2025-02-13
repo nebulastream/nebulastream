@@ -10,7 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-micro-benchmarks
-        Util/MicroBenchmarkUtils.cpp
-        Util/SleepOperator.cpp
-        )
+add_executable(different-tasks-sizes DifferentTaskSizes.cpp)
+target_link_libraries(different-tasks-sizes PRIVATE nes-micro-benchmarks)
