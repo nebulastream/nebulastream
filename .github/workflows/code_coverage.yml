@@ -154,12 +154,10 @@ jobs:
           done
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !failure() && !github.event.act }}
         with:
           name: code-coverage-${{ matrix.platform }}
           path: /tmp/cov-cache/code-coverage-${{ matrix.platform }}
       - name: Upload code coverage for PR branch
-        if: ${{ !cancelled() && !failure() && !github.event.act }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
