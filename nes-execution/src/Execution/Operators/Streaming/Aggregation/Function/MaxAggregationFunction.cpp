@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -56,9 +57,7 @@ void MaxAggregationFunction::lift(
 }
 
 void MaxAggregationFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1,
-    const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState1, const nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
 {
     /// Reading the max value from the first aggregation state
     const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);

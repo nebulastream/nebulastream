@@ -65,7 +65,11 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId(), ctx.pipelineMemoryProvider.bufferProvider);
+        getHashMapProxy,
+        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+        timestamp,
+        ctx.getWorkerThreadId(),
+        ctx.pipelineMemoryProvider.bufferProvider);
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record

@@ -226,7 +226,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
         const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized)};
 
-        bool isEqual = variableSizedData == otherVariableSizedData;
+        const bool isEqual = variableSizedData == otherVariableSizedData;
         EXPECT_EQ(isEqual, varSizedData.cast<VariableSizedData>() == otherVarSizedData.cast<VariableSizedData>());
     }
 }

@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -64,9 +65,7 @@ void AvgAggregationFunction::lift(
 }
 
 void AvgAggregationFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1,
-    const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState1, const nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
 {
     /// Reading the sum and count from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);

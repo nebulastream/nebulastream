@@ -12,14 +12,23 @@
     limitations under the License.
 */
 
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <memory>
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
-#include <nautilus/std/cstring.h>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-namespace NES::Runtime::Execution::Functions {
+#include <Nautilus/Interface/Record.hpp>
+#include <nautilus/std/cstring.h>
+#include <val_ptr.hpp>
+namespace NES::Runtime::Execution::Functions
+{
 
 ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVariableSize(const int8_t* value, const size_t size)
-        : sizeIncludingLength(size + sizeof(uint32_t)), data(std::make_unique<int8_t[]>(sizeIncludingLength))
+    : sizeIncludingLength(size + sizeof(uint32_t)), data(std::make_unique<int8_t[]>(sizeIncludingLength))
 {
     /// We are copying the data into the function's memory. This is necessary as the data might be destroyed after the function is created.
     /// In the constructor, we have allocated the memory for the data via the make_unique<>(). Thus, we have to copy here the

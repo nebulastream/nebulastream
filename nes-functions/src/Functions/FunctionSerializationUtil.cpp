@@ -22,7 +22,6 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
-#include <Functions/NodeFunctionConcat.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
@@ -38,6 +37,7 @@
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>
+#include <Functions/NodeFunctionConcat.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>

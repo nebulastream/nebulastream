@@ -75,7 +75,8 @@ void NLJBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     WindowOperatorBuild::open(executionCtx, recordBuffer);
 
     auto opHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs(), executionCtx.pipelineMemoryProvider.bufferProvider);
+    auto sliceReference
+        = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs(), executionCtx.pipelineMemoryProvider.bufferProvider);
     auto sliceStart = invoke(getNLJSliceStartProxy, sliceReference);
     auto sliceEnd = invoke(getNLJSliceEndProxy, sliceReference);
     const auto pagedVectorReference = invoke(
@@ -99,7 +100,8 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     const auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(localJoinState->nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(
+        localJoinState->nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 
