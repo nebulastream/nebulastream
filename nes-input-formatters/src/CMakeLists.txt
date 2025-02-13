@@ -15,6 +15,8 @@ add_source_files(nes-input-formatters
         CSVInputFormatter.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp
+        RawInputDataParser.cpp
+        FieldOffsetsIterator.cpp
 )
 
 # Register plugins

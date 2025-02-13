@@ -13,26 +13,63 @@
 */
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <ostream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::InputFormatters
 {
+/// The type that all formatters use to represent indexes to fields.
+using FieldOffsetsType = uint32_t;
 
-/// Forward referencing SequenceShredder to keep it as a private implementation detail of nes-input-formatters
+/// Forward referencing SequenceShredder/InputFormatter/FieldOffsets to keep it as a private implementation detail of nes-input-formatters
 class SequenceShredder;
+class InputFormatter;
+class FieldOffsetIterator;
 
 
-/// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
-class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
+/// TODO #496: Implement InputFormatterTask a Nautilus Operator (CompiledExecutablePipelineStage/Special Scan)
+/// -> figure out how to best call SequenceShredder and handle return values of SequenceShredder
+/// -> figure out how to best process spanning tuples (currently we use a string to allocate memory)
+/// -> convert FieldOffsetIterator to Nautilus data structure
+/// -> implement CSVInputFormatter as Nautilus operator/function
+/// (potentially make heavy use of proxy functions first)
+
+/// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
+/// individual InputFormatterTasks see during execution.
+/// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatterTask
+/// needs to process (resolving tuples that span multiple raw buffers).
+/// An InputFormatterTask belongs to exactly one source. The source reads raw data into buffers, constructs a Task from the
+/// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
+/// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
+/// the QueryEngine may still execute them in any order.
+class InputFormatterTask final : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    explicit InputFormatterTask(OriginId originId, std::unique_ptr<InputFormatter> inputFormatter);
+    ///
+    using ParseFunctionSignature = std::function<void(
+        std::string_view inputString,
+        int8_t* fieldPointer,
+        Memory::AbstractBufferProvider& bufferProvider,
+        Memory::TupleBuffer& tupleBufferFormatted)>;
+
+    explicit InputFormatterTask(
+        OriginId originId,
+        std::string tupleDelimiter,
+        std::string fieldDelimiter,
+        const Schema& schema,
+        std::unique_ptr<InputFormatter> inputFormatter);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;
@@ -41,7 +78,14 @@ public:
     InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
     void start(Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
+
+    /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
     void stop(Runtime::Execution::PipelineExecutionContext&) override;
+
+    /// (concurrently) executes an InputFormatterTask.
+    /// First, uses the concrete input formatter implementation to determine the indexes of all fields of all full tuples.
+    /// Second, uses the SequenceShredder to find partial tuples.
+    /// Third, processes (leading) partial tuple and if it contains full tuples, process all full tuples and trailing partial tuple
     void
     execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
@@ -49,11 +93,54 @@ public:
 
 private:
     OriginId originId;
-    /// Synchronizes between different InputFormatterTasks (see documentation of class for details)
     std::unique_ptr<SequenceShredder> sequenceShredder;
-    /// TODO #679: realize below comment
-    /// Implements the format-specific functions to determine the offsets of fields, as well as format-specific parsing functions of fields
+    std::string tupleDelimiter;
+    std::string fieldDelimiter;
+    uint32_t numberOfFieldsInSchema;
+    std::vector<size_t> fieldSizes;
+    std::vector<ParseFunctionSignature> fieldParseFunctions;
     std::unique_ptr<InputFormatter> inputFormatter;
+    uint32_t sizeOfTupleInBytes;
+
+private:
+    /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
+    /// Iterates over all full tuples, using the indexes in FieldOffsets and parses the tuples into formatted data.
+    void processRawBuffer(
+        const NES::Memory::TupleBuffer& rawBuffer,
+        NES::ChunkNumber::Underlying& runningChunkNumber,
+        FieldOffsetIterator& fieldOffsets,
+        NES::Memory::TupleBuffer& formattedBuffer,
+        Memory::AbstractBufferProvider& bufferProvider,
+        size_t totalNumberOfTuplesInRawBuffer,
+        size_t sizeOfFormattedTupleBufferInBytes,
+        Runtime::Execution::PipelineExecutionContext& pec) const;
+
+    /// Called by execute if the buffer delimits at least two tuples.
+    /// First, processes the leading spanning tuple, if the raw buffer completed it.
+    /// Second, processes the raw buffer, if it contains at least one full tuple.
+    /// Third, processes the trailing spanning tuple, if the raw buffer completed it.
+    void processRawBufferWithTupleDelimiter(
+        const NES::Memory::TupleBuffer& rawBuffer,
+        FieldOffsetsType offsetOfFirstTupleDelimiter,
+        FieldOffsetsType offsetOfLastTupleDelimiter,
+        SequenceNumber::Underlying sequenceNumberOfCurrentBuffer,
+        Memory::AbstractBufferProvider& bufferProvider,
+        size_t sizeOfFormattedTupleBufferInBytes,
+        size_t totalNumberOfTuplesInRawBuffer,
+        ChunkNumber::Underlying& runningChunkNumber,
+        FieldOffsetIterator& fieldOffsets,
+        Runtime::Execution::PipelineExecutionContext& pec) const;
+
+    /// Called by execute, if the buffer does not delimit any tuples.
+    /// Processes a spanning tuple, if the raw buffer connects two raw buffers that delimit tuples.
+    void processRawBufferWithoutTupleDelimiter(
+        const NES::Memory::TupleBuffer& rawBuffer,
+        FieldOffsetsType offsetOfFirstTupleDelimiter,
+        FieldOffsetsType offsetOfLastTupleDelimiter,
+        SequenceNumber::Underlying sequenceNumberOfCurrentBuffer,
+        Memory::AbstractBufferProvider& bufferProvider,
+        ChunkNumber::Underlying& runningChunkNumber,
+        Runtime::Execution::PipelineExecutionContext& pec) const;
 };
 
 

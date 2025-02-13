@@ -24,14 +24,13 @@
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatter>
-provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
+    const OriginId originId, const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    auto inputFormatterArguments
-        = NES::InputFormatters::InputFormatterRegistryArguments(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
-    if (auto inputFormatter = InputFormatterRegistry::instance().create(parserType, inputFormatterArguments))
+    if (auto inputFormatter = InputFormatterRegistry::instance().create(parserType, InputFormatterRegistryArguments{}))
     {
-        return std::move(inputFormatter.value());
+        return std::make_unique<InputFormatterTask>(
+            originId, std::move(tupleDelimiter), std::move(fieldDelimiter), std::move(schema), std::move(inputFormatter.value()));
     }
     throw UnknownParserType("unknown type of parser: {}", parserType);
 }

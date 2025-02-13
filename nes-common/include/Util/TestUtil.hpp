@@ -122,7 +122,7 @@ inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view ra
     return tupleBuffer;
 }
 
-/// Called by 'createTestTupleBufferFromTuples' to create a tuple from values.
+/// Called by 'createTupleBufferFromTuples' to create a tuple from values.
 template <bool containsVarSized = false, typename... Values>
 void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory::BufferManager& bufferManager, const Values&... values)
 {
