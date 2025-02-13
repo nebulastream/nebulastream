@@ -89,8 +89,9 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     {
         return {false};
     }
-
-    const auto compareResult = (nautilus::memcmp(ptrToVarSized, rhs.ptrToVarSized, size) == 0);
+    const auto varSizedData = getContent();
+    const auto rhsVarSizedData = rhs.getContent();
+    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
     return {compareResult};
 }
 
