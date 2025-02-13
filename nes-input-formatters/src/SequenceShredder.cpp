@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SequenceShredder.hpp>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -30,7 +32,6 @@
 #include <fmt/format.h>
 
 #include <ErrorHandling.hpp>
-#include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
 {
@@ -76,7 +77,7 @@ bool SequenceShredder::isInRange(const SequenceNumberType sequenceNumber)
     return false;
 }
 
-std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumberType> SequenceShredder::flushFinalPartialTuple()
+std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumberType> SequenceShredder::flushFinalSpanningTuple()
 {
     /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
     {

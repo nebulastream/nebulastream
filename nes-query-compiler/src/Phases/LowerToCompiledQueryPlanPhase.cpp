@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
+
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -22,7 +24,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -94,13 +95,10 @@ void processSource(
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
     const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceOperator.getDescriptor().getParserConfig().parserType,
+    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        sourceOperator.getOriginId(),
         *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
-        sourceOperator.getDescriptor().getParserConfig().tupleDelimiter,
-        sourceOperator.getDescriptor().getParserConfig().fieldDelimiter);
-    auto inputFormatterTask
-        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
+        sourceOperator.getDescriptor().getParserConfig());
 
     auto executableInputFormatterPipeline
         = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
