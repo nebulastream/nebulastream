@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
@@ -32,6 +33,12 @@
 #include <SystestState.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/Boolean.hpp>
+#include <Common/DataTypes/Char.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES::Systest
 {
@@ -57,9 +64,20 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         }
         const auto nameTrimmed = Util::trimWhiteSpaces(fieldAndType[0]);
         const auto typeTrimmed = Util::trimWhiteSpaces(fieldAndType[1]);
-        const auto basicType = magic_enum::enum_cast<BasicType>(typeTrimmed);
-        INVARIANT(basicType.has_value(), "Basic type not found for: {}", typeTrimmed);
-        fields.emplace_back(basicType.value(), std::string(nameTrimmed));
+        std::shared_ptr<DataType> dataType;
+        if (auto type = magic_enum::enum_cast<BasicType>(typeTrimmed); type.has_value())
+        {
+            dataType = DataTypeFactory::createType(type.value());
+        }
+        else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
+        {
+            dataType = DataTypeFactory::createVariableSizedData();
+        }
+        else
+        {
+            throw SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
+        }
+        fields.emplace_back(dataType, std::string(nameTrimmed));
     }
     return fields;
 }
@@ -324,31 +342,30 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 bool operator!=(const FieldResult& left, const FieldResult& right)
 {
     /// Check if the type is equal
-    if (left.type != right.type)
+    if (*left.type != *right.type)
     {
         return true;
     }
 
-
     /// Check if the value is equal by casting it to the correct type and comparing it (we allow a small delta)
-    switch (left.type)
+    if (NES::Util::instanceOf<VariableSizedDataType>(left.type) || NES::Util::instanceOf<Char>(left.type))
     {
-        case BasicType::BOOLEAN:
-            return not compareStringAsTypeWithError<bool>(left.valueAsString, right.valueAsString);
-        case BasicType::CHAR:
-        case BasicType::INT8:
-        case BasicType::UINT8:
-        case BasicType::INT16:
-        case BasicType::UINT16:
-        case BasicType::INT32:
-        case BasicType::UINT32:
-        case BasicType::INT64:
-        case BasicType::UINT64:
-            return not compareStringAsTypeWithError<int64_t>(left.valueAsString, right.valueAsString);
-        case BasicType::FLOAT32:
-        case BasicType::FLOAT64:
-            return not compareStringAsTypeWithError<double>(left.valueAsString, right.valueAsString);
+        return left.valueAsString != right.valueAsString;
     }
+    if (NES::Util::as_if<Boolean>(left.type))
+    {
+        return not compareStringAsTypeWithError<bool>(left.valueAsString, right.valueAsString);
+    }
+    if (NES::Util::as_if<Integer>(left.type))
+    {
+        return not compareStringAsTypeWithError<int64_t>(left.valueAsString, right.valueAsString);
+    }
+    if (NES::Util::as_if<Float>(left.type))
+    {
+        return not compareStringAsTypeWithError<double>(left.valueAsString, right.valueAsString);
+    }
+
+    throw UnknownPhysicalType("Unknown type {}", left.type->toString());
 }
 bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
 {
@@ -367,6 +384,7 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
             const auto& [name, field] = pair;
             if (not right.contains(name))
             {
+                NES_WARNING("Field {} does not exist in other schema", name);
                 return false;
             }
 
@@ -376,9 +394,9 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
                     "Field {} does not match {} ({}) != {} ({})",
                     name,
                     field.valueAsString,
-                    magic_enum::enum_name(field.type),
+                    field.type->toString(),
                     right.at(name).valueAsString,
-                    magic_enum::enum_name(right.at(name).type));
+                    right.at(name).type->toString());
                 return false;
             }
             return true;
