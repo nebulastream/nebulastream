@@ -31,6 +31,10 @@ namespace NES::Util
 [[nodiscard]] std::string_view trimWhiteSpaces(std::string_view input);
 [[nodiscard]] std::string_view trimCharsRight(std::string_view input, char c);
 
+/// Removes leading and trailing chars from the input string_view.
+/// This does not modify the underlying data!
+[[nodiscard]] std::string_view trimCharacters(std::string_view input, char c);
+
 
 /// From chars attempts to extract a T from string_view after removing surrounding whitespaces.
 /// Note: Implementation of T = string or string_view will return the string without performing any trimming.
