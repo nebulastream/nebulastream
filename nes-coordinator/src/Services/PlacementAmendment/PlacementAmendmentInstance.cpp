@@ -106,22 +106,12 @@ void PlacementAmendmentInstance::execute() {
                                                                                             coordinatorConfiguration);
         auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
+        auto startDeploymentTime = getTimestamp();
 
-        NES_ERROR("Deployment started: {}", getTimestamp())
         // 5. Call the deployment phase to dispatch the updated decomposed query plans for deployment, un-deployment, or migration
         if (deploymentUnit.containsDeploymentContext()) {
             //Undeploy all removed or migrating deployment contexts
             deploymentPhase->execute(deploymentUnit.deploymentRemovalContexts, requestType);
-            // Wait for all DQPs to get into the status stopped when performing holistic deployment.
-            if (!incrementalPlacement) {
-                for (auto deploymentRemovalContext : deploymentUnit.deploymentRemovalContexts) {
-                    while (queryCatalog->getDecomposedQueryPlanSatus(deploymentRemovalContext->getSharedQueryId(),
-                                                                     deploymentRemovalContext->getDecomposedQueryId())
-                           != QueryState::STOPPED) {
-                        sleep(.1);
-                    }
-                }
-            }
             //Remove all queries marked for removal from shared query plan
             sharedQueryPlan->removeQueryMarkedForRemoval();
             //Deploy all newly placed deployment contexts
@@ -134,7 +124,6 @@ void PlacementAmendmentInstance::execute() {
                 updateReconfigurationMarker(deploymentUnit, reconfigurationMarker);
                 deploymentPhase->execute(deploymentUnit.reconfigurationMarkerUnits, reconfigurationMarker);
             }
-            NES_ERROR("Deployment finished: {}", getTimestamp())
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
             NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")
@@ -181,6 +170,7 @@ void PlacementAmendmentInstance::execute() {
                 }
             }
         }
+
         // 7. Update the shared query plan and the query catalog
         NES_DEBUG("Update shared query plan status")
         SharedQueryPlanStatus sharedQueryPlanStatusPostPlacement = sharedQueryPlan->getStatus();
@@ -191,6 +181,7 @@ void PlacementAmendmentInstance::execute() {
         }
         //Mark as completed
         completionPromise.set_value(true);
+        NES_ERROR("DeploymentTime II : {}", getTimestamp() - startDeploymentTime);
     } catch (std::exception ex) {
         NES_ERROR("Failed to perform placement amendment for shared query {} due to {}", sharedQueryPlan->getId(), ex.what());
         completionPromise.set_value(false);

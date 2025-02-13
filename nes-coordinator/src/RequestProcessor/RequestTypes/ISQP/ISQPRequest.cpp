@@ -72,8 +72,7 @@ ISQPRequestPtr ISQPRequest::create(const Optimizer::PlacementAmendmentHandlerPtr
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
     try {
-        auto processingStartTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto processingStartTime = getTimestamp();
         topology = storageHandle->getTopologyHandle(requestId);
         globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
         globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
@@ -173,8 +172,8 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             }
         }
         NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
-        auto processingEndTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto processingEndTime = getTimestamp();
+
         auto numOfSQPAffected = sharedQueryPlans.size();
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
                                                                         amendmentStartTime,
@@ -182,6 +181,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                         numOfSQPAffected,
                                                                         numOfFailedPlacements,
                                                                         true));
+        NES_ERROR("Total Time to process ISQP Request {}", processingEndTime-processingStartTime);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, false));

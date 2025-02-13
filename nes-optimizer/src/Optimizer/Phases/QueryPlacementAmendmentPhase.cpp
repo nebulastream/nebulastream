@@ -72,6 +72,8 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
 DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}", sharedQueryPlan->getId());
 
+    auto startPlacementAmendmentTime = getTimestamp();
+    uint64_t deploymentTime = 0;
     bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
     NES_DEBUG("Enable incremental placement: {}", enableIncrementalPlacement);
 
@@ -99,6 +101,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
+                auto deploymentTimeStart = getTimestamp();
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 
@@ -141,6 +144,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 
+                deploymentTime = deploymentTime + (getTimestamp() - deploymentTimeStart);
+
                 // P1: Compute placement removal
                 handlePlacementRemoval(sharedQueryId,
                                        changeLogEntry->upstreamOperators,
@@ -155,6 +160,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                         nextDecomposedQueryPlanVersion,
                                         deploymentContexts);
 
+                deploymentTimeStart = getTimestamp();
                 // get new location of migrating stateful operator
                 std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>> migratingOperatorToProperties;
                 std::unordered_map<OperatorId, std::string> migratingOperatorToFileSink;
@@ -189,6 +195,9 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                          sharedQueryId,
                                          nextDecomposedQueryPlanVersion,
                                          deploymentContexts);
+
+                deploymentTime = deploymentTime + (getTimestamp() -deploymentTimeStart);
+
             } catch (std::exception& ex) {
                 NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
                           "failed changelog for further processing. {}",
@@ -268,6 +277,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::PROCESSED);
     }
 
+    NES_ERROR("Total Placement Amendment Time {} and Total Deployment Time I {} in nano sec: {}", getTimestamp() - startPlacementAmendmentTime, deploymentTime);
     NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator};
 }
