@@ -73,7 +73,7 @@ bool SequenceShredder::isInRange(const SequenceNumberType sequenceNumber)
     return false;
 }
 
-std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumberType> SequenceShredder::flushFinalPartialTuple()
+std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumberType> SequenceShredder::flushFinalSpanningTuple()
 {
     /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
     {

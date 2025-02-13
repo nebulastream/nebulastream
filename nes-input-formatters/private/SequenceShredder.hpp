@@ -116,6 +116,29 @@ namespace NES::InputFormatters
           the thread doubles the size of the ring buffer.
 */
 
+struct StagedBuffer
+{
+    Memory::TupleBuffer buffer;
+    size_t sizeOfBufferInBytes;
+    uint32_t offsetOfFirstTupleDelimiter;
+    uint32_t offsetOfLastTupleDelimiter;
+};
+
+/// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).
+/// A spanning tuple is a tuple that spans over at least two raw input buffers.
+/// Given an input buffer without a delimiter, the SequenceShredder may find one spanning tuple at most (the raw input buffer connects
+/// two raw input buffers with tuple delimiters).
+/// Given an input buffer with a tuple delimiter, the SequenceShredder may find up to two spanning tuples. A first, starting in a raw input
+/// buffer with a lower sequence number, ending in the raw input buffer. A second, starting in the raw input buffer, ending in a raw
+/// input buffer with a higher sequence number.
+struct SpanningTuple
+{
+    SequenceNumber::Underlying spanStart = 0;
+    SequenceNumber::Underlying spanEnd = 0;
+    bool isStartValid = false;
+    bool isEndValid = false;
+};
+
 class SequenceShredder
 {
 public:
@@ -124,14 +147,6 @@ public:
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
     static constexpr size_t INITIAL_NUM_BITMAPS = 64;
     using BitmapVectorType = std::vector<BitmapType>;
-
-    struct StagedBuffer
-    {
-        Memory::TupleBuffer buffer;
-        size_t sizeOfBufferInBytes;
-        uint32_t offsetOfFirstTupleDelimiter;
-        uint32_t offsetOfLastTupleDelimiter;
-    };
 
     struct SpanningTupleBuffers
     {
@@ -151,21 +166,6 @@ private:
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
     static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
 
-    /// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).
-    /// A spanning tuple is a tuple that spans over at least two raw input buffers.
-    /// Given an input buffer without a delimiter, the SequenceShredder may find one spanning tuple at most (the raw input buffer connects
-    /// two raw input buffers with tuple delimiters).
-    /// Given an input buffer with a tuple delimiter, the SequenceShredder may find up to two spanning tuples. A first, starting in a raw input
-    /// buffer with a lower sequence number, ending in the raw input buffer. A second, starting in the raw input buffer, ending in a raw
-    /// input buffer with a higher sequence number.
-    struct SpanningTuple
-    {
-        SequenceNumberType spanStart = 0;
-        SequenceNumberType spanEnd = 0;
-        bool isStartValid = false;
-        bool isEndValid = false;
-    };
-
 public:
     explicit SequenceShredder(size_t sizeOfTupleDelimiter);
     explicit SequenceShredder(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
@@ -181,7 +181,7 @@ public:
     /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
     /// The artificial tuple is a buffer with a sequence number (SN) that is exactly one larger than the largest seen SN.
     /// We configure the buffer to 'contain' a tuple delimiter as its first and only content.
-    [[nodiscard]] std::pair<SpanningTupleBuffers, SequenceNumberType> flushFinalPartialTuple();
+    [[nodiscard]] std::pair<SpanningTupleBuffers, SequenceNumberType> flushFinalSpanningTuple();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.

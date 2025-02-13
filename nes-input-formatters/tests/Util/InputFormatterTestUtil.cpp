@@ -12,21 +12,27 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <memory>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
+#include <TestTaskQueue.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::InputFormatterTestUtil
@@ -84,8 +90,7 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
     return schema;
 }
 
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers)
+std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
 {
     return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
     {
@@ -151,19 +156,14 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
+
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        validatedParserConfiguration.parserType,
-        schema,
-        validatedParserConfiguration.tupleDelimiter,
-        validatedParserConfiguration.fieldDelimiter);
-
-    return std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
+    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -191,14 +191,14 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
     return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
 }
 
-Runtime::Execution::TestablePipelineTask createInputFormatterTask(
+Runtime::Execution::TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
     std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    return Runtime::Execution::TestablePipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));
+    return Runtime::Execution::TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
 }
 
 }

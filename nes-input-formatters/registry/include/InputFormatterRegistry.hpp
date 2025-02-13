@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
-#include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::InputFormatters
@@ -28,9 +29,8 @@ using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatter>;
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
 struct InputFormatterRegistryArguments
 {
-    Schema schema;
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
+    Sources::ParserConfig inputFormatterConfig;
+    size_t numberOfFieldsInSchema;
 };
 
 class InputFormatterRegistry

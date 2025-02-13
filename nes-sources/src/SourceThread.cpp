@@ -118,10 +118,12 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
         auto emptyBuffer = bufferProvider.getBufferBlocking();
-        auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
 
         if (numReadBytes != 0)
         {
+            /// The source read in raw bytes, thus we don't know the number of tuples yet.
+            /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer.setNumberOfTuples(numReadBytes);
             emit(emptyBuffer, true);
         }
