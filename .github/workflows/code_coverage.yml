@@ -30,8 +30,8 @@ on:
         required: true
         type: number
         description: distance between base and head
-jobs:
 
+jobs:
   build-code-coverage-ref:
     container:
       image: nebulastream/nes-ci:${{ inputs.base_dev_image_tag }}
