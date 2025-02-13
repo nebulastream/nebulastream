@@ -15,12 +15,13 @@
 #pragma once
 
 #include <memory>
-#include <string>
+
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<InputFormatter>
-provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
+std::unique_ptr<InputFormatterTask> provideInputFormatterTask(OriginId originId, const Schema& schema, const Sources::ParserConfig& config);
 }

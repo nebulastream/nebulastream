@@ -116,12 +116,12 @@ private:
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
 /// Executes all 'taskSteps' in its 'execute' function.
-class TestablePipelineStage : public ExecutablePipelineStage
+class TestPipelineStage : public ExecutablePipelineStage
 {
 public:
     using ExecuteFunction = std::function<void(const Memory::TupleBuffer&, PipelineExecutionContext&)>;
-    TestablePipelineStage() = default;
-    TestablePipelineStage(const std::string& stepName, ExecuteFunction testTask) { addStep(stepName, std::move(testTask)); }
+    TestPipelineStage() = default;
+    TestPipelineStage(const std::string& stepName, ExecuteFunction testTask) { addStep(stepName, std::move(testTask)); }
 
     void addStep(const std::string& stepName, ExecuteFunction testTask) { taskSteps.emplace_back(stepName, std::move(testTask)); }
 
@@ -137,14 +137,14 @@ private:
 };
 
 /// Maps a pipeline task to a specific worker thread and therefore allows a test task queue to execute a specific task on a specific worker.
-struct TestablePipelineTask
+struct TestPipelineTask
 {
-    TestablePipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) {};
-    TestablePipelineTask(const WorkerThreadId workerThreadId, Memory::TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
+    TestPipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) {};
+    TestPipelineTask(const WorkerThreadId workerThreadId, Memory::TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
     }
-    TestablePipelineTask(const WorkerThreadId workerThreadId, std::shared_ptr<ExecutablePipelineStage> eps)
+    TestPipelineTask(const WorkerThreadId workerThreadId, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), eps(std::move(eps))
     {
     }
@@ -159,7 +159,7 @@ struct TestablePipelineTask
 
 struct WorkTask
 {
-    TestablePipelineTask task;
+    TestPipelineTask task;
     std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
 };
 
@@ -176,7 +176,7 @@ public:
     ~SingleThreadedTestTaskQueue() = default;
 
     /// Sequentially processes pipeline tasks on respective threads. Stops all threads.
-    void processTasks(std::vector<TestablePipelineTask> pipelineTasks);
+    void processTasks(std::vector<TestPipelineTask> pipelineTasks);
 
 private:
     std::queue<WorkTask> tasks;
@@ -186,7 +186,7 @@ private:
     std::shared_ptr<ExecutablePipelineStage> eps;
 
     /// Sets up all tasks for the threads.
-    void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks);
+    void enqueueTasks(std::vector<TestPipelineTask> pipelineTasks);
     /// Executes tasks on respective threads.
     void runTasks();
 };
@@ -198,7 +198,7 @@ class MultiThreadedTestTaskQueue
 public:
     MultiThreadedTestTaskQueue(
         size_t numberOfThreads,
-        const std::vector<TestablePipelineTask>& testTasks,
+        const std::vector<TestPipelineTask>& testTasks,
         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers);
 
