@@ -7,17 +7,16 @@ def split_wrapper(index, line):
 
 
 def main():
-    # We expect that this script is called with the following arguments
-    # Arg[1]: Absolute path to the index.html file
-    # Arg[2]: Absolute path where the script should write the output index.html file
-    # Arg[3]: Absolute path to the file that contains the changed files.
-    #          We expect that each line contains the absolute path to the changed file
 
     if len(sys.argv) != 4:
         print("Usage: python code-coverage-remove-rows-index-html.py <index_file> <output_file> <tested_files_path>")
         exit(1)
 
-
+    # We expect that this script is called with the following arguments
+    # Arg[1]: Absolute path to the index.html file
+    # Arg[2]: Absolute path where the script should write the output index.html file
+    # Arg[3]: Absolute path to the file that contains the changed files.
+    # We expect that each line contains the absolute path to the changed file
     index_file = sys.argv[1]
     output_file = sys.argv[2]
     tested_files = sys.argv[3]
@@ -60,7 +59,6 @@ def main():
     for row in rows:
         filename_cell = row.find('td')  # Assuming the filename is in the first column
         filename = filename_cell.text.strip()
-        # We have to remove everything before the "nebulastream-public/nebulastream-public" part
         filename = split_wrapper(-1, filename)
         print(f"Filename: {filename}")
         if filename not in tested_files_list:
@@ -69,11 +67,6 @@ def main():
             filename_cell_tag = filename_cell.find('a')
             base_path = base_path.rstrip("__w/")
             filename_cell_tag['href'] = base_path + "/" + filename_cell.text.strip() + ".html"
-
-            # debug commands remove after script works
-            print(base_path)
-            print(filename_cell.text.strip())
-            print(base_path + filename_cell.text.strip() + ".html")
 
     # Save the modified HTML to a new file
     with open(output_file, 'w', encoding='utf-8') as file:
