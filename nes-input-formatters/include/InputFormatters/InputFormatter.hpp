@@ -14,21 +14,25 @@
 
 #pragma once
 
-#include <cstddef>
-#include <memory>
-#include <ostream>
-#include <Runtime/TupleBuffer.hpp>
-#include <PipelineExecutionContext.hpp>
-#include "Identifiers/Identifiers.hpp"
+#include <InputFormatters/InputFormatterTask.hpp>
 
 namespace NES::InputFormatters
 {
-/// Forward referencing SequenceShredder to keep it as a private implementation detail of nes-input-formatters
-class SequenceShredder;
-
+/// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
+/// The InputFormatterTask uses the InputFormatter to determine the indexes of all full tuples in a raw buffer
+/// and to determine the indexes of spanning tuples.
+/// @Note All InputFormatter implementations must be thread-safe. NebulaStream's task queue concurrently executes InputFormatterTasks.
+///       Thus, the InputFormatterTask calls the interface functions of the InputFormatter concurrently.
+///       The most straight-forward way to comply is to implement the input formatter stateless, i.e., each call to its interface functions
+///       starts from a clean state.
 class InputFormatter
 {
 public:
+    struct BufferOffsets
+    {
+        FieldOffsetsType offsetOfFirstTupleDelimiter;
+        FieldOffsetsType offsetOfLastTupleDelimiter;
+    };
     InputFormatter() = default;
     virtual ~InputFormatter() = default;
 
@@ -37,22 +41,27 @@ public:
     InputFormatter(InputFormatter&&) = delete;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    /// Must only manipulate the sequenceShredder and otherwise be free of side-effects
-    virtual void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& rawTB,
-        NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-        size_t numBytesInRawTB,
-        SequenceShredder& sequenceShredder)
+    /// Determines all indexes of a spanning tuple (a tuple that spans at least two raw buffers).
+    /// Must write all indexes to the correct position to the fieldOffsets pointer.
+    /// @Note Must be thread-safe (see description of class)
+    virtual void indexSpanningTuple(
+        std::string_view tuple,
+        std::string_view fieldDelimiter,
+        FieldOffsetsType* fieldOffsets,
+        FieldOffsetsType startIdxOfCurrentTuple,
+        FieldOffsetsType endIdxOfCurrentTuple,
+        FieldOffsetsType currentFieldIndex)
         = 0;
 
-    /// Since there is no symbol that represents EoF/EoS, the final buffer does not end in a tuple delimiter. We need to 'manually' flush
-    /// the final tuple, between the last tuple delimiter of the final buffer and (including) the last byte of the final buffer.
-    virtual void flushFinalTuple(
-        OriginId originId, NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+    /// Determines all indexes of all full tuples in a raw buffer. A raw buffer may start and end with a partial tuple.
+    /// Must write all indexes to the fieldOffsets pointer.
+    /// @Note Must be thread-safe (see description of class)
+    virtual BufferOffsets indexRawBuffer(
+        std::string_view bufferView,
+        FieldOffsets& fieldOffsets,
+        std::string_view tupleDelimiter,
+        std::string_view fieldDelimiter)
         = 0;
-
-    virtual size_t getSizeOfTupleDelimiter() = 0;
-    virtual size_t getSizeOfFieldDelimiter() = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }
 

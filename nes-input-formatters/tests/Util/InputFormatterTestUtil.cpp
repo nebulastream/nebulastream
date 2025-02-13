@@ -150,13 +150,12 @@ std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(co
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        OriginId(0),
         validatedParserConfiguration.parserType,
         schema,
         validatedParserConfiguration.tupleDelimiter,
         validatedParserConfiguration.fieldDelimiter);
-
-    return std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -184,14 +183,14 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
     return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
 }
 
-Runtime::Execution::TestablePipelineTask createInputFormatterTask(
+Runtime::Execution::TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
     std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    return Runtime::Execution::TestablePipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));
+    return Runtime::Execution::TestPipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));
 }
 
 }
