@@ -63,13 +63,10 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
     const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceOperator.getDescriptor().getParserConfig().parserType,
+    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        sourceOperator.getOriginId(),
         *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
-        sourceOperator.getDescriptor().getParserConfig().tupleDelimiter,
-        sourceOperator.getDescriptor().getParserConfig().fieldDelimiter);
-    auto inputFormatterTask
-        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
+        sourceOperator.getDescriptor().getParserConfig());
 
     auto executableInputFormatterPipeline
         = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
