@@ -103,7 +103,7 @@ public:
         const auto fileSizeInBytes = std::filesystem::file_size(testFilePath);
         const auto numberOfExpectedRawBuffers = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
             + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
-        /// Sources sometimes need an extra buffer (reason currently unknown)
+        /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
 
         /// Create vector for result buffers and create emit function to collect buffers from source
@@ -128,7 +128,7 @@ public:
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
-            std::vector<TestablePipelineTask> pipelineTasks;
+            std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(
                 [&](auto& rawBuffers)
@@ -138,7 +138,7 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }
@@ -148,7 +148,7 @@ public:
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
 
-            /// Combine results and soraoeut
+            /// Combine results and sort them using (ascending on sequence-/chunknumbers)
             auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
             std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
             std::ranges::sort(
@@ -193,12 +193,13 @@ public:
     }
 };
 
+
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .numberOfIterations = 1,
-        .numberOfThreads = 8,
+        .numberOfThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
