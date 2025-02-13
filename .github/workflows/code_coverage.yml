@@ -27,9 +27,9 @@ on:
         type: string
         description: "Commit sha of base"
       number_of_commits:
-        required: false
-        default: -1
+        required: true
         type: number
+        description: distance between base and head
 jobs:
 
   build-code-coverage-ref:
