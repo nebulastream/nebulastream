@@ -20,12 +20,12 @@
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -77,7 +77,9 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, Nautilus::Configurations::NautilusBackend backend);
+        const std::vector<BasicType>& keyTypes,
+        const std::vector<BasicType>& valueTypes,
+        Nautilus::Configurations::NautilusBackend backend);
 
     std::string compareExpectedWithActual(
         const Memory::TupleBuffer& inputBufferKeys,

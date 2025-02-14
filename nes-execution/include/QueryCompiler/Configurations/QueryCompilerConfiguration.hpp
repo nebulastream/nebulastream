@@ -29,10 +29,7 @@
 
 namespace NES::QueryCompilation::Configurations
 {
-static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS = 100;
-static constexpr auto DEFAULT_HASH_PAGE_SIZE = 10240;
-static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
+static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 
 class QueryCompilerConfiguration final : public NES::Configurations::BaseConfiguration
@@ -44,42 +41,33 @@ public:
     /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     NES::Configurations::EnumOption<DumpMode> dumpMode
         = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
-
     NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
-
     NES::Configurations::EnumOption<Nautilus::Configurations::NautilusBackend> nautilusBackend
         = {"nautilusBackend",
            Nautilus::Configurations::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
            "[COMPILER|INTERPRETER]."};
-
     NES::Configurations::UIntOption numberOfPartitions
         = {"numberOfPartitions",
-           std::to_string(DEFAULT_NUMBER_OF_PARTITIONS),
+           std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption pageSize
         = {"pageSize",
-           std::to_string(DEFAULT_HASH_PAGE_SIZE),
+           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
-
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
-
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {
-            &nautilusBackend,
-            &pageSize,
-            &numberOfPartitions,
-            &joinStrategy,
-            &pipelinesTxtFilePath};
+        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
     }
 };
 }
