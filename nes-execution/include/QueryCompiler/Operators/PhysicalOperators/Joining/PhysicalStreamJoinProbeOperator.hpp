@@ -18,13 +18,13 @@
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 #include <Util/Execution.hpp>
@@ -41,7 +41,7 @@ public:
         const std::shared_ptr<Schema>& rightSchema,
         const std::shared_ptr<Schema>& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-        StreamJoinStrategy joinStrategy,
+        Configurations::StreamJoinStrategy joinStrategy,
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
         const std::vector<std::string>& joinFieldNamesLeft,
         const std::vector<std::string>& joinFieldNamesRight,
@@ -52,7 +52,7 @@ public:
     std::shared_ptr<Operator> copy() override;
 
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
-    StreamJoinStrategy getJoinStrategy() const;
+    Configurations::StreamJoinStrategy getJoinStrategy() const;
     std::unique_ptr<Runtime::Execution::Functions::Function> getJoinFunction();
     std::vector<std::string> getJoinFieldNameLeft() const;
     std::vector<std::string> getJoinFieldNameRight() const;
@@ -61,7 +61,7 @@ public:
 
 protected:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
-    StreamJoinStrategy joinStrategy;
+    Configurations::StreamJoinStrategy joinStrategy;
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
     std::vector<std::string> joinFieldNamesLeft;
     std::vector<std::string> joinFieldNamesRight;

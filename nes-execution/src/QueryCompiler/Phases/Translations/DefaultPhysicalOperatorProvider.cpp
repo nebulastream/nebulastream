@@ -16,7 +16,6 @@
 #include <memory>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -40,6 +39,8 @@
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -55,7 +56,6 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -68,8 +68,8 @@
 namespace NES::QueryCompilation
 {
 
-DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options)
-    : PhysicalOperatorProvider(std::move(options))
+DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig)
+    : PhysicalOperatorProvider(std::move(queryCompilerConfig))
 {
 }
 
@@ -283,7 +283,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = options->joinStrategy;
+    const auto joinStrategy = queryCompilerConfig.joinStrategy;
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
@@ -292,7 +292,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
     switch (joinStrategy)
     {
-        case StreamJoinStrategy::NESTED_LOOP_JOIN:
+        case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
             joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
             break;
     }
@@ -301,7 +301,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         = [&](const std::shared_ptr<Schema>& inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
     {
         return std::make_shared<PhysicalOperators::PhysicalStreamJoinBuildOperator>(
-            inputSchema, joinOperator->getOutputSchema(), joinOperatorHandler, options->joinStrategy, timeStampField, buildSideType);
+            inputSchema,
+            joinOperator->getOutputSchema(),
+            joinOperatorHandler,
+            queryCompilerConfig.joinStrategy,
+            timeStampField,
+            buildSideType);
     };
     auto joinFunctionLowered = FunctionProvider::lowerFunction(joinOperator->getJoinFunction());
     const auto leftJoinBuildOperator
@@ -313,7 +318,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         joinOperator->getRightInputSchema(),
         joinOperator->getOutputSchema(),
         joinOperatorHandler,
-        options->joinStrategy,
+        queryCompilerConfig.joinStrategy,
         std::move(joinFunctionLowered),
         streamJoinConfig.joinFieldNamesLeft,
         streamJoinConfig.joinFieldNamesRight,
@@ -331,10 +336,10 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->windowOperatorOptions.pageSize, joinOperator->getLeftInputSchema());
+        queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
     leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->windowOperatorOptions.pageSize, joinOperator->getRightInputSchema());
+        queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",

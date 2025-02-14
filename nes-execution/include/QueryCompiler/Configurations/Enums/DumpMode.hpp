@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation
+namespace NES::QueryCompilation::Configurations
 {
 enum class DumpMode : uint8_t
 {

@@ -18,8 +18,8 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/WrapOption.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
 namespace NES
@@ -82,8 +82,8 @@ public:
     BoolOption enableStatisticOuput
         = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output", {std::make_shared<BooleanValidation>()}};
 
-
-    QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
+    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler
+        = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
 
     /**
      * @brief Configuration yaml path.

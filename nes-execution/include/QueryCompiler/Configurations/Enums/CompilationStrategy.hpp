@@ -16,13 +16,22 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation
+namespace NES::QueryCompilation::Configurations
 {
-enum class NautilusBackend : uint8_t
+enum class CompilationStrategy : uint8_t
 {
-    /// Uses the interpretation based nautilus backend.
-    INTERPRETER,
-    /// Uses the compilation based nautilus backend.
-    COMPILER
+    /// Use fast compilation strategy, i.e., does not apply any optimizations and omits debug output.
+    FAST,
+    /// Creates debug output i.e., source code files and applies formatting. No code optimizations.
+    DEBUG,
+    /// Applies all compiler optimizations.
+    OPTIMIZE,
+    /// Applies all compiler optimizations and inlines proxy functions.
+    PROXY_INLINING
+};
+
+enum class StreamJoinStrategy : uint8_t
+{
+    NESTED_LOOP_JOIN
 };
 }

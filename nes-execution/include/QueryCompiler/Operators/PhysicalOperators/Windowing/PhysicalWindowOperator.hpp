@@ -23,8 +23,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -46,7 +46,7 @@ public:
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const;
     std::unique_ptr<Runtime::Execution::Operators::TimeFunction> getTimeFunction() const;
     std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-    getAggregationFunctions(const QueryCompilerOptions& options) const;
+    getAggregationFunctions(const Configurations::QueryCompilerConfiguration& options) const;
     std::pair<std::vector<Nautilus::Record::RecordFieldIdentifier>, std::vector<Nautilus::Record::RecordFieldIdentifier>>
     getKeyAndValueFields() const;
     ~PhysicalWindowOperator() override = default;

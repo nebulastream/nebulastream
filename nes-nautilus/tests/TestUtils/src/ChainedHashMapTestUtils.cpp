@@ -25,7 +25,7 @@
 #include <tuple>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -67,11 +67,11 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, const QueryCompilation::NautilusBackend backend)
+    const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, const Nautilus::Configurations::NautilusBackend backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend
     nautilus::engine::Options options;
-    const bool compilation = (backend == QueryCompilation::NautilusBackend::COMPILER);
+    const bool compilation = (backend == Nautilus::Configurations::NautilusBackend::COMPILER);
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);

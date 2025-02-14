@@ -26,7 +26,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -100,12 +100,12 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
     /// We set the threshold to be 10k tuples.
     constexpr auto thresholdForCompile = 10 * 1000;
-    auto backend = numberOfTuples > thresholdForCompile ? QueryCompilation::NautilusBackend::COMPILER
-                                                        : QueryCompilation::NautilusBackend::INTERPRETER;
+    auto backend = numberOfTuples > thresholdForCompile ? Configurations::NautilusBackend::COMPILER
+                                                        : Configurations::NautilusBackend::INTERPRETER;
     if (not compiledFunctions.contains({FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend}))
     {
         nautilus::engine::Options options;
-        const auto compilation = backend == QueryCompilation::NautilusBackend::COMPILER;
+        const auto compilation = backend == Configurations::NautilusBackend::COMPILER;
         options.setOption("engine.Compilation", compilation);
         const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
@@ -171,7 +171,7 @@ NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basi
 
 void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
-    QueryCompilation::NautilusBackend backend,
+    Configurations::NautilusBackend backend,
     nautilus::engine::Options& options,
     const std::shared_ptr<Schema>& schema,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
@@ -241,7 +241,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
-    const bool compilation = (backend == QueryCompilation::NautilusBackend::COMPILER);
+    const bool compilation = (backend == Configurations::NautilusBackend::COMPILER);
     options.setOption("engine.Compilation", compilation);
     auto engine = nautilus::engine::NautilusEngine(options);
     auto compiledFunction = engine.registerFunction(tmp);

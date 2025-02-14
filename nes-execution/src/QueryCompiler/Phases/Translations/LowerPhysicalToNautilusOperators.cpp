@@ -18,7 +18,6 @@
 #include <numeric>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
@@ -46,6 +45,7 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
@@ -62,7 +62,6 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -73,8 +72,8 @@
 namespace NES::QueryCompilation
 {
 
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options)
-    : options(std::move(options)), functionProvider(std::make_unique<FunctionProvider>())
+LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(Configurations::QueryCompilerConfiguration queryCompilerConfig)
+    : queryCompilerConfig(std::move(queryCompilerConfig)), functionProvider(std::make_unique<FunctionProvider>())
 {
 }
 
@@ -108,6 +107,19 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
+        /// Adding the node and the pipeline id to the pipelineIdToText
+        if (queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
+        {
+            continue;
+        }
+        if (not pipelineIdToText.contains(operatorPipeline->getPipelineId()))
+        {
+            pipelineIdToText[operatorPipeline->getPipelineId()] << "";
+        }
+        pipelineIdToText[operatorPipeline->getPipelineId()] << " Node: " << *NES::Util::as<PhysicalOperators::PhysicalOperator>(node)
+                                                            << "\n";
+
+
         parentOperator
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
@@ -161,7 +173,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         const auto handlerIndex = operatorHandlers.size() - 1;
         auto timeFunction = buildOperator->getTimeFunction();
-        auto aggregationFunctions = buildOperator->getAggregationFunctions(*options);
+        auto aggregationFunctions = buildOperator->getAggregationFunctions(queryCompilerConfig);
         const auto valueSize = std::accumulate(
             aggregationFunctions.begin(),
             aggregationFunctions.end(),
@@ -180,7 +192,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
         }
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
-        const auto entriesPerPage = options->windowOperatorOptions.pageSize / entrySize;
+        const auto entriesPerPage = queryCompilerConfig.pageSize.getValue() / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = buildOperator->getKeyAndValueFields();
         const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
             *buildOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
@@ -207,7 +219,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
         operatorHandlers.push_back(probeOperator->getOperatorHandler());
         const auto handlerIndex = operatorHandlers.size() - 1;
-        auto aggregationFunctions = probeOperator->getAggregationFunctions(*options);
+        auto aggregationFunctions = probeOperator->getAggregationFunctions(queryCompilerConfig);
         const auto valueSize = std::accumulate(
             aggregationFunctions.begin(),
             aggregationFunctions.end(),
@@ -224,8 +236,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
             keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
         }
-        const auto pageSize = options->windowOperatorOptions.pageSize;
-        const auto numberOfBuckets = options->windowOperatorOptions.numberOfPartitions;
+        const auto pageSize = queryCompilerConfig.pageSize.getValue();
+        const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto entriesPerPage = pageSize / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = probeOperator->getKeyAndValueFields();
@@ -256,7 +268,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto memoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->windowOperatorOptions.pageSize, buildOperator->getInputSchema());
+            queryCompilerConfig.pageSize.getValue(), buildOperator->getInputSchema());
 
         auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
 
@@ -282,10 +294,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->windowOperatorOptions.pageSize, probeOperator->getLeftInputSchema());
+            queryCompilerConfig.pageSize.getValue(), probeOperator->getLeftInputSchema());
         leftMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameLeft()});
         auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            options->windowOperatorOptions.pageSize, probeOperator->getRightInputSchema());
+            queryCompilerConfig.pageSize.getValue(), probeOperator->getRightInputSchema());
         rightMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
 
         std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;
