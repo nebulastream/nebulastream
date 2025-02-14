@@ -31,7 +31,7 @@ class WorkerConfiguration final : public BaseConfiguration
 {
 public:
     WorkerConfiguration() = default;
-    WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+    WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(std::move(name), std::move(description)) {};
 
 
     StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};
@@ -62,8 +62,7 @@ public:
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler
-        = {"queryCompiler", "Configuration for the query compiler"};
+    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 private:

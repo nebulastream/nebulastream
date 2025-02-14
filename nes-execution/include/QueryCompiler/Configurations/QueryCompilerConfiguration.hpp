@@ -38,7 +38,7 @@ class QueryCompilerConfiguration final : public NES::Configurations::BaseConfigu
 {
 public:
     QueryCompilerConfiguration() = default;
-    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+    QueryCompilerConfiguration(std::string name, std::string description) : BaseConfiguration(std::move(name), std::move(description)) {};
 
     /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     NES::Configurations::EnumOption<DumpMode> dumpMode
@@ -50,10 +50,6 @@ public:
            "Nautilus backend for the nautilus query compiler "
            "[COMPILER|INTERPRETER]."};
 
-    NES::Configurations::BoolOption useCompilationCache
-        = {"useCompilationCache", "false", "Enable use compilation caching", {std::make_shared<NES::Configurations::BooleanValidation>()}};
-
-    /// Hash Join Options
     NES::Configurations::UIntOption numberOfPartitions
         = {"numberOfPartitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
@@ -123,7 +119,9 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
+        return {&nautilusBackend,
+            &pageSize,
+            &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
     }
 };
 }

@@ -18,7 +18,6 @@
 #include <nautilus/Engine.hpp>
 #include <PipelineExecutionContext.hpp>
 
-#include "../../../nes-execution/include/QueryCompiler/QueryCompilerOptions.hpp"
 #include "../../../nes-query-engine/Task.hpp"
 
 namespace NES
