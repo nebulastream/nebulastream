@@ -178,10 +178,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
      NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
-    if (!isOpen) {
-        NES_DEBUG("The output file could not be opened during setup of the file sink.");
-        return false;
-    }
+//    if (!isOpen) {
+//        NES_DEBUG("The output file could not be opened during setup of the file sink.");
+//        return false;
+//    }
 
     if (!inputBuffer) {
         NES_ERROR("Invalid input buffer");
