@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES {
 

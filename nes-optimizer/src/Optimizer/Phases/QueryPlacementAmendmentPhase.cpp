@@ -277,7 +277,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::PROCESSED);
     }
 
-    NES_ERROR("Total Placement Amendment Time {} and Total Deployment Time I {} in nano sec: {}", getTimestamp() - startPlacementAmendmentTime, deploymentTime);
+    NES_ERROR("Total Placement Amendment Time {} and Total Deployment Time I in nano sec: {}", getTimestamp() - startPlacementAmendmentTime, deploymentTime);
     NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator};
 }

@@ -301,53 +301,53 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite
 }
 
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
-    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-    if (timestampAndWriteToSocket) {
-        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-        std::unique_lock lock(writeMutex);
-//        std::string bufferContent;
-        //auto schema = sinkFormat->getSchemaPtr();
-        //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
-        //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
-
-
-        // Write data to the socket
-        //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
-
-        auto* records = inputBuffer.getBuffer<Record>();
-        //todo: do not checkpoint if incremental is enabled
-        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
-            records[i].outputTimestamp = getTimestamp();
-            auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-//            if (checkpoint != 0 && checkpoint >= records[i].value) {
-//                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
-//                NES_ASSERT(false, "Checkpoints not increasing");
+//bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+//    // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
+//    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+//    if (timestampAndWriteToSocket) {
+//        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
+//        std::unique_lock lock(writeMutex);
+////        std::string bufferContent;
+//        //auto schema = sinkFormat->getSchemaPtr();
+//        //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
+//        //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
+//        //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
+//
+//
+//        // Write data to the socket
+//        //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
+//
+//        auto* records = inputBuffer.getBuffer<Record>();
+//        //todo: do not checkpoint if incremental is enabled
+//        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
+//            records[i].outputTimestamp = getTimestamp();
+//            auto& checkpoint = sinkInfo->checkpoints[records[i].id];
+////            if (checkpoint != 0 && checkpoint >= records[i].value) {
+////                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
+////                NES_ASSERT(false, "Checkpoints not increasing");
+////            }
+//            if (records[i].value == 0 || checkpoint == records[i].value + 1) {
+//                checkpoint = records[i].value;
 //            }
-            if (records[i].value == 0 || checkpoint == records[i].value + 1) {
-                checkpoint = records[i].value;
-            }
-        }
-//        NES_ERROR("Writing to tcp sink");
-        ssize_t bytes_written = write(sinkInfo->sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
-//        NES_ERROR("{} bytes written to tcp sink", bytes_written);
-        if (bytes_written == -1) {
-            NES_ERROR("Could not write to socket in sink")
-            perror("write");
-            close(sinkInfo->sockfd);
-            return 1;
-        }
-
-        //        receivedBuffers.push_back(bufferContent);
-        //        arrivalTimestamps.push_back(getTimestamp());
-
-        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-        return true;
-    }
-    return writeDataToFile(inputBuffer);
-}
+//        }
+////        NES_ERROR("Writing to tcp sink");
+//        ssize_t bytes_written = write(sinkInfo->sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
+////        NES_ERROR("{} bytes written to tcp sink", bytes_written);
+//        if (bytes_written == -1) {
+//            NES_ERROR("Could not write to socket in sink")
+//            perror("write");
+//            close(sinkInfo->sockfd);
+//            return 1;
+//        }
+//
+//        //        receivedBuffers.push_back(bufferContent);
+//        //        arrivalTimestamps.push_back(getTimestamp());
+//
+//        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
+//        return true;
+//    }
+//    return writeDataToFile(inputBuffer);
+//}
 
 std::string FileSink::getFilePath() const { return filePath; }
 
