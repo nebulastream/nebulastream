@@ -178,6 +178,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     void setReconnectCount(uint64_t count);
 
+    uint64_t getReconnectCount();
+
   private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing

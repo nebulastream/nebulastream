@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <utility>
 #include <vector>
+#include <Network/NetworkSink.hpp>
 
 namespace NES {
 
@@ -284,9 +285,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
                 //                sourceInfo->records.
 
-                NES_ERROR("checking if replay is activated")
+                NES_DEBUG("checking if replay is activated")
                 if (getReplayData()) {
-                    NES_ERROR("replay activatedcreating new stored buffer")
+                    NES_DEBUG("replay activated creating new stored buffer")
                     sourceInfo->records.push_back({});
                 }
                 auto& replayVector = sourceInfo->records.back();
@@ -500,7 +501,8 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
-    NES_ERROR("destroying source")
+    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))->getReconnectCount();
+    NES_ERROR("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
 }
 }// namespace NES

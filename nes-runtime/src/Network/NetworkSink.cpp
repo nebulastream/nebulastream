@@ -649,4 +649,8 @@ void NetworkSink::setReconnectCount(uint64_t count) {
     NES_ERROR("Setting reconnect count for sink {} from {} to {}", uniqueNetworkSinkDescriptorId, reconnectCount, count);
     reconnectCount = count;
 }
+
+uint64_t NetworkSink::getReconnectCount() {
+    return reconnectCount;
+}
 }// namespace NES::Network
