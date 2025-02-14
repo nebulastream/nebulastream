@@ -70,6 +70,7 @@ jobs:
           request_changes: false
           # Optionally set the number of comments per review to avoid GitHub API timeouts for heavily loaded pull requests
           suggestions_per_comment: 100
+          auto_resolve_conversations: true
           # As we are running it in a docker, we need to set the repo path prefix to /__w
           # This is mentioned in https://github.com/platisd/clang-tidy-pr-comments/blob/master/action.yml
           repo_path_prefix: /__w
