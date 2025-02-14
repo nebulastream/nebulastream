@@ -476,7 +476,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
                                                          inherited1::shared_from_this()),
                                   true);
     }
-    NES_DEBUG("AbstractQueryManager::stopDecomposedQueryPlan: shared query id {} and decomposed query id {}.{} was {}",
+    NES_ERROR("AbstractQueryManager::stopDecomposedQueryPlan: shared query id {} and decomposed query id {}.{} was {}",
               sharedQueryId,
               decomposedQueryId,
               decomposedQueryVersion,

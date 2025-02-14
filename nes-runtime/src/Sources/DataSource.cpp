@@ -300,7 +300,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         return true;
     }
 
-    NES_DEBUG("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
+    NES_ERROR("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
     bool expected = true;
 
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
