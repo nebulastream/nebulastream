@@ -74,35 +74,27 @@ public:
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
-
     NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
            SliceStoreType::MAP,
            "Type of slice store"
            "[MAP|LIST]. "};
-
     NES::Configurations::EnumOption<SliceCacheType> sliceCacheType
         = {"sliceCacheType",
            SliceCacheType::NONE,
            "Type of slice cache"
            "[NONE|FIFO|LRU]. "};
-
     NES::Configurations::EnumOption<ProbeType> probeType
         = {"probeType",
            ProbeType::PROBING,
            "Type of probe"
            "[PROBING|NO_PROBING]. "};
-
     NES::Configurations::UIntOption numberOfEntriesSliceCache
         = {"numberOfEntriesSliceCache", "1", "Size of the slice cache", {std::make_shared<NES::Configurations::NumberValidation>()}};
-
     NES::Configurations::BoolOption lockSliceCache
         = {"lockSliceCache", "false", "Enable lock in slice cache", {std::make_shared<NES::Configurations::BooleanValidation>()}};
-
     NES::Configurations::StringOption sortBufferByField = {"sortBufferByField", "", "Sort field identifier for the sort buffer operator."};
-
     NES::Configurations::StringOption sortBufferOrder = {"sortBufferOrder", "Ascending", "Sort order for the sort buffer operator."};
-
     NES::Configurations::EnumOption<DelayStrategy> delayStrategy
         = {"delayStrategy",
            DelayStrategy::BUFFER,
