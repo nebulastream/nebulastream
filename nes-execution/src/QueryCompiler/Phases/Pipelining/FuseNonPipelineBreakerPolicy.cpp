@@ -12,13 +12,13 @@
     limitations under the License.
 */
 #include <memory>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 

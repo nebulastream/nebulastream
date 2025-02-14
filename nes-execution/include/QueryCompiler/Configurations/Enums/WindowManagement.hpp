@@ -13,7 +13,7 @@
 */
 
 #pragma once
-namespace NES::QueryCompilation
+namespace NES::QueryCompilation::Configurations
 {
 
 enum class SliceStoreType : uint8_t
@@ -40,4 +40,11 @@ enum class DelayStrategy : uint8_t
     BUFFER,
     TUPLES
 };
+
+struct SliceCacheOptions
+{
+    SliceCacheType sliceCacheType;
+    uint64_t numberOfEntries;
+};
+
 }

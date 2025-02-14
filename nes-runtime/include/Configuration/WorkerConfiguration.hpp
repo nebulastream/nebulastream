@@ -62,7 +62,8 @@ public:
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
+    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler
+        = {"queryCompiler", "Configuration for the query compiler"};
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 private:

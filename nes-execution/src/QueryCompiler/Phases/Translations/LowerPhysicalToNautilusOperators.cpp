@@ -117,7 +117,7 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
         }
         NES_INFO("Lowering node: {}", *node);
         /// Adding the node and the pipeline id to the pipelineIdToText
-        if (options->pipelinesTxtFilePath.empty())
+        if (queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
         {
             continue;
         }
@@ -215,7 +215,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             entrySize);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
-        if (options->sliceCacheOptions.sliceCacheType == QueryCompilation::SliceCacheType::NONE)
+        if (queryCompilerConfig.sliceCacheType == Configurations::SliceCacheType::NONE)
         {
             const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
                 handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
@@ -229,7 +229,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 std::move(timeFunction),
                 std::move(keyFunctions),
                 std::move(windowAggregationOperator),
-                options->sliceCacheOptions);
+                Configurations::SliceCacheOptions{
+                    queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
             parentOperator->setChild(executableAggregationBuild);
             return executableAggregationBuild;
         }
@@ -280,15 +281,15 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
 
         /// Depending on the probe type, we have to create the correct aggregation probe
-        switch (options->probeType)
+        switch (queryCompilerConfig.probeType)
         {
-            case ProbeType::PROBING: {
+            case Configurations::ProbeType::PROBING: {
                 const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(
                     std::move(windowAggregationOperator), handlerIndex, windowMetaData);
                 pipeline.setRootOperator(executableAggregationProbe);
                 return executableAggregationProbe;
             }
-            case ProbeType::NO_PROBING: {
+            case Configurations::ProbeType::NO_PROBING: {
                 const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbeNoProbing>(
                     std::move(windowAggregationOperator), handlerIndex, windowMetaData);
                 pipeline.setRootOperator(executableAggregationProbe);
@@ -321,7 +322,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         switch (buildOperator->getJoinStrategy())
         {
             case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                if (options->sliceCacheOptions.sliceCacheType == QueryCompilation::SliceCacheType::NONE)
+                if (queryCompilerConfig.sliceCacheType == QueryCompilation::Configurations::SliceCacheType::NONE)
                 {
                     joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(
                         handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider);
@@ -329,7 +330,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 else
                 {
                     joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuildCache>(
-                        handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider, options->sliceCacheOptions);
+                        handlerIndex,
+                        buildOperator->getBuildSide(),
+                        std::move(timeFunction),
+                        memoryProvider,
+                        Configurations::SliceCacheOptions{
+                            queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
                 }
                 break;
             };
@@ -357,9 +363,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         switch (probeOperator->getJoinStrategy())
         {
             case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
-                switch (options->probeType)
+                switch (queryCompilerConfig.probeType)
                 {
-                    case ProbeType::PROBING: {
+                    case Configurations::ProbeType::PROBING: {
                         joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(
                             handlerIndex,
                             probeOperator->getJoinFunction(),
@@ -369,7 +375,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                             rightMemoryProvider);
                         break;
                     }
-                    case ProbeType::NO_PROBING: {
+                    case Configurations::ProbeType::NO_PROBING: {
                         joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbeNoProbing>(
                             handlerIndex,
                             probeOperator->getJoinFunction(),

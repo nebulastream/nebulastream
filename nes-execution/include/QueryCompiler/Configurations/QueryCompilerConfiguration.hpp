@@ -18,8 +18,11 @@
 #include <string>
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
@@ -46,6 +49,11 @@ public:
            Nautilus::Configurations::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
            "[COMPILER|INTERPRETER]."};
+
+    NES::Configurations::BoolOption useCompilationCache
+        = {"useCompilationCache", "false", "Enable use compilation caching", {std::make_shared<NES::Configurations::BooleanValidation>()}};
+
+    /// Hash Join Options
     NES::Configurations::UIntOption numberOfPartitions
         = {"numberOfPartitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
@@ -56,12 +64,61 @@ public:
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
+
+    NES::Configurations::UIntOption maxHashTableSize
+        = {"maxHashTableSize",
+           std::to_string(DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE),
+           "Maximum size of hash table",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
+
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+
+    NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
+        = {"sliceStoreType",
+           SliceStoreType::MAP,
+           "Type of slice store"
+           "[MAP|LIST]. "};
+
+    NES::Configurations::EnumOption<SliceCacheType> sliceCacheType
+        = {"sliceCacheType",
+           SliceCacheType::NONE,
+           "Type of slice cache"
+           "[NONE|FIFO|LRU]. "};
+
+    NES::Configurations::EnumOption<ProbeType> probeType
+        = {"probeType",
+           ProbeType::PROBING,
+           "Type of probe"
+           "[PROBING|NO_PROBING]. "};
+
+    NES::Configurations::UIntOption numberOfEntriesSliceCache
+        = {"numberOfEntriesSliceCache", "1", "Size of the slice cache", {std::make_shared<NES::Configurations::NumberValidation>()}};
+
+    NES::Configurations::BoolOption lockSliceCache
+        = {"lockSliceCache", "false", "Enable lock in slice cache", {std::make_shared<NES::Configurations::BooleanValidation>()}};
+
+    NES::Configurations::StringOption sortBufferByField = {"sortBufferByField", "", "Sort field identifier for the sort buffer operator."};
+
+    NES::Configurations::StringOption sortBufferOrder = {"sortBufferOrder", "Ascending", "Sort order for the sort buffer operator."};
+
+    NES::Configurations::EnumOption<DelayStrategy> delayStrategy
+        = {"delayStrategy",
+           DelayStrategy::BUFFER,
+           "Strategy for introducing delays"
+           "[BUFFER|TUPLES]. "};
+
+    NES::Configurations::FloatOption unorderedness
+        = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatValidation>()}};
+    NES::Configurations::UIntOption minDelay
+        = {"minDelay", "1", "Minimum delay", {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption maxDelay
+        = {"maxDelay", "10", "Maximum delay", {std::make_shared<NES::Configurations::NumberValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override

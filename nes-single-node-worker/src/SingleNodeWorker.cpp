@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
