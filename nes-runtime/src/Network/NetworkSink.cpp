@@ -24,6 +24,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Network {
 
@@ -333,6 +334,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
         //todo #3013: make sure buffers are kept if the device is currently buffering
+        NES_ERROR("shutting down network sink with termination type {}", magic_enum::enum_name(terminationType));
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 //todo #5159: make sure that downstream plans are garbage collected if they do not receive a drain
@@ -353,6 +355,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 } else {
                     networkManager->unregisterSubpartitionProducer(nesPartition);
                     //do not release network channel in the next step because none was established
+                    NES_ERROR("shutting down network sink done without connect: {}", magic_enum::enum_name(terminationType));
                     return;
                 }
             }
@@ -373,6 +376,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
+            NES_ERROR("shutting down network sink done with connect: {}", magic_enum::enum_name(terminationType));
         }
     }
 }
