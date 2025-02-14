@@ -67,7 +67,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
-    NES_DEBUG("Starting tcp source")
+    NES_ERROR("Starting tcp source")
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
@@ -500,6 +500,7 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
+    NES_ERROR("destroying source")
     //    ::close(sockfd);
 }
 }// namespace NES
