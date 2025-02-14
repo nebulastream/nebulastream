@@ -18,6 +18,7 @@
 #include <fstream>
 #include <numeric>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <fmt/core.h>

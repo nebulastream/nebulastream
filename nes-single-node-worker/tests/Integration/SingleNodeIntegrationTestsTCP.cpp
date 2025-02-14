@@ -20,6 +20,7 @@
 #include <thread>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>

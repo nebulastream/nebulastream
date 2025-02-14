@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <utility>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>

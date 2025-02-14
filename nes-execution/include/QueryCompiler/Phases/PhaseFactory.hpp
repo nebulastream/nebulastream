@@ -27,10 +27,10 @@ class PhaseFactory
 {
 public:
     virtual ~PhaseFactory() = default;
-    virtual std::shared_ptr<LowerLogicalToPhysicalOperators>
+    [[nodiscard]] virtual std::shared_ptr<LowerLogicalToPhysicalOperators>
     createLowerLogicalQueryPlanPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const = 0;
-    virtual std::shared_ptr<PipeliningPhase> createPipeliningPhase() const = 0;
-    virtual std::shared_ptr<AddScanAndEmitPhase>
+    [[nodiscard]] virtual std::shared_ptr<PipeliningPhase> createPipeliningPhase() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<AddScanAndEmitPhase>
     createAddScanAndEmitPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const = 0;
 };
 }

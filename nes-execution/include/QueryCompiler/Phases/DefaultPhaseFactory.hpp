@@ -29,8 +29,8 @@ public:
     static std::shared_ptr<PhaseFactory> create();
     std::shared_ptr<LowerLogicalToPhysicalOperators>
     createLowerLogicalQueryPlanPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const override;
-    std::shared_ptr<PipeliningPhase> createPipeliningPhase() const override;
-    std::shared_ptr<AddScanAndEmitPhase>
+    [[nodiscard]] std::shared_ptr<PipeliningPhase> createPipeliningPhase() const override;
+    [[nodiscard]] std::shared_ptr<AddScanAndEmitPhase>
     createAddScanAndEmitPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const override;
 };
 

@@ -29,6 +29,7 @@
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include "QueryCompiler/Configurations/Enums/CompilationStrategy.hpp"
 
 namespace NES::QueryCompilation
 {
