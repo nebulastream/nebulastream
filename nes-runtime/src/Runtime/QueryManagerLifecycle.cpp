@@ -397,7 +397,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
     const auto& sharedQueryId = qep->getSharedQueryId();
     const auto& decomposedQueryId = qep->getDecomposedQueryId();
     const auto& decomposedQueryVersion = qep->getDecomposedQueryVersion();
-    NES_WARNING("AbstractQueryManager::stopDecomposedQueryPlan: share query id {} and decomposed query plan id  {}.{}  type= {}",
+    NES_ERROR("AbstractQueryManager::stopDecomposedQueryPlan: share query id {} and decomposed query plan id  {}.{}  type= {}",
                 sharedQueryId,
                 decomposedQueryId,
                 decomposedQueryVersion,
