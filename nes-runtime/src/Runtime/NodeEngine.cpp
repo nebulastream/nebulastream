@@ -38,11 +38,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <arpa/inet.h>
 #include <string>
-#include <utility>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <arpa/inet.h>
+#include <utility>
 
 namespace NES::Runtime {
 
@@ -228,7 +228,9 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
     }
 }
 
-bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount) {
+bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                                          DecomposedQueryId decomposedQueryId,
+                                          uint64_t reconnectCount) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("startDecomposedQuery= {}", sharedQueryId);
     if (sharedQueryIdToDecomposedQueryPlanIds.contains(sharedQueryId)) {
@@ -850,7 +852,7 @@ folly::Synchronized<TCPSinkInfo>::LockedPtr NodeEngine::getTcpDescriptor(std::st
 
     std::stringstream ss(filePath);
     std::string portString;
-    while(std::getline(ss, portString, ':')) {
+    while (std::getline(ss, portString, ':')) {
         NES_DEBUG("Port string {}", portString)
     }
     auto port = std::stoi(portString);
@@ -868,7 +870,7 @@ folly::Synchronized<TCPSinkInfo>::LockedPtr NodeEngine::getTcpDescriptor(std::st
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Example IP address
-    server_addr.sin_port = htons(port);                 // Example port number
+    server_addr.sin_port = htons(port);                  // Example port number
 
     // Connect to the server
     if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
@@ -878,7 +880,7 @@ folly::Synchronized<TCPSinkInfo>::LockedPtr NodeEngine::getTcpDescriptor(std::st
         NES_FATAL_ERROR("could not connect sockfd")
     }
     NES_DEBUG("Created new tcp descriptor {} for {}", sockfd, filePath);
-    tcpDescriptor.insert({filePath, folly::Synchronized(TCPSinkInfo{sockfd, {}})});
+    tcpDescriptor.insert({filePath, folly::Synchronized(TCPSinkInfo{sockfd})});
     return tcpDescriptor.at(filePath).wlock();
 }
 
@@ -902,17 +904,15 @@ int64_t NodeEngine::getParentId() {
     return -1;
 }
 
-bool NodeEngine::isSimulatingBuffering() {
-    return activeBufferingSimulation;
-}
+bool NodeEngine::isSimulatingBuffering() { return activeBufferingSimulation; }
 
 void NodeEngine::setParentId(int64_t newParent, int64_t count) {
     activeBufferingSimulation = true;
     NES_DEBUG("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
-//    ++parentChangeCount;
+    //    ++parentChangeCount;
     parentChangeCount = count;
-//    NES_ERROR("new parent count = {}", parentChangeCount)
+    //    NES_ERROR("new parent count = {}", parentChangeCount)
     if (newParent == 0) {
         NES_ERROR("received parent is zero")
         return;
@@ -956,19 +956,19 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                                                                        partitionUpdateInfo.subpartitionId);
 
                                 auto networkSinkDescriptor =
-                                    Network::NetworkSinkDescriptor::create(nodeLocation,
-                                                                           partition,
-                                                                           sinkUpdateInfo.waitTime,
-                                                                           sinkUpdateInfo.retryTimes,
-                                                                           sinkUpdateInfo.version,
-                                                                           sinkUpdateInfo.numberOfOrigins,
-                                                                           sinkUpdateInfo.uniqueNetworkSinkId,
-                                                                           networkSink->getDownstreamLogicalOperatorId())//FIXME this should not be the old one
+                                    Network::NetworkSinkDescriptor::create(
+                                        nodeLocation,
+                                        partition,
+                                        sinkUpdateInfo.waitTime,
+                                        sinkUpdateInfo.retryTimes,
+                                        sinkUpdateInfo.version,
+                                        sinkUpdateInfo.numberOfOrigins,
+                                        sinkUpdateInfo.uniqueNetworkSinkId,
+                                        networkSink->getDownstreamLogicalOperatorId())//FIXME this should not be the old one
                                         ->as<Network::NetworkSinkDescriptor>();
                                 if (networkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
                                     updateExecutablePlanVersion(idAndVersion, updateEvent->decomposedQueryPlanVersion);
-                                    networkSink->configureNewSinkDescriptor(*networkSinkDescriptor,
-                                                                            reconfigurationMarker);
+                                    networkSink->configureNewSinkDescriptor(*networkSinkDescriptor, reconfigurationMarker);
                                     networkSink->setReconnectCount(reconnectCount);
                                     addedMarker = true;
                                 }
@@ -1011,7 +1011,8 @@ uint64_t NodeEngine::getParenChangeCount() { return parentChangeCount; }
 
 bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                                           DecomposedQueryId decomposedQueryId,
-                                          DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t reconnectCount) {
+                                          DecomposedQueryPlanVersion decomposedQueryVersion,
+                                          uint64_t reconnectCount) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("startDecomposedQuery= {}", sharedQueryId);
     if (sharedQueryIdToDecomposedQueryPlanIds.contains(sharedQueryId)) {
@@ -1032,7 +1033,8 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
         }
 
         try {
-            if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanIdWithVersion], reconnectCount)) {
+            if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanIdWithVersion],
+                                                       reconnectCount)) {
                 NES_DEBUG("start of QEP  {}.{}  succeeded", decomposedQueryId, decomposedQueryVersion);
             } else {
                 NES_DEBUG("start of QEP  {}.{}  failed", decomposedQueryId, decomposedQueryVersion);
@@ -1054,5 +1056,26 @@ NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) c
 }
 void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
     nesWorker->notifyCheckpointToCoordinator(sharedQueryId, checkpoints);
+}
+//folly::Synchronized<std::unordered_map<uint64_t, uint64_t>, folly::detail::SynchronizedLockPolicyTryExclusive>::LockedPtr NodeEngine::tryLockLastWritten(std::string sinkName) {
+folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::TryWLockedPtr NodeEngine::tryLockLastWritten(std::string sinkName) {
+    std::unique_lock lock(lastWrittenMutex);
+    if (lastWrites.contains(sinkName)) {
+        //        return lastWrites.at(sinkName).wlock();
+        return lastWrites.at(sinkName).tryWLock();
+//        auto lockedPtr = lastWrites.at(sinkName).tryWLock();
+    }
+//    auto map = std::unordered_map<uint64_t, uint64_t>();
+//    lastWrites.insert({sinkName, folly::Synchronized(std::move(map))});
+        lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
+    return lastWrites.at(sinkName).tryWLock();
+}
+
+std::unordered_map<uint64_t, uint64_t> NodeEngine::getLastWrittenCopy(std::string sinkName) {
+    std::unique_lock lock(lastWrittenMutex);
+    if (lastWrites.contains(sinkName)) {
+        return lastWrites.at(sinkName).copy();
+    }
+    return {};
 }
 }// namespace NES::Runtime

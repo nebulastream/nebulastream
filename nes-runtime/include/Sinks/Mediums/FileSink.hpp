@@ -115,11 +115,11 @@ class FileSink : public SinkMedium {
     std::atomic<uint64_t> numberOfReceivedBuffers{0};
     Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
     // keep unordered tuple buffers with sequence number as key
-    folly::Synchronized<std::map<uint64_t, Runtime::TupleBuffer>> bufferStorage;
+    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, Runtime::TupleBuffer>>> bufferStorage;
 
     // sequence number of last written tuple buffer
-    std::atomic<uint64_t> lastWritten{0};
-    std::mutex lastWrittenMtx;
+//    std::atomic<uint64_t> lastWritten{0};
+//    std::mutex lastWrittenMtx;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

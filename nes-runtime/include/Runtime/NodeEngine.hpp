@@ -59,8 +59,8 @@ namespace Runtime {
 // };
 
 struct TCPSinkInfo {
-  int sockfd;
-  std::unordered_map<uint64_t, uint64_t> checkpoints;
+    int sockfd;
+    //  std::unordered_map<uint64_t, uint64_t> checkpoints;
 };
 
 /**
@@ -78,22 +78,22 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     using inherited2 = ErrorListener;
 
   public:
-//    NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
-//               HardwareManagerPtr&& hardwareManager,
-//               std::vector<BufferManagerPtr>&& bufferManagers,
-//               QueryManagerPtr&& queryManager,
-//               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-//               Network::PartitionManagerPtr&& partitionManager,
-//               OperatorHandlerStorePtr operatorHandlerStore,
-//               QueryCompilation::QueryCompilerPtr&& queryCompiler,
-//               std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
-//               OpenCLManagerPtr&& openCLManager,
-//               WorkerId nodeEngineId,
-//               uint64_t numberOfBuffersInGlobalBufferManager,
-//               uint64_t numberOfBuffersInSourceLocalBufferPool,
-//               uint64_t numberOfBuffersPerWorker,
-//               bool sourceSharing,
-//               bool timeStampOutputSources = false);
+    //    NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
+    //               HardwareManagerPtr&& hardwareManager,
+    //               std::vector<BufferManagerPtr>&& bufferManagers,
+    //               QueryManagerPtr&& queryManager,
+    //               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+    //               Network::PartitionManagerPtr&& partitionManager,
+    //               OperatorHandlerStorePtr operatorHandlerStore,
+    //               QueryCompilation::QueryCompilerPtr&& queryCompiler,
+    //               std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
+    //               OpenCLManagerPtr&& openCLManager,
+    //               WorkerId nodeEngineId,
+    //               uint64_t numberOfBuffersInGlobalBufferManager,
+    //               uint64_t numberOfBuffersInSourceLocalBufferPool,
+    //               uint64_t numberOfBuffersPerWorker,
+    //               bool sourceSharing,
+    //               bool timeStampOutputSources = false);
     friend class NodeEngineBuilder;
 
     enum class NodeEngineQueryStatus : uint8_t { started, stopped, registered };
@@ -170,7 +170,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param decomposedQueryId: id of the decomposed query plan to be started
      * @return bool indicating success
      */
-    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount = 0);
+    [[nodiscard]] bool
+    startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, uint64_t reconnectCount = 0);
 
     /**
      * @brief method to stop a decomposed query plan
@@ -383,7 +384,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool addReconfigureMarker(SharedQueryId sharedQueryId,
                               DecomposedQueryId decomposedQueryid,
-                              ReconfigurationMarkerPtr reconfigurationMarker, uint64_t reconnectCount = 0);
+                              ReconfigurationMarkerPtr reconfigurationMarker,
+                              uint64_t reconnectCount = 0);
 
     /**
      * @brief Get the ids of all decomposed query plans with the specified status
@@ -425,13 +427,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     folly::Synchronized<TCPSinkInfo>::LockedPtr getTcpDescriptor(std::string sinkName);
 
-//    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
+    folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::TryWLockedPtr tryLockLastWritten(std::string sinkName);
+
+    //    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
 
     bool isSimulatingBuffering();
 
     bool getTimesStampOutputSources();
 
     void notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints);
+
+    std::unordered_map<uint64_t, uint64_t> getLastWrittenCopy(std::string sinkName);
 
   private:
     /**
@@ -444,7 +450,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                                                 DecomposedQueryId decomposedQueryId,
-                                                DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t reconnectCount = 0);
+                                                DecomposedQueryPlanVersion decomposedQueryVersion,
+                                                uint64_t reconnectCount = 0);
 
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -473,7 +480,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool sourceSharing;
     bool timestampOutPutSources;
     std::map<std::string, folly::Synchronized<TCPSinkInfo>> tcpDescriptor;
+    std::map<std::string, folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>> lastWrites;
     std::mutex tcpDescriptorMutex;
+    std::mutex lastWrittenMutex;
     std::mutex parentMutex;
     uint64_t parentId;
     bool connected = true;

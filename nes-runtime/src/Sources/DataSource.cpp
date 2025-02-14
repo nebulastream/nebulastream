@@ -85,8 +85,11 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
                 .count());
         // Set the sequence number of this buffer.
         // A data source generates a monotonic increasing sequence number
-        maxSequenceNumber++;
-        buffer.setSequenceNumber(maxSequenceNumber);
+
+        if (!getReplayData()) {
+            maxSequenceNumber++;
+            buffer.setSequenceNumber(maxSequenceNumber);
+        }
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
         buffer.setStatisticId(statisticId);

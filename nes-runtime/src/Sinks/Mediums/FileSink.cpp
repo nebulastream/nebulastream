@@ -141,8 +141,10 @@ void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
         NES_ERROR("sink notifies checkpoints");
-        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-        auto checkpoints = sinkInfo->checkpoints;
+//        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+//        auto checkpoints = sinkInfo->checkpoints;
+
+        auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
         nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
         //        for (const auto& bufferContent : receivedBuffers) {
@@ -163,6 +165,10 @@ struct Record {
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
 
+    if (!getReplayData()) {
+        std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
+        return writeDataToTCP(vec);
+    }
 
  // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
@@ -180,10 +186,15 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         return false;
     }
 
+    //todo: get source id
+    //todo: check if we can use origin id
+    NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
+    auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
+
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
     {
-        bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
+        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, inputBuffer);
     }
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
@@ -198,13 +209,20 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     // check if top value in the queue has changed after adding new sequence number
     if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-        if (lastWrittenMtx.try_lock()) {
+        auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
+        if (lastWrittenMap) {
             std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+
+            if (!lastWrittenMap->contains(sourceId)) {
+                lastWrittenMap->insert({sourceId, 0});
+            };
+            auto& lastWritten = lastWrittenMap->at(sourceId);
 
             {
                 auto bufferStorageLocked = *bufferStorage.rlock();
-                for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
-                     it != bufferStorageLocked.upper_bound(currentSeqNumberAfterAdding);
+                //todo: reduce hashmap lookups
+                for (auto it = bufferStorageLocked[sourceId].lower_bound(lastWritten + 1);
+                     it != bufferStorageLocked[sourceId].upper_bound(currentSeqNumberAfterAdding);
                      ++it) {
                     bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
                 }
@@ -216,30 +234,30 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
             // Update lastWritten to the latest sequence number
             lastWritten = currentSeqNumberAfterAdding;
-            lastWrittenMtx.unlock();
         }
     }
 
-    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
-        lastWrittenMtx.lock();
-        auto bufferStorageLocked = *bufferStorage.rlock();
-        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
-
-        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
-        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
-             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
-             ++it) {
-            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
-        }
-
-        // Write all buffers at once
-        writeDataToTCP(bulkWriteBatch);
-
-        // Update lastWritten to the latest sequence number
-        lastWritten = inputBuffer.getWatermark();
-        lastWrittenMtx.unlock();
-    }
+//todo: check if we need this
+//    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
+//        lastWrittenMtx.lock();
+//        auto bufferStorageLocked = *bufferStorage.rlock();
+//        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
+//        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+//
+//        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
+//        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
+//             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
+//             ++it) {
+//            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
+//        }
+//
+//        // Write all buffers at once
+//        writeDataToTCP(bulkWriteBatch);
+//
+//        // Update lastWritten to the latest sequence number
+//        lastWritten = inputBuffer.getWatermark();
+//        lastWrittenMtx.unlock();
+//    }
 
     return true;
 
@@ -269,17 +287,13 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite
 
             auto* records = bufferToWrite.getBuffer<Record>();
             //todo: do not checkpoint if incremental is enabled
-            for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
-                records[i].outputTimestamp = getTimestamp();
-                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-                //            if (checkpoint != 0 && checkpoint >= records[i].value) {
-                //                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
-                //                NES_ASSERT(false, "Checkpoints not increasing");
-                //            }
-                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
-                    checkpoint = records[i].value;
-                }
-            }
+//            for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
+//                records[i].outputTimestamp = getTimestamp();
+//                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
+//                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
+//                    checkpoint = records[i].value;
+//                }
+//            }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written = write(sinkInfo->sockfd, bufferToWrite.getBuffer(), bufferToWrite.getNumberOfTuples() * sizeof(Record));
             //        NES_ERROR("{} bytes written to tcp sink", bytes_written);

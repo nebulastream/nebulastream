@@ -153,17 +153,17 @@ struct Record {
     uint64_t outputTimestamp;
 };
 
-void CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
+std::optional<Runtime::TupleBuffer> CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
                                  Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
-    auto replayOffset = sourceInfo->replayedUntil.value() + 1;
-    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
-    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
+    auto replayOffset = sourceInfo->replayedUntil.value();
+//    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
+//    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
 
-    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
-              numTuplesToReplay,
-              replayOffset,
-              sourceInfo->seqReadFromSocketTotal,
-              totalTuplesToReplay);
+//    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
+//              numTuplesToReplay,
+//              replayOffset,
+//              sourceInfo->seqReadFromSocketTotal,
+//              totalTuplesToReplay);
 
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
@@ -184,20 +184,23 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-        if (!sourceInfo->hasCheckedAcknowledgement) {
-            NES_ERROR("has checked acknowledgement is false")
-            if (sourceInfo->seqReadFromSocketTotal != 0) {
-                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
-                auto id = sourceInfo->records.front().id;
-                auto ack = queryManager->waitForSourceAck(id);
-                NES_ERROR("received ack");
-                sourceInfo->replayedUntil = ack;
+        if (getReplayData()) {
+            if (!sourceInfo->hasCheckedAcknowledgement) {
+                NES_ERROR("has checked acknowledgement is false")
+                if (!sourceInfo->records.empty()) {
+//                if (sourceInfo->seqReadFromSocketTotal != 0) {
+                    NES_ERROR("tuples were read before from this descriptor, waiting for ack");
+                    auto id = sourceInfo->records.front().front().id;
+                    auto ack = queryManager->waitForSourceAck(id);
+                    NES_ERROR("received ack");
+                    sourceInfo->replayedUntil = ack;
+                }
+                sourceInfo->hasCheckedAcknowledgement = true;
             }
-            sourceInfo->hasCheckedAcknowledgement = true;
-        }
-        if (sourceInfo->replayedUntil.has_value()) {
-            fillReplayBuffer(sourceInfo, buffer);
-            return buffer.getBuffer();
+            if (sourceInfo->replayedUntil.has_value()) {
+                fillReplayBuffer(sourceInfo, buffer);
+                return buffer.getBuffer();
+            }
         }
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
@@ -274,6 +277,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
                 //                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
                 //                sourceInfo->records.
+
+                if (getReplayData()) {
+                    sourceInfo->records.push_back({});
+                }
+                auto& replayVector = sourceInfo->records.back();
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                     auto index = i * incomingTupleSize;
                     auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
@@ -287,8 +295,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     //                    records[i].processingTimestamp = getTimestamp();
                     records[i].processingTimestamp = timeStamp;
 
-                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
-                    //totalTupleCount++;
+                    if (getReplayData()) {
+                        //                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
+                        sourceInfo->records.back().emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
+                        //totalTupleCount++;
+                    }
                 }
                 auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
                 //todo: this is only for debugging
@@ -300,15 +311,20 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
-//                sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
-//                sourceInfo->seqReadFromSocketTotal += records[numCompleteTuplesRead -1].value;
-                sourceInfo->seqReadFromSocketTotal = sourceInfo->records.back().value;
+                //                sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
+                //                sourceInfo->seqReadFromSocketTotal += records[numCompleteTuplesRead -1].value;
+                //                sourceInfo->seqReadFromSocketTotal = sourceInfo->records.back().value;
                 generatedBuffers++;
                 //                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
                 //                          "New leftover bytes count: {} ",
                 //                          numCompleteTuplesRead,
                 //                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
-                return buffer.getBuffer();
+                auto returnBuffer = buffer.getBuffer();
+                if (getReplayData()) {
+                    //sequence numbers start at 1 which is why we can use size
+                    returnBuffer.setSequenceNumber(sourceInfo->records.size());
+                }
+                return returnBuffer;
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
 

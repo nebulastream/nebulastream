@@ -373,9 +373,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
+    uint64_t maxSequenceNumber = 0;
   private:
     mutable std::recursive_mutex startStopMutex;
-    uint64_t maxSequenceNumber = 0;
     bool replayData = false;
 
     mutable std::recursive_mutex successorModifyMutex;
