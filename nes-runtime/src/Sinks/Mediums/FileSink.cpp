@@ -144,8 +144,10 @@ void FileSink::shutdown() {
 //        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 //        auto checkpoints = sinkInfo->checkpoints;
 
-        auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
-        nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
+        if (getReplayData()) {
+            auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
+            nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
+        }
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
         //        for (const auto& bufferContent : receivedBuffers) {
         //            outputFile.write(bufferContent.c_str(), bufferContent.size());
