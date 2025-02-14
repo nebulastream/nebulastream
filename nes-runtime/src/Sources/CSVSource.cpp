@@ -165,15 +165,21 @@ std::optional<Runtime::TupleBuffer> CSVSource::fillReplayBuffer(folly::Synchroni
 //              sourceInfo->seqReadFromSocketTotal,
 //              totalTuplesToReplay);
 
+    NES_ERROR("replay buffer {}, end of replay at {}", replayOffset, sourceInfo->records.size());
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
-    std::memcpy(records, replay, numTuplesToReplay);
+    std::memcpy(records, replay, replay->size() * sizeof(Record));
+    auto returnBuffer = buffer.getBuffer();
+    returnBuffer.setSequenceNumber(sourceInfo->replayedUntil.value());
+    sourceInfo->replayedUntil = sourceInfo->replayedUntil.value() + 1;
 
-    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
-    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
-    if (sourceInfo->replayedUntil == sourceInfo->seqReadFromSocketTotal) {
+
+//    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
+//    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
+    if (sourceInfo->replayedUntil == sourceInfo->records.size()) {
         sourceInfo->replayedUntil = std::nullopt;
     }
+    return returnBuffer;
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
@@ -198,8 +204,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 sourceInfo->hasCheckedAcknowledgement = true;
             }
             if (sourceInfo->replayedUntil.has_value()) {
-                fillReplayBuffer(sourceInfo, buffer);
-                return buffer.getBuffer();
+                return fillReplayBuffer(sourceInfo, buffer);
+//                return buffer.getBuffer();
             }
         }
         uint64_t generatedTuplesThisPass = 0;
