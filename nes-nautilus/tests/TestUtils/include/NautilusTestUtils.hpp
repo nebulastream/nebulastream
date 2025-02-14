@@ -24,10 +24,10 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>

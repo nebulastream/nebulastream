@@ -26,7 +26,6 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -35,6 +34,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -100,8 +100,8 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
     /// We set the threshold to be 10k tuples.
     constexpr auto thresholdForCompile = 10 * 1000;
-    auto backend = numberOfTuples > thresholdForCompile ? Configurations::NautilusBackend::COMPILER
-                                                        : Configurations::NautilusBackend::INTERPRETER;
+    auto backend
+        = numberOfTuples > thresholdForCompile ? Configurations::NautilusBackend::COMPILER : Configurations::NautilusBackend::INTERPRETER;
     if (not compiledFunctions.contains({FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend}))
     {
         nautilus::engine::Options options;

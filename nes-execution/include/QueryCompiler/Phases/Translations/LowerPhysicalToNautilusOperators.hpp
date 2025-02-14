@@ -46,7 +46,7 @@ public:
     /// Applies the phase on a pipelined query plan.
     std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> pipelinedQueryPlan, size_t bufferSize);
     /// Applies the phase on a pipelined and lower physical operator to generatable once.
-    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline, size_t bufferSize);
+    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline, size_t bufferSize) const;
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
