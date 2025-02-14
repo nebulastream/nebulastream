@@ -289,13 +289,13 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite
 
             auto* records = bufferToWrite.getBuffer<Record>();
             //todo: do not checkpoint if incremental is enabled
-//            for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
-//                records[i].outputTimestamp = getTimestamp();
+            for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
+                records[i].outputTimestamp = getTimestamp();
 //                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
 //                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
 //                    checkpoint = records[i].value;
 //                }
-//            }
+            }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written = write(sinkInfo->sockfd, bufferToWrite.getBuffer(), bufferToWrite.getNumberOfTuples() * sizeof(Record));
             //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
