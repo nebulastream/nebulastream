@@ -337,30 +337,41 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         NES_ERROR("shutting down network sink with termination type {}", magic_enum::enum_name(terminationType));
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                //todo #5159: make sure that downstream plans are garbage collected if they do not receive a drain
-                //wait until channel has either connected or connection times out
-                NES_DEBUG("NetworkSink: reconfigure() waiting for channel to connect in order to unbuffer before shutdown. "
-                          "operator {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
-                //todo #4309: make sure this function times out
-                //the following call blocks until the channel has been established
-                auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), retryTimes);
-                if (channel.first) {
-                    NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
+                if (terminationType != Runtime::QueryTerminationType::HardStop) {
+                    //todo #5159: make sure that downstream plans are garbage collected if they do not receive a drain
+                    //wait until channel has either connected or connection times out
+                    NES_DEBUG("NetworkSink: reconfigure() waiting for channel to connect in order to unbuffer before shutdown. "
+                              "operator {} Thread {}",
                               nesPartition.toString(),
                               Runtime::NesThread::getId());
-                    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
-                                                      std::move(channel.first), channel.second);
+                    //todo #4309: make sure this function times out
+                    //the following call blocks until the channel has been established
+                    auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), retryTimes);
+                    if (channel.first) {
+                        NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
+                                  nesPartition.toString(),
+                                  Runtime::NesThread::getId());
+                        workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                          std::move(channel.first),
+                                                          channel.second);
+                    } else {
+                        workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+                        networkManager->unregisterSubpartitionProducer(nesPartition);
+                        //do not release network channel in the next step because none was established
+                        NES_ERROR("shutting down network sink done without connect: {}", magic_enum::enum_name(terminationType));
+                        return;
+                    }
                 } else {
+                    workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+                    workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
                     networkManager->unregisterSubpartitionProducer(nesPartition);
-                    //do not release network channel in the next step because none was established
-                    NES_ERROR("shutting down network sink done without connect: {}", magic_enum::enum_name(terminationType));
                     return;
                 }
             }
             if (terminationType != Runtime::QueryTerminationType::HardStop) {
                 unbuffer(workerContext);
+            } else {
+                workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
             }
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
