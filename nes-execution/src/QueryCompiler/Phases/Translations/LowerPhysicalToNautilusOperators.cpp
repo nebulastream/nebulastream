@@ -91,7 +91,7 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<PipelineQueryPlan> pipel
 }
 
 std::shared_ptr<OperatorPipeline>
-LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operatorPipeline, const size_t bufferSize)
+LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operatorPipeline, const size_t bufferSize) const
 {
     const auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
     auto nodes = PlanIterator(*decomposedQueryPlan).snapshot();
@@ -107,19 +107,6 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
-        /// Adding the node and the pipeline id to the pipelineIdToText
-        if (queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
-        {
-            continue;
-        }
-        if (not pipelineIdToText.contains(operatorPipeline->getPipelineId()))
-        {
-            pipelineIdToText[operatorPipeline->getPipelineId()] << "";
-        }
-        pipelineIdToText[operatorPipeline->getPipelineId()] << " Node: " << *NES::Util::as<PhysicalOperators::PhysicalOperator>(node)
-                                                            << "\n";
-
-
         parentOperator
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
@@ -275,7 +262,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> joinBuildNautilus;
         switch (buildOperator->getJoinStrategy())
         {
-            case StreamJoinStrategy::NESTED_LOOP_JOIN: {
+            case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
                 joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(
                     handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider);
                 break;
@@ -303,7 +290,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;
         switch (probeOperator->getJoinStrategy())
         {
-            case StreamJoinStrategy::NESTED_LOOP_JOIN:
+            case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
                 joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(
                     handlerIndex,
                     probeOperator->getJoinFunction(),

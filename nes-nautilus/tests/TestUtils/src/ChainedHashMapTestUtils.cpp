@@ -25,7 +25,6 @@
 #include <tuple>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -33,6 +32,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -67,7 +67,9 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, const Nautilus::Configurations::NautilusBackend backend)
+    const std::vector<BasicType>& keyTypes,
+    const std::vector<BasicType>& valueTypes,
+    const Nautilus::Configurations::NautilusBackend backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend
     nautilus::engine::Options options;
