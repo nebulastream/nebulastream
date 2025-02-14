@@ -192,7 +192,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
             if (!sourceInfo->hasCheckedAcknowledgement) {
-                NES_ERROR("has checked acknowledgement is false")
+                NES_ERROR("has checked acknowledgement is false, there are {} stored buffers", sourceInfo->records.size());
                 if (!sourceInfo->records.empty()) {
 //                if (sourceInfo->seqReadFromSocketTotal != 0) {
                     NES_ERROR("tuples were read before from this descriptor, waiting for ack");
@@ -284,7 +284,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
                 //                sourceInfo->records.
 
+                NES_ERROR("checking if replay is activated")
                 if (getReplayData()) {
+                    NES_ERROR("replay activatedcreating new stored buffer")
                     sourceInfo->records.push_back({});
                 }
                 auto& replayVector = sourceInfo->records.back();
