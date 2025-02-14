@@ -87,6 +87,7 @@ class TopologyNode : public Node {
      */
     uint16_t getTotalResources() const;
 
+ void clearAlternativeNodeCandidates();
     /**
      * @brief Get occupied resources
      * @return occupied resources

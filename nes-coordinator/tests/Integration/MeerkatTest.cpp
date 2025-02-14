@@ -56,25 +56,25 @@ using namespace Configurations;
 using namespace Optimizer;
 
 // ((1934 + 1) * 15 + 1) * 5
-//const uint64_t numberOfNodesPerLevel3 = 12;
-//const uint64_t numberOfNodesPerLevel2 = 4;
-//const uint64_t numberOfNodesPerLevel1 = 2;
-//const uint64_t numberOfNodes = 95;
+// const uint64_t numberOfNodesPerLevel3 = 12;
+// const uint64_t numberOfNodesPerLevel2 = 4;
+// const uint64_t numberOfNodesPerLevel1 = 2;
+// const uint64_t numberOfNodes = 96;
 
-//const uint64_t numberOfNodesPerLevel3 = 95;
-//const uint64_t numberOfNodesPerLevel2 = 21;
-//const uint64_t numberOfNodesPerLevel1 = 8;
-//const uint64_t numberOfNodes = 16035;
+const uint64_t numberOfNodesPerLevel3 = 95;
+const uint64_t numberOfNodesPerLevel2 = 21;
+const uint64_t numberOfNodesPerLevel1 = 8;
+const uint64_t numberOfNodes = 16035;
 
 //const uint64_t numberOfNodesPerLevel3 = 176;
 //const uint64_t numberOfNodesPerLevel2 = 21;
 //const uint64_t numberOfNodesPerLevel1 = 8;
 //const uint64_t numberOfNodes = 29743;
 
-const uint64_t numberOfNodesPerLevel3 = 140;
-const uint64_t numberOfNodesPerLevel2 = 25;
-const uint64_t numberOfNodesPerLevel1 = 12;
-const uint64_t numberOfNodes = 42311;
+// const uint64_t numberOfNodesPerLevel3 = 140;
+// const uint64_t numberOfNodesPerLevel2 = 25;
+// const uint64_t numberOfNodesPerLevel1 = 12;
+// const uint64_t numberOfNodes = 42311;
 
 class MeerkatTest : public Testing::BaseIntegrationTest {
 public:
@@ -490,15 +490,12 @@ TEST_F(MeerkatTest, testDecisionTime) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
 
     uint64_t var = 1;
-    TopologyNodePtr rootNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 4, properties);
-    rootNode->addNodeProperty("tf_installed", true);
-    rootNode->addNodeProperty("slots", 100);
-    rootNode->addNodeProperty("reliability", 100);
-    topology->addAsRootWorkerId(WorkerId(var));
+    auto rootNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
     var++;
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)
-                         ->addField("value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField("id", BasicType::UINT32)
+                           ->addField("value", BasicType::UINT64);
     const std::string sourceName = "car";
 
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
@@ -511,50 +508,39 @@ TEST_F(MeerkatTest, testDecisionTime) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
 
     while (var < numberOfNodes) {
-        TopologyNodePtr childNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 300, properties);
-        childNode->addNodeProperty("tf_installed", true);
-        topology->addTopologyNodeAsChild(rootNode->getId(), childNode->getId());
-        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-        childNode->addLinkProperty(rootNode->getId(), linkProperty);
-        childNode->addNodeProperty("slots", 100);
-        childNode->addNodeProperty("reliability", 100);
+        // Create child node under the root.
+        auto childNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
         var++;
-        for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
-            TopologyNodePtr subChildNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 300, properties);
-            subChildNode->addNodeProperty("tf_installed", true);
-            topology->addTopologyNodeAsChild(childNode->getId(), subChildNode->getId());
-            LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-            subChildNode->addLinkProperty(childNode->getId(), linkProperty);
-            subChildNode->addNodeProperty("slots", 100);
-            subChildNode->addNodeProperty("reliability", 100);
+
+        // Level 1: Create sub-child nodes under the child.
+        for (uint64_t j = 0; j < numberOfNodesPerLevel1 && var < numberOfNodes; j++) {
+            auto subChildNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
+            topology->removeTopologyNodeAsChild(rootNodeId, subChildNodeId);
+            topology->addTopologyNodeAsChild(childNodeId, subChildNodeId);
             var++;
-            for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
-                TopologyNodePtr subSubChildNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 300, properties);
-                subSubChildNode->addNodeProperty("tf_installed", true);
-                topology->addTopologyNodeAsChild(subChildNode->getId(), subSubChildNode->getId());
-                LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-                subSubChildNode->addLinkProperty(subChildNode->getId(), linkProperty);
-                subSubChildNode->addNodeProperty("slots", 100);
-                subSubChildNode->addNodeProperty("reliability", 100);
+
+            // Level 2: Create sub-sub-child nodes under the sub-child.
+            for (uint64_t k = 0; k < numberOfNodesPerLevel2 && var < numberOfNodes; k++) {
+                auto subSubChildNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
+                topology->removeTopologyNodeAsChild(rootNodeId, subSubChildNodeId);
+                topology->addTopologyNodeAsChild(subChildNodeId, subSubChildNodeId);
                 var++;
-                for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
-                    TopologyNodePtr sourceNode = TopologyNode::create(WorkerId(var), "localhost", 123, 124, 300, properties);
-                    sourceNode->addNodeProperty("tf_installed", true);
-                    topology->addTopologyNodeAsChild(subSubChildNode->getId(), sourceNode->getId());
-                    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-                    sourceNode->addLinkProperty(subSubChildNode->getId(), linkProperty);
-                    sourceNode->addNodeProperty("slots", 100);
-                    sourceNode->addNodeProperty("reliability", 100);
-                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-                        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode->getId());
+
+                // Level 3: Create source nodes under the sub-sub-child.
+                for (uint64_t l = 0; l < numberOfNodesPerLevel3 && var < numberOfNodes; l++) {
+                    auto sourceNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
+                    topology->removeTopologyNodeAsChild(rootNodeId, sourceNodeId);
+                    topology->addTopologyNodeAsChild(subSubChildNodeId, sourceNodeId);
                     var++;
 
+                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId);
                     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
                 }
             }
         }
     }
-    std::cout << "numberOfNodes" << var;
+    std::cout << "numberOfNodes created: " << var << std::endl;
 
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -564,10 +550,11 @@ TEST_F(MeerkatTest, testDecisionTime) {
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     queryPlan->setFaultTolerance(FaultToleranceType::M);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(CoordinatorConfiguration::createDefault());
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->optimizer.performOnlySourceOperatorExpansion = true;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-    //    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
 
     auto statisticRegistry = Statistic::StatisticRegistry::create();
     auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
@@ -575,7 +562,7 @@ TEST_F(MeerkatTest, testDecisionTime) {
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, coordinatorConfig->optimizer, statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -584,7 +571,8 @@ TEST_F(MeerkatTest, testDecisionTime) {
     auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                topology,
                                                                                typeInferencePhase,
-                                                                               CoordinatorConfiguration::createDefault());
+                                                                               coordinatorConfig);
     queryPlacementPhase->execute(sharedQueryPlan);
 }
+
 }

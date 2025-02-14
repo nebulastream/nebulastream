@@ -129,7 +129,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     NES_DEBUG("Place {}", logicalOperator->toString());
 
 
-    if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
+    if ((logicalOperator->getOriginalId() == logicalOperator->getId() && logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
         || logicalOperator->instanceOf<SinkLogicalOperator>()) {
         NES_TRACE("Received an NAry operator for placement.");
         //Check if all children operators already placed
@@ -241,7 +241,8 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     }
 
     NES_TRACE("Place further upstream operators.");
-    for (const auto& parent : logicalOperator->getParents()) {
+    auto parents = logicalOperator->getParents();
+    for (const auto& parent : parents) {
         identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
 }

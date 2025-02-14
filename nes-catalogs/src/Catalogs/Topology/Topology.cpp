@@ -620,10 +620,11 @@ bool Topology::tryForceAlternativeLinkOnSinglePath(
     return linkCreated;
 }
 
-void Topology::assignAlternativeNodes() {
+void Topology::assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNodeIds,
+    const std::set<WorkerId>& destinationTopologyNodeIds)
+{
 
     std::unordered_map<int, std::set<WorkerId>> levelToNodeIds;
-
     for (const auto& [nodeId, levels] : nodeLevels) {
         for (int level : levels) {
             levelToNodeIds[level].insert(nodeId);
@@ -631,26 +632,76 @@ void Topology::assignAlternativeNodes() {
     }
 
     for (const auto& [nodeId, levels] : nodeLevels) {
-        TopologyNodePtr node = workerIdToTopologyNode.at(nodeId).copy();
-        std::set<WorkerId> alternativeNodeIds;
+        TopologyNodePtr nodeCopy = workerIdToTopologyNode.at(nodeId).copy();
+        nodeCopy->clearAlternativeNodeCandidates();
 
-        for (int level : levels) {
-            const auto& nodesAtLevel = levelToNodeIds[level];
-            for (WorkerId altNodeId : nodesAtLevel) {
-                if (altNodeId != nodeId) {
-                    alternativeNodeIds.insert(altNodeId);
+        std::vector<TopologyNodePtr> originalPath =
+            findPathThatIncludesNode(sourceTopologyNodeIds, destinationTopologyNodeIds, nodeId);
+
+        std::unordered_set<WorkerId> pathNodeIds;
+        for (auto& p : originalPath) {
+            pathNodeIds.insert(p->getId());
+        }
+
+        std::set<WorkerId> alternativeNodeIds;
+        for (int lvl : levels) {
+            const auto& candidates = levelToNodeIds[lvl];
+            for (WorkerId candidateId : candidates) {
+
+                if (candidateId == nodeId) {
+                    continue;
+                }
+
+                if (pathNodeIds.count(candidateId) > 0) {
+                    continue;
+                }
+
+                if (isReachableIgnoringNodes(sourceTopologyNodeIds, candidateId, pathNodeIds)) {
+                    alternativeNodeIds.insert(candidateId);
                 }
             }
         }
 
-        for (const auto& id : alternativeNodeIds) {
-            node->setAlternativeNodeCandidate(id);
+        for (auto& altId : alternativeNodeIds) {
+            nodeCopy->setAlternativeNodeCandidate(altId);
         }
 
-
-        workerIdToTopologyNode[nodeId] = node;
+        workerIdToTopologyNode[nodeId] = nodeCopy;
     }
 }
+
+bool Topology::isReachableIgnoringNodes(const std::set<WorkerId>& startSet,
+                                        WorkerId targetId,
+                                        const std::unordered_set<WorkerId>& ignoreThese)
+{
+    std::queue<WorkerId> queue;
+    std::unordered_set<WorkerId> visited;
+
+    for (auto s : startSet) {
+        if (!ignoreThese.count(s)) {
+            queue.push(s);
+            visited.insert(s);
+        }
+    }
+
+    while (!queue.empty()) {
+        WorkerId current = queue.front();
+        queue.pop();
+        if (current == targetId) {
+            return true;
+        }
+
+        auto parentIds = getParentTopologyNodeIds(current);
+        for (auto pid : parentIds) {
+            if (ignoreThese.count(pid) == 0 && visited.count(pid) == 0) {
+                visited.insert(pid);
+                queue.push(pid);
+            }
+        }
+    }
+    return false;
+}
+
 
 
 

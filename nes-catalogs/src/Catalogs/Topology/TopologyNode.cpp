@@ -188,6 +188,8 @@ std::vector<WorkerId> TopologyNode::getAlternativeNodeCandidateIds() {
 
 void TopologyNode::setAlternativeNodeCandidate(WorkerId node) { alternativeNodeIds.emplace_back(node); }
 
+void TopologyNode::clearAlternativeNodeCandidates() { alternativeNodeIds.clear(); }
+
 void TopologyNode::addLinkProperty(WorkerId linkedNodeId, const LinkPropertyPtr& topologyLink) {
     linkProperties[linkedNodeId] = topologyLink;
 }

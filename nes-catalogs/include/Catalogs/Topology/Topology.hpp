@@ -26,6 +26,7 @@
 #include <optional>
 #include <set>
 #include <vector>
+#include <unordered_set>
 
 namespace NES {
 
@@ -385,8 +386,12 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
 
  void assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators);
 
- void assignAlternativeNodes();
+ void assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNodeIds,
+    const std::set<WorkerId>& destinationTopologyNodeIds);
 
+ bool isReachableIgnoringNodes(const std::set<WorkerId>& startSet,
+                                        WorkerId targetId,
+                                        const std::unordered_set<WorkerId>& ignoreThese);
   private:
     explicit Topology();
 
