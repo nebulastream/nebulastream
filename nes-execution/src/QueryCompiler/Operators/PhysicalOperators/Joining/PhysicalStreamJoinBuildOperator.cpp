@@ -15,10 +15,10 @@
 #include <memory>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
@@ -31,7 +31,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::shared_ptr<Schema>& inputSchema,
     const std::shared_ptr<Schema>& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-    const QueryCompilation::StreamJoinStrategy joinStrategy,
+    const Configurations::StreamJoinStrategy joinStrategy,
     TimestampField timeStampField,
     const JoinBuildSideType buildSide,
     const OperatorId id)
@@ -58,7 +58,7 @@ PhysicalStreamJoinBuildOperator::getJoinOperatorHandler() const
     return streamJoinOperatorHandler;
 }
 
-StreamJoinStrategy PhysicalStreamJoinBuildOperator::getJoinStrategy() const
+Configurations::StreamJoinStrategy PhysicalStreamJoinBuildOperator::getJoinStrategy() const
 {
     return joinStrategy;
 }
