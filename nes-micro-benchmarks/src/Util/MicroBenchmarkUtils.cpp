@@ -13,21 +13,21 @@
 */
 
 #include <random>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Util/MicroBenchmarkUtils.hpp>
+#include <Util/SleepOperator.hpp>
+#include <ExecutablePipelineProviderRegistry.hpp>
 #include "../../../nes-client/include/API/Functions/Functions.hpp"
 #include "../../../nes-common/include/Sequencing/SequenceData.hpp"
-#include "../../../nes-execution/include/Execution/Operators/Scan.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Emit.hpp"
 #include "../../../nes-execution/include/Execution/Operators/EmitOperatorHandler.hpp"
+#include "../../../nes-execution/include/Execution/Operators/Scan.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Selection.hpp"
 #include "../../../nes-execution/include/Execution/Pipelines/PhysicalOperatorPipeline.hpp"
 #include "../../../nes-execution/include/QueryCompiler/Operators/NautilusPipelineOperator.hpp"
 #include "../../../nes-execution/include/QueryCompiler/Phases/Translations/FunctionProvider.hpp"
-#include <ExecutablePipelineProviderRegistry.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include "../../../nes-functions/include/Functions/LogicalFunctions/NodeFunctionLess.hpp"
 #include "../../../nes-memory/include/Util/TestTupleBuffer.hpp"
-#include <Util/MicroBenchmarkUtils.hpp>
-#include <Util/SleepOperator.hpp>
 
 namespace NES
 {
@@ -63,25 +63,19 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
 
     /// Creating here the executable pipeline for all tasks
     auto pipelineStage = this->createFilterPipelineExecutableStage();
-    ((void) sleepDurationPerTuple);
+    ((void)sleepDurationPerTuple);
     // auto pipelineStage = this->createSleepPipelineExecutableStage(sleepDurationPerTuple);
     pipelineStage->start(pipelineExecutionContext);
     auto runningQueryPlanNode = Runtime::RunningQueryPlanNode::create(
-        queryId,
-        pipelineId,
-        emitter,
-        {},
-        std::move(pipelineStage),
-        [](auto)
-        {
-        },
-        Runtime::CallbackRef(),
-        Runtime::CallbackRef());
+        queryId, pipelineId, emitter, {}, std::move(pipelineStage), [](auto) {}, Runtime::CallbackRef(), Runtime::CallbackRef());
 
     struct InfoForThread
     {
-        InfoForThread() : sequenceNumber(SequenceNumber::INVALID), startTimestamp(0), numberOfTuples(0) {}
-        InfoForThread(SequenceNumber sequenceNumber, const uint64_t startTimestamp, const uint64_t numberOfTuples) : sequenceNumber(std::move(sequenceNumber)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples) {}
+        InfoForThread() : sequenceNumber(SequenceNumber::INVALID), startTimestamp(0), numberOfTuples(0) { }
+        InfoForThread(SequenceNumber sequenceNumber, const uint64_t startTimestamp, const uint64_t numberOfTuples)
+            : sequenceNumber(std::move(sequenceNumber)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples)
+        {
+        }
         SequenceNumber sequenceNumber;
         uint64_t startTimestamp;
         uint64_t numberOfTuples;
@@ -94,10 +88,7 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     uint64_t ts = 0;
     for (uint64_t i = 0; i < numberOfTasks; i++)
     {
-        InfoForThread infoForThread{
-            SequenceNumber(seqNumber),
-            ts,
-            numberOfTuplesPerTask};
+        InfoForThread infoForThread{SequenceNumber(seqNumber), ts, numberOfTuplesPerTask};
         infoForThreads.write(std::move(infoForThread));
         seqNumber += 1;
         ts += numberOfTuplesPerTask;
@@ -116,9 +107,8 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
             tupleBuffer.setLastChunk(true);
             tupleBuffer.setSequenceNumber(infoForThread.sequenceNumber);
 
-            Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(
-                tupleBuffer,
-                schemaInput);
+            Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer
+                = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schemaInput);
             PRECONDITION(
                 testTupleBuffer.getCapacity() >= infoForThread.numberOfTuples,
                 "The tuple buffer does not have enough capacity for the task.");
@@ -129,17 +119,7 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
                 testTupleBuffer.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, uint64_t>(id, value, infoForThread.startTimestamp + j));
                 testTupleBuffer.setNumberOfTuples(j + 1);
             }
-            Runtime::WorkTask task(
-                queryId,
-                pipelineId,
-                runningQueryPlanNode,
-                tupleBuffer,
-                []()
-                {
-                },
-                [](auto)
-                {
-                });
+            Runtime::WorkTask task(queryId, pipelineId, runningQueryPlanNode, tupleBuffer, []() {}, [](auto) {});
             taskQueue.write(std::move(task));
         }
     };
@@ -162,9 +142,11 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     const auto endTime = std::chrono::high_resolution_clock::now();
     const auto duration = endTime - startTime;
 
-    std::cout << "Created " << numberOfTasks << " tuple buffers with no. tuples " << numberOfTuplesPerTask << " totaling " << (numberOfTasks * numberOfTuplesPerTask) << " tuples with a buffer size of " << bufferSize << std::endl;
+    std::cout << "Created " << numberOfTasks << " tuple buffers with no. tuples " << numberOfTuplesPerTask << " totaling "
+              << (numberOfTasks * numberOfTuplesPerTask) << " tuples with a buffer size of " << bufferSize << std::endl;
     std::cout << "Taskqueue has " << taskQueue.size() << " elements" << std::endl;
-    std::cout << "Took a total of " << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " s" << " with " << numberOfWorkerThreads << " threads" << std::endl;
+    std::cout << "Took a total of " << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " s" << " with "
+              << numberOfWorkerThreads << " threads" << std::endl;
 
     return runningQueryPlanNode;
 }
@@ -196,10 +178,8 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
     scanOperator->setChild(filterOperator);
     filterOperator->setChild(emitOperator);
     constexpr OperatorId operatorId(1);
-    const auto nautilusPipelineWrapper = std::make_shared<QueryCompilation::NautilusPipelineOperator>(
-        operatorId,
-        filterPipeline,
-        operatorHandlers);
+    const auto nautilusPipelineWrapper
+        = std::make_shared<QueryCompilation::NautilusPipelineOperator>(operatorId, filterPipeline, operatorHandlers);
 
     /// Now creating an executable pipeline stage
     auto providerArguments = Runtime::Execution::ExecutablePipelineProviderRegistryArguments{};
@@ -210,7 +190,8 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
     return pipelineStage;
 }
 
-std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils::createSleepPipelineExecutableStage(std::chrono::nanoseconds sleepDurationPerTuple) const
+std::unique_ptr<Runtime::Execution::ExecutablePipelineStage>
+MicroBenchmarkUtils::createSleepPipelineExecutableStage(std::chrono::nanoseconds sleepDurationPerTuple) const
 {
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
 
@@ -233,10 +214,8 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
     scanOperator->setChild(sleepOperator);
     sleepOperator->setChild(emitOperator);
     constexpr OperatorId operatorId(1);
-    const auto nautilusPipelineWrapper = std::make_shared<QueryCompilation::NautilusPipelineOperator>(
-        operatorId,
-        filterPipeline,
-        operatorHandlers);
+    const auto nautilusPipelineWrapper
+        = std::make_shared<QueryCompilation::NautilusPipelineOperator>(operatorId, filterPipeline, operatorHandlers);
 
     /// Now creating an executable pipeline stage
     auto providerArguments = Runtime::Execution::ExecutablePipelineProviderRegistryArguments{};
@@ -248,11 +227,7 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
 }
 
 void BenchmarkWorkEmitter::emitWork(
-    QueryId,
-    const std::shared_ptr<Runtime::RunningQueryPlanNode>&,
-    Memory::TupleBuffer,
-    onComplete,
-    onFailure)
+    QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure)
 {
 }
 void BenchmarkWorkEmitter::emitPipelineStart(QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure)

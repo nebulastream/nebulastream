@@ -17,17 +17,15 @@
 
 namespace NES::Runtime::Execution::Operators
 {
-SleepOperator::SleepOperator(std::chrono::nanoseconds sleep_duration)
-    : sleepDuration(std::move(sleep_duration))
+SleepOperator::SleepOperator(std::chrono::nanoseconds sleep_duration) : sleepDuration(std::move(sleep_duration))
 {
 }
 
 void SleepOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    nautilus::invoke(+[](const uint64_t sleepDuration)
-    {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(sleepDuration));
-    }, nautilus::val<uint64_t>(sleepDuration.count()));
+    nautilus::invoke(
+        +[](const uint64_t sleepDuration) { std::this_thread::sleep_for(std::chrono::nanoseconds(sleepDuration)); },
+        nautilus::val<uint64_t>(sleepDuration.count()));
 
     child->execute(executionCtx, record);
 }

@@ -51,9 +51,9 @@ static void BM_SleepPipeline(benchmark::State& state)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("ts", DataTypeFactory::createUInt64());
+                                 ->addField("id", DataTypeFactory::createUInt64())
+                                 ->addField("value", DataTypeFactory::createUInt64())
+                                 ->addField("ts", DataTypeFactory::createUInt64());
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating some necessary variables for the benchmarking loop
@@ -81,14 +81,8 @@ static void BM_SleepPipeline(benchmark::State& state)
         });
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
-    const auto runningQueryPlanNode = utils.createTasks(
-        taskQueue,
-        numberOfTasks,
-        numberOfTuplesPerTask,
-        emitter,
-        *bufferProvider,
-        pec,
-        sleepDurationPerTuple);
+    const auto runningQueryPlanNode
+        = utils.createTasks(taskQueue, numberOfTasks, numberOfTuplesPerTask, emitter, *bufferProvider, pec, sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
@@ -104,9 +98,7 @@ static void BM_SleepPipeline(benchmark::State& state)
                     WorkerThreadId(state.thread_index()),
                     pipeline->id,
                     bufferProvider,
-                    [&](const Memory::TupleBuffer&, auto)
-                    {
-                    });
+                    [&](const Memory::TupleBuffer&, auto) {});
                 pipeline->stage->execute(task.buf, pec);
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
             }
@@ -147,8 +139,7 @@ static void BM_SleepPipeline(benchmark::State& state)
 
 /// Registering all benchmark functions
 BENCHMARK(NES::BM_SleepPipeline)
-    ->ArgsProduct(
-    {
+    ->ArgsProduct({
         {100 * 1000 * 1000}, /// Number of tuples that should be processed
         {1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds

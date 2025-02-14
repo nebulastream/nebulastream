@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 
 
 namespace NES::Runtime::Execution::Operators
@@ -38,7 +38,7 @@ public:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions);
+        const QueryCompilation::Configurations::SliceCacheOptions& sliceCacheOptions);
 
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -46,7 +46,7 @@ public:
 
 private:
     /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch
-    QueryCompilation::QueryCompilerOptions::SliceCacheOptions sliceCacheOptions;
+    QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions;
 };
 
 }

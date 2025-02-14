@@ -78,18 +78,18 @@ foreach (workerThreads IN LISTS workerThreads)
         foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
 
             if (CODE_COVERAGE)
-                target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
-                target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Aggregation --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
+                target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
+                target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
             endif (CODE_COVERAGE)
 
             add_test(
                     NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_interpreter
-                    COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_interpreter_join
+                    COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_interpreter_join
                     --
                     --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize})
             add_test(
                     NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_compiler
-                    COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_compiler_join
+                    COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_compiler_join
                     --
                     --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize})
 

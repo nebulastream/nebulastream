@@ -60,19 +60,19 @@ void handleEvent(PrintingStatisticListener::CombinedEventType event, std::vector
                 files[filesPos].flush();
             },
             [&](TaskEmit emitEvent)
-                {
-                    const auto workerId = emitEvent.threadId;
-                    const auto filesPos = workerId % files.size();
-                    files[filesPos] << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
-                        emitEvent.timestamp,
-                        emitEvent.taskId,
-                        emitEvent.fromPipeline,
-                        emitEvent.toPipeline,
-                        emitEvent.queryId,
-                        emitEvent.numberOfTuples);
-                },
-                [&](TaskExecutionComplete taskStopEvent)
+            {
+                const auto workerId = emitEvent.threadId;
+                const auto filesPos = workerId % files.size();
+                files[filesPos] << fmt::format(
+                    "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
+                    emitEvent.timestamp,
+                    emitEvent.taskId,
+                    emitEvent.fromPipeline,
+                    emitEvent.toPipeline,
+                    emitEvent.queryId,
+                    emitEvent.numberOfTuples);
+            },
+            [&](TaskExecutionComplete taskStopEvent)
             {
                 const auto workerId = taskStopEvent.threadId;
                 const auto filesPos = workerId % files.size();

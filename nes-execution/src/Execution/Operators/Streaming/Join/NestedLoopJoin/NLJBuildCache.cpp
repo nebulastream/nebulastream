@@ -17,7 +17,7 @@
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuildCache.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <nautilus/std/cstdlib.h>
 #include <nautilus/val_enum.hpp>
 
@@ -28,7 +28,7 @@ NLJBuildCache::NLJBuildCache(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-    const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions)
+    const QueryCompilation::Configurations::SliceCacheOptions& sliceCacheOptions)
     : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider), sliceCacheOptions(sliceCacheOptions)
 {
 }
@@ -51,12 +51,12 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     nautilus::val<uint64_t> numberOfEntries = sliceCacheOptions.numberOfEntries;
     switch (sliceCacheOptions.sliceCacheType)
     {
-        case QueryCompilation::SliceCacheType::NONE:
+        case QueryCompilation::Configurations::SliceCacheType::NONE:
             return;
-        case QueryCompilation::SliceCacheType::FIFO:
+        case QueryCompilation::Configurations::SliceCacheType::FIFO:
             sizeOfEntry = sizeof(SliceCacheEntryFIFO);
             break;
-        case QueryCompilation::SliceCacheType::LRU:
+        case QueryCompilation::Configurations::SliceCacheType::LRU:
             sizeOfEntry = sizeof(SliceCacheEntryLRU);
             break;
     }
@@ -94,15 +94,15 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
         startOfSliceEntries);
     switch (sliceCacheOptions.sliceCacheType)
     {
-        case QueryCompilation::SliceCacheType::NONE:
+        case QueryCompilation::Configurations::SliceCacheType::NONE:
             break;
-        case QueryCompilation::SliceCacheType::FIFO:
+        case QueryCompilation::Configurations::SliceCacheType::FIFO:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
                     sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
             break;
-        case QueryCompilation::SliceCacheType::LRU:
+        case QueryCompilation::Configurations::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(

@@ -20,7 +20,7 @@
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -33,7 +33,7 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
         WindowAggregationOperator windowAggregationOperator,
-        const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions);
+        QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions);
 
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -43,7 +43,7 @@ private:
     const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;
 
     /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch
-    QueryCompilation::QueryCompilerOptions::SliceCacheOptions sliceCacheOptions;
+    QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions;
 };
 
 }

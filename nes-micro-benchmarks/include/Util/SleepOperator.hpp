@@ -16,9 +16,11 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class SleepOperator final : public ExecutableOperator {
+class SleepOperator final : public ExecutableOperator
+{
 public:
     explicit SleepOperator(std::chrono::nanoseconds sleep_duration);
     void execute(ExecutionContext& executionCtx, Record& record) const override;

@@ -28,7 +28,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -40,11 +40,11 @@ AggregationBuildCache::AggregationBuildCache(
     std::unique_ptr<TimeFunction> timeFunction,
     std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
     WindowAggregationOperator windowAggregationOperator,
-    const QueryCompilation::QueryCompilerOptions::SliceCacheOptions& sliceCacheOptions)
+    QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions)
     : WindowAggregationOperator(std::move(windowAggregationOperator))
     , WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
-    , sliceCacheOptions(sliceCacheOptions)
+    , sliceCacheOptions(std::move(sliceCacheOptions))
 
 {
 }
@@ -66,12 +66,12 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
     nautilus::val<uint64_t> numberOfEntries = sliceCacheOptions.numberOfEntries;
     switch (sliceCacheOptions.sliceCacheType)
     {
-        case QueryCompilation::SliceCacheType::NONE:
+        case QueryCompilation::Configurations::SliceCacheType::NONE:
             return;
-        case QueryCompilation::SliceCacheType::FIFO:
+        case QueryCompilation::Configurations::SliceCacheType::FIFO:
             sizeOfEntry = sizeof(SliceCacheEntryFIFO);
             break;
-        case QueryCompilation::SliceCacheType::LRU:
+        case QueryCompilation::Configurations::SliceCacheType::LRU:
             sizeOfEntry = sizeof(SliceCacheEntryLRU);
             break;
     }
@@ -107,16 +107,16 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
 
     switch (sliceCacheOptions.sliceCacheType)
     {
-        case QueryCompilation::SliceCacheType::NONE:
+        case QueryCompilation::Configurations::SliceCacheType::NONE:
             break;
-        case QueryCompilation::SliceCacheType::FIFO:
+        case QueryCompilation::Configurations::SliceCacheType::FIFO:
 
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
                     sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
             break;
-        case QueryCompilation::SliceCacheType::LRU:
+        case QueryCompilation::Configurations::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
