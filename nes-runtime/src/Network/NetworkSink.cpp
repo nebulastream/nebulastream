@@ -415,12 +415,13 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
                                         reconfigurationMarker = reconfigurationMarker,
                                         planToRegisterAndStart = planToRegisterAndStart,
                                         decomposedQueryId = decomposedQueryId,
-                                        decomposedQueryVersion = decomposedQueryVersion]() mutable {
+                                        decomposedQueryVersion = decomposedQueryVersion,
+                    replay = getReplayData()]() mutable {
                         // register new plan
                         NES_DEBUG("Registering new decomposed query plan with id {}.{}",
                                   decomposedQueryId,
                                   decomposedQueryVersion);
-                        auto registered = nodeEngine->registerExecutableQueryPlan(planToRegisterAndStart);
+                        auto registered = nodeEngine->registerExecutableQueryPlan(planToRegisterAndStart, replay);
                         if (registered) {
                             // start new plan
                             NES_DEBUG("Starting new decomposed query plan with id {}.{}",

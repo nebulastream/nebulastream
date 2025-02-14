@@ -90,7 +90,7 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     decomposedQueryPlan = typeInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
-    NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
+    NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, false), "query plan could not be started.");
     NES_ASSERT(nodeEngine->startDecomposedQueryPlan(decomposedQueryPlan->getSharedQueryId(),
                                                     decomposedQueryPlan->getDecomposedQueryId()),
                "query plan could not be started.");

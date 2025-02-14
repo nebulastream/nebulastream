@@ -32,7 +32,7 @@ namespace NES {
 
 WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
 
-bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
     NES_DEBUG("WorkerRPCClient::registerDecomposedQuery address={} sharedQueryId={} decomposedQueryId = {} ",
@@ -46,6 +46,7 @@ bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const 
     // serialize query plan.
     auto serializedQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
+    request.set_replaydata(replayData);
 
     NES_TRACE("WorkerRPCClient:registerDecomposedQuery -> {}", request.DebugString());
     RegisterDecomposedQueryReply reply;

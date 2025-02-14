@@ -904,7 +904,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan, false));
     ASSERT_TRUE(
         this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),
@@ -956,7 +956,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan, false));
     ASSERT_TRUE(
         this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),

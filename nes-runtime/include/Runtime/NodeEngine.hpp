@@ -130,7 +130,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param executableQueryPlan: executable query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
+    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan, bool replayData);
 
     /**
      * @brief Stops and undeploy a decomposed query plan
@@ -146,7 +146,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param decomposedQueryPlan: the decomposed query plan to be registered
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData);
 
     /**
      * @brief checks and returns decomposed query plan, delayed to register

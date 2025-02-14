@@ -437,7 +437,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
         queryPlan3->getSinkOperators().front()->inferSchema();
         //register and start query on worker 3
-        auto success_register_wrk3 = wrk3->getNodeEngine()->registerDecomposableQueryPlan(queryPlan3);
+        auto success_register_wrk3 = wrk3->getNodeEngine()->registerDecomposableQueryPlan(queryPlan3, false);
         ASSERT_TRUE(success_register_wrk3);
         auto success_start_wrk3 =
             wrk3->getNodeEngine()->startDecomposedQueryPlan(sharedQueryId, queryPlan3->getDecomposedQueryId());
@@ -996,7 +996,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
             newPlanCrd->getSinkOperators().front()->inferSchema();
 
             //start new plan at crd
-            auto success_register_crd = crd->getNodeEngine()->registerDecomposableQueryPlan(newPlanCrd);
+            auto success_register_crd = crd->getNodeEngine()->registerDecomposableQueryPlan(newPlanCrd, false);
             ASSERT_TRUE(success_register_crd);
             auto success_start_crd =
                 crd->getNodeEngine()->startDecomposedQueryPlan(sharedQueryId, newPlanCrd->getDecomposedQueryId());
@@ -1041,7 +1041,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSourceReuse) {
             queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
             queryPlan3->getSinkOperators().front()->inferSchema();
             //register and start query on worker 3
-            auto success_register_wrk3 = wrk3->getNodeEngine()->registerDecomposableQueryPlan(queryPlan3);
+            auto success_register_wrk3 = wrk3->getNodeEngine()->registerDecomposableQueryPlan(queryPlan3, false);
             ASSERT_TRUE(success_register_wrk3);
             auto success_start_wrk3 =
                 wrk3->getNodeEngine()->startDecomposedQueryPlan(sharedQueryId, queryPlan3->getDecomposedQueryId());

@@ -326,6 +326,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     // Key to identify the source when loading persisted properties
     const std::string persistentSourceKey;
 
+    void setReplayData();
+
+    bool getReplayData();
+
   protected:
     void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
 
@@ -372,6 +376,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
   private:
     mutable std::recursive_mutex startStopMutex;
     uint64_t maxSequenceNumber = 0;
+    bool replayData = false;
 
     mutable std::recursive_mutex successorModifyMutex;
     /**

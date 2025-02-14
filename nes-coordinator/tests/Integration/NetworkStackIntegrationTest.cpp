@@ -355,7 +355,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                                        {},
                                                                        recvEngine->getQueryManager(),
                                                                        recvEngine->getBufferManager());
-            recvEngine->getQueryManager()->registerExecutableQueryPlan(qep);
+            recvEngine->getQueryManager()->registerExecutableQueryPlan(qep, false);
             ASSERT_EQ(recvEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
@@ -628,7 +628,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         //        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
 
         auto func = [](auto engine, auto qep) {
-            return engine->registerExecutableQueryPlan(qep);
+            return engine->registerExecutableQueryPlan(qep, false);
         };
 
         auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);
@@ -994,7 +994,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto builderGeneratorQEP = result2->getExecutableQueryPlan();
 
     auto func = [](auto engine, auto qep) {
-        return engine->registerExecutableQueryPlan(qep);
+        return engine->registerExecutableQueryPlan(qep, false);
     };
 
     auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);

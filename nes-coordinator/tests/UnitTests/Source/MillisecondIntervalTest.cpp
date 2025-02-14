@@ -173,7 +173,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      {},
                                                      this->nodeEngine->getQueryManager(),
                                                      this->nodeEngine->getBufferManager());
-    EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
+    EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan, false));
     EXPECT_TRUE(
         this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryId()));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(queryId)), ExecutableQueryPlanStatus::Running);

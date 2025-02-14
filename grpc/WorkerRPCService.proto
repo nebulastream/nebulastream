@@ -72,6 +72,7 @@ message UndeployDecomposedQueryReply {
 
 message RegisterDecomposedQueryRequest {
     NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+    bool replayData = 2;
 }
 
 message RegisterDecomposedQueryReply {

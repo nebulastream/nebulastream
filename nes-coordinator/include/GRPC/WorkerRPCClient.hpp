@@ -91,7 +91,7 @@ class WorkerRPCClient {
      * @param decomposedQueryPlan plan to register
      * @return true if succeeded, else false
      */
-    bool registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    bool registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData);
 
     /**
      * @brief register a query asynchronously

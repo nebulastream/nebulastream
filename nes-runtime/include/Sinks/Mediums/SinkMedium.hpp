@@ -166,6 +166,10 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     bool isForMigration() const;
 
+    void setReplayData();
+
+    bool getReplayData();
+
   protected:
     SinkFormatPtr sinkFormat;
     bool schemaWritten;
@@ -180,6 +184,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
     bool migration{false};
+    bool replayData = false;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

@@ -31,10 +31,19 @@
 #include <utility>
 
 namespace NES::Runtime {
-bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
+bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan, bool replayData) {
     const auto& sharedQueryId = executableQueryPlan->getSharedQueryId();
     const auto& decomposedQueryId = executableQueryPlan->getDecomposedQueryId();
     const auto& decomposedQueryVersion = executableQueryPlan->getDecomposedQueryVersion();
+
+    if (replayData) {
+        for (auto source : executableQueryPlan->getSources()) {
+            source->setReplayData();
+        }
+        for (auto sink : executableQueryPlan->getSinks()) {
+            sink->setReplayData();
+        }
+    }
 
     auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion);
 
@@ -174,6 +183,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         }
     }
 
+    //todo: before starting any sources, check that incremental property is set
     // 3b. start net sources
     for (const auto& source : netSources) {
         std::stringstream s;
@@ -207,8 +217,8 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
     return true;
 }
 
-bool MultiQueueQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep) {
-    auto ret = AbstractQueryManager::registerExecutableQueryPlan(qep);
+bool MultiQueueQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, bool replay) {
+    auto ret = AbstractQueryManager::registerExecutableQueryPlan(qep, replay);
     std::scoped_lock lock(queryMutex);
     NES_ASSERT2_FMT(queryToStatisticsMap.size() <= numberOfQueues,
                     "AbstractQueryManager::registerDecomposedQuery: not enough queues are free for numberOfQueues="

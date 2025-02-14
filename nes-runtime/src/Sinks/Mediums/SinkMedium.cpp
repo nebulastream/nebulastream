@@ -123,4 +123,12 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
 void SinkMedium::setMigrationFlag() { migration = true; }
 
 bool SinkMedium::isForMigration() const { return migration; }
+
+void SinkMedium::setReplayData() {
+    NES_ERROR("setting source to replay data")
+    replayData = true;
+}
+
+bool SinkMedium::getReplayData() { return replayData; }
+
 }// namespace NES

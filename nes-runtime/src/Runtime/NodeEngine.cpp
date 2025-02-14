@@ -99,7 +99,7 @@ NodeEngine::~NodeEngine() {
 bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("deployExecutableQueryPlan query using qep with sharedQueryId: {}", executableQueryPlan->getSharedQueryId());
-    bool successRegister = registerExecutableQueryPlan(executableQueryPlan);
+    bool successRegister = registerExecutableQueryPlan(executableQueryPlan, false);
     if (!successRegister) {
         NES_ERROR("Runtime::deployExecutableQueryPlan: failed to register query");
         return false;
@@ -118,7 +118,7 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
     return true;
 }
 
-bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData) {
     NES_INFO("Creating ExecutableQueryPlan for shared query plan {}, decomposed query plan {}, version {} ",
              decomposedQueryPlan->getSharedQueryId(),
              decomposedQueryPlan->getDecomposedQueryId(),
@@ -160,7 +160,7 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
         } else {
             executablePlan->setSourcesToReuse(sourcesToReuse);
         }
-        return registerExecutableQueryPlan(executablePlan);
+        return registerExecutableQueryPlan(executablePlan, replayData);
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
         return false;
@@ -182,7 +182,7 @@ Execution::ExecutableQueryPlanPtr NodeEngine::checkDecomposableQueryPlanToStart(
     return nullptr;
 }
 
-bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
+bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan, bool replayData) {
     std::unique_lock lock(engineMutex);
     SharedQueryId sharedQueryId = executableQueryPlan->getSharedQueryId();
     DecomposedQueryId decomposedQueryId = executableQueryPlan->getDecomposedQueryId();
@@ -212,7 +212,7 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
          */
         lock.unlock();
 
-        if (queryManager->registerExecutableQueryPlan(executableQueryPlan)) {
+        if (queryManager->registerExecutableQueryPlan(executableQueryPlan, replayData)) {
             // Here we have to lock again, as we are accessing deployedQEPs
             lock.lock();
             deployedExecutableQueryPlans[executablePlanId] = executableQueryPlan;

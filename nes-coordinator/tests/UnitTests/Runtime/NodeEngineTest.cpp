@@ -414,7 +414,7 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
                       .build();
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(qep));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(qep, false));
     const auto& decomposedQueryId = qep->getDecomposedQueryId();
     ASSERT_TRUE(engine->startDecomposedQueryPlan(testQueryId, decomposedQueryId));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
@@ -514,8 +514,8 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                       engine->getQueryManager(),
                                                       engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan, false));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2, false));
 
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryId()));
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryId()));
@@ -630,8 +630,8 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                       engine->getQueryManager(),
                                                       engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan, false));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2, false));
 
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryId()));
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryId()));
@@ -732,8 +732,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                       engine->getQueryManager(),
                                                       engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan, false));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2, false));
 
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryId()));
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryId()));
@@ -853,8 +853,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     // auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source1->getSchema(), sch2);
     // builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan, false));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2, false));
 
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryId()));
     ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryId()));

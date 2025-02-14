@@ -125,7 +125,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     * respective map
     * @param executableQueryPlan to be deployed
     */
-    virtual bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
+    virtual bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan, bool replayData);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -675,7 +675,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
 
     void destroy() override;
 
-    bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep) override;
+    bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, bool replayData) override;
 
     /**
      * @brief process task from task queue

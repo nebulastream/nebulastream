@@ -657,4 +657,11 @@ void DataSource::lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminati
 
     queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
 }
+
+void DataSource::setReplayData() {
+    NES_ERROR("setting source to replay data")
+    replayData = true;
+}
+
+bool DataSource::getReplayData() { return replayData; }
 }// namespace NES

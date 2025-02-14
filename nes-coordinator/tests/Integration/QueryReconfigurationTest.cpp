@@ -416,7 +416,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithDifferentId) {
                                                             decomposedQueryPlanToStart->getVersion(),
                                                             QueryState::MARKED_FOR_DEPLOYMENT,
                                                             wrk2->getWorkerId());
-    auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
+    auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart, false);
     ASSERT_TRUE(res);
 
     // pause plan at upstream worker
@@ -526,7 +526,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanWithSameId) {
         decomposedQueryPlanToStart->getVersion(),
         QueryState::MARKED_FOR_DEPLOYMENT,//FIXME #5182: should be MARKED_FOR_UPDATE_AND_DRAIN
         wrk2->getWorkerId());
-    auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
+    auto res = wrk2->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart, false);
     ASSERT_TRUE(res);
 
     // create marker to drain old and start new plan
@@ -625,7 +625,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoin) {
         decomposedQueryPlanToStart->getVersion(),
         QueryState::MARKED_FOR_DEPLOYMENT,//FIXME #5182: should be MARKED_FOR_UPDATE_AND_DRAIN
         wrk->getWorkerId());
-    auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
+    auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart, false);
     ASSERT_TRUE(res);
 
     // create marker to drain old and start new plan
@@ -731,7 +731,7 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoinWithMigration) {
         decomposedQueryPlanToStart->getVersion(),
         QueryState::MARKED_FOR_DEPLOYMENT,//FIXME #5182: should be MARKED_FOR_UPDATE_AND_DRAIN
         wrk->getWorkerId());
-    auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
+    auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart, false);
     ASSERT_TRUE(res);
 
     // create marker to drain old and start new plan
