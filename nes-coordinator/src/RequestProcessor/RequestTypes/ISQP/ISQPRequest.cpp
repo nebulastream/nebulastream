@@ -151,7 +151,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
-        auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter, !enableIncrementalPlacement);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,

@@ -101,7 +101,7 @@ class WorkerRPCClient {
      */
     void registerDecomposedQueryAsync(const std::string& address,
                                       const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                      const CompletionQueuePtr& cq);
+                                      const CompletionQueuePtr& cq, bool replayData);
 
     /**
      * @brief unregisters a decomposed query

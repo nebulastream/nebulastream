@@ -69,7 +69,7 @@ bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const 
 
 void WorkerRPCClient::registerDecomposedQueryAsync(const std::string& address,
                                                    const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                                   const CompletionQueuePtr& cq) {
+                                                   const CompletionQueuePtr& cq, bool replayData) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryId decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
     NES_DEBUG("WorkerRPCClient::registerDecomposedQueryAsync address={} sharedQueryId={} decomposedQueryId = {}",
@@ -82,6 +82,7 @@ void WorkerRPCClient::registerDecomposedQueryAsync(const std::string& address,
     // serialize query plan.
     auto serializableQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializableQueryPlan);
+    request.set_replaydata(replayData);
 
     NES_TRACE("WorkerRPCClient:registerDecomposedQuery -> {}", request.DebugString());
     RegisterDecomposedQueryReply reply;

@@ -24,12 +24,12 @@
 
 namespace NES {
 
-DeploymentPhasePtr DeploymentPhase::create(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter) {
-    return std::make_shared<DeploymentPhase>(queryCatalog, reconnectCounter);
+DeploymentPhasePtr DeploymentPhase::create(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter, bool replay) {
+    return std::make_shared<DeploymentPhase>(queryCatalog, reconnectCounter, replay);
 }
 
-DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter)
-    : workerRPCClient(WorkerRPCClient::create()), queryCatalog(queryCatalog), reconnectCounter(reconnectCounter) {
+DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog, uint64_t reconnectCounter, bool replay)
+    : workerRPCClient(WorkerRPCClient::create()), queryCatalog(queryCatalog), reconnectCounter(reconnectCounter), replay(replay) {
     NES_INFO("DeploymentPhase()");
 }
 
@@ -89,7 +89,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 }
                 // Register the decomposed query plan
 #ifdef ASYNC_DEPLOYMENT
-                workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext);
+                workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext, replay);
 #else
                 workerRPCClient->registerDecomposedQuery(grpcAddress, decomposedQueryPlan);
 #endif
