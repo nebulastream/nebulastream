@@ -94,7 +94,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
 //    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     auto actualReconnectCount = reconnectCount;
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount < changeCount)) {
-        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Version {}, Receiver: {}, parent: {}, parentChanges: {}, "
+        NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Version {}, Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
                   decomposedQueryVersion,
                   receiver,
@@ -153,7 +153,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 //    auto actualReconnectCount = workerContext.getReconnectCount(getDownstreamLogicalOperatorId());
     auto actualReconnectCount = reconnectCount;
     if (nodeEngine->isSimulatingBuffering() && (static_cast<int64_t>(receiver.getRawValue()) != parent || actualReconnectCount < changeCount)) {
-        NES_ERROR("write buffered data: parent mismatch, do not unbuffer data. Version: {}, Receiver: {}, parent: {}, parentChanges: {}, "
+        NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Version: {}, Receiver: {}, parent: {}, parentChanges: {}, "
                   "actual reconnects: {}",
                   decomposedQueryVersion,
                   receiver,
