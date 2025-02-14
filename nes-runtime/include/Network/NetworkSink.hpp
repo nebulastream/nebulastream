@@ -223,6 +223,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     DecomposedQueryPlanVersion version;
     OperatorId downstreamOperatorId;
     uint64_t reconnectCount = 0;
+    bool wasConnected = false;
     bool checkParentDiff(int64_t receiver, int64_t parent);
 };
 }// namespace NES::Network
