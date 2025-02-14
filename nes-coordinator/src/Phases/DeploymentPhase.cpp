@@ -53,7 +53,8 @@ void DeploymentPhase::execute(const std::set<Optimizer::ReconfigurationMarkerUni
                                                       reconfigurationMarkerUnit.sharedQueryId,
                                                       reconfigurationMarkerUnit.decomposedQueryId,
                                                       reconfigurationMarker,
-                                                      queueForReconfigurationMarker);
+                                                      queueForReconfigurationMarker,
+                                                      reconnectCounter);
             asyncRequests.emplace_back(RpcAsyncRequest{queueForReconfigurationMarker, RpcClientMode::Reconfiguration});
         }
         workerRPCClient->checkAsyncResult(asyncRequests);

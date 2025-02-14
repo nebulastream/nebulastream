@@ -350,11 +350,12 @@ void WorkerRPCClient::addReconfigurationMarker(const std::string& address,
                                                const NES::SharedQueryId& sharedQueryId,
                                                const NES::DecomposedQueryId& decomposedQueryId,
                                                const NES::ReconfigurationMarkerPtr& reconfigurationMarker,
-                                               const NES::CompletionQueuePtr& cq) {
+                                               const NES::CompletionQueuePtr& cq, uint64_t count) {
 
     ReconfigurationMarkerRequest request;
     request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_count(count);
     auto serializableReconfigurationMarker = request.mutable_serializablereconfigurationmarker();
     ReconfigurationMarkerSerializationUtil::serialize(reconfigurationMarker, *serializableReconfigurationMarker);
 

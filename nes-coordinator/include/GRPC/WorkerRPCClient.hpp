@@ -141,7 +141,8 @@ class WorkerRPCClient {
     void startDecomposedQueryAsync(const std::string& address,
                                    SharedQueryId sharedQueryId,
                                    DecomposedQueryId decomposedQueryId,
-                                   const CompletionQueuePtr& cq, uint64_t count = 0);
+                                   const CompletionQueuePtr& cq,
+                                   uint64_t count = 0);
 
     /**
      * @brief method to stop a query
@@ -182,7 +183,8 @@ class WorkerRPCClient {
                                   const SharedQueryId& sharedQueryId,
                                   const DecomposedQueryId& decomposedQueryId,
                                   const ReconfigurationMarkerPtr& reconfigurationMarker,
-                                  const CompletionQueuePtr& cq);
+                                  const CompletionQueuePtr& cq,
+                                  uint64_t count);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
