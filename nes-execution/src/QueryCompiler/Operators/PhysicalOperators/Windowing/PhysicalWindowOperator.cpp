@@ -34,9 +34,9 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
@@ -125,7 +125,7 @@ PhysicalWindowOperator::getKeyAndValueFields() const
 }
 
 std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-PhysicalWindowOperator::getAggregationFunctions(const QueryCompilerOptions& options) const
+PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompilerConfiguration& options) const
 {
     std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     const auto aggregationDescriptors = getWindowDefinition()->getWindowAggregation();
@@ -176,8 +176,7 @@ PhysicalWindowOperator::getAggregationFunctions(const QueryCompilerOptions& opti
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Median: {
-                    auto layout
-                        = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(inputSchema, options.windowOperatorOptions.pageSize);
+                    auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(inputSchema, options.pageSize.getValue());
                     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                         = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MedianAggregationFunction>(

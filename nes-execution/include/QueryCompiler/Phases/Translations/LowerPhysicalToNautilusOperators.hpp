@@ -23,12 +23,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
@@ -40,7 +40,7 @@ namespace NES::QueryCompilation
 class LowerPhysicalToNautilusOperators : std::enable_shared_from_this<LowerPhysicalToNautilusOperators>
 {
 public:
-    explicit LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options);
+    explicit LowerPhysicalToNautilusOperators(Configurations::QueryCompilerConfiguration queryCompilerConfig);
     ~LowerPhysicalToNautilusOperators();
 
     /// Applies the phase on a pipelined query plan.
@@ -70,7 +70,7 @@ private:
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
 
-    std::shared_ptr<QueryCompilerOptions> options;
+    Configurations::QueryCompilerConfiguration queryCompilerConfig;
     std::unique_ptr<FunctionProvider> functionProvider;
 };
 }

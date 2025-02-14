@@ -22,7 +22,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -55,13 +55,13 @@ namespace NES::Nautilus::Interface
 
 class PagedVectorTest : public Testing::BaseUnitTest,
                         public TestUtils::NautilusTestUtils,
-                        public testing::WithParamInterface<QueryCompilation::NautilusBackend>
+                        public testing::WithParamInterface<Nautilus::Configurations::NautilusBackend>
 {
 public:
     static constexpr uint64_t PAGE_SIZE = 4096;
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    QueryCompilation::NautilusBackend backend = QueryCompilation::NautilusBackend::INTERPRETER;
+    Nautilus::Configurations::NautilusBackend backend = Nautilus::Configurations::NautilusBackend::INTERPRETER;
     uint64_t numberOfItems{};
     static constexpr auto minNumberOfItems = 50;
     static constexpr auto maxNumberOfItems = 2000;
@@ -78,7 +78,7 @@ public:
         backend = GetParam();
         /// Setting the correct options for the engine, depending on the enum value from the backend
         nautilus::engine::Options options;
-        const bool compilation = (backend == QueryCompilation::NautilusBackend::COMPILER);
+        const bool compilation = (backend == Nautilus::Configurations::NautilusBackend::COMPILER);
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
@@ -302,7 +302,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 INSTANTIATE_TEST_CASE_P(
     PagedVectorTest,
     PagedVectorTest,
-    ::testing::Values(QueryCompilation::NautilusBackend::INTERPRETER, QueryCompilation::NautilusBackend::COMPILER),
+    ::testing::Values(Nautilus::Configurations::NautilusBackend::INTERPRETER, Nautilus::Configurations::NautilusBackend::COMPILER),
     [](const testing::TestParamInfo<PagedVectorTest::ParamType>& info)
     {
         std::stringstream ss;

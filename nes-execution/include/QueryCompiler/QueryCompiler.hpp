@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <memory>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
@@ -21,18 +22,17 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
 class QueryCompiler
 {
 public:
-    QueryCompiler(const std::shared_ptr<QueryCompilerOptions>& options, const std::shared_ptr<Phases::PhaseFactory>& phaseFactory);
+    QueryCompiler(Configurations::QueryCompilerConfiguration queryCompilerConfig, const Phases::PhaseFactory& phaseFactory);
     [[nodiscard]] QueryCompilationResult compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const;
 
 protected:
-    std::shared_ptr<QueryCompilerOptions> options;
+    Configurations::QueryCompilerConfiguration queryCompilerConfig;
     std::shared_ptr<LowerLogicalToPhysicalOperators> lowerLogicalToPhysicalOperatorsPhase;
     std::shared_ptr<LowerPhysicalToNautilusOperators> lowerPhysicalToNautilusOperatorsPhase;
     std::shared_ptr<NautilusCompilationPhase> compileNautilusPlanPhase;

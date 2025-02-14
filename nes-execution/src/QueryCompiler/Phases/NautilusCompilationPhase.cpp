@@ -29,7 +29,7 @@
 namespace NES::QueryCompilation
 {
 
-NautilusCompilationPhase::NautilusCompilationPhase(const std::shared_ptr<QueryCompilerOptions>& compilerOptions)
+NautilusCompilationPhase::NautilusCompilationPhase(const Configurations::QueryCompilerConfiguration& compilerOptions)
     : compilerOptions(compilerOptions)
 {
 }
@@ -47,15 +47,15 @@ std::shared_ptr<PipelineQueryPlan> NautilusCompilationPhase::apply(std::shared_p
     return queryPlan;
 }
 
-std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOptions>& compilerOptions)
+std::string getPipelineProviderIdentifier(const Configurations::QueryCompilerConfiguration& compilerOptions)
 {
-    switch (compilerOptions->nautilusBackend)
+    switch (compilerOptions.nautilusBackend)
     {
-        case NautilusBackend::INTERPRETER: {
-            return "Interpreter";
+        case Nautilus::Configurations::NautilusBackend::INTERPRETER: {
+            return "interpreter";
         };
-        case NautilusBackend::COMPILER: {
-            return "Compilation";
+        case Nautilus::Configurations::NautilusBackend::COMPILER: {
+            return "compiler";
         };
         default: {
             INVARIANT(false, "Invalid backend");
@@ -79,8 +79,13 @@ std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_pt
 
     /// enable dump to console or file if the compiler options are set
     options.setOption(
-        "toConsole", compilerOptions->dumpMode == DumpMode::CONSOLE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
-    options.setOption("toFile", compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
+        "toConsole",
+        compilerOptions.dumpMode == Configurations::DumpMode::CONSOLE
+            || compilerOptions.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE);
+    options.setOption(
+        "toFile",
+        compilerOptions.dumpMode == Configurations::DumpMode::FILE
+            || compilerOptions.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto providerArguments = Runtime::Execution::ExecutablePipelineProviderRegistryArguments{};

@@ -23,7 +23,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -45,7 +45,7 @@ namespace NES::Nautilus::Interface
 class ChainedHashMapCustomValueTest
     : public Testing::BaseUnitTest,
       public testing::WithParamInterface<
-          std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, QueryCompilation::NautilusBackend>>,
+          std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, Nautilus::Configurations::NautilusBackend>>,
       public TestUtils::ChainedHashMapCustomValueTestUtils
 {
 public:
@@ -53,7 +53,7 @@ public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {100, 2000};
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {1, 2048};
     static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {512, 10240};
-    QueryCompilation::NautilusBackend backend;
+    Nautilus::Configurations::NautilusBackend backend;
 
     static void SetUpTestSuite()
     {
@@ -235,7 +235,7 @@ INSTANTIATE_TEST_CASE_P(
               BasicType::UINT16,
               BasicType::UINT8,
               BasicType::FLOAT64}}),
-        ::testing::Values(QueryCompilation::NautilusBackend::COMPILER, QueryCompilation::NautilusBackend::INTERPRETER)),
+        ::testing::Values(Nautilus::Configurations::NautilusBackend::COMPILER, Nautilus::Configurations::NautilusBackend::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapCustomValueTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

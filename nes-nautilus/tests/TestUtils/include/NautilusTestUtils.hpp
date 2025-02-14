@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -65,7 +65,7 @@ struct RecordWithFields
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view functionName, const QueryCompilation::NautilusBackend backend)
+    NameAndNautilusBackend(std::string_view functionName, const Configurations::NautilusBackend backend)
         : functionName(std::move(functionName)), backend(backend)
     {
     }
@@ -89,7 +89,7 @@ struct NameAndNautilusBackend
     }
 
     std::string functionName;
-    QueryCompilation::NautilusBackend backend;
+    Configurations::NautilusBackend backend;
 };
 
 /// Struct that stores a min and max value.
@@ -153,7 +153,7 @@ public:
 
     void compileFillBufferFunction(
         std::string_view functionName,
-        QueryCompilation::NautilusBackend backend,
+        Configurations::NautilusBackend backend,
         nautilus::engine::Options& options,
         const std::shared_ptr<Schema>& schema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer);

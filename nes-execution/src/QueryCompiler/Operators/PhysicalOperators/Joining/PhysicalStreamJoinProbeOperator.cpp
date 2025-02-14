@@ -17,13 +17,13 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
@@ -35,7 +35,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     const std::shared_ptr<Schema>& rightSchema,
     const std::shared_ptr<Schema>& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-    const StreamJoinStrategy joinStrategy,
+    const Configurations::StreamJoinStrategy joinStrategy,
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
     const std::vector<std::string>& joinFieldNamesLeft,
     const std::vector<std::string>& joinFieldNamesRight,
@@ -73,7 +73,7 @@ PhysicalStreamJoinProbeOperator::getJoinOperatorHandler() const
     return streamJoinOperatorHandler;
 }
 
-StreamJoinStrategy PhysicalStreamJoinProbeOperator::getJoinStrategy() const
+Configurations::StreamJoinStrategy PhysicalStreamJoinProbeOperator::getJoinStrategy() const
 {
     return joinStrategy;
 }

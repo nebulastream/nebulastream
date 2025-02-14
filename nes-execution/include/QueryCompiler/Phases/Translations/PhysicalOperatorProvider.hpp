@@ -15,7 +15,7 @@
 #include <utility>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 namespace NES::QueryCompilation
 {
 
@@ -24,13 +24,14 @@ namespace NES::QueryCompilation
 class PhysicalOperatorProvider
 {
 public:
-    explicit PhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options) : options(std::move(options)) {};
+    explicit PhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig)
+        : queryCompilerConfig(std::move(queryCompilerConfig)) {};
     virtual ~PhysicalOperatorProvider() = default;
 
     /// This method is called to replace the logical operator with corresponding physical operators.
     virtual void lower(const DecomposedQueryPlan& decomposedQueryPlan, std::shared_ptr<LogicalOperator> operatorNode) = 0;
 
 protected:
-    std::shared_ptr<QueryCompilerOptions> options;
+    Configurations::QueryCompilerConfiguration queryCompilerConfig;
 };
 }

@@ -17,7 +17,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -35,7 +35,7 @@ namespace NES::Nautilus::Interface
 {
 class ChainedHashMapTest : public Testing::BaseUnitTest,
                            public testing::WithParamInterface<
-                               std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, QueryCompilation::NautilusBackend>>,
+                               std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, Nautilus::Configurations::NautilusBackend>>,
                            public TestUtils::ChainedHashMapTestUtils
 {
 public:
@@ -150,7 +150,7 @@ INSTANTIATE_TEST_CASE_P(
               BasicType::UINT16,
               BasicType::UINT8,
               BasicType::FLOAT64}}),
-        ::testing::Values(QueryCompilation::NautilusBackend::COMPILER, QueryCompilation::NautilusBackend::INTERPRETER)),
+        ::testing::Values(Nautilus::Configurations::NautilusBackend::COMPILER, Nautilus::Configurations::NautilusBackend::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

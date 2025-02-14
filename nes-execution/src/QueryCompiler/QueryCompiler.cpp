@@ -15,6 +15,8 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
@@ -22,7 +24,6 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -31,14 +32,13 @@
 namespace NES::QueryCompilation
 {
 
-QueryCompiler::QueryCompiler(
-    const std::shared_ptr<QueryCompilerOptions>& options, const std::shared_ptr<Phases::PhaseFactory>& phaseFactory)
-    : options(options)
-    , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
-    , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
-    , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
-    , pipeliningPhase(phaseFactory->createPipeliningPhase())
-    , addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options))
+QueryCompiler::QueryCompiler(Configurations::QueryCompilerConfiguration queryCompilerConfig, const Phases::PhaseFactory& phaseFactory)
+    : queryCompilerConfig(std::move(queryCompilerConfig))
+    , lowerLogicalToPhysicalOperatorsPhase(phaseFactory.createLowerLogicalQueryPlanPhase(this->queryCompilerConfig))
+    , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(this->queryCompilerConfig))
+    , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(this->queryCompilerConfig))
+    , pipeliningPhase(phaseFactory.createPipeliningPhase())
+    , addScanAndEmitPhase(phaseFactory.createAddScanAndEmitPhase(queryCompilerConfig))
 {
 }
 
@@ -49,9 +49,11 @@ QueryCompilationResult QueryCompiler::compileQuery(const std::shared_ptr<QueryCo
     Timer timer("QueryCompiler");
     /// Uncomment these dump informations for debugging purposes. They can be quite intrusive.
     /// create new context for handling debug output
-    const bool dumpToFile = options->dumpMode == DumpMode::FILE || options->dumpMode == DumpMode::FILE_AND_CONSOLE;
-    const bool dumpToConsole = options->dumpMode == DumpMode::CONSOLE || options->dumpMode == DumpMode::FILE_AND_CONSOLE;
-    const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, options->dumpPath);
+    const bool dumpToFile = queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE
+        || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
+    const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
+        || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
+    const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, queryCompilerConfig.dumpPath.getValue());
 
     timer.start();
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());

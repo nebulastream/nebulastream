@@ -25,9 +25,9 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation
@@ -75,7 +75,7 @@ struct StreamJoinConfigs
         const uint64_t windowSlide,
         const TimestampField& timeStampFieldLeft,
         const TimestampField& timeStampFieldRight,
-        const StreamJoinStrategy& joinStrategy)
+        const Configurations::StreamJoinStrategy& joinStrategy)
         : joinFieldNamesLeft(joinFieldNamesLeft)
         , joinFieldNamesRight(joinFieldNamesRight)
         , windowSize(windowSize)
@@ -91,14 +91,14 @@ struct StreamJoinConfigs
     const uint64_t windowSlide;
     const TimestampField& timeStampFieldLeft;
     const TimestampField& timeStampFieldRight;
-    const StreamJoinStrategy& joinStrategy;
+    const Configurations::StreamJoinStrategy& joinStrategy;
 };
 
 /// Provides a set of default lowerings for logical operators to corresponding physical operators.
 class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider
 {
 public:
-    explicit DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options);
+    explicit DefaultPhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig);
     ~DefaultPhysicalOperatorProvider() noexcept override = default;
 
     void lower(const DecomposedQueryPlan& decomposedQueryPlan, std::shared_ptr<LogicalOperator> operatorNode) override;
