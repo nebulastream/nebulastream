@@ -15,6 +15,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuildCache.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
@@ -29,7 +30,8 @@ NLJBuildCache::NLJBuildCache(
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     const QueryCompilation::Configurations::SliceCacheOptions& sliceCacheOptions)
-    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider), sliceCacheOptions(sliceCacheOptions)
+    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
+    , sliceCacheOptions(sliceCacheOptions)
 {
 }
 
@@ -42,7 +44,9 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
         +[](NLJOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
-        { opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads()); },
+        {
+            opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
+        },
         globalOperatorHandler,
         executionCtx.pipelineContext);
 
@@ -59,14 +63,20 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
         case QueryCompilation::Configurations::SliceCacheType::LRU:
             sizeOfEntry = sizeof(SliceCacheEntryLRU);
             break;
+        case QueryCompilation::Configurations::SliceCacheType::SECOND_CHANCE:
+            sizeOfEntry = sizeof(SliceCacheEntrySecondChance);
+            break;
     }
 
     nautilus::invoke(
-        +[](NLJOperatorHandler* opHandler,
-            Memory::AbstractBufferProvider* bufferProvider,
-            const uint64_t sizeOfEntryVal,
-            const uint64_t numberOfEntriesVal)
-        { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
+        +[](
+        NLJOperatorHandler* opHandler,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const uint64_t sizeOfEntryVal,
+        const uint64_t numberOfEntriesVal)
+        {
+            opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider);
+        },
         globalOperatorHandler,
         executionCtx.bufferProvider,
         sizeOfEntry,
@@ -85,13 +95,17 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
         globalOperatorHandler,
         executionCtx.getWorkerThreadId(),
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
+    const auto hitsRef = startOfSliceEntries;
+    const auto missesRef = hitsRef + nautilus::val<uint64_t>(sizeof(uint64_t));
+    const auto sliceCacheEntries = startOfSliceEntries + nautilus::val<uint64_t>(sizeof(HitsAndMisses));
     const auto startOfDataEntry = nautilus::invoke(
         +[](const SliceCacheEntry* sliceCacheEntry)
         {
             const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
             return startOfDataStructure;
         },
-        startOfSliceEntries);
+        sliceCacheEntries);
+
     switch (sliceCacheOptions.sliceCacheType)
     {
         case QueryCompilation::Configurations::SliceCacheType::NONE:
@@ -100,13 +114,34 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntryFIFO),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
             break;
         case QueryCompilation::Configurations::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntryLRU),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
+            break;
+        case QueryCompilation::Configurations::SliceCacheType::SECOND_CHANCE:
+            executionCtx.setLocalOperatorState(
+                this,
+                std::make_unique<SliceCacheSecondChance>(
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntrySecondChance),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
             break;
     }
 }
@@ -157,5 +192,19 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.bufferProvider);
     pagedVectorRef.writeRecord(record);
+}
+
+void NLJBuildCache::terminate(ExecutionContext& executionCtx) const
+{
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    nautilus::invoke(
+        +[](const NLJOperatorHandler* opHandler)
+        {
+            opHandler->writeCacheHitAndMissesToConsole();
+        },
+        globalOperatorHandler);
+
+    StreamJoinBuild::terminate(executionCtx);
 }
 }

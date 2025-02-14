@@ -71,7 +71,7 @@ endforeach()
 ## We wish to run all join and aggregation tests with different no. worker threads
 ## Additionally, we wish to run all join and aggregation tests with all available slice caches and three different slice caches
 set(workerThreads 1 4 8)
-set(sliceCaches LRU FIFO)
+set(sliceCaches LRU FIFO SECOND_CHANCE)
 set(numberOfEntriesSliceCaches 1 10 100 1000)
 foreach (workerThreads IN LISTS workerThreads)
     foreach (sliceCache IN LISTS sliceCaches)

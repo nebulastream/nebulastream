@@ -21,16 +21,32 @@ SliceCache::SliceCache(
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
-    const nautilus::val<int8_t*>& startOfDataEntry)
+    const nautilus::val<int8_t*>& startOfDataEntry,
+    const nautilus::val<uint64_t*>& hitsRef,
+    const nautilus::val<uint64_t*>& missesRef)
     : startOfEntries(startOfEntries)
     , startOfDataEntry(startOfDataEntry)
     , numberOfEntries(numberOfEntries)
     , sizeOfEntry(sizeOfEntry)
     , sliceStart(Timestamp::INVALID_VALUE)
     , sliceEnd(Timestamp::INVALID_VALUE)
-    , numberOfHits(0)
-    , numberOfMisses(0)
+    , numberOfHits(hitsRef)
+, numberOfMisses(missesRef)
 {
+}
+
+void SliceCache::incrementNumberOfHits()
+{
+    auto currentNumberOfHits = static_cast<nautilus::val<uint64_t>>(*numberOfHits);
+    currentNumberOfHits = currentNumberOfHits + 1;
+    *numberOfHits = currentNumberOfHits;
+}
+
+void SliceCache::incrementNumberOfMisses()
+{
+    auto currentNumberOfMisses = static_cast<nautilus::val<uint64_t>>(*numberOfMisses);
+    currentNumberOfMisses = currentNumberOfMisses + 1;
+    *numberOfMisses = currentNumberOfMisses;
 }
 
 nautilus::val<Timestamp> SliceCache::getSliceStart(const nautilus::val<uint64_t>& pos)
@@ -58,16 +74,24 @@ nautilus::val<int8_t*> SliceCache::getDataStructure(const nautilus::val<uint64_t
     return dataStructure;
 }
 
+nautilus::val<bool> SliceCache::foundSlice(const nautilus::val<uint64_t>& pos, const nautilus::val<Timestamp>& timestamp)
+{
+    sliceStart = getSliceStart(pos);
+    sliceEnd = getSliceEnd(pos);
+    if (sliceStart <= timestamp && timestamp < sliceEnd)
+    {
+        return true;
+    }
+    return false;
+}
+
 nautilus::val<int8_t*> SliceCache::searchInCache(const nautilus::val<Timestamp>& timestamp)
 {
     /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
     for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; i = i + 1)
     {
-        sliceStart = getSliceStart(i);
-        sliceEnd = getSliceEnd(i);
-        if (sliceStart <= timestamp && timestamp < sliceEnd)
+        if (foundSlice(i, timestamp))
         {
-            ++numberOfHits;
             return getDataStructure(i);
         }
     }

@@ -83,7 +83,7 @@ public:
         = {"sliceCacheType",
            SliceCacheType::NONE,
            "Type of slice cache"
-           "[NONE|FIFO|LRU]. "};
+           "[NONE|FIFO|LRU|SECOND_CHANCE]. "};
     NES::Configurations::EnumOption<ProbeType> probeType
         = {"probeType",
            ProbeType::PROBING,

@@ -21,8 +21,10 @@ SliceCacheLRU::SliceCacheLRU(
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
-    const nautilus::val<int8_t*>& startOfDataEntry)
-    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry)
+    const nautilus::val<int8_t*>& startOfDataEntry,
+        const nautilus::val<uint64_t *> &hitsRef,
+        const nautilus::val<uint64_t *> &missesRef)
+    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry, hitsRef, missesRef)
 {
 }
 
@@ -54,11 +56,12 @@ SliceCacheLRU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, co
     /// Second, we check if the timestamp is already in the cache.
     if (const auto dataStructure = SliceCache::searchInCache(timestamp); dataStructure != nullptr)
     {
+        incrementNumberOfHits();
         return dataStructure;
     }
 
     /// If the timestamp is not in the cache, we have a cache miss.
-    ++numberOfMisses;
+    incrementNumberOfMisses();
 
     /// Third, we have to replace the entry with the highest age bit, as we are in the LRU cache.
     /// Additionally, we have to reset the age bit of the replaced entry.

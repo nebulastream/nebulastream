@@ -13,31 +13,31 @@
 */
 
 #pragma once
-#include <Execution/Operators/SliceCache/SliceCache.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES::Runtime::Execution {
+struct SliceCacheEntrySecondChance : SliceCacheFIFO
 {
-struct SliceCacheEntryFIFO : SliceCacheEntry
-{
-    ~SliceCacheEntryFIFO() override = default;
+    /// Stores the second chance bit for each entry in the cache.
+    bool secondChanceBit;
+    ~SliceCacheEntrySecondChance() override = default;
 };
 
-class SliceCacheFIFO : public SliceCache
-{
+class SliceCacheSecondChance final : public SliceCacheFIFO {
 public:
-    SliceCacheFIFO(
+    SliceCacheSecondChance(
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<int8_t*>& startOfDataEntry,
         const nautilus::val<uint64_t *> &hitsRef,
         const nautilus::val<uint64_t *> &missesRef);
-    ~SliceCacheFIFO() override = default;
+    ~SliceCacheSecondChance() override = default;
     nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
 
-protected:
-    /// Stores the index of the entry that should be replaced next
-    nautilus::val<uint64_t> replacementIndex;
+private:
+    nautilus::val<bool*> getSecondChanceBit(const nautilus::val<uint64_t>& pos);
 };
+
 }

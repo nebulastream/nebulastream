@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -51,6 +52,22 @@ void AggregationOperatorHandler::setHashMapParams(
     this->valueSize = valueSize;
     this->pageSize = pageSize;
     this->numberOfBuckets = numberOfBuckets;
+}
+
+void AggregationOperatorHandler::writeCacheHitAndMissesToConsole() const
+{
+    if (sliceCacheEntriesBufferForWorkerThreads.empty())
+    {
+        std::cout << "Slice cache has not been created" << std::endl;
+        return;
+    }
+    /// Writing the number of hits and misses to std::cout for each worker thread
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        const auto sliceCacheStart = getStartOfSliceCacheEntries(WorkerThreadId(i));
+        const auto* hitsAndMisses = reinterpret_cast<const HitsAndMisses*>(sliceCacheStart);
+        std::cout << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i << std::endl;
+    }
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -145,7 +162,7 @@ void AggregationOperatorHandler::triggerSlices(
     }
 }
 
-int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId)
+const int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
     const auto pos = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size();
@@ -170,7 +187,7 @@ void AggregationOperatorHandler::allocateSliceCacheEntries(
     /// As we have a left and right side, we have to allocate the slice cache entries for both sides
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        const auto neededSize = numberOfEntries * sizeOfEntry;
+        const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
         INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
 
         auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);

@@ -17,6 +17,8 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <magic_enum.hpp>
+#include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -41,6 +43,26 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
 {
 }
 
+void StreamJoinOperatorHandler::writeCacheHitAndMissesToConsole() const
+{
+    if (sliceCacheEntriesBufferForWorkerThreads.empty())
+    {
+        std::cout << "Slice cache has not been created" << std::endl;
+        return;
+    }
+
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        for (auto joinBuildSide : magic_enum::enum_values<QueryCompilation::JoinBuildSideType>())
+        {
+            const auto sliceCacheStart = getStartOfSliceCacheEntries(WorkerThreadId(i), joinBuildSide);
+            const auto* hitsAndMisses = reinterpret_cast<const HitsAndMisses*>(sliceCacheStart);
+            std::cout << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i << " and join build side " << magic_enum::enum_name(joinBuildSide) << std::endl;
+        }
+    }
+}
+
 void StreamJoinOperatorHandler::triggerSlices(
     const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
     PipelineExecutionContext* pipelineCtx)
@@ -62,8 +84,8 @@ void StreamJoinOperatorHandler::triggerSlices(
     }
 }
 
-int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
-    const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide)
+const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
+    const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
     const auto pos
@@ -71,7 +93,7 @@ int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
     INVARIANT(
         pos < sliceCacheEntriesBufferForWorkerThreads.size(),
         "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
-    return sliceCacheEntriesBufferForWorkerThreads[pos].getBuffer();
+    return sliceCacheEntriesBufferForWorkerThreads.at(pos).getBuffer();
 }
 
 
@@ -88,7 +110,7 @@ void StreamJoinOperatorHandler::allocateSliceCacheEntries(
     /// As we have a left and right side, we have to allocate the slice cache entries for both sides
     for (uint64_t i = 0; i < numberOfWorkerThreads * 2; ++i)
     {
-        const auto neededSize = numberOfEntries * sizeOfEntry;
+        const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
         INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
 
         auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);

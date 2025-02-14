@@ -72,6 +72,8 @@ public:
     allocateSliceCacheEntries(const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
         = 0;
 
+    virtual void writeCacheHitAndMissesToConsole() const = 0;
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted

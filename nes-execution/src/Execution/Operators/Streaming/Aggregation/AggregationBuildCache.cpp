@@ -19,6 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
+#include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
@@ -74,6 +75,9 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
         case QueryCompilation::Configurations::SliceCacheType::LRU:
             sizeOfEntry = sizeof(SliceCacheEntryLRU);
             break;
+        case QueryCompilation::Configurations::SliceCacheType::SECOND_CHANCE:
+            sizeOfEntry = sizeof(SliceCacheEntrySecondChance);
+            break;
     }
     nautilus::invoke(
         +[](AggregationOperatorHandler* opHandler,
@@ -97,30 +101,38 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
         { return opHandler->getStartOfSliceCacheEntries(workerThreadId); },
         globalOperatorHandler,
         executionCtx.getWorkerThreadId());
+    const auto hitsRef = startOfSliceEntries;
+    const auto missesRef = hitsRef + nautilus::val<uint64_t>(sizeof(uint64_t));
+    const auto sliceCacheEntries = startOfSliceEntries + nautilus::val<uint64_t>(sizeof(HitsAndMisses));
     const auto startOfDataEntry = nautilus::invoke(
         +[](const SliceCacheEntry* sliceCacheEntry)
         {
             const auto startOfDataStructure = &sliceCacheEntry->dataStructure;
             return startOfDataStructure;
         },
-        startOfSliceEntries);
+        sliceCacheEntries);
 
     switch (sliceCacheOptions.sliceCacheType)
     {
         case QueryCompilation::Configurations::SliceCacheType::NONE:
             break;
         case QueryCompilation::Configurations::SliceCacheType::FIFO:
-
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), startOfSliceEntries, startOfDataEntry));
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
             break;
         case QueryCompilation::Configurations::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), startOfSliceEntries, startOfDataEntry));
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
+            break;
+        case QueryCompilation::Configurations::SliceCacheType::SECOND_CHANCE:
+            executionCtx.setLocalOperatorState(
+                this,
+                std::make_unique<SliceCacheSecondChance>(
+                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntrySecondChance), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
             break;
     }
 }
@@ -201,5 +213,19 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         aggFunction->lift(state, executionCtx.bufferProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
+}
+
+void AggregationBuildCache::terminate(ExecutionContext& executionCtx) const
+{
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    nautilus::invoke(
+        +[](const AggregationOperatorHandler* opHandler)
+        {
+            opHandler->writeCacheHitAndMissesToConsole();
+        },
+        globalOperatorHandler);
+
+    WindowOperatorBuild::terminate(executionCtx);
 }
 }

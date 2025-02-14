@@ -14,4 +14,5 @@ add_source_files(nes-execution
         SliceCache.cpp
         SliceCacheFIFO.cpp
         SliceCacheLRU.cpp
+        SliceCacheSecondChance.cpp
 )

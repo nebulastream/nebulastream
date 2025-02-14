@@ -26,7 +26,8 @@ enum class SliceCacheType : uint8_t
 {
     NONE,
     FIFO,
-    LRU
+    LRU,
+    SECOND_CHANCE
 };
 
 enum class ProbeType : uint8_t

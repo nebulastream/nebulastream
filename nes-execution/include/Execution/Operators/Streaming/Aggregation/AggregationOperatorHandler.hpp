@@ -55,9 +55,10 @@ public:
 
     std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
-    int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId);
+    const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const;
     void allocateSliceCacheEntries(
         const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
+    void writeCacheHitAndMissesToConsole() const override;
 
 protected:
     void triggerSlices(

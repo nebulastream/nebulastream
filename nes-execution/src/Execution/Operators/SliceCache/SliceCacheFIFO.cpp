@@ -27,8 +27,10 @@ SliceCacheFIFO::SliceCacheFIFO(
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
-    const nautilus::val<int8_t*>& startOfDataEntry)
-    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry), replacementIndex(0)
+    const nautilus::val<int8_t*>& startOfDataEntry,
+        const nautilus::val<uint64_t *> &hitsRef,
+        const nautilus::val<uint64_t *> &missesRef)
+    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry, hitsRef, missesRef), replacementIndex(0)
 {
 }
 
@@ -38,11 +40,12 @@ SliceCacheFIFO::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, c
     /// First, we check if the timestamp is already in the cache.
     if (const auto dataStructure = SliceCache::searchInCache(timestamp); dataStructure != nullptr)
     {
+        incrementNumberOfHits();
         return dataStructure;
     }
 
     /// If the timestamp is not in the cache, we have a cache miss.
-    ++numberOfMisses;
+    incrementNumberOfMisses();
 
     /// As we are in the FIFO cache, we need to replace the oldest entry with the new one.
     const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
