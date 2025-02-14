@@ -61,7 +61,9 @@ void handleEvent(PrintingStatisticListener::CombinedEventType event, std::vector
             },
             [&](TaskEmit emitEvent)
                 {
-                    file << fmt::format(
+                    const auto workerId = emitEvent.threadId;
+                    const auto filesPos = workerId % files.size();
+                    files[filesPos] << fmt::format(
                         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
                         emitEvent.timestamp,
                         emitEvent.taskId,

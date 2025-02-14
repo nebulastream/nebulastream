@@ -149,10 +149,10 @@ static void BM_SleepPipeline(benchmark::State& state)
 BENCHMARK(NES::BM_SleepPipeline)
     ->ArgsProduct(
     {
-        {500 * 1000 * 1000}, /// Number of tuples that should be processed
-        {3000, 2000, 1000, 500, 50, 20, 10, 5, 1}, /// Number of tuples per task/buffer.
+        {100 * 1000 * 1000}, /// Number of tuples that should be processed
+        {1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
-        {10}, /// Selectivity
+        benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
         benchmark::CreateRange(1, 16, 2) /// Number of worker threads
     })

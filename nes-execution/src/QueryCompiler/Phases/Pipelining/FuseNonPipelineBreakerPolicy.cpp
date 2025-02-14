@@ -18,7 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalStreamJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
