@@ -192,6 +192,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //todo: check if we can use origin id
     NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
     auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
+    NES_ERROR("writing data for source id {}", sourceId);
 
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
@@ -209,8 +210,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
 
+
+    NES_ERROR("seq number before adding {}, after adding {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding);
     // check if top value in the queue has changed after adding new sequence number
-    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+//    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+        NES_ERROR("try to acquire ")
         auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
         if (lastWrittenMap) {
             std::vector<Runtime::TupleBuffer> bulkWriteBatch;
@@ -237,7 +241,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             // Update lastWritten to the latest sequence number
             lastWritten = currentSeqNumberAfterAdding;
         }
-    }
+//    }
 
 //todo: check if we need this
 //    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
