@@ -19,7 +19,7 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-target_link_libraries(nes-runtime PUBLIC nes-common nes-operators nes-data-types nes-memory nes-sources nes-query-engine)
+target_link_libraries(nes-runtime PUBLIC nes-common nes-operators nes-data-types nes-memory nes-sources nes-query-engine nes-execution)
 
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

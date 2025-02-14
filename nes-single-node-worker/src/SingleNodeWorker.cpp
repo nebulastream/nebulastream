@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -42,7 +41,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 {
 }
 
-/// TODO #305: This is a hotfix to get again unique queryId after our ininital worker refactoring.
+/// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 

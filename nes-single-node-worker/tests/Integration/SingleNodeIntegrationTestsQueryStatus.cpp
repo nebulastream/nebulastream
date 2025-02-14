@@ -15,6 +15,7 @@
 #include <chrono>
 #include <thread>
 #include <vector>
+#include <Nautilus/NautilusBackend.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>

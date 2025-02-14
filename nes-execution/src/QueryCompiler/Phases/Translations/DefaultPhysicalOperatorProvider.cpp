@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
@@ -55,6 +56,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
+#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>

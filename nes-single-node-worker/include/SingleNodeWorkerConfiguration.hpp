@@ -16,7 +16,6 @@
 #include <string>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/PrintingVisitor.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 
 namespace NES::Configuration
 {

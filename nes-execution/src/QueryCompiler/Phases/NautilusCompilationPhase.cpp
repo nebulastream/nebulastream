@@ -11,11 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
+#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -29,8 +33,8 @@
 namespace NES::QueryCompilation
 {
 
-NautilusCompilationPhase::NautilusCompilationPhase(const Configurations::QueryCompilerConfiguration& compilerOptions)
-    : compilerOptions(compilerOptions)
+NautilusCompilationPhase::NautilusCompilationPhase(Configurations::QueryCompilerConfiguration compilerOptions)
+    : compilerOptions(std::move(compilerOptions))
 {
 }
 

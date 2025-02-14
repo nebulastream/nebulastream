@@ -14,18 +14,17 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <vector>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/BooleanValidation.hpp>
-#include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
-#include <Util/Common.hpp>
+#include "Configurations/BaseOption.hpp"
 
 namespace NES::QueryCompilation::Configurations
 {
@@ -36,7 +35,7 @@ class QueryCompilerConfiguration final : public NES::Configurations::BaseConfigu
 {
 public:
     QueryCompilerConfiguration() = default;
-    QueryCompilerConfiguration(std::string name, std::string description) : BaseConfiguration(std::move(name), std::move(description)) {};
+    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
     /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     NES::Configurations::EnumOption<DumpMode> dumpMode
