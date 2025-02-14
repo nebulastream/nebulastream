@@ -91,7 +91,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 #ifdef ASYNC_DEPLOYMENT
                 workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext, replay);
 #else
-                workerRPCClient->registerDecomposedQuery(grpcAddress, decomposedQueryPlan);
+                workerRPCClient->registerDecomposedQuery(grpcAddress, decomposedQueryPlan, replay);
 #endif
                 // Update decomposed query plan status
                 queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
