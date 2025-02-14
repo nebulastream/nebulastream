@@ -13,7 +13,9 @@
 */
 
 #pragma once
-#include <TupleBufferImpl.hpp>
+#include <Runtime/BufferPrimitives.hpp>
+#include <Runtime/DataSegment.hpp>
+#include <type_traits>
 
 namespace NES::Memory
 {
@@ -38,6 +40,11 @@ public:
 
     [[nodiscard]] explicit FloatingBuffer(PinnedBuffer&& buffer) noexcept;
 
+    FloatingBuffer& operator=(FloatingBuffer const& other) noexcept;
+
+    FloatingBuffer& operator=(FloatingBuffer&& other) noexcept;
+
+    friend void swap(FloatingBuffer& lhs, FloatingBuffer& rhs) noexcept;
 
     [[nodiscard]] bool isSpilled() const;
     ~FloatingBuffer() noexcept;
@@ -49,5 +56,8 @@ private:
     ///If > 1, then childOrMainData - 2 is the index of the child buffer in the BCB that this floating buffer belongs to.
     detail::ChildOrMainDataKey childOrMainData;
 };
+
+static_assert(std::is_copy_constructible_v<FloatingBuffer>);
+static_assert(std::is_assignable_v<FloatingBuffer, FloatingBuffer>);
 
 }

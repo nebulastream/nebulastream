@@ -186,12 +186,11 @@ std::optional<ChildKey> PinnedBuffer::storeReturnChildIndex(PinnedBuffer&& other
 {
     PRECONDITION(controlBlock != other.controlBlock, "Cannot attach other to self");
     other.controlBlock->pinnedRelease();
-    //I haven't figured out yet how to resolve the overload ambiguity
-    if (!other.dataSegment.operator==(other.controlBlock->getData()))
+    if (auto childKey = other.childOrMainData.asChildKey())
     {
         const detail::DataSegment<detail::InMemoryLocation> childSegment = other.dataSegment;
         //other is a child buffer
-        if (other.controlBlock->unregisterChild(other.dataSegment))
+        if (other.controlBlock->unregisterChild(*childKey))
         {
             //The passed other was also part of the reference count, we effectively destroyed the old one
             other.controlBlock->dataRelease();

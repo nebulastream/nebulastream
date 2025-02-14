@@ -2,7 +2,7 @@
 ARG TAG=latest
 FROM nebulastream/nes-development-dependency:${TAG}
 
-ARG ANTLR4_VERSION=4.13.2
+ARG ANTLR4_VERSION=4.13.1
 
 RUN apt update -y \
     && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq -y

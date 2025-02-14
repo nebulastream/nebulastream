@@ -15,10 +15,14 @@
 #include <algorithm>
 #include <cstdint>
 #include <utility>
+#include <variant>
+#include <vector>
+
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FloatingBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <boost/asio/detail/socket_ops.hpp>
 
 #include <Runtime/BufferManagerImpl.hpp>
 #include <Runtime/DataSegment.hpp>
@@ -178,34 +182,35 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
     const std::shared_ptr<BufferManager> manager
         = BufferManager::create(bufferSize, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 128, 64, 3);
     {
+        std::vector<std::variant<PinnedBuffer, FloatingBuffer>> buffers;
         auto parentBuffer = manager->getBufferNoBlocking().value();
         auto* rawData = parentBuffer.getBuffer();
         std::fill_n(rawData, bufferSize / sizeof(int8_t), 1);
-        std::vector<FloatingBuffer> floatingBuffers{};
-        for (int i = 0; i < 7; ++i)
+        //Offsets of buffers in this vector should be their offset in allBuffers + 7 (because of the children of the first buffer)
+        buffers.push_back(parentBuffer);
+        for (int i = 1; i < 8; ++i)
         {
             auto childBuffer = manager->getBufferNoBlocking().value();
             rawData = childBuffer.getBuffer();
-            std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 2);
+            std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 1);
             //Attach buffer1 as child to buffer 2
             childBuffer = *parentBuffer.storeReturnAsChildBuffer(std::move(childBuffer));
-            floatingBuffers.push_back(FloatingBuffer{std::move(childBuffer)});
+            buffers.push_back(FloatingBuffer{std::move(childBuffer)});
         }
-        floatingBuffers.push_back(FloatingBuffer(std::move(parentBuffer)));
+        buffers[0] = FloatingBuffer{std::move(parentBuffer)};
 
         ASSERT_EQ(manager->allBuffers.size(), 8);
         {
-            std::vector<PinnedBuffer> pinnedBuffers{};
-            pinnedBuffers.push_back(manager->getBufferBlocking());
-            rawData = pinnedBuffers[0].getBuffer();
+            buffers.push_back(manager->getBufferBlocking());
+            rawData = std::get<PinnedBuffer>(buffers[8]).getBuffer();
             std::fill_n(rawData, bufferSize / sizeof(int8_t), 9);
 
             bool spilled = false;
             //While spilling should be initiated for the first 4, it might not have processed all completion events
             //At least one must have been spilled
-            for (int i = 0; i < 3; ++i)
+            for (int i = 1; i < 4; ++i)
             {
-                if (floatingBuffers[i].isSpilled())
+                if (std::get<FloatingBuffer>(buffers[i]).isSpilled())
                 {
                     spilled = true;
                 }
@@ -214,31 +219,32 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             //The segments getting spilled are all children, so the clock should go around once,
             //stop again at 0 and not move until all associated segments are spilled
             ASSERT_EQ(manager->clockAt, 0);
-            //last for buffers should definitively not be spilled
-            for (int i = 3; i < 8; ++i)
+            //last five buffers should definitively not be spilled
+            for (int i = 4; i < 8; ++i)
             {
-                ASSERT_FALSE(floatingBuffers[i].isSpilled());
+                ASSERT_FALSE(std::get<FloatingBuffer>(buffers[i]).isSpilled());
             }
+            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[0]).isSpilled());
 
             //Second chance spilling should also clean up unused BCBs (the ones which data segment we attached as children to the first one)
             //in its first pass
             ASSERT_EQ(manager->allBuffers.size(), 2);
 
-            for (int i = 0; i < 3; ++i)
+            for (int i = 9; i < 12; ++i)
             {
                 auto nextBuffer = manager->getBufferBlocking();
                 rawData = nextBuffer.getBuffer();
-                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 10);
-                pinnedBuffers.push_back(nextBuffer);
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 1);
+                buffers.push_back(nextBuffer);
             }
-            for (int i = 0; i < 3; ++i)
+            for (int i = 1; i < 4; ++i)
             {
-                ASSERT_TRUE(floatingBuffers[i].isSpilled());
+                ASSERT_TRUE(std::get<FloatingBuffer>(buffers[i]).isSpilled());
             }
             spilled = false;
-            for (int i = 3; i < 8; ++i)
+            for (int i = 4; i < 7; ++i)
             {
-                if (floatingBuffers[i].isSpilled())
+                if (std::get<FloatingBuffer>(buffers[i]).isSpilled())
                 {
                     spilled = true;
                 }
@@ -247,60 +253,61 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             ASSERT_EQ(manager->clockAt, 0);
             ASSERT_EQ(manager->allBuffers.size(), 5);
 
-            //Spill the rest of the child buffers
-            for (int i = 0; i < 4; ++i)
+            //Spill the rest of the child buffers + parent buffer
+            for (int i = 12; i < 16; ++i)
             {
                 auto nextBuffer = manager->getBufferBlocking();
                 rawData = nextBuffer.getBuffer();
-                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 13);
-                pinnedBuffers.push_back(nextBuffer);
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 1);
+                buffers.push_back(nextBuffer);
             }
-            std::ranges::for_each(floatingBuffers, [](const auto& it) { ASSERT_TRUE(it.isSpilled()); });
+            std::ranges::for_each(
+                buffers.begin(), buffers.begin() + 8, [](const auto& it) { ASSERT_TRUE(std::get<FloatingBuffer>(it).isSpilled()); });
             //All children and the parent are spilled, so the clock should move forward
             ASSERT_EQ(manager->clockAt, 1);
             ASSERT_EQ(manager->allBuffers.size(), 9);
 
-            //Unpin last four buffers, then initiate spilling once, where second chance should take pinned (starting at zero) 4, 5, 6 and tag 7,
-            //Offset of these buffers in allBuffers are 5, 6, 7, tag 8.
-            for (int i = 4; i < 8; ++i)
+            //Unpin last four buffers, then initiate spilling once, where second chance should take 5, 6, 7 and tag 8,
+            //Again, offsets are increased by 7 because of the child buffers
+            for (int i = 12; i < 16; ++i)
             {
-                floatingBuffers.emplace_back(std::move(pinnedBuffers[i]));
+                buffers[i] = FloatingBuffer{std::move(std::get<PinnedBuffer>(buffers[i]))};
             }
-            pinnedBuffers.erase(pinnedBuffers.begin() + 4, pinnedBuffers.end());
 
-            for (int i = 0; i < 3; ++i)
+            for (int i = 16; i < 19; ++i)
             {
                 auto nextBuffer = manager->getBufferBlocking();
                 rawData = nextBuffer.getBuffer();
-                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 17);
-                pinnedBuffers.push_back(nextBuffer);
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 1);
+                buffers.push_back(nextBuffer);
             }
 
-            std::ranges::for_each(floatingBuffers.begin(), floatingBuffers.end() - 1, [](const auto& it) { ASSERT_TRUE(it.isSpilled()); });
-            ASSERT_FALSE(floatingBuffers[11].isSpilled());
+            std::ranges::for_each(
+                buffers.begin() + 12, buffers.begin() + 15, [](const auto& it) { ASSERT_TRUE(std::get<FloatingBuffer>(it).isSpilled()); });
+            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[15]).isSpilled());
             ASSERT_EQ(manager->clockAt, 8);
 
             //Unpin (by allBuffers offset), 1, 2, 3
             //Spilled should be 8, 1, 2, because 8 was already tagged before
-            floatingBuffers.emplace_back(std::move(pinnedBuffers[0]));
-            floatingBuffers.emplace_back(std::move(pinnedBuffers[1]));
-            floatingBuffers.emplace_back(std::move(pinnedBuffers[2]));
-            pinnedBuffers.erase(pinnedBuffers.begin(), pinnedBuffers.begin() + 3); //End index is exclusive
+            for (int i = 8; i < 11; ++i)
+            {
+                buffers[i] = FloatingBuffer{std::move(std::get<PinnedBuffer>(buffers[i]))};
+            }
 
-            for (int i = 0; i < 3; ++i)
+            for (int i = 19; i < 22; ++i)
             {
                 auto nextBuffer = manager->getBufferBlocking();
                 rawData = nextBuffer.getBuffer();
-                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 20);
-                pinnedBuffers.push_back(nextBuffer);
+                std::fill_n(rawData, bufferSize / sizeof(int8_t), i + 1);
+                buffers.push_back(nextBuffer);
             }
 
             ASSERT_EQ(manager->clockAt, 3);
             ASSERT_EQ(manager->allBuffers.size(), 15);
 
-            ASSERT_TRUE(floatingBuffers[11].isSpilled());
+            ASSERT_TRUE(std::get<FloatingBuffer>(buffers[15]).isSpilled());
             //floatingBuffers[14] is allBuffers[3]
-            ASSERT_FALSE(floatingBuffers[14].isSpilled());
+            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[10]).isSpilled());
         }
     }
 }
@@ -309,7 +316,16 @@ TEST_F(BufferManagerTest, BufferCleanupClock)
 {
     constexpr int bufferSize = 1024;
     const std::shared_ptr<BufferManager> manager
-        = BufferManager::create(bufferSize, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 4);
+        = BufferManager::create(bufferSize, 10, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 4);
+
+    {
+        std::vector<PinnedBuffer> buffers{};
+        for (int i = 0; i < 10; ++i)
+        {
+            buffers.push_back(manager->getBufferBlocking());
+        }
+
+    }
 }
 
 TEST_F(BufferManagerTest, GetFreeSegment)

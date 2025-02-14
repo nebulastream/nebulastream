@@ -104,12 +104,15 @@ public:
     [[nodiscard]] int32_t getDataReferenceCount() const noexcept;
 
     /// Decrease the pinned reference counter by one
-    /// Returns true if 0 is reached and the buffers memory is marked for recycling
+    /// Returns true if 0 is reached and the buffers memory is marked for spilling
     bool pinnedRelease();
 
     /// Decrease the data reference counter by one
     /// Returns true if 0 is reached and the buffer is recycled
     bool dataRelease();
+
+    bool tryRepinRetain() noexcept;
+
 
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
@@ -131,7 +134,7 @@ public:
 
     ///@brief Unregisters a child data segment.
     ///@return whether the passed data segment was a child of this node
-    bool unregisterChild(DataSegment<DataLocation>& child) noexcept;
+    bool unregisterChild(ChildKey child) noexcept;
 
     ///@brief Registers the data segment as a child of this BCB.
     ///@return true when the passed data segment is a new child, false if it was already registerd
@@ -140,7 +143,7 @@ public:
 
     ///@brief Deletes a child data segment, the data is not accessible afterward anymore
     ///@return whether the argument was a child. If false, child remains valid.
-    bool deleteChild(DataSegment<DataLocation>&& child);
+    // bool deleteChild(DataSegment<DataLocation>&& child);
 
     ///@brief Self-destructs this BCB if there is only one owner left
     ///@return the owned data segment if self-destructed, nullopt otherwise
@@ -168,7 +171,7 @@ private:
     Runtime::Timestamp creationTimestamp = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
 
-    mutable std::shared_mutex childMutex;
+    mutable std::shared_mutex segmentMutex;
     ///Not thread safe
     ///Max size is max uint32 - 2.
     ///When accessing, make sure to use the the index stored in the buffers - 2.
@@ -177,7 +180,9 @@ private:
     ///Not thread safe, to be used in second chance to avoid initiating spilling for the same segment multiple times
     ///Unknown indicates that no spilling was attempted yet, >= 2 indicates that for up to (inclusive) that child spilling was initiated,
     ///Main indicates spilling was initiated for all children and the main data segment.
-    ChildOrMainDataKey spillingInitiatedUpTo = ChildOrMainDataKey::UNKNOWN();
+    ChildOrMainDataKey skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
+
+    ChildOrMainDataKey isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
 
     std::atomic<DataSegment<DataLocation>> data{};
     std::atomic<BufferRecycler*> owningBufferRecycler{};
@@ -185,6 +190,7 @@ private:
 
     //False means second chance was not at the buffer yet, true means it was seen already and gets evicted next time its seen.
     std::atomic_flag clockReference = false;
+    std::atomic_flag isRepinning = false;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 private:

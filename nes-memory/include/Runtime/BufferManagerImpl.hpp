@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include "PinnedBuffer.hpp"
+
+
 #include <atomic>
 #include <concepts>
 #include <coroutine>
@@ -30,10 +33,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 
+#include <shared_mutex>
+#include <Runtime/BufferFiles.hpp>
 #include <Util/Ranges.hpp>
 #include <folly/SharedMutex.h>
 #include <google/protobuf/stubs/port.h>
-#include <Runtime/BufferFiles.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory
@@ -92,23 +96,49 @@ public:
     virtual ~VirtualAwaiterForProgress() = default;
 };
 
+class VirtualPromise
+{
+public:
+    //Delete destructor, needs to be handled over the destroy function of the coroutine handle
+    ~VirtualPromise() = delete;
+    virtual std::coroutine_handle<> setWaitingCoroutine(std::coroutine_handle<>) noexcept = 0;
+};
+
+template <typename Promise>
+concept SharedPromise = requires(Promise promise) {
+    { promise.getSharedPromise() } -> std::same_as<std::shared_ptr<Promise>>;
+};
+
 template <typename Future>
-class GetInMemorySegmentPromise
+class GetInMemorySegmentPromise : public VirtualPromise
 {
     friend class GetInMemorySegmentFuture;
     DataSegment<InMemoryLocation> result;
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
     std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
 
-    BufferManager* bufferManager;
+    std::shared_ptr<GetInMemorySegmentPromise> sharedHandle;
+    std::atomic<std::coroutine_handle<>> nextCoroutine{};
 
 public:
     //Constructor call is inserted by the compiler when calling the coroutine function,
     //passing instance and any arguments to the coroutine to this function
-    GetInMemorySegmentPromise(BufferManager& bufferManager) : currentBlockAwaiter(nullptr), bufferManager(&bufferManager) { }
+    GetInMemorySegmentPromise()
+        : currentBlockAwaiter(nullptr)
+        , sharedHandle(this, [](auto promise) { std::coroutine_handle<GetInMemorySegmentPromise>::from_promise(*promise).destroy(); })
+    {
+    }
     Future get_return_object() { return Future(std::coroutine_handle<GetInMemorySegmentPromise>::from_promise(*this)); }
     void unhandled_exception() noexcept { };
-    void return_value(DataSegment<InMemoryLocation> segment) noexcept { result = segment; }
+    void return_value(DataSegment<InMemoryLocation> segment) noexcept
+    {
+        result = segment;
+        auto resumption = nextCoroutine.exchange({});
+        if (resumption != nullptr)
+        {
+            resumption.resume();
+        }
+    }
     void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
 
     std::suspend_never initial_suspend() noexcept { return {}; };
@@ -117,26 +147,36 @@ public:
     std::suspend_always final_suspend() noexcept { return {}; };
 
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
+
+    std::shared_ptr<GetInMemorySegmentPromise> getSharedPromise() { return sharedHandle; }
+    std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
+    {
+        return nextCoroutine.exchange(next);
+    }
 };
 
 template <typename Future>
-class ReadSegmentPromise
+class ReadSegmentPromise : public VirtualPromise
 {
     friend class ReadSegmentFuture;
     DataSegment<OnDiskLocation> source;
     DataSegment<InMemoryLocation> target;
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
     std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
-
-    BufferManager* bufferManager;
-
     std::optional<ssize_t> result;
+
+    std::shared_ptr<ReadSegmentPromise> sharedHandle;
+
+    std::atomic<std::coroutine_handle<>> nextCoroutine{};
 
 public:
     //Constructor call is inserted by the compiler when calling the coroutine function,
     //passing instance and any arguments to the coroutine to this function
-    ReadSegmentPromise(BufferManager& bufferManager, DataSegment<OnDiskLocation> source, DataSegment<InMemoryLocation> target)
-        : source(source), target(target), currentBlockAwaiter(nullptr), bufferManager(&bufferManager)
+    ReadSegmentPromise(DataSegment<OnDiskLocation> source, DataSegment<InMemoryLocation> target)
+        : source(source)
+        , target(target)
+        , currentBlockAwaiter(nullptr)
+        , sharedHandle(this, [](auto promise) { std::coroutine_handle<ReadSegmentPromise>::from_promise(*promise).destroy(); })
     {
     }
     Future get_return_object() { return Future(std::coroutine_handle<ReadSegmentPromise>::from_promise(*this)); }
@@ -150,12 +190,51 @@ public:
     std::suspend_always final_suspend() noexcept { return {}; };
 
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
+    std::shared_ptr<ReadSegmentPromise> getSharedPromise() { return sharedHandle; }
+    std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
+    {
+        return nextCoroutine.exchange(next);
+    }
 };
 
-template <typename Promise>
-concept SharedPromise = requires(Promise promise) {
-    { promise.getSharedPromise() } -> std::same_as<std::shared_ptr<Promise>>;
+
+template <typename Future>
+class RepinBufferPromise : VirtualPromise
+{
+    friend class RepinBufferFuture;
+    DataSegment<OnDiskLocation> source;
+
+    PinnedBuffer result{};
+    std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
+
+    std::shared_ptr<RepinBufferPromise> sharedHandle;
+
+    std::atomic<std::coroutine_handle<>> nextCoroutine{};
+
+public:
+    RepinBufferPromise(DataSegment<OnDiskLocation> source)
+        : source(source)
+        , currentBlockAwaiter(nullptr)
+        , sharedHandle(this, [](auto promise) { std::coroutine_handle<RepinBufferPromise>::from_promise(*promise).destroy(); })
+    {
+    }
+
+    Future get_return_object() { return Future(std::coroutine_handle<RepinBufferPromise>::from_promise(*this)); }
+    void return_value(const PinnedBuffer& result) { this->result = result; }
+
+    void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
+    std::suspend_never initial_suspend() noexcept { return {}; }
+    std::suspend_always final_suspend() noexcept { return {}; };
+
+    VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
+    std::shared_ptr<RepinBufferPromise> getSharedPromise() { return sharedHandle; }
+
+    std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
+    {
+        return nextCoroutine.exchange(next);
+    }
 };
+
 
 class PunchHoleResult
 {
@@ -200,27 +279,26 @@ public:
 };
 
 template <typename Future>
-class PunchHolePromise
+class PunchHolePromise : VirtualPromise
 {
     friend class PunchHoleFuture;
     DataSegment<OnDiskLocation> target;
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
     std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
 
-    BufferManager* bufferManager;
 
     std::optional<PunchHoleResult> result;
 
     std::optional<bool> hasSubmitted;
     std::shared_ptr<PunchHolePromise> sharedHandle;
+    std::atomic<std::coroutine_handle<>> nextCoroutine{};
 
 public:
     //Constructor call is inserted by the compiler when calling the coroutine function,
     //passing instance and any arguments to the coroutine to this function
-    PunchHolePromise(BufferManager& bufferManager, DataSegment<OnDiskLocation> target)
+    PunchHolePromise(DataSegment<OnDiskLocation> target)
         : target(target)
         , currentBlockAwaiter(nullptr)
-        , bufferManager(&bufferManager)
         , sharedHandle(this, [](auto promise) { std::coroutine_handle<PunchHolePromise>::from_promise(*promise).destroy(); })
     {
     }
@@ -246,6 +324,11 @@ public:
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
 
     std::shared_ptr<PunchHolePromise> getSharedPromise() { return sharedHandle; }
+
+    std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
+    {
+        return nextCoroutine.exchange(next);
+    }
     //static_assert(SharedPromise<PunchHolePromise>);
 };
 
@@ -362,7 +445,7 @@ public:
 
     void await_resume() const noexcept { }
 
-    bool isDone() noexcept { return hasResumed.test(); }
+    bool isDone() const noexcept { return hasResumed.test(); }
 
     [[nodiscard]] const std::function<void()>& getBlocking() const noexcept { return blockingFn; }
     [[nodiscard]] const std::function<void()>& getPolling() const noexcept
@@ -379,14 +462,14 @@ public:
 template <typename Promise>
 class AvailableSegmentAwaiter
 {
-    DataSegment<InMemoryLocation> result;
+    DataSegment<InMemoryLocation> result{};
     std::coroutine_handle<Promise> handle;
 
     //This mutex is for synchronizing access on the result and handle.
     //The coroutine might try to set the handle while another thread is already filling in the result.
     //Without further synchronization, it could lead to the coroutine never waking up because the awaiter was already dequeued.
     //Alternatively, we could put both in an atomic tuple which should be 24 bytes big, but the logic would be more complicated.
-    std::recursive_mutex mutex;
+    mutable std::recursive_mutex mutex;
 
 public:
     explicit AvailableSegmentAwaiter() noexcept { }
@@ -397,7 +480,7 @@ public:
     AvailableSegmentAwaiter& operator=(const AvailableSegmentAwaiter& other) = delete;
 
     AvailableSegmentAwaiter& operator=(AvailableSegmentAwaiter&& other) = delete;
-    bool await_ready() noexcept { return false; }
+    bool await_ready() const noexcept { return result.getLocation().getPtr() != nullptr; }
     bool await_suspend(std::coroutine_handle<Promise> handle) noexcept
     {
         std::scoped_lock lock{mutex};
@@ -413,7 +496,7 @@ public:
 
     void setResultAndContinue(DataSegment<InMemoryLocation> segment)
     {
-        std::scoped_lock const lock{mutex};
+        const std::scoped_lock lock{mutex};
         result = segment;
         if (handle)
         {
@@ -425,7 +508,7 @@ public:
     {
         //This lock should not be necessary because this method should only be called through setResultAndContinues handle.resume(),
         //but there is no way to guarantee that this class is always used like that.
-        std::scoped_lock const lock{mutex};
+        const std::scoped_lock lock{mutex};
         if (result.getLocation().getPtr() == nullptr)
         {
             return std::nullopt;
@@ -433,9 +516,10 @@ public:
         return result;
     }
 
-    bool isDone() noexcept
+    bool isDone() const noexcept
     {
-        std::scoped_lock const lock{mutex};
+        //I'm not sure if this lock is really necessary
+        const std::scoped_lock lock{mutex};
         return result.getLocation().getPtr() != nullptr;
     }
 
@@ -460,7 +544,7 @@ class ReadSegmentAwaiter
 
     std::coroutine_handle<Promise> handle;
 
-    std::recursive_mutex mutex;
+    mutable std::recursive_mutex mutex;
 
 public:
     explicit ReadSegmentAwaiter() { }
@@ -473,7 +557,7 @@ public:
 
     ReadSegmentAwaiter& operator=(ReadSegmentAwaiter&& other) = delete;
 
-    bool await_ready() noexcept { return false; }
+    bool await_ready() const noexcept { return returnValue != std::nullopt; }
     bool await_suspend(std::coroutine_handle<Promise> handle)
     {
         std::scoped_lock lock{mutex};
@@ -485,7 +569,7 @@ public:
         return true;
     }
 
-    std::optional<ssize_t> await_resume() noexcept
+    std::optional<ssize_t> await_resume() const noexcept
     {
         std::scoped_lock lock{mutex};
         return returnValue;
@@ -526,7 +610,7 @@ class SubmitSegmentReadAwaiter
     std::shared_ptr<ReadSegmentAwaiter<Promise>> nextAwaiter = nullptr;
     std::coroutine_handle<Promise> handle;
 
-    std::recursive_mutex mutex;
+    mutable std::recursive_mutex mutex;
 
 public:
     explicit SubmitSegmentReadAwaiter(DataSegment<OnDiskLocation> source, DataSegment<InMemoryLocation> target)
@@ -542,7 +626,7 @@ public:
 
     SubmitSegmentReadAwaiter& operator=(SubmitSegmentReadAwaiter&& other) = delete;
 
-    bool await_ready() const noexcept { return false; }
+    bool await_ready() const noexcept { return nextAwaiter != nullptr; }
     bool await_suspend(std::coroutine_handle<Promise> handle)
     {
         std::scoped_lock lock{mutex};
@@ -603,7 +687,7 @@ class PunchHoleSegmentAwaiter
 {
     std::optional<ssize_t> returnValue = std::nullopt;
     std::coroutine_handle<Promise> handle;
-    std::mutex mutex;
+    mutable std::mutex mutex;
 
 public:
     explicit PunchHoleSegmentAwaiter() { }
@@ -616,7 +700,7 @@ public:
 
     PunchHoleSegmentAwaiter& operator=(PunchHoleSegmentAwaiter&& other) = delete;
 
-    bool await_ready() noexcept { return false; }
+    bool await_ready() const noexcept { return returnValue != std::nullopt; }
     bool await_suspend(std::coroutine_handle<Promise> handle)
     {
         std::scoped_lock lock{mutex};
@@ -628,7 +712,7 @@ public:
         return true;
     }
 
-    std::optional<ssize_t> await_resume() noexcept
+    std::optional<ssize_t> await_resume() const noexcept
     {
         std::scoped_lock lock{mutex};
         return returnValue;
@@ -653,7 +737,7 @@ class SubmitPunchHoleSegmentAwaiter
     DataSegment<OnDiskLocation> target;
     std::shared_ptr<PunchHoleSegmentAwaiter<Promise>> nextAwaiter = nullptr;
     std::coroutine_handle<Promise> handle;
-    std::mutex mutex;
+    mutable std::mutex mutex;
 
     explicit SubmitPunchHoleSegmentAwaiter(const DataSegment<OnDiskLocation> target) : target(target) { }
 
@@ -666,7 +750,7 @@ public:
 
     SubmitPunchHoleSegmentAwaiter& operator=(SubmitPunchHoleSegmentAwaiter&& other) = delete;
 
-    bool await_ready() const noexcept { return false; }
+    bool await_ready() const noexcept { return nextAwaiter != nullptr; }
     bool await_suspend(std::coroutine_handle<Promise> handle)
     {
         std::scoped_lock lock{mutex};
@@ -741,14 +825,14 @@ class AwaitExternalProgress : public VirtualAwaiterForProgress
     Awaiter& underlyingAwaiter;
 
 public:
-    explicit AwaitExternalProgress(std::function<void()> poll, std::function<void()> wait, Awaiter& awaiter)
+    explicit AwaitExternalProgress(const std::function<void()>& poll, const std::function<void()>& wait, Awaiter& awaiter)
         : poll(poll), wait(wait), underlyingAwaiter(awaiter) { };
     explicit AwaitExternalProgress(ResumeAfterBlockAwaiter<Promise>& resumeAfterBlock)
         : poll(resumeAfterBlock.getPolling()), wait(resumeAfterBlock.getBlocking()), underlyingAwaiter(resumeAfterBlock)
     {
     }
 
-    bool await_ready() noexcept { return underlyingAwaiter.await_ready(); }
+    bool await_ready() const noexcept { return underlyingAwaiter.await_ready(); }
 
     bool await_suspend(std::coroutine_handle<Promise> handle) noexcept
     {
@@ -771,65 +855,57 @@ public:
 };
 
 
+template <typename Future>
+concept ProgressableFutureConcept = requires(Future future) {
+    { future.pollOnce() } -> std::same_as<void>;
+    { future.waitOnce() } -> std::same_as<void>;
+    { future.isDone() } -> std::same_as<bool>;
+} && std::is_move_assignable_v<Future>;
+
+
 class GetInMemorySegmentFuture
 {
 public:
     using promise_type = GetInMemorySegmentPromise<GetInMemorySegmentFuture>;
 
 private:
-    std::coroutine_handle<promise_type> handle;
+    std::shared_ptr<promise_type> promise;
 
 public:
-    explicit GetInMemorySegmentFuture(const std::coroutine_handle<promise_type> handle) : handle(handle) { }
-    GetInMemorySegmentFuture(const GetInMemorySegmentFuture& other) = delete;
-    GetInMemorySegmentFuture(GetInMemorySegmentFuture&& other) noexcept : handle(std::exchange(other.handle, nullptr)) { }
-    GetInMemorySegmentFuture& operator=(const GetInMemorySegmentFuture& other) = delete;
-    GetInMemorySegmentFuture& operator=(GetInMemorySegmentFuture&& other) noexcept
-    {
-        if (this == &other)
-            return *this;
-        if (handle)
-        {
-            handle.destroy();
-        }
-        handle = std::exchange(other.handle, nullptr);
-        return *this;
-    }
+    explicit GetInMemorySegmentFuture(const std::coroutine_handle<promise_type> handle) : promise(handle.promise().getSharedPromise()) { }
+    GetInMemorySegmentFuture(const GetInMemorySegmentFuture& other) = default;
+    GetInMemorySegmentFuture(GetInMemorySegmentFuture&& other) noexcept = default;
+    GetInMemorySegmentFuture& operator=(const GetInMemorySegmentFuture& other) = default;
+    GetInMemorySegmentFuture& operator=(GetInMemorySegmentFuture&& other) noexcept = default;
 
-    ~GetInMemorySegmentFuture()
-    {
-        if (handle)
-        {
-            handle.destroy();
-        }
-    }
+    ~GetInMemorySegmentFuture() = default;
 
     void pollOnce() noexcept
     {
-        if (auto* pollAwaiter = handle.promise().exchangeAwaiter(nullptr))
+        if (auto* pollAwaiter = promise->exchangeAwaiter(nullptr))
         {
             pollAwaiter->getPollFn()();
             //If polling didn't make any progress, schedule it again
             if (!pollAwaiter->isDone())
             {
-                handle.promise().exchangeAwaiter(pollAwaiter);
+                promise->exchangeAwaiter(pollAwaiter);
             }
         }
     }
     void waitOnce() noexcept
     {
         //atomic exchange ensures that only one thread can run the method and resume the coroutine
-        if (auto* currentBlockAwaiter = handle.promise().exchangeAwaiter(nullptr))
+        if (auto* currentBlockAwaiter = promise->exchangeAwaiter(nullptr))
         {
             currentBlockAwaiter->getWaitFn()();
             if (!currentBlockAwaiter->isDone())
             {
-                handle.promise().exchangeAwaiter(currentBlockAwaiter);
+                promise->exchangeAwaiter(currentBlockAwaiter);
             }
         }
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return handle.promise().result.getLocation().getPtr() != nullptr; }
+    [[nodiscard]] bool isDone() const noexcept { return promise->result.getLocation().getPtr() != nullptr; }
 
     //TODO add timeout to task and give back nullopt when timeout exceededc
     std::optional<DataSegment<InMemoryLocation>> waitUntilDone() noexcept
@@ -838,9 +914,25 @@ public:
         {
             waitOnce();
         }
-        return handle.promise().result;
+        return promise->result;
     };
+
+    bool await_ready() const noexcept { return isDone(); }
+
+    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    {
+        if (!isDone())
+        {
+            const auto previous = promise->setWaitingCoroutine(suspending);
+            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
+            return true;
+        }
+        return false;
+    }
+
+    std::optional<DataSegment<InMemoryLocation>> await_resume() const noexcept { return promise->result; }
 };
+static_assert(ProgressableFutureConcept<GetInMemorySegmentFuture>);
 
 class ReadSegmentFuture
 {
@@ -848,59 +940,43 @@ public:
     using promise_type = ReadSegmentPromise<ReadSegmentFuture>;
 
 private:
-    std::coroutine_handle<promise_type> handle;
+    std::shared_ptr<promise_type> promise;
 
 public:
-    explicit ReadSegmentFuture(const std::coroutine_handle<promise_type> handle) : handle(handle) { }
-    ReadSegmentFuture(const ReadSegmentFuture& other) = delete;
-    ReadSegmentFuture(ReadSegmentFuture&& other) noexcept : handle(std::exchange(other.handle, nullptr)) { }
-    ReadSegmentFuture& operator=(const ReadSegmentFuture& other) = delete;
-    ReadSegmentFuture& operator=(ReadSegmentFuture&& other) noexcept
-    {
-        if (this == &other)
-            return *this;
-        if (handle)
-        {
-            handle.destroy();
-        }
-        handle = std::exchange(other.handle, nullptr);
-        return *this;
-    }
-
-    ~ReadSegmentFuture()
-    {
-        if (handle)
-        {
-            handle.destroy();
-        }
-    }
+    explicit ReadSegmentFuture(const std::coroutine_handle<promise_type> handle) : promise(handle.promise().getSharedPromise()) { }
+    ReadSegmentFuture(const ReadSegmentFuture& other) = default;
+    ReadSegmentFuture(ReadSegmentFuture&& other) noexcept = default;
+    ReadSegmentFuture& operator=(const ReadSegmentFuture& other) = default;
+    ReadSegmentFuture& operator=(ReadSegmentFuture&& other) noexcept = default;
+    ~ReadSegmentFuture() = default;
 
     void pollOnce() noexcept
     {
-        if (auto* pollAwaiter = handle.promise().exchangeAwaiter(nullptr))
+        if (auto* pollAwaiter = promise->exchangeAwaiter(nullptr))
         {
             pollAwaiter->getPollFn()();
             //If polling didn't make any progress, schedule it again
             if (!pollAwaiter->isDone())
             {
-                handle.promise().exchangeAwaiter(pollAwaiter);
+                promise->exchangeAwaiter(pollAwaiter);
             }
         }
+
     }
     void waitOnce() noexcept
     {
         //atomic exchange ensures that only one thread can run the method and resume the coroutine
-        if (auto* currentBlockAwaiter = handle.promise().exchangeAwaiter(nullptr))
+        if (auto* currentBlockAwaiter = promise->exchangeAwaiter(nullptr))
         {
             currentBlockAwaiter->getWaitFn()();
             if (!currentBlockAwaiter->isDone())
             {
-                handle.promise().exchangeAwaiter(currentBlockAwaiter);
+                promise->exchangeAwaiter(currentBlockAwaiter);
             }
         }
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return handle.promise().result.has_value(); }
+    [[nodiscard]] bool isDone() const noexcept { return promise->result.has_value(); }
 
     //TODO add timeout to task and give back nullopt when timeout exceededc
     std::optional<ssize_t> waitUntilDone() noexcept
@@ -909,9 +985,25 @@ public:
         {
             waitOnce();
         }
-        return handle.promise().result;
+        return promise->result;
     };
+
+    bool await_ready() const noexcept { return isDone(); }
+
+    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    {
+        if (!isDone())
+        {
+            const auto previous = promise->setWaitingCoroutine(suspending);
+            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
+            return true;
+        }
+        return false;
+    }
+
+    std::optional<ssize_t> await_resume() const noexcept { return promise->result; }
 };
+static_assert(ProgressableFutureConcept<ReadSegmentFuture>);
 
 class PunchHoleFuture
 {
@@ -943,6 +1035,7 @@ public:
                 promise->exchangeAwaiter(pollAwaiter);
             }
         }
+        return isDone();
     }
     void waitOnce() noexcept
     {
@@ -970,7 +1063,7 @@ public:
     [[nodiscard]] bool isDone() const noexcept { return promise->result.has_value(); }
     [[nodiscard]] std::optional<PunchHoleResult> getResult() const noexcept { return promise->result; }
 
-    //TODO add timeout to task and give back nullopt when timeout exceededc
+    //TODO add timeout to task and give back nullopt when timeout exceeded
     [[nodiscard]] std::optional<PunchHoleResult> waitUntilDone() noexcept
     {
         while (!isDone())
@@ -981,24 +1074,96 @@ public:
     };
 
     [[nodiscard]] DataSegment<OnDiskLocation> getTarget() const noexcept { return promise->target; }
+
+    bool await_ready() const noexcept { return isDone(); }
+
+    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    {
+        if (!isDone())
+        {
+            const auto previous = promise->setWaitingCoroutine(suspending);
+            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
+            return true;
+        }
+        return false;
+    }
+
+    std::optional<PunchHoleResult> await_resume() const noexcept { return promise->result; }
+};
+static_assert(ProgressableFutureConcept<PunchHoleFuture>);
+
+
+class RepinBufferFuture
+{
+public:
+    using promise_type = RepinBufferPromise<RepinBufferFuture>;
+
+private:
+    std::shared_ptr<promise_type> promise;
+
+public:
+    explicit RepinBufferFuture() = default;
+    explicit RepinBufferFuture(const std::coroutine_handle<promise_type> handle) : promise(handle.promise().getSharedPromise()) { }
+    explicit RepinBufferFuture(const std::shared_ptr<promise_type>& handle) : promise(handle) { }
+    RepinBufferFuture(const RepinBufferFuture& other) noexcept = default;
+    RepinBufferFuture(RepinBufferFuture&& other) noexcept = default;
+    RepinBufferFuture& operator=(const RepinBufferFuture& other) = default;
+    RepinBufferFuture& operator=(RepinBufferFuture&& other) noexcept = default;
+
+    ~RepinBufferFuture() noexcept = default;
+
+    void pollOnce() noexcept
+    {
+        if (auto* pollAwaiter = promise->exchangeAwaiter(nullptr))
+        {
+            pollAwaiter->getPollFn()();
+            //If polling didn't make any progress, schedule it again
+            if (!pollAwaiter->isDone())
+            {
+                promise->exchangeAwaiter(pollAwaiter);
+            }
+        }
+    }
+    void waitOnce() noexcept
+    {
+        //atomic exchange ensures that only one thread can run the method and resume the coroutine
+        if (auto* currentBlockAwaiter = promise->exchangeAwaiter(nullptr))
+        {
+            currentBlockAwaiter->getWaitFn()();
+            if (!currentBlockAwaiter->isDone())
+            {
+                promise->exchangeAwaiter(currentBlockAwaiter);
+            }
+        }
+    }
+
+    [[nodiscard]] bool isDone() const noexcept { return promise->result.getBuffer() != nullptr; }
+
+    PinnedBuffer waitUntilDone() noexcept
+    {
+        while (!isDone())
+        {
+            waitOnce();
+        }
+        return promise->result;
+    };
+
+    bool await_ready() const noexcept { return isDone(); }
+
+    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    {
+        if (!isDone())
+        {
+            const auto previous = promise->setWaitingCoroutine(suspending);
+            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
+            return true;
+        }
+        return false;
+    }
+
+    PinnedBuffer await_resume() const noexcept { return promise->result; }
 };
 
 
 }
 }
-
-// template <>
-// struct fmt::formatter<NES::Memory::detail::PunchHoleResult> : std::formatter<std::string_view>
-// {
-//     auto format(NES::Memory::detail::PunchHoleResult result, format_context& ctx) const -> format_context::iterator
-//     {
-//         string_view output = "Unknown PunchHoleResult";
-//         switch (result)
-//         {
-//             case NES::Memory::detail::PunchHoleResult::FAILED_TO_TRANSFER_OWNERSHIP(): output = "Failed to transfer ownership of coroutine for hole punching to buffer recycler."; break;
-//             case NES::Memory::detail::PunchHoleResult::FAILED_TO_SUBMIT(): output = "Failed to submit request for punching hole into bounded queue."; break;
-//             case NES::Memory::detail::PunchHoleResult::CONTINUED_WITHOUT_RESULT(): output = "Coroutine was continued without providing awaiter a result"; break;
-//
-//         }
-//     }
-// };

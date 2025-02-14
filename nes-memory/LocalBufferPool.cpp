@@ -165,9 +165,12 @@ std::optional<PinnedBuffer> LocalBufferPool::getBufferNoBlocking()
     if (exclusiveBuffers.read(inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        controlBlock->dataRetain();
         const std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
-        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+        auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};
+        controlBlock->dataRelease();
+        return pinnedBuffer;
     }
     return std::nullopt;
 }
@@ -180,9 +183,13 @@ std::optional<PinnedBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::m
         //TODO use buffer count correctly
         exclusiveBufferCount.fetch_sub(1);
         auto* const controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        controlBlock->dataRetain();
         const std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
-        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+        auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};
+        controlBlock->dataRelease();
+        return pinnedBuffer;
+
     }
     return std::nullopt;
 }

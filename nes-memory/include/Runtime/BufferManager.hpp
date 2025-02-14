@@ -16,7 +16,7 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <deque>
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -45,7 +45,6 @@ namespace detail
 }
 class NewBufferTask;
 class PinnedBuffer;
-class RepinningBufferTask;
 class FloatingBuffer;
 
 /**
@@ -159,7 +158,7 @@ public:
     readOnDiskSegment(detail::DataSegment<detail::OnDiskLocation> source, detail::DataSegment<detail::InMemoryLocation> target) noexcept;
     [[nodiscard]] NewBufferTask getBuffer() noexcept;
 
-    [[nodiscard]] RepinningBufferTask repinBuffer(FloatingBuffer&&) noexcept;
+    [[nodiscard]] detail::RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept;
 
     /// This blocks until a buffer is available.
     PinnedBuffer getBufferBlocking() override;
@@ -226,6 +225,9 @@ public:
 
 
 private:
+
+    folly::MPMCQueue<detail::BufferControlBlock*> newBuffers;
+
     mutable std::shared_mutex allBuffersMutex;
     //All pooled buffers
     std::vector<detail::BufferControlBlock*> allBuffers;
@@ -326,6 +328,10 @@ private:
     ///If no other thread is currently spilling buffers, the calling thread will block until amount of buffers have been successfully spilled.
     ///If another thread is currently spilling, will return an empty vector
     // std::unique_ptr<std::vector<detail::DataSegment<detail::InMemoryLocation>>> spillSegments(size_t amount);
+
+    /// <b>Unsynchronized access to allBuffers</b>
+    /// Flushes newBuffers MPMC queue into all buffers
+    void flushNewBuffers() noexcept;
 
     ///<b>Unsynchronized access to write SQE!</b>
     ///Non-blocking function that writes Sqe entries for up to spillBatchSize unpinned buffers.

@@ -13,8 +13,8 @@
 */
 
 #include "TupleBufferImpl.hpp"
-#include <utility>
 #include <cstdint>
+#include <utility>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -62,7 +62,7 @@ BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMe
 //     watermark = that.watermark;
 //     originId = that.originId;
 //
-//     std::shared_lock thatChildMutex{that.childMutex};
+//     std::shared_lock thatChildMutex{that.segmentMutex};
 //     children = std::vector{that.children};
 // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 //     /// store the current thread that owns the buffer and track which function obtained the buffer
@@ -83,7 +83,7 @@ BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMe
 //     originId = that.originId;
 //     owningBufferRecycler.store(that.owningBufferRecycler.load());
 //
-//     std::shared_lock thatChildMutex{that.childMutex};
+//     std::shared_lock thatChildMutex{that.segmentMutex};
 //     children = std::vector{that.children};
 //
 // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -138,15 +138,24 @@ BufferControlBlock* BufferControlBlock::pinnedRetain()
 
     //Spin over pinnedCounter, only increase it by one if it is 0 or more, because -1 means the data segment is being modified
     //and might become invalid
-    int32_t old;
+    int32_t old = pinnedCounter.load();
     do
     {
-        //Could I move this load before the loop?
-        old = pinnedCounter.load();
     } while (old < 0 || !pinnedCounter.compare_exchange_weak(old, old + 1));
     return this;
 }
 
+bool BufferControlBlock::tryRepinRetain() noexcept
+{
+    skipSpillingUpTo = ChildOrMainDataKey::MAIN();
+    std::shared_lock segmentLock{segmentMutex};
+    if (isSpilledUpTo == ChildOrMainDataKey::UNKNOWN())
+    {
+        pinnedRetain();
+        return true;
+    }
+    return false;
+}
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo()
 {
@@ -175,11 +184,10 @@ int32_t BufferControlBlock::getDataReferenceCount() const noexcept
 
 bool BufferControlBlock::pinnedRelease()
 {
-    if (uint32_t const prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
+    if (const uint32_t prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
     {
         numberOfTuples = 0;
-        //TODO mark as spillable
-        //      NES_ASSERT(!dataInMemory, "Buffer with pinned references was not in memory");
+        skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
@@ -211,12 +219,12 @@ BufferControlBlock* BufferControlBlock::dataRetain()
 }
 bool BufferControlBlock::dataRelease()
 {
-    if (uint32_t const prevRefCnt = dataCounter.fetch_sub(1); prevRefCnt == 1)
+    if (const uint32_t prevRefCnt = dataCounter.fetch_sub(1); prevRefCnt == 1)
     {
-        std::unique_lock childLock{childMutex};
+        std::unique_lock childLock{segmentMutex};
         numberOfTuples = 0;
         auto* bufferRecycler = owningBufferRecycler.load();
-        auto const emptySegment = DataSegment<DataLocation>{};
+        const auto emptySegment = DataSegment<DataLocation>{};
         for (auto& child : children)
         {
             //TODO add flag for unpooled into segment
@@ -260,6 +268,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
     /// nop
 }
 #endif
+
 
 /// -----------------------------------------------------------------------------
 /// ------------------ Utility functions for PinnedBuffer ------------------------
@@ -337,6 +346,11 @@ void BufferControlBlock::setOriginId(const OriginId originId)
 
 bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment) noexcept
 {
+    if (isRepinning.test() && segment.isSpilled())
+    {
+        return false;
+    }
+    std::unique_lock dataLock{segmentMutex};
     auto zero = 0;
     auto minusOne = -1;
     if (pinnedCounter.compare_exchange_strong(zero, -1))
@@ -347,6 +361,10 @@ bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment) noe
             pinnedCounter.compare_exchange_strong(minusOne, 0),
             "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
             minusOne);
+        if (segment.isSpilled())
+        {
+            isSpilledUpTo = ChildOrMainDataKey::MAIN();
+        }
         return true;
     }
     return false;
@@ -354,6 +372,11 @@ bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment) noe
 
 bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey key) noexcept
 {
+    if (isRepinning.test() && segment.isSpilled())
+    {
+        return false;
+    }
+    std::unique_lock dataLock{segmentMutex};
     auto zero = 0;
     auto minusOne = -1;
     if (pinnedCounter.compare_exchange_strong(zero, -1))
@@ -364,6 +387,10 @@ bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey 
             pinnedCounter.compare_exchange_strong(minusOne, 0),
             "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
             minusOne);
+        if (segment.isSpilled())
+        {
+            isSpilledUpTo = ChildOrMainDataKey{key};
+        }
         return true;
     }
     return false;
@@ -385,35 +412,58 @@ std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment()
     {
         return std::nullopt;
     }
+    std::unique_lock dataLock{segmentMutex};
     data.store(DataSegment<DataLocation>{});
     int minusOne = -1;
     INVARIANT(
         pinnedCounter.compare_exchange_strong(minusOne, 0),
         "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
         minusOne);
+    if (isSpilledUpTo == ChildOrMainDataKey::MAIN())
+    {
+        isSpilledUpTo = ChildOrMainDataKey{ChildKey{children.size() - 1}};
+    }
+    if (skipSpillingUpTo == ChildOrMainDataKey::MAIN())
+    {
+        skipSpillingUpTo = ChildOrMainDataKey{ChildKey{children.size() - 1}};
+    }
     return dataSegment;
 }
 
-bool BufferControlBlock::deleteChild(DataSegment<DataLocation>&& child)
-{
-    std::unique_lock writeLock{childMutex};
-    if (std::erase(children, child) != 0)
-    {
-        owningBufferRecycler.load()->recycleSegment(std::move(child));
-        return true;
-    }
-    return false;
-}
+// bool BufferControlBlock::deleteChild(DataSegment<DataLocation>&& child)
+// {
+//     std::unique_lock writeLock{segmentMutex};
+//     //Invalidate the spillingUpTo so that
+//     if (std::erase(children, child) != 0)
+//     {
+//         owningBufferRecycler.load()->recycleSegment(std::move(child));
+//         return true;
+//     }
+//     return false;
+// }
 ChildKey BufferControlBlock::registerChild(const DataSegment<DataLocation>& child) noexcept
 {
-    std::unique_lock writeLock{childMutex};
+    std::unique_lock writeLock{segmentMutex};
     children.emplace_back(child);
-    return ChildKey{children.size() - 1};
+    ChildKey newPosition{children.size() - 1};
+    if (isSpilledUpTo == ChildOrMainDataKey::MAIN())
+    {
+        if (newPosition == 0)
+        {
+            isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
+        }
+        else
+        {
+            isSpilledUpTo = ChildOrMainDataKey{ChildKey{newPosition - 1}};
+        }
+    }
+
+    return newPosition;
 }
 
 std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLocation>& childToFind) noexcept
 {
-    std::shared_lock readLock{childMutex};
+    std::shared_lock readLock{segmentMutex};
     for (auto child = children.begin(); child != children.end(); ++child)
     {
         if ((*child) == childToFind)
@@ -425,7 +475,7 @@ std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLoca
 }
 std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey index) const noexcept
 {
-    std::shared_lock readLock{childMutex};
+    std::shared_lock readLock{segmentMutex};
     if (index < children.size())
     {
         return children[index];
@@ -433,11 +483,45 @@ std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey i
     return std::nullopt;
 }
 
-bool BufferControlBlock::unregisterChild(DataSegment<DataLocation>& child) noexcept
+bool BufferControlBlock::unregisterChild(const ChildKey child) noexcept
 {
-    std::unique_lock writeLock{childMutex};
-    //Not thread safe
-    return std::erase(children, child) != 0;
+    //Assert that there is only a single owner, because if other buffers would have a on this BCB and some childkey,
+    //Their childkey would point to the wrong data
+    if (dataCounter != 1) return false;
+    std::unique_lock writeLock{segmentMutex};
+    children.erase(children.begin() + child);
+    if (auto skipToChild = skipSpillingUpTo.asChildKey())
+    {
+        //If everything or nothing was spilled, we don't need to update the counters
+        if (skipToChild >= child)
+        {
+            if (skipToChild == 0)
+            {
+                //Because we spill first the children and then the main data segment, we go back to unknown (i.e. nothing spilled)
+                //If the first child segment was spilled.
+                skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
+            }
+            else
+            {
+                skipSpillingUpTo = ChildOrMainDataKey{ChildKey{*skipToChild - 1}};
+            }
+        }
+    }
+    if (auto spilledUpToChild = isSpilledUpTo.asChildKey())
+    {
+        if (spilledUpToChild >= child)
+        {
+            if (spilledUpToChild == 0)
+            {
+                isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
+            }
+            else
+            {
+                isSpilledUpTo = ChildOrMainDataKey{ChildKey{*spilledUpToChild - 1}};
+            }
+        }
+    }
+    return true;
 }
 }
 }

@@ -15,16 +15,16 @@
 #pragma once
 
 
-
 #include <cstddef>
 #include <cstdint>
 #include <future>
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Time/Timestamp.hpp>
 #include <Runtime/BufferPrimitives.hpp>
 #include <Runtime/DataSegment.hpp>
+#include <Time/Timestamp.hpp>
+#include <type_traits>
 
 namespace NES::Memory::detail
 {
@@ -273,4 +273,6 @@ public:
 };
 
 
+static_assert(std::is_copy_constructible_v<PinnedBuffer>);
+static_assert(std::is_assignable_v<PinnedBuffer, PinnedBuffer>);
 }

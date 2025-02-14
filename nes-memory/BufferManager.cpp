@@ -40,7 +40,9 @@
 #include <TupleBufferImpl.hpp>
 
 #include <liburing.h>
+
 #include <Runtime/BufferManagerImpl.hpp>
+#include <fmt/ranges.h>
 
 #include <Runtime/FloatingBuffer.hpp>
 #include <gmock/gmock-actions.h>
@@ -92,7 +94,8 @@ BufferManager::BufferManager(
     const uint32_t maxConcurrentReadSubmissions,
     const uint32_t maxConcurrentHolePunchSubmissions,
     const std::filesystem::path& spillDirectory)
-    : checksAddedPerNewBuffer(checksAddedPerNewBuffer)
+    : newBuffers((bufferChecksThreshold / checksAddedPerNewBuffer) * 4)
+    , checksAddedPerNewBuffer(checksAddedPerNewBuffer)
     , bufferChecksThreshold(bufferChecksThreshold)
     , availableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
@@ -270,6 +273,16 @@ void BufferManager::destroy()
     }
 }
 
+void BufferManager::flushNewBuffers() noexcept
+{
+    auto toFlush = newBuffers.size();
+    allBuffers.reserve(allBuffers.size() + toFlush);
+    detail::BufferControlBlock* bcb;
+    while (toFlush-- > 0 && newBuffers.read(bcb))
+    {
+        allBuffers.push_back(bcb);
+    }
+}
 
 void BufferManager::cleanupAllBuffers(size_t maxIter)
 {
@@ -330,43 +343,121 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     clockAt = erased - allBuffers.begin();
 }
 
-PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
+detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
 {
-    if (auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>())
+    using Promise = detail::RepinBufferPromise<detail::RepinBufferFuture>;
+    //I belive that there are some corner cases where we could get really unlucky with thread scheduling and get some segment spilled by another thread.
+    //Better recheck after spilling that everything is indeed in memory
+    while (!floating.controlBlock->tryRepinRetain())
     {
-        auto result = PinnedBuffer{floating.controlBlock, *memorySegment, floating.childOrMainData};
-        floating.controlBlock = nullptr;
-        floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
-        result.controlBlock->dataRelease();
-        return result;
-    }
-    auto memorySegment = getInMemorySegment().waitUntilDone();
-    if (!memorySegment)
-    {
-        throw BufferAllocationFailure();
-    }
-    //TODO put a lock in control block, this might get respilled between swapping and creating a pinned buffer
-    auto readBytes = readOnDiskSegment(*floating.getSegment().get<detail::OnDiskLocation>(), *memorySegment).waitUntilDone();
-    if (!readBytes)
-    {
-        throw CannotReadBufferFromDisk();
-    }
-    if (*readBytes < 0)
-    {
-        throw CannotReadBufferFromDisk("Failed to read spilled buffer with error {}", std::strerror(-*readBytes));
-    }
-    //TODO swap children correctly
-    if (!floating.controlBlock->swapDataSegment(*memorySegment))
-    {
-        throw CannotAccessBuffer("Could not repin buffer because it was already pinned");
+        if (!floating.controlBlock->isRepinning.test_and_set())
+        {
+            auto memorySegmentFuture = getInMemorySegment();
+
+            auto awaitMemorySegment = detail::AwaitExternalProgress<
+                Promise,
+                std::optional<detail::DataSegment<detail::InMemoryLocation>>,
+                detail::GetInMemorySegmentFuture>{
+                std::bind(&detail::GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
+                std::bind(&detail::GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
+                memorySegmentFuture};
+            auto memorySegment = co_await awaitMemorySegment;
+            if (!memorySegment)
+            {
+                throw BufferAllocationFailure();
+            }
+            auto readFuture = readOnDiskSegment(*floating.getSegment().get<detail::OnDiskLocation>(), *memorySegment);
+            auto awaitReadSegment = detail::AwaitExternalProgress<
+                Promise,
+                std::optional<ssize_t>,
+                detail::ReadSegmentFuture>{
+                std::bind(&detail::ReadSegmentFuture::pollOnce, readFuture),
+                std::bind(&detail::ReadSegmentFuture::waitOnce, readFuture),
+                readFuture};
+
+            auto readBytes = co_await awaitReadSegment;
+            if (!readBytes)
+            {
+                throw CannotReadBufferFromDisk();
+            }
+            if (*readBytes < 0)
+            {
+                throw CannotReadBufferFromDisk("Failed to read spilled buffer with error {}", std::strerror(-*readBytes));
+            }
+            //TODO swap children correctly
+            if (!floating.controlBlock->swapDataSegment(*memorySegment))
+            {
+                throw CannotAccessBuffer("Could not repin buffer because it was already pinned");
+            }
+            floating.controlBlock->isRepinning.clear();
+            floating.controlBlock->isRepinning.notify_all();
+        }
+        else
+        {
+            floating.controlBlock->isRepinning.wait(true);
+        }
     }
 
+    const auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>();
+    INVARIANT(memorySegment, "Floating buffer repinned sucessfully but data segment was spilled");
     auto result = PinnedBuffer{floating.controlBlock, *memorySegment, floating.childOrMainData};
     floating.controlBlock = nullptr;
     floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
     result.controlBlock->dataRelease();
+    //Release the repin retainer
+    result.controlBlock->pinnedRelease();
     return result;
 }
+
+
+PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
+{
+    //I belive that there are some corner cases where we could get really unlucky with thread scheduling and get some segment spilled by another thread.
+    //Better recheck after spilling that everything is indeed in memory
+    while (!floating.controlBlock->tryRepinRetain())
+    {
+        if (!floating.controlBlock->isRepinning.test_and_set())
+        {
+            auto memorySegment = getInMemorySegment().waitUntilDone();
+            if (!memorySegment)
+            {
+                throw BufferAllocationFailure();
+            }
+            auto readBytes = readOnDiskSegment(*floating.getSegment().get<detail::OnDiskLocation>(), *memorySegment).waitUntilDone();
+            if (!readBytes)
+            {
+                throw CannotReadBufferFromDisk();
+            }
+            if (*readBytes < 0)
+            {
+                throw CannotReadBufferFromDisk("Failed to read spilled buffer with error {}", std::strerror(-*readBytes));
+            }
+            //TODO swap children correctly
+            if (!floating.controlBlock->swapDataSegment(*memorySegment))
+            {
+                throw CannotAccessBuffer("Could not repin buffer because it was already pinned");
+            }
+            floating.controlBlock->isRepinning.clear();
+            floating.controlBlock->isRepinning.notify_all();
+        }
+        else
+        {
+            floating.controlBlock->isRepinning.wait(true);
+        }
+    }
+
+    const auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>();
+    INVARIANT(memorySegment, "Floating buffer repinned sucessfully but data segment was spilled");
+    auto result = PinnedBuffer{floating.controlBlock, *memorySegment, floating.childOrMainData};
+    floating.controlBlock = nullptr;
+    floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
+    result.controlBlock->dataRelease();
+    //Release the repin retainer
+    result.controlBlock->pinnedRelease();
+    return result;
+}
+
+
 detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
 {
     using Promise = detail::GetInMemorySegmentPromise<detail::GetInMemorySegmentFuture>;
@@ -443,6 +534,8 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
 
 int64_t BufferManager::secondChancePass() noexcept
 {
+    //Flush outstanding new buffers while we are at it
+    flushNewBuffers();
     unsigned int currentBatchSize = 0;
     //Can we allocate the SegmentWriteRequest directly in the vector?
     auto addToBatch
@@ -465,21 +558,27 @@ int64_t BufferManager::secondChancePass() noexcept
     };
 
     bool spilledLastFully = false;
+    const size_t clockStart = clockAt;
+    size_t deleted = 0;
+    size_t i = clockAt;
     //We only do two rounds over the buffers to avoid looping forever in case there are less than spillBatchSize spillable buffers
     //The starting point can be hit three times, but we explicitly move the clock behind the last fully spilled buffer, so that it is guaranteed that its last in the next round.
-    for (size_t i = clockAt, clockStart = clockAt;
-         (((i - (clockStart)) + allBuffers.size() - 1) / allBuffers.size()) < 3 && currentBatchSize < spillBatchSize;
-         i++)
+    for (; (((i - (clockStart)) + allBuffers.size() - 1) / allBuffers.size()) < 3 && currentBatchSize < spillBatchSize; i++)
     {
         //We only move the clock forward inside the loop, so if not all segments of a buffer where spilled it doesn't move forward
         clockAt = i % allBuffers.size();
         detail::BufferControlBlock* const currentBCB = allBuffers[clockAt];
         //Do cleanup of unused BCBs as we go
-        if (currentBCB->getDataReferenceCount() == 0)
+        if (currentBCB->getDataReferenceCount() == 0
+            && ((clockStart + deleted < allBuffers.size() && (clockAt > (clockStart + deleted) || clockAt < clockStart))
+                || (clockStart + deleted >= allBuffers.size() && (clockAt > (clockStart + deleted) % allBuffers.size())
+                    && clockAt < clockStart)))
         {
-            delete currentBCB;
-            allBuffers.erase(allBuffers.begin() + clockAt);
-            --i;
+            //Swap deleted entries at the beginning of the clock range.
+            //std::remove would swap them towards the end, but because we do not have a hard end bound swapping to the clock start seems more reasonable
+            //This does mess up the order of the buffers a bit, but the effect on second chance should be small, because we are only swapping
+            //with positions that we have seen at least once.
+            std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
         }
         else if (
             currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
@@ -487,17 +586,17 @@ int64_t BufferManager::secondChancePass() noexcept
         {
             uint32_t childrenToTake = std::min(spillBatchSize - currentBatchSize, static_cast<uint32_t>(currentBCB->children.size()));
             uint32_t startAt;
-            if (auto startChild = currentBCB->spillingInitiatedUpTo.asChildKey())
+            if (auto startChild = currentBCB->skipSpillingUpTo.asChildKey())
             {
                 startAt = *startChild + 1;
             }
-            else if (currentBCB->spillingInitiatedUpTo == detail::ChildOrMainDataKey::UNKNOWN())
+            else if (currentBCB->skipSpillingUpTo == detail::ChildOrMainDataKey::UNKNOWN())
             {
                 startAt = 0;
             }
             else
             {
-                //currentBCB->spillingInitiatedUpTo == detail::ChildOrMainDataKey::MAIN()
+                //currentBCB->skipSpillingUpTo == detail::ChildOrMainDataKey::MAIN()
                 //Spilling is already initiated for all children and the main segment;
                 spilledLastFully = true;
                 continue;
@@ -523,15 +622,39 @@ int64_t BufferManager::secondChancePass() noexcept
                     addToBatch(currentBCB, *segment, detail::ChildOrMainDataKey::MAIN());
                 }
                 spilledLastFully = true;
-                currentBCB->spillingInitiatedUpTo = detail::ChildOrMainDataKey::MAIN();
+                currentBCB->skipSpillingUpTo = detail::ChildOrMainDataKey::MAIN();
             }
             else
             {
                 spilledLastFully = false;
-                currentBCB->spillingInitiatedUpTo
+                currentBCB->skipSpillingUpTo
                     = detail::ChildOrMainDataKey{ChildKey{static_cast<unsigned long>(child - currentBCB->children.begin()) - 1}};
             }
         }
+    }
+
+    buffersToCheck = std::max(buffersToCheck - i, 0UL);
+
+    if (deleted > 0)
+    {
+        //You could also swap everything to the start or end and then do only one erase,
+        //But I assume that wrapping around in deletion is relatively rare because
+        //All buffers should be very large and I expect most second chance invocations to not pass all buffers even once.
+        auto firstBegin = allBuffers.begin() + clockStart;
+        auto firstEnd = allBuffers.begin() + std::min(clockStart + deleted, allBuffers.size());
+        auto oldAllBuffersSize = allBuffers.size();
+        std::for_each(firstBegin, firstEnd, [](const auto* bcb) { delete bcb; });
+        allBuffers.erase(firstBegin, firstEnd);
+
+        if (clockStart + deleted > oldAllBuffersSize)
+        {
+            auto secondBegin = allBuffers.begin();
+            auto secondEnd = allBuffers.begin() + (clockStart + deleted - oldAllBuffersSize);
+            std::for_each(firstBegin, firstEnd, [](const auto* bcb) { delete bcb; });
+            allBuffers.erase(secondBegin, secondEnd);
+        }
+        //Add oldBufferSize to avoid becoming negative
+        clockAt = (clockAt + oldAllBuffersSize - deleted) % allBuffers.size();
     }
     //Move clock one forward if the last buffer was spilled completely.
     //spilledLastFully is false when we spilled children, but then not the parent.
@@ -730,10 +853,10 @@ size_t BufferManager::processReadCompletionEvents() noexcept
     io_uring_cqe* completion = nullptr;
     while (io_uring_peek_cqe(&uringReadRing, &completion) == 0)
     {
-        auto* awaiterW = reinterpret_cast<std::weak_ptr<detail::ReadSegmentAwaiter<Promise>>*>(completion->user_data);
+        const auto* awaiterW = reinterpret_cast<std::weak_ptr<detail::ReadSegmentAwaiter<Promise>>*>(completion->user_data);
         //We do error handling in the coroutine/the caller of the coroutine.
         //We can't just skip not fully read segments like in the write cqe processing, because there is a 1:1 mapping of coroutines and entries
-        if (auto awaiter = awaiterW->lock())
+        if (const auto awaiter = awaiterW->lock())
         {
             awaiter->setResultAndContinue(completion->res);
         }
@@ -744,15 +867,29 @@ size_t BufferManager::processReadCompletionEvents() noexcept
     return counter;
 }
 
-PinnedBuffer BufferManager::makeBufferAndRegister(detail::DataSegment<detail::InMemoryLocation> segment) noexcept
+PinnedBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<detail::InMemoryLocation> segment) noexcept
 {
-    const auto controlBlock = new detail::BufferControlBlock{segment, this};
+    auto* const controlBlock = new detail::BufferControlBlock{segment, this};
+    //Ensure that BCBs main segment doesn't get spilled until we create the pinned buffer
+    controlBlock->pinnedRetain();
     {
-        std::unique_lock lock{allBuffersMutex};
-        allBuffers.push_back(controlBlock);
+        auto savedNewBuffer = newBuffers.write(controlBlock);
+        INVARIANT(savedNewBuffer, "Could not save newly created buffer");
+        size_t checks = buffersToCheck.fetch_add(checksAddedPerNewBuffer);
+        //If checksAddedPerBuffer > 1, then 2nd chance might make checks == bufferChecksThreshold miss.
+        //But, we only want one thread at maximum trying to flush and cleanup
+        if (checks >= bufferChecksThreshold && checks < bufferChecksThreshold + checksAddedPerNewBuffer)
+        {
+            const std::unique_lock lock{allBuffersMutex};
+            flushNewBuffers();
+            cleanupAllBuffers(bufferChecksThreshold);
+            buffersToCheck.fetch_sub(bufferChecksThreshold);
+        }
     }
 
-    return PinnedBuffer{controlBlock, segment, detail::ChildOrMainDataKey::MAIN()};
+    PinnedBuffer newBuffer{controlBlock, segment, detail::ChildOrMainDataKey::MAIN()};
+    controlBlock->pinnedRelease();
+    return newBuffer;
 }
 PinnedBuffer BufferManager::getBufferBlocking()
 {
@@ -849,9 +986,14 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
     auto dataSegment = detail::DataSegment{detail::InMemoryLocation{ptr + controlBlockSize, true}, bufferSize};
     auto* controlBlock = reinterpret_cast<detail::BufferControlBlock*>(ptr);
     new (controlBlock) detail::BufferControlBlock{dataSegment, this};
+
+    controlBlock->pinnedRetain();
     std::unique_lock allBuffersLock{allBuffersMutex};
     allBuffers.push_back(controlBlock);
-    return PinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
+    PinnedBuffer pinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
+    controlBlock->pinnedRelease();
+
+    return pinnedBuffer;
 }
 
 void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& segment)

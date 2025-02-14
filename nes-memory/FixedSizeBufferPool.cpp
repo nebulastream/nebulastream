@@ -86,9 +86,12 @@ std::optional<PinnedBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std:
     if (exclusiveBuffers.tryReadUntil(now + timeout, inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        controlBlock->dataRetain();
         std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
-        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+        PinnedBuffer pinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+        controlBlock->dataRelease();
+        return pinnedBuffer;
     }
     return std::nullopt;
 }
@@ -138,23 +141,29 @@ size_t FixedSizeBufferPool::getBufferSize() const
 {
     return bufferManager->getBufferSize();
 }
+
 size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 {
     return numberOfReservedBuffers;
 }
+
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
     throw UnsupportedOperation("This function is not supported here");
 }
+
 std::optional<PinnedBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     detail::DataSegment<detail::InMemoryLocation> inMemorySegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
     if (exclusiveBuffers.read(inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        controlBlock->dataRetain();
         std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
-        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+        auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};
+        controlBlock->dataRelease();
+        return pinnedBuffer;
     }
     return std::nullopt;
 }
