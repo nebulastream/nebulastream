@@ -38,7 +38,7 @@ QueryCompiler::QueryCompiler(Configurations::QueryCompilerConfiguration queryCom
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(this->queryCompilerConfig))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(this->queryCompilerConfig))
     , pipeliningPhase(phaseFactory.createPipeliningPhase())
-    , addScanAndEmitPhase(phaseFactory.createAddScanAndEmitPhase(queryCompilerConfig))
+    , addScanAndEmitPhase(phaseFactory.createAddScanAndEmitPhase(this->queryCompilerConfig))
 {
 }
 

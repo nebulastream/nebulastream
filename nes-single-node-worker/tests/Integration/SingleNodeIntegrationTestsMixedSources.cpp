@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>

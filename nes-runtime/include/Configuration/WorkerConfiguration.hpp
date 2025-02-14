@@ -14,27 +14,24 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/WrapOption.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
-namespace NES
+namespace NES::Configurations
 {
-
-
-namespace Configurations
-{
-
-
 class WorkerConfiguration final : public BaseConfiguration
 {
 public:
     WorkerConfiguration() = default;
-    WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(std::move(name), std::move(description)) {};
+    WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
 
     StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};
@@ -85,5 +82,4 @@ private:
         };
     }
 };
-}
 }

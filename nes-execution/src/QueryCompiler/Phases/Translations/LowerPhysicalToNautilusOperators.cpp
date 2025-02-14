@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
@@ -45,6 +46,7 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
