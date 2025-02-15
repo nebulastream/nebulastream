@@ -85,7 +85,9 @@ void WorkerContext::storeNetworkChannelFuture(
     if (!dataChannelFutures.contains(id)) {
         dataChannelFutures[id] = std::move(channelFuture);
     } else {
-        NES_FATAL_ERROR("WorkerContext: storing channel future for operator {}  for context {} but there already is a future", id, workerId);
+        NES_FATAL_ERROR("WorkerContext: storing channel future for operator {}  for context {} but there already is a future",
+                        id,
+                        workerId);
     }
 }
 
@@ -219,8 +221,8 @@ std::pair<Network::NetworkChannel*, WorkerId> WorkerContext::getNetworkChannel(N
         return {nullptr, INVALID_WORKER_NODE_ID};
     }
     NES_DEBUG("WorkerContext: found channel for operator {} for context {}, retrieving data", ownerId, workerId);
-//    return {(*it).second.first.get(), WorkerId ((*it).second.second)};
-    std::pair p = {(*it).second.first.get(), WorkerId ((*it).second.second)};
+    //    return {(*it).second.first.get(), WorkerId ((*it).second.second)};
+    std::pair p = {(*it).second.first.get(), WorkerId((*it).second.second)};
     NES_DEBUG("WorkerContext: retrieved data for  channel for operator {} for context {}, returning", ownerId, workerId);
     return p;
 }
@@ -247,9 +249,7 @@ WorkerContext::getAsyncConnectionResult(NES::OperatorId operatorId) {
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
 }
-void WorkerContext::dropReconnectBufferStorage(OperatorId operatorId) {
-    reconnectBufferStorage.erase(operatorId);
-}
+void WorkerContext::dropReconnectBufferStorage(OperatorId operatorId) { reconnectBufferStorage.erase(operatorId); }
 
 std::optional<Network::EventOnlyNetworkChannelPtr> WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
@@ -338,18 +338,25 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
         dataChannelFutures.erase(iteratorOperatorId);
         return;
     }
-    auto& [pairRef, promise] = iteratorOperatorId->second.value();
-    auto& [future, receiver] = pairRef;
+    //    auto& [pairRef, promise] = iteratorOperatorId->second.value();
+    //    auto& [future, receiver] = pairRef;
+
+    auto pair = std::move(iteratorOperatorId->second.value());
     // auto& [future, promise] = iteratorOperatorId->second.value();
     //signal connection process to stop
+
+    auto promise = std::move(pair.second);
     promise.set_value(true);
+    auto future = std::move(pair.first.first);
     //wait for the future to be set so we can make sure that channel is closed in case it has already been created
-    auto channel = future.get();
-    if (channel) {
-        uint16_t numSendingThreads = 0;
-        uint16_t currentMessageSequenceNumber = 0;
-        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
-    }
+    std::thread thread([future = std::move(future)]() mutable {
+        auto channel = future.get();
+        if (channel) {
+            uint16_t numSendingThreads = 0;
+            uint16_t currentMessageSequenceNumber = 0;
+            channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
+        }
+    });
     dataChannelFutures.erase(iteratorOperatorId);
 }
 
