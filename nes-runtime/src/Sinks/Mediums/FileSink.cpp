@@ -31,6 +31,7 @@
 #include <sys/un.h>
 #include <utility>
 #include <thread>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES {
 
@@ -171,7 +172,7 @@ struct Record {
     uint64_t outputTimestamp;
 };
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
 
     NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
     if (!getReplayData()) {
@@ -203,8 +204,16 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+    auto bufferCopy = context.getUnpooledBuffer(inputBuffer.getBufferSize());
+    std::memcpy(bufferCopy.getBuffer(), inputBuffer.getBuffer(), inputBuffer.getBufferSize());
+    bufferCopy.setNumberOfTuples(inputBuffer.getNumberOfTuples());
+    bufferCopy.setOriginId(inputBuffer.getOriginId());
+    bufferCopy.setWatermark(inputBuffer.getWatermark());
+    bufferCopy.setCreationTimestampInMS(inputBuffer.getCreationTimestampInMS());
+    bufferCopy.setSequenceNumber(inputBuffer.getSequenceNumber());
+//    inputBuffer.release();
     {
-        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, inputBuffer);
+        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
     }
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
@@ -233,10 +242,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         {
             NES_ERROR("getting read lock for buffer storage")
-            auto bufferStorageLocked = bufferStorage.wlock();
+            auto bufferStorageLocked = bufferStorage.rlock();
             //todo: reduce hashmap lookups
-            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
-                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
+            for (auto it = bufferStorageLocked->at(sourceId).lower_bound(lastWritten + 1);
+                 it != bufferStorageLocked->at(sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
             }

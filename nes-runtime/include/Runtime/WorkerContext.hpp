@@ -334,6 +334,7 @@ class WorkerContext {
     std::pair<Network::NetworkChannel*, WorkerId> getNetworkChannel(OperatorId ownerId);
     std::optional<std::pair<Network::NetworkChannelPtr, WorkerId>> getAsyncConnectionResult(OperatorId operatorId);
     void dropReconnectBufferStorage(OperatorId operatorId);
+    TupleBuffer getUnpooledBuffer(uint64_t bufferSize);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

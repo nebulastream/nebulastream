@@ -129,6 +129,11 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
+TupleBuffer WorkerContext::getUnpooledBuffer(uint64_t bufferSize) {
+    return localBufferPool->getUnpooledBuffer(bufferSize).value();
+}
+
+
 bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
