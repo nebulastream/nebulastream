@@ -166,7 +166,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     //              sourceInfo->seqReadFromSocketTotal,
     //              totalTuplesToReplay);
 
-    NES_DEBUG("replay buffer {}, end of replay at {}", replayOffset, sourceInfo->records.size());
+    NES_DEBUG("replay buffer {} (index {}), end of replay at {}", replayOffset + 1, replayOffset, sourceInfo->records.size());
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replay, replay->size() * sizeof(Record));
@@ -191,14 +191,14 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
-            NES_ERROR("has checked acknowledgement is false, there are {} stored buffers", sourceInfo->records.size());
+//            NES_ERROR("there are {} stored buffers", sourceInfo->records.size());
             if (!sourceInfo->records.empty()) {
                 //                if (sourceInfo->seqReadFromSocketTotal != 0) {
-                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
+//                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto id = sourceInfo->records.front().front().id;
                 auto ack = queryManager->getSourceAck(id);
                 if (ack.has_value()) {
-                    NES_ERROR("found ack");
+//                    NES_ERROR("found ack");
                     sentUntil = std::max(sentUntil, ack.value());
                 }
             }
