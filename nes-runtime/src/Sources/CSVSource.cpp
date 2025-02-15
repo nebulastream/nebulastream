@@ -166,7 +166,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     //              sourceInfo->seqReadFromSocketTotal,
     //              totalTuplesToReplay);
 
-    NES_DEBUG("replay buffer {} (index {}), end of replay at {}", replayOffset + 1, replayOffset, sourceInfo->records.size());
+    NES_ERROR("replay buffer {} (index {}), end of replay at {}", replayOffset + 1, replayOffset, sourceInfo->records.size());
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replay, replay->size() * sizeof(Record));
