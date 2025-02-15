@@ -90,7 +90,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         zmqSocket.close();
                         return nullptr;
                     }
-                    backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                    backOffTime = std::min(std::chrono::milliseconds(10), backOffTime);
                     continue;
                 }
                 //}
@@ -113,7 +113,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                 zmqSocket.close();
                                 return nullptr;
                             }
-                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                            backOffTime = std::min(std::chrono::milliseconds(10), backOffTime);
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -144,7 +144,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                 zmqSocket.close();
                                 return nullptr;
                             }
-                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                            backOffTime = std::min(std::chrono::milliseconds(10), backOffTime);
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
@@ -186,7 +186,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                           std::to_string(backOffTime.count()));
                 std::this_thread::sleep_for(backOffTime);// TODO make this async
                 backOffTime *= 2;
-                backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
+                backOffTime = std::min(std::chrono::milliseconds(10), backOffTime);
                 i++;
             }
             NES_ERROR("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);

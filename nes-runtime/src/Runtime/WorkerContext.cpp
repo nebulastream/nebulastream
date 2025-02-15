@@ -343,34 +343,19 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
         dataChannelFutures.erase(iteratorOperatorId);
         return;
     }
-    //    auto& [pairRef, promise] = iteratorOperatorId->second.value();
-    //    auto& [future, receiver] = pairRef;
-
-    auto pair = std::move(iteratorOperatorId->second.value());
-    NES_ERROR("inserting nullopt");
-    dataChannelFutures.insert({operatorId, std::nullopt});
-    NES_ERROR("erasing");
-    dataChannelFutures.erase(iteratorOperatorId);
+    auto& [pairRef, promise] = iteratorOperatorId->second.value();
+    auto& [future, receiver] = pairRef;
     // auto& [future, promise] = iteratorOperatorId->second.value();
     //signal connection process to stop
-
-    auto promise = std::move(pair.second);
     promise.set_value(true);
-    auto future = std::move(pair.first.first);
     //wait for the future to be set so we can make sure that channel is closed in case it has already been created
-    NES_ERROR("creating thread for deleting channel");
-    std::thread thread([future = std::move(future)]() mutable {
-        auto channel = future.get();
-        if (channel) {
-            uint16_t numSendingThreads = 0;
-            uint16_t currentMessageSequenceNumber = 0;
-            channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
-        }
-    });
-    thread.detach();
-    NES_ERROR("deleting channel future");
-    //TODO: is moving enough?
-//    dataChannelFutures.erase(iteratorOperatorId);
+    auto channel = future.get();
+    if (channel) {
+        uint16_t numSendingThreads = 0;
+        uint16_t currentMessageSequenceNumber = 0;
+        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
+    }
+    dataChannelFutures.erase(iteratorOperatorId);
 }
 
 bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
