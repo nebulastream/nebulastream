@@ -121,7 +121,10 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
 
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
-    bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
+
+    {
+        bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
+    }
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
 
@@ -140,16 +143,18 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
             std::vector<Runtime::TupleBuffer> bulkWriteBatch;
 
             {
-                auto bufferStorageLocked = *bufferStorage.rlock();
-                for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
-                     it != bufferStorageLocked.upper_bound(currentSeqNumberAfterAdding);
-                     ++it) {
-                    bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
+                auto bufferStorageLocked = *bufferStorage.wlock();
+                auto lower = bufferStorageLocked.lower_bound(lastWritten + 1);
+                auto upper = bufferStorageLocked.upper_bound(currentSeqNumberAfterAdding);
+                for (auto it = lower; it != upper; ++it) {
+                    bulkWriteBatch.push_back(it->second);
                 }
+                bufferStorageLocked.erase(lower, upper);
             }
 
             // Write all buffers at once
             writeBulkToFile(bulkWriteBatch);
+
             // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
 
             // Update lastWritten to the latest sequence number
