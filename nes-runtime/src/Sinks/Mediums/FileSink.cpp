@@ -16,6 +16,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
@@ -29,9 +30,8 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <utility>
 #include <thread>
-#include <Runtime/WorkerContext.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -151,8 +151,8 @@ void FileSink::shutdown() {
         auto sharedQueryId = this->sharedQueryId;
         if (getReplayData()) {
             std::thread thread([nodeEngine, filePath, sharedQueryId]() mutable {
-              auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
-              nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
+                auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
+                nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
             });
             thread.detach();
         }
@@ -164,15 +164,8 @@ void FileSink::shutdown() {
     }
 }
 
-struct Record {
-    uint64_t id;
-    uint64_t value;
-    uint64_t ingestionTimestamp;
-    uint64_t processingTimestamp;
-    uint64_t outputTimestamp;
-};
-
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
+    (void) context;
 
     NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
     if (!getReplayData()) {
@@ -184,7 +177,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
     numberOfReceivedBuffers++;
-
 
     //    if (!isOpen) {
     //        NES_DEBUG("The output file could not be opened during setup of the file sink.");
@@ -204,16 +196,22 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     // get sequence number of received buffer
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
-    auto bufferCopy = context.getUnpooledBuffer(inputBuffer.getBufferSize());
-    std::memcpy(bufferCopy.getBuffer(), inputBuffer.getBuffer(), inputBuffer.getBufferSize());
-    bufferCopy.setNumberOfTuples(inputBuffer.getNumberOfTuples());
-    bufferCopy.setOriginId(inputBuffer.getOriginId());
-    bufferCopy.setWatermark(inputBuffer.getWatermark());
-    bufferCopy.setCreationTimestampInMS(inputBuffer.getCreationTimestampInMS());
-    bufferCopy.setSequenceNumber(inputBuffer.getSequenceNumber());
-//    inputBuffer.release();
+    //    auto bufferCopy = context.getUnpooledBuffer(inputBuffer.getBufferSize());
+    //    std::memcpy(bufferCopy.getBuffer(), inputBuffer.getBuffer(), inputBuffer.getBufferSize());
+    //    bufferCopy.setNumberOfTuples(inputBuffer.getNumberOfTuples());
+    //    bufferCopy.setOriginId(inputBuffer.getOriginId());
+    //    bufferCopy.setWatermark(inputBuffer.getWatermark());
+    //    bufferCopy.setCreationTimestampInMS(inputBuffer.getCreationTimestampInMS());
+    //    bufferCopy.setSequenceNumber(inputBuffer.getSequenceNumber());
+    //    inputBuffer.release();
     {
-        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
+        //        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
+        auto records = (Record*) inputBuffer.getBuffer();
+        std::vector<Record> vector;
+        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
+            vector.push_back(records[i]);
+        }
+        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, std::move(vector));
     }
     // save the highest consecutive sequence number in the queue
     auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
@@ -233,7 +231,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
     if (lastWrittenMap) {
         NES_ERROR("got log for written map")
-        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+//        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+        std::vector<std::vector<Record>> bulkWriteBatch;
 
         if (!lastWrittenMap->contains(sourceId)) {
             lastWrittenMap->insert({sourceId, 0});
@@ -290,6 +289,41 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     NES_ERROR("returning")
     return true;
+}
+
+bool FileSink::writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite) {
+
+    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+    if (timestampAndWriteToSocket) {
+        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
+
+        for (auto records : buffersToWrite) {
+            //todo: do not checkpoint if incremental is enabled
+            for (uint64_t i = 0; i < records.size(); ++i) {
+                records[i].outputTimestamp = getTimestamp();
+                //                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
+                //                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
+                //                    checkpoint = records[i].value;
+                //                }
+            }
+            //        NES_ERROR("Writing to tcp sink");
+            ssize_t bytes_written =
+                write(sinkInfo->sockfd, records.data(), records.size() * sizeof(Record));
+            //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
+            if (bytes_written == -1) {
+                NES_ERROR("Could not write to socket in sink")
+                perror("write");
+                close(sinkInfo->sockfd);
+                return 1;
+            }
+
+            //        receivedBuffers.push_back(bufferContent);
+            //        arrivalTimestamps.push_back(getTimestamp());
+        }
+        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
+        return true;
+    }
+    return false;
 }
 
 bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite) {

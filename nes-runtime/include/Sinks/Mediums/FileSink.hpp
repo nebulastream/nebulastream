@@ -25,6 +25,14 @@
 
 namespace NES {
 
+struct Record {
+    uint64_t id;
+    uint64_t value;
+    uint64_t ingestionTimestamp;
+    uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
+};
+
 /**
  * @brief The file sink writes the stream result to a text file, in CSV or JSON format.
  */
@@ -92,6 +100,7 @@ class FileSink : public SinkMedium {
      * @return bool indicating if the write was complete
      */
     bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
+    bool writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite);
   protected:
 
     bool writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite);
@@ -115,11 +124,8 @@ class FileSink : public SinkMedium {
     std::atomic<uint64_t> numberOfReceivedBuffers{0};
     Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
     // keep unordered tuple buffers with sequence number as key
-    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, Runtime::TupleBuffer>>> bufferStorage;
-
-    // sequence number of last written tuple buffer
-//    std::atomic<uint64_t> lastWritten{0};
-//    std::mutex lastWrittenMtx;
+//    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, Runtime::TupleBuffer>>> bufferStorage;
+    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::vector<Record>>>> bufferStorage;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
