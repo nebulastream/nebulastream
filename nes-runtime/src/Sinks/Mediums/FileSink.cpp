@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <utility>
+#include <thread>
 
 namespace NES {
 
@@ -87,66 +88,72 @@ void FileSink::setup() {
         }
     }
 
-if (!timestampAndWriteToSocket) {
-    // Open the file stream
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-    }
-    isOpen = outputFile.is_open() && outputFile.good();
-    if (!isOpen) {
-        NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
-                  filePath,
-                  outputFile.is_open(),
-                  outputFile.good());
-    }
+    if (!timestampAndWriteToSocket) {
+        // Open the file stream
+        if (!outputFile.is_open()) {
+            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        }
+        isOpen = outputFile.is_open() && outputFile.good();
+        if (!isOpen) {
+            NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
+                      filePath,
+                      outputFile.is_open(),
+                      outputFile.good());
+        }
 
-} else {
+    } else {
 
-    //todo: use this in case domain socket should be used instead of tcp
-    //    // Create a Unix domain socket
-    //    clientSockFd = socket(AF_UNIX, SOCK_STREAM, 0);
-    //    if (clientSockFd == -1) {
-    //        perror("socket");
-    //        return;
-    //    }
-    //
-    //    // Set up the address structure
-    //    struct sockaddr_un addr;
-    //    memset(&addr, 0, sizeof(addr));
-    //    addr.sun_family = AF_UNIX;
-    //    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
-    //
-    //    // Connect to the Unix domain socket
-    //    if (connect(clientSockFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-    //        perror("connect");
-    //        close(clientSockFd);
-    //        return;
-    //    }
+        //todo: use this in case domain socket should be used instead of tcp
+        //    // Create a Unix domain socket
+        //    clientSockFd = socket(AF_UNIX, SOCK_STREAM, 0);
+        //    if (clientSockFd == -1) {
+        //        perror("socket");
+        //        return;
+        //    }
+        //
+        //    // Set up the address structure
+        //    struct sockaddr_un addr;
+        //    memset(&addr, 0, sizeof(addr));
+        //    addr.sun_family = AF_UNIX;
+        //    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
+        //
+        //    // Connect to the Unix domain socket
+        //    if (connect(clientSockFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        //        perror("connect");
+        //        close(clientSockFd);
+        //        return;
+        //    }
 
-    NES_DEBUG("Connecting to tcp socket on worker {}", nodeEngine->getNodeId());
-    //todo: this will not work for multiple sinks
-//    if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
-////    if (true) {
-//    } else {
-//        sockfd = this->nodeEngine->getTcpDescriptor(filePath).value();
-//        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
-//    }
-    //get it once
-    NES_DEBUG("creating socket for file sink")
+        NES_DEBUG("Connecting to tcp socket on worker {}", nodeEngine->getNodeId());
+        //todo: this will not work for multiple sinks
+        //    if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
+        ////    if (true) {
+        //    } else {
+        //        sockfd = this->nodeEngine->getTcpDescriptor(filePath).value();
+        //        NES_ERROR("Found existing tcp descriptor {} for {}", sockfd, filePath)
+        //    }
+        //get it once
+        NES_DEBUG("creating socket for file sink")
         auto sockfd = nodeEngine->getTcpDescriptor(filePath);
-}
+    }
 }
 
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
         NES_ERROR("sink notifies checkpoints");
-//        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-//        auto checkpoints = sinkInfo->checkpoints;
+        //        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+        //        auto checkpoints = sinkInfo->checkpoints;
 
+        auto nodeEngine = this->nodeEngine;
+        auto filePath = this->filePath;
+        auto sharedQueryId = this->sharedQueryId;
         if (getReplayData()) {
-            auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
-            nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
+            std::thread thread([nodeEngine, filePath, sharedQueryId]() mutable {
+              auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
+              nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
+            });
+            thread.detach();
         }
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
         //        for (const auto& bufferContent : receivedBuffers) {
@@ -164,7 +171,6 @@ struct Record {
     uint64_t outputTimestamp;
 };
 
-
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
 
     if (!getReplayData()) {
@@ -172,16 +178,16 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         return writeDataToTCP(vec);
     }
 
- // Stop execution if the file could not be opened during setup.
+    // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
     numberOfReceivedBuffers++;
 
-     NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
-//    if (!isOpen) {
-//        NES_DEBUG("The output file could not be opened during setup of the file sink.");
-//        return false;
-//    }
+    //    if (!isOpen) {
+    //        NES_DEBUG("The output file could not be opened during setup of the file sink.");
+    //        return false;
+    //    }
 
     if (!inputBuffer) {
         NES_ERROR("Invalid input buffer");
@@ -210,81 +216,74 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
 
-
     NES_ERROR("seq number before adding {}, after adding {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding);
     // check if top value in the queue has changed after adding new sequence number
-//    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-        NES_ERROR("try to acquire ")
-        auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
-        if (lastWrittenMap) {
-            std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+    //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+    NES_ERROR("try to acquire ")
+    auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
+    if (lastWrittenMap) {
+        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
 
-            if (!lastWrittenMap->contains(sourceId)) {
-                lastWrittenMap->insert({sourceId, 0});
-            };
-            auto& lastWritten = lastWrittenMap->at(sourceId);
+        if (!lastWrittenMap->contains(sourceId)) {
+            lastWrittenMap->insert({sourceId, 0});
+        };
+        auto& lastWritten = lastWrittenMap->at(sourceId);
 
-            {
-                auto bufferStorageLocked = *bufferStorage.rlock();
-                //todo: reduce hashmap lookups
-                for (auto it = bufferStorageLocked[sourceId].lower_bound(lastWritten + 1);
-                     it != bufferStorageLocked[sourceId].upper_bound(currentSeqNumberAfterAdding);
-                     ++it) {
-                    bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
-                }
+        {
+            auto bufferStorageLocked = *bufferStorage.rlock();
+            //todo: reduce hashmap lookups
+            for (auto it = bufferStorageLocked[sourceId].lower_bound(lastWritten + 1);
+                 it != bufferStorageLocked[sourceId].upper_bound(currentSeqNumberAfterAdding);
+                 ++it) {
+                bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
             }
-
-            // Write all buffers at once
-            writeDataToTCP(bulkWriteBatch);
-            // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
-
-            // Update lastWritten to the latest sequence number
-            lastWritten = currentSeqNumberAfterAdding;
         }
-//    }
 
-//todo: check if we need this
-//    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
-//        lastWrittenMtx.lock();
-//        auto bufferStorageLocked = *bufferStorage.rlock();
-//        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-//        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
-//
-//        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
-//        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
-//             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
-//             ++it) {
-//            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
-//        }
-//
-//        // Write all buffers at once
-//        writeDataToTCP(bulkWriteBatch);
-//
-//        // Update lastWritten to the latest sequence number
-//        lastWritten = inputBuffer.getWatermark();
-//        lastWrittenMtx.unlock();
-//    }
+        // Write all buffers at once
+        writeDataToTCP(bulkWriteBatch);
+        // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
+
+        // Update lastWritten to the latest sequence number
+        lastWritten = currentSeqNumberAfterAdding;
+    }
+    //    }
+
+    //todo: check if we need this
+    //    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
+    //        lastWrittenMtx.lock();
+    //        auto bufferStorageLocked = *bufferStorage.rlock();
+    //        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
+    //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+    //
+    //        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
+    //        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
+    //             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
+    //             ++it) {
+    //            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
+    //        }
+    //
+    //        // Write all buffers at once
+    //        writeDataToTCP(bulkWriteBatch);
+    //
+    //        // Update lastWritten to the latest sequence number
+    //        lastWritten = inputBuffer.getWatermark();
+    //        lastWrittenMtx.unlock();
+    //    }
 
     return true;
-
-
-
 }
 
-
-bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite) {
-
+bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite) {
 
     // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
     auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
     if (timestampAndWriteToSocket) {
         NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-//        std::string bufferContent;
+        //        std::string bufferContent;
         //auto schema = sinkFormat->getSchemaPtr();
         //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
         //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
         //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
-
 
         // Write data to the socket
         //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
@@ -295,13 +294,14 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite
             //todo: do not checkpoint if incremental is enabled
             for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
                 records[i].outputTimestamp = getTimestamp();
-//                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-//                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
-//                    checkpoint = records[i].value;
-//                }
+                //                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
+                //                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
+                //                    checkpoint = records[i].value;
+                //                }
             }
             //        NES_ERROR("Writing to tcp sink");
-            ssize_t bytes_written = write(sinkInfo->sockfd, bufferToWrite.getBuffer(), bufferToWrite.getNumberOfTuples() * sizeof(Record));
+            ssize_t bytes_written =
+                write(sinkInfo->sockfd, bufferToWrite.getBuffer(), bufferToWrite.getNumberOfTuples() * sizeof(Record));
             //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
             if (bytes_written == -1) {
                 NES_ERROR("Could not write to socket in sink")
@@ -312,14 +312,12 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer> & buffersToWrite
 
             //        receivedBuffers.push_back(bufferContent);
             //        arrivalTimestamps.push_back(getTimestamp());
-
         }
         NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
         return true;
     }
     return false;
 }
-
 
 //bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
 //    // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
