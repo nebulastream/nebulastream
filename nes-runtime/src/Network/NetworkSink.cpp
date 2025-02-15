@@ -365,8 +365,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 } else {
                     NES_ERROR("aborting connection process");
                     workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+                    NES_ERROR("killed connection process");
                     workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+                    NES_ERROR("dropped buffers");
                     networkManager->unregisterSubpartitionProducer(nesPartition);
+                    NES_ERROR("unregistered partition");
                     return;
                 }
             }
