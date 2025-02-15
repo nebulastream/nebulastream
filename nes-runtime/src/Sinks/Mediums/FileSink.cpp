@@ -227,7 +227,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
             //todo: fixme
             for (uint64_t i = 0; i <= lastWritten; ++i) {
-                const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+                const auto seqData = SequenceData(i, 1, true);
                 newQueue.emplace(seqData, i);
             }
             readLock->operator[](sourceId) = newQueue;
@@ -250,7 +250,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
     NES_ERROR("try to acquire lock for written map")
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
-    if (lastWrittenMap) {
+    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding && lastWrittenMap) {
         NES_ERROR("got lock for written map")
         //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
         std::vector<std::vector<Record>> bulkWriteBatch;
