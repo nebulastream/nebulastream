@@ -220,9 +220,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     NES_ERROR("seq number before adding {}, after adding {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding);
     // check if top value in the queue has changed after adding new sequence number
     //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-    NES_ERROR("try to acquire ")
+    NES_ERROR("try to acquire lock for written map")
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
     if (lastWrittenMap) {
+        NES_ERROR("got log for written map")
         std::vector<Runtime::TupleBuffer> bulkWriteBatch;
 
         if (!lastWrittenMap->contains(sourceId)) {
@@ -231,17 +232,22 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto& lastWritten = lastWrittenMap->at(sourceId);
 
         {
-            auto bufferStorageLocked = *bufferStorage.rlock();
+            NES_ERROR("getting read lock for buffer storage")
+            auto bufferStorageLocked = bufferStorage.wlock();
             //todo: reduce hashmap lookups
-            for (auto it = bufferStorageLocked[sourceId].lower_bound(lastWritten + 1);
-                 it != bufferStorageLocked[sourceId].upper_bound(currentSeqNumberAfterAdding);
+            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
+                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
             }
         }
 
+        NES_ERROR("writing data to tcp")
+
         // Write all buffers at once
         writeDataToTCP(bulkWriteBatch);
+
+        NES_ERROR("wrote data to tcp updatign last written count")
         // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
 
         // Update lastWritten to the latest sequence number
@@ -271,6 +277,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //        lastWrittenMtx.unlock();
     //    }
 
+    NES_ERROR("returning")
     return true;
 }
 
