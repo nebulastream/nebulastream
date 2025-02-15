@@ -47,7 +47,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
 
     auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion);
 
-    NES_DEBUG("AbstractQueryManager::registerExecutableQueryPlan: shared query id {} and decomposed query id {}.{}",
+    NES_ERROR("AbstractQueryManager::registerExecutableQueryPlan: shared query id {} and decomposed query id {}.{}",
               sharedQueryId,
               decomposedQueryId,
               decomposedQueryVersion);
@@ -87,7 +87,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         decomposeQueryToSourceIdMapping[decomposedQueryIdWithVersion] = sourceIds;
     }
 
-    NES_DEBUG("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
+    NES_ERROR("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
               decomposedQueryId,
               sharedQueryId,
               decomposedQueryId);

@@ -48,7 +48,7 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
     auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
         (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
 
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
+    NES_ERROR("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
               "{} plan={}",
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryId(),
@@ -58,6 +58,7 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
         //check if the plan is reconfigured
         NES_ASSERT(decomposedQueryPlan->getState() != QueryState::MARKED_FOR_REDEPLOYMENT,
                    "Plan marked for redeployment should not be registered again");
+        NES_ERROR("registered decomposed query plan")
         success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());
