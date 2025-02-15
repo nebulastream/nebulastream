@@ -362,6 +362,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
             channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
         }
     });
+    thread.detach();
     NES_ERROR("deleting channel future");
     //TODO: is moving enough?
 //    dataChannelFutures.erase(iteratorOperatorId);
