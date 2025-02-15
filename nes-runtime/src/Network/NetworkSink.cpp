@@ -338,6 +338,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 if (terminationType != Runtime::QueryTerminationType::HardStop) {
+                    NES_ERROR("shuting doewn network sink, try to extablish connection to unbuffer");
                     //todo #5159: make sure that downstream plans are garbage collected if they do not receive a drain
                     //wait until channel has either connected or connection times out
                     NES_DEBUG("NetworkSink: reconfigure() waiting for channel to connect in order to unbuffer before shutdown. "
@@ -362,6 +363,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                         return;
                     }
                 } else {
+                    NES_ERROR("aborting connection process");
                     workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
                     workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
                     networkManager->unregisterSubpartitionProducer(nesPartition);
