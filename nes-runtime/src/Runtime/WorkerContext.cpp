@@ -342,6 +342,10 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
     //    auto& [future, receiver] = pairRef;
 
     auto pair = std::move(iteratorOperatorId->second.value());
+    NES_ERROR("inserting nullopt");
+    dataChannelFutures.insert({operatorId, std::nullopt});
+    NES_ERROR("erasing");
+    dataChannelFutures.erase(iteratorOperatorId);
     // auto& [future, promise] = iteratorOperatorId->second.value();
     //signal connection process to stop
 
@@ -359,6 +363,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
         }
     });
     NES_ERROR("deleting channel future");
+    //TODO: is moving enough?
 //    dataChannelFutures.erase(iteratorOperatorId);
 }
 
