@@ -349,6 +349,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
     promise.set_value(true);
     auto future = std::move(pair.first.first);
     //wait for the future to be set so we can make sure that channel is closed in case it has already been created
+    NES_ERROR("creating thread for deleting channel");
     std::thread thread([future = std::move(future)]() mutable {
         auto channel = future.get();
         if (channel) {
@@ -357,6 +358,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
             channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber);
         }
     });
+    NES_ERROR("deleting channel future");
     dataChannelFutures.erase(iteratorOperatorId);
 }
 
