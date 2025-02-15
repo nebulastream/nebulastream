@@ -157,29 +157,18 @@ std::optional<Runtime::TupleBuffer>
 CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
                             Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     auto replayOffset = sentUntil;
-    //    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
-    //    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
-
-    //    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
-    //              numTuplesToReplay,
-    //              replayOffset,
-    //              sourceInfo->seqReadFromSocketTotal,
-    //              totalTuplesToReplay);
 
     NES_ERROR("replay buffer {} (index {}), end of replay at {}", replayOffset + 1, replayOffset, sourceInfo->records.size());
-    auto replay = &sourceInfo->records[replayOffset];
+//    auto replay = &sourceInfo->records[replayOffset];
+    auto replayVec = sourceInfo->records.at(replayOffset);
+//    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
-    std::memcpy(records, replay, replay->size() * sizeof(Record));
-    buffer.setNumberOfTuples(replay->size());
+    std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
+    buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
 
-    //    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
-    //    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
-//    if (sourceInfo->replayedUntil == sourceInfo->records.size()) {
-//        sourceInfo->replayedUntil = std::nullopt;
-//    }
     return returnBuffer;
 }
 
