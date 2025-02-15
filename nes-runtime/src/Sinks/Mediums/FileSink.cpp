@@ -252,7 +252,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     NES_ERROR("try to acquire lock for written map")
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
     if (lastWrittenMap) {
-        NES_ERROR("got log for written map")
+        NES_ERROR("got lock for written map")
 //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
         std::vector<std::vector<Record>> bulkWriteBatch;
 
@@ -262,13 +262,14 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto& lastWritten = lastWrittenMap->at(sourceId);
 
         {
-            NES_ERROR("getting read lock for buffer storage")
-            auto bufferStorageLocked = bufferStorage.rlock();
+            NES_ERROR("getting lock for buffer storage")
+            auto bufferStorageLocked = bufferStorage.wlock();
             //todo: reduce hashmap lookups
-            for (auto it = bufferStorageLocked->at(sourceId).lower_bound(lastWritten + 1);
-                 it != bufferStorageLocked->at(sourceId).upper_bound(currentSeqNumberAfterAdding);
+            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
+                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
+                bufferStorageLocked->operator[](sourceId).erase(it);
             }
         }
 
