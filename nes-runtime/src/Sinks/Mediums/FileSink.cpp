@@ -268,11 +268,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
+                NES_ERROR("adding element with seq {}", it->second.front().id);
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
             }
             for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
+                NES_ERROR("erasing element with seq {}", it->second.front().id);
                 bufferStorageLocked->operator[](sourceId).erase(it);
             }
         }
