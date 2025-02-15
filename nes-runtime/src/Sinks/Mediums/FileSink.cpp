@@ -173,7 +173,9 @@ struct Record {
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
 
+    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
     if (!getReplayData()) {
+        NES_ERROR("replay data not activated writing buffer");
         std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
         return writeDataToTCP(vec);
     }
@@ -182,7 +184,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // This results in ExecutionResult::Error for the task.
     numberOfReceivedBuffers++;
 
-    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
     //    if (!isOpen) {
     //        NES_DEBUG("The output file could not be opened during setup of the file sink.");
