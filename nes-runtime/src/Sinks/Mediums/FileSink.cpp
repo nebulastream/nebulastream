@@ -219,7 +219,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         if (!readLock->contains(sourceId)) {
             auto lastWrittenMap = nodeEngine->lockLastWritten(filePath);
 
-
             uint64_t lastWritten = 0;
             if (lastWrittenMap->contains(sourceId)) {
                 lastWritten = lastWrittenMap->at(sourceId);
@@ -253,7 +252,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
     if (lastWrittenMap) {
         NES_ERROR("got lock for written map")
-//        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+        //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
         std::vector<std::vector<Record>> bulkWriteBatch;
 
         if (!lastWrittenMap->contains(sourceId)) {
@@ -268,15 +267,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
-                NES_ERROR("adding element with seq {}", it->second.front().id);
+                NES_ERROR("adding element with id {}", it->second.front().id);
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
             }
-            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
-                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
-                 ++it) {
-                NES_ERROR("erasing element with seq {}", it->second.front().id);
-                bufferStorageLocked->operator[](sourceId).erase(it);
-            }
+            NES_ERROR("erasing elements");
+            bufferStorageLocked->operator[](sourceId).erase(
+                bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1),
+                bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
         }
 
         //TODO: take care of cleanup
@@ -336,8 +333,7 @@ bool FileSink::writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite) 
                 //                }
             }
             //        NES_ERROR("Writing to tcp sink");
-            ssize_t bytes_written =
-                write(sinkInfo->sockfd, records.data(), records.size() * sizeof(Record));
+            ssize_t bytes_written = write(sinkInfo->sockfd, records.data(), records.size() * sizeof(Record));
             //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
             if (bytes_written == -1) {
                 NES_ERROR("Could not write to socket in sink")
