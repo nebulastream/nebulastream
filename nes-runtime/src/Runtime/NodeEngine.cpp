@@ -1057,16 +1057,22 @@ NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) c
 void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
     nesWorker->notifyCheckpointToCoordinator(sharedQueryId, checkpoints);
 }
-//folly::Synchronized<std::unordered_map<uint64_t, uint64_t>, folly::detail::SynchronizedLockPolicyTryExclusive>::LockedPtr NodeEngine::tryLockLastWritten(std::string sinkName) {
+
+folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::RLockedPtr NodeEngine::lockLastWritten(std::string sinkName) {
+    std::unique_lock lock(lastWrittenMutex);
+    if (lastWrites.contains(sinkName)) {
+        return lastWrites.at(sinkName).rlock();
+    }
+    lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
+    return lastWrites.at(sinkName).rlock();
+
+}
+
 folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::TryWLockedPtr NodeEngine::tryLockLastWritten(std::string sinkName) {
     std::unique_lock lock(lastWrittenMutex);
     if (lastWrites.contains(sinkName)) {
-        //        return lastWrites.at(sinkName).wlock();
         return lastWrites.at(sinkName).tryWLock();
-//        auto lockedPtr = lastWrites.at(sinkName).tryWLock();
     }
-//    auto map = std::unordered_map<uint64_t, uint64_t>();
-//    lastWrites.insert({sinkName, folly::Synchronized(std::move(map))});
         lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
     return lastWrites.at(sinkName).tryWLock();
 }

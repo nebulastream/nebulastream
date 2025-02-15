@@ -213,16 +213,38 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
         bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, std::move(vector));
     }
+
+    if (!seqQueueMap.rlock()->contains(sourceId)) {
+        auto readLock = seqQueueMap.wlock();
+        if (!readLock->contains(sourceId)) {
+            auto lastWrittenMap = nodeEngine->lockLastWritten(filePath);
+
+
+            uint64_t lastWritten = 0;
+            if (lastWrittenMap->contains(sourceId)) {
+                lastWritten = lastWrittenMap->at(sourceId);
+            }
+
+            Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
+            //todo: fixme
+            for (uint64_t i = 0; i <= lastWritten; ++i) {
+                const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+                newQueue.emplace(seqData, i);
+            }
+            readLock->operator[](sourceId) = newQueue;
+            NES_ERROR("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
+        }
+    }
     // save the highest consecutive sequence number in the queue
-    auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
+    auto currentSeqNumberBeforeAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
 
     // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
     const auto seqData = SequenceData(bufferSeqNumber, 1, true);
     // insert input buffer sequence number to the queue
-    seqQueue.emplace(seqData, bufferSeqNumber);
+    seqQueueMap.wlock()->at(sourceId).emplace(seqData, bufferSeqNumber);
 
     // get the highest consecutive sequence number in the queue after adding new value
-    auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
+    auto currentSeqNumberAfterAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
 
     NES_ERROR("seq number before adding {}, after adding {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding);
     // check if top value in the queue has changed after adding new sequence number
