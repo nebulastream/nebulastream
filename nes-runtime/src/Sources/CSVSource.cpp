@@ -188,9 +188,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto id = sourceInfo->records.front().front().id;
                 auto ack = queryManager->getSourceAck(id);
-                if (ack.has_value()) {
-                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value() - 1);
-                    sentUntil = std::max(sentUntil, ack.value() - 1);
+                if (ack.has_value() && ack.value() != 0) {
+                    auto adjustedAck = ack.value() - 1;
+                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, adjustedAck);
+                    sentUntil = std::max(sentUntil, adjustedAck);
                 }
             }
             if (sentUntil < sourceInfo->records.size()) {
