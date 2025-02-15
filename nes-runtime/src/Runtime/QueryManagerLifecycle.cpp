@@ -423,6 +423,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
         }
     }
 
+    NES_ERROR("stopping sources")
     for (const auto& source : qep->getSources()) {
         if (type == QueryTerminationType::Graceful) {
             // graceful shutdown :: only leaf sources
@@ -435,12 +436,14 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
         }
     }
 
+    NES_ERROR("stopping pipelines")
     if (type == QueryTerminationType::HardStop || type == QueryTerminationType::Failure) {
         for (auto& stage : qep->getPipelines()) {
             NES_ASSERT2_FMT(stage->stop(type), "Cannot hard stop pipeline " << stage->getPipelineId());
         }
     }
 
+    NES_ERROR("wait for termination future")
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not successful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -465,6 +468,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
             break;
         }
     }
+    NES_ERROR("ret = {}", ret);
     if (ret) {
         addReconfigurationMessage(sharedQueryId,
                                   decomposedQueryId,
