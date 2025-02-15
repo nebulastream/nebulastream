@@ -71,7 +71,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
             constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
                                                                        : Network::Messages::ChannelType::DataChannel;
             //if retry times are set to 0, keep retrying indefinitely
-            while (i < retryTimes || retryTimes == 0 || abortConnection.has_value()) {
+            while (i < retryTimes || retryTimes == 0) {
                 //if the thread creater requested to abort, return nullptr
                 if (abortConnection.has_value()
                     && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
