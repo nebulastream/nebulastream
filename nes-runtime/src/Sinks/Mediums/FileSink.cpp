@@ -251,6 +251,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             }
         }
 
+        //TODO: take care of cleanup
+
         NES_ERROR("writing data to tcp")
 
         // Write all buffers at once

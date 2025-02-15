@@ -170,6 +170,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replay, replay->size() * sizeof(Record));
+    buffer.setNumberOfTuples(replay->size());
     auto returnBuffer = buffer.getBuffer();
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
