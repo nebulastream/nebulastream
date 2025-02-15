@@ -166,7 +166,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
-    NES_ERROR("setting sequence number first played buffer to {} (id {})", sentUntil, sourceInfo->records.front().front().id)
+    NES_ERROR("setting sequence number replayed buffer to {} (id {})", sentUntil, sourceInfo->records.front().front().id)
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
 
