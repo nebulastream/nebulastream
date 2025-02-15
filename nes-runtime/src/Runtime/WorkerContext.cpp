@@ -359,7 +359,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
         }
     });
     NES_ERROR("deleting channel future");
-    dataChannelFutures.erase(iteratorOperatorId);
+//    dataChannelFutures.erase(iteratorOperatorId);
 }
 
 bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
