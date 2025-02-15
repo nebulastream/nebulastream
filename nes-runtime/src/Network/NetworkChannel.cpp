@@ -38,6 +38,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         std::optional<std::future<bool>> abortConnection = std::nullopt) {
     try {
 
+        NES_ERROR("create network channel abort connection has value = {}", abortConnection.has_value());
         NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
                         "Cannot use indefinite retries without suppliying a future to abort connection");
         std::chrono::milliseconds backOffTime = waitTime;
