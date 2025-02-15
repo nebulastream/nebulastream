@@ -77,11 +77,11 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
 Status WorkerRPCServer::UnregisterDecomposedQuery(ServerContext*,
                                                   const UnregisterDecomposedQueryRequest* request,
                                                   UnregisterDecomposedQueryReply* reply) {
-    NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->sharedqueryid());
+    NES_ERROR("WorkerRPCServer::UnregisterQuery: got request for {}", request->sharedqueryid());
     bool success = nodeEngine->unregisterDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
                                                              DecomposedQueryId(request->decomposedqueryid()));
     if (success) {
-        NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
+        NES_ERROR("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -110,14 +110,14 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
 
 Status
 WorkerRPCServer::StopDecomposedQuery(ServerContext*, const StopDecomposedQueryRequest* request, StopDecomposedQueryReply* reply) {
-    NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
+    NES_ERROR("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Invalid, "Invalid termination type requested");
     bool success = nodeEngine->stopDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
                                                        DecomposedQueryId(request->decomposedqueryid()),
                                                        terminationType);
     if (success) {
-        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        NES_ERROR("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -145,13 +145,14 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
                                                const MonitoringRegistrationRequest* request,
                                                MonitoringRegistrationReply*) {
     try {
-        NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
+        NES_ERROR("WorkerRPCServer::RegisterMonitoringPlan: Got request");
         std::set<Monitoring::MetricType> types;
         for (auto type : request->metrictypes()) {
             types.insert((Monitoring::MetricType) type);
         }
         Monitoring::MonitoringPlanPtr plan = Monitoring::MonitoringPlan::create(types);
         monitoringAgent->setMonitoringPlan(plan);
+        NES_ERROR("WorkerRPCServer::RegisterMonitoringPlan: Done");
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: {}", ex.what());
@@ -161,10 +162,11 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
 
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
-        NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");
+        NES_ERROR("WorkerRPCServer: GetMonitoringData request received");
         auto metrics = monitoringAgent->getMetricsAsJson().dump();
         NES_DEBUG("WorkerRPCServer: Transmitting monitoring data: {}", metrics);
         reply->set_metricsasjson(metrics);
+        NES_ERROR("WorkerRPCServer: GetMonitoringData done");
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: {}", ex.what());
@@ -173,14 +175,14 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 }
 
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
-    NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
+    NES_ERROR("WorkerRPCServer::BeginBuffer request received");
 
     auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
     auto decomposedQueryVersion = DecomposedQueryPlanVersion(request->decomposedqueryversion());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
     bool success = nodeEngine->bufferData(decomposedQueryId, decomposedQueryVersion, uniqueNetworkSinkDescriptorId);
     if (success) {
-        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        NES_ERROR("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
     } else {
@@ -193,12 +195,12 @@ Status
 WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRequest* request, StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
     // NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
-//    NES_ERROR("Start buffering request received, count = {}", request->count());
+    NES_ERROR("Start buffering request received, count = {}", request->count());
     nodeEngine->setParentId(request->parent(), request->count());
     //    nodeEngine->tryApplyingNewDescriptors();
     auto success = true;
     if (success) {
-        NES_DEBUG("WorkerRPCServer::StartBufferingOnAllSinks: success");
+        NES_ERROR("WorkerRPCServer::StartBufferingOnAllSinks: success");
         reply->set_success(true);
         return Status::OK;
     } else {
@@ -210,7 +212,7 @@ WorkerRPCServer::StartBufferingOnAllSinks(ServerContext*, const StartBufferingRe
 
 Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
-    NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
+    NES_ERROR("WorkerRPCServer::Sink Reconfiguration request received");
     auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
     auto decomposedQueryVersion = DecomposedQueryPlanVersion(request->decomposedqueryversion());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
@@ -225,7 +227,7 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
                                                  decomposedQueryVersion,
                                                  uniqueNetworkSinkDescriptorId);
     if (success) {
-        NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
+        NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);
         return Status::OK;
     } else {
@@ -237,7 +239,7 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 
 Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
     (void) request;
-    NES_DEBUG("WorkerRPCServer received location request")
+    NES_ERROR("WorkerRPCServer received location request")
     if (!locationProvider) {
         NES_DEBUG("WorkerRPCServer: locationProvider not set, node doesn't have known location")
         //return an empty reply
@@ -288,6 +290,7 @@ Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointL
         NES_ERROR("notifying checkpoint id {}, seq {}", id, seq)
        nodeEngine->getQueryManager()->setSourceAck(id, seq);
     }
+    NES_ERROR("notifying checkpoints done")
     reply->set_success(true);
     return Status::OK;
 }
