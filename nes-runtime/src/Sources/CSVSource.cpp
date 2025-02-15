@@ -188,16 +188,18 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto id = sourceInfo->records.front().front().id;
                 auto ack = queryManager->getSourceAck(id);
                 if (ack.has_value()) {
-//                    NES_ERROR("found ack");
+                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value());
                     sentUntil = std::max(sentUntil, ack.value());
                 }
             }
             if (sentUntil < sourceInfo->records.size()) {
+                NES_ERROR("sent until {}, records {}", sentUntil, sourceInfo->records.size());
                 return fillReplayBuffer(sourceInfo, buffer);
                 //                return buffer.getBuffer();
             }
         }
-        NES_ASSERT(sentUntil == sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
+        NES_ERROR("sent until {}, records {}", sentUntil, sourceInfo->records.size());
+        NES_ASSERT(sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
         auto* records = buffer.getBuffer().getBuffer<Record>();
