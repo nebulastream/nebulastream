@@ -166,6 +166,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
+    NES_ERROR("setting sequence number first played buffer to {} (id {})", sentUntil, sourceInfo->records.front().front().id)
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
 
@@ -198,7 +199,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                return buffer.getBuffer();
             }
         }
-        NES_ERROR("sent until {}, records {}", sentUntil, sourceInfo->records.size());
+        NES_ERROR("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
         NES_ASSERT(sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
@@ -322,6 +323,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto returnBuffer = buffer.getBuffer();
                 if (getReplayData()) {
                     //sequence numbers start at 1 which is why we can use size
+                    NES_ERROR("setting sequence number first played buffer to {} (id {})", sourceInfo->records.size(), sourceInfo->records.front().front().id)
                     returnBuffer.setSequenceNumber(sourceInfo->records.size());
                 }
                 sentUntil++;
