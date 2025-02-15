@@ -158,9 +158,9 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
                             Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     auto replayOffset = sentUntil;
 
-    NES_ERROR("replay buffer {} (index {}), end of replay at {}", replayOffset + 1, replayOffset, sourceInfo->records.size());
 //    auto replay = &sourceInfo->records[replayOffset];
     auto replayVec = sourceInfo->records.at(replayOffset);
+    NES_ERROR("replay with id {} buffer {} (index {}), end of replay at {}", replayVec.front().id, replayOffset + 1, replayOffset, sourceInfo->records.size());
 //    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
