@@ -172,16 +172,19 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
 
         NES_ERROR("channel creation done, setting promise")
         //pass channel back to calling thread via promise
+        auto success = channel.operator bool();
         promise.set_value(std::move(channel));
 
         NES_ERROR("promise set, adding reconf message")
 
-        //notify the sink about successful connection via reconfiguration message
-        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
-                                                reconfigurationMessage.getParentPlanId(),
-                                                reconfigurationMessage.getParentPlanVersion(),
-                                                reconfigurationMessage,
-                                                false);
+        if (success) {
+            //notify the sink about successful connection via reconfiguration message
+            queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
+                                                    reconfigurationMessage.getParentPlanId(),
+                                                    reconfigurationMessage.getParentPlanVersion(),
+                                                    reconfigurationMessage,
+                                                    false);
+        }
     });
 
     thread.detach();
