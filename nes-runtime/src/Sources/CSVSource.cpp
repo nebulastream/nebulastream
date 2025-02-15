@@ -189,8 +189,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto id = sourceInfo->records.front().front().id;
                 auto ack = queryManager->getSourceAck(id);
                 if (ack.has_value()) {
-                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value());
-                    sentUntil = std::max(sentUntil, ack.value());
+                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value() - 1);
+                    sentUntil = std::max(sentUntil, ack.value() - 1);
                 }
             }
             if (sentUntil < sourceInfo->records.size()) {
