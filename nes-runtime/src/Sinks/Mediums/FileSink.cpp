@@ -269,7 +269,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
                 bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
-                bufferStorageLocked->operator[](sourceId).erase(it);
             }
             for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
