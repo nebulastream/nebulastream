@@ -13,6 +13,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -32,7 +33,6 @@
 #include <sys/socket.h>
 #include <utility>
 #include <vector>
-#include <Network/NetworkSink.hpp>
 
 namespace NES {
 
@@ -72,7 +72,6 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-        sourceInfo->hasCheckedAcknowledgement = false;
         return;
     }
     struct Deleter {
@@ -154,32 +153,32 @@ struct Record {
     uint64_t outputTimestamp;
 };
 
-std::optional<Runtime::TupleBuffer> CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
-                                 Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
-    auto replayOffset = sourceInfo->replayedUntil.value();
-//    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
-//    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
+std::optional<Runtime::TupleBuffer>
+CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
+                            Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
+    auto replayOffset = sentUntil;
+    //    auto totalTuplesToReplay = (sourceInfo->seqReadFromSocketTotal + 1) - replayOffset;
+    //    auto numTuplesToReplay = std::min(totalTuplesToReplay, buffer.getCapacity());
 
-//    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
-//              numTuplesToReplay,
-//              replayOffset,
-//              sourceInfo->seqReadFromSocketTotal,
-//              totalTuplesToReplay);
+    //    NES_ERROR("replay {} tuples from {}, end of replay at {} ({} to replay in total)",
+    //              numTuplesToReplay,
+    //              replayOffset,
+    //              sourceInfo->seqReadFromSocketTotal,
+    //              totalTuplesToReplay);
 
     NES_DEBUG("replay buffer {}, end of replay at {}", replayOffset, sourceInfo->records.size());
     auto replay = &sourceInfo->records[replayOffset];
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replay, replay->size() * sizeof(Record));
     auto returnBuffer = buffer.getBuffer();
-    returnBuffer.setSequenceNumber(sourceInfo->replayedUntil.value());
-    sourceInfo->replayedUntil = sourceInfo->replayedUntil.value() + 1;
+    returnBuffer.setSequenceNumber(sentUntil + 1);
+    sentUntil++;
 
-
-//    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
-//    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
-    if (sourceInfo->replayedUntil == sourceInfo->records.size()) {
-        sourceInfo->replayedUntil = std::nullopt;
-    }
+    //    sourceInfo->replayedUntil = numTuplesToReplay + sourceInfo->replayedUntil.value();
+    //    NES_ASSERT(sourceInfo->replayedUntil <= sourceInfo->seqReadFromSocketTotal, "To many tuples replayed");
+//    if (sourceInfo->replayedUntil == sourceInfo->records.size()) {
+//        sourceInfo->replayedUntil = std::nullopt;
+//    }
     return returnBuffer;
 }
 
@@ -192,23 +191,23 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
-            if (!sourceInfo->hasCheckedAcknowledgement) {
-                NES_ERROR("has checked acknowledgement is false, there are {} stored buffers", sourceInfo->records.size());
-                if (!sourceInfo->records.empty()) {
-//                if (sourceInfo->seqReadFromSocketTotal != 0) {
-                    NES_ERROR("tuples were read before from this descriptor, waiting for ack");
-                    auto id = sourceInfo->records.front().front().id;
-                    auto ack = queryManager->waitForSourceAck(id);
-                    NES_ERROR("received ack");
-                    sourceInfo->replayedUntil = ack;
+            NES_ERROR("has checked acknowledgement is false, there are {} stored buffers", sourceInfo->records.size());
+            if (!sourceInfo->records.empty()) {
+                //                if (sourceInfo->seqReadFromSocketTotal != 0) {
+                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
+                auto id = sourceInfo->records.front().front().id;
+                auto ack = queryManager->getSourceAck(id);
+                if (ack.has_value()) {
+                    NES_ERROR("found ack");
+                    sentUntil = std::max(sentUntil, ack.value());
                 }
-                sourceInfo->hasCheckedAcknowledgement = true;
             }
-            if (sourceInfo->replayedUntil.has_value()) {
+            if (sentUntil < sourceInfo->records.size()) {
                 return fillReplayBuffer(sourceInfo, buffer);
-//                return buffer.getBuffer();
+                //                return buffer.getBuffer();
             }
         }
+        NES_ASSERT(sentUntil == sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
         auto* records = buffer.getBuffer().getBuffer<Record>();
@@ -333,6 +332,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     //sequence numbers start at 1 which is why we can use size
                     returnBuffer.setSequenceNumber(sourceInfo->records.size());
                 }
+                sentUntil++;
                 return returnBuffer;
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
@@ -501,7 +501,8 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
-    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))->getReconnectCount();
+    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))
+                     ->getReconnectCount();
     NES_ERROR("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
 }

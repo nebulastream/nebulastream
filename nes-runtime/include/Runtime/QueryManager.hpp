@@ -84,8 +84,8 @@ struct TcpSourceInfo {
     uint64_t nextLinesIndex = 0;
     uint16_t leftoverByteCount = 0;
 //    uint64_t seqReadFromSocketTotal = 0;
-    std::optional<uint64_t> replayedUntil = std::nullopt;
-    bool hasCheckedAcknowledgement = false;
+//    std::optional<uint64_t> replayedUntil = std::nullopt;
+//    bool hasCheckedAcknowledgement = false;
 //    std::vector<Record> records = {};
     std::vector<std::vector<Record>> records = {};
 };
@@ -278,6 +278,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t waitForSourceAck(uint64_t id);
 
     void setSourceAck(uint64_t id, uint64_t seq);
+
+    std::optional<uint64_t> getSourceAck(uint64_t id);
 
   private:
     /**

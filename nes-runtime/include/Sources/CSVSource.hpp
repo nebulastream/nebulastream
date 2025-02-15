@@ -109,6 +109,7 @@ class CSVSource : public DataSource {
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
+    uint64_t sentUntil = 0;
     //std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> readLines;
 //    std::vector<std::string> readLines;
 //    uint64_t nextLinesIndex = 0;
