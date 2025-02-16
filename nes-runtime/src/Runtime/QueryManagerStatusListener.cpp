@@ -266,9 +266,10 @@ std::optional<uint64_t> AbstractQueryManager::getSourceAck(uint64_t id) {
 //}
 
 void AbstractQueryManager::setSourceAck(uint64_t id, uint64_t seq) {
+    std::unique_lock lock(tcpAckMutex);
     auto& ack = tcpSourceAcks[id];
     ack.seq = seq;
-    ack.cv.notify_all();
+//    ack.cv.notify_all();
 }
 
 folly::Synchronized<TcpSourceInfo>::LockedPtr AbstractQueryManager::getTcpSourceInfo(std::string sourceName, std::string filePath) {

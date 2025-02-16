@@ -92,7 +92,7 @@ struct TcpSourceInfo {
 
 struct TcpSourceAcknowledgement {
     std::optional<uint64_t> seq = std::nullopt;
-    std::condition_variable cv;
+//    std::condition_variable cv;
 };
 
 class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>,
