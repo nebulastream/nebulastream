@@ -35,11 +35,12 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 10
+MEASURE_INTERVAL = 5
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
 PIPELINE_TXT = "pipelines.txt"
+CACHE_HITS_MISSES_TXT = "cache_hits_and_misses.txt"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -101,6 +102,8 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     worker_config_yaml["worker"]["queryCompiler"]["numberOfEntriesSliceCache"] = current_benchmark_config.numberOfEntriesSliceCache
     worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
     worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
+    worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
+
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
@@ -153,7 +156,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 # no. tuples set to 0 means that the source will run indefinitely
-                number_of_tuples_before_stopping_source = 0 #10 * 1000 * 1000 * 1000
+                number_of_tuples_before_stopping_source = 1* 1000 * 1000 * 1000
                 cmd = f"{TCP_SERVER} -p {port} -n {number_of_tuples_before_stopping_source} -t {current_benchmark_config.timestamp_increment}"
                 print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
@@ -283,9 +286,32 @@ if __name__ == "__main__":
     # Running all benchmarks
     output_folders = []
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
-    for benchmark_config in ALL_BENCHMARK_CONFIGS:
+    total_iterations = len(ALL_BENCHMARK_CONFIGS)
+    iteration_times = []
+
+    for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=1):
+        start_time = time.time()
+
         output_folders.append(run_benchmark(benchmark_config))
-        time.sleep(1) # Sleep for a second to allow the system to clean up
+        time.sleep(1)  # Sleep for a second to allow the system to clean up
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        iteration_times.append(elapsed_time)
+
+        # Calculate average time per iteration
+        avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
+
+        # Estimate remaining time
+        remaining_iterations = total_iterations - i
+        remaining_time = remaining_iterations * avg_time_per_iteration
+        eta = datetime.timedelta(seconds=int(remaining_time))
+
+        print(f"Iteration {i}/{total_iterations} completed. ETA: {eta}")
 
     output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
     print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
+
+    all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
+    copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
+    print(f"Copy command: \n\"{copy_command}\"")

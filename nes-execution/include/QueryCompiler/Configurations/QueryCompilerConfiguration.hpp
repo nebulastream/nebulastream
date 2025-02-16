@@ -74,6 +74,7 @@ public:
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::StringOption cacheHitsAndMissesFilePath = {"cacheHitsAndMissesFilePath", "cache_hits_and_misses.txt", "Path to dump cache hits and misses."};
     NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
            SliceStoreType::MAP,
@@ -111,9 +112,23 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend,
+        return {&            &nautilusBackend,
             &pageSize,
-            &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
+            &numberOfPartitions,
+            &joinStrategy,
+            &sliceStoreType,
+            &sliceCacheType,
+            &numberOfEntriesSliceCache,
+            &lockSliceCache,
+            &sortBufferByField,
+            &sortBufferOrder,
+            &delayStrategy,
+            &unorderedness,
+            &minDelay,
+            &maxDelay,
+            &pipelinesTxtFilePath,
+            &cacheHitsAndMissesFilePath,
+            &probeType};
     }
 };
 }

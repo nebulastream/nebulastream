@@ -70,7 +70,6 @@
 
 namespace NES::QueryCompilation
 {
-
 DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig)
     : PhysicalOperatorProvider(std::move(queryCompilerConfig))
 {
@@ -98,7 +97,8 @@ void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const std::s
 }
 
 void DefaultPhysicalOperatorProvider::lower(
-    const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator> operatorNode)
+    const DecomposedQueryPlan& decomposedQueryPlan,
+    const std::shared_ptr<LogicalOperator> operatorNode)
 {
     if (isDemultiplex(operatorNode))
     {
@@ -135,7 +135,9 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
         const auto physicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
-            filterOperator->getInputSchema(), filterOperator->getOutputSchema(), filterOperator->getPredicate());
+            filterOperator->getInputSchema(),
+            filterOperator->getOutputSchema(),
+            filterOperator->getPredicate());
         physicalSelectionOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSelectionOperator);
     }
@@ -159,7 +161,9 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         const auto limitOperator = NES::Util::as<LogicalLimitOperator>(operatorNode);
         const auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
-            limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
+            limitOperator->getInputSchema(),
+            limitOperator->getOutputSchema(),
+            limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
     }
     else
@@ -200,7 +204,9 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const std::shared_ptr
 {
     const auto projectOperator = NES::Util::as<LogicalProjectionOperator>(operatorNode);
     const auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
-        projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getFunctions());
+        projectOperator->getInputSchema(),
+        projectOperator->getOutputSchema(),
+        projectOperator->getFunctions());
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
@@ -210,7 +216,9 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 {
     const auto mapOperator = NES::Util::as<LogicalMapOperator>(operatorNode);
     const auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
-        mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapFunction());
+        mapOperator->getInputSchema(),
+        mapOperator->getOutputSchema(),
+        mapOperator->getMapFunction());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
@@ -218,7 +226,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const std::shared_ptr<LogicalJoinOperator>& joinOperator,
     const std::shared_ptr<Schema>& outputSchema,
-    std::vector<std::shared_ptr<Operator>> children)
+    std::vector<std::shared_ptr<Operator> > children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
@@ -290,7 +298,13 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
-        joinFieldNameLeft, joinFieldNameRight, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
+        joinFieldNameLeft,
+        joinFieldNameRight,
+        windowSize,
+        windowSlide,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        joinStrategy);
 
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
     switch (joinStrategy)
@@ -329,9 +343,15 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 
     /// Creating two trigger operators, one for each side of the join
     const auto triggerLeft = PhysicalOperators::PhysicalWindowTrigger::create(
-        getNextOperatorId(), joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+        getNextOperatorId(),
+        joinOperator->getLeftInputSchema(),
+        joinOperator->getOutputSchema(),
+        joinOperatorHandler);
     const auto triggerRight = PhysicalOperators::PhysicalWindowTrigger::create(
-        getNextOperatorId(), joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+        getNextOperatorId(),
+        joinOperator->getRightInputSchema(),
+        joinOperator->getOutputSchema(),
+        joinOperatorHandler);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     leftJoinBuildOperator->insertBetweenThisAndParentNodes(triggerLeft);
@@ -341,16 +361,19 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 }
 
 std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
+    const StreamJoinOperators& streamJoinOperators,
+    const StreamJoinConfigs& streamJoinConfig) const
 {
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
+        queryCompilerConfig.pageSize.getValue(),
+        joinOperator->getLeftInputSchema());
     leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
+        queryCompilerConfig.pageSize.getValue(),
+        joinOperator->getRightInputSchema());
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",
@@ -364,11 +387,13 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         joinOperator->getOutputOriginIds()[0],
         std::move(sliceAndWindowStore),
         leftMemoryProvider,
-        rightMemoryProvider);
+        rightMemoryProvider,
+        queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+    const std::shared_ptr<LogicalJoinOperator>& joinOperator,
+    const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
 {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -421,12 +446,13 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const std
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode) const
 {
     NES_DEBUG("Create Thread local window aggregation");
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
     PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+        not windowOperator->getInputOriginIds().empty(),
+        "The number of input origin IDs for an window operator should not be zero.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();
     const auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -445,16 +471,30 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
     INVARIANT(numberOfInputOrigins == 1, "We expect exactly one input origin for a time based window operator");
     std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
-            timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
+            timeBasedWindowType->getSize().getTime(),
+            timeBasedWindowType->getSlide().getTime(),
+            numberOfInputOrigins);
     const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
-        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
+        windowOperator->getInputOriginIds(),
+        windowDefinition->getOriginId(),
+        std::move(sliceAndWindowStore),
+        queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
+        getNextOperatorId(),
+        windowInputSchema,
+        windowOutputSchema,
+        windowDefinition,
+        windowHandler);
     const auto trigger
         = PhysicalOperators::PhysicalWindowTrigger::create(getNextOperatorId(), windowInputSchema, windowOutputSchema, windowHandler);
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
+        getNextOperatorId(),
+        windowInputSchema,
+        windowOutputSchema,
+        windowDefinition,
+        windowHandler,
+        windowOperator->windowMetaData);
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
     operatorNode->insertBetweenThisAndChildNodes(trigger);
     operatorNode->replace(aggregationProbe);
@@ -464,7 +504,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const std::shared_ptr<
 {
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
     PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+        not windowOperator->getInputOriginIds().empty(),
+        "The number of input origin IDs for an window operator should not be zero.");
     PRECONDITION(NES::Util::instanceOf<LogicalWindowOperator>(operatorNode), "The operator should be a window operator.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();
@@ -501,5 +542,4 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const std::shared_ptr<
         lowerTimeBasedWindowOperator(operatorNode);
     }
 }
-
 }

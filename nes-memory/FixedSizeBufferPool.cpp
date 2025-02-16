@@ -23,22 +23,22 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
+#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
 
 FixedSizeBufferPool::FixedSizeBufferPool(
-    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& buffers, const size_t numberOfReservedBuffers)
+    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& availableBuffers, const size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
     , exclusiveBuffers(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)
     , isDestroyed(false)
 {
-    while (!buffers.empty())
+    while (!availableBuffers.empty())
     {
-        auto* memSegment = buffers.front();
-        buffers.pop_front();
+        auto* memSegment = availableBuffers.front();
+        availableBuffers.pop_front();
         INVARIANT(memSegment, "null memory segment");
         INVARIANT(memSegment->isAvailable(), "Buffer not available");
         INVARIANT(

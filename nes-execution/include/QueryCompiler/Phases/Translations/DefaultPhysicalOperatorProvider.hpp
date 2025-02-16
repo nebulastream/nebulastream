@@ -112,11 +112,11 @@ protected:
     static bool isDemultiplex(const std::shared_ptr<LogicalOperator>& operatorNode);
 
     void lowerBinaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
-    static void lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerProjectOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerMapOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
-    static void lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
-    static void lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode) const;
     static void lowerWatermarkAssignmentOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     void lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
 

@@ -18,7 +18,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
+#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
@@ -215,11 +215,6 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 {
     return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
-}
-
-uint64_t TupleBuffer::getNumberOfTuples() const noexcept
-{
-    return controlBlock->getNumberOfTuples();
 }
 
 OriginId TupleBuffer::getOriginId() const noexcept

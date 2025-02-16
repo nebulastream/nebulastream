@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <TaggedPointer.hpp>
-
+#include <Memory/detail/TaggedPointer.hpp>
 #include <cstdint>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
+#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES
 {

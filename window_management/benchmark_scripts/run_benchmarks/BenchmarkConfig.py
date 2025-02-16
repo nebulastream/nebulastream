@@ -55,18 +55,21 @@ class BenchmarkConfig:
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [8]
-    SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in ["LRU", "FIFO"] for size in [1, 10, 100] for locked_slice_cache in [True, False]] + [("NONE", 0, False)]
-    SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:1]
+    NUMBER_OF_WORKER_THREADS = [1, 4]
+    CACHE_SIZES = [1, 10, 100]
+    CACHE_TYPES = ["LRU", "FIFO", "SECOND_CHANCE"]
+    LOCKED_SLICE_CACHE = [False] # True or False
+    SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for locked_slice_cache in LOCKED_SLICE_CACHE] + [("NONE", 0, False)]
+    SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE
 
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
     BUFFER_SIZES = [8196] #[1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
-    NO_PHYSICAL_SOURCES = [2] # Currently only 1 is supported. Otherwise, nebuli does not pass the query to the single node worker
+    NO_PHYSICAL_SOURCES = [1]
 
-    # Adding join queries
-    WINDOW_SIZE_SLIDE = [(10*1000, 10*1000)]
+    # Adding queries
+    WINDOW_SIZE_SLIDE = [(10*1000, 1*1000)]
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
             f"SELECT MIN(value) FROM tcp_source WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"

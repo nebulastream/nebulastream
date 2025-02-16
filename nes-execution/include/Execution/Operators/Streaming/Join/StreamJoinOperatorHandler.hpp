@@ -36,7 +36,8 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider,
+        const std::string_view cacheHitsAndMissesFile);
 
     const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const;
     void allocateSliceCacheEntries(
@@ -59,6 +60,7 @@ protected:
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
+    std::string cacheHitsAndMissesFile;
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
 };
