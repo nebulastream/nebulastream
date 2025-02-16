@@ -210,7 +210,7 @@ int main(const int argc, char* argv[])
         }
         else if (std::strcmp(argv[i], "-n") == 0 || std::strcmp(argv[i], "--count-limit") == 0)
         {
-            countLimit = std::stoll(argv[++i]);
+            countLimit = std::stoull(argv[++i]);
         }
         else if (std::strcmp(argv[i], "-t") == 0 || std::strcmp(argv[i], "--time-step") == 0)
         {

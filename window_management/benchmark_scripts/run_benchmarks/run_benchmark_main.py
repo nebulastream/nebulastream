@@ -17,10 +17,13 @@ import shutil
 import subprocess
 import time
 import random
+import datetime
 import yaml
 import BenchmarkConfig
+import PostProcessing
 import pathlib
 import copy
+
 
 # Configuration for compilation
 BUILD_DIR = "build_dir"
@@ -35,10 +38,11 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+MEASURE_INTERVAL = 2
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
+COMBINED_CSV_FILE_WORKER_STATISTICS = "combined_worker_statistics.csv"
 PIPELINE_TXT = "pipelines.txt"
 CACHE_HITS_MISSES_TXT = "cache_hits_and_misses.txt"
 WORKER_CONFIG = "worker"
@@ -156,18 +160,18 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 # no. tuples set to 0 means that the source will run indefinitely
-                number_of_tuples_before_stopping_source = 1* 1000 * 1000 * 1000
+                number_of_tuples_before_stopping_source = 1 * 1000 * 1000 * 1000
                 cmd = f"{TCP_SERVER} -p {port} -n {number_of_tuples_before_stopping_source} -t {current_benchmark_config.timestamp_increment}"
-                print(f"Trying to start tcp server with {cmd}")
+                # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
                 if process.poll() is not None and process.poll() != 0:
-                    print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
+                    # print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
                     port = str(int(port) + random.randint(1,10))
                     terminate_process_if_exists(process)
                     time.sleep(1)
                 else:
-                    print(f"Started tcp server with PID: {process.pid} and port: {port}")
+                    # print(f"Started tcp server with PID: {process.pid} and port: {port}")
                     processes.append(process)
                     ports.append(port)
                     port = str(int(port) + 1) # Increment the port for the next server
@@ -181,13 +185,13 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
 
 def submitting_query(query_file):
     cmd = f"cat {query_file} | {NEBULI_PATH} register -x -s localhost:8080"
-    print(f"Submitting the query via {cmd}...")
+    # print(f"Submitting the query via {cmd}...")
     # shell=True is needed to pipe the output of cat to the register command
     result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE,  # Capture standard output
                             stderr=subprocess.PIPE,  # Capture standard error
                             text=True  # Decode output to a string
                             )
-    print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
+    # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
     query_id = result.stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
@@ -195,7 +199,7 @@ def submitting_query(query_file):
 
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
-    print(f"Starting the single node worker with {cmd}")
+    # print(f"Starting the single node worker with {cmd}")
     process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started single node worker with pid {pid}")
@@ -204,7 +208,7 @@ def start_single_node_worker(worker_config_file):
 
 def stop_query(query_id):
     cmd = f"{NEBULI_PATH} stop {query_id} -s localhost:8080"
-    print(f"Stopping the query via {cmd}...")
+    # print(f"Stopping the query via {cmd}...")
     process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
     return process
 
@@ -231,7 +235,7 @@ def get_start_ports():
         if 'sourceConfig' in item and 'socketPort' in item['sourceConfig']
     ]
     source_ports = [str(port) for port in source_ports]
-    print(f"Got the following start source ports: {' '.join(source_ports)}")
+    # print(f"Got the following start source ports: {' '.join(source_ports)}")
     return source_ports
 
 
@@ -278,6 +282,9 @@ def run_benchmark(current_benchmark_config):
         return output_folder
 
 
+
+
+
 if __name__ == "__main__":
     # Removing the build folder and compiling the project
     # clear_build_dir()
@@ -307,7 +314,16 @@ if __name__ == "__main__":
         remaining_time = remaining_iterations * avg_time_per_iteration
         eta = datetime.timedelta(seconds=int(remaining_time))
 
-        print(f"Iteration {i}/{total_iterations} completed. ETA: {eta}")
+        # Calculate estimated finish time
+        finish_time = datetime.datetime.now() + eta
+
+        # Print ETA and finish time in cyan
+        print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+
+
+    # Calling the postprocessing main
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS)
+    post_processing.main()
 
     output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
     print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")

@@ -27,7 +27,11 @@ echo "Installing required packages..."
 pip install \
     pyyaml \
     pathlib \
-    numpy
+    numpy \
+    pandas \
+    matplotlib \
+    seaborn \
+    tqdm
 
 echo "Setup complete. To activate the virtual environment in the future, run:"
 echo "source $VENV_DIR/bin/activate"
