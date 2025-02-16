@@ -203,7 +203,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (!sourceInfo->records.empty()) {
             NES_ERROR("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
         }
-        NES_ASSERT(sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
+        NES_ASSERT(!getReplayData() || sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
         auto* records = buffer.getBuffer().getBuffer<Record>();
