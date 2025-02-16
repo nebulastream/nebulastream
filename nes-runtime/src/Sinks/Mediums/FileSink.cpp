@@ -251,7 +251,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
 
-    NES_ERROR("seq number before adding {}, after adding {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding);
+    NES_ERROR("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
     // check if top value in the queue has changed after adding new sequence number
     //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
     NES_ERROR("try to acquire lock for written map")
@@ -268,7 +268,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         if (lastWritten < currentSeqNumberAfterAdding) {
             {
-                NES_ERROR("getting lock for buffer storage")
+                NES_ERROR("writing data: last written {} seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", lastWritten, currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
                 auto bufferStorageLocked = bufferStorage.wlock();
                 //todo: reduce hashmap lookups
                 //            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
