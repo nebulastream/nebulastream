@@ -239,6 +239,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     // save the highest consecutive sequence number in the queue
+
+    //todo: there is a problem with locking here
     auto currentSeqNumberBeforeAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
 
     // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
@@ -254,7 +256,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
     NES_ERROR("try to acquire lock for written map")
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
-    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding && lastWrittenMap) {
+    if (lastWrittenMap) {
         NES_ERROR("got lock for written map")
         //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
         std::vector<std::vector<Record>> bulkWriteBatch;
@@ -264,11 +266,14 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         };
         auto& lastWritten = lastWrittenMap->at(sourceId);
 
-        {
+        if (lastWritten < currentSeqNumberAfterAdding){
             NES_ERROR("getting lock for buffer storage")
             auto bufferStorageLocked = bufferStorage.wlock();
             //todo: reduce hashmap lookups
-            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
+//            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
+//                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
+//                 ++it) {
+            for (auto it = bufferStorageLocked->operator[](sourceId).find(lastWritten + 1);
                  it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                  ++it) {
                 NES_ERROR("adding element with id {}", it->second.front().id);
@@ -276,7 +281,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             }
             NES_ERROR("erasing elements");
             bufferStorageLocked->operator[](sourceId).erase(
-                bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1),
+                bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
                 bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
         }
 
