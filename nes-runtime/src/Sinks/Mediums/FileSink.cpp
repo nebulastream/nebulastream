@@ -206,7 +206,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //    inputBuffer.release();
     {
         //        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
-        if (bufferStorage.rlock()->at(sourceId).contains(bufferSeqNumber)) {
+        if (bufferStorage.wlock()->operator[](sourceId).contains(bufferSeqNumber)) {
             NES_ERROR("buffer already recorded, exiting");
             return true;
         }
