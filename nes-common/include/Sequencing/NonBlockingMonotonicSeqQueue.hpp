@@ -200,10 +200,12 @@ class NonBlockingMonotonicSeqQueue {
             }
         }
 
+        auto start = currentBlock->blockIndex * blockSize;
+        auto end = currentBlock->blockIndex * blockSize + blockSize;
         // check if we really found the correct block
-        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
-              && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize)) {
-            NES_ERROR("Wrong block for seq {}, expected indext between {} and {} but is {}", seq.sequenceNumber, currentBlock->blockIndex * blockSize, currentBlock->blockIndex * blockSize + blockSize);
+        if (!(seq.sequenceNumber >= start
+              && seq.sequenceNumber < end)) {
+            NES_ERROR("Wrong block for seq {}, expected indext between {} and {}", seq.sequenceNumber, start, end);
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 
