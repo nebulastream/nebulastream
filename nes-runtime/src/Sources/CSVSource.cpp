@@ -72,6 +72,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        NES_ERROR("Created source infor with fd {}", sourceInfo->sockfd)
         return;
     }
     struct Deleter {
@@ -166,7 +167,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
-    NES_ERROR("setting sequence number replayed buffer to {} (id {})", sentUntil, sourceInfo->records.front().front().id)
+    NES_ERROR("setting sequence number replayed buffer to {} (id {}), fd ", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
 
@@ -174,7 +175,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
+    NES_ERROR("CSVSource::receiveData called on  {}", operatorId);
     //    if (generatedBuffers == 0) {
     //        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
     //    }
