@@ -20,7 +20,7 @@
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
-//#define ASYNC_DEPLOYMENT
+#define ASYNC_DEPLOYMENT
 
 namespace NES {
 
