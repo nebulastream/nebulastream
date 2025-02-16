@@ -101,8 +101,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData) {
+    (void) messageSequenceData;
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
-        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceData, messageSequenceData.sequenceNumber);
+//        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceData, messageSequenceData.sequenceNumber);
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer, false);
     } else {
@@ -139,20 +140,20 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
         NES_DEBUG("Received lastEOS {}", lastEOS);
-        if (lastEOS) {
-            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
-            while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
-                NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
-                          (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
-                          eosMessageMaxSeqNumber,
-                          eosNesPartition);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-            NES_DEBUG("Waited for all buffers for the last EOS!");
-
-            // Cleaning up and resetting for this partition, so that we can reuse the partition later on
-            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
-        }
+//        if (lastEOS) {
+//            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+//            while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
+//                NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
+//                          (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
+//                          eosMessageMaxSeqNumber,
+//                          eosNesPartition);
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            }
+//            NES_DEBUG("Waited for all buffers for the last EOS!");
+//
+//            // Cleaning up and resetting for this partition, so that we can reuse the partition later on
+//            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
+//        }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
