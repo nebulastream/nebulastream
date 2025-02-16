@@ -56,15 +56,15 @@ using namespace Configurations;
 using namespace Optimizer;
 
 // ((1934 + 1) * 15 + 1) * 5
-// const uint64_t numberOfNodesPerLevel3 = 12;
-// const uint64_t numberOfNodesPerLevel2 = 4;
-// const uint64_t numberOfNodesPerLevel1 = 2;
-// const uint64_t numberOfNodes = 96;
+const uint64_t numberOfNodesPerLevel3 = 12;
+const uint64_t numberOfNodesPerLevel2 = 4;
+const uint64_t numberOfNodesPerLevel1 = 2;
+const uint64_t numberOfNodes = 96;
 
-const uint64_t numberOfNodesPerLevel3 = 95;
-const uint64_t numberOfNodesPerLevel2 = 21;
-const uint64_t numberOfNodesPerLevel1 = 8;
-const uint64_t numberOfNodes = 16035;
+// const uint64_t numberOfNodesPerLevel3 = 95;
+// const uint64_t numberOfNodesPerLevel2 = 21;
+// const uint64_t numberOfNodesPerLevel1 = 8;
+// const uint64_t numberOfNodes = 16035;
 
 //const uint64_t numberOfNodesPerLevel3 = 176;
 //const uint64_t numberOfNodesPerLevel2 = 21;
@@ -302,11 +302,11 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     NesWorkerPtr wrkMid2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     EXPECT_TRUE(wrkMid2->start(false, true));
 
-    // NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
-    // EXPECT_TRUE(wrkMid3->start(false, true));
-    //
-    // NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
-    // EXPECT_TRUE(wrkMid4->start(false, true));
+    NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    EXPECT_TRUE(wrkMid3->start(false, true));
+
+    NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    EXPECT_TRUE(wrkMid4->start(false, true));
 
     // NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
     // EXPECT_TRUE(wrkMid5->start(false, true));
@@ -548,7 +548,7 @@ TEST_F(MeerkatTest, testDecisionTime) {
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
-    queryPlan->setFaultTolerance(FaultToleranceType::M);
+    // queryPlan->setFaultTolerance(FaultToleranceType::M);
 
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->optimizer.performOnlySourceOperatorExpansion = true;

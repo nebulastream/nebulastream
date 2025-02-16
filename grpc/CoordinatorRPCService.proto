@@ -81,6 +81,7 @@ service CoordinatorRPCService {
   rpc sendCheckpoint (CheckpointMessage) returns (CheckpointReply) {}
 
   rpc trimCheckpoint (TrimMessage) returns (TrimReply) {}
+
 }
 
 message SerializedOpenCLDeviceInfo {

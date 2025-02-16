@@ -285,6 +285,10 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
 void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEvent) {
 
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto sharedQueryId = offloadEvent->getSharedQueryId();
     auto decomposedQueryId = offloadEvent->getDecomposedQueryId();
     auto targetWorkerId = offloadEvent->getTargetWorkerId();
@@ -375,6 +379,13 @@ void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEven
                 }
                 upstreamExecutionNode->unlock();
                 downstreamExecutionNode->unlock();
+
+                now = std::chrono::system_clock::now();
+                now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+                epoch = now_ms.time_since_epoch();
+                auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+                std::cout << "The ISQP decision time was: " << valueAfter.count() - value.count();
             }
         }
     }

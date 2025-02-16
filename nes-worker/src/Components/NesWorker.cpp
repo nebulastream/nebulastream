@@ -442,8 +442,7 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
         it->second.availableFixedBufferSum = currentAvailableFixedBufferSum;
 
         // 2. Check if local query is overloaded
-        // bool overloaded = (queueGrowthPerSec > QUEUE_SIZE_THRESHOLD) || (avgLatencyIncrease > LATENCY_THRESHOLD);
-        bool overloaded = false;
+        bool overloaded = (queueGrowthPerSec > QUEUE_SIZE_THRESHOLD) || (avgLatencyIncrease > LATENCY_THRESHOLD);
         if (overloaded) {
             NES_WARNING("Query {}:{} considered overloaded due to per-second metrics. Checking neighbors...",
                         decomposedQueryId.getRawValue(), sharedQueryId.getRawValue());
@@ -473,6 +472,10 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
                 neighborLoadScores[neighbor.first] = totalNeighborLoad;
             }
 
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            auto epoch = now_ms.time_since_epoch();
+            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
             // 4. Find the best neighbor to offload to (lowest load score)
             WorkerId bestTarget = INVALID_WORKER_NODE_ID;
             double bestScore = MAXFLOAT;
@@ -484,9 +487,15 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
                 }
             }
 
+            now = std::chrono::system_clock::now();
+            now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            epoch = now_ms.time_since_epoch();
+            auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+            std::cout << "The best neighbor search time was: " << valueAfter.count() - value.count();
+
             if (bestTarget != INVALID_WORKER_NODE_ID) {
                 NES_INFO("Selected neighbor {} for offloading query {} based on load scores.", bestTarget, decomposedQueryId.getRawValue());
-
                 // 5. Offload query to bestTarget
                 bool offloadSuccess = coordinatorRpcClient->requestQueryOffload(workerId, sharedQueryId, decomposedQueryId, bestTarget);
                 if (offloadSuccess) {
@@ -497,6 +506,7 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
             } else {
                 NES_WARNING("No suitable neighbor found for offloading query {}.", decomposedQueryId.getRawValue());
             }
+            decisionManagerRunning = false;
         }
     }
     if(nodeEngine) nodeEngine->setSelfStatistics(currentStats);

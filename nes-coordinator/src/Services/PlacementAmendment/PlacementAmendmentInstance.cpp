@@ -107,6 +107,10 @@ void PlacementAmendmentInstance::execute() {
         // 5. Call the deployment phase to dispatch the updated decomposed query plans for deployment, un-deployment, or migration
         if (deploymentUnit.containsDeploymentContext()) {
             //Undeploy all removed or migrating deployment contexts
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            auto epoch = now_ms.time_since_epoch();
+            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
             deploymentPhase->execute(deploymentUnit.deploymentRemovalContexts, requestType);
             // Wait for all DQPs to get into the status stopped when performing holistic deployment.
             if (!incrementalPlacement) {
@@ -121,6 +125,7 @@ void PlacementAmendmentInstance::execute() {
             //Remove all queries marked for removal from shared query plan
             sharedQueryPlan->removeQueryMarkedForRemoval();
             //Deploy all newly placed deployment contexts
+
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
 
             if (incrementalPlacement && !deploymentUnit.reconfigurationMarkerUnits.empty()) {
@@ -129,6 +134,13 @@ void PlacementAmendmentInstance::execute() {
                 updateReconfigurationMarker(deploymentUnit, reconfigurationMarker);
                 deploymentPhase->execute(deploymentUnit.reconfigurationMarkerUnits, reconfigurationMarker);
             }
+
+            now = std::chrono::system_clock::now();
+            now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            epoch = now_ms.time_since_epoch();
+            auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+            std::cout << "The redeployment time was: " << valueAfter.count() - value.count();
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
             NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")

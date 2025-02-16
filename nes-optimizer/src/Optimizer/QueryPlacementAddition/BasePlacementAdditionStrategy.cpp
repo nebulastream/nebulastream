@@ -173,9 +173,11 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
-topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
-    topology->assignAlternativeNodes(topologyNodesWithUpStreamPinnedOperators, pinnedDownStreamTopologyNodeIds);
+    if(faultTolerance == FaultToleranceType::M) {
+        topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
+        topology->assignAlternativeNodes(topologyNodesWithUpStreamPinnedOperators, pinnedDownStreamTopologyNodeIds);
 
+    }
     // 1. Perform path selection and if failure then use the exponential back-off and retry strategy
     while (!success) {
 
@@ -204,21 +206,21 @@ topology->assignLevelsByBFS(topologyNodesWithUpStreamPinnedOperators);
                     }
                     continue;
                 }
-                if ((faultTolerance == FaultToleranceType::M
-                     || faultTolerance == FaultToleranceType::AS)
-                    && perSourcePaths.size() == 1)
-                {
-                    bool linkCreated = false;
-                    if (!perSourcePaths[0].empty()) {
-                        linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
-                            perSourcePaths[0]);
-                    }
-
-                    if (linkCreated) {
-                        topology->assignAlternativeNodes(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
-                        perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
-                    }
-                }
+                // if ((faultTolerance == FaultToleranceType::M
+                //      || faultTolerance == FaultToleranceType::AS)
+                //     && perSourcePaths.size() == 1)
+                // {
+                //     bool linkCreated = false;
+                //     if (!perSourcePaths[0].empty()) {
+                //         linkCreated = topology->tryForceAlternativeLinkOnSinglePath(
+                //             perSourcePaths[0]);
+                //     }
+                //
+                //     if (linkCreated) {
+                //         topology->assignAlternativeNodes(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
+                //         perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
+                //     }
+                // }
 
                 for (auto& p : perSourcePaths) {
                     allSourcesAllPaths.push_back(std::move(p));
