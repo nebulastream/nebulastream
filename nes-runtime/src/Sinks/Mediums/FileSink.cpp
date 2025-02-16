@@ -206,6 +206,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //    inputBuffer.release();
     {
         //        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
+        if (bufferStorage.rlock()->at(sourceId).contains(bufferSeqNumber)) {
+            NES_ERROR("buffer already recorded, exiting");
+            return true;
+        }
         auto records = (Record*) inputBuffer.getBuffer();
         std::vector<Record> vector;
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
