@@ -266,37 +266,39 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         };
         auto& lastWritten = lastWrittenMap->at(sourceId);
 
-        if (lastWritten < currentSeqNumberAfterAdding){
-            NES_ERROR("getting lock for buffer storage")
-            auto bufferStorageLocked = bufferStorage.wlock();
-            //todo: reduce hashmap lookups
-//            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
-//                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
-//                 ++it) {
-            for (auto it = bufferStorageLocked->operator[](sourceId).find(lastWritten + 1);
-                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
-                 ++it) {
-                NES_ERROR("adding element with id {}", it->second.front().id);
-                bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
+        if (lastWritten < currentSeqNumberAfterAdding) {
+            {
+                NES_ERROR("getting lock for buffer storage")
+                auto bufferStorageLocked = bufferStorage.wlock();
+                //todo: reduce hashmap lookups
+                //            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
+                //                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
+                //                 ++it) {
+                for (auto it = bufferStorageLocked->operator[](sourceId).find(lastWritten + 1);
+                     it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
+                     ++it) {
+                    NES_ERROR("adding element with id {}", it->second.front().id);
+                    bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
+                }
+                NES_ERROR("erasing elements");
+                bufferStorageLocked->operator[](sourceId).erase(
+                    bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
+                    bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
             }
-            NES_ERROR("erasing elements");
-            bufferStorageLocked->operator[](sourceId).erase(
-                bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
-                bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
+
+            //TODO: take care of cleanup
+
+            NES_ERROR("writing data to tcp")
+
+            // Write all buffers at once
+            writeDataToTCP(bulkWriteBatch);
+
+            NES_ERROR("wrote data to tcp updatign last written count")
+            // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
+
+            // Update lastWritten to the latest sequence number
+            lastWritten = currentSeqNumberAfterAdding;
         }
-
-        //TODO: take care of cleanup
-
-        NES_ERROR("writing data to tcp")
-
-        // Write all buffers at once
-        writeDataToTCP(bulkWriteBatch);
-
-        NES_ERROR("wrote data to tcp updatign last written count")
-        // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
-
-        // Update lastWritten to the latest sequence number
-        lastWritten = currentSeqNumberAfterAdding;
     }
     //    }
 
