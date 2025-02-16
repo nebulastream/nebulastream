@@ -96,12 +96,12 @@ public:
         = {"lockSliceCache", "false", "Enable lock in slice cache", {std::make_shared<NES::Configurations::BooleanValidation>()}};
     NES::Configurations::StringOption sortBufferByField = {"sortBufferByField", "", "Sort field identifier for the sort buffer operator."};
     NES::Configurations::StringOption sortBufferOrder = {"sortBufferOrder", "Ascending", "Sort order for the sort buffer operator."};
-    NES::Configurations::EnumOption<DelayStrategy> delayStrategy
-        = {"delayStrategy",
-           DelayStrategy::BUFFER,
-           "Strategy for introducing delays"
-           "[BUFFER|TUPLES]. "};
 
+    NES::Configurations::EnumOption<ShuffleStrategy> shuffleStrategy
+        = {"shuffleStrategy",
+           DelayStrategy::BUFFER,
+           "Strategy for introducing delays by shuffling tuples or buffers in the stream"
+           "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
     NES::Configurations::FloatOption unorderedness
         = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatValidation>()}};
     NES::Configurations::UIntOption minDelay
@@ -122,7 +122,7 @@ private:
             &lockSliceCache,
             &sortBufferByField,
             &sortBufferOrder,
-            &delayStrategy,
+            &shuffleStrategy,
             &unorderedness,
             &minDelay,
             &maxDelay,

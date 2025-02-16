@@ -16,6 +16,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
+#include "../../../../include/QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
@@ -353,8 +355,57 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         joinOperator->getOutputSchema(),
         joinOperatorHandler);
 
+    /// Depending on the set shuffle strategy, we might add the corresponding operators
+    if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER)
+    {
+        const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+
+        const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
+        streamJoinOperators.leftInputOperator = delayBufferOperatorLeft;
+        streamJoinOperators.rightInputOperator = delayBufferOperatorRight;
+        INVARIANT(false, "think about, if this is correct. We need the delay buffer operator for the join build side");
+    }
+    else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
+    {
+        const auto delayBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+
+        const auto delayBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(delayBufferOperatorLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(delayBufferOperatorRight);
+        streamJoinOperators.leftInputOperator = delayBufferOperatorLeft;
+        streamJoinOperators.rightInputOperator = delayBufferOperatorRight;
+        INVARIANT(false, "think about, if this is correct. We need the delay buffer operator for the join build side");
+    }
+    else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER_TUPLES)
+    {
+        throw NotImplemented();
+    }
+
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     leftJoinBuildOperator->insertBetweenThisAndParentNodes(triggerLeft);
+
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
     rightJoinBuildOperator->insertBetweenThisAndParentNodes(triggerRight);
     streamJoinOperators.operatorNode->replace(joinProbeOperator);

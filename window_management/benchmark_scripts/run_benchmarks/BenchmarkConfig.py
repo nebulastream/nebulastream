@@ -17,7 +17,7 @@ from numpy.lib.format import BUFFER_SIZE
 # This class stores all information needed to run a single benchmarks
 class BenchmarkConfig:
     def __init__(self, number_of_worker_threads, slice_cache_type, slice_store_type, numberOfEntriesSliceCache, lock_slice_cache,
-                 timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source):
+                 timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source, shuffle_strategy):
         self.number_of_worker_threads = number_of_worker_threads
         self.slice_cache_type = slice_cache_type
         self.slice_store_type = slice_store_type
@@ -27,6 +27,7 @@ class BenchmarkConfig:
         self.buffer_size_in_bytes = buffer_size_in_bytes
         self.query = query
         self.no_physical_sources_per_logical_source = no_physical_sources_per_logical_source
+        self.shuffle_strategy = shuffle_strategy
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
         self.task_queue_size = 100000
@@ -45,6 +46,7 @@ class BenchmarkConfig:
             "lock_slice_cache": self.lock_slice_cache,
             "timestamp_increment": self.timestamp_increment,
             "buffer_size_in_bytes": self.buffer_size_in_bytes,
+            "shuffle_strategy": self.shuffle_strategy,
             "query": self.query,
             "task_queue_size": self.task_queue_size,
             "buffers_in_global_buffer_manager": self.buffers_in_global_buffer_manager,
@@ -61,9 +63,9 @@ def create_all_benchmark_configs():
     LOCKED_SLICE_CACHE = [False] # True or False
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for locked_slice_cache in LOCKED_SLICE_CACHE] + [("NONE", 0, False)]
     SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:2]
-
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
+    SHUFFLE_STRATEGY = ["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
     BUFFER_SIZES = [8196] #[1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
     NO_PHYSICAL_SOURCES = [1]
@@ -89,7 +91,8 @@ def create_all_benchmark_configs():
             timestamp_increment,
             buffer_size_in_bytes,
             query,
-            no_physical_sources_per_logical_source
+            no_physical_sources_per_logical_source,
+            shuffle_strategy
         )
         for slice_cache_type_size in SLICE_CACHE_TYPE_AND_SIZE
         for slice_store_type in SLICE_STORE_TYPE
@@ -98,4 +101,5 @@ def create_all_benchmark_configs():
         for query in QUERIES
         for number_of_worker_threads in NUMBER_OF_WORKER_THREADS
         for no_physical_sources_per_logical_source in NO_PHYSICAL_SOURCES
+        for shuffle_strategy in SHUFFLE_STRATEGY
     ]

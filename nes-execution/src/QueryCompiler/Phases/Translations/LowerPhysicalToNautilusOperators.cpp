@@ -18,6 +18,8 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+
+#include "../../../../include/QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -234,6 +236,14 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             parentOperator->setChild(executableAggregationBuild);
             return executableAggregationBuild;
         }
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode))
+    {
+
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleTupleOperator>(operatorNode))
+    {
+
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationProbe>(operatorNode))
     {

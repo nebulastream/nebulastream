@@ -36,10 +36,12 @@ enum class ProbeType : uint8_t
     NO_PROBING
 };
 
-enum class DelayStrategy : uint8_t
+enum class ShuffleStrategy : uint8_t
 {
+    NONE,
     BUFFER,
-    TUPLES
+    TUPLES,
+    BUFFER_TUPLES
 };
 
 struct SliceCacheOptions
