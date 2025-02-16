@@ -203,6 +203,7 @@ class NonBlockingMonotonicSeqQueue {
         // check if we really found the correct block
         if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
               && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize)) {
+            NES_ERROR("Wrong block for seq {}, expected indext between {} and {} but is {}", seq.sequenceNumber, currentBlock->blockIndex * blockSize, currentBlock->blockIndex * blockSize + blockSize);
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 

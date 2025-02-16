@@ -72,7 +72,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
         NES_DEBUG("Creating source info")
         auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-        NES_ERROR("Created source infor with fd {}", sourceInfo->sockfd)
+        NES_ERROR("Created source info with fd {}", sourceInfo->sockfd)
         return;
     }
     struct Deleter {
