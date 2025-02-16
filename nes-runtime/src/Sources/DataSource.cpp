@@ -357,7 +357,7 @@ void DataSource::open() {
 }
 
 void DataSource::close() {
-    NES_WARNING("Close Called")
+    NES_ERROR("Close Called")
     Runtime::QueryTerminationType queryTerminationType;
     std::optional<ReconfigurationMarkerPtr> marker;
     {
