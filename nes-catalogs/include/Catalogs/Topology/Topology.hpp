@@ -386,9 +386,11 @@ findPathThatIncludesNode(const std::set<WorkerId>& topologyNodesWithUpStreamPinn
 
  void assignLevelsByBFS(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators);
 
+ std::unordered_set<WorkerId> getBranchForNode(WorkerId nodeId) const;
  void assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNodeIds,
     const std::set<WorkerId>& destinationTopologyNodeIds);
 
+ TopologyNodePtr getTopologyNode(WorkerId nodeId) const;
  bool isReachableIgnoringNodes(const std::set<WorkerId>& startSet,
                                         WorkerId targetId,
                                         const std::unordered_set<WorkerId>& ignoreThese);

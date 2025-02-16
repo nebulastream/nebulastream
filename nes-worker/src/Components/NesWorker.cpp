@@ -442,7 +442,8 @@ void NesWorker::computePerSecondMetricsAndDecide(const std::vector<Runtime::Quer
         it->second.availableFixedBufferSum = currentAvailableFixedBufferSum;
 
         // 2. Check if local query is overloaded
-        bool overloaded = (queueGrowthPerSec > QUEUE_SIZE_THRESHOLD) || (avgLatencyIncrease > LATENCY_THRESHOLD);
+        // bool overloaded = (queueGrowthPerSec > QUEUE_SIZE_THRESHOLD) || (avgLatencyIncrease > LATENCY_THRESHOLD);
+        bool overloaded = false;
         if (overloaded) {
             NES_WARNING("Query {}:{} considered overloaded due to per-second metrics. Checking neighbors...",
                         decomposedQueryId.getRawValue(), sharedQueryId.getRawValue());

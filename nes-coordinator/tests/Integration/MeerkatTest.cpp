@@ -237,6 +237,18 @@ public:
         topology = Topology::create();
     }
 
+    std::vector<WorkerConfigurationPtr> generateWorkerConfigs(size_t count) {
+        std::vector<WorkerConfigurationPtr> cfgs;
+        for (size_t i = 0; i < count; i++) {
+            auto wcfg = std::make_shared<WorkerConfiguration>();
+            wcfg->numberOfBuffersPerEpoch = 2;
+            wcfg->numWorkerThreads = 1;
+            wcfg->loadBalancing = 1000;
+            cfgs.push_back(wcfg);
+        }
+        return cfgs;
+    }
+
 };
 
 TEST_F(MeerkatTest, testHandshakeProcedure) {
@@ -296,122 +308,87 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
-    NesWorkerPtr wrkMid1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    EXPECT_TRUE(wrkMid1->start(false, true));
 
-    NesWorkerPtr wrkMid2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    EXPECT_TRUE(wrkMid2->start(false, true));
+    size_t numIntermediates = 4;
 
-    NesWorkerPtr wrkMid3 = std::make_shared<NesWorker>(std::move(workerConfig3));
-    EXPECT_TRUE(wrkMid3->start(false, true));
+    auto intermediateConfigs = generateWorkerConfigs(numIntermediates);
 
-    NesWorkerPtr wrkMid4 = std::make_shared<NesWorker>(std::move(workerConfig4));
-    EXPECT_TRUE(wrkMid4->start(false, true));
+    std::vector<NesWorkerPtr> intermediates;
+    intermediates.reserve(numIntermediates);
+    for (size_t i = 0; i < numIntermediates; i++) {
+        NesWorkerPtr w = std::make_shared<NesWorker>(std::move(intermediateConfigs[i]));
+        EXPECT_TRUE(w->start(false, true));
+        intermediates.push_back(w);
+    }
 
-    // NesWorkerPtr wrkMid5 = std::make_shared<NesWorker>(std::move(workerConfig5));
-    // EXPECT_TRUE(wrkMid5->start(false, true));
-    //
-    // NesWorkerPtr wrkMid6 = std::make_shared<NesWorker>(std::move(workerConfig6));
-    // EXPECT_TRUE(wrkMid6->start(false, true));
-    //
-    // NesWorkerPtr wrkMid7 = std::make_shared<NesWorker>(std::move(workerConfig7));
-    // EXPECT_TRUE(wrkMid7->start(false, true));
-    //
-    // NesWorkerPtr wrkMid8 = std::make_shared<NesWorker>(std::move(workerConfig8));
-    // EXPECT_TRUE(wrkMid8->start(false, true));
-    //
-    // NesWorkerPtr wrkMid9 = std::make_shared<NesWorker>(std::move(workerConfig9));
-    // EXPECT_TRUE(wrkMid9->start(false, true));
-    //
-    // NesWorkerPtr wrkMid10 = std::make_shared<NesWorker>(std::move(workerConfig10));
-    // EXPECT_TRUE(wrkMid10->start(false, true));
-    //
-    // NesWorkerPtr wrkMid11 = std::make_shared<NesWorker>(std::move(workerConfig11));
-    // EXPECT_TRUE(wrkMid11->start(false, true));
-    //
-    // NesWorkerPtr wrkMid12 = std::make_shared<NesWorker>(std::move(workerConfig12));
-    // EXPECT_TRUE(wrkMid12->start(false, true));
-    //
-    // NesWorkerPtr wrkMid13 = std::make_shared<NesWorker>(std::move(workerConfig13));
-    // EXPECT_TRUE(wrkMid13->start(false, true));
-    //
-    // NesWorkerPtr wrkMid14 = std::make_shared<NesWorker>(std::move(workerConfig14));
-    // EXPECT_TRUE(wrkMid14->start(false, true));
-    //
-    // NesWorkerPtr wrkMid15 = std::make_shared<NesWorker>(std::move(workerConfig15));
-    // EXPECT_TRUE(wrkMid15->start(false, true));
-    //
-    // NesWorkerPtr wrkMid16 = std::make_shared<NesWorker>(std::move(workerConfig16));
-    // EXPECT_TRUE(wrkMid16->start(false, true));
-
-    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig17));
+    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig1));
     wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf->start(false, true));
 
-    // wrkMid3->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid3->addParent(wrkMid1->getWorkerId());
-    //
-    // wrkMid4->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid4->addParent(wrkMid2->getWorkerId());
-
-    // wrkMid5->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid5->addParent(wrkMid3->getWorkerId());
-    //
-    // wrkMid6->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid6->addParent(wrkMid4->getWorkerId());
-    //
-    // wrkMid7->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid7->addParent(wrkMid5->getWorkerId());
-    //
-    // wrkMid8->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid8->addParent(wrkMid6->getWorkerId());
-    //
-    // wrkMid9->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid9->addParent(wrkMid7->getWorkerId());
-    //
-    // wrkMid10->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid10->addParent(wrkMid8->getWorkerId());
-    //
-    // wrkMid11->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid11->addParent(wrkMid9->getWorkerId());
-    //
-    // wrkMid12->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid12->addParent(wrkMid10->getWorkerId());
-    //
-    // wrkMid13->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid13->addParent(wrkMid11->getWorkerId());
-    //
-    // wrkMid14->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid14->addParent(wrkMid12->getWorkerId());
-    //
-    // wrkMid15->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid15->addParent(wrkMid13->getWorkerId());
-    //
-    // wrkMid16->removeParent(crd->getNesWorker()->getWorkerId());
-    // wrkMid16->addParent(wrkMid14->getWorkerId());
 
     wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-    wrkLeaf->addParent(wrkMid1->getWorkerId());
-    wrkLeaf->addParent(wrkMid2->getWorkerId());
 
-    auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
-    QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
-                                                                                   Optimizer::PlacementStrategy::BottomUp,
-                                                                                   FaultToleranceType::M);
+
+    size_t half = numIntermediates / 2;
+
+    for (size_t i = 0; i < numIntermediates; i++) {
+        intermediates[i]->removeParent(crd->getNesWorker()->getWorkerId());
+    }
+
+
+    for (size_t i = 0; i < half; i++) {
+        if (i == 0) {
+            intermediates[i]->addParent(crd->getNesWorker()->getWorkerId());
+        } else {
+            intermediates[i]->addParent(intermediates[i - 1]->getWorkerId());
+        }
+    }
+
+    for (size_t i = half; i < numIntermediates; i++) {
+        if (i == half) {
+            intermediates[i]->addParent(crd->getNesWorker()->getWorkerId());
+        } else {
+            intermediates[i]->addParent(intermediates[i - 1]->getWorkerId());
+        }
+    }
+
+    if (half > 0) {
+        wrkLeaf->addParent(intermediates[half - 1]->getWorkerId());
+    }
+    if (numIntermediates > half) {
+        wrkLeaf->addParent(intermediates[numIntermediates - 1]->getWorkerId());
+    }
+
+    auto query = Query::from("window")
+                        .filter(Attribute("id") < 10)
+                        .sink(NullOutputSinkDescriptor::create());
+    QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+        query.getQueryPlan(),
+        Optimizer::PlacementStrategy::BottomUp,
+        FaultToleranceType::M
+    );
 
     auto queryCatalog = crd->getQueryCatalog();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-    // wrkMid3->requestOffload(sharedQueryPlanId, wrkMid3->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkMid1->getWorkerId());
-    std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+
+    if (intermediates.size() >= 3) {
+        auto decomposedIds = intermediates[numIntermediates - 1]->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
+        if (!decomposedIds.empty()) {
+            intermediates[numIntermediates - 1]->requestOffload(
+                sharedQueryPlanId,
+                decomposedIds[0],
+                intermediates[numIntermediates - 2]->getWorkerId()
+            );
+        }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 
-
-    // EXPECT_TRUE(wrkMid4->stop(true));
-    // EXPECT_TRUE(wrkMid3->stop(true));
-    EXPECT_TRUE(wrkMid1->stop(true));
-    EXPECT_TRUE(wrkMid2->stop(true));
+    for (auto & w : intermediates) {
+        EXPECT_TRUE(w->stop(true));
+    }
     EXPECT_TRUE(wrkLeaf->stop(true));
     EXPECT_TRUE(crd->stopCoordinator(true));
 }

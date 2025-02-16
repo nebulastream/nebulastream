@@ -34,7 +34,7 @@ class ServerCompletionQueue;
 
 namespace NES {
 
-const uint64_t LATENCY_THRESHOLD = 5;
+const uint64_t LATENCY_THRESHOLD = 5000;
 const uint64_t QUEUE_SIZE_THRESHOLD = 5000;
 
 class WorkerHealthCheckService;

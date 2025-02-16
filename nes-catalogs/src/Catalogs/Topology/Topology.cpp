@@ -620,14 +620,36 @@ bool Topology::tryForceAlternativeLinkOnSinglePath(
     return linkCreated;
 }
 
-void Topology::assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNodeIds,
-    const std::set<WorkerId>& destinationTopologyNodeIds)
-{
+TopologyNodePtr Topology::getTopologyNode(WorkerId nodeId) const {
+    return workerIdToTopologyNode.at(nodeId).withRLock([](const auto& nodePtr) {
+        return nodePtr;
+    });
+}
 
+std::unordered_set<WorkerId> Topology::getBranchForNode(WorkerId nodeId) const {
+    std::unordered_set<WorkerId> branch;
+    TopologyNodePtr current = getTopologyNode(nodeId);
+    while (current) {
+        branch.insert(current->getId());
+        auto parentIds = current->getParents();
+        if (!parentIds.empty()) {
+            current = getTopologyNode(parentIds[0]->as<TopologyNode>()->getId());
+        } else {
+            break;
+        }
+    }
+    return branch;
+}
+
+
+void Topology::assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNodeIds,
+                                      const std::set<WorkerId>&)
+{
+    // Build mapping: level -> set of node IDs.
     std::unordered_map<int, std::set<WorkerId>> levelToNodeIds;
     for (const auto& [nodeId, levels] : nodeLevels) {
-        for (int level : levels) {
-            levelToNodeIds[level].insert(nodeId);
+        for (int lvl : levels) {
+            levelToNodeIds[lvl].insert(nodeId);
         }
     }
 
@@ -635,40 +657,32 @@ void Topology::assignAlternativeNodes(const std::set<WorkerId>& sourceTopologyNo
         TopologyNodePtr nodeCopy = workerIdToTopologyNode.at(nodeId).copy();
         nodeCopy->clearAlternativeNodeCandidates();
 
-        std::vector<TopologyNodePtr> originalPath =
-            findPathThatIncludesNode(sourceTopologyNodeIds, destinationTopologyNodeIds, nodeId);
-
-        std::unordered_set<WorkerId> pathNodeIds;
-        for (auto& p : originalPath) {
-            pathNodeIds.insert(p->getId());
-        }
+        // Compute the primary branch for this node using its parent chain.
+        std::unordered_set<WorkerId> branch = getBranchForNode(nodeId);
 
         std::set<WorkerId> alternativeNodeIds;
         for (int lvl : levels) {
             const auto& candidates = levelToNodeIds[lvl];
             for (WorkerId candidateId : candidates) {
-
-                if (candidateId == nodeId) {
+                if (candidateId == nodeId)
                     continue;
-                }
-
-                if (pathNodeIds.count(candidateId) > 0) {
+                // Exclude any candidate that is on the same primary branch.
+                if (branch.count(candidateId) > 0)
                     continue;
-                }
-
-                if (isReachableIgnoringNodes(sourceTopologyNodeIds, candidateId, pathNodeIds)) {
+                // Optionally, perform additional reachability checks.
+                if (isReachableIgnoringNodes(sourceTopologyNodeIds, candidateId, {})) {
                     alternativeNodeIds.insert(candidateId);
                 }
             }
         }
-
-        for (auto& altId : alternativeNodeIds) {
+        for (const auto& altId : alternativeNodeIds) {
             nodeCopy->setAlternativeNodeCandidate(altId);
         }
-
         workerIdToTopologyNode[nodeId] = nodeCopy;
     }
 }
+
+
 
 bool Topology::isReachableIgnoringNodes(const std::set<WorkerId>& startSet,
                                         WorkerId targetId,
