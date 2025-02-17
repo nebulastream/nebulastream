@@ -88,6 +88,7 @@ for file in files:
     df["buffer_size"] = buffer_size
     df["file_buffer_size"] = file_buffer_size
     df["keys"] = keys
+    df["keys_percent"] = len(keys.split("_")) / 10 if keys != "no_keys" else 0
 
     # Append the processed DataFrame
     data_frames.append(df)
@@ -97,6 +98,36 @@ if data_frames:
     combined_df = pd.concat(data_frames, ignore_index=True)
 else:
     raise RuntimeError("No valid CSV files found!")
+
+new_method_rows = []
+
+# Group by buffer_size, file_buffer_size, and keys to ensure unique key configurations are handled separately
+for (buffer_size, file_buffer_size, keys), group in combined_df.groupby(["buffer_size", "file_buffer_size", "keys"]):
+    no_sep = group[group["sep_method"] == "NO_SEPARATION"]
+    sep_payload = group[group["sep_method"] == "SEPARATE_FILES_PAYLOAD"]
+    sep_keys = group[group["sep_method"] == "SEPARATE_FILES_KEYS"]
+
+    for _, row in sep_keys.iterrows():
+        key_percentage = row["keys_percent"]
+
+        # Find the exact matching row in NO_SEPARATION and SEPARATE_FILES_PAYLOAD
+        #matching_no_sep = no_sep[no_sep["keys"] == row["keys"]]
+        #matching_sep_payload = sep_payload[sep_payload["keys"] == row["keys"]]
+
+        writing_time = sep_payload["writing_time"].values[0] + key_percentage * no_sep["writing_time"].values[0]
+        truncating_time = sep_payload["truncating_time"].values[0] + key_percentage * no_sep["truncating_time"].values[0]
+        reading_time = row["reading_time"]  # Directly from SEPARATE_FILES_KEYS
+
+        new_row = row.copy()
+        new_row["sep_method"] = "SEPARATE_FILES_SUCCESSIVELY"
+        new_row["writing_time"] = writing_time
+        new_row["truncating_time"] = truncating_time
+        new_row["reading_time"] = reading_time
+
+        new_method_rows.append(new_row)
+
+# Append the new rows
+combined_df = pd.concat([combined_df, pd.DataFrame(new_method_rows)], ignore_index=True)
 
 # Add total execution time
 combined_df['execution_time'] = combined_df["writing_time"] + combined_df["reading_time"] + combined_df["truncating_time"]
@@ -110,6 +141,8 @@ combined_df["alloc_pv_read_percent"] = ((combined_df["def_var_read"] - combined_
 
 # Sort the combined values
 combined_df = combined_df.sort_values(["sep_method", "buffer_size", "file_buffer_size"])
+
+print(combined_df["sep_method"].value_counts())
 
 #%% Remove outliers
 
@@ -140,13 +173,15 @@ filtered_outliers_df = pd.concat(filtered_outliers_groups, ignore_index=True)
 
 plot_df = filtered_outliers_df
 
-# Choose three representative values for each
+# Choose representative values for each
+selected_sep_methods = ["SEPARATE_FILES_KEYS"]
 selected_buffer_sizes = [1024, 4096, 16384]
 selected_file_buffer_sizes = [0, 100]
 selected_keys = ["no_keys", "f0_f1_f2_f3_f4", "f0_f2_f4_f6_f8"]
 
 # Filter the DataFrame for only these values:
 subset1= plot_df[
+    (~plot_df['sep_method'].isin(selected_sep_methods)) &
     (plot_df['buffer_size'].isin(selected_buffer_sizes)) &
     (plot_df['file_buffer_size'].isin(selected_file_buffer_sizes) &
     (plot_df['keys'].isin(selected_keys)))
