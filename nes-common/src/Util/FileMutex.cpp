@@ -19,9 +19,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #if defined(linux) || defined(__APPLE__)
-#    include <fcntl.h>
+    #include <fcntl.h>
 #else
-#    error "Unsupported platform"
+    #error "Unsupported platform"
 #endif
 
 namespace NES::Util
