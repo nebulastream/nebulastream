@@ -72,6 +72,7 @@ ISQPRequestPtr ISQPRequest::create(const Optimizer::PlacementAmendmentHandlerPtr
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
     try {
+        NES_ERROR("Start of ISQP Request");
         auto processingStartTime = getTimestamp();
         topology = storageHandle->getTopologyHandle(requestId);
         globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
