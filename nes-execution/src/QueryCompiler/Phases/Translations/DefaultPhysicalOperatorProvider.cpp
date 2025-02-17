@@ -17,7 +17,8 @@
 #include <utility>
 #include <vector>
 
-#include "../../../../include/QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp"
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
@@ -298,7 +299,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     const auto joinStrategy = queryCompilerConfig.joinStrategy;
 
-    const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
+    StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
         joinFieldNameLeft,
         joinFieldNameRight,
@@ -373,8 +374,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             queryCompilerConfig.maxDelay);
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
         streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
-        streamJoinOperators.leftInputOperator = delayBufferOperatorLeft;
-        streamJoinOperators.rightInputOperator = delayBufferOperatorRight;
+        streamJoinOperators.leftInputOperator = shuffleBufferOperatorLeft;
+        streamJoinOperators.rightInputOperator = shuffleBufferOperatorRight;
         INVARIANT(false, "think about, if this is correct. We need the delay buffer operator for the join build side");
     }
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
@@ -400,7 +401,40 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     }
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER_TUPLES)
     {
-        throw NotImplemented();
+        /// We are adding a shuffle buffer operator for the tuples and a shuffle buffer operator for the buffer
+        const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+        const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+
+        const auto shuffleTuplesOperatorLeft = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+        const auto shuffleTuplesOperatorRight = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(),
+            joinOperator->getOutputSchema(),
+            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.minDelay,
+            queryCompilerConfig.maxDelay);
+
+
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
+        shuffleBufferOperatorLeft->insertBetweenThisAndParentNodes(shuffleTuplesOperatorLeft);
+        shuffleBufferOperatorRight->insertBetweenThisAndParentNodes(shuffleTuplesOperatorRight);
+        streamJoinOperators.leftInputOperator = shuffleTuplesOperatorLeft;
+        streamJoinOperators.rightInputOperator = shuffleTuplesOperatorRight;
     }
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);

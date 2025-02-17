@@ -70,8 +70,22 @@ def create_all_benchmark_configs():
     QUERIES = []
     NO_PHYSICAL_SOURCES = [1]
 
-    # Adding queries
-    WINDOW_SIZE_SLIDE = [(10*1000, 1*1000)]
+    # Adding queries with different window sizes.
+    WINDOW_SIZE_SLIDE = [
+        # Representing a tumbling window of 10s, resulting in 1 concurrent window
+        (10*1000, 10*1000),
+
+        # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
+        (10*1000, 100),
+
+        # Representing a sliding window of 1000s with slide of 10s, resulting in 100 concurrent windows.
+        # This is to test our approach for the same no. concurrent windows but with larger window sizes
+        (1*1000*1000, 10*1000),
+
+        # Representing a sliding window of 1000s with slide of 100ms, resulting in 10000 concurrent windows
+        # Testing our approach with a lot of small slices and a lot of concurrent windows
+        (1*1000*1000, 100)
+                         ]
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
             f"SELECT MIN(value) FROM tcp_source WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"
