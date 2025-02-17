@@ -41,7 +41,8 @@ using namespace Runtime::Execution::Functions;
 std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
 {
     /// 1. Check if the function is valid.
-    INVARIANT(nodeFunction->validateBeforeLowering(), "Function not valid: {}", *nodeFunction);
+    auto ret = nodeFunction->validateBeforeLowering();
+    INVARIANT(ret, "Function not valid: {}", *nodeFunction);
 
     /// 2. Recursively lower the children of the function node.
     std::vector<std::unique_ptr<Function>> childFunction;

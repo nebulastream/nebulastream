@@ -180,10 +180,8 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
-    INVARIANT(
-        controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
-        "Cannot load tuple buffer with index={}",
-        bufferIndex);
+    auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
+    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
     return childBuffer;
 }
 
