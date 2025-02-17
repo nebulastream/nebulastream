@@ -335,12 +335,12 @@ uint64_t findChainIndexProxy(const HashMap* hashMap, const uint64_t tupleIndexVa
 
     /// Second, we have to find the chain that contains the tuple with the index #tupleIndexVal
     /// Thus, we count how many tuples are there per chain until we reach the tuple with the index #tupleIndexVal
-    for (; chainIndex < chainedHashMap->getNumberOfChains(); chainIndex = chainIndex + 1)
+    for (; chainIndex < chainedHashMap->getNumberOfChains(); ++chainIndex)
     {
         const auto* currentChain = chainedHashMap->getStartOfChain(chainIndex);
         while (currentChain != nullptr && seenTuples < tupleIndexVal)
         {
-            seenTuples = seenTuples + 1;
+            ++seenTuples;
             currentChain = currentChain->next;
         }
         if (seenTuples >= tupleIndexVal)
@@ -349,6 +349,7 @@ uint64_t findChainIndexProxy(const HashMap* hashMap, const uint64_t tupleIndexVa
         }
     }
     INVARIANT(false, "Could not find the tuple with index {} in ChainedHashMap.", tupleIndexVal);
+    std::terminate(); /// Ensure termination even if INVARIANT is disabled.
 }
 
 

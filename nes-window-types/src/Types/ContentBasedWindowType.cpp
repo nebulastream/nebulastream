@@ -25,10 +25,8 @@ ContentBasedWindowType::ContentBasedWindowType() = default;
 std::shared_ptr<ThresholdWindow>
 ContentBasedWindowType::asThresholdWindow(const std::shared_ptr<ContentBasedWindowType>& contentBasedWindowType)
 {
-    if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType))
-    {
-        return thresholdWindow;
-    }
-    INVARIANT(false, "Can not cast the content based window type to a threshold window");
+    auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType);
+    INVARIANT(thresholdWindow, "Cannot cast the content based window type to a threshold window");
+    return thresholdWindow;
 }
 }

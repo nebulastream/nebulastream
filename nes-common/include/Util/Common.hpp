@@ -30,7 +30,7 @@ std::string escapeJson(const std::string& str);
 
 /// this method checks if the object is null
 template <typename T>
-std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage)
+std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, USED_IN_DEBUG const std::string& errorMessage)
 {
     INVARIANT(ptr, errorMessage);
     return ptr;
