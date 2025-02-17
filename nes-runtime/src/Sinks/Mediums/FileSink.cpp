@@ -242,6 +242,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto records = (Record*) inputBuffer.getBuffer();
         std::vector<Record> vector;
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
+            records[i].outputTimestamp = getTimestamp();
             vector.push_back(records[i]);
         }
         bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, std::move(vector));
@@ -344,14 +345,9 @@ bool FileSink::writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite) 
         NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
 
         for (auto records : buffersToWrite) {
-            //todo: do not checkpoint if incremental is enabled
-            for (uint64_t i = 0; i < records.size(); ++i) {
-                records[i].outputTimestamp = getTimestamp();
-                //                auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-                //                if (records[i].value == 0 || checkpoint == records[i].value + 1) {
-                //                    checkpoint = records[i].value;
-                //                }
-            }
+//            for (uint64_t i = 0; i < records.size(); ++i) {
+//                records[i].outputTimestamp = getTimestamp();
+//            }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written = write(sinkInfo->sockfd, records.data(), records.size() * sizeof(Record));
             //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
