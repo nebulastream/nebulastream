@@ -73,15 +73,11 @@ for file in files:
         'col17': 'compare_data'
     })
 
-    # Calculate time to write to file without memory allocation
-    writing_time = df['write_exec_time'] - df['alloc_mem_write']
-    df["writing_time"] = writing_time / 1000
+    # Calculate time to write to file and read from file without memory allocation
+    df["writing_time"] = df['write_exec_time'] - df['alloc_mem_write']
+    df["reading_time"] = df['read_exec_time'] - df['alloc_mem_read']
 
-    # Calculate time to read from file without memory allocation
-    reading_time = df['read_exec_time'] - df['alloc_mem_read']
-    df["reading_time"] = reading_time / 1000
-
-    df["truncating_time"] = df['truncate_file'] / 1000
+    df["truncating_time"] = df['truncate_file']
 
     # Attach Metadata to each row
     df["sep_method"] = sep_method
@@ -99,37 +95,60 @@ if data_frames:
 else:
     raise RuntimeError("No valid CSV files found!")
 
-new_method_rows = []
+# Container to hold data for new separation method
+separate_files_successively_rows = []
 
 # Group by buffer_size, file_buffer_size, and keys to ensure unique key configurations are handled separately
 for (buffer_size, file_buffer_size, keys), group in combined_df.groupby(["buffer_size", "file_buffer_size", "keys"]):
-    no_sep = group[group["sep_method"] == "NO_SEPARATION"]
-    sep_payload = group[group["sep_method"] == "SEPARATE_FILES_PAYLOAD"]
-    sep_keys = group[group["sep_method"] == "SEPARATE_FILES_KEYS"]
+    no_sep = group[group["sep_method"] == "NO_SEPARATION"].reset_index(drop=True)
+    sep_payload = group[group["sep_method"] == "SEPARATE_FILES_PAYLOAD"].reset_index(drop=True)
+    sep_keys = group[group["sep_method"] == "SEPARATE_FILES_KEYS"].reset_index(drop=True)
 
-    for _, row in sep_keys.iterrows():
-        key_percentage = row["keys_percent"]
+    # Ensure the lengths of the DataFrames are the same
+    if not (no_sep.shape[0] == sep_payload.shape[0] == sep_keys.shape[0]):
+        raise RuntimeError("Found different number of runs per experiment!")
 
-        # Find the exact matching row in NO_SEPARATION and SEPARATE_FILES_PAYLOAD
-        #matching_no_sep = no_sep[no_sep["keys"] == row["keys"]]
-        #matching_sep_payload = sep_payload[sep_payload["keys"] == row["keys"]]
+    # Iterate over the rows of no_sep, sep_payload, and sep_keys simultaneously by their position in the group
+    for i in range(len(sep_keys)):
+        no_sep_row = no_sep.iloc[i]
+        sep_payload_row = sep_payload.iloc[i]
+        sep_key_row = sep_keys.iloc[i]
 
-        writing_time = sep_payload["writing_time"].values[0] + key_percentage * no_sep["writing_time"].values[0]
-        truncating_time = sep_payload["truncating_time"].values[0] + key_percentage * no_sep["truncating_time"].values[0]
-        reading_time = row["reading_time"]  # Directly from SEPARATE_FILES_KEYS
+        key_percentage = sep_key_row["keys_percent"]
 
-        new_row = row.copy()
+        # Create new row from SEPARATE_FILES_KEYS row
+        new_row = sep_key_row.copy()
         new_row["sep_method"] = "SEPARATE_FILES_SUCCESSIVELY"
-        new_row["writing_time"] = writing_time
-        new_row["truncating_time"] = truncating_time
-        new_row["reading_time"] = reading_time
 
-        new_method_rows.append(new_row)
+        new_row["def_var_write"] = sep_payload_row["def_var_write"] + no_sep_row["def_var_write"]
+        new_row["alloc_mem_write"] = sep_payload_row["alloc_mem_write"] + no_sep_row["alloc_mem_write"]
+        new_row["open_file_write"] = sep_payload_row["open_file_write"] + no_sep_row["open_file_write"]
+        new_row["close_file_write"] = sep_payload_row["close_file_write"] + no_sep_row["close_file_write"]
 
-# Append the new rows
-combined_df = pd.concat([combined_df, pd.DataFrame(new_method_rows)], ignore_index=True)
+        new_row["truncate_file"] = sep_payload_row["truncate_file"] + key_percentage * no_sep_row["truncate_file"]
+        new_row["write_buf_write"] = sep_payload_row["write_buf_write"] + key_percentage * no_sep_row["write_buf_write"]
+        new_row["write_file_write"] = sep_payload_row["write_file_write"] + key_percentage * no_sep_row["write_file_write"]
+
+        new_row["write_exec_time"] = (
+            sep_payload_row["write_exec_time"] + no_sep_row["write_exec_time"]
+            - sep_payload_row["write_buf_write"] - no_sep_row["write_buf_write"]
+            - sep_payload_row["write_file_write"] - no_sep_row["write_file_write"]
+            + new_row["write_buf_write"] + new_row["write_file_write"])
+
+        # Calculate time to write to file without memory allocation
+        new_row["writing_time"] = new_row['write_exec_time'] - new_row['alloc_mem_write']
+        new_row["truncating_time"] = new_row['truncate_file']
+
+        # Append the new row
+        separate_files_successively_rows.append(new_row)
+
+# Append the new rows to the original DataFrame
+combined_df = pd.concat([combined_df, pd.DataFrame(separate_files_successively_rows)], ignore_index=True)
 
 # Add total execution time
+combined_df["writing_time"] /= 1000
+combined_df["reading_time"] /= 1000
+combined_df["truncating_time"] /= 1000
 combined_df['execution_time'] = combined_df["writing_time"] + combined_df["reading_time"] + combined_df["truncating_time"]
 
 # Calculate the percentage of execution time for defining variables
@@ -142,7 +161,9 @@ combined_df["alloc_pv_read_percent"] = ((combined_df["def_var_read"] - combined_
 # Sort the combined values
 combined_df = combined_df.sort_values(["sep_method", "buffer_size", "file_buffer_size"])
 
-print(combined_df["sep_method"].value_counts())
+sep_method_counts = combined_df.groupby("sep_method").size()
+if len(sep_method_counts.unique()) != 1:
+    raise RuntimeError("Found different number of configurations or runs per separation method!")
 
 #%% Remove outliers
 
