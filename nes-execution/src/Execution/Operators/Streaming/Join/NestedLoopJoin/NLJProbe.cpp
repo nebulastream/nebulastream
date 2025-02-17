@@ -46,12 +46,11 @@ NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceE
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-    if (const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd); slice.has_value())
-    {
-        return dynamic_cast<NLJSlice*>(slice.value().get());
-    }
 
-    INVARIANT(false, "Could not find a slice for slice end {}", sliceEnd);
+    auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
+    INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
+
+    return dynamic_cast<NLJSlice*>(slice.value().get());
 }
 
 Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)

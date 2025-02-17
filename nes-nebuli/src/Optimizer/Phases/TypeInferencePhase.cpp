@@ -56,11 +56,10 @@ std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::sh
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(
-    const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const
+void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators) const
 {
     PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
-    PRECONDITION(not sourceOperators.empty(), "Query plan with id {} did not contain sources during type inference.", queryId);
+    PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)

@@ -105,11 +105,8 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
-    if (fieldIndex.has_value())
-    {
-        return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
-    }
-    INVARIANT(false, "Could not find fieldIndex for {}", fieldName);
+    INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);
+    return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
 }
 
 template <class T, bool boundaryChecks>
