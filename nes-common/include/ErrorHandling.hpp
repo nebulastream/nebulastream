@@ -74,41 +74,41 @@ private:
 #undef EXCEPTION
 
 #ifdef DISABLE_ASSERTS
-#define PRECONDITION(condition, formatString, ...) ((void)0)
-#define INVARIANT(condition, formatString, ...) ((void)0)
+    #define PRECONDITION(condition, formatString, ...) ((void)0)
+    #define INVARIANT(condition, formatString, ...) ((void)0)
 #else
 
-/// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
-/// the caller of the functions made an error.
-/// @param condition The condition that should be true
-/// @param message The message that should be printed if the condition is false
-#define PRECONDITION(condition, formatString, ...) \
-    do \
-    { \
-        if (!(condition)) \
+    /// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
+    /// the caller of the functions made an error.
+    /// @param condition The condition that should be true
+    /// @param message The message that should be printed if the condition is false
+    #define PRECONDITION(condition, formatString, ...) \
+        do \
         { \
-            std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-            cpptrace::generate_trace().print(); \
-            std::terminate(); \
-        } \
-    } while (false)
+            if (!(condition)) \
+            { \
+                std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+                cpptrace::generate_trace().print(); \
+                std::terminate(); \
+            } \
+        } while (false)
 
-/// @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
-/// means that there is a bug in the program.
-/// @param condition The condition that should be true
-/// @param message The message that should be printed if the condition is false
-#define INVARIANT(condition, formatString, ...) \
-    do \
-    { \
-        if (!(condition)) \
+    /// @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
+    /// means that there is a bug in the program.
+    /// @param condition The condition that should be true
+    /// @param message The message that should be printed if the condition is false
+    #define INVARIANT(condition, formatString, ...) \
+        do \
         { \
-            std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-            cpptrace::generate_trace().print(); \
-            std::terminate(); \
-        } \
-    } while (false)
+            if (!(condition)) \
+            { \
+                std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+                cpptrace::generate_trace().print(); \
+                std::terminate(); \
+            } \
+        } while (false)
 
 #endif
 

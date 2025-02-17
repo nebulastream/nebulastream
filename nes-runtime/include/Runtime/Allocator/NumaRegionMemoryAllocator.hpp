@@ -14,18 +14,18 @@
 
 #pragma once
 #ifdef NES_ENABLE_NUMA_SUPPORT
-#    include <memory>
-#    include <Util/Logger/Logger.hpp>
-#    ifdef __linux__
-#        include <memory_resource>
-#    elif defined(__APPLE__)
-/// TODO move non experimental when upgrading clang dep
-#        include <experimental/memory_resource>
+    #include <memory>
+    #include <Util/Logger/Logger.hpp>
+    #ifdef __linux__
+        #include <memory_resource>
+    #elif defined(__APPLE__)
+        /// TODO move non experimental when upgrading clang dep
+        #include <experimental/memory_resource>
 namespace std::pmr
 {
 using memory_resource = std::experimental::pmr::memory_resource;
 }
-#    endif
+    #endif
 
 namespace NES::Runtime
 {

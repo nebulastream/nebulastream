@@ -162,7 +162,7 @@ std::vector<std::shared_ptr<PhysicalType>> Util::getPhysicalTypes(const Schema& 
 }
 
 #ifdef WRAP_READ_CALL
-#    include <sys/types.h>
+    #include <sys/types.h>
 /// If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function
 /// to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
 /// However, this allows to mock calls to read (e.g. TCPSourceTest)

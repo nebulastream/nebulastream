@@ -20,59 +20,59 @@
 
 ///NOLINTBEGIN
 #ifdef ENGINE_LOG_LEVEL_TRACE
-#    define ENGINE_LOG_TRACE(...) NES_TRACE(__VA_ARGS__)
-#    define ENGINE_IF_LOG_TRACE(...) __VA_ARGS__
-#    define ENGINE_LOG_DEBUG(...) NES_DEBUG(__VA_ARGS__)
-#    define ENGINE_IF_LOG_DEBUG(...) __VA_ARGS__
-#    define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
-#    define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
-#    define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
-#    define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
-#    define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
-#    define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
+    #define ENGINE_LOG_TRACE(...) NES_TRACE(__VA_ARGS__)
+    #define ENGINE_IF_LOG_TRACE(...) __VA_ARGS__
+    #define ENGINE_LOG_DEBUG(...) NES_DEBUG(__VA_ARGS__)
+    #define ENGINE_IF_LOG_DEBUG(...) __VA_ARGS__
+    #define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
+    #define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
+    #define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
+    #define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
+    #define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
+    #define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
 #elifdef ENGINE_LOG_LEVEL_DEBUG
-#    define ENGINE_LOG_TRACE(...)
-#    define ENGINE_IF_LOG_TRACE(...)
-#    define ENGINE_LOG_DEBUG(...) NES_DEBUG(__VA_ARGS__)
-#    define ENGINE_IF_LOG_DEBUG(...) __VA_ARGS__
-#    define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
-#    define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
-#    define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
-#    define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
-#    define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
-#    define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
+    #define ENGINE_LOG_TRACE(...)
+    #define ENGINE_IF_LOG_TRACE(...)
+    #define ENGINE_LOG_DEBUG(...) NES_DEBUG(__VA_ARGS__)
+    #define ENGINE_IF_LOG_DEBUG(...) __VA_ARGS__
+    #define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
+    #define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
+    #define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
+    #define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
+    #define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
+    #define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
 #elifdef ENGINE_LOG_LEVEL_INFO
-#    define ENGINE_LOG_TRACE(...)
-#    define ENGINE_IF_LOG_TRACE(...)
-#    define ENGINE_LOG_DEBUG(...)
-#    define ENGINE_IF_LOG_DEBUG(...)
-#    define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
-#    define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
-#    define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
-#    define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
-#    define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
-#    define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
+    #define ENGINE_LOG_TRACE(...)
+    #define ENGINE_IF_LOG_TRACE(...)
+    #define ENGINE_LOG_DEBUG(...)
+    #define ENGINE_IF_LOG_DEBUG(...)
+    #define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
+    #define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
+    #define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
+    #define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
+    #define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
+    #define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
 #elifdef ENGINE_LOG_LEVEL_ERROR
-#    define ENGINE_LOG_TRACE(...)
-#    define ENGINE_IF_LOG_TRACE(...)
-#    define ENGINE_LOG_DEBUG(...)
-#    define ENGINE_IF_LOG_DEBUG(...)
-#    define ENGINE_LOG_INFO(...)
-#    define ENGINE_IF_LOG_INFO(...)
-#    define ENGINE_LOG_WARNING(...)
-#    define ENGINE_IF_LOG_WARNING(...)
-#    define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
-#    define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
+    #define ENGINE_LOG_TRACE(...)
+    #define ENGINE_IF_LOG_TRACE(...)
+    #define ENGINE_LOG_DEBUG(...)
+    #define ENGINE_IF_LOG_DEBUG(...)
+    #define ENGINE_LOG_INFO(...)
+    #define ENGINE_IF_LOG_INFO(...)
+    #define ENGINE_LOG_WARNING(...)
+    #define ENGINE_IF_LOG_WARNING(...)
+    #define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
+    #define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
 #else
-#    define ENGINE_LOG_TRACE(...)
-#    define ENGINE_IF_LOG_TRACE(...)
-#    define ENGINE_LOG_DEBUG(...)
-#    define ENGINE_IF_LOG_DEBUG(...)
-#    define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
-#    define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
-#    define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
-#    define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
-#    define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
-#    define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
+    #define ENGINE_LOG_TRACE(...)
+    #define ENGINE_IF_LOG_TRACE(...)
+    #define ENGINE_LOG_DEBUG(...)
+    #define ENGINE_IF_LOG_DEBUG(...)
+    #define ENGINE_IF_LOG_INFO(...) __VA_ARGS__
+    #define ENGINE_LOG_INFO(...) NES_INFO(__VA_ARGS__)
+    #define ENGINE_LOG_WARNING(...) NES_WARNING(__VA_ARGS__)
+    #define ENGINE_IF_LOG_WARNING(...) __VA_ARGS__
+    #define ENGINE_LOG_ERROR(...) NES_ERROR(__VA_ARGS__)
+    #define ENGINE_IF_LOG_ERROR(...) __VA_ARGS__
 #endif
 ///NOLINTEND
