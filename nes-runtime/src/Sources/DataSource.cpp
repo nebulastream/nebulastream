@@ -300,7 +300,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         return true;
     }
 
-    NES_ERROR("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
+    NES_DEBUG("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
     bool expected = true;
 
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
@@ -357,7 +357,7 @@ void DataSource::open() {
 }
 
 void DataSource::close() {
-    NES_ERROR("Close Called")
+    NES_DEBUG("Close Called")
     Runtime::QueryTerminationType queryTerminationType;
     std::optional<ReconfigurationMarkerPtr> marker;
     {
@@ -474,7 +474,7 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (100));
-        NES_ERROR("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
+        NES_DEBUG("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
                   startPeriod,
                   endPeriod,
                   nextPeriodStartTime);
@@ -534,7 +534,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_ERROR("DataSource produced buffer {} type= {} string={}: Received Data: {} "
+                NES_DEBUG("DataSource produced buffer {} type= {} string={}: Received Data: {} "
                           "operatorId={} orgID={}",
                           numberOfBuffersProduced,
                           magic_enum::enum_name(getType()),
@@ -662,7 +662,7 @@ void DataSource::lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminati
 }
 
 void DataSource::setReplayData() {
-    NES_ERROR("setting source to replay data")
+    NES_DEBUG("setting source to replay data")
     replayData = true;
 }
 

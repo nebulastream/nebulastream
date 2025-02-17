@@ -142,7 +142,7 @@ void FileSink::setup() {
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
-        NES_ERROR("sink notifies checkpoints");
+        NES_DEBUG("sink notifies checkpoints");
         //        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
         //        auto checkpoints = sinkInfo->checkpoints;
 
@@ -167,9 +167,9 @@ void FileSink::shutdown() {
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
     (void) context;
 
-    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+    NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
     if (!getReplayData()) {
-        NES_ERROR("replay data not activated writing buffer");
+        NES_DEBUG("replay data not activated writing buffer");
         std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
         return writeDataToTCP(vec);
     }
@@ -184,7 +184,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //    }
 
     if (!inputBuffer) {
-        NES_ERROR("Invalid input buffer");
+        NES_DEBUG("Invalid input buffer");
         return false;
     }
 
@@ -192,7 +192,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //todo: check if we can use origin id
     NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
     auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
-    NES_ERROR("writing data for source id {}", sourceId);
+    NES_DEBUG("writing data for source id {}", sourceId);
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
 
     {
@@ -219,7 +219,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                     newQueue.emplace(seqData, i);
                 }
                 readLock->operator[](sourceId) = newQueue;
-                NES_ERROR("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
+                NES_DEBUG("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
             }
         }
     }
@@ -236,7 +236,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     {
         //        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
         if (bufferStorage.wlock()->operator[](sourceId).contains(bufferSeqNumber)) {
-            NES_ERROR("buffer already recorded, exiting");
+            NES_DEBUG("buffer already recorded, exiting");
             return true;
         }
         auto records = (Record*) inputBuffer.getBuffer();
@@ -260,13 +260,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // get the highest consecutive sequence number in the queue after adding new value
     auto currentSeqNumberAfterAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
 
-    NES_ERROR("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
+    NES_DEBUG("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
     // check if top value in the queue has changed after adding new sequence number
     //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-    NES_ERROR("try to acquire lock for written map")
+    NES_DEBUG("try to acquire lock for written map")
     auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
     if (lastWrittenMap) {
-        NES_ERROR("got lock for written map")
+        NES_DEBUG("got lock for written map")
         //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
         std::vector<std::vector<Record>> bulkWriteBatch;
 
@@ -277,7 +277,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         if (lastWritten < currentSeqNumberAfterAdding) {
             {
-                NES_ERROR("writing data: last written {} seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", lastWritten, currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
+                NES_DEBUG("writing data: last written {} seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", lastWritten, currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
                 auto bufferStorageLocked = bufferStorage.wlock();
                 //todo: reduce hashmap lookups
                 //            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
@@ -286,10 +286,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                 for (auto it = bufferStorageLocked->operator[](sourceId).find(lastWritten + 1);
                      it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
                      ++it) {
-                    NES_ERROR("adding element with id {}", it->second.front().id);
+                    NES_DEBUG("adding element with id {}", it->second.front().id);
                     bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
                 }
-                NES_ERROR("erasing elements");
+                NES_DEBUG("erasing elements");
                 bufferStorageLocked->operator[](sourceId).erase(
                     bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
                     bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
@@ -297,12 +297,12 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
             //TODO: take care of cleanup
 
-            NES_ERROR("writing data to tcp")
+            NES_DEBUG("writing data to tcp")
 
             // Write all buffers at once
             writeDataToTCP(bulkWriteBatch);
 
-            NES_ERROR("wrote data to tcp updatign last written count")
+            NES_DEBUG("wrote data to tcp updatign last written count")
             // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
 
             // Update lastWritten to the latest sequence number
@@ -333,7 +333,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //        lastWrittenMtx.unlock();
     //    }
 
-    NES_ERROR("returning")
+    NES_DEBUG("returning")
     return true;
 }
 
@@ -471,7 +471,7 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
 
     if (!inputBuffer) {
-        NES_ERROR("Invalid input buffer");
+        NES_DEBUG("Invalid input buffer");
         return false;
     }
 

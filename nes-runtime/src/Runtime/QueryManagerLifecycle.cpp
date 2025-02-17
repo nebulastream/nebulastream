@@ -47,7 +47,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
 
     auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion);
 
-    NES_ERROR("AbstractQueryManager::registerExecutableQueryPlan: shared query id {} and decomposed query id {}.{}",
+    NES_DEBUG("AbstractQueryManager::registerExecutableQueryPlan: shared query id {} and decomposed query id {}.{}",
               sharedQueryId,
               decomposedQueryId,
               decomposedQueryVersion);
@@ -87,7 +87,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         decomposeQueryToSourceIdMapping[decomposedQueryIdWithVersion] = sourceIds;
     }
 
-    NES_ERROR("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
+    NES_DEBUG("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
               decomposedQueryId,
               sharedQueryId,
               decomposedQueryId);
@@ -397,7 +397,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
     const auto& sharedQueryId = qep->getSharedQueryId();
     const auto& decomposedQueryId = qep->getDecomposedQueryId();
     const auto& decomposedQueryVersion = qep->getDecomposedQueryVersion();
-    NES_ERROR("AbstractQueryManager::stopDecomposedQueryPlan: share query id {} and decomposed query plan id  {}.{}  type= {}",
+    NES_DEBUG("AbstractQueryManager::stopDecomposedQueryPlan: share query id {} and decomposed query plan id  {}.{}  type= {}",
                 sharedQueryId,
                 decomposedQueryId,
                 decomposedQueryVersion,
@@ -423,7 +423,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
         }
     }
 
-    NES_ERROR("stopping sources")
+    NES_DEBUG("stopping sources")
     for (const auto& source : qep->getSources()) {
         if (type == QueryTerminationType::Graceful) {
             // graceful shutdown :: only leaf sources
@@ -436,14 +436,14 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
         }
     }
 
-    NES_ERROR("stopping pipelines")
+    NES_DEBUG("stopping pipelines")
     if (type == QueryTerminationType::HardStop || type == QueryTerminationType::Failure) {
         for (auto& stage : qep->getPipelines()) {
             NES_ASSERT2_FMT(stage->stop(type), "Cannot hard stop pipeline " << stage->getPipelineId());
         }
     }
 
-    NES_ERROR("wait for termination future")
+    NES_DEBUG("wait for termination future")
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not successful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -468,7 +468,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
             break;
         }
     }
-    NES_ERROR("ret = {}", ret);
+    NES_DEBUG("ret = {}", ret);
     if (ret) {
         addReconfigurationMessage(sharedQueryId,
                                   decomposedQueryId,
@@ -480,7 +480,7 @@ bool AbstractQueryManager::stopExecutableQueryPlan(const Execution::ExecutableQu
                                                          inherited1::shared_from_this()),
                                   true);
     }
-    NES_ERROR("AbstractQueryManager::stopDecomposedQueryPlan: shared query id {} and decomposed query id {}.{} was {}",
+    NES_DEBUG("AbstractQueryManager::stopDecomposedQueryPlan: shared query id {} and decomposed query id {}.{} was {}",
               sharedQueryId,
               decomposedQueryId,
               decomposedQueryVersion,

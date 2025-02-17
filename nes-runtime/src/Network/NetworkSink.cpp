@@ -334,11 +334,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
         //todo #3013: make sure buffers are kept if the device is currently buffering
-        NES_ERROR("shutting down network sink with termination type {}", magic_enum::enum_name(terminationType));
+        NES_DEBUG("shutting down network sink with termination type {}", magic_enum::enum_name(terminationType));
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 if (terminationType != Runtime::QueryTerminationType::HardStop) {
-                    NES_ERROR("shuting doewn network sink, try to extablish connection to unbuffer");
+                    NES_DEBUG("shuting doewn network sink, try to extablish connection to unbuffer");
                     //todo #5159: make sure that downstream plans are garbage collected if they do not receive a drain
                     //wait until channel has either connected or connection times out
                     NES_DEBUG("NetworkSink: reconfigure() waiting for channel to connect in order to unbuffer before shutdown. "
@@ -359,17 +359,17 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                         workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
                         networkManager->unregisterSubpartitionProducer(nesPartition);
                         //do not release network channel in the next step because none was established
-                        NES_ERROR("shutting down network sink done without connect: {}", magic_enum::enum_name(terminationType));
+                        NES_DEBUG("shutting down network sink done without connect: {}", magic_enum::enum_name(terminationType));
                         return;
                     }
                 } else {
-                    NES_ERROR("aborting connection process");
+                    NES_DEBUG("aborting connection process");
                     workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
-                    NES_ERROR("killed connection process");
+                    NES_DEBUG("killed connection process");
                     workerContext.dropReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
-                    NES_ERROR("dropped buffers");
+                    NES_DEBUG("dropped buffers");
                     networkManager->unregisterSubpartitionProducer(nesPartition);
-                    NES_ERROR("unregistered partition");
+                    NES_DEBUG("unregistered partition");
                     return;
                 }
             }
@@ -392,7 +392,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
-            NES_ERROR("shutting down network sink done with connect: {}", magic_enum::enum_name(terminationType));
+            NES_DEBUG("shutting down network sink done with connect: {}", magic_enum::enum_name(terminationType));
         }
     }
 }
@@ -651,7 +651,7 @@ bool NetworkSink::checkParentDiff(int64_t receiver, int64_t parent) {
 OperatorId NetworkSink::getDownstreamLogicalOperatorId() { return downstreamOperatorId; }
 
 void NetworkSink::setReconnectCount(uint64_t count) {
-    NES_ERROR("Setting reconnect count for sink {} from {} to {}", uniqueNetworkSinkDescriptorId, reconnectCount, count);
+    NES_DEBUG("Setting reconnect count for sink {} from {} to {}", uniqueNetworkSinkDescriptorId, reconnectCount, count);
     reconnectCount = count;
 }
 

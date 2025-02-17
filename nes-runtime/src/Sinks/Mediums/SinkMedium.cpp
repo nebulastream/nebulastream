@@ -125,7 +125,7 @@ void SinkMedium::setMigrationFlag() { migration = true; }
 bool SinkMedium::isForMigration() const { return migration; }
 
 void SinkMedium::setReplayData() {
-    NES_ERROR("setting source to replay data")
+    NES_DEBUG("setting source to replay data")
     replayData = true;
 }
 
