@@ -56,20 +56,20 @@ using namespace Configurations;
 using namespace Optimizer;
 
 // ((1934 + 1) * 15 + 1) * 5
-const uint64_t numberOfNodesPerLevel3 = 12;
-const uint64_t numberOfNodesPerLevel2 = 4;
-const uint64_t numberOfNodesPerLevel1 = 2;
-const uint64_t numberOfNodes = 96;
+// const uint64_t numberOfNodesPerLevel3 = 12;
+// const uint64_t numberOfNodesPerLevel2 = 4;
+// const uint64_t numberOfNodesPerLevel1 = 2;
+// const uint64_t numberOfNodes = 96;
 
 // const uint64_t numberOfNodesPerLevel3 = 95;
 // const uint64_t numberOfNodesPerLevel2 = 21;
 // const uint64_t numberOfNodesPerLevel1 = 8;
 // const uint64_t numberOfNodes = 16035;
 
-//const uint64_t numberOfNodesPerLevel3 = 176;
-//const uint64_t numberOfNodesPerLevel2 = 21;
-//const uint64_t numberOfNodesPerLevel1 = 8;
-//const uint64_t numberOfNodes = 29743;
+const uint64_t numberOfNodesPerLevel3 = 176;
+const uint64_t numberOfNodesPerLevel2 = 21;
+const uint64_t numberOfNodesPerLevel1 = 8;
+const uint64_t numberOfNodes = 29743;
 
 // const uint64_t numberOfNodesPerLevel3 = 140;
 // const uint64_t numberOfNodesPerLevel2 = 25;
@@ -309,7 +309,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
 
-    size_t numIntermediates = 4;
+    size_t numIntermediates = 30;
 
     auto intermediateConfigs = generateWorkerConfigs(numIntermediates);
 
@@ -525,7 +525,7 @@ TEST_F(MeerkatTest, testDecisionTime) {
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
-    // queryPlan->setFaultTolerance(FaultToleranceType::M);
+    queryPlan->setFaultTolerance(FaultToleranceType::M);
 
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->optimizer.performOnlySourceOperatorExpansion = true;
