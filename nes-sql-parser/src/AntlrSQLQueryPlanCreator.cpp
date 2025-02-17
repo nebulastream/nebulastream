@@ -640,9 +640,9 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
             {
                 const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
                 implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
+                ++countNodeFieldAccess;
                 INVARIANT(
-                    ++countNodeFieldAccess < 2,
-                    "The function of a named function must only have one child that is a field access function.");
+                    countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
             }
         }
         INVARIANT(not implicitFieldName.empty(), "");
