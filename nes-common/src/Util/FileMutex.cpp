@@ -50,7 +50,8 @@ void FileMutex::lock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    INVARIANT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
+    auto ret = ::fcntl(fd, F_SETLKW, &lock);
+    INVARIANT(-1 != ret, "Cannot acquire lock");
 }
 
 bool FileMutex::try_lock()
@@ -75,7 +76,8 @@ void FileMutex::unlock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    INVARIANT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
+    auto ret = fcntl(fd, F_SETLK, &lock);
+    INVARIANT(-1 != ret, "Cannot acquire lock");
 }
 
 }
