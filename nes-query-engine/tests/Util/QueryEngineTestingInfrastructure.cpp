@@ -196,7 +196,10 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         auto result = std::visit(
             Overloaded{
                 [](SourceDescriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
-                { INVARIANT(false, "Source cannot be a successor"); },
+                {
+                    INVARIANT(false, "Source cannot be a successor");
+                    std::terminate(); /// Ensures termination if INVARIANT is a no-op in release mode.
+                },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 {
                     auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, bm);

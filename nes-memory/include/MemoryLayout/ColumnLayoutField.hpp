@@ -98,11 +98,8 @@ ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::creat
     const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
-    if (fieldIndex.has_value())
-    {
-        return ColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
-    }
-    INVARIANT(false, "Could not find fieldIndex for {}", fieldName);
+    INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);
+    return ColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
 }
 
 template <class T, bool boundaryChecks>
