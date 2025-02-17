@@ -193,9 +193,38 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
     auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
     NES_ERROR("writing data for source id {}", sourceId);
+    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+
+    {
+        auto lastWrittenMap = nodeEngine->lockLastWritten(filePath);
+
+        uint64_t lastWritten = 0;
+        if (lastWrittenMap->contains(sourceId)) {
+            lastWritten = lastWrittenMap->at(sourceId);
+        }
+
+        //ignore this buffer if it was already written
+        if (bufferSeqNumber <= lastWritten) {
+            return true;
+        }
+
+        if (!seqQueueMap.rlock()->contains(sourceId)) {
+            auto readLock = seqQueueMap.wlock();
+            if (!readLock->contains(sourceId)) {
+
+                Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
+                //todo: fixme
+                for (uint64_t i = 0; i <= lastWritten; ++i) {
+                    const auto seqData = SequenceData(i, 1, true);
+                    newQueue.emplace(seqData, i);
+                }
+                readLock->operator[](sourceId) = newQueue;
+                NES_ERROR("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
+            }
+        }
+    }
 
     // get sequence number of received buffer
-    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
     //    auto bufferCopy = context.getUnpooledBuffer(inputBuffer.getBufferSize());
     //    std::memcpy(bufferCopy.getBuffer(), inputBuffer.getBuffer(), inputBuffer.getBufferSize());
     //    bufferCopy.setNumberOfTuples(inputBuffer.getNumberOfTuples());
@@ -218,26 +247,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, std::move(vector));
     }
 
-    if (!seqQueueMap.rlock()->contains(sourceId)) {
-        auto readLock = seqQueueMap.wlock();
-        if (!readLock->contains(sourceId)) {
-            auto lastWrittenMap = nodeEngine->lockLastWritten(filePath);
-
-            uint64_t lastWritten = 0;
-            if (lastWrittenMap->contains(sourceId)) {
-                lastWritten = lastWrittenMap->at(sourceId);
-            }
-
-            Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
-            //todo: fixme
-            for (uint64_t i = 0; i <= lastWritten; ++i) {
-                const auto seqData = SequenceData(i, 1, true);
-                newQueue.emplace(seqData, i);
-            }
-            readLock->operator[](sourceId) = newQueue;
-            NES_ERROR("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
-        }
-    }
     // save the highest consecutive sequence number in the queue
 
     //todo: there is a problem with locking here
