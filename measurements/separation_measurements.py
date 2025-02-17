@@ -422,6 +422,8 @@ plt.show()
 
 #%%
 
+selected_keys = ["no_keys", "f0_f1", "f0_f1_f2_f3_f4"]
+
 subset4 = plot_df[
     (plot_df['buffer_size'] == 4096) &
     (plot_df['file_buffer_size'] == 0) &
@@ -447,34 +449,12 @@ g4 = sns.catplot(
     data=melted4, x='sep_method', y='time', hue='keys', col='phase',
     kind='bar', height=4, aspect=1.2, ci="sd"
 )
+for ax in g4.axes.flat:
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
 g4.fig.suptitle('Execution Times by Separation Method & Keys\n(buffer_size = 4096, file_buffer = 0)', y=1.05)
 plt.show()
 
 #%%
-
-subset5 = plot_df[
-    (plot_df['buffer_size'] == 4096) &
-    (plot_df['keys'].isin(selected_keys))
-].copy()
-
-# Melt for plotting.
-melted5 = pd.melt(subset5,
-                  id_vars=['file_buffer_size', 'sep_method', 'keys'],
-                  value_vars=['writing_time', 'truncating_time', 'reading_time'],
-                  var_name='phase',
-                  value_name='time')
-
-# Create a line plot with separate facets for each phase.
-g5 = sns.relplot(
-    data=melted5,
-    x='file_buffer_size', y='time', hue='sep_method', style='keys',
-    col='phase', kind='line', marker='o',
-    facet_kws={'sharey': False, 'sharex': True},
-    height=4, aspect=1.2, estimator=np.mean
-)
-g5.set_titles("{col_name}")
-g5.fig.suptitle('Impact of file_buffer (buffer_size = 4096) on Execution Times', y=1.03)
-plt.show()
 
 # for group_key, group_data in combined_df.groupby(group_columns):
 #     # For the corresponding cleaned group, filter clean_df using the same configuration.
