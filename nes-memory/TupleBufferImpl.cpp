@@ -24,9 +24,9 @@
 #include <magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-#    include <mutex>
-#    include <thread>
-#    include <cpptrace.hpp>
+    #include <mutex>
+    #include <thread>
+    #include <cpptrace.hpp>
 #endif
 
 namespace NES::Memory
