@@ -17,9 +17,9 @@
 #include <memory>
 
 #if defined(__GLIBCXX__) || defined(__GLIBCPP__)
-#    define NES_NOEXCEPT(isNoexcept) noexcept(isNoexcept)
+    #define NES_NOEXCEPT(isNoexcept) noexcept(isNoexcept)
 #else
-#    define NES_NOEXCEPT(isNoexcept)
+    #define NES_NOEXCEPT(isNoexcept)
 #endif
 
 namespace NES::detail
