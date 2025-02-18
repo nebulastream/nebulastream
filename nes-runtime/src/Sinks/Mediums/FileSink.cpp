@@ -265,6 +265,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
             bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
     }
+    lastWritten = currentSeqNumberAfterAdding;
     NES_DEBUG("returning")
     std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
     return writeDataToTCP(vec);
