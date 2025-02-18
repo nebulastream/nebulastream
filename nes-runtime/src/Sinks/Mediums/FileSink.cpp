@@ -187,7 +187,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     //todo: check if we can use origin id
     NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
     auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
-    NES_DEBUG("writing data for source id {}", sourceId);
+    NES_ERROR("writing data for source id {}", sourceId);
     const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
 
     auto lastWrittenMap = nodeEngine->writeLockLastWritten(filePath);
