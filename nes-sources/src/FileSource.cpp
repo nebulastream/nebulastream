@@ -41,8 +41,8 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sour
 
 void FileSource::open()
 {
-    auto* const realCSVPath = realpath(this->filePath.c_str(), nullptr);
-    this->inputFile = std::ifstream(realCSVPath, std::ios::binary);
+    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
+    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
     if (not this->inputFile)
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), std::strerror(errno));
