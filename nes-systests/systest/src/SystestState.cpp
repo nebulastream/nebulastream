@@ -112,14 +112,30 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
 std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir)
 {
     std::vector<Query> queries;
+    uint64_t loadedFiles = 0;
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
-        loadQueriesFromTestFile(testfile, workingDir);
-        for (auto& query : testfile.queries)
+        try
         {
-            queries.emplace_back(std::move(query));
+            loadQueriesFromTestFile(testfile, workingDir);
+            for (auto& query : testfile.queries)
+            {
+                queries.emplace_back(std::move(query));
+            }
+            ++loadedFiles;
         }
+        catch (const Exception& exception)
+        {
+            tryLogCurrentException();
+            std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.file.string(), exception.what());
+        }
+    }
+    std::cout << "Loaded test files: " << loadedFiles << "/" << testmap.size() << '\n' << std::flush;
+    if (loadedFiles != testmap.size())
+    {
+        std::cerr << "Could not load all test files. Terminating.\n" << std::flush;
+        std::exit(1);
     }
     return queries;
 }
