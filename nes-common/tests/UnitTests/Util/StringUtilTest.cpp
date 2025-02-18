@@ -18,6 +18,7 @@
 #include <Util/Strings.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Util
 {
@@ -351,8 +352,8 @@ TEST(StringCaseConversionTest, ToLowerCaseSpecialCharacters)
 
 TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
 {
-    EXPECT_DEATH([[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"), "Precondition violated:.*");
-    EXPECT_DEATH([[maybe_unused]] auto testString = toUpperCase("éçàô"), "Precondition violated:*");
+    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"); }(), "Precondition violated:.*");
+    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("éçàô"); }(), "Precondition violated:.*");
 }
 
 TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
@@ -394,9 +395,9 @@ TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
 TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
 {
     std::string lowerStr = "héllô!123";
-    EXPECT_DEATH(toUpperCaseInplace(lowerStr), "Precondition violated:.*");
+    EXPECT_DEATH_DEBUG(toUpperCaseInplace(lowerStr), "Precondition violated:.*");
     std::string str = "HÉLLÔ!123";
-    EXPECT_DEATH(toLowerCaseInplace(str), "Precondition violated:.*");
+    EXPECT_DEATH_DEBUG(toLowerCaseInplace(str), "Precondition violated:.*");
 }
 
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)
