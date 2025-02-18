@@ -216,9 +216,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
     auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
     auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
-    ASSERT_DEATH((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), "Invariant violated:.*");
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i)
@@ -228,13 +228,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
 
-    ASSERT_DEATH(field0[i], "Invariant violated:.*");
-    ASSERT_DEATH(field1[i], "Invariant violated:.*");
-    ASSERT_DEATH(field2[i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field0[i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field1[i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field2[i], "Invariant violated:.*");
 
-    ASSERT_DEATH(field0[++i], "Invariant violated:.*");
-    ASSERT_DEATH(field1[i], "Invariant violated:.*");
-    ASSERT_DEATH(field2[i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field0[++i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field1[i], "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG(field2[i], "Invariant violated:.*");
 }
 
 /**
@@ -257,9 +257,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
     ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
     ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", columnLayout, tupleBuffer)));
 
-    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), "Invariant violated:.*");
 }
 
 /**
