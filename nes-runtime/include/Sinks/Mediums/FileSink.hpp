@@ -21,9 +21,11 @@
 #include <memory>
 #include <string>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES {
+
 
 struct Record {
     uint64_t id;
