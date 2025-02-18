@@ -167,7 +167,7 @@ void FileSink::shutdown() {
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
     (void) context;
 
-    NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
+    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
     if (!getReplayData()) {
         NES_DEBUG("replay data not activated writing buffer");
         std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
@@ -179,7 +179,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     numberOfReceivedBuffers++;
 
     if (!inputBuffer) {
-        NES_DEBUG("Invalid input buffer");
+        NES_ERROR("Invalid input buffer");
         return false;
     }
 
@@ -201,6 +201,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         //ignore this buffer if it was already written
         if (bufferSeqNumber <= lastWritten) {
+            NES_ERROR("seq {} is less than {} for id {}", bufferSeqNumber, lastWritten, sourceId);
             return true;
         }
 
@@ -214,7 +215,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                     newQueue.emplace(seqData, i);
                 }
                 sequQueueLocked->operator[](sourceId) = newQueue;
-                NES_DEBUG("creating new queue with start {}", sequQueueLocked->at(sourceId).getCurrentValue());
+                NES_ERROR("creating new queue with start {}", sequQueueLocked->at(sourceId).getCurrentValue());
             }
         }
     }
@@ -224,8 +225,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             NES_ERROR("buffer already recorded, exiting");
             return true;
         }
+        NES_ERROR("buffer not yet recored, proceeedign");
         lockedStorage->operator[](sourceId).emplace(bufferSeqNumber);
     }
+    NES_ERROR("increase seq nr")
 
     // save the highest consecutive sequence number in the queue
 
@@ -246,8 +249,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
               sourceId,
               sharedQueryId);
     // check if top value in the queue has changed after adding new sequence number
-    NES_ERROR("Locking last written map")
     if (!lastWrittenMap->contains(sourceId)) {
+        NES_ERROR("create last written entry")
         lastWrittenMap->insert({sourceId, 0});
     };
     auto& lastWritten = lastWrittenMap->at(sourceId);
@@ -263,8 +266,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         lockedStorage->operator[](sourceId).erase(
             lockedStorage->operator[](sourceId).begin(),
             lockedStorage->operator[](sourceId).find(currentSeqNumberAfterAdding));
+        lastWritten = currentSeqNumberAfterAdding;
     }
-    lastWritten = currentSeqNumberAfterAdding;
     NES_ERROR("returning")
     std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
     return writeDataToTCP(vec);
