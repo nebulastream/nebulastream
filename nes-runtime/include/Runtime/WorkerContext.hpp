@@ -40,13 +40,13 @@ class AbstractBufferProvider;
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
-struct BufferMetaData {
-    uint64_t numberOfTuples;
-    OriginId originId;
-    uint64_t watermark;
-    uint64_t creationTimestampInMS;
-    uint64_t sequenceNumber;
-};
+//struct BufferMetaData {
+//    uint64_t numberOfTuples;
+//    OriginId originId;
+//    uint64_t watermark;
+//    uint64_t creationTimestampInMS;
+//    uint64_t sequenceNumber;
+//};
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread
@@ -81,8 +81,8 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-//    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
-    std::unordered_map<OperatorId, std::queue<std::pair<BufferMetaData, std::vector<uint8_t>>>> reconnectBufferStorage;
+    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+//    std::unordered_map<OperatorId, std::queue<std::pair<BufferMetaData, std::vector<uint8_t>>>> reconnectBufferStorage;
 //    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> persistedreconnectBufferStorage;
 
   public:

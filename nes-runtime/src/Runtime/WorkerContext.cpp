@@ -119,29 +119,29 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
 }
 
 void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
-//    auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
-//    std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
-//    bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
-//    bufferCopy.setOriginId(buffer.getOriginId());
-//    bufferCopy.setWatermark(buffer.getWatermark());
-//    bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
-//    bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
-//    reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
+    auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
+    std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
+    bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+    bufferCopy.setOriginId(buffer.getOriginId());
+    bufferCopy.setWatermark(buffer.getWatermark());
+    bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
+    reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 
 
-        std::vector<uint8_t> bufferCopy;
-        //todo: this also copies invalid data
-        auto rawData = buffer.getBuffer();
-        bufferCopy.insert(bufferCopy.end(), &rawData[0], &rawData[buffer.getBufferSize()]);
-        BufferMetaData metaData{
-            buffer.getNumberOfTuples(),
-            buffer.getOriginId(),
-            buffer.getWatermark(),
-            buffer.getCreationTimestampInMS(),
-            buffer.getSequenceNumber(),
-
-        };
-        reconnectBufferStorage[operatorId].push({metaData, std::move(bufferCopy)});
+//        std::vector<uint8_t> bufferCopy;
+//        //todo: this also copies invalid data
+//        auto rawData = buffer.getBuffer();
+//        bufferCopy.insert(bufferCopy.end(), &rawData[0], &rawData[buffer.getBufferSize()]);
+//        BufferMetaData metaData{
+//            buffer.getNumberOfTuples(),
+//            buffer.getOriginId(),
+//            buffer.getWatermark(),
+//            buffer.getCreationTimestampInMS(),
+//            buffer.getSequenceNumber(),
+//
+//        };
+//        reconnectBufferStorage[operatorId].push({metaData, std::move(bufferCopy)});
 }
 
 TupleBuffer WorkerContext::getUnpooledBuffer(uint64_t bufferSize) {
@@ -167,60 +167,60 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
 }
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectBufferStorage(OperatorId operatorId) {
-//    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
-//    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
-//        auto buffer = iteratorAtOperatorId->second.front();
-//        return buffer;
-//    }
-//    return {};
-
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
     if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
-        auto [metaData, content] = iteratorAtOperatorId->second.front();
-        auto bufferCopy = localBufferPool->getBufferBlocking();
-        //todo: this also copies invalid data
-        std::memcpy(bufferCopy.getBuffer(), content.data(), content.size());
-        bufferCopy.setNumberOfTuples(metaData.numberOfTuples);
-        bufferCopy.setOriginId(metaData.originId);
-        bufferCopy.setWatermark(metaData.watermark);
-        bufferCopy.setCreationTimestampInMS(metaData.creationTimestampInMS);
-        bufferCopy.setSequenceNumber(metaData.sequenceNumber);
-        return bufferCopy;
+        auto buffer = iteratorAtOperatorId->second.front();
+        return buffer;
     }
     return {};
+
+//    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
+//    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
+//        auto [metaData, content] = iteratorAtOperatorId->second.front();
+//        auto bufferCopy = localBufferPool->getBufferBlocking();
+//        //todo: this also copies invalid data
+//        std::memcpy(bufferCopy.getBuffer(), content.data(), content.size());
+//        bufferCopy.setNumberOfTuples(metaData.numberOfTuples);
+//        bufferCopy.setOriginId(metaData.originId);
+//        bufferCopy.setWatermark(metaData.watermark);
+//        bufferCopy.setCreationTimestampInMS(metaData.creationTimestampInMS);
+//        bufferCopy.setSequenceNumber(metaData.sequenceNumber);
+//        return bufferCopy;
+//    }
+//    return {};
 }
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
-//    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
-//    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
-//        auto buffer = iteratorAtOperatorId->second.front();
-//        iteratorAtOperatorId->second.pop();
-//        if (iteratorAtOperatorId->second.empty()) {
-//            reconnectBufferStorage.erase(iteratorAtOperatorId);
-//        }
-//        return buffer;
-//    }
-//    return {};
-
-
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
     if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
-        auto [metaData, content] = iteratorAtOperatorId->second.front();
+        auto buffer = iteratorAtOperatorId->second.front();
         iteratorAtOperatorId->second.pop();
         if (iteratorAtOperatorId->second.empty()) {
             reconnectBufferStorage.erase(iteratorAtOperatorId);
         }
-        auto bufferCopy = localBufferPool->getBufferBlocking();
-        //todo: this also copies invalid data
-        std::memcpy(bufferCopy.getBuffer(), content.data(), content.size());
-        bufferCopy.setNumberOfTuples(metaData.numberOfTuples);
-        bufferCopy.setOriginId(metaData.originId);
-        bufferCopy.setWatermark(metaData.watermark);
-        bufferCopy.setCreationTimestampInMS(metaData.creationTimestampInMS);
-        bufferCopy.setSequenceNumber(metaData.sequenceNumber);
-        return bufferCopy;
+        return buffer;
     }
     return {};
+
+
+//    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
+//    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
+//        auto [metaData, content] = iteratorAtOperatorId->second.front();
+//        iteratorAtOperatorId->second.pop();
+//        if (iteratorAtOperatorId->second.empty()) {
+//            reconnectBufferStorage.erase(iteratorAtOperatorId);
+//        }
+//        auto bufferCopy = localBufferPool->getBufferBlocking();
+//        //todo: this also copies invalid data
+//        std::memcpy(bufferCopy.getBuffer(), content.data(), content.size());
+//        bufferCopy.setNumberOfTuples(metaData.numberOfTuples);
+//        bufferCopy.setOriginId(metaData.originId);
+//        bufferCopy.setWatermark(metaData.watermark);
+//        bufferCopy.setCreationTimestampInMS(metaData.creationTimestampInMS);
+//        bufferCopy.setSequenceNumber(metaData.sequenceNumber);
+//        return bufferCopy;
+//    }
+//    return {};
 }
 
 void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
