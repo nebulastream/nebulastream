@@ -142,7 +142,7 @@ void FileSink::setup() {
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
-        NES_DEBUG("sink notifies checkpoints");
+        NES_ERROR("sink notifies checkpoints");
         //        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
         //        auto checkpoints = sinkInfo->checkpoints;
 
@@ -151,11 +151,16 @@ void FileSink::shutdown() {
         auto sharedQueryId = this->sharedQueryId;
         if (getReplayData()) {
             std::thread thread([nodeEngine, filePath, sharedQueryId]() mutable {
+                NES_ERROR("locking checkpoints");
                 auto checkpoints = nodeEngine->getLastWrittenCopy(filePath);
+                for (auto& [id, point] : checkpoints) {
+                    NES_ERROR("sending checkpoint {} {}", id, point);
+                }
                 nodeEngine->notifyCheckpoints(sharedQueryId, checkpoints);
             });
             thread.detach();
         }
+        NES_ERROR("notify checkpoint created");
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
         //        for (const auto& bufferContent : receivedBuffers) {
         //            outputFile.write(bufferContent.c_str(), bufferContent.size());
