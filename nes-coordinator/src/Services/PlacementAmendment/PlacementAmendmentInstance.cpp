@@ -94,7 +94,7 @@ void PlacementAmendmentInstance::execute() {
             default: {
                 //Mark as completed
                 NES_ERROR("Shared query plan in unhandled status", magic_enum::enum_name(sharedQueryPlanStatus));
-                completionPromise.set_value(false);
+                completionPromise.set_value({0,0, false});
                 return;
             }
         }
@@ -179,12 +179,12 @@ void PlacementAmendmentInstance::execute() {
         } else if (sharedQueryPlanStatusPostPlacement == SharedQueryPlanStatus::PARTIALLY_PROCESSED) {
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
         }
+        auto deploymentTime = (getTimestamp() - startDeploymentTime)+ deploymentUnit.deploymentTime;
         //Mark as completed
-        completionPromise.set_value(true);
-        NES_ERROR("DeploymentTime II : {}", getTimestamp() - startDeploymentTime);
+        completionPromise.set_value({deploymentTime, deploymentUnit.placementTime, true});
     } catch (std::exception ex) {
         NES_ERROR("Failed to perform placement amendment for shared query {} due to {}", sharedQueryPlan->getId(), ex.what());
-        completionPromise.set_value(false);
+        completionPromise.set_value({0,0, false});
     }
 }
 
@@ -299,8 +299,8 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
     }
 }
 
-std::future<bool> PlacementAmendmentInstance::getFuture() { return completionPromise.get_future(); }
+std::future<Perf> PlacementAmendmentInstance::getFuture() { return completionPromise.get_future(); }
 
-void PlacementAmendmentInstance::setPromise(bool promise) { completionPromise.set_value(promise); }
+void PlacementAmendmentInstance::setPromise(bool promise) { completionPromise.set_value({0,0, promise}); }
 
 }// namespace NES::Optimizer

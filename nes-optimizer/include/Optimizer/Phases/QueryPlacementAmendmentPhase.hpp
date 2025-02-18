@@ -146,9 +146,11 @@ struct DeploymentUnit {
   public:
     DeploymentUnit(std::set<DeploymentContextPtr> deploymentRemovalContexts,
                    std::set<DeploymentContextPtr> deploymentAdditionContexts,
-                   std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnits)
+                   std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnits,
+                   uint64_t deploymentTime,
+                   uint64_t placementTime)
         : deploymentRemovalContexts(deploymentRemovalContexts), deploymentAdditionContexts(deploymentAdditionContexts),
-          reconfigurationMarkerUnits(reconfigurationMarkerUnits){};
+          reconfigurationMarkerUnits(reconfigurationMarkerUnits), deploymentTime(deploymentTime), placementTime(placementTime){};
 
     bool containsDeploymentContext() { return !deploymentAdditionContexts.empty() || !deploymentRemovalContexts.empty(); }
 
@@ -162,6 +164,8 @@ struct DeploymentUnit {
     const std::set<DeploymentContextPtr> deploymentRemovalContexts;
     const std::set<DeploymentContextPtr> deploymentAdditionContexts;
     const std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnits;
+    uint64_t deploymentTime;
+    uint64_t placementTime;
 };
 
 static std::atomic_uint64_t counter{0};

@@ -151,7 +151,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::vector<std::future<bool>> completedAmendments;
+        std::vector<std::future<Optimizer::Perf>> completedAmendments;
         auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter, !enableIncrementalPlacement);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
@@ -166,14 +166,27 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         }
 
         uint64_t numOfFailedPlacements = 0;
+        uint64_t numOfSuccess = 0;
+        uint64_t totalDeploymentTime = 0;
+        uint64_t totalPlacementTime = 0;
         // Wait for all amendment runners to finish processing
         for (auto& completedAmendment : completedAmendments) {
-            if (!completedAmendment.get()) {
+            auto perf = completedAmendment.get();
+            if (!perf.success) {
                 numOfFailedPlacements++;
+            }else {
+                numOfSuccess++;
             }
+            totalDeploymentTime = totalDeploymentTime + perf.deploymentTime;
+            totalPlacementTime = totalPlacementTime + perf.placementTime;
         }
         NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime = getTimestamp();
+
+        if (enableIncrementalPlacement) {
+            totalDeploymentTime = totalDeploymentTime/numOfSuccess;
+            totalPlacementTime = totalPlacementTime/numOfSuccess;
+        }
 
         auto numOfSQPAffected = sharedQueryPlans.size();
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
@@ -182,7 +195,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                         numOfSQPAffected,
                                                                         numOfFailedPlacements,
                                                                         true));
-        NES_ERROR("Total Time to process ISQP Request {}", processingEndTime-processingStartTime);
+        NES_ERROR("Total Time to process ISQP Request={}; placementTime={}; deploymentTime={}", processingEndTime-processingStartTime, totalPlacementTime, totalDeploymentTime);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, false));

@@ -65,6 +65,12 @@ using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance
 class PlacementAmendmentHandler;
 struct DeploymentUnit;
 
+struct Perf {
+    uint64_t deploymentTime;
+    uint64_t placementTime;
+    bool success;
+};
+
 /**
  * @brief class representing the placement amendment instance
  */
@@ -101,7 +107,7 @@ class PlacementAmendmentInstance {
      * @brief Get promise to check if the amendment instance was processed
      * @return
      */
-    std::future<bool> getFuture();
+    std::future<Perf> getFuture();
 
     /**
      * @warning only used by the mocks for testing purposes
@@ -130,7 +136,7 @@ class PlacementAmendmentInstance {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     DeploymentPhasePtr deploymentPhase;
-    std::promise<bool> completionPromise;
+    std::promise<Perf> completionPromise;
 
     //declare as friend to allow accessing execute method
     friend PlacementAmendmentHandler;
