@@ -19,39 +19,24 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalShuffleTuplesOperator::PhysicalShuffleTuplesOperator(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
-    : Operator(id)
-    , PhysicalUnaryOperator(id, inputSchema, inputSchema)
-    , unorderedness(unorderedness)
-    , minDelay(minDelay)
-    , maxDelay(maxDelay)
+    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness)
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema), unorderedness(unorderedness)
 {
 }
 
-std::shared_ptr<PhysicalOperator>
-PhysicalShuffleTuplesOperator::create(std::shared_ptr<Schema> inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
+std::shared_ptr<PhysicalOperator> PhysicalShuffleTuplesOperator::create(std::shared_ptr<Schema> inputSchema, const float& unorderedness)
 {
-    return create(getNextOperatorId(), std::move(inputSchema), unorderedness, minDelay, maxDelay);
+    return create(getNextOperatorId(), std::move(inputSchema), unorderedness);
 }
-std::shared_ptr<PhysicalOperator> PhysicalShuffleTuplesOperator::create(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
+std::shared_ptr<PhysicalOperator>
+PhysicalShuffleTuplesOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness)
 {
-    return std::make_shared<PhysicalShuffleTuplesOperator>(id, inputSchema, unorderedness, minDelay, maxDelay);
+    return std::make_shared<PhysicalShuffleTuplesOperator>(id, inputSchema, unorderedness);
 }
 
 float PhysicalShuffleTuplesOperator::getUnorderedness() const
 {
     return unorderedness;
-}
-
-uint64_t PhysicalShuffleTuplesOperator::getMinDelay() const
-{
-    return minDelay;
-}
-
-uint64_t PhysicalShuffleTuplesOperator::getMaxDelay() const
-{
-    return maxDelay;
 }
 
 std::string PhysicalShuffleTuplesOperator::toString() const
@@ -65,9 +50,9 @@ std::string PhysicalShuffleTuplesOperator::toString() const
 
 std::shared_ptr<Operator> PhysicalShuffleTuplesOperator::copy()
 {
-    auto result = create(id, inputSchema, unorderedness, minDelay, maxDelay);
+    auto result = create(id, inputSchema, unorderedness);
     result->addAllProperties(properties);
     return result;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+}

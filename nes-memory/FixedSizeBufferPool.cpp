@@ -19,17 +19,19 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <Memory/detail/TupleBufferImpl.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
-#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
 
 FixedSizeBufferPool::FixedSizeBufferPool(
-    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& availableBuffers, const size_t numberOfReservedBuffers)
+    const std::shared_ptr<BufferManager>& bufferManager,
+    std::deque<detail::MemorySegment*>& availableBuffers,
+    const size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
     , exclusiveBuffers(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)

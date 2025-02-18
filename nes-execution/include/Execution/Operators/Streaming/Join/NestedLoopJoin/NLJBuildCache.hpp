@@ -43,7 +43,7 @@ public:
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void terminate(ExecutionContext &executionCtx) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
 private:
     /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch

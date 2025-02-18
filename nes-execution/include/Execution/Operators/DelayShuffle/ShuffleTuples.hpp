@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators
 class ShuffleTuplesOperatorHandler : public OperatorHandler
 {
 public:
-    ShuffleTuplesOperatorHandler(float unorderedness, uint64_t minShuffle, uint64_t maxShuffle);
+    ShuffleTuplesOperatorHandler(float unorderedness);
 
     void setup(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
@@ -40,29 +40,28 @@ public:
 private:
     const float unorderedness;
     std::mt19937 gen;
-    std::uniform_real_distribution<> unorderednessDistrib;
-    std::uniform_int_distribution<> ShuffleDistrib;
     uint64_t numberOfWorkerThreads;
     std::vector<std::vector<uint64_t>> emitIndicesForWorker;
 };
 
-class ShuffleTuples : public Operator
+/// Shuffles the tuples in the input buffer. We choose not to have the fastest shuffle algorithm here, but a simple one
+class ShuffleTuples final : public Operator
 {
 public:
     ShuffleTuples(
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         const uint64_t operatorHandlerIndex);
 
+    /// Sets the number of worker threads for the operator handler
     void setup(ExecutionContext& executionCtx) const override;
 
+    /// Shuffles the input buffer by writing the records to the output buffer at the positions specified by the emitIndices
+    /// This is not the most efficient way to shuffle records, but it is sufficient for the purpose.
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    void emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const;
-
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     uint64_t operatorHandlerIndex;
     std::vector<Record::RecordFieldIdentifier> projections;
 };
-} // namespace NES::Runtime::Execution::Operators
+}

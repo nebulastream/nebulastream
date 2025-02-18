@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <unistd.h>
+#include <Memory/detail/TupleBufferImpl.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -27,7 +28,6 @@
 #include <sys/types.h>
 #include <ErrorHandling.hpp>
 #include <FixedSizeBufferPool.hpp>
-#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {

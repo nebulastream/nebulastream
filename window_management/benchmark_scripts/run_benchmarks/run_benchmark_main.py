@@ -107,6 +107,9 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
     worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
     worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
+    worker_config_yaml["worker"]["queryCompiler"]["unorderedness"] = current_benchmark_config.unorderedness
+    worker_config_yaml["worker"]["queryCompiler"]["minDelay"] = current_benchmark_config.min_delay
+    worker_config_yaml["worker"]["queryCompiler"]["maxDelay"] = current_benchmark_config.max_delay
 
 
     # Query Engine Configuration

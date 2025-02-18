@@ -38,7 +38,7 @@ public:
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void terminate(ExecutionContext &executionCtx) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
 private:
     const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;

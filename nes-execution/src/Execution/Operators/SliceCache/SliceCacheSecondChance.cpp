@@ -22,8 +22,8 @@ SliceCacheSecondChance::SliceCacheSecondChance(
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<int8_t*>& startOfDataEntry,
-        const nautilus::val<uint64_t *> &hitsRef,
-        const nautilus::val<uint64_t *> &missesRef)
+    const nautilus::val<uint64_t*>& hitsRef,
+    const nautilus::val<uint64_t*>& missesRef)
     : SliceCacheFIFO(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry, hitsRef, missesRef)
 {
 }
@@ -37,8 +37,7 @@ nautilus::val<bool*> SliceCacheSecondChance::getSecondChanceBit(const nautilus::
 
 
 nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
-    const nautilus::val<Timestamp>& timestamp,
-    const SliceCache::SliceCacheReplacement& replacementFunction)
+    const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
 {
     /// We check if the timestamp is at the replacement index.
     /// If this is the case, we set the second chance bit to true and return the data structure.
@@ -55,7 +54,7 @@ nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
     /// We must start at the current replacement index, as we have to replace the oldest entry.
     incrementNumberOfMisses();
     auto secondChanceBit = getSecondChanceBit(replacementIndex);
-    while(*secondChanceBit == true)
+    while (*secondChanceBit == true)
     {
         *secondChanceBit = false;
         replacementIndex = (replacementIndex + 1) % numberOfEntries;

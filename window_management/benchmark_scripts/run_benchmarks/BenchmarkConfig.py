@@ -16,8 +16,10 @@ from numpy.lib.format import BUFFER_SIZE
 
 # This class stores all information needed to run a single benchmarks
 class BenchmarkConfig:
-    def __init__(self, number_of_worker_threads, slice_cache_type, slice_store_type, numberOfEntriesSliceCache, lock_slice_cache,
-                 timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source, shuffle_strategy):
+    def __init__(self, number_of_worker_threads, slice_cache_type, slice_store_type, numberOfEntriesSliceCache,
+                 lock_slice_cache,
+                 timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source,
+                 shuffle_strategy, unorderedness, min_delay, max_delay):
         self.number_of_worker_threads = number_of_worker_threads
         self.slice_cache_type = slice_cache_type
         self.slice_store_type = slice_store_type
@@ -28,13 +30,16 @@ class BenchmarkConfig:
         self.query = query
         self.no_physical_sources_per_logical_source = no_physical_sources_per_logical_source
         self.shuffle_strategy = shuffle_strategy
+        self.unorderedness = unorderedness
+        self.min_delay = min_delay
+        self.max_delay = max_delay
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
         self.task_queue_size = 100000
         self.buffers_in_global_buffer_manager = 1 * 1000 * 1000
         self.buffers_per_worker = 12800
         self.buffers_in_source_local_buffer_pool = 1000
-        self.nautilus_backend = "COMPILER" # "COMPILER" or "INTERPRETER"
+        self.nautilus_backend = "COMPILER"  # "COMPILER" or "INTERPRETER"
 
     # Returns a dictionary representation of the configuration
     def to_dict(self):
@@ -57,42 +62,42 @@ class BenchmarkConfig:
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [1, 4, 8]
-    CACHE_SIZES = [1, 10, 100]
+    NUMBER_OF_WORKER_THREADS = [1, 8]
+    CACHE_SIZES = [1, 100]
     CACHE_TYPES = ["LRU", "FIFO", "SECOND_CHANCE"]
-    LOCKED_SLICE_CACHE = [False] # True or False
-    SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for locked_slice_cache in LOCKED_SLICE_CACHE] + [("NONE", 0, False)]
-    SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:2]
+    LOCKED_SLICE_CACHE = [False]  # True or False
+    SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for
+                                 locked_slice_cache in LOCKED_SLICE_CACHE] + [("NONE", 0, False)]
+    #SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:2]
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
     SHUFFLE_STRATEGY = ["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
-    BUFFER_SIZES = [8196] #[1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
+    MIN_MAX_DELAYS = [(0, 10)] # in milliseconds
+    UNORDEREDNESS = [0, 100] # in percentage
+    BUFFER_SIZES = [8196]  # [1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
     NO_PHYSICAL_SOURCES = [1]
 
     # Adding queries with different window sizes.
     WINDOW_SIZE_SLIDE = [
         # Representing a tumbling window of 10s, resulting in 1 concurrent window
-        (10*1000, 10*1000),
+        (10 * 1000, 10 * 1000),
 
         # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
-        (10*1000, 100),
+        (10 * 1000, 100),
 
         # Representing a sliding window of 1000s with slide of 10s, resulting in 100 concurrent windows.
         # This is to test our approach for the same no. concurrent windows but with larger window sizes
-        (1*1000*1000, 10*1000),
+        (1 * 1000 * 1000, 10 * 1000),
 
         # Representing a sliding window of 1000s with slide of 100ms, resulting in 10000 concurrent windows
         # Testing our approach with a lot of small slices and a lot of concurrent windows
-        (1*1000*1000, 100)
-                         ]
+        (1 * 1000 * 1000, 100)
+    ]
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
             f"SELECT MIN(value) FROM tcp_source WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"
         )
-        # QUERIES.append(
-        #     f"SELECT * FROM tcp_source WHERE value > 5000 INTO csv_sink;"
-        # )
 
     # Returning all possible configurations
     return [
@@ -106,7 +111,10 @@ def create_all_benchmark_configs():
             buffer_size_in_bytes,
             query,
             no_physical_sources_per_logical_source,
-            shuffle_strategy
+            shuffle_strategy,
+            unorderedness,
+            min_delay,
+            max_delay
         )
         for slice_cache_type_size in SLICE_CACHE_TYPE_AND_SIZE
         for slice_store_type in SLICE_STORE_TYPE
@@ -116,4 +124,6 @@ def create_all_benchmark_configs():
         for number_of_worker_threads in NUMBER_OF_WORKER_THREADS
         for no_physical_sources_per_logical_source in NO_PHYSICAL_SOURCES
         for shuffle_strategy in SHUFFLE_STRATEGY
+        for min_delay, max_delay in MIN_MAX_DELAYS
+        for unorderedness in UNORDEREDNESS
     ]

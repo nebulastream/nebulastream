@@ -120,19 +120,34 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryFIFO), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntryFIFO),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
             break;
         case QueryCompilation::Configurations::SliceCacheType::LRU:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntryLRU), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntryLRU),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
             break;
         case QueryCompilation::Configurations::SliceCacheType::SECOND_CHANCE:
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheSecondChance>(
-                    sliceCacheOptions.numberOfEntries, sizeof(SliceCacheEntrySecondChance), sliceCacheEntries, startOfDataEntry, hitsRef, missesRef));
+                    sliceCacheOptions.numberOfEntries,
+                    sizeof(SliceCacheEntrySecondChance),
+                    sliceCacheEntries,
+                    startOfDataEntry,
+                    hitsRef,
+                    missesRef));
             break;
     }
 }
@@ -220,11 +235,7 @@ void AggregationBuildCache::terminate(ExecutionContext& executionCtx) const
     /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
-        +[](const AggregationOperatorHandler* opHandler)
-        {
-            opHandler->writeCacheHitAndMissesToConsole();
-        },
-        globalOperatorHandler);
+        +[](const AggregationOperatorHandler* opHandler) { opHandler->writeCacheHitAndMissesToConsole(); }, globalOperatorHandler);
 
     WindowOperatorBuild::terminate(executionCtx);
 }

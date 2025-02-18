@@ -17,7 +17,6 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <magic_enum.hpp>
 #include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
@@ -28,6 +27,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -61,15 +61,15 @@ void StreamJoinOperatorHandler::writeCacheHitAndMissesToConsole() const
         {
             const auto sliceCacheStart = getStartOfSliceCacheEntries(WorkerThreadId(i), joinBuildSide);
             const auto* hitsAndMisses = reinterpret_cast<const HitsAndMisses*>(sliceCacheStart);
-            file << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i <<
-                " and join build side " << magic_enum::enum_name(joinBuildSide) << std::endl;
+            file << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i
+                 << " and join build side " << magic_enum::enum_name(joinBuildSide) << std::endl;
         }
     }
     file.flush();
 }
 
 void StreamJoinOperatorHandler::triggerSlices(
-    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice> > >& slicesAndWindowInfo,
+    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
     PipelineExecutionContext* pipelineCtx)
 {
     /// For every window, we have to trigger all combination of slices. This is necessary, as we have to give the probe operator all
@@ -90,8 +90,7 @@ void StreamJoinOperatorHandler::triggerSlices(
 }
 
 const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
-    const WorkerThreadId& workerThreadId,
-    const QueryCompilation::JoinBuildSideType& joinBuildSide) const
+    const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
     const auto pos
@@ -103,9 +102,7 @@ const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
 }
 
 void StreamJoinOperatorHandler::allocateSliceCacheEntries(
-    const uint64_t sizeOfEntry,
-    const uint64_t numberOfEntries,
-    Memory::AbstractBufferProvider* bufferProvider)
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// If the slice cache has already been created, we simply return
     if (hasSliceCacheCreated.exchange(true))

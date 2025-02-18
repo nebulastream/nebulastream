@@ -74,7 +74,8 @@ public:
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
-    NES::Configurations::StringOption cacheHitsAndMissesFilePath = {"cacheHitsAndMissesFilePath", "cache_hits_and_misses.txt", "Path to dump cache hits and misses."};
+    NES::Configurations::StringOption cacheHitsAndMissesFilePath
+        = {"cacheHitsAndMissesFilePath", "cache_hits_and_misses.txt", "Path to dump cache hits and misses."};
     NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
            SliceStoreType::MAP,
@@ -99,15 +100,15 @@ public:
 
     NES::Configurations::EnumOption<ShuffleStrategy> shuffleStrategy
         = {"shuffleStrategy",
-           DelayStrategy::BUFFER,
+           ShuffleStrategy::NONE,
            "Strategy for introducing delays by shuffling tuples or buffers in the stream"
            "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
     NES::Configurations::FloatOption unorderedness
         = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatValidation>()}};
     NES::Configurations::UIntOption minDelay
-        = {"minDelay", "1", "Minimum delay", {std::make_shared<NES::Configurations::NumberValidation>()}};
+        = {"minDelay", "1", "Minimum delay in milliseconds", {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxDelay
-        = {"maxDelay", "10", "Maximum delay", {std::make_shared<NES::Configurations::NumberValidation>()}};
+        = {"maxDelay", "10", "Maximum delay in milliseconds", {std::make_shared<NES::Configurations::NumberValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override

@@ -23,12 +23,12 @@ LogicalShuffleTuplesOperator::LogicalShuffleTuplesOperator(OperatorId id) : Oper
 {
 }
 
-bool LogicalShuffleTuplesOperator::isIdentical(std::shared_ptr<Node> const& rhs) const
+bool LogicalShuffleTuplesOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalShuffleTuplesOperator>(rhs)->getId() == id;
 }
 
-bool LogicalShuffleTuplesOperator::equal(std::shared_ptr<Node> const& rhs) const
+bool LogicalShuffleTuplesOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalShuffleTuplesOperator>(rhs))
     {
@@ -75,7 +75,7 @@ void LogicalShuffleTuplesOperator::inferStringSignature()
     NES_TRACE("LogicalShuffleTuplesOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "LogicalShuffleTuplesOperator: DelayTuples should have children");
 
-    //Infer query signatures for child operators
+    /// Infer query signatures for child operators
     for (const auto& child : children)
     {
         const auto childOperator = NES::Util::as<LogicalOperator>(child);
@@ -86,9 +86,9 @@ void LogicalShuffleTuplesOperator::inferStringSignature()
     auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "DelayTuples()." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    /// Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-} // namespace NES
+}

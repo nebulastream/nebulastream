@@ -15,10 +15,10 @@
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
+#include <Memory/detail/TupleBufferImpl.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
-#include <Memory/detail/TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {

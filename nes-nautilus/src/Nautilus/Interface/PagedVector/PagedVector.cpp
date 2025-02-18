@@ -92,7 +92,6 @@ const Memory::TupleBuffer& PagedVector::getTupleBufferForEntry(const uint64_t en
 
 PagedVector::~PagedVector()
 {
-    // std::cout << "Counter: " << counter << std::endl;
 }
 
 uint64_t PagedVector::findPageIndex(const uint64_t& pos)

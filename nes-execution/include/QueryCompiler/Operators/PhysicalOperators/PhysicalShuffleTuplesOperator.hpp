@@ -24,21 +24,14 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalShuffleTuplesOperator : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
 {
 public:
-    PhysicalShuffleTuplesOperator(
-        OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay);
-    static std::shared_ptr<PhysicalOperator>
-    create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay);
-    static std::shared_ptr<PhysicalOperator>
-    create(std::shared_ptr<Schema> inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay);
+    PhysicalShuffleTuplesOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness);
+    static std::shared_ptr<PhysicalOperator> create(std::shared_ptr<Schema> inputSchema, const float& unorderedness);
     float getUnorderedness() const;
-    uint64_t getMinDelay() const;
-    uint64_t getMaxDelay() const;
     std::string toString() const override;
     std::shared_ptr<Operator> copy() override;
 
 protected:
     float unorderedness;
-    uint64_t minDelay;
-    uint64_t maxDelay;
 };
 }

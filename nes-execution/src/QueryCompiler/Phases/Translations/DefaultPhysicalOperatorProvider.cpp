@@ -17,8 +17,6 @@
 #include <utility>
 #include <vector>
 
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
@@ -52,6 +50,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
@@ -100,8 +100,7 @@ void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const std::s
 }
 
 void DefaultPhysicalOperatorProvider::lower(
-    const DecomposedQueryPlan& decomposedQueryPlan,
-    const std::shared_ptr<LogicalOperator> operatorNode)
+    const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator> operatorNode)
 {
     if (isDemultiplex(operatorNode))
     {
@@ -138,9 +137,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
         const auto physicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
-            filterOperator->getInputSchema(),
-            filterOperator->getOutputSchema(),
-            filterOperator->getPredicate());
+            filterOperator->getInputSchema(), filterOperator->getOutputSchema(), filterOperator->getPredicate());
         physicalSelectionOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSelectionOperator);
     }
@@ -164,9 +161,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         const auto limitOperator = NES::Util::as<LogicalLimitOperator>(operatorNode);
         const auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
-            limitOperator->getInputSchema(),
-            limitOperator->getOutputSchema(),
-            limitOperator->getLimit());
+            limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
     }
     else
@@ -207,9 +202,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const std::shared_ptr
 {
     const auto projectOperator = NES::Util::as<LogicalProjectionOperator>(operatorNode);
     const auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
-        projectOperator->getInputSchema(),
-        projectOperator->getOutputSchema(),
-        projectOperator->getFunctions());
+        projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getFunctions());
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
@@ -219,9 +212,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 {
     const auto mapOperator = NES::Util::as<LogicalMapOperator>(operatorNode);
     const auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
-        mapOperator->getInputSchema(),
-        mapOperator->getOutputSchema(),
-        mapOperator->getMapFunction());
+        mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapFunction());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
@@ -229,7 +220,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const std::shared_ptr<LogicalJoinOperator>& joinOperator,
     const std::shared_ptr<Schema>& outputSchema,
-    std::vector<std::shared_ptr<Operator> > children)
+    std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
@@ -301,13 +292,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 
     StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
-        joinFieldNameLeft,
-        joinFieldNameRight,
-        windowSize,
-        windowSlide,
-        timeStampFieldLeft,
-        timeStampFieldRight,
-        joinStrategy);
+        joinFieldNameLeft, joinFieldNameRight, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
 
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
     switch (joinStrategy)
@@ -344,90 +329,58 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         streamJoinConfig.joinFieldNamesRight,
         joinOperator->windowMetaData);
 
-    /// Creating two trigger operators, one for each side of the join
-    const auto triggerLeft = PhysicalOperators::PhysicalWindowTrigger::create(
-        getNextOperatorId(),
-        joinOperator->getLeftInputSchema(),
-        joinOperator->getOutputSchema(),
-        joinOperatorHandler);
-    const auto triggerRight = PhysicalOperators::PhysicalWindowTrigger::create(
-        getNextOperatorId(),
-        joinOperator->getRightInputSchema(),
-        joinOperator->getOutputSchema(),
-        joinOperatorHandler);
-
     /// Depending on the set shuffle strategy, we might add the corresponding operators
     if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER)
     {
         const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
-            joinOperator->getOutputSchema(),
+            joinOperator->getLeftInputSchema(),
             queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
 
         const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
-            joinOperator->getOutputSchema(),
+            joinOperator->getRightInputSchema(),
             queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
         streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
         streamJoinOperators.leftInputOperator = shuffleBufferOperatorLeft;
         streamJoinOperators.rightInputOperator = shuffleBufferOperatorRight;
-        INVARIANT(false, "think about, if this is correct. We need the delay buffer operator for the join build side");
     }
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
     {
-        const auto delayBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
-            getNextOperatorId(),
-            joinOperator->getOutputSchema(),
-            queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
-
-        const auto delayBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
-            getNextOperatorId(),
-            joinOperator->getOutputSchema(),
-            queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
-        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(delayBufferOperatorLeft);
-        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(delayBufferOperatorRight);
-        streamJoinOperators.leftInputOperator = delayBufferOperatorLeft;
-        streamJoinOperators.rightInputOperator = delayBufferOperatorRight;
-        INVARIANT(false, "think about, if this is correct. We need the delay buffer operator for the join build side");
+        const auto shuffleTuplesOperatorLeft = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.unorderedness);
+        const auto shuffleTuplesOperatorRight = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.unorderedness);
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleTuplesOperatorLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleTuplesOperatorRight);
+        streamJoinOperators.leftInputOperator = shuffleTuplesOperatorLeft;
+        streamJoinOperators.rightInputOperator = shuffleTuplesOperatorRight;
     }
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER_TUPLES)
     {
         /// We are adding a shuffle buffer operator for the tuples and a shuffle buffer operator for the buffer
         const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
-            joinOperator->getOutputSchema(),
+            joinOperator->getLeftInputSchema(),
             queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
         const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
-            joinOperator->getOutputSchema(),
+            joinOperator->getRightInputSchema(),
             queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
 
         const auto shuffleTuplesOperatorLeft = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(),
-            joinOperator->getOutputSchema(),
-            queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.unorderedness);
         const auto shuffleTuplesOperatorRight = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(),
-            joinOperator->getOutputSchema(),
-            queryCompilerConfig.unorderedness,
-            queryCompilerConfig.minDelay,
-            queryCompilerConfig.maxDelay);
-
+            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.unorderedness);
 
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
         streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
@@ -436,6 +389,18 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         streamJoinOperators.leftInputOperator = shuffleTuplesOperatorLeft;
         streamJoinOperators.rightInputOperator = shuffleTuplesOperatorRight;
     }
+
+    /// Creating two trigger operators, one for each side of the join
+    const auto triggerLeft = PhysicalOperators::PhysicalWindowTrigger::create(
+        getNextOperatorId(),
+        streamJoinOperators.leftInputOperator->getOutputSchema(),
+        joinOperator->getOutputSchema(),
+        joinOperatorHandler);
+    const auto triggerRight = PhysicalOperators::PhysicalWindowTrigger::create(
+        getNextOperatorId(),
+        streamJoinOperators.rightInputOperator->getOutputSchema(),
+        joinOperator->getOutputSchema(),
+        joinOperatorHandler);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     leftJoinBuildOperator->insertBetweenThisAndParentNodes(triggerLeft);
@@ -446,19 +411,16 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 }
 
 std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators,
-    const StreamJoinConfigs& streamJoinConfig) const
+    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
 {
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(),
-        joinOperator->getLeftInputSchema());
+        queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
     leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(),
-        joinOperator->getRightInputSchema());
+        queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",
@@ -477,8 +439,7 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-    const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+    const std::shared_ptr<LogicalJoinOperator>& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
 {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -536,8 +497,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
     NES_DEBUG("Create Thread local window aggregation");
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
     PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(),
-        "The number of input origin IDs for an window operator should not be zero.");
+        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();
     const auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -556,9 +516,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
     INVARIANT(numberOfInputOrigins == 1, "We expect exactly one input origin for a time based window operator");
     std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
-            timeBasedWindowType->getSize().getTime(),
-            timeBasedWindowType->getSlide().getTime(),
-            numberOfInputOrigins);
+            timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
     const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
         windowOperator->getInputOriginIds(),
         windowDefinition->getOriginId(),
@@ -566,31 +524,54 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
-        getNextOperatorId(),
-        windowInputSchema,
-        windowOutputSchema,
-        windowDefinition,
-        windowHandler);
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
     const auto trigger
         = PhysicalOperators::PhysicalWindowTrigger::create(getNextOperatorId(), windowInputSchema, windowOutputSchema, windowHandler);
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
-        getNextOperatorId(),
-        windowInputSchema,
-        windowOutputSchema,
-        windowDefinition,
-        windowHandler,
-        windowOperator->windowMetaData);
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
     operatorNode->insertBetweenThisAndChildNodes(trigger);
     operatorNode->replace(aggregationProbe);
+
+    /// Depending on the set shuffle strategy, we might add the corresponding operators
+    if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER)
+    {
+        const auto shuffleBufferOperator = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            windowInputSchema,
+            queryCompilerConfig.unorderedness.getValue(),
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
+
+        aggregationBuild->insertBetweenThisAndChildNodes(shuffleBufferOperator);
+    }
+    else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
+    {
+        const auto shuffleTuplesOperator = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(), windowInputSchema, queryCompilerConfig.unorderedness.getValue());
+        aggregationBuild->insertBetweenThisAndChildNodes(shuffleTuplesOperator);
+    }
+    else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER_TUPLES)
+    {
+        /// We are adding a shuffle buffer operator for the tuples and a shuffle buffer operator for the buffer
+        const auto shuffleBufferOperator = PhysicalOperators::PhysicalShuffleBufferOperator::create(
+            getNextOperatorId(),
+            windowInputSchema,
+            queryCompilerConfig.unorderedness.getValue(),
+            std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
+            std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
+        const auto shuffleTuplesOperator = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
+            getNextOperatorId(), windowInputSchema, queryCompilerConfig.unorderedness.getValue());
+        aggregationBuild->insertBetweenThisAndChildNodes(shuffleBufferOperator);
+        aggregationBuild->insertBetweenThisAndChildNodes(shuffleTuplesOperator);
+    }
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
 {
     const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
     PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(),
-        "The number of input origin IDs for an window operator should not be zero.");
+        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
     PRECONDITION(NES::Util::instanceOf<LogicalWindowOperator>(operatorNode), "The operator should be a window operator.");
 
     const auto windowInputSchema = windowOperator->getInputSchema();

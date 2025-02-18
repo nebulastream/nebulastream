@@ -42,7 +42,8 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     const std::string_view cacheHitsAndMissesFile)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), cacheHitsAndMissesFile(cacheHitsAndMissesFile)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , cacheHitsAndMissesFile(cacheHitsAndMissesFile)
 {
 }
 

@@ -31,7 +31,7 @@ SliceCache::SliceCache(
     , sliceStart(Timestamp::INVALID_VALUE)
     , sliceEnd(Timestamp::INVALID_VALUE)
     , numberOfHits(hitsRef)
-, numberOfMisses(missesRef)
+    , numberOfMisses(missesRef)
 {
 }
 

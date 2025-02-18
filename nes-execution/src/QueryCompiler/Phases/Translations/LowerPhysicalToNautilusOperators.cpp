@@ -18,18 +18,16 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/DelayShuffle/DelayBuffer.hpp>
+#include <Execution/Operators/DelayShuffle/ShuffleTuples.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
-#include <Execution/Operators/DelayShuffle/DelayBuffer.hpp>
-#include <Execution/Operators/DelayShuffle/ShuffleTuples.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -67,6 +65,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
@@ -241,26 +241,31 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode))
     {
-        auto delayBufferOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode);
+        auto shuffleBufferOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode);
         operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::DelayBufferOperatorHandler>(
-            delayBufferOperator->getUnorderedness(), delayBufferOperator->getMinDelay(), delayBufferOperator->getMaxDelay()));
-        return std::make_shared<Runtime::Execution::Operators::DelayBuffer>(operatorHandlers.size() - 1);
+            shuffleBufferOperator->getUnorderedness(), shuffleBufferOperator->getMinDelay(), shuffleBufferOperator->getMaxDelay()));
+        const auto shuffleBuffers = std::make_shared<Runtime::Execution::Operators::DelayBuffer>(operatorHandlers.size() - 1);
+        parentOperator->setChild(shuffleBuffers);
+        return shuffleBuffers;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleTuplesOperator>(operatorNode))
     {
-        auto schema = operatorNode->getOutputSchema();
-        INVARIANT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-
         /// pass buffer size here
-        auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+        auto shuffleTuplesOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleTuplesOperator>(operatorNode);
+        INVARIANT(
+            shuffleTuplesOperator->getInputSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+            "Currently only row layout is supported");
+        auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(shuffleTuplesOperator->getInputSchema(), bufferSize);
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
             = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
-        auto delayTuplesOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleTuplesOperator>(operatorNode);
 
-        operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::ShuffleTuplesOperatorHandler>(
-            delayTuplesOperator->getUnorderedness(), delayTuplesOperator->getMinDelay(), delayTuplesOperator->getMaxDelay()));
-        return std::make_shared<Runtime::Execution::Operators::ShuffleTuples>(std::move(memoryProvider), operatorHandlers.size() - 1);
+        operatorHandlers.push_back(
+            std::make_unique<Runtime::Execution::Operators::ShuffleTuplesOperatorHandler>(shuffleTuplesOperator->getUnorderedness()));
+        const auto shuffleTuplesExec
+            = std::make_shared<Runtime::Execution::Operators::ShuffleTuples>(std::move(memoryProvider), operatorHandlers.size() - 1);
+        pipeline.setRootOperator(shuffleTuplesExec);
+        return shuffleTuplesExec;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationProbe>(operatorNode))
     {

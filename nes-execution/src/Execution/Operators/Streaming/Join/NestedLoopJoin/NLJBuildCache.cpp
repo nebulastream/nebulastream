@@ -30,8 +30,7 @@ NLJBuildCache::NLJBuildCache(
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     const QueryCompilation::Configurations::SliceCacheOptions& sliceCacheOptions)
-    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
-    , sliceCacheOptions(sliceCacheOptions)
+    : StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider), sliceCacheOptions(sliceCacheOptions)
 {
 }
 
@@ -44,9 +43,7 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
         +[](NLJOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
-        {
-            opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
-        },
+        { opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads()); },
         globalOperatorHandler,
         executionCtx.pipelineContext);
 
@@ -69,14 +66,11 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     }
 
     nautilus::invoke(
-        +[](
-        NLJOperatorHandler* opHandler,
-        Memory::AbstractBufferProvider* bufferProvider,
-        const uint64_t sizeOfEntryVal,
-        const uint64_t numberOfEntriesVal)
-        {
-            opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider);
-        },
+        +[](NLJOperatorHandler* opHandler,
+            Memory::AbstractBufferProvider* bufferProvider,
+            const uint64_t sizeOfEntryVal,
+            const uint64_t numberOfEntriesVal)
+        { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
         globalOperatorHandler,
         executionCtx.bufferProvider,
         sizeOfEntry,
@@ -198,12 +192,7 @@ void NLJBuildCache::terminate(ExecutionContext& executionCtx) const
 {
     /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    nautilus::invoke(
-        +[](const NLJOperatorHandler* opHandler)
-        {
-            opHandler->writeCacheHitAndMissesToConsole();
-        },
-        globalOperatorHandler);
+    nautilus::invoke(+[](const NLJOperatorHandler* opHandler) { opHandler->writeCacheHitAndMissesToConsole(); }, globalOperatorHandler);
 
     StreamJoinBuild::terminate(executionCtx);
 }

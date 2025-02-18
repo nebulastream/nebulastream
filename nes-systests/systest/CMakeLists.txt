@@ -43,8 +43,8 @@ endif (CODE_COVERAGE)
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-add_test(NAME systest_interpreter COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
-add_test(NAME systest_compiler COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
+add_test(NAME systest_interpreter COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+add_test(NAME systest_compiler COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 
 
 ## We wish to run all join tests with 1, 2, 4 worker threads

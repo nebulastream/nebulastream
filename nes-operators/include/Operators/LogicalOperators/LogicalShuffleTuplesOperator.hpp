@@ -26,12 +26,12 @@ class LogicalShuffleTuplesOperator : public LogicalUnaryOperator
 public:
     explicit LogicalShuffleTuplesOperator(OperatorId id);
     ~LogicalShuffleTuplesOperator() override = default;
-    [[nodiscard]] bool equal(std::shared_ptr<Node> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Node> const& rhs) const override;
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     std::string toString() const override;
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
     void inferStringSignature() override;
 };
 using LogicalShuffleTuplesOperatorPtr = std::shared_ptr<LogicalShuffleTuplesOperator>;
-} // namespace NES
+}

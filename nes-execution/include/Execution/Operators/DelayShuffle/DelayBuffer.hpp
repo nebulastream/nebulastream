@@ -14,44 +14,43 @@
 
 #pragma once
 
-#include "ExecutableOperator.hpp"
-#include "Identifiers/Identifiers.hpp"
 #include <random>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class DelayBufferOperatorHandler : public OperatorHandler
+class DelayBufferOperatorHandler final : public OperatorHandler
 {
 public:
-    DelayBufferOperatorHandler(float unorderedness, uint64_t minDelay = 1, uint64_t maxDelay = 10);
+    DelayBufferOperatorHandler(float unorderedness, std::chrono::milliseconds minDelay, std::chrono::milliseconds maxDelay);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
+    /// Sleeps for a random time [minDelay, maxDelay] with a given probability. We calculate the probability by
+    /// taking the modulo of the sequence number with 100 and comparing it with the unorderedness.
+    /// This way, we ensure that the sleep is only executed for a certain percentage of the tuple buffers.
     void sleepOrNot(SequenceNumber sequenceNumber);
 
 private:
-    const float unorderedness;
+    float unorderedness;
     std::mt19937 gen;
-    std::uniform_real_distribution<> unorderednessDistrib;
     std::uniform_int_distribution<> delayDistrib;
 };
 
-class DelayBuffer : public ExecutableOperator
+class DelayBuffer final : public ExecutableOperator
 {
 public:
-    DelayBuffer(const uint64_t operatorHandlerIndex);
-
-    void setup(ExecutionContext& executionCtx) const override;
+    explicit DelayBuffer(const uint64_t operatorHandlerIndex);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     uint64_t operatorHandlerIndex;
 };
-} // namespace NES::Runtime::Execution::Operators
+}

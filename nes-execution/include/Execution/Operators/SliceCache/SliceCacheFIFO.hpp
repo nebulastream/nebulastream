@@ -30,8 +30,8 @@ public:
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<int8_t*>& startOfDataEntry,
-        const nautilus::val<uint64_t *> &hitsRef,
-        const nautilus::val<uint64_t *> &missesRef);
+        const nautilus::val<uint64_t*>& hitsRef,
+        const nautilus::val<uint64_t*>& missesRef);
     ~SliceCacheFIFO() override = default;
     nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;

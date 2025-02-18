@@ -15,7 +15,8 @@
 #pragma once
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 struct SliceCacheEntrySecondChance : SliceCacheFIFO
 {
     /// Stores the second chance bit for each entry in the cache.
@@ -23,15 +24,16 @@ struct SliceCacheEntrySecondChance : SliceCacheFIFO
     ~SliceCacheEntrySecondChance() override = default;
 };
 
-class SliceCacheSecondChance final : public SliceCacheFIFO {
+class SliceCacheSecondChance final : public SliceCacheFIFO
+{
 public:
     SliceCacheSecondChance(
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<int8_t*>& startOfDataEntry,
-        const nautilus::val<uint64_t *> &hitsRef,
-        const nautilus::val<uint64_t *> &missesRef);
+        const nautilus::val<uint64_t*>& hitsRef,
+        const nautilus::val<uint64_t*>& missesRef);
     ~SliceCacheSecondChance() override = default;
     nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;

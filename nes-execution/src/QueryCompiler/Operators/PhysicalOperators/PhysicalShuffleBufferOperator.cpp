@@ -19,7 +19,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalShuffleBufferOperator::PhysicalShuffleBufferOperator(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
+    OperatorId id,
+    const std::shared_ptr<Schema>& inputSchema,
+    const float& unorderedness,
+    const std::chrono::milliseconds& minDelay,
+    const std::chrono::milliseconds& maxDelay)
     : Operator(id)
     , PhysicalUnaryOperator(id, inputSchema, inputSchema)
     , unorderedness(unorderedness)
@@ -28,13 +32,20 @@ PhysicalShuffleBufferOperator::PhysicalShuffleBufferOperator(
 {
 }
 
-std::shared_ptr<PhysicalOperator>
-PhysicalShuffleBufferOperator::create(std::shared_ptr<Schema> inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
+std::shared_ptr<PhysicalOperator> PhysicalShuffleBufferOperator::create(
+    std::shared_ptr<Schema> inputSchema,
+    const float& unorderedness,
+    const std::chrono::milliseconds& minDelay,
+    const std::chrono::milliseconds& maxDelay)
 {
     return create(getNextOperatorId(), std::move(inputSchema), unorderedness, minDelay, maxDelay);
 }
 std::shared_ptr<PhysicalOperator> PhysicalShuffleBufferOperator::create(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, float const& unorderedness, uint64_t const& minDelay, uint64_t const& maxDelay)
+    OperatorId id,
+    const std::shared_ptr<Schema>& inputSchema,
+    const float& unorderedness,
+    const std::chrono::milliseconds& minDelay,
+    const std::chrono::milliseconds& maxDelay)
 {
     return std::make_shared<PhysicalShuffleBufferOperator>(id, inputSchema, unorderedness, minDelay, maxDelay);
 }
@@ -44,12 +55,12 @@ float PhysicalShuffleBufferOperator::getUnorderedness() const
     return unorderedness;
 }
 
-uint64_t PhysicalShuffleBufferOperator::getMinDelay() const
+std::chrono::milliseconds PhysicalShuffleBufferOperator::getMinDelay() const
 {
     return minDelay;
 }
 
-uint64_t PhysicalShuffleBufferOperator::getMaxDelay() const
+std::chrono::milliseconds PhysicalShuffleBufferOperator::getMaxDelay() const
 {
     return maxDelay;
 }
@@ -70,4 +81,4 @@ std::shared_ptr<Operator> PhysicalShuffleBufferOperator::copy()
     return result;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+}
