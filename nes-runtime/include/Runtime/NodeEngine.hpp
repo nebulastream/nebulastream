@@ -23,6 +23,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -443,6 +444,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::WLockedPtr writeLockLastWritten(std::string sinkName);
 
+    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>::WLockedPtr writeLockSeqQueue(std::string sinkName);
+
+    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr writeLockSinkStorage(std::string sinkName);
+
   private:
     /**
      * @brief method to start a already deployed query
@@ -492,6 +497,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool connected = true;
     // uint64_t receiverChangeCount = 0;
     uint64_t parentChangeCount = 0;
+
+    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
+    // keep unordered tuple buffers with sequence number as key
+    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>> sinkBufferStorage;
 
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
     std::atomic<bool> activeBufferingSimulation = false;

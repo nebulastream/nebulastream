@@ -103,7 +103,7 @@ class FileSink : public SinkMedium {
     bool writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite);
   protected:
 
-    bool writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite);
+    bool writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite, folly::Synchronized<Runtime::TCPSinkInfo>::LockedPtr& sinkInfo);
 
     /// The output file path of the file sink.
     std::string filePath;
@@ -122,11 +122,9 @@ class FileSink : public SinkMedium {
     bool timestampAndWriteToSocket;
     std::atomic<uint64_t> numberOfWrittenBuffers{0};
     std::atomic<uint64_t> numberOfReceivedBuffers{0};
-    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
+//    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
     // keep unordered tuple buffers with sequence number as key
-//    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, Runtime::TupleBuffer>>> bufferStorage;
-//    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::vector<Record>>>> bufferStorage;
-    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>> bufferStorage;
+//    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>> bufferStorage;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
