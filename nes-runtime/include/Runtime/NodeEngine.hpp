@@ -441,6 +441,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::RLockedPtr lockLastWritten(std::string sinkName);
 
+    folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::WLockedPtr writeLockLastWritten(std::string sinkName);
+
   private:
     /**
      * @brief method to start a already deployed query

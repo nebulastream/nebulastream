@@ -1065,6 +1065,15 @@ folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::RLockedPtr NodeEngi
     }
     lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
     return lastWrites.at(sinkName).rlock();
+}
+
+folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::WLockedPtr NodeEngine::writeLockLastWritten(std::string sinkName) {
+    std::unique_lock lock(lastWrittenMutex);
+    if (lastWrites.contains(sinkName)) {
+        return lastWrites.at(sinkName).wlock();
+    }
+    lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
+    return lastWrites.at(sinkName).wlock();
 
 }
 

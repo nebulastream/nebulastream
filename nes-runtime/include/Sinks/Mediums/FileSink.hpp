@@ -125,7 +125,8 @@ class FileSink : public SinkMedium {
     folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
     // keep unordered tuple buffers with sequence number as key
 //    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, Runtime::TupleBuffer>>> bufferStorage;
-    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::vector<Record>>>> bufferStorage;
+//    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::vector<Record>>>> bufferStorage;
+    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>> bufferStorage;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
