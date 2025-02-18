@@ -55,8 +55,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     if (!parser.loadFile(testFilePath))
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
-        return {};
+        throw TestException("Could not successfully load test file://{}", testFilePath.string());
     }
 
     /// We create a map from sink names to their schema
@@ -149,7 +148,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             /// We expect at least one sink to be defined in the test file
             if (sinkNamesToSchema.empty())
             {
-                throw UnknownSinkType("No sinks defined in test file: {}", testFileName);
+                throw TestException("No sinks defined in test file: {}", testFileName);
             }
 
             /// We have to get all sink names from the query and then create custom paths for each sink.
@@ -203,8 +202,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     }
     catch (const Exception&)
     {
-        tryLogCurrentException();
-        return {};
+        throw TestException("Could not successfully parse test file://{}", testFilePath.string());
     }
     return plans;
 }

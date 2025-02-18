@@ -235,8 +235,8 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
 {
     PRECONDITION(
         query.getSinkOperators().size() == 1,
-        fmt::format(
-            "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
+        "NebulaStream currently only supports a single sink per query, but the query contains: {}",
+        query.getSinkOperators().size());
     PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
