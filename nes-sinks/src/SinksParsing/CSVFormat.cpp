@@ -37,7 +37,6 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -54,7 +53,7 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema, bool addTimestamp) : schem
     {
         auto physicalType = factory.getPhysicalType(f->getDataType());
         PRECONDITION(
-            Util::instanceOf<BasicPhysicalType>(physicalType) || Util::instanceOf<VariableSizedDataType>(physicalType),
+            Util::instanceOf<BasicPhysicalType>(physicalType) || Util::instanceOf<VariableSizedDataPhysicalType>(physicalType),
             "Formatter can only handle basic and variable size physical types");
 
         formattingContext.offsets.push_back(offset);
