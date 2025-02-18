@@ -295,11 +295,11 @@ bool AbstractQueryManager::unregisterExecutableQueryPlan(const Execution::Execut
     return true;
 }
 
-bool AbstractQueryManager::sendTrimmingReconfiguration(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier) {
+bool AbstractQueryManager::sendTrimmingReconfiguration(DecomposedQueryId decomposedQueryId, DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t epochBarrier) {
     std::unique_lock queryLock(queryMutex);
     bool isPropagated = false;
-    auto sharedQueryId = getSharedQueryId(decomposedQueryId);
-    auto qep = getQueryExecutionPlan(decomposedQueryId);
+    auto qep = getQueryExecutionPlan(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
+    auto sharedQueryId = qep->getSharedQueryId();
     //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
     auto sinks = qep->getSinks();
     for (auto sink : sinks) {
@@ -307,10 +307,11 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(DecomposedQueryId decompo
             NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId={}, punctuation={}", sharedQueryId, epochBarrier);
             auto newReconf = ReconfigurationMessage(sharedQueryId,
                                                     decomposedQueryId,
+                                                    decomposedQueryVersion,
                                                     Runtime::ReconfigurationType::PropagateEpoch,
                                                     sink,
                                                     std::make_any<uint64_t>(epochBarrier));
-            addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf);
+            addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf);
             isPropagated = true;
         }
     }
@@ -320,20 +321,21 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(DecomposedQueryId decompo
     return false;
 }
 
-bool AbstractQueryManager::propagateEpochBackwards(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier) {
+bool AbstractQueryManager::propagateEpochBackwards(DecomposedQueryId decomposedQueryId, DecomposedQueryPlanVersion decomposedQueryVersion, uint64_t epochBarrier) {
     std::unique_lock queryLock(queryMutex);
-    auto sharedQueryId = getSharedQueryId(decomposedQueryId);
-    auto qep = getQueryExecutionPlan(decomposedQueryId);
+    auto qep = getQueryExecutionPlan(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
+    auto sharedQueryId = qep->getSharedQueryId();
     auto sources = qep->getSources();
     bool isPropagated = false;
     for (auto source : sources) {
         if (source->getType() == SourceType::NETWORK_SOURCE) {
             auto newReconf = Runtime::ReconfigurationMessage(sharedQueryId,
                                                              decomposedQueryId,
+                                                             decomposedQueryVersion,
                                                              Runtime::ReconfigurationType::PropagateEpoch,
                                                              source,
                                                              std::make_any<uint64_t>(epochBarrier));
-            addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf);
+            addReconfigurationMessage(sharedQueryId, decomposedQueryId, decomposedQueryVersion, newReconf);
             isPropagated = true;
         }
     }

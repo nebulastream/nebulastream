@@ -354,10 +354,11 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, OperatorId 
                     NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId={} punctuation={} ", epochBarrier, epochBarrier);
                     auto newReconf = ReconfigurationMessage(qep->getSharedQueryId(),
                                                             qep->getDecomposedQueryId(),
+                                                            qep->getDecomposedQueryVersion(),
                                                             Runtime::ReconfigurationType::PropagateEpoch,
                                                             sink,
                                                             std::make_any<uint64_t>(epochBarrier));
-                    addReconfigurationMessage(qep->getSharedQueryId(), qep->getDecomposedQueryId(), newReconf);
+                    addReconfigurationMessage(qep->getSharedQueryId(), qep->getDecomposedQueryId(), qep->getDecomposedQueryVersion(), newReconf);
                 }
             }
         }

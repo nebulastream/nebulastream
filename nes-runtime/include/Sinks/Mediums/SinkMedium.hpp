@@ -51,8 +51,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         SharedQueryId sharedQueryId,
                         DecomposedQueryId decomposedQueryId,
-                        FaultToleranceType faultToleranceType,
                         DecomposedQueryPlanVersion decomposedQueryVersion,
+                        FaultToleranceType faultToleranceType,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
     /**
@@ -193,9 +193,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic<uint32_t> activeProducers;
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;
- FaultToleranceType faultToleranceType;
     DecomposedQueryPlanVersion decomposedQueryVersion;
-    uint64_t numberOfOrigins;
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
@@ -204,7 +202,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
  std::function<bool(Runtime::TupleBuffer&)> duplicateDetectionCallback;
     std::function<void(uint64_t)> notifyEpochCallback;
-
+ FaultToleranceType faultToleranceType;
+ uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint64_t buffersPerEpoch;
     bool isWaiting;

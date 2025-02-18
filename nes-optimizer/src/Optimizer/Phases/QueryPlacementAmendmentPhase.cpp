@@ -190,7 +190,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                          planIdToPlanCopy,
                                          sharedQueryId,
                                          nextDecomposedQueryPlanVersion,
-                                         deploymentContexts);
+                                         deploymentContexts,
+                                         faultToleranceType);
             } catch (std::exception& ex) {
                 NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
                           "failed changelog for further processing. {}",
@@ -282,7 +283,8 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
     std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
     SharedQueryId sharedQueryId,
     DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-    std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts) {
+    std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
+    FaultToleranceType faultTolerance) {
 
     // go over operators that needs to be migrated
     for (const auto& [migratingOperatorId, migratingOperatorProperties] : migratingOperatorToProperties) {
@@ -305,7 +307,7 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
         migrateSourceOperator->addParent(migrateSinkOperator);
 
         // 2. Make placement of new operators and path between them
-        auto strategy = getStrategy(placementStrategy);
+        auto strategy = getStrategy(placementStrategy, faultTolerance);
         auto placementResults = strategy->updateGlobalExecutionPlan(sharedQueryId,
                                                                     {migrateSourceOperator},
                                                                     {migrateSinkOperator},

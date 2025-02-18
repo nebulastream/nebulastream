@@ -56,20 +56,20 @@ using namespace Configurations;
 using namespace Optimizer;
 
 // ((1934 + 1) * 15 + 1) * 5
-// const uint64_t numberOfNodesPerLevel3 = 12;
-// const uint64_t numberOfNodesPerLevel2 = 4;
-// const uint64_t numberOfNodesPerLevel1 = 2;
-// const uint64_t numberOfNodes = 96;
+const uint64_t numberOfNodesPerLevel3 = 12;
+const uint64_t numberOfNodesPerLevel2 = 4;
+const uint64_t numberOfNodesPerLevel1 = 2;
+const uint64_t numberOfNodes = 96;
 
 // const uint64_t numberOfNodesPerLevel3 = 95;
 // const uint64_t numberOfNodesPerLevel2 = 21;
 // const uint64_t numberOfNodesPerLevel1 = 8;
 // const uint64_t numberOfNodes = 16035;
 
-const uint64_t numberOfNodesPerLevel3 = 176;
-const uint64_t numberOfNodesPerLevel2 = 21;
-const uint64_t numberOfNodesPerLevel1 = 8;
-const uint64_t numberOfNodes = 29743;
+//const uint64_t numberOfNodesPerLevel3 = 176;
+//const uint64_t numberOfNodesPerLevel2 = 21;
+//const uint64_t numberOfNodesPerLevel1 = 8;
+//const uint64_t numberOfNodes = 29743;
 
 // const uint64_t numberOfNodesPerLevel3 = 140;
 // const uint64_t numberOfNodesPerLevel2 = 25;
@@ -309,7 +309,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
 
-    size_t numIntermediates = 30;
+    size_t numIntermediates = 4;
 
     auto intermediateConfigs = generateWorkerConfigs(numIntermediates);
 
@@ -359,9 +359,9 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
         wrkLeaf->addParent(intermediates[numIntermediates - 1]->getWorkerId());
     }
 
-    auto query = Query::from("window")
-                        .filter(Attribute("id") < 10)
-                        .sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
+    // auto query = Query::from("window")
+                        // .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Max(Attribute("timestamp"))).sink(PrintSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
         query.getQueryPlan(),
         Optimizer::PlacementStrategy::BottomUp,
@@ -377,7 +377,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
         if (!decomposedIds.empty()) {
             intermediates[numIntermediates - 1]->requestOffload(
                 sharedQueryPlanId,
-                decomposedIds[0],
+                decomposedIds[0].id,
                 intermediates[numIntermediates - 2]->getWorkerId()
             );
         }
@@ -418,7 +418,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkerTopology) {
     auto queryCatalog = crd->getQueryCatalog();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
-    wrkMid->requestOffload(sharedQueryPlanId, wrkMid->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0], wrkLeaf->getWorkerId());
+    wrkMid->requestOffload(sharedQueryPlanId, wrkMid->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId)[0].id, wrkLeaf->getWorkerId());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));

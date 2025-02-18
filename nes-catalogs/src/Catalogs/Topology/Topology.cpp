@@ -1399,5 +1399,4 @@ void Topology::informNeighborsOfNode(WorkerId nodeId, std::string targetAddress)
     neighborUpdateCallback(nodeId, targetAddress, neighborInfo);
 }
 
-WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdCounter++); }
 }// namespace NES

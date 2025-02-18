@@ -189,6 +189,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                          numOfProducers,
                                          fileSinkDescriptor->getFileName(),
                                          fileSinkDescriptor->getAppend(),
+                                         fileSinkDescriptor->getFaultToleranceType(),
                                          fileSinkDescriptor->getNumberOfOrigins());
         } else {
             NES_ERROR("createDataSink: unsupported format");

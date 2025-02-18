@@ -194,9 +194,7 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
-bool WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
-    auto iteratorPartitionId = this->storage.find(nesPartitionId);
-    bool isTrimmed = false;
+
 void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
@@ -254,13 +252,6 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t tim
     }
 }
 
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        return this->storage[nesPartition]->getTopElementFromQueue();
-    }
-    return {};
-}
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectBufferStorage(OperatorId operatorId) {
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
@@ -284,12 +275,6 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnec
     return {};
 }
 
-void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->removeTopElementFromQueue();
-    }
-}
 
 std::vector<char> WorkerContext::getBinaryStorage(Network::NesPartition nesPartition) {
     SchemaPtr& schema = schemas[nesPartition];

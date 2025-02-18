@@ -450,48 +450,44 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 
     // release all deployed queryIdAndCatalogEntryMapping
     for (auto it = deployedExecutableQueryPlans.begin(); it != deployedExecutableQueryPlans.end();) {
-        auto& [queryDecPlanId, queryExecutionPlan] = *it;
+        auto& [querySubPlanId, queryExecutionPlan] = *it;
         if(queryExecutionPlan->getFaultToleranceType() == FaultToleranceType::M) {
-            nesWorker->requestSubQueryRemoval(queryManager->getSharedQueryId(queryDecPlanId), queryDecPlanId);
+            nesWorker->requestSubQueryRemoval(queryManager->getSharedQueryId(querySubPlanId), querySubPlanId.id);
             it = deployedExecutableQueryPlans.erase(it);
         }
-        else {
-            try {
-                if (markQueriesAsFailed) {
-                    if (queryManager->failExecutableQueryPlan(queryExecutionPlan)) {
-                        NES_DEBUG("fail of QEP  {}  succeeded", decomposedQueryPlanId);
-                    } else {
-                        NES_ERROR("fail of QEP {} failed", decomposedQueryPlanId);
-                        withError = true;
-                    }
+        try {
+            if (markQueriesAsFailed) {
+                if (queryManager->failExecutableQueryPlan(queryExecutionPlan)) {
+                    NES_DEBUG("fail of QEP  {}  succeeded", querySubPlanId.id);
                 } else {
-                    if (queryManager->stopExecutableQueryPlan(queryExecutionPlan)) {
-                        NES_DEBUG("stop of QEP  {}  succeeded", decomposedQueryPlanId);
-                    } else {
-                        NES_ERROR("stop of QEP {} failed", decomposedQueryPlanId);
-                        withError = true;
-                    }
-                }
-            } catch (std::exception const& err) {
-                NES_ERROR("stop of QEP {} failed: {}", decomposedQueryPlanId, err.what());
-                withError = true;
-            }
-            try {
-                auto sharedQueryId = queryExecutionPlan->getSharedQueryId();
-                if (queryManager->unregisterExecutableQueryPlan(queryExecutionPlan)) {
-                    NES_DEBUG("unregisterExecutableQueryPlan of QEP  {}  succeeded", decomposedQueryPlanId);
-                    it = deployedExecutableQueryPlans.erase(it);
-                    operatorHandlerStore->removeOperatorHandlers(sharedQueryId, decomposedQueryPlanId);
-                } else {
-                    NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed", decomposedQueryPlanId);
+                    NES_ERROR("fail of QEP {} failed", querySubPlanId.id);
                     withError = true;
-                    ++it;
                 }
-            } catch (std::exception const& err) {
-                NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed: {}", decomposedQueryPlanId, err.what());
+            } else {
+                if (queryManager->stopExecutableQueryPlan(queryExecutionPlan)) {
+                    NES_DEBUG("stop of QEP  {}  succeeded", querySubPlanId.id);
+                } else {
+                    NES_ERROR("stop of QEP {} failed", querySubPlanId.id);
+                    withError = true;
+                }
+            }
+        } catch (std::exception const& err) {
+            NES_ERROR("stop of QEP {} failed: {}", querySubPlanId.id, err.what());
+            withError = true;
+        }
+        try {
+            if (queryManager->unregisterExecutableQueryPlan(queryExecutionPlan)) {
+                NES_DEBUG("unregisterExecutableQueryPlan of QEP  {}  succeeded", querySubPlanId.id);
+                it = deployedExecutableQueryPlans.erase(it);
+            } else {
+                NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed", querySubPlanId.id);
                 withError = true;
                 ++it;
             }
+        } catch (std::exception const& err) {
+            NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed: {}", querySubPlanId.id, err.what());
+            withError = true;
+            ++it;
         }
     }
     // release components
@@ -576,7 +572,7 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, SharedQueryId queryId) c
     std::unique_lock lock(engineMutex);
     auto subQueryPlanIds = sharedQueryIdToDecomposedQueryPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
-        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId {}", subQueryPlanId);
+        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId {}", subQueryPlanId.id);
         auto sources = deployedExecutableQueryPlans.find(subQueryPlanId)->second->getSources();
         for (auto& source : sources) {
             if (source->injectEpochBarrier(timestamp)) {

@@ -455,9 +455,9 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
-        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, epochBarrier);
+        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, decomposedQueryVersion, epochBarrier);
         if (success) {
-            success = queryManager->propagateEpochBackwards(decomposedQueryId, epochBarrier);
+            success = queryManager->propagateEpochBackwards(decomposedQueryId, decomposedQueryVersion, epochBarrier);
             NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
         } else {
             NES_ERROR("NetworkSink::onEvent:: could not trim : epoch {} queryId {}", epochBarrier, decomposedQueryId);
@@ -471,9 +471,9 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
-        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, epochBarrier);
+        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, decomposedQueryVersion, epochBarrier);
         if (success) {
-            success = queryManager->propagateEpochBackwards(decomposedQueryId, epochBarrier);
+            success = queryManager->propagateEpochBackwards(decomposedQueryId, decomposedQueryVersion, epochBarrier);
             if (success) {
                 NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
             } else {

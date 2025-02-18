@@ -293,7 +293,8 @@ class QueryPlacementAmendmentPhase {
         std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
         SharedQueryId sharedQueryId,
         DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-        std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
+        std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
+        FaultToleranceType faultTolerance);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

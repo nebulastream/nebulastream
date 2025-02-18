@@ -29,10 +29,10 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryId decomposedQueryId,
-                       DecomposedQueryPlanVersion decomposedQueryVersion
+                       DecomposedQueryPlanVersion decomposedQueryVersion,
                        FaultToleranceType faultToleranceType,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, faultToleranceType, 1, watermarkProcessor) {}
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, faultToleranceType, 1, std::move(watermarkProcessor)) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
@@ -45,7 +45,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
       sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
-      numberOfOrigins(numberOfOrigins), faultToleranceType(faultToleranceType), watermarkProcessor(std::move(watermarkProcessor)) {
+       faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins), watermarkProcessor(std::move(watermarkProcessor)) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
@@ -162,8 +162,8 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
 uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryId);
-    if (nodeEngine->getQueryManager()->propagateEpochBackwards(decomposedQueryId, epochBarrier)) {
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
+    if (nodeEngine->getQueryManager()->propagateEpochBackwards(decomposedQueryId, decomposedQueryVersion, epochBarrier)) {
         return true;
     }
     return false;

@@ -210,17 +210,17 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
             operatorCopy->setId(getNextOperatorId());
             operatorCopy->setOriginalId(logicalOperator->getId());
             //TODO: create a shadow structure to track newly created copies
-            // for (const auto& parent : logicalOperator->getParents()) {
-            //     LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
-            //
-            //     parentOperator->addChild(operatorCopy);
-            // }
-            //
-            // for (const auto& child : logicalOperator->getChildren()) {
-            //     LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-            //     childOperator->addParent(operatorCopy);
-            // }
-            // operatorIdToOriginalOperatorMap[operatorCopy->getId()] = operatorCopy;
+            for (const auto& parent : logicalOperator->getParents()) {
+                LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
+
+                parentOperator->addChild(operatorCopy);
+            }
+
+            for (const auto& child : logicalOperator->getChildren()) {
+                LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+                childOperator->addParent(operatorCopy);
+            }
+            operatorIdToOriginalOperatorMap[operatorCopy->getId()] = operatorCopy;
             identifyPinningLocation(operatorCopy, alternativeNode, pinnedDownStreamOperators);
         }
         else {
