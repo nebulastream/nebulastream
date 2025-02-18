@@ -149,8 +149,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             /// We expect at least one sink to be defined in the test file
             if (sinkNamesToSchema.empty())
             {
-                NES_ERROR("No sinks defined in test file: {}", testFileName);
-                std::exit(1);
+                throw UnknownSinkType("No sinks defined in test file: {}", testFileName);
             }
 
             /// We have to get all sink names from the query and then create custom paths for each sink.
@@ -178,8 +177,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             }();
             if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
             {
-                NES_ERROR("Failed to find sink name <{}>", sinkName);
-                std::exit(1);
+                throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
             }
 
 
@@ -196,16 +194,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
 
             config.query = query;
-            try
-            {
-                auto plan = createFullySpecifiedQueryPlan(config);
-                plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
-            }
-            catch (const std::exception& e)
-            {
-                NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
-                std::exit(1);
-            }
+            auto plan = createFullySpecifiedQueryPlan(config);
+            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
         });
     try
     {
