@@ -105,6 +105,7 @@ set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wext
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1 -DDISABLE_ASSERTS=1 -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DDISABLE_ASSERTS=1 -Wno-unused-parameter")
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
