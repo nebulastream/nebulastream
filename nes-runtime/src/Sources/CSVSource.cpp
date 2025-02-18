@@ -161,13 +161,13 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
 
 //    auto replay = &sourceInfo->records[replayOffset];
     auto replayVec = sourceInfo->records.at(replayOffset);
-    NES_DEBUG("replay with id {} buffer {} (index {}), end of replay at {}", replayVec.front().id, replayOffset + 1, replayOffset, sourceInfo->records.size());
+    NES_ERROR("replay with id {} buffer {} (index {}), end of replay at {}", replayVec.front().id, replayOffset + 1, replayOffset, sourceInfo->records.size());
 //    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
-    NES_DEBUG("setting sequence number replayed buffer to {} (id {}), fd {}", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
+    NES_ERROR("setting sequence number replayed buffer to {} (id {}), fd {}", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
     returnBuffer.setSequenceNumber(sentUntil + 1);
     sentUntil++;
 
@@ -175,7 +175,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
+    NES_ERROR("CSVSource::receiveData called on  {}", operatorId);
     //    if (generatedBuffers == 0) {
     //        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
     //    }
@@ -191,18 +191,18 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto ack = queryManager->getSourceAck(id);
                 if (ack.has_value() && ack.value() != 0) {
                     auto adjustedAck = ack.value() - 1;
-                    NES_DEBUG("found ack, sent until {} ack {}", sentUntil, adjustedAck);
+                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, adjustedAck);
                     sentUntil = std::max(sentUntil, adjustedAck);
                 }
             }
             if (sentUntil < sourceInfo->records.size()) {
-                NES_DEBUG("sent until {}, records {}", sentUntil, sourceInfo->records.size());
+                NES_ERROR("sent until {}, records {}", sentUntil, sourceInfo->records.size());
                 return fillReplayBuffer(sourceInfo, buffer);
                 //                return buffer.getBuffer();
             }
         }
         if (!sourceInfo->records.empty()) {
-            NES_DEBUG("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
+            NES_ERROR("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
         }
         NES_ASSERT(!getReplayData() || sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
