@@ -33,6 +33,8 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
+        /// Enable that antlr throws exeptions on parsing errors
+        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         AntlrSQLParser::QueryContext* tree = parser.query();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
@@ -42,7 +44,7 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
     }
     catch (antlr4::RuntimeException antlrException)
     {
-        throw InvalidQuerySyntax("Antlr exception during parsing: {}", antlrException.what());
+        throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
     }
 }
 
