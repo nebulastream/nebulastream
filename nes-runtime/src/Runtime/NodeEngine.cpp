@@ -1095,10 +1095,12 @@ std::unordered_map<uint64_t, uint64_t> NodeEngine::getLastWrittenCopy(std::strin
 }
 folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>::WLockedPtr
 
-NodeEngine::writeLockSeqQueue(std::string) {
-    return seqQueueMap.wlock();
+NodeEngine::writeLockSeqQueue(std::string sinkName) {
+    std::unique_lock lock(seqQueueMutex);
+    return seqQueueMap[sinkName].wlock();
 }
-folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr NodeEngine::writeLockSinkStorage(std::string) {
-    return sinkBufferStorage.wlock();
+folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr NodeEngine::writeLockSinkStorage(std::string sinkName) {
+    std::unique_lock lock(sinkBufferMutex);
+    return sinkBufferStorage[sinkName].wlock();
 }
 }// namespace NES::Runtime

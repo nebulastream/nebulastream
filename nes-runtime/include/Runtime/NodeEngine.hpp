@@ -498,9 +498,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     // uint64_t receiverChangeCount = 0;
     uint64_t parentChangeCount = 0;
 
-    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
+    std::mutex seqQueueMutex;
+    std::map<std::string, folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>> seqQueueMap;
     // keep unordered tuple buffers with sequence number as key
-    folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>> sinkBufferStorage;
+    std::mutex sinkBufferMutex;
+    std::map<std::string, folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>> sinkBufferStorage;
 
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
     std::atomic<bool> activeBufferingSimulation = false;
