@@ -340,7 +340,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
             cv.notify_all();
         });
 
-    while (not finishedProducing and runningQueryCount > 0)
+    while (not finishedProducing or runningQueryCount > 0)
     {
         std::shared_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
