@@ -23,13 +23,57 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 import multiprocessing
 
+
+# Converting a cache hits and misses file to two dictionaries
+def parse_lines_to_dataframe(file):
+    with open(file, 'r') as input_file:
+        lines = input_file.readlines()
+
+    # Initialize dictionaries to hold the hits and misses data
+    hits_data = {}
+    misses_data = {}
+
+    # Regular expression to extract information
+    pattern = re.compile(r'Hits: (\d+) Misses: (\d+) for worker thread (\d+)(?: and join build side (\w+))?')
+
+    for line in lines:
+        match = pattern.search(line)
+        if match:
+            hits, misses, thread_id, build_side = match.groups()
+            # Determine the column name
+            if build_side:
+                column_name = f'worker_{thread_id}_{build_side}'
+            else:
+                column_name = f'worker_{thread_id}'
+
+            # Store the hits and misses in the dictionaries with prefixes
+            hits_column_name = f'hits_{column_name}'
+            misses_column_name = f'misses_{column_name}'
+
+            if hits_column_name not in hits_data:
+                hits_data[hits_column_name] = []
+                misses_data[misses_column_name] = []
+
+            hits_data[hits_column_name] = (int(hits))
+            misses_data[misses_column_name] = (int(misses))
+
+    # Adding a total hits and misses column
+    hits_data["hits_total"] = sum(hit for hit in hits_data.values())
+    misses_data["misses_total"] = sum(miss for miss in misses_data.values())
+
+    return hits_data, misses_data
+
 # This class stores some methods that we need to call after all benchmarks have been run
 class PostProcessing:
 
-    def __init__(self, input_folders, benchmark_config_file, combined_csv_file_name):
+    def __init__(self, input_folders, benchmark_config_file, combined_csv_file_name, worker_statistics_csv_path, cache_statistics_csv_path, cache_hits_misses_name):
         self.input_folders = input_folders
         self.benchmark_config_file = benchmark_config_file
+        self.worker_statistics_csv_path = worker_statistics_csv_path
+        self.cache_statistics_csv_path = cache_statistics_csv_path
+        self.cache_hits_misses_name = cache_hits_misses_name
         self.combined_csv_file_name = combined_csv_file_name
+
 
     def main(self):
         print("Starting post processing")
@@ -39,7 +83,66 @@ class PostProcessing:
             futures = {executor.submit(self.convert_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
+        # Now, we can combine the worker and the cache statistics into two separate csv files
+        self.combine_worker_statistics()
+        self.combine_cache_statistics()
+
         print("Finished post processing")
+
+
+    # Gathering all cache statistic files across all folders
+    def combine_cache_statistics(self):
+        cache_statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in self.input_folders for f in os.listdir(input_folder_name) if self.cache_hits_misses_name in f]
+        print(f"Found {len(cache_statistic_files)} cache statistic files in {self.input_folders}")
+        cache_stats_combined_df = pd.DataFrame()
+        for idx, [input_folder, cache_stat_file] in enumerate(cache_statistic_files):
+            # Reading the benchmark configs and the hits and misses
+            with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
+                benchmark_config_yaml = yaml.safe_load(file)
+
+            (hits_dict, misses_dict) = parse_lines_to_dataframe(cache_stat_file)
+
+            # Combine the dictionaries
+            combined_dict = {**hits_dict, **misses_dict, **benchmark_config_yaml.copy()}
+            new_row_df = pd.DataFrame([combined_dict])
+            cache_stats_combined_df = pd.concat([cache_stats_combined_df, new_row_df], ignore_index=True)
+
+        cache_stats_combined_df = cache_stats_combined_df.fillna(0, downcast='infer')
+        cache_stats_combined_df["slice_cache"] = cache_stats_combined_df["slice_cache_type"].astype(str) + "_" + cache_stats_combined_df["numberOfEntriesSliceCache"].astype(str)
+
+        # Writing the combined dataframe to a csv file
+        cache_stats_combined_df.to_csv(self.cache_statistics_csv_path, index=False)
+        print(f"Done with combining all cache statistics to {self.cache_statistics_csv_path}!")
+
+    # Converting query engine statistics to a csv file
+    def combine_worker_statistics(self):
+        # Gathering all statistic files across all folders
+        statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in self.input_folders for f in os.listdir(input_folder_name) if self.combined_csv_file_name in f]
+        print(f"Found {len(statistic_files)} cache statistic files in {self.input_folders}")
+        combined_df = pd.DataFrame()
+        no_statistics_files = len(statistic_files)
+        cnt_rows = 0
+        for idx, [input_folder, stat_file] in enumerate(statistic_files):
+            print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
+            df = pd.read_csv(stat_file)
+
+            # Normalize all timestamps to the minimal start timestamp of any task
+            df['start_time'] = pd.to_datetime(df['start_time'], format="%Y-%m-%d %H:%M:%S.%f")
+            df['end_time'] = pd.to_datetime(df['end_time'], format="%Y-%m-%d %H:%M:%S.%f")
+            min_start_time = df['start_time'].min()
+            df['start_time_normalized'] = df['start_time'] - min_start_time
+            df['end_time_normalized'] = df['end_time'] - min_start_time
+
+            # Sorting the dataframe
+            df = df.sort_values(by='task_id').reset_index(drop=True)
+
+            # Adding this dataframe to the global one
+            cnt_rows += len(df)
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+        # Writing the combined dataframe to a csv file
+        combined_df.to_csv(self.worker_statistics_csv_path, index=False)
+        print(f"Done with combining all query engine statistics to {self.worker_statistics_csv_path}!")
 
     def convert_statistics_to_csv(self, input_folder):
         pattern_worker_file = r"^worker_\d+\.txt$"

@@ -38,13 +38,16 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 2
+MEASURE_INTERVAL = 1
 WAIT_BETWEEN_COMMANDS = 2
+NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000 # 0 means the source will run indefinitely
 
 # Compilation for misc.
 COMBINED_CSV_FILE_WORKER_STATISTICS = "combined_worker_statistics.csv"
 PIPELINE_TXT = "pipelines.txt"
 CACHE_HITS_MISSES_TXT = "cache_hits_and_misses.txt"
+WORKER_STATISTICS_CSV_PATH = f"/tmp/worker_statistics_{int(time.time())}.csv"
+CACHE_STATISTICS_CSV_PATH = f"/tmp/cache_statistics_{int(time.time())}.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -162,9 +165,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     for port in starting_ports:
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
-                # no. tuples set to 0 means that the source will run indefinitely
-                number_of_tuples_before_stopping_source = 1 * 1000 * 1000 * 1000
-                cmd = f"{TCP_SERVER} -p {port} -n {number_of_tuples_before_stopping_source} -t {current_benchmark_config.timestamp_increment}"
+                cmd = f"{TCP_SERVER} -p {port} -n {NUMBER_OF_TUPLES_GENERATE_PER_SOURCE} -t {current_benchmark_config.timestamp_increment}"
                 # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
@@ -325,12 +326,15 @@ if __name__ == "__main__":
 
 
     # Calling the postprocessing main
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS)
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH, CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT)
     post_processing.main()
 
-    output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
-    print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
+    #all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
+    #copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
+    #print(f"Copy command: \n\"{copy_command}\"")
 
-    all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
-    copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
+    #output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
+    #print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
+    print(f"Created worker statistics CSV file at {WORKER_STATISTICS_CSV_PATH} and cache statistics CSV file at {CACHE_STATISTICS_CSV_PATH}")
+    copy_command = f"rsync -avz --progress tower-en717:{WORKER_STATISTICS_CSV_PATH} tower-en717:{CACHE_STATISTICS_CSV_PATH} /home/nils/Downloads/"
     print(f"Copy command: \n\"{copy_command}\"")
