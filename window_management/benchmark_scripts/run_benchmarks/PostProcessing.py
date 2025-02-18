@@ -118,7 +118,7 @@ class PostProcessing:
     def combine_worker_statistics(self):
         # Gathering all statistic files across all folders
         statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in self.input_folders for f in os.listdir(input_folder_name) if self.combined_csv_file_name in f]
-        print(f"Found {len(statistic_files)} cache statistic files in {self.input_folders}")
+        print(f"Found {len(statistic_files)} worker statistic files in {self.input_folders}")
         combined_df = pd.DataFrame()
         no_statistics_files = len(statistic_files)
         cnt_rows = 0
@@ -139,6 +139,9 @@ class PostProcessing:
             # Adding this dataframe to the global one
             cnt_rows += len(df)
             combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+        combined_df["slice_cache"] = combined_df["slice_cache_type"].astype(str) + "_" + combined_df["numberOfEntriesSliceCache"].astype(str)
+        combined_df["unorderedness"] = combined_df["unorderedness"].astype(str) + "_" + combined_df["shuffle_strategy"].astype(str)
 
         # Writing the combined dataframe to a csv file
         combined_df.to_csv(self.worker_statistics_csv_path, index=False)

@@ -136,6 +136,18 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
         parentOperator
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
+
+    if (not queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
+    {
+        std::ofstream file(queryCompilerConfig.pipelinesTxtFilePath.getValue(), std::ios::app);
+        for (const auto& [pipelineId, text] : pipelineIdToText)
+        {
+            file << "Pipeline: " << pipelineId << "\n";
+            file << text.str();
+        }
+    }
+
+
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (const auto& root : rootOperators)
     {

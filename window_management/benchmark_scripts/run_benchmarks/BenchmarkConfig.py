@@ -50,6 +50,9 @@ class BenchmarkConfig:
             "numberOfEntriesSliceCache": self.numberOfEntriesSliceCache,
             "lock_slice_cache": self.lock_slice_cache,
             "timestamp_increment": self.timestamp_increment,
+            "unorderedness": self.unorderedness,
+            "min_delay": self.min_delay,
+            "max_delay": self.max_delay,
             "buffer_size_in_bytes": self.buffer_size_in_bytes,
             "shuffle_strategy": self.shuffle_strategy,
             "query": self.query,
@@ -68,7 +71,7 @@ def create_all_benchmark_configs():
     LOCKED_SLICE_CACHE = [False]  # True or False
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for
                                  locked_slice_cache in LOCKED_SLICE_CACHE] + [("NONE", 0, False)]
-    #SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:2]
+    #SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:1]
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
     SHUFFLE_STRATEGY = ["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
