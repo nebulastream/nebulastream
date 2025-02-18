@@ -47,7 +47,7 @@ struct Query
         if (not is_directory(resultDir))
         {
             create_directory(resultDir);
-            std::cout << "created working directory: " << resultDir << "\n";
+            std::cout << "Created working directory: file://" << resultDir.string() << "\n";
         }
 
         return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
@@ -59,7 +59,7 @@ struct Query
         if (not is_directory(sourceDir))
         {
             create_directory(sourceDir);
-            std::cout << "created working directory: " << sourceDir << "\n";
+            std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
         }
 
         return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
