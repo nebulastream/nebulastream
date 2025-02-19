@@ -277,7 +277,7 @@ OffloadPlanner::findDifferentWorkerOperatorsDown(const OperatorPtr& startOp,
         if (current->hasProperty(Optimizer::PINNED_WORKER_ID)) {
             auto pinned = std::any_cast<WorkerId>(current->getProperty(Optimizer::PINNED_WORKER_ID));
             if (pinned == originWorkerId) {
-                current->addProperty("WORKER_ID_TO_OFFLOAD", targetWorkerId);
+                current->addProperty("placed", targetWorkerId);
                 auto logOp = current->as<LogicalOperator>();
                 if (logOp) {
                     for (auto& parent : logOp->getParents()) {
@@ -321,7 +321,7 @@ OffloadPlanner::findDifferentWorkerOperatorsUp(const OperatorPtr& startOp,
         if (current->hasProperty(Optimizer::PINNED_WORKER_ID)) {
             auto pinned = std::any_cast<WorkerId>(current->getProperty(Optimizer::PINNED_WORKER_ID));
             if (pinned == originWorkerId) {
-                current->addProperty("WORKER_ID_TO_OFFLOAD", targetWorkerId);
+                current->addProperty("placed", targetWorkerId);
                 auto logOp = current->as<LogicalOperator>();
                 if (logOp) {
                     for (auto& child : logOp->getChildren()) {

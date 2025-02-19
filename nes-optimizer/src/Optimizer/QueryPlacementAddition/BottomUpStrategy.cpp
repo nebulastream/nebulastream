@@ -63,7 +63,9 @@ PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryI
         performPathSelection(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 3. Pin all unpinned operators
-        pinOperators(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
+        pinOperators(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        copy =
+    CopiedPinnedOperators::create(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
 
         // 4. Compute query sub plans
         auto computedQuerySubPlans =
@@ -117,9 +119,6 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         return;
     }
 
-    if (logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
-        candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
-    }
     else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
     && logicalOperator->getOriginalId() == logicalOperator->getId() && (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)) {
         if (pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
@@ -198,7 +197,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
     if ((faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) && !logicalOperator->instanceOf<SourceLogicalOperator>()
-        && !logicalOperator->instanceOf<SinkLogicalOperator>() && logicalOperator->getOriginalId() == logicalOperator->getId() && !logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
+        && !logicalOperator->instanceOf<SinkLogicalOperator>() && logicalOperator->getOriginalId() == logicalOperator->getId()) {
         // Get alternative nodes for the candidate topology node
 
         auto alternativeNodeIds = candidateTopologyNode->getAlternativeNodeCandidateIds();
@@ -212,7 +211,6 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
             //TODO: create a shadow structure to track newly created copies
             for (const auto& parent : logicalOperator->getParents()) {
                 LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
-
                 parentOperator->addChild(operatorCopy);
             }
 

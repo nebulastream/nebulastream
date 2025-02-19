@@ -547,8 +547,7 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
 }
 
 void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
-                                                 const std::set<OperatorId>& downstreamOperatorIds,
-                                                 WorkerId targetWorkerId) {
+                                                 const std::set<OperatorId>& downstreamOperatorIds) {
 
     std::set<LogicalOperatorPtr> upstreamLogicalOperators;
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
@@ -567,8 +566,8 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
 
     for (const auto& operatorToRePlace : operatorsToBeRePlaced) {
         operatorToRePlace->as_if<LogicalOperator>()->setOperatorState(OperatorState::TO_BE_REPLACED);
-        if (targetWorkerId != INVALID_WORKER_NODE_ID)
-            operatorToRePlace->addProperty("WORKER_ID_TO_OFFLOAD", targetWorkerId);
+        if (!operatorToRePlace->hasProperty("placed"))
+            operatorToRePlace->addProperty("placed", std::any_cast<WorkerId>(operatorToRePlace->getProperty(Optimizer::PINNED_WORKER_ID)));
     }
 
     //add change log entry indicating the addition
