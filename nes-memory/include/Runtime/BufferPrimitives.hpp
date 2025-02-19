@@ -60,12 +60,10 @@ public:
     constexpr ChildOrMainDataKey& operator=(ChildOrMainDataKey&& other) noexcept;
 
 
-
     constexpr friend bool operator==(const ChildOrMainDataKey& lhs, const ChildOrMainDataKey& rhs);
     constexpr friend bool operator!=(const ChildOrMainDataKey& lhs, const ChildOrMainDataKey& rhs);
     static constexpr ChildOrMainDataKey UNKNOWN() noexcept;
     static constexpr ChildOrMainDataKey MAIN() noexcept;
-
 };
 constexpr ChildOrMainDataKey ChildOrMainDataKey::UNKNOWN() noexcept
 {
@@ -124,6 +122,24 @@ constexpr ChildOrMainDataKey::ChildOrMainDataKey(ChildKey& childKey) noexcept : 
 {
 }
 
+class BufferControlBlock;
+template <bool isPinned>
+class RefCountedBCB
+{
+    BufferControlBlock* controlBlock;
+
+public:
+    explicit RefCountedBCB();
+    explicit RefCountedBCB(BufferControlBlock* controlBlock);
+    RefCountedBCB(const RefCountedBCB& other);
+    RefCountedBCB(RefCountedBCB&& other) noexcept;
+    RefCountedBCB& operator=(const RefCountedBCB& other);
+    RefCountedBCB& operator=(RefCountedBCB&& other) noexcept;
+
+    BufferControlBlock& operator*() const noexcept;
+
+    ~RefCountedBCB() noexcept;
+};
 }
 
 constexpr ChildKey::operator detail::ChildOrMainDataKey() const

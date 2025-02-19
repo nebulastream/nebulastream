@@ -153,7 +153,7 @@ private:
 
 public:
     [[nodiscard]] PinnedBuffer pinBuffer(FloatingBuffer&&);
-    [[nodiscard]] detail::GetInMemorySegmentFuture getInMemorySegment() noexcept;
+    [[nodiscard]] detail::GetInMemorySegmentFuture getInMemorySegment(size_t amount) noexcept;
     [[nodiscard]] detail::ReadSegmentFuture
     readOnDiskSegment(detail::DataSegment<detail::OnDiskLocation> source, detail::DataSegment<detail::InMemoryLocation> target) noexcept;
     [[nodiscard]] NewBufferTask getBuffer() noexcept;

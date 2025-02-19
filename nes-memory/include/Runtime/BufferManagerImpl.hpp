@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include "PinnedBuffer.hpp"
-
 
 #include <atomic>
 #include <concepts>
@@ -28,6 +26,7 @@
 #include <utility>
 #include <unistd.h>
 #include <Runtime/BufferPrimitives.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 #include <Runtime/DataSegment.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,8 +35,7 @@
 #include <shared_mutex>
 #include <Runtime/BufferFiles.hpp>
 #include <Util/Ranges.hpp>
-#include <folly/SharedMutex.h>
-#include <google/protobuf/stubs/port.h>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory
@@ -46,6 +44,7 @@ namespace NES::Memory
 class BufferManager;
 namespace detail
 {
+using CoroutineError = uint32_t;
 
 class BufferControlBlock;
 class SegmentWriteRequest
@@ -75,12 +74,14 @@ public:
     [[nodiscard]] ChildOrMainDataKey getKey() const { return key; }
 };
 
+template <typename T>
+concept SuspendReturnType = std::same_as<T, bool> || std::same_as<T, std::coroutine_handle<>>;
 
 //Using a concept allows us to "forward declare" behaviour of types that at the end depend on the future type again
 template <typename UnderlyingAwaiter, typename Promise, typename ReturnType, typename WrappedAwaiter>
 concept Awaiter = requires(UnderlyingAwaiter underlyingAwaiter, std::coroutine_handle<Promise> handle, WrappedAwaiter wrappedAwaiter) {
     { underlyingAwaiter.await_ready() } -> std::same_as<bool>;
-    { underlyingAwaiter.await_suspend(handle) } -> std::same_as<bool>;
+    { underlyingAwaiter.await_suspend(handle) } -> SuspendReturnType;
     { underlyingAwaiter.await_resume() } -> std::same_as<ReturnType>;
     { underlyingAwaiter.isDone() } -> std::same_as<bool>;
     { handle.promise().exchangeAwaiter(&wrappedAwaiter) };
@@ -100,7 +101,7 @@ class VirtualPromise
 {
 public:
     //Delete destructor, needs to be handled over the destroy function of the coroutine handle
-    ~VirtualPromise() = delete;
+    virtual ~VirtualPromise() = default;
     virtual std::coroutine_handle<> setWaitingCoroutine(std::coroutine_handle<>) noexcept = 0;
 };
 
@@ -112,12 +113,13 @@ concept SharedPromise = requires(Promise promise) {
 template <typename Future>
 class GetInMemorySegmentPromise : public VirtualPromise
 {
-    friend class GetInMemorySegmentFuture;
-    DataSegment<InMemoryLocation> result;
+    //friend class GetInMemorySegmentFuture;
+    std::optional<std::variant<std::vector<DataSegment<InMemoryLocation>>, CoroutineError>> result{};
+    std::atomic_flag isDone{false};
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
-    std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
+    std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter{};
 
-    std::shared_ptr<GetInMemorySegmentPromise> sharedHandle;
+    std::shared_ptr<GetInMemorySegmentPromise> sharedHandle{};
     std::atomic<std::coroutine_handle<>> nextCoroutine{};
 
 public:
@@ -129,24 +131,37 @@ public:
     {
     }
     Future get_return_object() { return Future(std::coroutine_handle<GetInMemorySegmentPromise>::from_promise(*this)); }
-    void unhandled_exception() noexcept { };
-    void return_value(DataSegment<InMemoryLocation> segment) noexcept
+    void return_value(std::variant<std::vector<DataSegment<InMemoryLocation>>, CoroutineError> segment) noexcept
     {
+        //First set result, then set isDone.
+        //If copy is still in progress, then getResult will still return std::nullopt.
         result = segment;
-        auto resumption = nextCoroutine.exchange({});
-        if (resumption != nullptr)
+        const auto wasSetBefore = isDone.test_and_set();
+        INVARIANT(!wasSetBefore, "Promise return_value method was invoked twice");
+        if (const auto resumption = nextCoroutine.exchange({}); resumption != nullptr)
         {
             resumption.resume();
         }
     }
     void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
 
+    void unhandled_exception() noexcept { };
     std::suspend_never initial_suspend() noexcept { return {}; };
     //Needs to always suspend, because otherwise the coroutine self-destructs after co_return.
     //When then the destructor of the future is called because it goes out-of-scope, it causes a segmentation fault
     std::suspend_always final_suspend() noexcept { return {}; };
 
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
+
+    std::optional<std::variant<std::vector<DataSegment<InMemoryLocation>>, CoroutineError>> getResult() const noexcept
+    {
+        if (isDone.test())
+        {
+            INVARIANT(result.has_value(), "Promise was marked as done, but no result was set");
+            return *result;
+        }
+        return std::nullopt;
+    }
 
     std::shared_ptr<GetInMemorySegmentPromise> getSharedPromise() { return sharedHandle; }
     std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
@@ -158,12 +173,13 @@ public:
 template <typename Future>
 class ReadSegmentPromise : public VirtualPromise
 {
-    friend class ReadSegmentFuture;
+    //friend class ReadSegmentFuture;
     DataSegment<OnDiskLocation> source;
     DataSegment<InMemoryLocation> target;
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
     std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
-    std::optional<ssize_t> result;
+    std::variant<ssize_t, CoroutineError> result;
+    std::atomic_flag isDone{false};
 
     std::shared_ptr<ReadSegmentPromise> sharedHandle;
 
@@ -172,7 +188,7 @@ class ReadSegmentPromise : public VirtualPromise
 public:
     //Constructor call is inserted by the compiler when calling the coroutine function,
     //passing instance and any arguments to the coroutine to this function
-    ReadSegmentPromise(DataSegment<OnDiskLocation> source, DataSegment<InMemoryLocation> target)
+    ReadSegmentPromise(BufferManager&, DataSegment<OnDiskLocation> source, DataSegment<InMemoryLocation> target)
         : source(source)
         , target(target)
         , currentBlockAwaiter(nullptr)
@@ -180,15 +196,33 @@ public:
     {
     }
     Future get_return_object() { return Future(std::coroutine_handle<ReadSegmentPromise>::from_promise(*this)); }
-    void unhandled_exception() noexcept { };
-    void return_value(std::optional<ssize_t> result) noexcept { this->result = result; }
+    void return_value(std::variant<ssize_t, CoroutineError> result) noexcept
+    {
+        this->result = result;
+        isDone.test_and_set();
+        auto resumption = nextCoroutine.exchange({});
+        if (resumption != nullptr)
+        {
+            resumption.resume();
+        }
+    }
     void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
 
+    void unhandled_exception() noexcept { };
     std::suspend_never initial_suspend() noexcept { return {}; };
     //Needs to always suspend, because otherwise the coroutine self-destructs after co_return.
     //When then the destructor of the future is called because it goes out-of-scope, it causes a segmentation fault
     std::suspend_always final_suspend() noexcept { return {}; };
 
+
+    std::optional<std::variant<ssize_t, CoroutineError>> getResult()
+    {
+        if (isDone.test())
+        {
+            return result;
+        }
+        return std::nullopt;
+    }
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
     std::shared_ptr<ReadSegmentPromise> getSharedPromise() { return sharedHandle; }
     std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
@@ -199,33 +233,53 @@ public:
 
 
 template <typename Future>
-class RepinBufferPromise : VirtualPromise
+class RepinBufferPromise : public VirtualPromise
 {
-    friend class RepinBufferFuture;
-    DataSegment<OnDiskLocation> source;
+    //friend class RepinBufferFuture;
 
-    PinnedBuffer result{};
-    std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
+    std::variant<PinnedBuffer, CoroutineError> result{};
+    std::atomic_flag isDone{false};
+    std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter = nullptr;
 
     std::shared_ptr<RepinBufferPromise> sharedHandle;
 
     std::atomic<std::coroutine_handle<>> nextCoroutine{};
 
 public:
-    RepinBufferPromise(DataSegment<OnDiskLocation> source)
-        : source(source)
-        , currentBlockAwaiter(nullptr)
-        , sharedHandle(this, [](auto promise) { std::coroutine_handle<RepinBufferPromise>::from_promise(*promise).destroy(); })
+    RepinBufferPromise()
+        : sharedHandle(this, [](auto promise) { std::coroutine_handle<RepinBufferPromise>::from_promise(*promise).destroy(); })
     {
     }
 
     Future get_return_object() { return Future(std::coroutine_handle<RepinBufferPromise>::from_promise(*this)); }
-    void return_value(const PinnedBuffer& result) { this->result = result; }
+    void return_value(const std::variant<PinnedBuffer, CoroutineError>& result)
+    {
+        this->result = result;
+        isDone.test_and_set();
+        auto resumption = nextCoroutine.exchange({});
+        if (resumption != nullptr)
+        {
+            resumption.resume();
+        }
+    }
 
+    void unhandled_exception() noexcept { };
     void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
     std::suspend_never initial_suspend() noexcept { return {}; }
-    std::suspend_always final_suspend() noexcept { return {}; };
+    std::suspend_always final_suspend() noexcept
+    {
+        sharedHandle.reset();
+        return {};
+    };
 
+    std::optional<std::variant<PinnedBuffer, CoroutineError>> getResult() const noexcept
+    {
+        if (isDone.test())
+        {
+            return result;
+        }
+        return std::nullopt;
+    }
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
     std::shared_ptr<RepinBufferPromise> getSharedPromise() { return sharedHandle; }
 
@@ -236,75 +290,74 @@ public:
 };
 
 
-class PunchHoleResult
+class UringSuccessOrError
 {
     //0 indicates success,
     //negative values indicate iouring errors, that must be negated to get an error message through strerror
     //positive values indicate our errors
-    ssize_t returnCode;
+    uint32_t returnCode;
 
 public:
-    constexpr PunchHoleResult(const PunchHoleResult& other) = default;
-    constexpr PunchHoleResult(PunchHoleResult&& other) noexcept = default;
-    constexpr PunchHoleResult& operator=(const PunchHoleResult& other) = default;
-    constexpr PunchHoleResult& operator=(PunchHoleResult&& other) noexcept = default;
-    constexpr explicit PunchHoleResult(ssize_t returnCode) : returnCode(returnCode) { }
+    constexpr UringSuccessOrError(const UringSuccessOrError& other) = default;
+    constexpr UringSuccessOrError(UringSuccessOrError&& other) noexcept = default;
+    constexpr UringSuccessOrError& operator=(const UringSuccessOrError& other) = default;
+    constexpr UringSuccessOrError& operator=(UringSuccessOrError&& other) noexcept = default;
+    constexpr explicit UringSuccessOrError(const uint32_t returnCode) : returnCode(returnCode) { }
 
     [[nodiscard]] constexpr bool isSuccess() const { return returnCode == 0; }
 
     [[nodiscard]] constexpr std::optional<uint32_t> getUringError() const
     {
-        if (returnCode <= 0)
-        {
-            return -returnCode;
-        }
-        return std::nullopt;
-    }
-
-    [[nodiscard]] constexpr std::optional<uint32_t> getInternalError() const
-    {
-        if (returnCode >= 0)
+        if (returnCode > 0)
         {
             return returnCode;
         }
         return std::nullopt;
     }
 
-
-    static constexpr PunchHoleResult FAILED_TO_TRANSFER_OWNERSHIP() { return PunchHoleResult{ErrorCode::FailedToTransferCleanupOwnership}; }
-
-    static constexpr PunchHoleResult FAILED_TO_SUBMIT() { return PunchHoleResult{ErrorCode::CannotSubmitBufferIO}; }
-
-    static constexpr PunchHoleResult CONTINUED_WITHOUT_RESULT() { return PunchHoleResult{ErrorCode::CoroutineContinuedWithoutResult}; }
+    // static constexpr UringSuccessOrError FAILED_TO_TRANSFER_OWNERSHIP() { return UringSuccessOrError{ErrorCode::FailedToTransferCleanupOwnership}; }
+    //
+    // static constexpr UringSuccessOrError FAILED_TO_SUBMIT() { return UringSuccessOrError{ErrorCode::CannotSubmitBufferIO}; }
+    //
+    // static constexpr UringSuccessOrError CONTINUED_WITHOUT_RESULT() { return UringSuccessOrError{ErrorCode::CoroutineContinuedWithoutResult}; }
 };
 
 template <typename Future>
 class PunchHolePromise : VirtualPromise
 {
-    friend class PunchHoleFuture;
+    //friend class PunchHoleFuture;
     DataSegment<OnDiskLocation> target;
     //Raw pointer because the ResumeAfterBlockAwaiter is allocated on the "stack" of the coroutine anyway but we also need a not-present value
     std::atomic<VirtualAwaiterForProgress*> currentBlockAwaiter;
 
 
-    std::optional<PunchHoleResult> result;
-
+    std::atomic<std::optional<std::variant<UringSuccessOrError, CoroutineError>>> result{};
+    //TODO is three value logic really necessary?
     std::optional<bool> hasSubmitted;
     std::shared_ptr<PunchHolePromise> sharedHandle;
-    std::atomic<std::coroutine_handle<>> nextCoroutine{};
+    std::atomic<std::coroutine_handle<>> nextCoroutineOnReturn{};
+    std::atomic<std::coroutine_handle<>> nextCoroutineOnYield{};
 
 public:
     //Constructor call is inserted by the compiler when calling the coroutine function,
     //passing instance and any arguments to the coroutine to this function
-    PunchHolePromise(DataSegment<OnDiskLocation> target)
+    PunchHolePromise(BufferManager&, DataSegment<OnDiskLocation> target)
         : target(target)
         , currentBlockAwaiter(nullptr)
         , sharedHandle(this, [](auto promise) { std::coroutine_handle<PunchHolePromise>::from_promise(*promise).destroy(); })
     {
     }
     Future get_return_object() { return Future(std::coroutine_handle<PunchHolePromise>::from_promise(*this)); }
+    void return_value(std::variant<UringSuccessOrError, CoroutineError> result) noexcept
+    {
+        this->result = result;
+        auto resumption = nextCoroutineOnReturn.exchange({});
+        if (resumption != nullptr)
+        {
+            resumption.resume();
+        }
+    }
     void unhandled_exception() noexcept { };
-    void return_value(std::optional<PunchHoleResult> result) noexcept { this->result = result; }
 
     //Suspend never because it is just information for the caller.
     //Either, it succeeds to submit and then suspends when waiting for the confirmation, or it needs to reach co_return so that the coroutine
@@ -312,6 +365,11 @@ public:
     std::suspend_never yield_value(bool hasSubmitted) noexcept
     {
         this->hasSubmitted = hasSubmitted;
+        auto resumption = nextCoroutineOnYield.exchange({});
+        if (resumption != nullptr)
+        {
+            resumption.resume();
+        }
         return {};
     }
     void setBlockingFunction(VirtualAwaiterForProgress* newBlocking) noexcept { currentBlockAwaiter = newBlocking; }
@@ -321,14 +379,25 @@ public:
     //When then the destructor of the future is called because it goes out-of-scope, it causes a segmentation fault
     std::suspend_always final_suspend() noexcept { return {}; };
 
+    std::optional<std::variant<UringSuccessOrError, CoroutineError>> getResult() const noexcept { return result; }
+
+    std::optional<bool> getYielded() const noexcept { return hasSubmitted; }
+
     VirtualAwaiterForProgress* exchangeAwaiter(VirtualAwaiterForProgress* newAwaiter) { return currentBlockAwaiter.exchange(newAwaiter); }
 
     std::shared_ptr<PunchHolePromise> getSharedPromise() { return sharedHandle; }
 
     std::coroutine_handle<> setWaitingCoroutine(const std::coroutine_handle<> next) noexcept override
     {
-        return nextCoroutine.exchange(next);
+        return nextCoroutineOnReturn.exchange(next);
     }
+
+    std::coroutine_handle<> setNextCoroutineOnYield(const std::coroutine_handle<> next) noexcept
+    {
+        return nextCoroutineOnYield.exchange(next);
+    }
+
+    DataSegment<OnDiskLocation> getTarget() const noexcept { return target; }
     //static_assert(SharedPromise<PunchHolePromise>);
 };
 
@@ -366,7 +435,7 @@ class ResumeAfterBlockAwaiter
     const bool hasPolling;
     std::function<void()> pollingFn;
     std::function<bool()> underlyingPoll;
-    std::coroutine_handle<Promise> handle;
+    std::atomic<std::coroutine_handle<>> handle{std::coroutine_handle{}};
     std::atomic_flag hasResumed = false;
     std::atomic_flag hasPassed = false;
 
@@ -376,12 +445,16 @@ public:
         blockingFn = [&, blocking]()
         {
             //These objects are strictly oneshot
-            bool check = hasResumed.test_and_set();
-            INVARIANT(check, "Coroutine was resumed concurrently");
+            const bool check = hasResumed.test_and_set();
+            INVARIANT(!check, "Coroutine was resumed concurrently");
             //Is blocking getting copied into this lambda correctly?
             blocking();
-
-            handle.resume();
+            const bool passedCheck = hasPassed.test_and_set();
+            INVARIANT(!passedCheck, "ResumeAfterBlockAwaiter was passed concurrently");
+            if (const auto toResume = handle.exchange(std::coroutine_handle{}); toResume.address() != nullptr)
+            {
+                toResume.resume();
+            }
         };
     }
     explicit ResumeAfterBlockAwaiter(const std::function<void()>& blocking, const std::function<bool()>& poll)
@@ -390,21 +463,22 @@ public:
         blockingFn = [&, blocking]()
         {
             //These objects are strictly oneshot
-            bool check = hasResumed.test_and_set();
-            INVARIANT(!check, "Coroutine was resumed blocking concurrently");
+            const bool check = hasResumed.test_and_set();
+            INVARIANT(!check, "Coroutine was resumed concurrently");
             //Is blocking getting copied into this lambda correctly?
             blocking();
-
-            if (handle)
+            const bool passedCheck = hasPassed.test_and_set();
+            INVARIANT(!passedCheck, "ResumeAfterBlockAwaiter was passed concurrently");
+            if (const auto toResume = handle.exchange(std::coroutine_handle{}); toResume.address() != nullptr)
             {
-                handle.resume();
+                toResume.resume();
             }
         };
 
         pollingFn = [&, poll]()
         {
-            bool check = hasResumed.test_and_set();
-            INVARIANT(!check, "Coroutine was polled while concurrently making blocking progress");
+            const bool check = hasResumed.test_and_set();
+            INVARIANT(!check, "Coroutine was polled while concurrently making progress");
             if (!hasPassed.test())
             {
                 if (poll())
@@ -414,9 +488,9 @@ public:
             }
             if (hasPassed.test())
             {
-                if (handle)
+                if (const auto toResume = handle.exchange(std::coroutine_handle{}); toResume.address() != nullptr)
                 {
-                    handle.resume();
+                    toResume.resume();
                 }
             }
             else
@@ -427,20 +501,16 @@ public:
     }
 
 
-    bool await_ready() const noexcept { return hasResumed.test(); }
-    bool await_suspend(std::coroutine_handle<Promise> suspendingHandle) noexcept
+    bool await_ready() const noexcept { return hasPassed.test(); }
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> suspendingHandle) noexcept
     {
-        bool suspend = true;
-        if (hasPolling)
+        auto prev = handle.exchange(suspendingHandle);
+        INVARIANT(prev == std::coroutine_handle<>{}, "Multiple coroutines where awaiting the same ResumeAfterBlockAwaiter");
+        if (!hasPassed.test())
         {
-            suspend = !underlyingPoll();
+            return {};
         }
-        if (!suspend)
-        {
-            return false;
-        }
-        handle = suspendingHandle;
-        return true;
+        return handle.exchange(std::coroutine_handle{});
     }
 
     void await_resume() const noexcept { }
@@ -812,13 +882,15 @@ class AwaitExternalProgress : public VirtualAwaiterForProgress
     std::function<void()> poll;
     std::function<void()> wait;
     /*
-     * Everything is in the frame of the coroutine anyway, unless someone does something stupid on purpose like
+     * Everything is in the frame of the coroutine anyway.
+     * Doing something stupid on purpose like
      * AwaitExternalProgress awaitExternalProg;
      * {
      *      Awaiter underlying = {};
      *      awaitExternalProg = {underlying}
      * }
-     * storing a reference should be fine.
+     * is still probably not a good idea, but even that should work because the coroutine frame is allocated at once
+     * and not partially deallocated or reused (although that might change in the future).
      * We can't move in the underlying awaiters because of the mutexes.
      * An alternative would be unique pointers, which would be one more level of indirection.
      */
@@ -834,15 +906,24 @@ public:
 
     bool await_ready() const noexcept { return underlyingAwaiter.await_ready(); }
 
-    bool await_suspend(std::coroutine_handle<Promise> handle) noexcept
+    template <typename Suspension = decltype(std::declval<Awaiter>().await_suspend(std::declval<std::coroutine_handle<Promise>>()))>
+    Suspension await_suspend(std::coroutine_handle<Promise> handle) noexcept
     {
+        //The underlying awaiters are responsible for ensuring thread safety and to guarantee resumption
         poll();
         if (!underlyingAwaiter.await_ready())
         {
             handle.promise().exchangeAwaiter(this);
             return underlyingAwaiter.await_suspend(handle);
         }
-        return false;
+        if constexpr (std::is_assignable_v<std::coroutine_handle<>, Suspension>)
+        {
+            return handle;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     ReturnType await_resume() noexcept { return underlyingAwaiter.await_resume(); }
@@ -905,32 +986,37 @@ public:
         }
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return promise->result.getLocation().getPtr() != nullptr; }
-
+    [[nodiscard]] bool isDone() const noexcept { return promise->getResult().has_value(); }
     //TODO add timeout to task and give back nullopt when timeout exceededc
-    std::optional<DataSegment<InMemoryLocation>> waitUntilDone() noexcept
+    std::variant<std::vector<DataSegment<InMemoryLocation>>, uint32_t> waitUntilDone() noexcept
     {
-        while (!isDone())
+        auto result = promise->getResult();
+        while (!result)
         {
             waitOnce();
+            result = promise->getResult();
         }
-        return promise->result;
+        return *result;
     };
 
     bool await_ready() const noexcept { return isDone(); }
 
-    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> suspending) noexcept
     {
+        const auto previous = promise->setWaitingCoroutine(suspending);
+        INVARIANT(previous.address() == nullptr, "Multiple coroutines trying to await the same promise");
         if (!isDone())
         {
-            const auto previous = promise->setWaitingCoroutine(suspending);
-            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
-            return true;
+            return {};
         }
-        return false;
+        return promise->setWaitingCoroutine({});
     }
 
-    std::optional<DataSegment<InMemoryLocation>> await_resume() const noexcept { return promise->result; }
+    std::variant<std::vector<DataSegment<InMemoryLocation>>, uint32_t> await_resume() const noexcept
+    {
+        INVARIANT(promise->getResult(), "Resumed GetInMemorySegmentFuture but result was not set.");
+        return *promise->getResult();
+    }
 };
 static_assert(ProgressableFutureConcept<GetInMemorySegmentFuture>);
 
@@ -961,7 +1047,6 @@ public:
                 promise->exchangeAwaiter(pollAwaiter);
             }
         }
-
     }
     void waitOnce() noexcept
     {
@@ -976,32 +1061,66 @@ public:
         }
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return promise->result.has_value(); }
+    [[nodiscard]] bool isDone() const noexcept { return promise->getResult().has_value(); }
 
     //TODO add timeout to task and give back nullopt when timeout exceededc
-    std::optional<ssize_t> waitUntilDone() noexcept
+    std::variant<ssize_t, uint32_t> waitUntilDone() noexcept
     {
         while (!isDone())
         {
             waitOnce();
         }
-        return promise->result;
+        return *promise->getResult();
     };
 
     bool await_ready() const noexcept { return isDone(); }
 
-    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> suspending) noexcept
     {
+        /* First set the waiting coroutine, then check for isDone
+         * Example on why we can't first check isDone and then set waiting coroutine
+         * if (!isDone()){
+         *      //If this thread gets suspended right here, the coroutine could get suspended and never resumed.
+         *      //While this thread is suspended here, another thread might run promise#return_value, set the result and isDone (it doesn't matter for this thread anymore)
+         *      //and get and resume the coroutine in the promise, which is still not set to our suspending coroutine.
+         *      //Then, our thread resumes, sets the waiting coroutine and suspends the coroutine, but no one will ever call resume anymore.
+         *      promise->setWaitingCoroutine(suspending);
+         *      return true;
+         * }
+         * return false;
+         *
+        */
+
+        //First ensure that suspending is stored in the promise
+        const auto previous = promise->setWaitingCoroutine(suspending);
+        INVARIANT(previous.address() == nullptr, "Multiple coroutines trying to await the same promise");
+        //If hasn't been set, suspend.
+        //If the result gets set after we call isDone, we still give up control over the coroutine and whoever set the result resumes it
         if (!isDone())
         {
-            const auto previous = promise->setWaitingCoroutine(suspending);
-            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
-            return true;
+            return {};
         }
-        return false;
+
+        /* Try to get our coroutine back.
+         * There are two edge cases that could happen but that will still work out:
+         * 1. We checked isDone, then got suspended, and another thread in return_value set isDone and got our coroutine.
+         *      In that case we get an empty coroutine handle,
+         *      causing us to suspend here and the thread setting the return value is continuing with our coroutine.
+         * 2. Another thread registered itself. We usually don't want multiple threads awaiting on the same thing,
+         *      because in most places we don't have a way to deal with multiple awaiting coroutines, but in this case it's fine.
+         *      Either another thread triggered an invariance or its at the same point and also just continues with our coroutine.
+         * In both cases we get a coroutine handle that is different to ours, but because we know that ours gets executed by another thread,
+         * we just resume with the one we got.
+        */
+
+        return promise->setWaitingCoroutine({});
     }
 
-    std::optional<ssize_t> await_resume() const noexcept { return promise->result; }
+    std::variant<ssize_t, uint32_t> await_resume() const noexcept
+    {
+        INVARIANT(promise->getResult(), "Resumed coroutine but no result was set in promise");
+        return *promise->getResult();
+    }
 };
 static_assert(ProgressableFutureConcept<ReadSegmentFuture>);
 
@@ -1014,6 +1133,36 @@ private:
     std::shared_ptr<promise_type> promise;
 
 public:
+    class OwnershipTransferredAwaiter
+    {
+        std::shared_ptr<promise_type> promise;
+
+    public:
+        explicit OwnershipTransferredAwaiter(const std::shared_ptr<promise_type>& promise) : promise(promise) { }
+        OwnershipTransferredAwaiter(const OwnershipTransferredAwaiter& other) = default;
+        OwnershipTransferredAwaiter(OwnershipTransferredAwaiter&& other) noexcept = default;
+        OwnershipTransferredAwaiter& operator=(const OwnershipTransferredAwaiter& other) = default;
+        OwnershipTransferredAwaiter& operator=(OwnershipTransferredAwaiter&& other) noexcept = default;
+        bool await_ready() const { return promise->getYielded().value_or(false); }
+
+        bool await_suspend(std::coroutine_handle<> toSuspend)
+        {
+            if (!promise->getYielded())
+            {
+                const auto previous = promise->setNextCoroutineOnYield(toSuspend);
+                INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
+                return true;
+            }
+            return false;
+        }
+
+        bool await_resume() const noexcept
+        {
+            INVARIANT(
+                promise->getYielded(), "Coroutine waiting on OwnershipTransferredAwaiter resumed, but nothing was yielded in promise.");
+            return *promise->getYielded();
+        }
+    };
     explicit PunchHoleFuture() = default;
     explicit PunchHoleFuture(const std::coroutine_handle<promise_type> handle) : promise(handle.promise().getSharedPromise()) { }
     explicit PunchHoleFuture(const std::shared_ptr<promise_type>& handle) : promise(handle) { }
@@ -1035,7 +1184,6 @@ public:
                 promise->exchangeAwaiter(pollAwaiter);
             }
         }
-        return isDone();
     }
     void waitOnce() noexcept
     {
@@ -1052,43 +1200,51 @@ public:
 
     bool waitUntilYield() noexcept
     {
-        while (!promise->hasSubmitted.has_value())
+        while (!promise->getYielded().has_value())
         {
             waitOnce();
         }
 
-        return *promise->hasSubmitted;
+        return *promise->getYielded();
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return promise->result.has_value(); }
-    [[nodiscard]] std::optional<PunchHoleResult> getResult() const noexcept { return promise->result; }
+    [[nodiscard]] bool isDone() const noexcept { return promise->getYielded().has_value(); }
+    [[nodiscard]] std::optional<std::variant<UringSuccessOrError, CoroutineError>> getResult() const noexcept
+    {
+        return promise->getResult();
+    }
 
     //TODO add timeout to task and give back nullopt when timeout exceeded
-    [[nodiscard]] std::optional<PunchHoleResult> waitUntilDone() noexcept
+    [[nodiscard]] std::optional<std::variant<UringSuccessOrError, CoroutineError>> waitUntilDone() noexcept
     {
         while (!isDone())
         {
             waitOnce();
         }
-        return promise->result;
+        return promise->getResult();
     };
 
-    [[nodiscard]] DataSegment<OnDiskLocation> getTarget() const noexcept { return promise->target; }
+    [[nodiscard]] DataSegment<OnDiskLocation> getTarget() const noexcept { return promise->getTarget(); }
 
+    OwnershipTransferredAwaiter awaitYield() const noexcept { return OwnershipTransferredAwaiter{promise}; }
     bool await_ready() const noexcept { return isDone(); }
 
-    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> suspending) noexcept
     {
+        const auto previous = promise->setWaitingCoroutine(suspending);
+        INVARIANT(previous.address() == nullptr, "Multiple coroutines trying to await the same promise");
         if (!isDone())
         {
-            const auto previous = promise->setWaitingCoroutine(suspending);
-            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
-            return true;
+            return {};
         }
-        return false;
+        return promise->setWaitingCoroutine({});
     }
 
-    std::optional<PunchHoleResult> await_resume() const noexcept { return promise->result; }
+    std::variant<UringSuccessOrError, CoroutineError> await_resume() const noexcept
+    {
+        INVARIANT(promise->getResult(), "Resumed coroutine but no result was set in promise");
+        return *promise->getResult();
+    }
 };
 static_assert(ProgressableFutureConcept<PunchHoleFuture>);
 
@@ -1137,31 +1293,35 @@ public:
         }
     }
 
-    [[nodiscard]] bool isDone() const noexcept { return promise->result.getBuffer() != nullptr; }
+    [[nodiscard]] bool isDone() const noexcept { return promise->getResult().has_value(); }
 
-    PinnedBuffer waitUntilDone() noexcept
+    std::variant<PinnedBuffer, uint32_t> waitUntilDone() noexcept
     {
         while (!isDone())
         {
             waitOnce();
         }
-        return promise->result;
+        return *promise->getResult();
     };
 
     bool await_ready() const noexcept { return isDone(); }
 
-    bool await_suspend(std::coroutine_handle<> suspending) noexcept
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> suspending) noexcept
     {
+        const auto previous = promise->setWaitingCoroutine(suspending);
+        INVARIANT(previous.address() == nullptr, "Multiple coroutines trying to await the same promise");
         if (!isDone())
         {
-            const auto previous = promise->setWaitingCoroutine(suspending);
-            INVARIANT(previous.address() == nullptr, "Multiple couroutines trying to await the same promise");
-            return true;
+            return {};
         }
-        return false;
+        return promise->setWaitingCoroutine({});
     }
 
-    PinnedBuffer await_resume() const noexcept { return promise->result; }
+    std::variant<PinnedBuffer, uint32_t> await_resume() const noexcept
+    {
+        INVARIANT(promise->getResult(), "Resumed coroutine but no result was set in promise");
+        return *promise->getResult();
+    }
 };
 
 

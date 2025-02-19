@@ -32,6 +32,7 @@
 #include <Runtime/DataSegment.hpp>
 #include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <folly/MPMCQueue.h>
 #include <sys/types.h>
 #include <ErrorHandling.hpp>
@@ -42,10 +43,9 @@
 #include <liburing.h>
 
 #include <Runtime/BufferManagerImpl.hpp>
-#include <fmt/ranges.h>
+#include <folly/Synchronized.h>
 
 #include <Runtime/FloatingBuffer.hpp>
-#include <gmock/gmock-actions.h>
 namespace NES::Memory
 {
 
@@ -324,7 +324,7 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     {
         if (bcb->getDataReferenceCount() == 0)
         {
-            delete bcb;
+            //delete bcb;
             return true;
         }
         return false;
@@ -340,140 +340,162 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     }
     allBuffers.shrink_to_fit();
 
-    clockAt = erased - allBuffers.begin();
+    ptrdiff_t difference = erased - allBuffers.begin();
+    clockAt = difference;
 }
 
 detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
 {
     using Promise = detail::RepinBufferPromise<detail::RepinBufferFuture>;
-    //I belive that there are some corner cases where we could get really unlucky with thread scheduling and get some segment spilled by another thread.
-    //Better recheck after spilling that everything is indeed in memory
-    while (!floating.controlBlock->tryRepinRetain())
-    {
-        if (!floating.controlBlock->isRepinning.test_and_set())
-        {
-            auto memorySegmentFuture = getInMemorySegment();
+    /* Repinning Buffers in a thread safe manner:
+     * 1. Acquire lock on BCB with startRepinning. StartRepinning also indicates to second chance that this buffer should be skipped.
+     * 2. Do the actual repinning:
+     *      1. Get memory segments for the spilled segments,
+     *      2. Read data from disk into in memory segments,
+     *      3. Initiate deletion of on disk data.
+     * 3. Pin the BCB before releasing the lock, if we wouldn't, the buffer could get spilled again.
+     * 4. Release lock.
+     * 5. Reset BCBs data structures so that when unpinning it could get spilled again with markSpillingDone.
+     * 6. Create pinned buffer.
+     * 7. Release the additional pin and that of the floating buffer.
+    */
 
-            auto awaitMemorySegment = detail::AwaitExternalProgress<
-                Promise,
-                std::optional<detail::DataSegment<detail::InMemoryLocation>>,
-                detail::GetInMemorySegmentFuture>{
+    detail::RefCountedBCB<true> pin{};
+    {
+        auto lock = floating.controlBlock->startRepinning();
+        //Ensure that isRepinning is set to true, so that
+        std::vector<detail::ChildOrMainDataKey> toRepin{};
+        //toRepin is for most parts enough, but for the deletion we need the old segments as well
+        std::vector<detail::DataSegment<detail::OnDiskLocation>> segmentToUnspill{};
+        uint32_t numChildren = floating.controlBlock->getNumberOfChildrenBuffers(lock);
+        toRepin.reserve(numChildren + 1);
+        segmentToUnspill.reserve(numChildren + 1);
+
+        //Find out which segments need to be unspilled
+        for (unsigned int i = 0; i < floating.controlBlock->children.size(); ++i)
+        {
+            if (auto childSegment = floating.controlBlock->getChild(i, lock); childSegment->isSpilled())
+            {
+                toRepin.emplace_back(ChildKey{i});
+                segmentToUnspill.push_back(*childSegment->get<detail::OnDiskLocation>());
+            }
+        }
+        if (auto mainSegment = floating.controlBlock->getData().get<detail::OnDiskLocation>())
+        {
+            toRepin.emplace_back(detail::ChildOrMainDataKey::MAIN());
+            segmentToUnspill.push_back(*mainSegment);
+        }
+
+        //get in memory segments for segments that need to be unspilled
+        auto memorySegmentFuture = getInMemorySegment(toRepin.size());
+        auto awaitMemorySegments
+            = detail::AwaitExternalProgress<Promise, decltype(memorySegmentFuture.waitUntilDone()), detail::GetInMemorySegmentFuture>{
                 std::bind(&detail::GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
                 std::bind(&detail::GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
                 memorySegmentFuture};
-            auto memorySegment = co_await awaitMemorySegment;
-            if (!memorySegment)
-            {
-                throw BufferAllocationFailure();
-            }
-            auto readFuture = readOnDiskSegment(*floating.getSegment().get<detail::OnDiskLocation>(), *memorySegment);
-            auto awaitReadSegment = detail::AwaitExternalProgress<
-                Promise,
-                std::optional<ssize_t>,
-                detail::ReadSegmentFuture>{
-                std::bind(&detail::ReadSegmentFuture::pollOnce, readFuture),
-                std::bind(&detail::ReadSegmentFuture::waitOnce, readFuture),
-                readFuture};
-
-            auto readBytes = co_await awaitReadSegment;
-            if (!readBytes)
-            {
-                throw CannotReadBufferFromDisk();
-            }
-            if (*readBytes < 0)
-            {
-                throw CannotReadBufferFromDisk("Failed to read spilled buffer with error {}", std::strerror(-*readBytes));
-            }
-            //TODO swap children correctly
-            if (!floating.controlBlock->swapDataSegment(*memorySegment))
-            {
-                throw CannotAccessBuffer("Could not repin buffer because it was already pinned");
-            }
-            floating.controlBlock->isRepinning.clear();
-            floating.controlBlock->isRepinning.notify_all();
-        }
-        else
+        auto memorySegmentsOrError = co_await awaitMemorySegments;
+        if (!std::holds_alternative<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError))
         {
-            floating.controlBlock->isRepinning.wait(true);
+            co_return static_cast<uint32_t>(ErrorCode::BufferAllocationFailure);
         }
+        auto memorySegments = std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError);
+
+        //Read data from on disk segments in to in memory segments.
+        //First initiate all reading, then await reading
+        std::vector<detail::ReadSegmentFuture> readSegmentFutures{};
+        readSegmentFutures.reserve(toRepin.size());
+        for (unsigned long i = 0; i < toRepin.size(); ++i)
+        {
+            auto readFuture
+                = readOnDiskSegment(*floating.controlBlock->getSegment(toRepin[i], lock)->get<detail::OnDiskLocation>(), memorySegments[i]);
+            readSegmentFutures.push_back(readFuture);
+        }
+        for (unsigned long i = 0; i < toRepin.size(); ++i)
+        {
+            auto readFuture = readSegmentFutures[i];
+            auto awaitReadSegment
+                = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, detail::CoroutineError>, detail::ReadSegmentFuture>{
+                    std::bind(&detail::ReadSegmentFuture::pollOnce, readFuture),
+                    std::bind(&detail::ReadSegmentFuture::waitOnce, readFuture),
+                    readFuture};
+
+            const auto readBytesOrError = co_await awaitReadSegment;
+            if (const auto error = getOptional<detail::CoroutineError>(readBytesOrError))
+            {
+                co_return *error;
+            }
+            if (auto readBytes = std::get<long>(readBytesOrError); readBytes < 0)
+            {
+                NES_ERROR("Failed to read spilled buffer with error {}", std::strerror(-readBytes));
+                co_return static_cast<uint32_t>(ErrorCode::CannotReadBufferFromDisk);
+            }
+            const auto swapped = floating.controlBlock->swapSegment(memorySegments[i], toRepin[i], lock);
+            INVARIANT(swapped, "Failed to swap back in unspilled in memory data segment");
+
+            const auto punchHoleFuture = punchHoleSegment(std::move(segmentToUnspill[i]));
+            auto submittedDeletion = co_await punchHoleFuture.awaitYield();
+            if (!submittedDeletion)
+            {
+                NES_WARNING("Failed to submit segment deletion task, segment will only be removed from disk on system shutdown.");
+            }
+        }
+        pin = floating.controlBlock->getCounter<true>();
     }
+    floating.controlBlock->markSpillingDone();
 
     const auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>();
-    INVARIANT(memorySegment, "Floating buffer repinned sucessfully but data segment was spilled");
+    INVARIANT(memorySegment, "Floating buffer repinned successfully but data segment was still spilled");
     auto result = PinnedBuffer{floating.controlBlock, *memorySegment, floating.childOrMainData};
     floating.controlBlock = nullptr;
     floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
     result.controlBlock->dataRelease();
-    //Release the repin retainer
-    result.controlBlock->pinnedRelease();
-    return result;
+    co_return result;
 }
 
 
 PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
 {
-    //I belive that there are some corner cases where we could get really unlucky with thread scheduling and get some segment spilled by another thread.
-    //Better recheck after spilling that everything is indeed in memory
-    while (!floating.controlBlock->tryRepinRetain())
+    auto repinResult = repinBuffer(std::move(floating)).waitUntilDone();
+    if (const auto error = getOptional<detail::CoroutineError>(repinResult))
     {
-        if (!floating.controlBlock->isRepinning.test_and_set())
-        {
-            auto memorySegment = getInMemorySegment().waitUntilDone();
-            if (!memorySegment)
-            {
-                throw BufferAllocationFailure();
-            }
-            auto readBytes = readOnDiskSegment(*floating.getSegment().get<detail::OnDiskLocation>(), *memorySegment).waitUntilDone();
-            if (!readBytes)
-            {
-                throw CannotReadBufferFromDisk();
-            }
-            if (*readBytes < 0)
-            {
-                throw CannotReadBufferFromDisk("Failed to read spilled buffer with error {}", std::strerror(-*readBytes));
-            }
-            //TODO swap children correctly
-            if (!floating.controlBlock->swapDataSegment(*memorySegment))
-            {
-                throw CannotAccessBuffer("Could not repin buffer because it was already pinned");
-            }
-            floating.controlBlock->isRepinning.clear();
-            floating.controlBlock->isRepinning.notify_all();
-        }
-        else
-        {
-            floating.controlBlock->isRepinning.wait(true);
-        }
+        throw ErrorCode::typeFromCode(*error).create();
     }
-
-    const auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>();
-    INVARIANT(memorySegment, "Floating buffer repinned sucessfully but data segment was spilled");
-    auto result = PinnedBuffer{floating.controlBlock, *memorySegment, floating.childOrMainData};
-    floating.controlBlock = nullptr;
-    floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
-    result.controlBlock->dataRelease();
-    //Release the repin retainer
-    result.controlBlock->pinnedRelease();
-    return result;
+    return std::get<PinnedBuffer>(repinResult);
 }
 
 
-detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
+detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount) noexcept
 {
     using Promise = detail::GetInMemorySegmentPromise<detail::GetInMemorySegmentFuture>;
+    //Making a shared ptr out of this is probably not worth it, as in most request amount == 1 and DataSegments are small,
+    //so copying is probably cheaper
+    std::vector<detail::DataSegment<detail::InMemoryLocation>> result{};
+    result.reserve(amount);
     auto inMemorySegment = detail::DataSegment<detail::InMemoryLocation>{};
-    if (availableBuffers.read(inMemorySegment))
+    while (result.size() < amount && availableBuffers.read(inMemorySegment))
     {
-        co_return inMemorySegment;
+        result.push_back(inMemorySegment);
+    }
+    auto missingSegments = amount - result.size();
+    if (missingSegments == 0)
+    {
+        co_return result;
     }
 
-    requiredSegments.fetch_add(1);
-    auto inMemorySegmentRequest = detail::AvailableSegmentAwaiter<Promise>::create(waitingSegmentRequests);
-    if (!inMemorySegmentRequest)
+    std::vector<std::shared_ptr<detail::AvailableSegmentAwaiter<Promise>>> segmentAwaiters{};
+    segmentAwaiters.reserve(missingSegments);
+
+    for (unsigned long i = 0; i < missingSegments; ++i)
     {
-        //System is so overloaded that we can't even submit new requests, returning the nullptr segment
-        co_return inMemorySegment;
+        auto inMemorySegmentRequest = detail::AvailableSegmentAwaiter<Promise>::create(waitingSegmentRequests);
+        if (!inMemorySegmentRequest)
+        {
+            //System is so overloaded that we can't even submit new requests, returning the nullptr segment
+            co_return static_cast<uint32_t>(ErrorCode::CannotSubmitMemoryRequest);
+        }
+        segmentAwaiters.push_back(*inMemorySegmentRequest);
     }
+    requiredSegments.fetch_add(missingSegments);
 
     //Check if there are enough spilling operations in flight to satisfy the currently waiting coroutines
     auto fillSQE = false;
@@ -504,9 +526,10 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
         co_await detail::AwaitExternalProgress<Promise, void, detail::ResumeAfterBlockAwaiter<Promise>>{resumeAfterBlock};
         auto added = secondChancePass();
         buffersBeingSpilled.fetch_add(added);
+        missingSegments = std::max(static_cast<int64_t>(missingSegments) - static_cast<int64_t>(added), 0L);
         //Coroutines only need to wait until they initiated the spilling of one segment.
         //If other threads need more memory, they can try to spill some buffers as well.
-        if (added > 0)
+        if (missingSegments == 0)
         {
             fillSQE = false;
         }
@@ -519,17 +542,19 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment() noexcept
     //2. other coroutines might be waiting longer for segments than the one processing them, so fulfilling them through the request queue guarantees some fairness
     //3. in the future, we would probably like to have segmentRequests for multiple segments at once to avoid filling up the request queue
     //      and make progress in the workers more deterministic
-    auto awaitForProgress = detail::AwaitExternalProgress<
-        Promise,
-        std::optional<detail::DataSegment<detail::InMemoryLocation>>,
-        decltype(*inMemorySegmentRequest->get())>{
-        std::bind(&BufferManager::pollWriteCompletionEventsOnce, this),
-        std::bind(&BufferManager::waitForWriteCompletionEventsOnce, this),
-        *inMemorySegmentRequest->get()};
-    auto result = co_await awaitForProgress;
-    requiredSegments.fetch_sub(1);
-    INVARIANT(result, "GetInMemorySegmentFuture resumed before inMemory segment was set");
-    co_return *result;
+    for (auto segmentAwaiter : segmentAwaiters)
+    {
+        auto awaitForProgress = detail::
+            AwaitExternalProgress<Promise, std::optional<detail::DataSegment<detail::InMemoryLocation>>, decltype(*segmentAwaiter)>{
+                std::bind(&BufferManager::pollWriteCompletionEventsOnce, this),
+                std::bind(&BufferManager::waitForWriteCompletionEventsOnce, this),
+                *segmentAwaiter};
+        auto freedSegment = co_await awaitForProgress;
+        INVARIANT(freedSegment, "GetInMemorySegmentFuture resumed before inMemory segment was set");
+        requiredSegments.fetch_sub(missingSegments);
+        result.push_back(*freedSegment);
+    }
+    co_return result;
 }
 
 int64_t BufferManager::secondChancePass() noexcept
@@ -775,8 +800,8 @@ detail::ReadSegmentFuture BufferManager::readOnDiskSegment(
         std::bind(&BufferManager::pollReadCompletionEntriesOnce, this),
         std::bind(&BufferManager::waitForReadCompletionEntriesOnce, this),
         *underlyingReadAwaiter};
-    auto writtenOut = co_await readAwaiter;
-    co_return writtenOut;
+    auto readBytes = co_await readAwaiter;
+    co_return *readBytes;
 }
 
 void BufferManager::pollReadSubmissionEntriesOnce() noexcept
@@ -910,10 +935,10 @@ PinnedBuffer BufferManager::getBufferBlocking()
                 return makeBufferAndRegister(inMemorySegment);
             }
         }
-        auto retSegment = getInMemorySegment().waitUntilDone();
-        if (retSegment)
+        auto retSegment = getInMemorySegment(1).waitUntilDone();
+        if (std::holds_alternative<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(retSegment))
         {
-            return makeBufferAndRegister(*retSegment);
+            return makeBufferAndRegister(std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(retSegment).at(0));
         }
     }
     /// Throw exception if no buffer was returned allocated after timeout.
@@ -1013,7 +1038,13 @@ bool BufferManager::recycleSegment(detail::DataSegment<detail::OnDiskLocation>&&
 {
     auto punchHoleFuture = punchHoleSegment(std::move(segment));
     //Ensure request was submitted into queue.
-    return punchHoleFuture.waitUntilYield();
+    auto submitted = punchHoleFuture.waitUntilYield();
+    if (!submitted)
+    {
+        NES_WARNING("Failed to submit segment deletion task, segment will only be removed from disk on system shutdown.");
+        return false;
+    }
+    return true;
 }
 
 detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept
@@ -1037,20 +1068,26 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
                 {
                     if (auto result = future.getResult())
                     {
-                        if (result->isSuccess())
+                        if (auto uringSuccessOrError = NES::getOptional<detail::UringSuccessOrError>(*result))
                         {
-                            holePunchedSegments.insert(future.getTarget());
+                            INVARIANT(
+                                uringSuccessOrError->isSuccess() || uringSuccessOrError->getUringError(),
+                                "UringSuccessOrError was neither success or error");
+                            if (uringSuccessOrError->isSuccess())
+                            {
+                                holePunchedSegments.insert(future.getTarget());
+                            }
+                            else if (auto uringError = uringSuccessOrError->getUringError())
+                            {
+                                NES_WARNING(
+                                    "Failed to delete on disk segment in file {}, offset {} with error message \"{}\"",
+                                    future.getTarget().getLocation().getFileID(),
+                                    future.getTarget().getLocation().getOffset(),
+                                    std::strerror(*uringError));
+                                failedToHolePunch.insert(future.getTarget());
+                            }
                         }
-                        else if (auto uringError = result->getUringError())
-                        {
-                            NES_WARNING(
-                                "Failed to delete on disk segment in file {}, offset {} with error message \"{}\"",
-                                future.getTarget().getLocation().getFileID(),
-                                future.getTarget().getLocation().getOffset(),
-                                std::strerror(*uringError));
-                            failedToHolePunch.insert(future.getTarget());
-                        }
-                        else if (auto internalError = result->getInternalError())
+                        else if (auto internalError = NES::getOptional<detail::CoroutineError>(*result))
                         {
                             NES_WARNING(
                                 "Failed to delete on disk segment in file {}, offset {} with error message \"{}\"",
@@ -1088,13 +1125,13 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
     co_yield ownershipTransferrred;
     if (!ownershipTransferrred)
     {
-        co_return detail::PunchHoleResult::FAILED_TO_TRANSFER_OWNERSHIP();
+        co_return static_cast<detail::CoroutineError>(ErrorCode::FailedToTransferCleanupOwnership);
     }
 
     auto underlyingSubmissionAwaiter = detail::SubmitPunchHoleSegmentAwaiter<Promise>::create(waitingPunchHoleRequests, segment);
     if (!underlyingSubmissionAwaiter)
     {
-        co_return detail::PunchHoleResult::FAILED_TO_SUBMIT();
+        co_return static_cast<detail::CoroutineError>(ErrorCode::CannotSubmitBufferIO);
     }
 
     auto submissionAwaiter = detail::AwaitExternalProgress<
@@ -1114,10 +1151,10 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
     auto returnCode = co_await *underlyingDeletion;
     if (!returnCode)
     {
-        co_return detail::PunchHoleResult::CONTINUED_WITHOUT_RESULT();
+        co_return static_cast<detail::CoroutineError>(ErrorCode::CoroutineContinuedWithoutResult);
     }
 
-    co_return detail::PunchHoleResult{*returnCode};
+    co_return detail::UringSuccessOrError{static_cast<uint32_t>(-*returnCode)};
 }
 
 void BufferManager::pollPunchHoleSubmissionEntriesOnce() noexcept

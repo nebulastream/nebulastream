@@ -110,7 +110,7 @@ public:
     inline std::optional<OnDiskLocation> getOnDiskLocation() const;
 
     [[nodiscard]] inline uint8_t getTag() const;
-    [[nodiscard]] inline uint64_t getRaw() const;
+    [[nodiscard]] uint64_t getRaw() const;
     [[nodiscard]] inline bool isNotPreAllocated() const noexcept;
 
     inline bool operator==(const InMemoryLocation& other) const noexcept;

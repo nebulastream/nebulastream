@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 #include <magic_enum_iostream.hpp>
@@ -42,7 +43,7 @@ namespace detail
 
 
 BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
-    : data(static_cast<DataSegment<DataLocation>>(inMemorySegment)), owningBufferRecycler(recycler)
+    : data(inMemorySegment), owningBufferRecycler(recycler)
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer and track which function obtained the buffer
@@ -145,17 +146,25 @@ BufferControlBlock* BufferControlBlock::pinnedRetain()
     return this;
 }
 
-bool BufferControlBlock::tryRepinRetain() noexcept
+std::unique_lock<std::shared_mutex> BufferControlBlock::startRepinning() noexcept
 {
+    std::unique_lock segmentLock{segmentMutex};
     skipSpillingUpTo = ChildOrMainDataKey::MAIN();
-    std::shared_lock segmentLock{segmentMutex};
-    if (isSpilledUpTo == ChildOrMainDataKey::UNKNOWN())
-    {
-        pinnedRetain();
-        return true;
-    }
-    return false;
+    auto wasRepinning = isRepinning.test_and_set();
+    INVARIANT(
+        !wasRepinning,
+        "Started repinning of BCB for segment at {} while another repinning was in progress",
+        data.load().getLocation().getRaw());
+    return segmentLock;
 }
+
+void BufferControlBlock::markSpillingDone() noexcept
+{
+    isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
+    skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
+    isRepinning.clear();
+}
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo()
 {
@@ -269,7 +278,14 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 }
 #endif
 
+template <bool pinned>
+RefCountedBCB<pinned> BufferControlBlock::getCounter() noexcept
+{
+    return RefCountedBCB<pinned>{this};
+}
 
+template RefCountedBCB<true> BufferControlBlock::getCounter() noexcept;
+template RefCountedBCB<false> BufferControlBlock::getCounter() noexcept;
 /// -----------------------------------------------------------------------------
 /// ------------------ Utility functions for PinnedBuffer ------------------------
 /// -----------------------------------------------------------------------------
@@ -344,13 +360,53 @@ void BufferControlBlock::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
+
+bool BufferControlBlock::swapSegment(DataSegment<DataLocation>& segment, ChildOrMainDataKey key) noexcept
+{
+    if (key == ChildOrMainDataKey::UNKNOWN())
+    {
+        return false;
+    }
+    if (key == ChildOrMainDataKey::MAIN())
+    {
+        return swapDataSegment(segment);
+    }
+    return swapChild(segment, *key.asChildKey());
+}
+bool BufferControlBlock::swapSegment(
+    DataSegment<DataLocation>& segment, ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) noexcept
+{
+    if (key == ChildOrMainDataKey::UNKNOWN())
+    {
+        return false;
+    }
+    if (key == ChildOrMainDataKey::MAIN())
+    {
+        return swapDataSegment(segment, lock);
+    }
+    return swapChild(segment, *key.asChildKey(), lock);
+}
+
+
 bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment) noexcept
 {
     if (isRepinning.test() && segment.isSpilled())
     {
         return false;
     }
-    std::unique_lock dataLock{segmentMutex};
+    std::unique_lock lock{segmentMutex};
+    return swapDataSegment(segment, lock);
+}
+
+bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment, std::unique_lock<std::shared_mutex>& lock) noexcept
+{
+    if (isRepinning.test() && segment.isSpilled())
+    {
+        return false;
+    }
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for swapping the main segment of the BCB");
     auto zero = 0;
     auto minusOne = -1;
     if (pinnedCounter.compare_exchange_strong(zero, -1))
@@ -376,7 +432,21 @@ bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey 
     {
         return false;
     }
-    std::unique_lock dataLock{segmentMutex};
+    std::unique_lock lock{segmentMutex};
+    return swapChild(segment, key, lock);
+}
+
+bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey key, std::unique_lock<std::shared_mutex>& lock) noexcept
+{
+    if (isRepinning.test() && segment.isSpilled())
+    {
+        return false;
+    }
+
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for swapping a child segment of the BCB");
+
     auto zero = 0;
     auto minusOne = -1;
     if (pinnedCounter.compare_exchange_strong(zero, -1))
@@ -401,6 +471,14 @@ bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey 
 
 std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment()
 {
+    std::unique_lock lock{segmentMutex};
+    return stealDataSegment(lock);
+}
+std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment(std::unique_lock<std::shared_mutex>& lock)
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for stealing the main segment of the BCB");
     DataSegment<DataLocation> dataSegment = data;
     int zero = 0;
     int32_t one = 1;
@@ -412,7 +490,6 @@ std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment()
     {
         return std::nullopt;
     }
-    std::unique_lock dataLock{segmentMutex};
     data.store(DataSegment<DataLocation>{});
     int minusOne = -1;
     INVARIANT(
@@ -443,7 +520,14 @@ std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment()
 // }
 ChildKey BufferControlBlock::registerChild(const DataSegment<DataLocation>& child) noexcept
 {
-    std::unique_lock writeLock{segmentMutex};
+    std::unique_lock lock{segmentMutex};
+    return registerChild(child, lock);
+}
+ChildKey BufferControlBlock::registerChild(const DataSegment<DataLocation>& child, std::unique_lock<std::shared_mutex>& lock) noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for registering a new child in the BCB");
     children.emplace_back(child);
     ChildKey newPosition{children.size() - 1};
     if (isSpilledUpTo == ChildOrMainDataKey::MAIN())
@@ -461,9 +545,18 @@ ChildKey BufferControlBlock::registerChild(const DataSegment<DataLocation>& chil
     return newPosition;
 }
 
-std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLocation>& childToFind) noexcept
+std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLocation>& child) noexcept
 {
-    std::shared_lock readLock{segmentMutex};
+    std::shared_lock lock{segmentMutex};
+    return findChild(child, lock);
+}
+
+std::optional<ChildKey>
+BufferControlBlock::findChild(const DataSegment<DataLocation>& childToFind, std::shared_lock<std::shared_mutex>& lock) noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for finding a child of the BCB");
     for (auto child = children.begin(); child != children.end(); ++child)
     {
         if ((*child) == childToFind)
@@ -473,9 +566,65 @@ std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLoca
     }
     return std::nullopt;
 }
-std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey index) const noexcept
+
+std::optional<ChildKey>
+BufferControlBlock::findChild(const DataSegment<DataLocation>& childToFind, std::unique_lock<std::shared_mutex>& lock) noexcept
 {
-    std::shared_lock readLock{segmentMutex};
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for finding a child of the BCB");
+    for (auto child = children.begin(); child != children.end(); ++child)
+    {
+        if ((*child) == childToFind)
+        {
+            return child - children.begin();
+        }
+    }
+    return std::nullopt;
+}
+uint32_t BufferControlBlock::getNumberOfChildrenBuffers() const noexcept
+{
+    std::shared_lock lock{segmentMutex};
+    return getNumberOfChildrenBuffers(lock);
+}
+uint32_t BufferControlBlock::getNumberOfChildrenBuffers(std::shared_lock<std::shared_mutex>& lock) const noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for calculating the number of child segments of the BCB");
+    return children.size();
+}
+uint32_t BufferControlBlock::getNumberOfChildrenBuffers(std::unique_lock<std::shared_mutex>& lock) const noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for calculating the number of child segments of the BCB");
+    return children.size();
+}
+std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey key) const noexcept
+{
+    std::shared_lock lock{segmentMutex};
+    return getChild(key, lock);
+}
+
+std::optional<DataSegment<DataLocation>>
+BufferControlBlock::getChild(ChildKey index, std::shared_lock<std::shared_mutex>& lock) const noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for retrieving a child of the BCB");
+    if (index < children.size())
+    {
+        return children[index];
+    }
+    return std::nullopt;
+}
+std::optional<DataSegment<DataLocation>>
+BufferControlBlock::getChild(ChildKey index, std::unique_lock<std::shared_mutex>& lock) const noexcept
+{
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for retrieving a child of the BCB");
     if (index < children.size())
     {
         return children[index];
@@ -483,12 +632,62 @@ std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey i
     return std::nullopt;
 }
 
-bool BufferControlBlock::unregisterChild(const ChildKey child) noexcept
+std::optional<DataSegment<DataLocation>> BufferControlBlock::getSegment(ChildOrMainDataKey key) const noexcept
+{
+    if (key == ChildOrMainDataKey::MAIN())
+    {
+        return data.load();
+    }
+    if (key == ChildOrMainDataKey::UNKNOWN())
+    {
+        return std::nullopt;
+    }
+    return getChild(*key.asChildKey());
+}
+
+std::optional<DataSegment<DataLocation>>
+BufferControlBlock::getSegment(ChildOrMainDataKey key, std::shared_lock<std::shared_mutex>& lock) const noexcept
+{
+    if (key == ChildOrMainDataKey::MAIN())
+    {
+        return data.load();
+    }
+    if (key == ChildOrMainDataKey::UNKNOWN())
+    {
+        return std::nullopt;
+    }
+    return getChild(*key.asChildKey(), lock);
+}
+
+std::optional<DataSegment<DataLocation>>
+BufferControlBlock::getSegment(ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) const noexcept
+{
+    if (key == ChildOrMainDataKey::MAIN())
+    {
+        return data.load();
+    }
+    if (key == ChildOrMainDataKey::UNKNOWN())
+    {
+        return std::nullopt;
+    }
+    return getChild(*key.asChildKey(), lock);
+}
+bool BufferControlBlock::unregisterChild(ChildKey child) noexcept
+{
+    std::unique_lock lock{segmentMutex};
+    return unregisterChild(child, lock);
+}
+bool BufferControlBlock::unregisterChild(const ChildKey child, std::unique_lock<std::shared_mutex>& lock) noexcept
 {
     //Assert that there is only a single owner, because if other buffers would have a on this BCB and some childkey,
     //Their childkey would point to the wrong data
-    if (dataCounter != 1) return false;
-    std::unique_lock writeLock{segmentMutex};
+    if (dataCounter != 1)
+    {
+        return false;
+    }
+    INVARIANT(
+        lock.mutex()->native_handle() == segmentMutex.native_handle(),
+        "Caller didn't acquire the correct mutex for unregistering a child of the BCB");
     children.erase(children.begin() + child);
     if (auto skipToChild = skipSpillingUpTo.asChildKey())
     {

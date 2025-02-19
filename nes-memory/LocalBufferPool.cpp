@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "LocalBufferPool.hpp"
 #include <chrono>
 #include <cstddef>
 #include <deque>

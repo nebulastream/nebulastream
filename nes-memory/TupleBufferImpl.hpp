@@ -16,13 +16,14 @@
 
 #include <atomic>
 #include <chrono>
+#include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferPrimitives.hpp>
 #include <Runtime/DataSegment.hpp>
 #include <Time/Timestamp.hpp>
-#include <Runtime/BufferPrimitives.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <deque>
@@ -111,7 +112,15 @@ public:
     /// Returns true if 0 is reached and the buffer is recycled
     bool dataRelease();
 
-    bool tryRepinRetain() noexcept;
+
+    template <bool pinned>
+    RefCountedBCB<pinned> getCounter() noexcept;
+
+    std::unique_lock<std::shared_mutex> startRepinning() noexcept;
+
+    ///Resets everything to a state as if this was a BCB for a newly created pinned buffer.
+    ///Ensure that you pinned the BCB when you had the lock from startRepinning, otherwise the segments could get spilled again
+    void markSpillingDone() noexcept;
 
 
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
@@ -129,17 +138,30 @@ public:
     void setCreationTimestamp(Runtime::Timestamp timestamp);
     [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
 
+    bool swapSegment(DataSegment<DataLocation>&, ChildOrMainDataKey key) noexcept;
     bool swapDataSegment(DataSegment<DataLocation>& segment) noexcept;
-    bool swapChild(DataSegment<DataLocation>&, ChildKey) noexcept;
+    bool swapChild(DataSegment<DataLocation>&, ChildKey key) noexcept;
+
+    bool swapSegment(DataSegment<DataLocation>& segment, ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) noexcept;
+    bool swapDataSegment(DataSegment<DataLocation>& segment, std::unique_lock<std::shared_mutex>& lock) noexcept;
+    bool swapChild(DataSegment<DataLocation>& segment, ChildKey key, std::unique_lock<std::shared_mutex>& lock) noexcept;
+
+    // bool swapSegment(DataSegment<DataLocation>&, ChildOrMainDataKey) noexcept;
+    // bool swapDataSegment(DataSegment<DataLocation>& segment) noexcept;
+    // bool swapChild(DataSegment<DataLocation>&, ChildKey) noexcept;
 
     ///@brief Unregisters a child data segment.
     ///@return whether the passed data segment was a child of this node
     bool unregisterChild(ChildKey child) noexcept;
+    bool unregisterChild(ChildKey child, std::unique_lock<std::shared_mutex>& lock) noexcept;
 
     ///@brief Registers the data segment as a child of this BCB.
     ///@return true when the passed data segment is a new child, false if it was already registerd
     ChildKey registerChild(const DataSegment<DataLocation>& child) noexcept;
+    ChildKey registerChild(const DataSegment<DataLocation>& child, std::unique_lock<std::shared_mutex>& lock) noexcept;
     std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child) noexcept;
+    std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child, std::shared_lock<std::shared_mutex>& lock) noexcept;
+    std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child, std::unique_lock<std::shared_mutex>& lock) noexcept;
 
     ///@brief Deletes a child data segment, the data is not accessible afterward anymore
     ///@return whether the argument was a child. If false, child remains valid.
@@ -148,9 +170,18 @@ public:
     ///@brief Self-destructs this BCB if there is only one owner left
     ///@return the owned data segment if self-destructed, nullopt otherwise
     std::optional<DataSegment<DataLocation>> stealDataSegment();
-    [[nodiscard]] uint32_t getNumberOfChildrenBuffers() const noexcept { return children.size(); }
+    std::optional<DataSegment<DataLocation>> stealDataSegment(std::unique_lock<std::shared_mutex>& lock);
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers() const noexcept;
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers(std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers(std::unique_lock<std::shared_mutex>& lock) const noexcept;
 
-    std::optional<DataSegment<DataLocation>> getChild(ChildKey) const noexcept;
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key) const noexcept;
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key, std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key, std::unique_lock<std::shared_mutex>& lock) const noexcept;
+
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key) const noexcept;
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) const noexcept;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();

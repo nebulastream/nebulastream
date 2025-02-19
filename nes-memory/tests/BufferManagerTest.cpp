@@ -198,7 +198,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             buffers.push_back(FloatingBuffer{std::move(childBuffer)});
         }
         buffers[0] = FloatingBuffer{std::move(parentBuffer)};
-
+        manager->flushNewBuffers();
         ASSERT_EQ(manager->allBuffers.size(), 8);
         {
             buffers.push_back(manager->getBufferBlocking());
@@ -228,6 +228,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
 
             //Second chance spilling should also clean up unused BCBs (the ones which data segment we attached as children to the first one)
             //in its first pass
+            manager->flushNewBuffers();
             ASSERT_EQ(manager->allBuffers.size(), 2);
 
             for (int i = 9; i < 12; ++i)
@@ -251,6 +252,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             }
             ASSERT_TRUE(spilled);
             ASSERT_EQ(manager->clockAt, 0);
+            manager->flushNewBuffers();
             ASSERT_EQ(manager->allBuffers.size(), 5);
 
             //Spill the rest of the child buffers + parent buffer
@@ -265,6 +267,8 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
                 buffers.begin(), buffers.begin() + 8, [](const auto& it) { ASSERT_TRUE(std::get<FloatingBuffer>(it).isSpilled()); });
             //All children and the parent are spilled, so the clock should move forward
             ASSERT_EQ(manager->clockAt, 1);
+
+            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[15]).isSpilled());manager->flushNewBuffers();
             ASSERT_EQ(manager->allBuffers.size(), 9);
 
             //Unpin last four buffers, then initiate spilling once, where second chance should take 5, 6, 7 and tag 8,
@@ -284,7 +288,6 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
 
             std::ranges::for_each(
                 buffers.begin() + 12, buffers.begin() + 15, [](const auto& it) { ASSERT_TRUE(std::get<FloatingBuffer>(it).isSpilled()); });
-            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[15]).isSpilled());
             ASSERT_EQ(manager->clockAt, 8);
 
             //Unpin (by allBuffers offset), 1, 2, 3
@@ -324,7 +327,6 @@ TEST_F(BufferManagerTest, BufferCleanupClock)
         {
             buffers.push_back(manager->getBufferBlocking());
         }
-
     }
 }
 
@@ -333,8 +335,8 @@ TEST_F(BufferManagerTest, GetFreeSegment)
     constexpr int bufferSize = 1024;
     const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
-    auto segmentFuture = manager->getInMemorySegment();
-    auto segment = *segmentFuture.waitUntilDone();
+    auto segmentFuture = manager->getInMemorySegment(1);
+    const auto segment = std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(segmentFuture.waitUntilDone())[0];
 
     ASSERT_TRUE(segment.getLocation().getPtr() != nullptr);
 }
