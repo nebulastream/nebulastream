@@ -156,7 +156,7 @@ jobs:
 
           # if changed_files.txt wasn't created, there's no relevant coverage
           if [ -e changed_files.txt ]; then
-            /code-cov-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py \
+            python3 ./scripts/code-coverage-remove-rows-index-html.py \
               build/ccov/all-merged/index.html \
               $dst/index.html \
               changed_files.txt
