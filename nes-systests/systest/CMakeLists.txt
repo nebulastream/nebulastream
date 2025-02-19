@@ -46,8 +46,24 @@ include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 add_test(NAME systest_interpreter COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
 add_test(NAME systest_compiler COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000)
 
+# We run all tests with a small and large task queue size
+# We set the number of worker threads to 8, to further stress the task queue
+set(taskQueueSize 5 10000)
+foreach (taskQueueSize IN LISTS taskQueueSize)
+    if (CODE_COVERAGE)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_interpreter PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_compiler PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
+    endif (CODE_COVERAGE)
 
-## We wish to run all join and aggregation tests with different no. worker threads
+    add_test(
+            NAME systest_task_queue_size_${taskQueueSize}_interpreter
+            COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
+    add_test(
+            NAME systest_task_queue_size_${taskQueueSize}_compiler
+            COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
+endforeach ()
+
+## We run all join and aggregation tests with different no. worker threads
 set(workerThreads 1 2 4 8)
 foreach (workerThreads IN LISTS workerThreads)
     if (CODE_COVERAGE)
