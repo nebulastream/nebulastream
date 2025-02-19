@@ -37,12 +37,13 @@ class RunningSource
 public:
     /// Creates and starts the underlying source implementation. As long as the RunningSource is kept alive the source will run,
     /// once the last reference to the RunningSource is destroyed the source is stopped.
+    /// UnRegistering a source should not block, but it may not succeed (immediately), the tryUnregister
     static std::shared_ptr<RunningSource> create(
         QueryId queryId,
         std::unique_ptr<Sources::SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
-        std::function<void(Exception)> unregisterWithError,
+        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryDeregister,
+        std::function<void(Exception)> deregisterWithError,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
 
@@ -54,20 +55,24 @@ public:
     ~RunningSource();
     [[nodiscard]] OriginId getOriginId() const;
 
-    void stop();
+    /// attempts UnRegistration
+    bool attemptDeregister();
     void fail(Exception exception) const;
+
+    /// Calls the underlying `tryStop`
+    bool tryStop();
 
 private:
     RunningSource(
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<Sources::SourceHandle> source,
-        std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
+        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
         std::function<void(Exception)> unregisterWithError);
 
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<Sources::SourceHandle> source;
-    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister;
-    std::function<void(Exception)> unregisterWithError;
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryDeregister;
+    std::function<void(Exception)> deregisterWithError;
 };
 
 }

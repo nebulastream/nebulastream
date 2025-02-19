@@ -460,21 +460,21 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
         EXPECT_TRUE(ctrl2->waitUntilOpened());
         EXPECT_FALSE(ctrl2->wasClosed());
 
-        ctrl1->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
-        ctrl1->injectData(identifiableData(2), NUMBER_OF_TUPLES_PER_BUFFER);
-        ctrl2->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER);
-        ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER);
-        ctrl1->injectEoS();
+        ASSERT_TRUE(ctrl1->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER + 0));
+        ASSERT_TRUE(ctrl1->injectData(identifiableData(2), NUMBER_OF_TUPLES_PER_BUFFER + 1));
+        ASSERT_TRUE(ctrl2->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER + 2));
+        ASSERT_TRUE(ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER + 3));
+        ASSERT_TRUE(ctrl1->injectEoS());
 
-        sinkCtrl->waitForNumberOfReceivedBuffers(4);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(4));
 
-        ctrl2->injectData(identifiableData(5), NUMBER_OF_TUPLES_PER_BUFFER);
-        sinkCtrl->waitForNumberOfReceivedBuffers(5);
-        ctrl2->injectData(identifiableData(6), NUMBER_OF_TUPLES_PER_BUFFER);
-        sinkCtrl->waitForNumberOfReceivedBuffers(6);
-        ctrl2->injectEoS();
+        ASSERT_TRUE(ctrl2->injectData(identifiableData(5), NUMBER_OF_TUPLES_PER_BUFFER + 4));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(5));
+        ASSERT_TRUE(ctrl2->injectData(identifiableData(6), NUMBER_OF_TUPLES_PER_BUFFER + 5));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(6));
+        ASSERT_TRUE(ctrl2->injectEoS());
 
-        test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT);
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
     }
     test.stop();
 
@@ -521,7 +521,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
         sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination);
         dataGenerator.stop();
 
-        test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT);
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
     }
     test.stop();
 }

@@ -24,16 +24,20 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <Interfaces.hpp>
-#include <RunningQueryPlan.hpp>
 
 namespace NES::Runtime
 {
+/// Forward refs to not expose them via nes-query-engine
+struct RunningQueryPlanNode;
+class RunningSource;
 class QueryCatalog;
 
 class BaseTask
 {
 public:
+    using onComplete = std::function<void()>;
+    using onFailure = std::function<void(Exception)>;
+
     BaseTask() = default;
     BaseTask(QueryId queryId, std::function<void()> onCompletion, std::function<void(Exception)> onError)
         : queryId(queryId), onCompletion(std::move(onCompletion)), onError(std::move(onError))
@@ -69,8 +73,8 @@ struct WorkTask : BaseTask
         PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
         Memory::TupleBuffer buf,
-        WorkEmitter::onComplete complete,
-        WorkEmitter::onFailure failure)
+        onComplete complete,
+        onFailure failure)
         : BaseTask(queryId, std::move(complete), std::move(failure))
         , pipeline(std::move(pipeline))
         , pipelineId(pipelineId)
@@ -106,20 +110,20 @@ struct StartPipelineTask : BaseTask
 struct StopPipelineTask : BaseTask
 {
     explicit StopPipelineTask(
-        QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, WorkEmitter::onComplete complete, WorkEmitter::onFailure failure)
-        : BaseTask(queryId, std::move(complete), std::move(failure)), pipeline(std::move(pipeline))
-    {
-    }
+        QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept;
+    StopPipelineTask(const StopPipelineTask& other) = delete;
+    StopPipelineTask(StopPipelineTask&& other) noexcept;
+    StopPipelineTask& operator=(const StopPipelineTask& other) = delete;
+    StopPipelineTask& operator=(StopPipelineTask&& other) noexcept;
+    ~StopPipelineTask();
     StopPipelineTask() = default;
     std::unique_ptr<RunningQueryPlanNode> pipeline;
 };
 
-
 struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
-    StopSourceTask(
-        QueryId queryId, std::weak_ptr<RunningSource> target, WorkEmitter::onComplete onComplete, WorkEmitter::onFailure onFailure)
+    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target))
     {
     }
@@ -129,12 +133,7 @@ struct StopSourceTask : BaseTask
 struct FailSourceTask : BaseTask
 {
     FailSourceTask() : exception("", 0) { }
-    FailSourceTask(
-        QueryId queryId,
-        std::weak_ptr<RunningSource> target,
-        Exception exception,
-        WorkEmitter::onComplete onComplete,
-        WorkEmitter::onFailure onFailure)
+    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target)), exception(std::move(exception))
     {
     }

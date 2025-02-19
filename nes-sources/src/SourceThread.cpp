@@ -242,7 +242,31 @@ bool SourceThread::stop()
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
     NES_DEBUG("SourceThread  {} : stopped", originId);
-    return true;
+}
+
+SourceThread::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
+{
+    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    NES_DEBUG("SourceThread  {} : attempting to stop source", originId);
+    thread.request_stop();
+
+    try
+    {
+        auto result = this->terminationFuture.wait_for(timeout);
+        if (result == std::future_status::timeout)
+        {
+            NES_DEBUG("SourceThread  {} : source was not stopped during timeout", originId);
+            return TryStopResult::TIMEOUT;
+        }
+        auto deletedOnScopeExit = std::move(thread);
+    }
+    catch (const Exception& exception)
+    {
+        NES_ERROR("Source encountered an error: {}", exception.what());
+    }
+
+    NES_DEBUG("SourceThread  {} : stopped", originId);
+    return TryStopResult::SUCCESS;
 }
 
 OriginId SourceThread::getOriginId() const

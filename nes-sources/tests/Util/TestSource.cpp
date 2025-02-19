@@ -49,7 +49,8 @@ constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
 template <typename QueueType, typename Args>
 bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> condition)
 {
-    for (size_t i = 0; i < 10; ++i)
+    constexpr auto attempts = 10;
+    for (size_t i = 0; i < attempts; ++i)
     {
         if (condition())
         {
@@ -60,6 +61,7 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
             return true;
         }
     }
+    NES_WARNING("Failed to inject data after {} attempts", attempts);
     return false;
 }
 
