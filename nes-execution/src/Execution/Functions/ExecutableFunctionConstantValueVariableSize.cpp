@@ -22,8 +22,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <nautilus/std/cstring.h>
-#include <val_ptr.hpp>
 namespace NES::Runtime::Execution::Functions
 {
 
