@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <Task.hpp>
 
 namespace NES::Runtime
 {
@@ -35,14 +36,21 @@ public:
 class WorkEmitter
 {
 public:
-    using onComplete = std::function<void()>;
-    using onFailure = std::function<void(Exception)>;
-
     virtual ~WorkEmitter() = default;
 
-    virtual void emitWork(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure) = 0;
-    virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, onComplete, onFailure) = 0;
-    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, onComplete, onFailure) = 0;
-    virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, onComplete, onFailure) = 0;
+    /// Creates and submits a new Task targeting the `target` node.
+    /// If the `potentiallyProcessTheWorkInPlace` parameter is set, the task may be executed in place if it cannot be submitted to the task queue.
+    /// This function may return false if the `potentiallyProcessTheWorkInPlace` parameter is disabled and the task cannot be submitted.
+    virtual bool emitWork(
+        QueryId,
+        const std::shared_ptr<RunningQueryPlanNode>& target,
+        Memory::TupleBuffer,
+        BaseTask::onComplete,
+        BaseTask::onFailure,
+        bool potentiallyProcessTheWorkInPlace)
+        = 0;
+    virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure) = 0;
+    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure) = 0;
+    virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure) = 0;
 };
 }

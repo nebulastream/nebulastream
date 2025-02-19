@@ -81,7 +81,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer*
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
      * fusion, this should only happen occasionally.
      */
-    pipelineCtx->emitBuffer(*tb, PipelineExecutionContext::ContinuationPolicy::NEVER);
+    pipelineCtx->emitBuffer(*tb);
 
     /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
     delete tb;

@@ -61,6 +61,7 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <TestSource.hpp>
+#include <Task.hpp>
 
 namespace NES::Testing
 {
@@ -160,15 +161,30 @@ public:
 struct TestWorkEmitter : Runtime::WorkEmitter
 {
     MOCK_METHOD(
-        void,
+        bool,
         emitWork,
-        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure),
+        (QueryId,
+         const std::shared_ptr<Runtime::RunningQueryPlanNode>&,
+         Memory::TupleBuffer,
+         Runtime::BaseTask::onComplete,
+         Runtime::BaseTask::onFailure,
+         bool),
         (override));
     MOCK_METHOD(
-        void, emitPipelineStart, (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure), (override));
+        void,
+        emitPipelineStart,
+        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (override));
     MOCK_METHOD(
-        void, emitPendingPipelineStop, (QueryId, std::shared_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
-    MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
+        void,
+        emitPendingPipelineStop,
+        (QueryId, std::shared_ptr<Runtime::RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (override));
+    MOCK_METHOD(
+        void,
+        emitPipelineStop,
+        (QueryId, std::unique_ptr<Runtime::RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (override));
 };
 struct TestQueryLifetimeController : Runtime::QueryLifetimeController
 {
