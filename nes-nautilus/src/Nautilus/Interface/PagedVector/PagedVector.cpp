@@ -114,4 +114,9 @@ uint64_t PagedVector::getNumberOfPages() const
 {
     return pages.size();
 }
+
+Memory::MemoryLayouts::MemoryLayoutPtr PagedVector::getMemoryLayout() const
+{
+    return memoryLayout;
+}
 }

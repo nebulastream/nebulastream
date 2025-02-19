@@ -96,4 +96,26 @@ void NLJSlice::combinePagedVectors()
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }
 }
+
+void NLJSlice::writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections)
+{
+    auto leftMemoryLayout = leftPagedVectors[0]->getMemoryLayout();
+    for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
+    {
+        for (auto j = 0UL; j < leftPagedVectors[i]->getTotalNumberOfEntries(); ++j)
+        {
+
+        }
+    }
+
+    for (uint64_t i = 1; i < rightPagedVectors.size(); ++i)
+    {
+        auto rightNumberOfEntries = rightPagedVectors[i]->getTotalNumberOfEntries();
+    }
+}
+
+void NLJSlice::readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections)
+{
+}
+
 }
