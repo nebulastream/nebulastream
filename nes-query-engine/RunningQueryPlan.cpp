@@ -386,7 +386,6 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
         while (not pendingSourceStop->attemptUnregister())
         {
         }
-
     }
 
     return {
