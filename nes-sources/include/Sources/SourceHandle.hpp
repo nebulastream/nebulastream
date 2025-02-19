@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <InputFormatters/InputFormatter.hpp>
