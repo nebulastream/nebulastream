@@ -318,8 +318,7 @@ std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::pat
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, std::string typeName)
-    : SchemaField(std::move(name), YAML::stringToFieldType(std::move(typeName)))
+SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
 {
 }
 

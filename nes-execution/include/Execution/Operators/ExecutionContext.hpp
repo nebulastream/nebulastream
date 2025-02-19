@@ -166,7 +166,7 @@ struct ExecutionContext final
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
-    /// Use allocateBuffer if you want to allocate spacey that lives for multiple pipeline invocations, i.e., query lifetime.
+    /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
 
