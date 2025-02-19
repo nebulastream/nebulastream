@@ -178,7 +178,7 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             auto right = deserializeFunction(serializedNodeFunction.right());
             return NodeFunctionConcat::create(left, right);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_FunctionConstantValue>())
+        if (serializedFunction.details().Is<SerializableFunction_FunctionConstantValue>())
         {
             /// de-serialize constant value function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Constant Value function node.");

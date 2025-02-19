@@ -28,7 +28,7 @@ namespace NES::CLI
 
 struct SchemaField
 {
-    SchemaField(std::string name, std::string typeName);
+    SchemaField(std::string name, const std::string& typeName);
     SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
     SchemaField() = default;
 

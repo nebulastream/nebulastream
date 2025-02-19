@@ -28,6 +28,7 @@
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
 #include <folly/Synchronized.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution
 {
