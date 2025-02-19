@@ -200,9 +200,11 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     {
         parser.parse();
     }
-    catch (const Exception&)
+    catch (Exception& exception)
     {
-        throw TestException("Could not successfully parse test file://{}", testFilePath.string());
+        tryLogCurrentException();
+        exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
+        throw exception;
     }
     return plans;
 }
