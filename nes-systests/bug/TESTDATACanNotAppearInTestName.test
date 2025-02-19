@@ -1,4 +1,4 @@
-# name: sources/TESTDATACanNotAppearInTestName.test
+# name: bug/TESTDATACanNotAppearInTestName.test
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
@@ -12,8 +12,10 @@ Source fiveTuples UINT64 field_1
 4
 5
 
+SINK sink UINT64 fiveTuples$field_1
+
 # Description: simply reads in five tuples with a single value and produces the same tuples
-SELECT field_1 FROM fiveTuples INTO SINK
+SELECT field_1 FROM fiveTuples INTO sink
 ----
 1
 2
