@@ -60,8 +60,8 @@
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
-#include <TestSource.hpp>
 #include <Task.hpp>
+#include <TestSource.hpp>
 
 namespace NES::Testing
 {

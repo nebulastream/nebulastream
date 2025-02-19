@@ -133,7 +133,8 @@ struct StopSourceTask : BaseTask
 struct FailSourceTask : BaseTask
 {
     FailSourceTask() : exception("", 0) { }
-    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, onComplete onComplete, onFailure onFailure)
+    FailSourceTask(
+        QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target)), exception(std::move(exception))
     {
     }

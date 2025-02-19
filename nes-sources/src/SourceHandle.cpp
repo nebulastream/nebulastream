@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <utility>
