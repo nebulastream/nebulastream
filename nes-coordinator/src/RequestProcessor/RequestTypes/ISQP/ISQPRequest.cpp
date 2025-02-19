@@ -183,7 +183,8 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime = getTimestamp();
 
-        if (enableIncrementalPlacement) {
+        // compute the average deployment and placement time if the amendment thread count is more than 1
+        if (coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue() > 1) {
             totalDeploymentTime = totalDeploymentTime/numOfSuccess;
             totalPlacementTime = totalPlacementTime/numOfSuccess;
         }

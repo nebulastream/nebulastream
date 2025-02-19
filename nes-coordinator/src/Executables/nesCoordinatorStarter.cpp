@@ -46,6 +46,13 @@ int main(int argc, const char* argv[]) {
 
         NES_INFO("start coordinator with {}", coordinatorConfig->toString());
 
+        if(!coordinatorConfig->optimizer.enableIncrementalPlacement && coordinatorConfig->optimizer.placementAmendmentThreadCount.getValue() > 1) {
+            NES_ERROR("Running With Strategy : HCD");
+        }else if(!coordinatorConfig->optimizer.enableIncrementalPlacement && coordinatorConfig->optimizer.placementAmendmentThreadCount.getValue() == 1) {
+            NES_ERROR("Running With Strategy : HSD");
+        }else if(coordinatorConfig->optimizer.enableIncrementalPlacement) {
+            NES_ERROR("Running With Strategy : ISQD");
+        }
         NES_INFO("creating coordinator");
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
 
