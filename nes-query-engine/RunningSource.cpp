@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -19,9 +20,9 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
+#include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
@@ -47,8 +48,11 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
+                        /// The Queue might be full, we have to reattempt
                         ENGINE_LOG_DEBUG("Source Emitted Data to sucessor: {}-{}", queryId, successor->id);
-                        emitter.emitWork(queryId, successor, data.buffer, {}, {});
+                        while (!emitter.emitWork(queryId, successor, data.buffer, {}, {}, false))
+                        {
+                        };
                     }
                 },
                 [&](Sources::SourceReturnType::EoS)
@@ -70,12 +74,12 @@ OriginId RunningSource::getOriginId() const
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<Sources::SourceHandle> source,
-    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
     std::function<void(Exception)> unregisterWithError)
     : successors(std::move(successors))
     , source(std::move(source))
-    , unregister(std::move(unregister))
-    , unregisterWithError(std::move(unregisterWithError))
+    , tryDeregister(std::move(tryUnregister))
+    , deregisterWithError(std::move(unregisterWithError))
 {
 }
 
@@ -83,13 +87,13 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryId queryId,
     std::unique_ptr<Sources::SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
-    std::function<void(Exception)> unregisterWithError,
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
+    std::function<void(Exception)> deregisterWithError,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
     auto runningSource = std::shared_ptr<RunningSource>(
-        new RunningSource(successors, std::move(source), std::move(unregister), std::move(unregisterWithError)));
+        new RunningSource(successors, std::move(source), std::move(tryUnregister), std::move(deregisterWithError)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     runningSource->source->start(emitFunction(queryId, runningSource, std::move(successors), controller, emitter));
     return runningSource;
@@ -100,20 +104,26 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (!source->stop())
-        {
-            /// Currently we do not have to recover from a source which could not be properly closed as all our queries are one-shot.
-            ENGINE_LOG_WARNING("Could not gracefully stop source");
-        }
+        source->stop();
     }
 }
-void RunningSource::stop()
+bool RunningSource::attemptDeregister()
 {
-    unregister(std::move(this->successors));
+    auto successful = tryDeregister(std::move(this->successors));
+    if (!successful)
+    {
+        INVARIANT(!this->successors.empty(), "A failed attempt for deregistration should not move the sources successors");
+    }
+    return successful;
+}
+
+bool RunningSource::tryStop()
+{
+    return this->source->tryStop(std::chrono::milliseconds(0));
 }
 void RunningSource::fail(Exception exception) const
 {
-    unregisterWithError(std::move(exception));
+    deregisterWithError(std::move(exception));
 }
 
 }

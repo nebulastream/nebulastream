@@ -177,10 +177,10 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
         node,
         [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
         {
-            if (auto node = weakRef.lock())
+            if (const auto nodeLocked = weakRef.lock())
             {
                 ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
-                node->requiresTermination = true;
+                nodeLocked->requiresTermination = true;
             }
         },
         {});
@@ -304,7 +304,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 auto lock = runningPlan->internal.lock();
                 auto& internal = *lock;
 
-                /// The RunningQueryPlan is guaranteed to be alive at this point. Otherwise the the callback would have been cleared.
+                /// The RunningQueryPlan is guaranteed to be alive at this point. Otherwise the callback would have been cleared.
                 ENGINE_LOG_DEBUG("Pipeline Setup Completed");
                 for (auto& [source, successors] : sources)
                 {
@@ -319,12 +319,24 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                             {
                                 auto lock = runningPlan->internal.lock();
                                 auto& internal = *lock;
-                                ENGINE_LOG_INFO("Stopping Source");
+                                ENGINE_LOG_INFO("Stopping Source with OriginId {}", id);
+                                if (const auto it = internal.sources.find(id); it != internal.sources.end())
+                                {
+                                    if (it->second->tryStop() != Sources::SourceReturnType::TryStopResult::SUCCESS)
+                                    {
+                                        return false;
+                                    }
+                                }
+
+                                ENGINE_LOG_INFO("Stopped all sources");
+
                                 for (auto& successor : successors)
                                 {
                                     emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
                                 }
+
                                 internal.sources.erase(id);
+                                return true;
                             },
                             [listener](const Exception& exception) { listener->onFailure(exception); },
                             controller,
@@ -363,10 +375,18 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
 
 
     /// Source stop will emit a the PendingPipelineStop which stops a pipeline once no more tasks are depending on it.
+    /// The blocking nature of waiting for all sources to be stopped introduces a potential deadlock, if the source is blocked
+    /// waiting on submitting work into the TaskQueue, while all WorkerThreads are waiting for the source to terminate.
     auto sources = internal.sources | std::views::values | ranges::to<std::vector>();
-    for (auto& source : sources)
+    auto pendingSourceStops
+        = sources | std::views::filter([](auto& source) { return source->attemptUnregister(); }) | ranges::to<std::vector>();
+    for (const auto& pendingSourceStop : pendingSourceStops)
     {
-        source->stop();
+        /// We need to wait for the source to be unregistered, as the source may be blocked on submitting work into the AdmissionQueue
+        while (not pendingSourceStop->attemptUnregister())
+        {
+        }
+
     }
 
     return {

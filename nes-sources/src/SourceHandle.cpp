@@ -43,7 +43,11 @@ bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 }
 bool SourceHandle::stop() const
 {
-    return this->sourceThread->stop();
+    this->sourceThread->stop();
+}
+bool SourceHandle::tryStop(std::chrono::milliseconds timeout) const
+{
+    return this->sourceThread->tryStop(timeout) == SourceThread::TryStopResult::SUCCESS;
 }
 
 OriginId SourceHandle::getSourceId() const

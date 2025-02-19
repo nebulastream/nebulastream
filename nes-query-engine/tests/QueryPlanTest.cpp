@@ -41,6 +41,7 @@
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
+#include <Task.hpp>
 
 using namespace std::chrono_literals;
 namespace stdv = std::ranges::views;
@@ -144,14 +145,14 @@ struct TestPipelineExecutionContext : Execution::PipelineExecutionContext
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
     MOCK_METHOD(std::vector<std::shared_ptr<Execution::OperatorHandler>>&, getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<Execution::OperatorHandler>>&), (override));
-    MOCK_METHOD(void, emitBuffer, (const Memory::TupleBuffer&, ContinuationPolicy), (override));
+    MOCK_METHOD(bool, emitBuffer, (const Memory::TupleBuffer&, ContinuationPolicy), (override));
 };
 
 struct TerminatePipelineArgs
 {
     std::unique_ptr<RunningQueryPlanNode> target;
-    WorkEmitter::onComplete onComplete;
-    WorkEmitter::onFailure onFailure;
+    BaseTask::onComplete onComplete;
+    BaseTask::onFailure onFailure;
 };
 
 template <typename Args, typename KeyT>
@@ -286,8 +287,8 @@ template <>
 struct SetupPipelineArgs
 {
     std::weak_ptr<RunningQueryPlanNode> target;
-    WorkEmitter::onComplete onComplete;
-    WorkEmitter::onFailure onFailure;
+    BaseTask::onComplete onComplete;
+    BaseTask::onFailure onFailure;
 };
 
 using Setups = EmittedTask<SetupPipelineArgs, Execution::ExecutablePipelineStage*>;
@@ -355,7 +356,7 @@ template <>
 {
     if (auto target = stops.target.lock())
     {
-        target->stop();
+        target->attemptUnregister();
     }
     return ::testing::AssertionSuccess();
 }
