@@ -113,7 +113,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     placementAmendmentHandler->enqueueRequest(amendmentInstance);
 
     // If amendment successfully happens then update the catalog and return the call
-    if (amendmentInstance->getFuture().get()) {
+    if (amendmentInstance->getFuture().get().success) {
         // 4. Mark the shared query plan as failed in the catalog
         queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::FAILED, failureReason);
         // 5. respond to the calling service which is the shared query id to the query being undeployed
