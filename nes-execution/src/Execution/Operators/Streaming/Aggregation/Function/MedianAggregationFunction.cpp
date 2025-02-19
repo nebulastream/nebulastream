@@ -56,7 +56,9 @@ void MedianAggregationFunction::lift(
 }
 
 void MedianAggregationFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1, const nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState1,
+    const nautilus::val<AggregationState*> aggregationState2,
+    PipelineMemoryProvider&)
 {
     /// Getting the paged vectors from the aggregation states
     const auto memArea1 = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState1);
@@ -70,7 +72,8 @@ void MedianAggregationFunction::combine(
         memArea2);
 }
 
-Nautilus::Record MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+Nautilus::Record
+MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);

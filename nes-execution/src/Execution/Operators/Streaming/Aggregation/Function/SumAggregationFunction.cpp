@@ -58,7 +58,9 @@ void SumAggregationFunction::lift(
 }
 
 void SumAggregationFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1, const nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState1,
+    const nautilus::val<AggregationState*> aggregationState2,
+    PipelineMemoryProvider&)
 {
     /// Reading the sum from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
