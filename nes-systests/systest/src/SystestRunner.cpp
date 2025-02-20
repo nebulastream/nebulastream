@@ -388,18 +388,18 @@ void printQueryResultToStdOut(const Query& query, const std::string& errorMessag
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (errorMessage.empty())
     {
-        std::cout << "PASSED" << std::endl;
+        std::cout << "PASSED" << '\n';
     }
     else
     {
-        std::cout << "FAILED" << std::endl;
+        std::cout << "FAILED" << '\n';
         /// spd logger cannot handle multiline prints with proper color and pattern.
         /// And as this is only for test runs we use stdout here.
         std::cout << "===================================================================" << '\n';
-        std::cout << query.queryDefinition << std::endl;
+        std::cout << query.queryDefinition << '\n';
         std::cout << "===================================================================" << '\n';
         std::cout << errorMessage;
-        std::cout << "===================================================================" << std::endl;
+        std::cout << "===================================================================" << '\n';
     }
 }
 }
