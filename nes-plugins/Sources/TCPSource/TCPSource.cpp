@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "TCPSource.hpp"
+#include <TCPSource.hpp>
+
 #include <cerrno> /// For socket error
 #include <chrono>
 #include <cstring>
@@ -24,13 +25,13 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <sys/select.h>
 
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
@@ -84,21 +85,36 @@ std::ostream& TCPSource::toString(std::ostream& str) const
 
 bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
 {
-    std::chrono::seconds SocketConnectDefaultTimeout{connectionTimeout};
-    sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    while (result != nullptr && sockfd == -1)
+    const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
+
+    /// we try each addrinfo until we successfully create a socket
+    while (result != nullptr)
     {
+        sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+
+        if (sockfd != -1)
+        {
+            break;
+        }
         result = result->ai_next;
     }
+
+    /// check if we found a vaild address
+    if (result == nullptr)
+    {
+        NES_ERROR("No valid address found to create socket.");
+        return false;
+    }
+
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
     /// set timeout for both blocking receive and send calls
     /// if timeout is set to zero, then the operation will never timeout
     /// (https://linux.die.net/man/7/socket)
     /// as a workaround, we implicitly add one microsecond to the timeout
-    timeval Timeout{SocketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &Timeout, sizeof(Timeout));
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &Timeout, sizeof(Timeout));
+    timeval timeout{.tv_sec = socketConnectDefaultTimeout.count(), .tv_usec = IMPLICIT_TIMEOUT_USEC};
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
     /// if the TCPSource did not establish a connection, try with timeout
@@ -108,33 +124,36 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
+            strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
         }
 
         /// Set the timeout for the connect attempt
         fd_set fdset;
-        timeval tv{SocketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
+        timeval timeValue{socketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
 
         FD_ZERO(&fdset);
         FD_SET(sockfd, &fdset);
 
-        connection = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
+        connection = select(sockfd + 1, nullptr, &fdset, nullptr, &timeValue);
         if (connection <= 0)
         {
             /// Timeout or error
             errno = ETIMEDOUT;
             close();
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
+            strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
         }
 
         /// Check if connect succeeded
         int error = 0;
         socklen_t len = sizeof(error);
-        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || error)
+        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || (error != 0))
         {
             errno = error;
             close();
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
+            strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
         }
     }
     return true;
@@ -160,7 +179,7 @@ void TCPSource::open()
     }
 
     /// make sure that result is cleaned up automatically (RAII)
-    std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
+    const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
 
     const int flags = fcntl(sockfd, F_GETFL, 0);
 
@@ -246,7 +265,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
 }
 
 void TCPSource::close()
