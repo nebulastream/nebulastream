@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <regex>
@@ -23,7 +23,6 @@
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
-#include <API/Query.hpp>
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
@@ -38,11 +37,7 @@
 #include <Functions/NodeFunctionConcat.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
@@ -54,7 +49,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Parsers
 {

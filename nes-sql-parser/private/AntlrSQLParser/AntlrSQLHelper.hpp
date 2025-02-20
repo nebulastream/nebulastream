@@ -16,13 +16,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <API/Query.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
