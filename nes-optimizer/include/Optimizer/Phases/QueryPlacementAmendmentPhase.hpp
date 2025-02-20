@@ -136,9 +136,6 @@ struct ReconfigurationMarkerUnit {
 };
 
 /**
- */
-
-/**
  * @brief This struct holds the placement removal and addition deployment contexts. In addition a set of reconfigurationMarkerUnits need to be sent.
  * This is necessary as after a placement amendment we might want to restart a running query by first removing the existing placements, then adding new one, and
  * using reconfiguration markers to terminate plans that are marked for removal and starting newly deployed or updated plans.
@@ -276,25 +273,6 @@ class QueryPlacementAmendmentPhase {
     computeReconfigurationMarkerDeploymentUnit(SharedQueryId& sharedQueryId,
                                                const ChangeLogEntryPtr& changeLogEntry,
                                                std::set<ReconfigurationMarkerUnit>& reconfigurationMarkerUnitComparator) const;
-
-    /**
-     * @brief perform placement for migrating operators
-     * @param placementStrategy: the placement strategy
-     * @param migratingOperatorToProperties: operator id to operator properties (old and new node id, old decomposed plan id)
-     * @param planIdToCopy: decomposed plan copy saved by operator id
-     * @param sharedQueryId: id of the shared query plan
-     * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
-     * @param deploymentContexts: map containing deployment contexts
-     */
-    void handleMigrationPlacement(
-        Optimizer::PlacementStrategy placementStrategy,
-        const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
-        std::unordered_map<OperatorId, std::string>& migratingOperatorToFileSink,
-        std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-        std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
-        FaultToleranceType faultTolerance);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

@@ -12,6 +12,7 @@
 
 add_nes_execution_test(execution-global-slice-pre-aggregation-test "NonKeyedSlicePreAggregationTest.cpp")
 add_nes_execution_test(execution-keyed-slice-pre-aggregation-test "KeyedSlicePreAggregationTest.cpp")
+add_nes_execution_test(execution-keyed-serialization-test "KeyedSerializationTest.cpp")
 add_nes_execution_test(execution-multi-origin-watermark-processor-test "MultiOriginWatermarkProcessorTest.cpp")
 add_nes_execution_test(execution-slice-assigner-test "SliceAssignerTest.cpp")
 

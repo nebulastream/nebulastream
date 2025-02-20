@@ -18,7 +18,9 @@ add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES}
+        include/Runtime/OperatorHandlerStore.hpp
+        src/Runtime/OperatorHandlerStore.cpp)
 
 target_link_libraries(nes-runtime PUBLIC nes-statistics)
 target_include_directories(nes-runtime PUBLIC

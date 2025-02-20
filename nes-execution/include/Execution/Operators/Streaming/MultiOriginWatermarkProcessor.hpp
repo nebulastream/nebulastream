@@ -15,10 +15,13 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace NES::Runtime::Execution::Operators {
@@ -52,6 +55,30 @@ class MultiOriginWatermarkProcessor {
     [[nodiscard]] uint64_t getCurrentWatermark();
 
     std::string getCurrentStatus();
+
+    /**
+    * @brief get state of watermarks processor as vector of buffers
+    * Format of buffers looks like:
+    * buffers contain data in format:
+    * -----------------------------------------
+    * number of origins (n) | number of states for origin 1 (m)
+    * seq number of first block (i_0) | isLastChunk of first block (i_0) | number of chunks of first block (i_0) | ... | same for i_m state
+    * same for all other origins j_1 ... j_n
+    * @return vector of buffers
+    */
+    std::vector<Runtime::TupleBuffer> serializeWatermarks(std::shared_ptr<BufferManager> bufferManager) const;
+
+    /**
+     * @brief set new timestamps and sequence numbers for all origins
+     * Format of buffers looks like:
+     * buffers contain data in format:
+     * -----------------------------------------
+     * number of origins (n) | number of states for origin 1 (m)
+     * seq number of first block (i_0) | isLastChunk of first block (i_0) | number of chunks of first block (i_0) | ... | same for i_m state
+     * same for all other origins j_1 ... j_n
+     * @param vector of buffers
+     */
+    void restoreWatermarks(std::span<const Runtime::TupleBuffer> buffers);
 
   private:
     const std::vector<OriginId> origins;

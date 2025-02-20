@@ -18,7 +18,9 @@
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 
@@ -27,6 +29,9 @@ namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
 class KeyedThreadLocalSliceStore;
 class State;
+
+class KeyedSlicePreAggregationHandler;
+using KeyedSlicePreAggregationHandlerPtr = std::shared_ptr<KeyedSlicePreAggregationHandler>;
 /**
  * @brief The KeyedSlicePreAggregationHandler provides an operator handler to perform slice-based pre-aggregation of keyed tumbling windows.
  * @note sliding windows will be added later.
@@ -51,7 +56,76 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
+    /**
+      * @brief Retrieves state, window info and watermarks information from max(last watermark, migrated tmstmp)
+      * @return vector of tuple buffers
+      */
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration();
+
+    /**
+     * @brief Retrieve the state as a vector of tuple buffers
+     * Format of buffers looks like:
+     * start buffers contain metadata in format:
+     * -----------------------------------------
+     * number of metadata buffers | number of slices (n) | number of buffers in 1st slice (m_0) | ... | number of slices in n-th slice (m_n)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     * -----------------------------------------
+     * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
+     * @param startTS as a left border of slices
+     * @param stopTS as a right border of slice
+     * @return vector of tuple buffers
+     */
+    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
+
+    /**
+     * @brief Restores the state from vector of tuple buffers
+     * Expected format of buffers:
+     * start buffers contain metadata in format:
+     * -----------------------------------------
+     * number of slices (n) | number of buffers in 1st slice (m_0) | ... | number of slices in n-th slice (m_n)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     *-----------------------------------------
+     * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
+     * @param buffers with the state
+     */
+    void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
+
+    /**
+     * @brief Retrieve watermarks and sequence numbers as a vector of tuple buffers
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build origins (n) | number of probe origins (m)
+     * | watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     */
+    std::vector<TupleBuffer> getWatermarksToMigrate();
+
+    /**
+     * @brief Restores watermarks and sequence numbers in build and probe watermark processors
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build buffers (n) | number of probe buffers (m)
+     * watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     */
+    void restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers);
+
+    void setBufferManager(const BufferManagerPtr& bufManager);
+
     ~KeyedSlicePreAggregationHandler() override;
+
+    private:
+    /**
+     * Deserialize slice from span of buffers
+     * @param buffers as a span
+     * @return recreated KeyedSlicePtr
+     */
+    KeyedSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers);
+
+  protected:
+    BufferManagerPtr bufferManager;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_

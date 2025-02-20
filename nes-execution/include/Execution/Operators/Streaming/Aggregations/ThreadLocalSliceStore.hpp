@@ -128,7 +128,7 @@ class ThreadLocalSliceStore {
     }
 
     /**
-     * @brief Deletes the slice with the smalles slice index.
+     * @brief Deletes the slice with the smallest slice index.
      */
     void removeSlicesUntilTs(uint64_t ts) {
         // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.

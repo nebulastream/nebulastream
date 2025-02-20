@@ -120,6 +120,21 @@ class ChainedHashMap {
     void insertPage(int8_t* page, uint64_t numberOfEntries);
 
     /**
+     * @brief This serializes the complete ChainedHashMap including its content
+     * @return serialized ChainedHashMap
+     */
+    std::vector<uint8_t> serialize() const;
+
+    /**
+     * @brief This deserializes the complete ChainedHashMap including its contents
+     * @param data serialized version of ChainedHashMap
+     * @param length length of data
+     * @param allocator
+     * @return ChainedHashMap
+     */
+    static std::unique_ptr<ChainedHashMap> deserialize(const uint8_t* data, size_t length, std::unique_ptr<std::pmr::memory_resource> allocator);
+
+    /**
      * @brief Destructs the hash map and releases all associated resources.
      * All pointers to entries of the hash map become invalid and accesses are undefined.
      */
@@ -169,7 +184,7 @@ class ChainedHashMap {
     const hash_t mask;
     uint64_t currentSize = 0;
     Entry** entries;
-    std::vector<int8_t*> pages;
+    std::vector<int8_t*> pages;  // serialise this
 };
 }// namespace NES::Nautilus::Interface
 

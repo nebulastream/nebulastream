@@ -158,8 +158,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     bool isReconfiguration() const;
 
     /**
-    * @return returns true if the pipeline is migration pipeline
-    */
+     * @return returns true if the pipeline is migration pipeline
+     */
     bool isMigration() const;
 
     /**

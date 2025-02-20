@@ -820,9 +820,7 @@ void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
     NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
     this->metricStore = metricStore;
 }
-
 WorkerId NodeEngine::getNodeId() const { return nodeId; }
-
 void NodeEngine::setNodeId(const WorkerId NodeId) { nodeId = NodeId; }
 
 void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources) {

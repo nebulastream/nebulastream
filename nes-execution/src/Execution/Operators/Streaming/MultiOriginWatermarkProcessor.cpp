@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 
@@ -61,6 +62,98 @@ uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
     return minimalWatermark;
+}
+
+std::vector<Runtime::TupleBuffer>
+MultiOriginWatermarkProcessor::serializeWatermarks(std::shared_ptr<BufferManager> bufferManager) const {
+    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+
+    auto dataBuffer = bufferManager->getBufferBlocking();
+    buffersToTransfer.emplace(buffersToTransfer.begin(), dataBuffer);
+    uint64_t dataBuffersCount = 1;
+
+    // check that tuple buffer size is more than or equal to uint64_t
+    if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
+        NES_THROW_RUNTIME_ERROR(
+            "Buffer size has to be at least greater or equal to uint64_t in size for successful state migration.");
+    }
+    auto dataPtr = dataBuffer.getBuffer<uint64_t>();
+    uint64_t dataIdx = 0;
+
+    // TODO: make Util function for that actually
+
+    /** @brief Lambda to write to metadata buffers */
+    auto writeToMetadata =
+        [&dataBuffer, &dataPtr, &dataIdx, &bufferManager, &dataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
+            StateSerializationUtil::writeToBuffer(bufferManager,
+                                                  dataBuffer.getBufferSize(),
+                                                  dataPtr,
+                                                  dataIdx,
+                                                  dataBuffersCount,
+                                                  buffersToTransfer,
+                                                  dataToWrite);
+        };
+
+    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    // write information from every watermark processor to buffers
+    // 0. Write number of origins
+    writeToMetadata(origins.size());
+    // 1. Go over origins and write watermark processor state
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        // get information stored in watermark processor represented as state of container
+        auto states = watermarkProcessors[originIndex]->serialize();
+        // 2. Write number of states
+        writeToMetadata(states.size());
+        for (const auto& state : states) {
+            // 3. Write state content
+            auto seqNumber = std::get<0>(state);
+            writeToMetadata(seqNumber);
+            auto lastChunkNumber = std::get<1>(state);
+            writeToMetadata(lastChunkNumber);
+            auto seenChunks = std::get<2>(state);
+            writeToMetadata(seenChunks);
+            auto watermark = std::get<3>(state);
+            writeToMetadata(watermark);
+        }
+    }
+
+    return buffersToTransfer;
+}
+
+void MultiOriginWatermarkProcessor::restoreWatermarks(std::span<const Runtime::TupleBuffer> buffers) {
+    // get first buffer
+    uint64_t dataBuffersIdx = 0;
+    auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
+    uint64_t dataIdx = 0;
+
+    /** @brief Lambda to read from metadata buffers */
+    auto readFromMetadata = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
+        return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
+    };
+    // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
+    // 0. Retrieve number of origins
+    auto numberOfOrigins = readFromMetadata();
+
+    if (numberOfOrigins != origins.size()) {
+        NES_NOT_IMPLEMENTED();
+    }
+    // 1. Go over origin ids and recreate watermark processors
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        auto numberOfStates = readFromMetadata();
+        // 2. Get number of states
+        auto states = std::vector<NES::Sequencing::ContainerState<uint64_t>>();
+
+        // 3. Get state content
+        for (uint64_t stateId = 0; stateId < numberOfStates; stateId++) {
+            auto seqNumber = readFromMetadata();
+            auto lastChunkNumber = readFromMetadata();
+            auto seenChunks = readFromMetadata();
+            auto watermark = readFromMetadata();
+            states.emplace_back(seqNumber, lastChunkNumber, seenChunks, watermark);
+        }
+
+        watermarkProcessors[originIndex]->deserialize(states);
+    }
 }
 
 }// namespace NES::Runtime::Execution::Operators

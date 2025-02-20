@@ -96,10 +96,10 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     void dispatchBuffer(TupleBuffer tupleBuffer);
 
     /**
-    * @brief Emits a output tuple to migration pipeline.
-    * @param outputBuffer the output tuple buffer that is passed to the Runtime
-    * @param workerContext the worker context
-    */
+     * @brief Emits a output tuple to migration pipeline.
+     * @param outputBuffer the output tuple buffer that is passed to the Runtime
+     * @param workerContext the worker context
+     */
     void migrateBuffer(TupleBuffer& buffer, WorkerContextRef workerContext);
 
     /**
@@ -193,8 +193,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     /**
-    * @brief The emit function handler to emit migration buffer.
-    */
+     * @brief The emit function handler to emit migration buffer.
+     */
     std::optional<std::function<void(TupleBuffer&, WorkerContext&)>> emitMigrationHandler;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;

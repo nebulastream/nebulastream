@@ -14,9 +14,14 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <cinttypes>
 #include <ostream>
+#include "KeyedSliceMergingHandler.hpp"
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -58,6 +63,10 @@ class KeyedSlice {
      * @return uint64_t
      */
     inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() { return state; }
+
+    std::vector<Runtime::TupleBuffer> serialize(BufferManagerPtr& bufferManager);
+
+    static KeyedSlicePtr deserialize(std::span<const Runtime::TupleBuffer> buffers);
 
     ~KeyedSlice();
     KeyedSlice();

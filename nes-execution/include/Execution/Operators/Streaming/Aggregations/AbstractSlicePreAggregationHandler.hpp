@@ -75,10 +75,10 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
   protected:
     const uint64_t windowSize;
     const uint64_t windowSlide;
-    std::vector<std::unique_ptr<SliceStore>> threadLocalSliceStores;
+    std::vector<std::unique_ptr<SliceStore>> threadLocalSliceStores;  // these 4 are probs the state
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = 1;
+    std::atomic<uint64_t> resultSequenceNumber = 1;  // until here
     std::mutex triggerMutex;
 
   private:
