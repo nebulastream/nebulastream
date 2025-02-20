@@ -566,8 +566,8 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
 
     for (const auto& operatorToRePlace : operatorsToBeRePlaced) {
         operatorToRePlace->as_if<LogicalOperator>()->setOperatorState(OperatorState::TO_BE_REPLACED);
-        if (!operatorToRePlace->hasProperty("placed"))
-            operatorToRePlace->addProperty("placed", std::any_cast<WorkerId>(operatorToRePlace->getProperty(Optimizer::PINNED_WORKER_ID)));
+        if (!operatorToRePlace->hasProperty("offload"))
+            operatorToRePlace->addProperty("offload", std::any_cast<WorkerId>(operatorToRePlace->getProperty(Optimizer::PINNED_WORKER_ID)));
     }
 
     //add change log entry indicating the addition

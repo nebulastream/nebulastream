@@ -119,6 +119,14 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         return;
     }
 
+    else if (logicalOperator->hasProperty("offload")) {
+        NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        logicalOperator->addProperty(PINNED_WORKER_ID, std::any_cast<WorkerId>(logicalOperator->getProperty("offload")));
+        for (const auto& parent : logicalOperator->getParents()) {
+            identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
+        }
+        return;
+    }
     else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
     && logicalOperator->getOriginalId() == logicalOperator->getId() && (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)) {
         if (pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
@@ -126,7 +134,8 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         }
     }
 
-    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()) {
+    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
+        && faultTolerance == FaultToleranceType::NONE) {
             candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
     }
     NES_DEBUG("Place {}", logicalOperator->toString());
