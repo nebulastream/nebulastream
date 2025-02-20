@@ -87,23 +87,23 @@ foreach (workerThreads IN LISTS workerThreads)
                         NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter
                         COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter_join
                         --
-                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.unorderedness=1.0)
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
                 add_test(
                         NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler
                         COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler_join
                         --
-                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.unorderedness=1.0)
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
 
                 add_test(
                         NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter
                         COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter_aggregation
                         --
-                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.unorderedness=1.0)
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
                 add_test(
                         NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler
                         COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler_aggregation
                         --
-                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.unorderedness=1.0)
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
 
             endforeach ()
         endforeach ()

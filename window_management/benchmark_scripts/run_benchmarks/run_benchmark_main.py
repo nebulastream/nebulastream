@@ -38,7 +38,7 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+MEASURE_INTERVAL = 1
 WAIT_BETWEEN_COMMANDS = 2
 NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000 # 0 means the source will run indefinitely
 
@@ -110,7 +110,7 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
     worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
     worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
-    worker_config_yaml["worker"]["queryCompiler"]["unorderedness"] = current_benchmark_config.unorderedness
+    worker_config_yaml["worker"]["queryCompiler"]["degreeOfDisorder"] = current_benchmark_config.degree_of_disorder
     worker_config_yaml["worker"]["queryCompiler"]["shuffleStrategy"] = current_benchmark_config.shuffle_strategy
     worker_config_yaml["worker"]["queryCompiler"]["minDelay"] = current_benchmark_config.min_delay
     worker_config_yaml["worker"]["queryCompiler"]["maxDelay"] = current_benchmark_config.max_delay
@@ -327,7 +327,7 @@ if __name__ == "__main__":
 
 
     # Calling the postprocessing main
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH, CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT)
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH, CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT, PIPELINE_TXT)
     post_processing.main()
 
     #all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)

@@ -103,8 +103,8 @@ public:
            ShuffleStrategy::NONE,
            "Strategy for introducing delays by shuffling tuples or buffers in the stream"
            "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
-    NES::Configurations::FloatOption unorderedness
-        = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatRangeValidation>(0, 1)}};
+    NES::Configurations::FloatOption degreeOfDisorder
+        = {"degreeOfDisorder", "0.0", "Percentage of degreeOfDisorder", {std::make_shared<NES::Configurations::FloatRangeValidation>(0, 1)}};
     NES::Configurations::UIntOption minDelay
         = {"minDelay", "1", "Minimum delay in milliseconds", {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxDelay
@@ -124,7 +124,7 @@ private:
             &sortBufferByField,
             &sortBufferOrder,
             &shuffleStrategy,
-            &unorderedness,
+            &degreeOfDisorder,
             &minDelay,
             &maxDelay,
             &pipelinesTxtFilePath,

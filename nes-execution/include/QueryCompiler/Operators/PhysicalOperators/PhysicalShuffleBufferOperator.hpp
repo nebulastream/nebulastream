@@ -25,18 +25,18 @@ public:
     PhysicalShuffleBufferOperator(
         OperatorId id,
         const std::shared_ptr<Schema>& inputSchema,
-        const float& unorderedness,
+        const float& degreeOfDisorder,
         const std::chrono::milliseconds& minDelay,
         const std::chrono::milliseconds& maxDelay);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
         const std::shared_ptr<Schema>& inputSchema,
-        const float& unorderedness,
+        const float& degreeOfDisorder,
         const std::chrono::milliseconds& minDelay,
         const std::chrono::milliseconds& maxDelay);
     static std::shared_ptr<PhysicalOperator> create(
         std::shared_ptr<Schema> inputSchema,
-        const float& unorderedness,
+        const float& degreeOfDisorder,
         const std::chrono::milliseconds& minDelay,
         const std::chrono::milliseconds& maxDelay);
     float getUnorderedness() const;
@@ -46,7 +46,7 @@ public:
     std::shared_ptr<Operator> copy() override;
 
 protected:
-    float unorderedness;
+    float degreeOfDisorder;
     std::chrono::milliseconds minDelay;
     std::chrono::milliseconds maxDelay;
 };

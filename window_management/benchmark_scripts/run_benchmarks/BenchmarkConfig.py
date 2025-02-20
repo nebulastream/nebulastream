@@ -19,7 +19,7 @@ class BenchmarkConfig:
     def __init__(self, number_of_worker_threads, slice_cache_type, slice_store_type, numberOfEntriesSliceCache,
                  lock_slice_cache,
                  timestamp_increment, buffer_size_in_bytes, query, no_physical_sources_per_logical_source,
-                 shuffle_strategy, unorderedness, min_delay, max_delay):
+                 shuffle_strategy, degree_of_disorder, min_delay, max_delay):
         self.number_of_worker_threads = number_of_worker_threads
         self.slice_cache_type = slice_cache_type
         self.slice_store_type = slice_store_type
@@ -30,7 +30,7 @@ class BenchmarkConfig:
         self.query = query
         self.no_physical_sources_per_logical_source = no_physical_sources_per_logical_source
         self.shuffle_strategy = shuffle_strategy
-        self.unorderedness = unorderedness
+        self.degree_of_disorder = degree_of_disorder
         self.min_delay = min_delay
         self.max_delay = max_delay
 
@@ -50,7 +50,7 @@ class BenchmarkConfig:
             "numberOfEntriesSliceCache": self.numberOfEntriesSliceCache,
             "lock_slice_cache": self.lock_slice_cache,
             "timestamp_increment": self.timestamp_increment,
-            "unorderedness": self.unorderedness,
+            "degree_of_disorder": self.degree_of_disorder,
             "min_delay": self.min_delay,
             "max_delay": self.max_delay,
             "buffer_size_in_bytes": self.buffer_size_in_bytes,
@@ -65,8 +65,8 @@ class BenchmarkConfig:
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [1, 2, 4, 8, 16]
-    CACHE_SIZES = [1, 10, 20, 100]
+    NUMBER_OF_WORKER_THREADS = [1, 8]
+    CACHE_SIZES = [1, 100]
     CACHE_TYPES = ["LRU", "FIFO", "SECOND_CHANCE"]
     LOCKED_SLICE_CACHE = [False]  # True or False
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for
@@ -115,7 +115,7 @@ def create_all_benchmark_configs():
             query,
             no_physical_sources_per_logical_source,
             shuffle_strategy,
-            unorderedness,
+            degree_of_disorder,
             min_delay,
             max_delay
         )
@@ -128,5 +128,5 @@ def create_all_benchmark_configs():
         for no_physical_sources_per_logical_source in NO_PHYSICAL_SOURCES
         for shuffle_strategy in SHUFFLE_STRATEGY
         for min_delay, max_delay in MIN_MAX_DELAYS
-        for unorderedness in UNORDEREDNESS
+        for degree_of_disorder in UNORDEREDNESS
     ]

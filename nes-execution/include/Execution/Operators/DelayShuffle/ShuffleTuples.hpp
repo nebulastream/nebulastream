@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators
 class ShuffleTuplesOperatorHandler : public OperatorHandler
 {
 public:
-    ShuffleTuplesOperatorHandler(float unorderedness);
+    ShuffleTuplesOperatorHandler(float degreeOfDisorder);
 
     void setup(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
@@ -38,7 +38,7 @@ public:
     std::vector<uint64_t> getEmitIndicesForWorker(WorkerThreadId workerThreadId);
 
 private:
-    const double unorderedness;
+    const double degreeOfDisorder;
     std::mt19937 gen;
     uint64_t numberOfWorkerThreads;
     std::vector<std::vector<uint64_t>> emitIndicesForWorker;

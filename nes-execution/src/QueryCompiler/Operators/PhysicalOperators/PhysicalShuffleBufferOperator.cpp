@@ -21,12 +21,12 @@ namespace NES::QueryCompilation::PhysicalOperators
 PhysicalShuffleBufferOperator::PhysicalShuffleBufferOperator(
     OperatorId id,
     const std::shared_ptr<Schema>& inputSchema,
-    const float& unorderedness,
+    const float& degreeOfDisorder,
     const std::chrono::milliseconds& minDelay,
     const std::chrono::milliseconds& maxDelay)
     : Operator(id)
     , PhysicalUnaryOperator(id, inputSchema, inputSchema)
-    , unorderedness(unorderedness)
+    , degreeOfDisorder(degreeOfDisorder)
     , minDelay(minDelay)
     , maxDelay(maxDelay)
 {
@@ -34,25 +34,25 @@ PhysicalShuffleBufferOperator::PhysicalShuffleBufferOperator(
 
 std::shared_ptr<PhysicalOperator> PhysicalShuffleBufferOperator::create(
     std::shared_ptr<Schema> inputSchema,
-    const float& unorderedness,
+    const float& degreeOfDisorder,
     const std::chrono::milliseconds& minDelay,
     const std::chrono::milliseconds& maxDelay)
 {
-    return create(getNextOperatorId(), std::move(inputSchema), unorderedness, minDelay, maxDelay);
+    return create(getNextOperatorId(), std::move(inputSchema), degreeOfDisorder, minDelay, maxDelay);
 }
 std::shared_ptr<PhysicalOperator> PhysicalShuffleBufferOperator::create(
     OperatorId id,
     const std::shared_ptr<Schema>& inputSchema,
-    const float& unorderedness,
+    const float& degreeOfDisorder,
     const std::chrono::milliseconds& minDelay,
     const std::chrono::milliseconds& maxDelay)
 {
-    return std::make_shared<PhysicalShuffleBufferOperator>(id, inputSchema, unorderedness, minDelay, maxDelay);
+    return std::make_shared<PhysicalShuffleBufferOperator>(id, inputSchema, degreeOfDisorder, minDelay, maxDelay);
 }
 
 float PhysicalShuffleBufferOperator::getUnorderedness() const
 {
-    return unorderedness;
+    return degreeOfDisorder;
 }
 
 std::chrono::milliseconds PhysicalShuffleBufferOperator::getMinDelay() const
@@ -76,7 +76,7 @@ std::string PhysicalShuffleBufferOperator::toString() const
 
 std::shared_ptr<Operator> PhysicalShuffleBufferOperator::copy()
 {
-    auto result = create(id, inputSchema, unorderedness, minDelay, maxDelay);
+    auto result = create(id, inputSchema, degreeOfDisorder, minDelay, maxDelay);
     result->addAllProperties(properties);
     return result;
 }

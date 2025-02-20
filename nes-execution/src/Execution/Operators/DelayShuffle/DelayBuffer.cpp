@@ -20,8 +20,8 @@
 namespace NES::Runtime::Execution::Operators
 {
 DelayBufferOperatorHandler::DelayBufferOperatorHandler(
-    const float unorderedness, const std::chrono::milliseconds minDelay, const std::chrono::milliseconds maxDelay)
-    : unorderedness(unorderedness), gen(std::mt19937(std::random_device()())), delayDistrib(minDelay.count(), maxDelay.count())
+    const float degreeOfDisorder, const std::chrono::milliseconds minDelay, const std::chrono::milliseconds maxDelay)
+    : degreeOfDisorder(degreeOfDisorder), gen(std::mt19937(std::random_device()())), delayDistrib(minDelay.count(), maxDelay.count())
 {
 }
 
@@ -35,7 +35,7 @@ void DelayBufferOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExe
 void DelayBufferOperatorHandler::sleepOrNot(const SequenceNumber sequenceNumber)
 {
     const auto seqNumberMod100 = sequenceNumber.getRawValue() % 100;
-    if (seqNumberMod100 < unorderedness * 100)
+    if (seqNumberMod100 < degreeOfDisorder * 100)
     {
         std::this_thread::sleep_for((std::chrono::milliseconds(delayDistrib(gen))));
     }

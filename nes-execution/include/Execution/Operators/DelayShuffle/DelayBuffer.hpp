@@ -26,18 +26,18 @@ namespace NES::Runtime::Execution::Operators
 class DelayBufferOperatorHandler final : public OperatorHandler
 {
 public:
-    DelayBufferOperatorHandler(float unorderedness, std::chrono::milliseconds minDelay, std::chrono::milliseconds maxDelay);
+    DelayBufferOperatorHandler(float degreeOfDisorder, std::chrono::milliseconds minDelay, std::chrono::milliseconds maxDelay);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     /// Sleeps for a random time [minDelay, maxDelay] with a given probability. We calculate the probability by
-    /// taking the modulo of the sequence number with 100 and comparing it with the unorderedness.
+    /// taking the modulo of the sequence number with 100 and comparing it with the degreeOfDisorder.
     /// This way, we ensure that the sleep is only executed for a certain percentage of the tuple buffers.
     void sleepOrNot(SequenceNumber sequenceNumber);
 
 private:
-    float unorderedness;
+    float degreeOfDisorder;
     std::mt19937 gen;
     std::uniform_int_distribution<> delayDistrib;
 };

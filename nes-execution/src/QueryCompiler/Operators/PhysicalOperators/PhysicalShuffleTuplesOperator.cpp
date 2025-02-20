@@ -19,24 +19,24 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalShuffleTuplesOperator::PhysicalShuffleTuplesOperator(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness)
-    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema), unorderedness(unorderedness)
+    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder)
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema), degreeOfDisorder(degreeOfDisorder)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalShuffleTuplesOperator::create(std::shared_ptr<Schema> inputSchema, const float& unorderedness)
+std::shared_ptr<PhysicalOperator> PhysicalShuffleTuplesOperator::create(std::shared_ptr<Schema> inputSchema, const float& degreeOfDisorder)
 {
-    return create(getNextOperatorId(), std::move(inputSchema), unorderedness);
+    return create(getNextOperatorId(), std::move(inputSchema), degreeOfDisorder);
 }
 std::shared_ptr<PhysicalOperator>
-PhysicalShuffleTuplesOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness)
+PhysicalShuffleTuplesOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder)
 {
-    return std::make_shared<PhysicalShuffleTuplesOperator>(id, inputSchema, unorderedness);
+    return std::make_shared<PhysicalShuffleTuplesOperator>(id, inputSchema, degreeOfDisorder);
 }
 
 float PhysicalShuffleTuplesOperator::getUnorderedness() const
 {
-    return unorderedness;
+    return degreeOfDisorder;
 }
 
 std::string PhysicalShuffleTuplesOperator::toString() const
@@ -50,7 +50,7 @@ std::string PhysicalShuffleTuplesOperator::toString() const
 
 std::shared_ptr<Operator> PhysicalShuffleTuplesOperator::copy()
 {
-    auto result = create(id, inputSchema, unorderedness);
+    auto result = create(id, inputSchema, degreeOfDisorder);
     result->addAllProperties(properties);
     return result;
 }

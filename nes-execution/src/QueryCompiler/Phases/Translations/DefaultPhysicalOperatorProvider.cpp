@@ -335,14 +335,14 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             joinOperator->getLeftInputSchema(),
-            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.degreeOfDisorder,
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
 
         const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             joinOperator->getRightInputSchema(),
-            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.degreeOfDisorder,
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
@@ -353,9 +353,9 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
     {
         const auto shuffleTuplesOperatorLeft = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.unorderedness);
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.degreeOfDisorder);
         const auto shuffleTuplesOperatorRight = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.unorderedness);
+            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.degreeOfDisorder);
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleTuplesOperatorLeft);
         streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleTuplesOperatorRight);
         streamJoinOperators.leftInputOperator = shuffleTuplesOperatorLeft;
@@ -367,20 +367,20 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         const auto shuffleBufferOperatorLeft = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             joinOperator->getLeftInputSchema(),
-            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.degreeOfDisorder,
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
         const auto shuffleBufferOperatorRight = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             joinOperator->getRightInputSchema(),
-            queryCompilerConfig.unorderedness,
+            queryCompilerConfig.degreeOfDisorder,
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
 
         const auto shuffleTuplesOperatorLeft = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.unorderedness);
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), queryCompilerConfig.degreeOfDisorder);
         const auto shuffleTuplesOperatorRight = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.unorderedness);
+            getNextOperatorId(), joinOperator->getRightInputSchema(), queryCompilerConfig.degreeOfDisorder);
 
         streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorLeft);
         streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(shuffleBufferOperatorRight);
@@ -539,7 +539,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         const auto shuffleBufferOperator = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             windowInputSchema,
-            queryCompilerConfig.unorderedness.getValue(),
+            queryCompilerConfig.degreeOfDisorder.getValue(),
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
 
@@ -548,7 +548,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::TUPLES)
     {
         const auto shuffleTuplesOperator = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), windowInputSchema, queryCompilerConfig.unorderedness.getValue());
+            getNextOperatorId(), windowInputSchema, queryCompilerConfig.degreeOfDisorder.getValue());
         aggregationBuild->insertBetweenThisAndChildNodes(shuffleTuplesOperator);
     }
     else if (queryCompilerConfig.shuffleStrategy == Configurations::ShuffleStrategy::BUFFER_TUPLES)
@@ -557,11 +557,11 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         const auto shuffleBufferOperator = PhysicalOperators::PhysicalShuffleBufferOperator::create(
             getNextOperatorId(),
             windowInputSchema,
-            queryCompilerConfig.unorderedness.getValue(),
+            queryCompilerConfig.degreeOfDisorder.getValue(),
             std::chrono::milliseconds(queryCompilerConfig.minDelay.getValue()),
             std::chrono::milliseconds(queryCompilerConfig.maxDelay.getValue()));
         const auto shuffleTuplesOperator = PhysicalOperators::PhysicalShuffleTuplesOperator::create(
-            getNextOperatorId(), windowInputSchema, queryCompilerConfig.unorderedness.getValue());
+            getNextOperatorId(), windowInputSchema, queryCompilerConfig.degreeOfDisorder.getValue());
         aggregationBuild->insertBetweenThisAndChildNodes(shuffleBufferOperator);
         aggregationBuild->insertBetweenThisAndChildNodes(shuffleTuplesOperator);
     }

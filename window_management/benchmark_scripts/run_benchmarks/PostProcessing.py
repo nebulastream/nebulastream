@@ -63,16 +63,28 @@ def parse_lines_to_dataframe(file):
 
     return hits_data, misses_data
 
+def find_pipeline_number(log_text):
+    lines = log_text.split('\n')
+    for i, line in enumerate(lines):
+        if "Pipeline:" in line:
+            pipeline_number = int(line.split(":")[1].strip())
+            # Check the subsequent lines for "Build"
+            for j in range(i + 1, len(lines)):
+                if "Build" in lines[j]:
+                    return pipeline_number
+    return None
+
 # This class stores some methods that we need to call after all benchmarks have been run
 class PostProcessing:
 
-    def __init__(self, input_folders, benchmark_config_file, combined_csv_file_name, worker_statistics_csv_path, cache_statistics_csv_path, cache_hits_misses_name):
+    def __init__(self, input_folders, benchmark_config_file, combined_csv_file_name, worker_statistics_csv_path, cache_statistics_csv_path, cache_hits_misses_name, pipeline_txt):
         self.input_folders = input_folders
         self.benchmark_config_file = benchmark_config_file
         self.worker_statistics_csv_path = worker_statistics_csv_path
         self.cache_statistics_csv_path = cache_statistics_csv_path
         self.cache_hits_misses_name = cache_hits_misses_name
         self.combined_csv_file_name = combined_csv_file_name
+        self.pipeline_txt = pipeline_txt
 
 
     def main(self):
@@ -141,13 +153,18 @@ class PostProcessing:
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
         combined_df["slice_cache"] = combined_df["slice_cache_type"].astype(str) + "_" + combined_df["numberOfEntriesSliceCache"].astype(str)
-        combined_df["unorderedness"] = combined_df["unorderedness"].astype(str) + "_" + combined_df["shuffle_strategy"].astype(str)
+        combined_df["degree_of_disorder"] = combined_df["degree_of_disorder"].astype(str) + "_" + combined_df["shuffle_strategy"].astype(str)
 
         # Writing the combined dataframe to a csv file
         combined_df.to_csv(self.worker_statistics_csv_path, index=False)
         print(f"Done with combining all query engine statistics to {self.worker_statistics_csv_path}!")
 
     def convert_statistics_to_csv(self, input_folder):
+        pipeline_txt_path = os.path.join(input_folder, self.pipeline_txt)
+        with open(pipeline_txt_path, 'r') as file:
+            interesting_pipelines = find_pipeline_number(file.read())
+
+
         pattern_worker_file = r"^worker_\d+\.txt$"
         pattern_task_details = (r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
                                 r"Task (?P<task_id>\d+) for Pipeline (?P<pipeline>\d+).*?"
@@ -207,6 +224,10 @@ class PostProcessing:
 
             # Sorting the dataframe
             df = df.sort_values(by='task_id').reset_index(drop=True)
+
+            # Remove everything that has a pipeline id not in interesting_pipelines
+            if interesting_pipelines is not None:
+                df = df[df['pipeline_id'].isin(interesting_pipelines)]
 
             # Write the created dataframe to the csv file
             df.to_csv(stat_file + ".csv", index=False)

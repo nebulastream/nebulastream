@@ -26,8 +26,8 @@
 
 namespace NES::Runtime::Execution::Operators
 {
-ShuffleTuplesOperatorHandler::ShuffleTuplesOperatorHandler(const float unorderedness)
-    : unorderedness(unorderedness), gen(std::mt19937(std::random_device()()))
+ShuffleTuplesOperatorHandler::ShuffleTuplesOperatorHandler(const float degreeOfDisorder)
+    : degreeOfDisorder(degreeOfDisorder), gen(std::mt19937(std::random_device()()))
 {
 }
 
@@ -39,7 +39,7 @@ void ShuffleTuplesOperatorHandler::setup(const uint64_t numberOfWorkerThreads)
 
 void ShuffleTuplesOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
-    ((void)unorderedness);
+    ((void)degreeOfDisorder);
 }
 
 void ShuffleTuplesOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExecutionContext&)
@@ -55,8 +55,8 @@ void ShuffleTuplesOperatorHandler::createEmitIndicesForInputBuffer(const WorkerT
     /// Generate indices from 0 - numberOfTuples-1
     std::iota(emitIndices.begin(), emitIndices.end(), 0);
 
-    /// Shuffle indices randomly but leave some elements in place to have an unorderedness factor
-    const auto numberOfInPlaceItems = static_cast<uint64_t>(numberOfTuples * (1 - unorderedness));
+    /// Shuffle indices randomly but leave some elements in place to have an degreeOfDisorder factor
+    const auto numberOfInPlaceItems = static_cast<uint64_t>(numberOfTuples * (1 - degreeOfDisorder));
     std::shuffle(emitIndices.begin() + numberOfInPlaceItems, emitIndices.end(), gen);
 }
 

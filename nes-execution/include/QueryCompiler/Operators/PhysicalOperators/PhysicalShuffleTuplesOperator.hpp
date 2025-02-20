@@ -24,14 +24,14 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalShuffleTuplesOperator : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
 {
 public:
-    PhysicalShuffleTuplesOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& unorderedness);
-    static std::shared_ptr<PhysicalOperator> create(std::shared_ptr<Schema> inputSchema, const float& unorderedness);
+    PhysicalShuffleTuplesOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder);
+    static std::shared_ptr<PhysicalOperator> create(std::shared_ptr<Schema> inputSchema, const float& degreeOfDisorder);
     float getUnorderedness() const;
     std::string toString() const override;
     std::shared_ptr<Operator> copy() override;
 
 protected:
-    float unorderedness;
+    float degreeOfDisorder;
 };
 }

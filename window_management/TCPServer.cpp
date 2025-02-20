@@ -37,7 +37,7 @@ public:
         std::cout << "New connection from " << inet_ntoa(address.sin_addr) << std::endl;
         try
         {
-            /// define random distributions for unorderedness and ts delay
+            /// define random distributions for degreeOfDisorder and ts delay
             std::random_device rd;
             std::mt19937 gen(rd());
 
