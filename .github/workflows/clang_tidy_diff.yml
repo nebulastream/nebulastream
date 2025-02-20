@@ -50,9 +50,11 @@ jobs:
       - name: Create results directory
         run: mkdir clang-tidy-result
       - name: Clang-Tidy Precheck
-        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -config-file .clang-tidy-pre-check -j $(nproc)
+        run: |
+          git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -config-file .clang-tidy-pre-check -j $(($(nproc)<64 ? $(nproc) : 64))
       - name: Analyze by running Clang-Tidy
-        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
+        run: |
+          git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(($(nproc)<64 ? $(nproc) : 64))
       - name: Upload Clang-Tidy Results
         if: ${{ !cancelled() && !github.event.act }}
         uses: actions/upload-artifact@v4
