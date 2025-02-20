@@ -74,8 +74,8 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 
     auto reply = IntegrationTestUtil::querySummary(queryId, uut);
     EXPECT_EQ(reply.status(), QueryStatus::Stopped);
-    EXPECT_EQ(reply.numberofrestarts(), 1);
-    EXPECT_EQ(reply.error_size(), 0);
+    EXPECT_EQ(reply.runs().size(), 1);
+    EXPECT_FALSE(reply.runs().at(0).has_error());
 
     auto log = IntegrationTestUtil::queryLog(queryId, uut);
     const std::vector<QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
@@ -117,8 +117,8 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     /// Test for query status after registration
     auto summary = IntegrationTestUtil::querySummary(queryId, uut);
     EXPECT_EQ(summary.status(), Stopped);
-    EXPECT_EQ(summary.numberofrestarts(), 0);
-    EXPECT_EQ(summary.error_size(), 0);
+    EXPECT_EQ(summary.runs().size(), 1);
+    EXPECT_FALSE(summary.runs().at(0).has_error());
 
     /// Test for invalid queryId
     auto invalidQueryId = QueryId{42};

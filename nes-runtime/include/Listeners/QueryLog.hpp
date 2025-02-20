@@ -27,14 +27,20 @@
 namespace NES::Runtime
 {
 
+struct QueryRunSummary
+{
+    std::chrono::system_clock::time_point start;
+    std::chrono::system_clock::time_point stop;
+    std::optional<Exception> error;
+};
+
 /// Summary structure of the query log for a query
 struct QuerySummary
 {
     /// In the future, this will be extended to include more information such as the query plan, etc.
     QueryId queryId;
     Execution::QueryStatus currentStatus;
-    uint64_t numberOfRestarts;
-    std::vector<Exception> exceptions;
+    std::vector<QueryRunSummary> runs;
 };
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
