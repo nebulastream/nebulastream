@@ -68,10 +68,13 @@ def find_pipeline_number(log_text):
     for i, line in enumerate(lines):
         if "Pipeline:" in line:
             pipeline_number = int(line.split(":")[1].strip())
-            # Check the subsequent lines for "Build"
+            # Check the subsequent lines for "Build" until the next "Pipeline"
             for j in range(i + 1, len(lines)):
-                if "Build" in lines[j]:
-                    return pipeline_number
+                if "Pipeline:" in lines[j]:
+                    break
+                elif "Build" in lines[j]:
+                    print(f"Found interesting pipeline: {pipeline_number}")
+                    return [pipeline_number]
     return None
 
 # This class stores some methods that we need to call after all benchmarks have been run
