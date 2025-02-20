@@ -85,7 +85,6 @@ public:
 
     //TODO add timeout to task and give back nullopt when timeout exceededc
     std::variant<ssize_t, uint32_t> waitUntilDone() noexcept;
-    ;
 
     bool await_ready() const noexcept;
 

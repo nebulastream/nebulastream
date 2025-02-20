@@ -29,10 +29,10 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/DataSegment.hpp>
-#include <Runtime/PinnedBuffer.hpp>
-#include <Runtime/FloatingBuffer.hpp>
 #include <Runtime/BufferManagerFuture.hpp>
+#include <Runtime/DataSegment.hpp>
+#include <Runtime/FloatingBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <folly/MPMCQueue.h>
@@ -326,11 +326,21 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
         secondEnd = allBuffers.begin() + ((clockAt + maxIter) - allBuffers.size());
     }
 
-    auto check = [](const detail::BufferControlBlock* bcb)
+    auto check = [&](const detail::BufferControlBlock* bcb)
     {
         if (bcb->getDataReferenceCount() == 0)
         {
-            //delete bcb;
+            if (bcb->getData().isNotPreAllocated())
+            {
+                const auto alignedBufferSize = alignBufferSize(bcb->data.load().getSize(), DEFAULT_ALIGNMENT);
+                constexpr auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
+                const auto alignedBufferSizePlusControlBlock = alignBufferSize(alignedBufferSize + controlBlockSize, DEFAULT_ALIGNMENT);
+                memoryResource->deallocate(bcb->getData().get<detail::InMemoryLocation>()->getLocation().getPtr(), alignedBufferSizePlusControlBlock);
+            }
+            else
+            {
+                delete bcb;
+            }
             return true;
         }
         return false;
@@ -419,11 +429,8 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
         for (unsigned long i = 0; i < toRepin.size(); ++i)
         {
             auto readFuture = readSegmentFutures[i];
-            auto awaitReadSegment
-                = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, CoroutineError>, ReadSegmentFuture>{
-                    std::bind(&ReadSegmentFuture::pollOnce, readFuture),
-                    std::bind(&ReadSegmentFuture::waitOnce, readFuture),
-                    readFuture};
+            auto awaitReadSegment = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, CoroutineError>, ReadSegmentFuture>{
+                std::bind(&ReadSegmentFuture::pollOnce, readFuture), std::bind(&ReadSegmentFuture::waitOnce, readFuture), readFuture};
 
             const auto readBytesOrError = co_await awaitReadSegment;
             if (const auto error = getOptional<CoroutineError>(readBytesOrError))
@@ -472,7 +479,7 @@ PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
 
 GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount) noexcept
 {
-    using Promise =GetInMemorySegmentPromise<GetInMemorySegmentFuture>;
+    using Promise = GetInMemorySegmentPromise<GetInMemorySegmentFuture>;
     //Making a shared ptr out of this is probably not worth it, as in most request amount == 1 and DataSegments are small,
     //so copying is probably cheaper
     std::vector<detail::DataSegment<detail::InMemoryLocation>> result{};
@@ -768,8 +775,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
         }
         if (successFullSwap)
         {
-            if (std::shared_ptr<detail::AvailableSegmentAwaiter<GetInMemorySegmentPromise<GetInMemorySegmentFuture>>>
-                    awaiter;
+            if (std::shared_ptr<detail::AvailableSegmentAwaiter<GetInMemorySegmentPromise<GetInMemorySegmentFuture>>> awaiter;
                 waitingSegmentRequests.read(awaiter))
             {
                 //save result in awaiter and resume coroutine
@@ -983,34 +989,7 @@ std::optional<PinnedBuffer> BufferManager::getBufferWithTimeout(const std::chron
 std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
     std::unique_lock lock(unpooledBuffersMutex);
-    // UnpooledBufferHolder probe(bufferSize);
-    // auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
-    // if (candidate != unpooledBuffers.end())
-    // {
-    //     /// it points to a segment of size at least bufferSize;
-    //     for (auto it = candidate; it != unpooledBuffers.end(); ++it)
-    //     {
-    //         if (it->size == bufferSize)
-    //         {
-    //             if (it->free)
-    //             {
-    //                 auto* memSegment = (*it).segment.get();
-    //                 it->free = false;
-    //                 if (memSegment->controlBlock->prepare())
-    //                 {
-    //                     return PinnedBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-    //                 }
-    //                 throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
-    //             }
-    //         }
-    //         else
-    //         {
-    //             break;
-    //         }
-    //     }
-    // }
-    /// we could not find a buffer, allocate it
-    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
+
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + controlBlockSize, DEFAULT_ALIGNMENT);
@@ -1038,7 +1017,7 @@ void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>
 {
     if (segment.isNotPreAllocated())
     {
-        memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
+        // memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
     }
     else
     {

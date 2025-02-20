@@ -50,18 +50,6 @@ class BufferRecycler;
 static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 
 
-/**
- * @brief Computes aligned buffer size based on original buffer size and alignment
- */
-constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
-{
-    if (bufferSize % withAlignment)
-    {
-        /// make sure that each buffer is a multiple of the alignment
-        return bufferSize + (withAlignment - bufferSize % withAlignment);
-    }
-    return bufferSize;
-}
 
 namespace detail
 {
@@ -202,7 +190,7 @@ private:
     Runtime::Timestamp creationTimestamp = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
 
-    mutable std::shared_mutex segmentMutex;
+    mutable std::shared_mutex segmentMutex{};
     ///Not thread safe
     ///Max size is max uint32 - 2.
     ///When accessing, make sure to use the the index stored in the buffers - 2.

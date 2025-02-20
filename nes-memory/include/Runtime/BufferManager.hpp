@@ -50,6 +50,18 @@ class PinnedBuffer;
 class FloatingBuffer;
 
 /**
+ * @brief Computes aligned buffer size based on original buffer size and alignment
+ */
+constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
+{
+    if (bufferSize % withAlignment)
+    {
+        /// make sure that each buffer is a multiple of the alignment
+        return bufferSize + (withAlignment - bufferSize % withAlignment);
+    }
+    return bufferSize;
+}
+/**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
  * 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly. They are also subject to reference
