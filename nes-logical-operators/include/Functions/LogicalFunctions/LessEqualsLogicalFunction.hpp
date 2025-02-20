@@ -29,7 +29,7 @@ public:
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit LessEqualsLogicalFunction(LessEqualsLogicalFunction* other);
+    explicit LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }

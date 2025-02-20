@@ -22,9 +22,8 @@ namespace NES
 class RoundLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    explicit RoundLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit RoundLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~RoundLogicalFunction() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
@@ -32,7 +31,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit RoundLogicalFunction(RoundLogicalFunction* other);
+    explicit RoundLogicalFunction(const RoundLogicalFunction& other);
 };
 
 }

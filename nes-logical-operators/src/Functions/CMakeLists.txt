@@ -21,6 +21,8 @@ add_source_files(nes-logical-operators
         RenameLogicalFunction.cpp
         LogicalFunction.cpp
         WhenLogicalFunction.cpp
+        UnaryLogicalFunction.cpp
+        BinaryLogicalFunction.cpp
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)

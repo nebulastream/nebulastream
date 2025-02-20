@@ -78,7 +78,7 @@ void InferModelLogicalOperator::updateToFullyQualifiedFieldName(std::shared_ptr<
     const auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
-        field->updateFieldName(existingField.value()->getName());
+        field->setFieldName(existingField.value()->getName());
     }
     else
     {
@@ -86,11 +86,11 @@ void InferModelLogicalOperator::updateToFullyQualifiedFieldName(std::shared_ptr<
         ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
-            field->updateFieldName(fieldName);
+            field->setFieldName(fieldName);
         }
         else
         {
-            field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            field->setFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 }

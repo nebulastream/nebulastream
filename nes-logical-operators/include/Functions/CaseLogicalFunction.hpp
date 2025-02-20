@@ -22,7 +22,6 @@ namespace NES
 class CaseLogicalFunction : public LogicalFunction
 {
 public:
-    explicit CaseLogicalFunction(std::shared_ptr<DataType> stamp);
     explicit CaseLogicalFunction(std::vector<std::shared_ptr<LogicalFunction>> const& whenExps, std::shared_ptr<LogicalFunction> const& defaultExp);
     ~CaseLogicalFunction() noexcept override = default;
 
@@ -35,13 +34,13 @@ public:
     std::shared_ptr<LogicalFunction> getDefaultExp() const;
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
     std::shared_ptr<LogicalFunction> clone() const override;
     bool validateBeforeLowering() const;
 
 protected:
-    explicit CaseLogicalFunction(CaseLogicalFunction* other);
+    explicit CaseLogicalFunction(const CaseLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 

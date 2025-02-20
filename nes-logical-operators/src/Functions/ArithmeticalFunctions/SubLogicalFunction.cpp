@@ -22,18 +22,14 @@
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(std::shared_ptr<DataType> stamp) : BinaryLogicalFunction(std::move(stamp), "Sub") {};
-
-SubLogicalFunction::SubLogicalFunction(SubLogicalFunction* other) : BinaryLogicalFunction(other)
+SubLogicalFunction::SubLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), "Sub")
 {
-}
+    this->setLeftChild(left);
+    this->setRightChild(right);
+};
 
-std::shared_ptr<LogicalFunction> SubLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : BinaryLogicalFunction(other)
 {
-    auto subNode = std::make_shared<SubLogicalFunction>(left->getStamp());
-    subNode->setLeftChild(left);
-    subNode->setRightChild(right);
-    return subNode;
 }
 
 bool SubLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -41,7 +37,7 @@ bool SubLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs)
     if (NES::Util::instanceOf<SubLogicalFunction>(rhs))
     {
         auto otherSubNode = NES::Util::as<SubLogicalFunction>(rhs);
-        return getLeftChild()->equal(otherSubNode->getLeftChild()) && getRightChild()->equal(otherSubNode->getRightChild());
+        return getLeftChild() == otherSubNode->getLeftChild() and getRightChild() == otherSubNode->getRightChild();
     }
     return false;
 }
@@ -55,7 +51,7 @@ std::string SubLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> SubLogicalFunction::clone() const
 {
-    return SubLogicalFunction::create(Util::as<LogicalFunction>(children[0])->clone(), Util::as<LogicalFunction>(children[1])->clone());
+    return std::make_shared<SubLogicalFunction>(Util::as<LogicalFunction>(children[0])->clone(), Util::as<LogicalFunction>(children[1])->clone());
 }
 
 }

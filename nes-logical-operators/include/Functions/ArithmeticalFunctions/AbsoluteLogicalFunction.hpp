@@ -22,9 +22,8 @@ namespace NES
 class AbsoluteLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    explicit AbsoluteLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit AbsoluteLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~AbsoluteLogicalFunction() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
@@ -32,7 +31,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit AbsoluteLogicalFunction(AbsoluteLogicalFunction* other);
+    explicit AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other);
 };
 
 }

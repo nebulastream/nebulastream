@@ -15,7 +15,10 @@
 #pragma once
 
 #include <memory>
+#include <utility>
+#include <string>
 #include <Functions/LogicalFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -23,10 +26,10 @@ class UnaryLogicalFunction : public LogicalFunction
 {
 public:
     [[nodiscard]] std::shared_ptr<LogicalFunction> getChild() const;
-    void setChild(const std::shared_ptr<LogicalFunction> child);
+    void setChild(const std::shared_ptr<LogicalFunction>& child);
 
 protected:
     explicit UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name);
-    explicit UnaryLogicalFunction(UnaryLogicalFunction* other);
+    explicit UnaryLogicalFunction(const UnaryLogicalFunction& other);
 };
 }

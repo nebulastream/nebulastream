@@ -24,7 +24,6 @@ namespace NES
 class FieldAssignmentLogicalFunction : public BinaryLogicalFunction
 {
 public:
-    explicit FieldAssignmentLogicalFunction(std::shared_ptr<DataType> stamp);
     explicit FieldAssignmentLogicalFunction(
         std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
@@ -37,7 +36,7 @@ public:
     [[nodiscard]]  std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit FieldAssignmentLogicalFunction(FieldAssignmentLogicalFunction* other);
+    explicit FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }

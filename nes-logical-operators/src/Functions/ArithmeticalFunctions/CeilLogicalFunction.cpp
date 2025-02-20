@@ -21,17 +21,13 @@
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Ceil") {};
-
-CeilLogicalFunction::CeilLogicalFunction(CeilLogicalFunction* other) : UnaryLogicalFunction(other)
+CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(child->getStamp(), "Ceil")
 {
-}
+    this->setChild(child);
+};
 
-std::shared_ptr<LogicalFunction> CeilLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
+CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto ceilNode = std::make_shared<CeilLogicalFunction>(child->getStamp());
-    ceilNode->setChild(child);
-    return ceilNode;
 }
 
 bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -39,7 +35,7 @@ bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
     if (NES::Util::instanceOf<CeilLogicalFunction>(rhs))
     {
         auto otherCeilNode = NES::Util::as<CeilLogicalFunction>(rhs);
-        return getChild()->equal(otherCeilNode->getChild());
+        return getChild() == otherCeilNode->getChild();
     }
     return false;
 }
@@ -53,6 +49,6 @@ std::string CeilLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> CeilLogicalFunction::clone() const
 {
-    return CeilLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<CeilLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

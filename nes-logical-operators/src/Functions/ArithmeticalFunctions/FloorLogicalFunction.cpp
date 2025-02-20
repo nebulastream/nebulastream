@@ -22,17 +22,13 @@
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Floor") {};
-
-FloorLogicalFunction::FloorLogicalFunction(FloorLogicalFunction* other) : UnaryLogicalFunction(other)
+FloorLogicalFunction::FloorLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(std::move(stamp), "Floor")
 {
-}
+    this->setChild(child);
+};
 
-std::shared_ptr<LogicalFunction> FloorLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
+FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto floorNode = std::make_shared<FloorLogicalFunction>(child->getStamp());
-    floorNode->setChild(child);
-    return floorNode;
 }
 
 bool FloorLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -54,6 +50,6 @@ std::string FloorLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> FloorLogicalFunction::clone() const
 {
-    return FloorLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<FloorLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

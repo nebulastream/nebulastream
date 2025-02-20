@@ -12,28 +12,21 @@
     limitations under the License.
 */
 
-#include <cmath>
+#include <memory>
+#include <sstream>
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/StdInt.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(std::shared_ptr<DataType> stamp)
-    : UnaryLogicalFunction(std::move(stamp), "Abs") {};
-
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(AbsoluteLogicalFunction* other) : UnaryLogicalFunction(other)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Abs")
 {
+    this->setChild(child);
 }
 
-std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto absNode = std::make_shared<AbsoluteLogicalFunction>(child->getStamp());
-    absNode->setChild(child);
-    return absNode;
 }
 
 bool AbsoluteLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -41,7 +34,7 @@ bool AbsoluteLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const&
     if (NES::Util::instanceOf<AbsoluteLogicalFunction>(rhs))
     {
         auto otherAbsNode = NES::Util::as<AbsoluteLogicalFunction>(rhs);
-        return getChild()->equal(otherAbsNode->getChild());
+        return getChild() == otherAbsNode->getChild();
     }
     return false;
 }
@@ -55,7 +48,7 @@ std::string AbsoluteLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
 {
-    return AbsoluteLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return Util::as<LogicalFunction>(std::make_shared<AbsoluteLogicalFunction>(getChild())->clone());
 }
 
 }

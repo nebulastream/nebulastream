@@ -28,17 +28,13 @@
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Sqrt") {};
-
-SqrtLogicalFunction::SqrtLogicalFunction(SqrtLogicalFunction* other) : UnaryLogicalFunction(other)
+SqrtLogicalFunction::SqrtLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Sqrt")
 {
-}
+    this->setChild(child);
+};
 
-std::shared_ptr<LogicalFunction> SqrtLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto sqrtNode = std::make_shared<SqrtLogicalFunction>(child->getStamp());
-    sqrtNode->setChild(child);
-    return sqrtNode;
 }
 
 bool SqrtLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -46,7 +42,7 @@ bool SqrtLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
     if (NES::Util::instanceOf<SqrtLogicalFunction>(rhs))
     {
         auto otherSqrtNode = NES::Util::as<SqrtLogicalFunction>(rhs);
-        return getChild()->equal(otherSqrtNode->getChild());
+        return getChild() == otherSqrtNode->getChild();
     }
     return false;
 }
@@ -60,7 +56,7 @@ std::string SqrtLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> SqrtLogicalFunction::clone() const
 {
-    return SqrtLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<SqrtLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 
 }

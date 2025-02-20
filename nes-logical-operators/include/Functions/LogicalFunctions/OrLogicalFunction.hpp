@@ -30,7 +30,7 @@ public:
     std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit OrLogicalFunction(OrLogicalFunction* other);
+    explicit OrLogicalFunction(const OrLogicalFunction& other);
 
     [[nodiscard]] std::string toString() const override;
 };

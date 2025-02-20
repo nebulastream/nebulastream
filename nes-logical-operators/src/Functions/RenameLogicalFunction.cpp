@@ -29,21 +29,16 @@ namespace NES
 RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName)
     : LogicalFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
-RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other)
-    : RenameLogicalFunction(other->getOriginalField(), other->getNewFieldName()) {};
+RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
+    : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
 
-std::shared_ptr<LogicalFunction>
-RenameLogicalFunction::create(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName)
-{
-    return std::make_shared<RenameLogicalFunction>(RenameLogicalFunction(originalField, std::move(newFieldName)));
-}
 
 bool RenameLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
     {
         auto otherFieldRead = NES::Util::as<RenameLogicalFunction>(rhs);
-        return otherFieldRead->getOriginalField()->equal(getOriginalField()) && this->newFieldName == otherFieldRead->getNewFieldName();
+        return otherFieldRead->getOriginalField() == getOriginalField() and  this->newFieldName == otherFieldRead->getNewFieldName();
     }
     return false;
 }
@@ -98,7 +93,7 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
 
 std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
 {
-    return RenameLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(originalField->clone()), newFieldName);
+    return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(originalField->clone()), newFieldName);
 }
 
 bool RenameLogicalFunction::validateBeforeLowering() const

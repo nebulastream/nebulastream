@@ -26,17 +26,13 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Round") {};
-
-RoundLogicalFunction::RoundLogicalFunction(RoundLogicalFunction* other) : UnaryLogicalFunction(other)
+RoundLogicalFunction::RoundLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Round")
 {
-}
+    this->setChild(child);
+};
 
-std::shared_ptr<LogicalFunction> RoundLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto roundNode = std::make_shared<RoundLogicalFunction>(child->getStamp());
-    roundNode->setChild(child);
-    return roundNode;
 }
 
 bool RoundLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -44,7 +40,7 @@ bool RoundLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rh
     if (NES::Util::instanceOf<RoundLogicalFunction>(rhs))
     {
         auto otherRoundNode = NES::Util::as<RoundLogicalFunction>(rhs);
-        return getChild()->equal(otherRoundNode->getChild());
+        return getChild() == otherRoundNode->getChild();
     }
     return false;
 }
@@ -58,6 +54,6 @@ std::string RoundLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> RoundLogicalFunction::clone() const
 {
-    return RoundLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<RoundLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

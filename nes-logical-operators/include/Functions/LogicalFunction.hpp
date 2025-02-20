@@ -88,7 +88,7 @@ public:
 
 protected:
     explicit LogicalFunction(std::shared_ptr<DataType> stamp, std::string type);
-    explicit LogicalFunction(const LogicalFunction* other);
+    explicit LogicalFunction(const LogicalFunction& other);
 
     std::shared_ptr<DataType> stamp;
     std::string type;

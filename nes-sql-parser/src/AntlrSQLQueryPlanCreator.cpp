@@ -98,17 +98,17 @@ std::shared_ptr<LogicalFunction> createFunctionFromOpBoolean(
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::EQ:
-            return EqualsLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<EqualsLogicalFunction>(leftFunction, rightFunction);
         case AntlrSQLLexer::NEQJ:
-            return NegateLogicalFunction::create(EqualsLogicalFunction::create(leftFunction, rightFunction));
+            return std::make_shared<NegateLogicalFunction>(std::make_shared<EqualsLogicalFunction>(leftFunction, rightFunction));
         case AntlrSQLLexer::LT:
-            return LessLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<LessLogicalFunction>(leftFunction, rightFunction);
         case AntlrSQLLexer::GT:
-            return GreaterLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<GreaterLogicalFunction>(leftFunction, rightFunction);
         case AntlrSQLLexer::GTE:
-            return GreaterEqualsLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<GreaterEqualsLogicalFunction>(leftFunction, rightFunction);
         case AntlrSQLLexer::LTE:
-            return LessEqualsLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<LessEqualsLogicalFunction>(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -122,9 +122,9 @@ std::shared_ptr<LogicalFunction> createLogicalBinaryFunction(
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return AndLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<AndLogicalFunction>(leftFunction, rightFunction);
         case AntlrSQLLexer::OR:
-            return OrLogicalFunction::create(leftFunction, rightFunction);
+            return std::make_shared<OrLogicalFunction>(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -345,7 +345,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helper.isGroupBy)
     {
-        const auto key = Util::as<FieldAccessLogicalFunction>(FieldAccessLogicalFunction::create(context->getText()));
+        const auto key = Util::as<FieldAccessLogicalFunction>(std::make_shared<FieldAccessLogicalFunction>(context->getText()));
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -878,7 +878,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
     const auto constantText = context->getText();
     auto constFunctionItem
-        = FunctionItem(NES::ConstantValueLogicalFunction::create(dataType, constantText.substr(0, constantText.find('_'))));
+        = FunctionItem(std::make_shared<ConstantValueLogicalFunction>(dataType, constantText.substr(0, constantText.find('_'))));
         helper.functionBuilder.push_back(constFunctionItem);
     }
     else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)

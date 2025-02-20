@@ -83,7 +83,7 @@ bool WindowedAggregationLogicalOperator::operator==(Operator const& rhs) const
 
         for (uint64_t i = 0; i < this->getKeys().size(); i++)
         {
-            if (!this->getKeys()[i]->equal(rhsOperator->getKeys()[i]))
+            if (this->getKeys()[i] != rhsOperator->getKeys()[i])
             {
                 return false;
             }

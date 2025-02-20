@@ -73,12 +73,12 @@ void MaxAggregationFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(getFinalAggregateStamp());
 }

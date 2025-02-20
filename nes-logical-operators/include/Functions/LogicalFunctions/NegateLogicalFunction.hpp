@@ -22,7 +22,7 @@ namespace NES
 class NegateLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
+    explicit NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~NegateLogicalFunction() override = default;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
@@ -33,7 +33,7 @@ public:
     bool validateBeforeLowering() const;
 
 protected:
-    explicit NegateLogicalFunction(NegateLogicalFunction* other);
+    explicit NegateLogicalFunction(const NegateLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }

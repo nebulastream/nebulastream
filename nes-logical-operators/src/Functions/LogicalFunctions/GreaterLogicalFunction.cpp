@@ -20,21 +20,14 @@
 namespace NES
 {
 
-GreaterLogicalFunction::GreaterLogicalFunction() noexcept : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Greater")
+GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-GreaterLogicalFunction::GreaterLogicalFunction(GreaterLogicalFunction* other) : BinaryLogicalFunction(other)
+GreaterLogicalFunction::GreaterLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Greater")
 {
-}
-
-std::shared_ptr<LogicalFunction>
-GreaterLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-{
-    auto greater = std::make_shared<GreaterLogicalFunction>();
-    greater->setLeftChild(left);
-    greater->setRightChild(right);
-    return greater;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool GreaterLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -56,7 +49,7 @@ std::string GreaterLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> GreaterLogicalFunction::clone() const
 {
-    return GreaterLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<GreaterLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

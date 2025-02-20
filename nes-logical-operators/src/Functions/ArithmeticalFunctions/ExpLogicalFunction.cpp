@@ -22,17 +22,13 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Exp") {};
-
-ExpLogicalFunction::ExpLogicalFunction(ExpLogicalFunction* other) : UnaryLogicalFunction(other)
+ExpLogicalFunction::ExpLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(child->getStamp(), "Exp")
 {
-}
+    this->setChild(child);
+};
 
-std::shared_ptr<LogicalFunction> ExpLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
+ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : UnaryLogicalFunction(other)
 {
-    auto expNode = std::make_shared<ExpLogicalFunction>(child->getStamp());
-    expNode->setChild(child);
-    return expNode;
 }
 
 bool ExpLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -54,6 +50,6 @@ std::string ExpLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> ExpLogicalFunction::clone() const
 {
-    return ExpLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<ExpLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

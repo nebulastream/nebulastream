@@ -19,16 +19,18 @@
 #include <Abstract/LogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
+#include <API/Schema.hpp>
+#include <Util/Common.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string&& value)
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value)
     : LogicalFunction(type, "ConstantValue"), constantValue(std::move(value))
 {
 }
 
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction* other)
-    : LogicalFunction(other->getStamp(), "ConstantValue"), constantValue(other->constantValue)
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
+    : LogicalFunction(other.getStamp(), "ConstantValue"), constantValue(other.constantValue)
 {
 }
 
@@ -47,11 +49,6 @@ std::string ConstantValueLogicalFunction::toString() const
     return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
-std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::create(const std::shared_ptr<DataType>& type, std::string value)
-{
-    return std::make_shared<ConstantValueLogicalFunction>(ConstantValueLogicalFunction(type, std::move(value)));
-}
-
 std::string ConstantValueLogicalFunction::getConstantValue() const
 {
     return constantValue;
@@ -65,12 +62,7 @@ void ConstantValueLogicalFunction::inferStamp(const Schema&)
 
 std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::clone() const
 {
-    return std::make_shared<ConstantValueLogicalFunction>(*this);
-}
-
-bool ConstantValueLogicalFunction::validateBeforeLowering() const
-{
-    return children.empty();
+    return std::make_shared<ConstantValueLogicalFunction>(getStamp(), constantValue);
 }
 
 }

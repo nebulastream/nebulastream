@@ -24,16 +24,14 @@
 namespace NES
 {
 
-OrLogicalFunction::OrLogicalFunction(OrLogicalFunction* other) : BinaryLogicalFunction(other)
+OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-OrLogicalFunction::OrLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+OrLogicalFunction::OrLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(std::move(stamp), "Or")
 {
-    auto orNode = std::make_shared<OrLogicalFunction>();
-    orNode->setLeftChild(left);
-    orNode->setRightChild(right);
-    return orNode;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool OrLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const

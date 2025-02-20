@@ -51,9 +51,9 @@ public:
                           ->addField("f2", BasicType::INT64)
                           ->addField("f3", BasicType::BOOLEAN)
                           ->updateSourceName("src");
-        LogicalFunctionReadLeft = FieldAccessLogicalFunction::create("f1");
-        LogicalFunctionReadRight = FieldAccessLogicalFunction::create("f2");
-        LogicalFunctionReadBool = FieldAccessLogicalFunction::create("f3");
+        LogicalFunctionReadLeft = std::make_shared<FieldAccessLogicalFunction>("f1");
+        LogicalFunctionReadRight = std::make_shared<FieldAccessLogicalFunction>("f2");
+        LogicalFunctionReadBool = std::make_shared<FieldAccessLogicalFunction>("f3");
     }
 
 protected:
@@ -81,8 +81,8 @@ TEST_F(FunctionProviderTest, testLoweringAdd)
 
 TEST_F(FunctionProviderTest, testLoweringDiv)
 {
-    const auto DivLogicalFunction = DivLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    DivLogicalFunction->inferStamp(dummySchema);
+    const auto DivLogicalFunction = std::make_shared<DivLogicalFunction>(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    DivLogicalFunction->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(DivLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::DivPhysicalFunction*>(executableFunction.get()));
@@ -90,8 +90,8 @@ TEST_F(FunctionProviderTest, testLoweringDiv)
 
 TEST_F(FunctionProviderTest, testLoweringSub)
 {
-    const auto SubLogicalFunction = SubLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    SubLogicalFunction->inferStamp(dummySchema);
+    const auto SubLogicalFunction = std::make_shared<SubLogicalFunction>(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    SubLogicalFunction->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(SubLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::SubPhysicalFunction*>(executableFunction.get()));
@@ -99,8 +99,8 @@ TEST_F(FunctionProviderTest, testLoweringSub)
 
 TEST_F(FunctionProviderTest, testLoweringMul)
 {
-    const auto MulLogicalFunction = MulLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    MulLogicalFunction->inferStamp(dummySchema);
+    const auto MulLogicalFunction = std::make_shared<MulLogicalFunction>(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    MulLogicalFunction->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(MulLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::MulPhysicalFunction*>(executableFunction.get()));
@@ -108,8 +108,8 @@ TEST_F(FunctionProviderTest, testLoweringMul)
 
 TEST_F(FunctionProviderTest, testLoweringEquals)
 {
-    const auto EqualsLogicalFunction = EqualsLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    EqualsLogicalFunction->inferStamp(dummySchema);
+    const auto EqualsLogicalFunction = std::make_shared<EqualsLogicalFunction>(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    EqualsLogicalFunction->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(EqualsLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::EqualsPhysicalFunction*>(executableFunction.get()));
@@ -117,8 +117,8 @@ TEST_F(FunctionProviderTest, testLoweringEquals)
 
 TEST_F(FunctionProviderTest, testLoweringNegate)
 {
-    const auto NegateLogicalFunction = NegateLogicalFunction::create(LogicalFunctionReadBool);
-    NegateLogicalFunction->inferStamp(dummySchema);
+    const auto NegateLogicalFunction = std::make_shared<NegateLogicalFunction>(LogicalFunctionReadBool);
+    NegateLogicalFunction->withInferredStamp(dummySchema);
     const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(NegateLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::NegatePhysicalFunction*>(executableFunction.get()));

@@ -23,9 +23,12 @@
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction() : UnaryLogicalFunction(DataTypeFactory::createBoolean(), "Negate") {};
+NegateLogicalFunction::NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(DataTypeFactory::createBoolean(), "Negate")
+{
+    this->setChild(child);
+}
 
-NegateLogicalFunction::NegateLogicalFunction(NegateLogicalFunction* other) : UnaryLogicalFunction(other)
+NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : UnaryLogicalFunction(other)
 {
 }
 
@@ -34,7 +37,7 @@ bool NegateLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
     if (NES::Util::instanceOf<NegateLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<NegateLogicalFunction>(rhs);
-        return this->getChild()->equal(other->getChild());
+        return this->getChild() == other->getChild();
     }
     return false;
 }
@@ -44,13 +47,6 @@ std::string NegateLogicalFunction::toString() const
     std::stringstream ss;
     ss << "!" << *getChild();
     return ss.str();
-}
-
-std::shared_ptr<LogicalFunction> NegateLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
-{
-    auto equals = std::make_shared<NegateLogicalFunction>();
-    equals->setChild(child);
-    return equals;
 }
 
 void NegateLogicalFunction::inferStamp(const Schema& schema)
@@ -66,7 +62,7 @@ void NegateLogicalFunction::inferStamp(const Schema& schema)
 }
 std::shared_ptr<LogicalFunction> NegateLogicalFunction::clone() const
 {
-    return NegateLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_shared<NegateLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
 
 bool NegateLogicalFunction::validateBeforeLowering() const

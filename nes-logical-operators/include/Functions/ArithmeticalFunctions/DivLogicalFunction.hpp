@@ -22,10 +22,8 @@ namespace NES
 class DivLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    explicit DivLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit DivLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~DivLogicalFunction() noexcept override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
@@ -33,7 +31,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit DivLogicalFunction(DivLogicalFunction* other);
+    explicit DivLogicalFunction(const DivLogicalFunction& other);
 };
 
 }

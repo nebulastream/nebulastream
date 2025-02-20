@@ -25,15 +25,14 @@ namespace NES
 class SqrtLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    explicit SqrtLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit SqrtLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~SqrtLogicalFunction() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
     std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit SqrtLogicalFunction(SqrtLogicalFunction* other);
+    explicit SqrtLogicalFunction(const SqrtLogicalFunction& other);
 
     [[nodiscard]] std::string toString() const override;
 };

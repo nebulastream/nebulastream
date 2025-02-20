@@ -20,10 +20,8 @@ namespace NES
 class ModuloLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    explicit ModuloLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     ~ModuloLogicalFunction() noexcept override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
@@ -31,7 +29,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit ModuloLogicalFunction(ModuloLogicalFunction* other);
+    explicit ModuloLogicalFunction(const ModuloLogicalFunction& other);
 };
 
 }

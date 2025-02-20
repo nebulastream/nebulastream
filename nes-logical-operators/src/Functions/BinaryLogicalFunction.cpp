@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <vector>
 #include <memory>
 #include <string>
 #include <utility>
-#include <Functions/LogicalFunction.hpp>
+#include <Functions/BinaryLogicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -26,33 +27,34 @@ namespace NES
 constexpr size_t LEFT_CHILD_INDEX = 0;
 constexpr size_t RIGHT_CHILD_INDEX = 1;
 
-LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
+BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
     : LogicalFunction(std::move(stamp), std::move(name))
 {
+    children.resize(2);
 }
 
-LogicalFunction::LogicalFunction(LogicalFunction* other) : LogicalFunction(other)
+BinaryLogicalFunction::BinaryLogicalFunction(const BinaryLogicalFunction& other) : LogicalFunction(other)
 {
-    children[LEFT_CHILD_INDEX] = other->getLeftChild()->clone();
-    children[RIGHT_CHILD_INDEX] = other->getRightChild()->clone();
+    children[LEFT_CHILD_INDEX] = other.getLeftChild()->clone();
+    children[RIGHT_CHILD_INDEX] = other.getRightChild()->clone();
 }
 
-void LogicalFunction::setLeftChild(std::shared_ptr<LogicalFunction> left)
+void BinaryLogicalFunction::setLeftChild(std::shared_ptr<LogicalFunction> left)
 {
     children[LEFT_CHILD_INDEX] = left;
 }
 
-void LogicalFunction::setRightChild(std::shared_ptr<LogicalFunction> right)
+void BinaryLogicalFunction::setRightChild(std::shared_ptr<LogicalFunction> right)
 {
     children[RIGHT_CHILD_INDEX] = right;
 }
 
-std::shared_ptr<LogicalFunction> LogicalFunction::getLeftChild() const
+std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeftChild() const
 {
     return children[LEFT_CHILD_INDEX];
 }
 
-std::shared_ptr<LogicalFunction> LogicalFunction::getRightChild() const
+std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRightChild() const
 {
     return children[RIGHT_CHILD_INDEX];
 }

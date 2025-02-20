@@ -23,7 +23,7 @@ namespace NES
 class RenameLogicalFunction : public LogicalFunction
 {
 public:
-    RenameLogicalFunction(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName);
+    RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
@@ -36,13 +36,12 @@ public:
     bool validateBeforeLowering() const;
 
 protected:
-    explicit RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other);
-
+    explicit RenameLogicalFunction(const RenameLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 
 private:
     const std::shared_ptr<FieldAccessLogicalFunction> originalField;
-    const std::string newFieldName;
+    std::string newFieldName;
 };
 
 }

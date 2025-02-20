@@ -51,7 +51,7 @@ bool ThresholdWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType))
     {
-        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate->equal(otherThresholdWindow->predicate);
+        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate == otherThresholdWindow->predicate;
     }
     return false;
 }

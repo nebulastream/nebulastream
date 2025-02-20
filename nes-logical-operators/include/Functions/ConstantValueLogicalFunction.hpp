@@ -27,24 +27,19 @@ namespace NES
 class ConstantValueLogicalFunction : public LogicalFunction
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<DataType>& type, std::string value);
+    ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
     std::string getConstantValue() const;
-
     void inferStamp(const Schema& schema) override;
-
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
     std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction* other);
-
+    explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
     std::string toString() const override;
 
 private:
-    explicit ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string&& value);
-    std::string constantValue;
+    const std::string constantValue;
 };
 }

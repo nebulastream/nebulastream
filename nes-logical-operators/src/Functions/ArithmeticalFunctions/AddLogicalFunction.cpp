@@ -22,20 +22,14 @@
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(std::shared_ptr<DataType> stamp)
-    : BinaryLogicalFunction(std::move(stamp), "Add") {};
-
-AddLogicalFunction::AddLogicalFunction(AddLogicalFunction* other) : BinaryLogicalFunction(other)
+AddLogicalFunction::AddLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), "Add")
 {
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
-std::shared_ptr<LogicalFunction>
-AddLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : BinaryLogicalFunction(other)
 {
-    auto addNode = std::make_shared<AddLogicalFunction>(left->getStamp());
-    addNode->setLeftChild(left);
-    addNode->setRightChild(right);
-    return addNode;
 }
 
 bool AddLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -59,7 +53,7 @@ std::string AddLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> AddLogicalFunction::clone() const
 {
-    return AddLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<AddLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

@@ -25,16 +25,15 @@ namespace NES
 class FloorLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    explicit FloorLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit FloorLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~FloorLogicalFunction() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit FloorLogicalFunction(FloorLogicalFunction* other);
+    explicit FloorLogicalFunction(const FloorLogicalFunction& other);
 };
 
 }

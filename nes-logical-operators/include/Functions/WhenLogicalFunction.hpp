@@ -24,21 +24,19 @@ namespace NES
 class WhenLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    explicit WhenLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     ~WhenLogicalFunction() noexcept override = default;
-
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     void inferStamp(const Schema& schema) override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    bool validateBeforeLowering() const;
 
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit WhenLogicalFunction(WhenLogicalFunction* other);
+    explicit WhenLogicalFunction(const WhenLogicalFunction& other);
 };
 
 }

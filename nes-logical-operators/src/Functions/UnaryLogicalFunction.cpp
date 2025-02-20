@@ -16,25 +16,25 @@
 #include <memory>
 #include <utility>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Functions/UnaryLogicalFunction.hpp>
 
 namespace NES
 {
-LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
+UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
     : LogicalFunction(std::move(stamp), std::move(name))
 {
 }
 
-LogicalFunction::LogicalFunction(LogicalFunction* other) : LogicalFunction(other)
+UnaryLogicalFunction::UnaryLogicalFunction(const UnaryLogicalFunction& other) : LogicalFunction(other)
 {
 }
 
-void LogicalFunction::setChild(const std::shared_ptr<LogicalFunction> child)
+void UnaryLogicalFunction::setChild(const std::shared_ptr<LogicalFunction>& child)
 {
     children[0] = child;
 }
 
-std::shared_ptr<LogicalFunction> LogicalFunction::getChild() const
+std::shared_ptr<LogicalFunction> UnaryLogicalFunction::getChild() const
 {
     return children[0];
 }

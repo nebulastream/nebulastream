@@ -33,7 +33,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit AndLogicalFunction(AndLogicalFunction* other);
+    explicit AndLogicalFunction(const AndLogicalFunction& other);
 };
 
 }

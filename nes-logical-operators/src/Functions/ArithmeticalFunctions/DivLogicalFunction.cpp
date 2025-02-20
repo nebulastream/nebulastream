@@ -21,19 +21,14 @@
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(std::shared_ptr<DataType> stamp) : BinaryLogicalFunction(std::move(stamp), "Div") {};
-
-DivLogicalFunction::DivLogicalFunction(DivLogicalFunction* other) : BinaryLogicalFunction(other)
+DivLogicalFunction::DivLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), "Div")
 {
-}
+    this->setLeftChild(left);
+    this->setRightChild(right);
+};
 
-std::shared_ptr<LogicalFunction>
-DivLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : BinaryLogicalFunction(other)
 {
-    auto divNode = std::make_shared<DivLogicalFunction>(left->getStamp());
-    divNode->setLeftChild(left);
-    divNode->setRightChild(right);
-    return divNode;
 }
 
 bool DivLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -41,7 +36,7 @@ bool DivLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs)
     if (NES::Util::instanceOf<DivLogicalFunction>(rhs))
     {
         auto otherDivNode = NES::Util::as<DivLogicalFunction>(rhs);
-        return getLeftChild()->equal(otherDivNode->getLeftChild()) && getRightChild()->equal(otherDivNode->getRightChild());
+        return getLeftChild() == otherDivNode->getLeftChild() and getRightChild() == otherDivNode->getRightChild();
     }
     return false;
 }
@@ -55,7 +50,7 @@ std::string DivLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> DivLogicalFunction::clone() const
 {
-    return DivLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<DivLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 

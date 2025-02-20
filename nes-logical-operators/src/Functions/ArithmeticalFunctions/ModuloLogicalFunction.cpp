@@ -27,20 +27,14 @@
 namespace NES
 {
 
-ModuloLogicalFunction::ModuloLogicalFunction(std::shared_ptr<DataType> stamp)
-    : BinaryLogicalFunction(std::move(stamp), "Mod") {};
-
-ModuloLogicalFunction::ModuloLogicalFunction(ModuloLogicalFunction* other) : BinaryLogicalFunction(other)
+ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-ModuloLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+ModuloLogicalFunction::ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(std::move(stamp), "Mod")
 {
-    auto addNode = std::make_shared<ModuloLogicalFunction>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
-    addNode->setLeftChild(left);
-    addNode->setRightChild(right);
-    return addNode;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -48,7 +42,7 @@ bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
     if (NES::Util::instanceOf<ModuloLogicalFunction>(rhs))
     {
         auto otherAddNode = NES::Util::as<ModuloLogicalFunction>(rhs);
-        return getLeftChild()->equal(otherAddNode->getLeftChild()) && getRightChild()->equal(otherAddNode->getRightChild());
+        return getLeftChild() == otherAddNode->getLeftChild() and getRightChild() == otherAddNode->getRightChild();
     }
     return false;
 }
@@ -62,7 +56,7 @@ std::string ModuloLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> ModuloLogicalFunction::clone() const
 {
-    return ModuloLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<ModuloLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

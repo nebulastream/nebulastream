@@ -24,23 +24,18 @@ namespace NES
 class FieldAccessLogicalFunction : public LogicalFunction
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<DataType> stamp, std::string fieldName);
-    static std::shared_ptr<LogicalFunction> create(std::string fieldName);
+    explicit FieldAccessLogicalFunction(std::string fieldName);
+    explicit FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
 
-    bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
-    std::string getFieldName() const;
-    void updateFieldName(std::string fieldName);
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::string getFieldName() const;
+    [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
 
     void inferStamp(const Schema& schema) override;
-
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit FieldAccessLogicalFunction(FieldAccessLogicalFunction* other);
-
-    FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
-
+    explicit FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
     std::string toString() const override;
 
     std::string fieldName;

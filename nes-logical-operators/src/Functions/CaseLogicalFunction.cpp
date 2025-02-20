@@ -26,11 +26,7 @@
 
 namespace NES
 {
-CaseLogicalFunction::CaseLogicalFunction(std::shared_ptr<DataType> stamp) : LogicalFunction(std::move(stamp), "Case")
-{
-}
-
-CaseLogicalFunction::CaseLogicalFunction(CaseLogicalFunction* other) : LogicalFunction(other)
+CaseLogicalFunction::CaseLogicalFunction(const CaseLogicalFunction& other) : LogicalFunction(other)
 {
     auto otherWhenChildren = getWhenChildren();
     for (auto& whenItr : otherWhenChildren)
@@ -40,12 +36,9 @@ CaseLogicalFunction::CaseLogicalFunction(CaseLogicalFunction* other) : LogicalFu
     children.push_back(getDefaultExp()->clone());
 }
 
-std::shared_ptr<LogicalFunction>
-CaseLogicalFunction::create(const std::vector<std::shared_ptr<LogicalFunction>>& whenExps, const std::shared_ptr<LogicalFunction>& defaultExp)
+CaseLogicalFunction::CaseLogicalFunction(const std::vector<std::shared_ptr<LogicalFunction>>& whenExps, const std::shared_ptr<LogicalFunction>& defaultExp) : LogicalFunction(defaultExp->getStamp(), "Case")
 {
-    auto caseNode = std::make_shared<CaseLogicalFunction>(defaultExp->getStamp());
-    caseNode->setChildren(whenExps, defaultExp);
-    return caseNode;
+    this->setChildren(whenExps, defaultExp);
 }
 
 void CaseLogicalFunction::inferStamp(const Schema& schema)
@@ -124,7 +117,7 @@ bool CaseLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
         }
         for (std::size_t i = 0; i < children.size(); i++)
         {
-            if (!children.at(i)->equal(otherCaseNode->children.at(i)))
+            if (children.at(i) != otherCaseNode->children.at(i))
             {
                 return false;
             }
@@ -155,7 +148,7 @@ std::shared_ptr<LogicalFunction> CaseLogicalFunction::clone() const
     {
         copyOfWhenFunctions.push_back(NES::Util::as<LogicalFunction>(whenFunction)->clone());
     }
-    return CaseLogicalFunction::create(copyOfWhenFunctions, getDefaultExp()->clone());
+    return std::make_shared<CaseLogicalFunction>(copyOfWhenFunctions, getDefaultExp()->clone());
 }
 
 bool CaseLogicalFunction::validateBeforeLowering() const

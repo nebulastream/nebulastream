@@ -552,7 +552,7 @@ std::shared_ptr<Windowing::WatermarkStrategyDescriptor> OperatorSerializationUti
             FunctionSerializationUtil::deserializeFunction(serializedEventTimeWatermarkStrategyDescriptor.onfield()));
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            FieldAccessLogicalFunction::create(onField->getFieldName()),
+            std::make_shared<FieldAccessLogicalFunction>(onField->getFieldName()),
             Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
         return eventTimeWatermarkStrategyDescriptor;
     }

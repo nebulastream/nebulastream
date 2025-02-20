@@ -338,7 +338,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return AndLogicalFunction::create(left, right);
+        return std::make_shared<AndLogicalFunction>(left, right);
     }
     if (serializedFunction.details().Is<SerializableFunction_FunctionOr>())
     {
@@ -348,7 +348,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return OrLogicalFunction::create(left, right);
+        return std::make_shared<OrLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionLess>())
     {
@@ -358,7 +358,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return LessLogicalFunction::create(left, right);
+        return std::make_shared<LessLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionLessEquals>())
     {
@@ -368,7 +368,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return LessEqualsLogicalFunction::create(left, right);
+        return std::make_shared<LessEqualsLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionGreater>())
     {
@@ -378,7 +378,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return GreaterLogicalFunction::create(left, right);
+        return std::make_shared<GreaterLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionGreaterEquals>())
     {
@@ -388,7 +388,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return GreaterEqualsLogicalFunction::create(left, right);
+        return std::make_shared<GreaterEqualsLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionEquals>())
     {
@@ -398,7 +398,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return EqualsLogicalFunction::create(left, right);
+        return std::make_shared<EqualsLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionNegate>())
     {
@@ -407,7 +407,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionNegate();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return NegateLogicalFunction::create(child);
+        return std::make_shared<NegateLogicalFunction>(child);
     } else if (serializedFunction.details().Is<SerializableFunction_FunctionAdd>())
     {
         /// de-serialize ADD function node.
@@ -416,7 +416,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return AddLogicalFunction::create(left, right);
+        return std::make_shared<AddLogicalFunction>(left, right);
     }
     if (serializedFunction.details().Is<SerializableFunction_FunctionSub>())
     {
@@ -426,7 +426,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return SubLogicalFunction::create(left, right);
+        return std::make_shared<SubLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionMul>())
     {
@@ -436,7 +436,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return MulLogicalFunction::create(left, right);
+        return std::make_shared<MulLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionDiv>())
     {
@@ -446,7 +446,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return DivLogicalFunction::create(left, right);
+        return std::make_shared<DivLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionMod>())
     {
@@ -456,7 +456,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return ModuloLogicalFunction::create(left, right);
+        return std::make_shared<ModuloLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionPow>())
     {
@@ -466,7 +466,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return PowLogicalFunction::create(left, right);
+        return std::make_shared<PowLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionAbs>())
     {
@@ -475,7 +475,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionAbs();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return AbsoluteLogicalFunction::create(child);
+        return std::make_shared<AbsoluteLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionCeil>())
     {
@@ -484,7 +484,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionCeil();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return CeilLogicalFunction::create(child);
+        return std::make_shared<CeilLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionExp>())
     {
@@ -493,7 +493,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionExp();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return ExpLogicalFunction::create(child);
+        return std::make_shared<ExpLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionFloor>())
     {
@@ -502,7 +502,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionFloor();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return FloorLogicalFunction::create(child);
+        return std::make_shared<FloorLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionRound>())
     {
@@ -511,7 +511,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionRound();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return RoundLogicalFunction::create(child);
+        return std::make_shared<RoundLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionSqrt>())
     {
@@ -520,7 +520,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         auto serializedLogicalFunction = SerializableFunction_FunctionSqrt();
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto child = deserializeFunction(serializedLogicalFunction.child());
-        return SqrtLogicalFunction::create(child);
+        return std::make_shared<SqrtLogicalFunction>(child);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionConstantValue>())
     {
@@ -530,7 +530,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedConstantValue);
         /// The data type stored in the function's stamp is equal to the datatype of the value
         auto valueDataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
-        return ConstantValueLogicalFunction::create(valueDataType, serializedConstantValue.value());
+        return std::make_shared<ConstantValueLogicalFunction>(valueDataType, serializedConstantValue.value());
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
     {
@@ -539,7 +539,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         SerializableFunction_FunctionFieldAccess serializedFieldAccessFunction;
         serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
         const auto& name = serializedFieldAccessFunction.fieldname();
-        return FieldAccessLogicalFunction::create(name);
+        return std::make_shared<FieldAccessLogicalFunction>(name);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldRename>())
     {
@@ -556,7 +556,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
                 *originalFieldAccessFunction));
         }
         const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-        return RenameLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(originalFieldAccessFunction), newFieldName);
+        return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(originalFieldAccessFunction), newFieldName);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
     {
@@ -566,9 +566,9 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
         const auto* field = serializedFieldAccessFunction.mutable_field();
         auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
-        auto fieldAccessNode = FieldAccessLogicalFunction::create(fieldStamp, field->fieldname());
+        auto fieldAccessNode = std::make_shared<FieldAccessLogicalFunction>(fieldStamp, field->fieldname());
         auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
-        return FieldAssignmentLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(fieldAccessNode), fieldAssignmentFunction);
+        return std::make_shared<FieldAssignmentLogicalFunction>(Util::as<FieldAccessLogicalFunction>(fieldAccessNode), fieldAssignmentFunction);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionWhen>())
     {
@@ -578,7 +578,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
         serializedFunction.details().UnpackTo(&serializedLogicalFunction);
         auto left = deserializeFunction(serializedLogicalFunction.left());
         auto right = deserializeFunction(serializedLogicalFunction.right());
-        return WhenLogicalFunction::create(left, right);
+        return std::make_shared<WhenLogicalFunction>(left, right);
     }
     else if (serializedFunction.details().Is<SerializableFunction_FunctionCase>())
     {
@@ -595,7 +595,7 @@ std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(
             leftExps.push_back(deserializeFunction(leftNode));
         }
             auto right = deserializeFunction(serializedLogicalFunction.right());
-            return CaseLogicalFunction::create(leftExps, right);
+            return std::make_shared<CaseLogicalFunction>(leftExps, right);
         }
         else
         {
