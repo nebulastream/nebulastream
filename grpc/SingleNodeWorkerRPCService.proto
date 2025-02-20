@@ -67,11 +67,16 @@ message QuerySummaryRequest {
   uint64 queryId = 1;
 }
 
+message QueryRunSummary {
+   uint64 startUnixTimeInMs = 1;
+   uint64 stopUnixTimeInMs = 2;
+   optional Error error = 3;
+}
+
 message QuerySummaryReply {
     uint64 queryId = 1;
     QueryStatus status = 2;
-    repeated Error error = 3;
-    uint64 numberOfRestarts = 4;
+    repeated QueryRunSummary runs = 3;
 }
 
 message QueryLogRequest {
