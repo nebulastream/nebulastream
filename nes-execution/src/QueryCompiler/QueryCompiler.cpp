@@ -27,6 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <fmt/format.h>
+#include "CompiledQueryPlan.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -46,9 +47,9 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     NES_INFO("Compile Query with Nautilus");
 
     /// create new context for handling debug output
-    const bool const dumpToFile = queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE
+    const bool dumpToFile = queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
-    const bool const dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
+    const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
     const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, queryCompilerConfig.dumpPath.getValue());
 
@@ -56,7 +57,7 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     auto logicalQueryPlan = request->getDecomposedQueryPlan();
     dumpHelper.dump("1. LogicalQueryPlan", logicalQueryPlan->toString());
 
-    auto const physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+    const auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
     dumpHelper.dump("2. PhysicalQueryPlan", physicalQueryPlan->toString());
 
     auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
@@ -71,6 +72,6 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
 
     auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan);
-    return std::move(executableQueryPlan);
+    return executableQueryPlan;
 }
 }
