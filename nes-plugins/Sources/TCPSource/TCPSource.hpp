@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <netdb.h>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -32,8 +34,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
-
-#include <netdb.h>
 
 namespace NES::Sources
 {
@@ -134,7 +134,7 @@ struct ConfigParametersTCP
             return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "connectTimeoutSeconds", 60, [](const std::unordered_map<std::string, std::string>& config) {
+        "connectTimeoutSeconds", 10, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(CONNECT_TIMEOUT, config);
         }};
 
@@ -151,9 +151,14 @@ class TCPSource : public Source
     /// We implicitly add one microsecond to avoid operation from never timing out
     /// (https://linux.die.net/man/7/socket)
     constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
+    constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
 
 public:
-    static inline const std::string NAME = "TCP";
+    static const std::string& name()
+    {
+        static const std::string Instance = "TCP";
+        return Instance;
+    }
 
     explicit TCPSource(const SourceDescriptor& sourceDescriptor);
     ~TCPSource() override = default;
@@ -181,6 +186,9 @@ private:
 
     int connection = -1;
     int sockfd = -1;
+
+    /// buffer for thread-safe strerror_r
+    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
 
     std::string socketHost;
     std::string socketPort;
