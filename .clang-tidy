@@ -286,6 +286,7 @@ CheckOptions:
   readability-identifier-naming.ParameterCase: camelBack
   modernize-loop-convert.UseCxx20ReverseRanges: false
   performance-move-const-arg.CheckTriviallyCopyableMove: false
+  google-runtime-int.TypeSuffix: '_t'
   # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
