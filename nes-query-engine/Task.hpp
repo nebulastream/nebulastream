@@ -23,7 +23,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
-#include <InstantiatedQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <RunningQueryPlan.hpp>
 
@@ -159,7 +159,7 @@ struct StartQueryTask : BaseTask
 {
     StartQueryTask(
         QueryId queryId,
-        std::unique_ptr<InstantiatedQueryPlan> queryPlan,
+        std::unique_ptr<ExecutableQueryPlan> queryPlan,
         std::weak_ptr<QueryCatalog> catalog,
         std::function<void()> onCompletion,
         std::function<void(Exception)> onError)
@@ -170,7 +170,7 @@ struct StartQueryTask : BaseTask
     }
 
     StartQueryTask() = default;
-    std::unique_ptr<InstantiatedQueryPlan> queryPlan;
+    std::unique_ptr<ExecutableQueryPlan> queryPlan;
     std::weak_ptr<QueryCatalog> catalog;
 };
 

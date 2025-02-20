@@ -28,14 +28,14 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
 
 namespace NES::Runtime
 {
 
-std::ostream& operator<<(std::ostream& os, const InstantiatedQueryPlan& instantiatedQueryPlan)
+std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan)
 {
     std::function<void(const std::weak_ptr<Execution::ExecutablePipeline>&, size_t)> printNode
         = [&os, &printNode](const std::weak_ptr<Execution::ExecutablePipeline>& weakPipeline, size_t indent)
@@ -59,19 +59,19 @@ std::ostream& operator<<(std::ostream& os, const InstantiatedQueryPlan& instanti
     return os;
 }
 
-std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
-    std::unique_ptr<Execution::ExecutableQueryPlan>&& executableQueryPlan,
-    const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
+
+std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
+    Execution::CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
     std::unordered_map<OriginId, std::vector<std::shared_ptr<Execution::ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
-    PipelineId::Underlying pipelineIdGenerator = executableQueryPlan->pipelines.size() + PipelineId::INITIAL;
+    PipelineId::Underlying pipelineIdGenerator = compiledQueryPlan.pipelines.size() + PipelineId::INITIAL;
 
-    for (auto& [descriptor, predecessors] : executableQueryPlan->sinks)
+    for (auto& [descriptor, predecessors] : compiledQueryPlan.sinks)
     {
         auto sink = Execution::ExecutablePipeline::create(PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(*descriptor), {});
-        executableQueryPlan->pipelines.push_back(sink);
+        compiledQueryPlan.pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {
             std::visit(
@@ -83,18 +83,17 @@ std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
         }
     }
 
-    for (auto [id, descriptor, successors] : executableQueryPlan->sources)
+    for (auto [id, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider), std::move(successors));
     }
 
 
-    return std::make_unique<InstantiatedQueryPlan>(
-        executableQueryPlan->queryId, std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
+    return std::make_unique<ExecutableQueryPlan>(compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources));
 }
 
-InstantiatedQueryPlan::InstantiatedQueryPlan(
+ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId,
     std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
     std::vector<SourceWithSuccessor> instantiatedSources)

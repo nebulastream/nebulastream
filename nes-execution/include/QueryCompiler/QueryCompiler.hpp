@@ -28,7 +28,7 @@ class QueryCompiler
 {
 public:
     QueryCompiler(Configurations::QueryCompilerConfiguration queryCompilerConfig, const Phases::PhaseFactory& phaseFactory);
-    std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> compileQuery(const std::shared_ptr<QueryCompilationRequest>& request);
+    std::unique_ptr<Runtime::Execution::CompiledQueryPlan> compileQuery(const std::shared_ptr<QueryCompilationRequest>& request);
 
 protected:
     Configurations::QueryCompilerConfiguration queryCompilerConfig;

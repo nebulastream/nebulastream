@@ -41,7 +41,7 @@
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <InstantiatedQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryEngine.hpp>
@@ -54,7 +54,7 @@ namespace NES::Runtime
 {
 
 
-/// The InstantiatedQueryPlan moved into a RunningQueryPlan.
+/// The ExecutableQueryPlan moved into a RunningQueryPlan.
 /// Pipelines and Sources in the RunningQueryPlan have been scheduled to be initialized
 /// Once all initialization is done the query transitions into the running state.
 /// If the Query is stopped during initialization, the running query plan is dropped. Which causes all initialized pipelines
@@ -99,11 +99,11 @@ public:
 
     void start(
         QueryId queryId,
-        std::unique_ptr<InstantiatedQueryPlan> plan,
+        std::unique_ptr<ExecutableQueryPlan> plan,
         const std::shared_ptr<AbstractQueryStatusListener>& listener,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    QueryId registerQuery(std::unique_ptr<InstantiatedQueryPlan>);
+    QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
     void stopQuery(QueryId queryId);
     void clear()
     {
@@ -574,7 +574,7 @@ void QueryEngine::stop(QueryId queryId)
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::start(std::unique_ptr<InstantiatedQueryPlan> instantiatedQueryPlan)
+void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> instantiatedQueryPlan)
 {
     ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
     threadPool->taskQueue.blockingWrite(
@@ -588,7 +588,7 @@ QueryEngine::~QueryEngine()
 
 void QueryCatalog::start(
     QueryId queryId,
-    std::unique_ptr<InstantiatedQueryPlan> plan,
+    std::unique_ptr<ExecutableQueryPlan> plan,
     const std::shared_ptr<AbstractQueryStatusListener>& listener,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)

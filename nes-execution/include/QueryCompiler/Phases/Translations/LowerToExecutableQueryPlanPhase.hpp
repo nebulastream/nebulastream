@@ -15,9 +15,9 @@
 
 #include <memory>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <ExecutableQueryPlan.hpp>
+#include <CompiledQueryPlan.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
-std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan);
+std::unique_ptr<Runtime::Execution::CompiledQueryPlan> apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan);
 }
