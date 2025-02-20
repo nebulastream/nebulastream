@@ -96,10 +96,17 @@ struct Query
     SystestParser::Schema expectedSinkSchema;
 };
 
+struct QueryExecutionInfo
+{
+    uint64_t executionTimeInNanos;
+    bool passed;
+};
+
 struct RunningQuery
 {
     Query query;
     QueryId queryId = INVALID_QUERY_ID;
+    QueryExecutionInfo queryExecutionInfo;
 };
 
 struct TestFile
