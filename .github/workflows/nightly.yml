@@ -8,6 +8,11 @@ name: NES Nightly
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        required: false
+        default: 'main'
+        description: "which branch/ref to use for running the nightly job"
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 4:30 AM CEST
 
@@ -18,6 +23,8 @@ jobs:
       sha: ${{ steps.fetch-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || 'main' }}
       - name: Fetch SHA
         id: fetch-sha
         run: |
@@ -64,24 +71,26 @@ jobs:
         run: echo "Long running tests will be added in the future."
 
   build-and-benchmark:
+    needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/build-and-benchmark.yml
     secrets: inherit
     with:
-      run_reason: "Nightly Benchmark"
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      run_reason: "Nightly Benchmark"
 
   benchmark-compile-time:
+    needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/benchmark-compile-time.yml
     secrets: inherit
     with:
-      run_reason: "Nightly Benchmark"
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      run_reason: "Nightly Benchmark"
 
   create-nightly-image:
     needs: [ build-and-test ]
-    if: ${{ !github.event.act }}
+    if: ${{ !github.event.act && inputs.ref == 'main' }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
