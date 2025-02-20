@@ -123,7 +123,7 @@ class PostProcessing:
         no_statistics_files = len(statistic_files)
         cnt_rows = 0
         for idx, [input_folder, stat_file] in enumerate(statistic_files):
-            print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
+            #print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
             df = pd.read_csv(stat_file)
 
             # Normalize all timestamps to the minimal start timestamp of any task
@@ -159,7 +159,7 @@ class PostProcessing:
         no_statistics_files = len(statistic_files)
         cnt_rows = 0
         for idx, stat_file in enumerate(statistic_files):
-            print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            #print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
             with open(stat_file, 'r') as file:
                 log_text = file.read()
 

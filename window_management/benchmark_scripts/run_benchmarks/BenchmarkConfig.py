@@ -65,8 +65,8 @@ class BenchmarkConfig:
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [1, 8]
-    CACHE_SIZES = [1, 100]
+    NUMBER_OF_WORKER_THREADS = [1, 2, 4, 8, 16]
+    CACHE_SIZES = [1, 10, 20, 100]
     CACHE_TYPES = ["LRU", "FIFO", "SECOND_CHANCE"]
     LOCKED_SLICE_CACHE = [False]  # True or False
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for
@@ -74,8 +74,8 @@ def create_all_benchmark_configs():
     #SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:1]
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
-    SHUFFLE_STRATEGY = ["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
-    MIN_MAX_DELAYS = [(0, 10)] # in milliseconds
+    SHUFFLE_STRATEGY = ["NONE", "BUFFER_TUPLES"]  #["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
+    MIN_MAX_DELAYS = [(1, 10)] # in milliseconds
     UNORDEREDNESS = [0, 1] # in percentage
     BUFFER_SIZES = [8196]  # [1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []

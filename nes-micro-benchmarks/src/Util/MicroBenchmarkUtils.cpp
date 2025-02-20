@@ -108,12 +108,13 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
             tupleBuffer.setChunkNumber(ChunkNumber(1));
             tupleBuffer.setLastChunk(true);
             tupleBuffer.setSequenceNumber(infoForThread.sequenceNumber);
+            tupleBuffer.setCreationTimestampInMS(Runtime::Timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
 
             Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer
                 = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schemaInput);
             PRECONDITION(
                 testTupleBuffer.getCapacity() >= infoForThread.numberOfTuples,
-                "The tuple buffer does not have enough capacity for the task.");
+                "The tuple buffer does not have enough capacity for the task of {}", infoForThread.numberOfTuples);
             for (uint64_t j = 0; j < infoForThread.numberOfTuples; j++)
             {
                 const uint64_t id = dis(gen);

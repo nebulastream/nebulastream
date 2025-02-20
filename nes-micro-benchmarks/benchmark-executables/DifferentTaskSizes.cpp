@@ -51,9 +51,9 @@ static void DoTearDown(const benchmark::State&)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id", DataTypeFactory::createUInt64())
-                                 ->addField("value", DataTypeFactory::createUInt64())
-                                 ->addField("ts", DataTypeFactory::createUInt64());
+        ->addField("id", DataTypeFactory::createUInt64())
+        ->addField("value", DataTypeFactory::createUInt64())
+        ->addField("ts", DataTypeFactory::createUInt64());
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task
@@ -102,7 +102,9 @@ static void DoTearDown(const benchmark::State&)
                     WorkerThreadId(state.thread_index()),
                     pipeline->id,
                     bufferProvider,
-                    [&](const Memory::TupleBuffer&, auto) {});
+                    [&](const Memory::TupleBuffer&, auto)
+                    {
+                    });
                 pipeline->stage->execute(task.buf, pec);
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
             }
@@ -140,7 +142,6 @@ static void DoTearDown(const benchmark::State&)
     }
 }
 
-
 /// Expects the following arguments for this method:
 /// 1. Number of tuples to be processed
 /// 2. The number of tuples per task
@@ -149,6 +150,7 @@ static void DoTearDown(const benchmark::State&)
 /// 5. The index of the provider name in: {"INTERPRETER", "COMPILER"}
 /// 6. The number of worker threads
 /// 7. The skewness of the distribution of tasks
+/// 8. Minimum number of tuples per task
 static void BM_SkewedPipeline(benchmark::State& state)
 {
     /// Extracting the parameters from the state
@@ -159,27 +161,35 @@ static void BM_SkewedPipeline(benchmark::State& state)
     const auto providerName = std::array{"Interpreter"s, "Compilation"s}[state.range(4)];
     const auto numberOfWorkerThreads = state.range(5);
     const auto skewness = state.range(6) / 100.0;
+    const auto minNumberOfTuples = state.range(7);
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id", DataTypeFactory::createUInt64())
-                                 ->addField("value", DataTypeFactory::createUInt64())
-                                 ->addField("ts", DataTypeFactory::createUInt64());
+        ->addField("id", DataTypeFactory::createUInt64())
+        ->addField("value", DataTypeFactory::createUInt64())
+        ->addField("ts", DataTypeFactory::createUInt64());
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task.
     /// We would like to have a skewed distribution of tasks, where the first task has a lot of tuples and the last task has only a few tuples.
     /// This is to simulate a real-world scenario where the first task has a lot of tuples and the last task has only a few tuples.
     std::vector<uint64_t> numberOfTuplesPerTaskVector;
-    uint64_t remainingItems = numberOfTuples;
-    const auto maxNumberOfItems = bufferSize / schemaInput->getSchemaSizeInBytes();
+    int64_t remainingItems = numberOfTuples;
+    const auto maxNumberOfTuples = bufferSize / schemaInput->getSchemaSizeInBytes();
     uint64_t rank = 1;
+    const auto incrementEvery = 5;
+    uint64_t counter = 1;
     while (remainingItems > 0)
     {
-        const auto itemsInPackage = std::min(static_cast<uint64_t>(maxNumberOfItems * (1.0 / std::pow(rank, skewness))), remainingItems);
+        /// We must ensure that the skewed number of tuples sits between the min and max number of tuples
+        const auto skewedNumberOfTuples = static_cast<int64_t>(maxNumberOfTuples * (1.0 / std::pow(rank, skewness)));
+        const auto itemsInPackage = std::max(minNumberOfTuples, std::min(skewedNumberOfTuples, remainingItems));
         numberOfTuplesPerTaskVector.push_back(itemsInPackage);
         remainingItems -= itemsInPackage;
-        rank++;
+        if (counter % incrementEvery == 0)
+        {
+            ++rank;
+        }
     }
 
     const auto numberOfTasks = numberOfTuplesPerTaskVector.size();
@@ -212,6 +222,7 @@ static void BM_SkewedPipeline(benchmark::State& state)
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
+    std::vector<std::vector<Memory::TupleBuffer> > tupleBufferEmitStorage(numberOfWorkerThreads);
     auto workerFunction = [&](const WorkerThreadId threadId)
     {
         Runtime::WorkTask task;
@@ -220,12 +231,22 @@ static void BM_SkewedPipeline(benchmark::State& state)
             if (auto pipeline = task.pipeline.lock())
             {
                 BenchmarkPEC pec(
-                    state.threads(),
-                    WorkerThreadId(state.thread_index()),
+                    numberOfWorkerThreads,
+                    threadId,
                     pipeline->id,
                     bufferProvider,
-                    [&](const Memory::TupleBuffer&, auto) {});
+                    [&](const Memory::TupleBuffer& buffer, auto)
+                    {
+                        tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(buffer);
+                    });
                 pipeline->stage->execute(task.buf, pec);
+
+                /// Calculating the duration in milliseconds. We assume that the tuple buffer has a creation timestamp set.
+                /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
+                const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch() - std::chrono::milliseconds(
+                        task.buf.getCreationTimestampInMS().getRawValue()));
+                task.buf.setCreationTimestampInMS(Runtime::Timestamp(duration.count()));
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
             }
             else
@@ -253,6 +274,27 @@ static void BM_SkewedPipeline(benchmark::State& state)
         }
     }
 
+    /// Combining all emitted buffers into a single vector
+    std::vector<Memory::TupleBuffer> emittedBuffers;
+    for (auto buffer : tupleBufferEmitStorage)
+    {
+        emittedBuffers.insert(emittedBuffers.end(), buffer.begin(), buffer.end());
+    }
+
+    /// Now we can write the latency per task buffer to a csv file, such that we can analyze the latency of each task buffer.
+    /// Additionally, we would like to write the other parameters to the csv file as well.
+    std::ofstream latencyFile("latency_per_task_buffer.csv", std::ios::app);
+    latencyFile << "SequenceNumber,LatencyInMS,NumberOfTuples,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
+    for (auto& taskBuffer : emittedBuffers)
+    {
+        const auto latency = taskBuffer.getCreationTimestampInMS();
+        const auto numberOfTuples = taskBuffer.getNumberOfTuples();
+        latencyFile << taskBuffer.getSequenceNumber() << "," << latency << "," << numberOfTuples << "," << selectivity << "," <<
+            providerName << ","
+            << numberOfWorkerThreads << "," << skewness << "\n";
+    }
+
+
     /// Reporting additional statistics
     state.counters["Number_Of_Tasks"] = numberOfTasks;
     state.counters["Tuples_Processed"] = numberOfTasks * numberOfTuplesPerTask;
@@ -262,7 +304,6 @@ static void BM_SkewedPipeline(benchmark::State& state)
     }
 }
 }
-
 
 constexpr auto NUM_REPETITIONS = 3;
 
@@ -284,14 +325,16 @@ constexpr auto NUM_REPETITIONS = 3;
 //      ->Repetitions(NUM_REPETITIONS);
 
 BENCHMARK(NES::BM_SkewedPipeline)
-    ->ArgsProduct({
-        {100 * 1000 * 1000}, /// Number of tuples that should be processed
+    ->ArgsProduct(
+    {
+        {10 * 1000}, /// Number of tuples that should be processed
         {1000}, /// Max number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
-        benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
+        {10, 50, 90}, /// Selectivity
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
-        benchmark::CreateRange(1, 16, 2), /// Number of worker threads
-        {1, 100, 150, 200} /// Skewness (will be divided by 100 to achieve a double value)
+        {1, 8}, ///benchmark::CreateRange(1, 16, 2), /// Number of worker threads
+        {100}, /// Skewness (will be divided by 100 to achieve a double value)
+        {100} /// Minimum number of tuples per task (should be set in accordance to the max number of tuples per task)
     })
     ->Setup(NES::DoSetup)
     ->Teardown(NES::DoTearDown)
