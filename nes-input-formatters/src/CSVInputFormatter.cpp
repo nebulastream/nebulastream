@@ -51,7 +51,7 @@ namespace NES::InputFormatters
 
 struct PartialTuple
 {
-    uint64_t offsetInBuffer;
+    unsigned long long offsetInBuffer;
     Memory::TupleBuffer tbRaw;
 
     [[nodiscard]] std::string_view getStringView() const
