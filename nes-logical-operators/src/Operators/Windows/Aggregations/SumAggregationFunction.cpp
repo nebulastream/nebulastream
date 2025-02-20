@@ -16,15 +16,14 @@
 #include <utility>
 #include <Operators/Windows/Aggregations/SumAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/Numeric.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/FunctionSerializationUtil.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "SerializableAggregationFunction.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <SerializableFunction.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing
 {
@@ -106,10 +105,10 @@ NES::SerializableAggregationFunction SumAggregationFunction::serialize() const
     serializedAggregationFunction.set_type(NAME);
 
     auto *onFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+    onFieldFuc->CopyFrom(onField->serialize());
 
     auto *asFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+    asFieldFuc->CopyFrom(asField->serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

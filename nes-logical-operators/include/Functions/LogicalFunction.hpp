@@ -14,16 +14,15 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
+#include <span>
 #include <ostream>
-#include <string>
 #include <API/Schema.hpp>
+#include <Util/Common.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <Common/DataTypes/DataType.hpp>
-#include <Util/Common.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <SerializableFunction.pb.h>
 
 namespace NES
 {
@@ -31,67 +30,54 @@ namespace NES
 /// @brief this indicates an function, which is a parameter for a FilterOperator or a MapOperator.
 /// Each function declares a stamp, which expresses the data type of this function.
 /// A stamp can be of a concrete type or invalid if the data type was not yet inferred.
-class LogicalFunction : std::enable_shared_from_this<LogicalFunction>
+class LogicalFunction : public std::enable_shared_from_this<LogicalFunction>
 {
 public:
     virtual ~LogicalFunction() = default;
 
-    /// @brief Indicates if this function is a predicate -> if its result stamp is a boolean
-    [[nodiscard]] bool isPredicate() const;
-
     /// Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(const Schema& schema);
-
     std::shared_ptr<DataType> getStamp() const;
     void setStamp(std::shared_ptr<DataType> stamp);
+    [[nodiscard]] bool isPredicate();
+
+    [[nodiscard]] std::string getType() const;
+
+    virtual SerializableFunction serialize() const = 0;
 
     virtual bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const = 0;
-
     virtual std::shared_ptr<LogicalFunction> clone() const = 0;
-
     virtual std::string toString() const  = 0;
 
-    const std::string& getType() const
-    {
-        return type;
-    }
-
-
     template <class FunctionType>
-    void getFunctionByTypeHelper(std::vector<std::shared_ptr<FunctionType>>& foundNodes)
+    std::vector<std::shared_ptr<FunctionType>> getFunctionByType() const
     {
-        auto sharedThis = this->shared_from_this();
-        if (NES::Util::instanceOf<FunctionType>(sharedThis))
-        {
-            foundNodes.push_back(NES::Util::as<FunctionType>(sharedThis));
-        }
-        for (auto& successor : this->children)
-        {
-            successor->getFunctionByTypeHelper(foundNodes);
-        }
-    };
+        std::vector<std::shared_ptr<FunctionType>> results;
+        std::stack<std::shared_ptr<LogicalFunction>> toVisit;
+        toVisit.push(std::const_pointer_cast<LogicalFunction>(this->shared_from_this()));
 
-    template <class FunctionType>
-    std::vector<std::shared_ptr<FunctionType>> getFunctionByType()
-    {
-        std::vector<std::shared_ptr<FunctionType>> vector;
-        getFunctionByTypeHelper<FunctionType>(vector);
-        return vector;
+        while (!toVisit.empty()) {
+            auto node = toVisit.top();
+            toVisit.pop();
+            if (auto casted = std::dynamic_pointer_cast<FunctionType>(node))
+            {
+                results.push_back(casted);
+            }
+            for (const auto& child : node->getChildren())
+            {
+                toVisit.push(child);
+            }
+        }
+        return results;
     }
 
-    std::vector<std::shared_ptr<LogicalFunction>> getChildren() const
-    {
-        return children;
-    }
-
-    std::vector<std::shared_ptr<LogicalFunction>> children;
+    virtual std::span<const std::shared_ptr<LogicalFunction>> getChildren() const = 0;
 
 protected:
-    explicit LogicalFunction(std::shared_ptr<DataType> stamp, std::string type);
-    explicit LogicalFunction(const LogicalFunction& other);
+    explicit LogicalFunction(std::shared_ptr<DataType> stamp);
+    LogicalFunction(const LogicalFunction& other);
 
     std::shared_ptr<DataType> stamp;
-    std::string type;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& function)
@@ -100,8 +86,4 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& functio
 }
 }
 
-template <typename T>
-requires(std::is_base_of_v<NES::LogicalFunction, T>)
-struct fmt::formatter<T> : fmt::ostream_formatter
-{
-};
+FMT_OSTREAM(NES::LogicalFunction);

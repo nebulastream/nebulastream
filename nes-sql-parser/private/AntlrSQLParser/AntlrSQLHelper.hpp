@@ -101,7 +101,7 @@ public:
     void addWhereClause(const std::shared_ptr<LogicalFunction> expressionNode);
     void addHavingClause(const std::shared_ptr<LogicalFunction> expressionNode);
     void addProjectionField(const std::shared_ptr<LogicalFunction> expressionNode);
-    [[nodiscard]] const std::shared_ptr<Windowing::WindowType> getWindowType();
+    [[nodiscard]] const std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setSource(std::string sourceName);
     const std::string getSource() const;
     void addMapExpression(std::shared_ptr<FieldAssignmentLogicalFunction> expressionNode);

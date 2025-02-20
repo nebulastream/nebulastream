@@ -73,7 +73,7 @@ std::ostream& PrintSink::toString(std::ostream& str) const
 
 Configurations::DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
+    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)

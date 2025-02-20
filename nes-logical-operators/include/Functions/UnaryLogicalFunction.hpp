@@ -27,9 +27,11 @@ class UnaryLogicalFunction : public LogicalFunction
 public:
     [[nodiscard]] std::shared_ptr<LogicalFunction> getChild() const;
     void setChild(const std::shared_ptr<LogicalFunction>& child);
+    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
 
 protected:
-    explicit UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name);
+    explicit UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::shared_ptr<LogicalFunction> child);
     explicit UnaryLogicalFunction(const UnaryLogicalFunction& other);
+    std::array<std::shared_ptr<LogicalFunction>, 1> children;
 };
 }

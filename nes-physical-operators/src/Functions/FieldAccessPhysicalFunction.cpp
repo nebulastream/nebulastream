@@ -13,7 +13,7 @@
 */
 
 #include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Functions

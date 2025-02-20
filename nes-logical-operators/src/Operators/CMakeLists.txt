@@ -12,7 +12,6 @@
 
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
-add_subdirectory(Serialization)
 add_subdirectory(Windows)
 
 add_source_files(nes-logical-operators

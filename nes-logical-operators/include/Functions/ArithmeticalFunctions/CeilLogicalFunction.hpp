@@ -16,24 +16,26 @@
 #include <memory>
 #include <Functions/UnaryLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
-
 class CeilLogicalFunction final : public UnaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Ceil";
+
     explicit CeilLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~CeilLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
-    [[nodiscard]] std::string toString() const override;
-
 private:
     explicit CeilLogicalFunction(const CeilLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::CeilLogicalFunction);

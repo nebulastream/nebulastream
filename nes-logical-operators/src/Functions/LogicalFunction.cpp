@@ -13,24 +13,23 @@
 */
 
 #include <memory>
-#include <string>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <typeinfo>
+#ifdef __GNUG__
+#include <cxxabi.h>
+#include <cstdlib>
+#endif
 
 namespace NES
 {
 
-LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp, std::string type) : stamp(std::move(stamp)), type(type)
+LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp) : stamp(std::move(stamp))
 {
-}
-
-bool LogicalFunction::isPredicate() const
-{
-    return NES::Util::instanceOf<Boolean>(stamp);
 }
 
 std::shared_ptr<DataType> LogicalFunction::getStamp() const
@@ -43,12 +42,31 @@ void LogicalFunction::setStamp(std::shared_ptr<DataType> stamp)
     this->stamp = std::move(stamp);
 }
 
+bool LogicalFunction::isPredicate()
+{
+    return *stamp == Boolean();
+}
+
 void LogicalFunction::inferStamp(const Schema& schema)
 {
-    for (const auto& node : children)
+    for (const auto& node : getChildren())
     {
-        NES::Util::as<LogicalFunction>(node)->inferStamp(schema);
+        node->inferStamp(schema);
     }
+}
+
+std::string LogicalFunction::getType() const {
+#ifdef __GNUG__
+    int status = 0;
+    /// Demangle the name obtained from typeid.
+    char* demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
+    std::string result = (status == 0) ? demangled : typeid(*this).name();
+    std::free(demangled);
+    return result;
+#else
+    /// For non-GNU compilers, typeid may already return a readable name.
+    return typeid(*this).name();
+#endif
 }
 
 LogicalFunction::LogicalFunction(const LogicalFunction& other) : stamp(other.stamp)

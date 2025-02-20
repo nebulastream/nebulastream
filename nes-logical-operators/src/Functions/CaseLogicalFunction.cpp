@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <sstream>
-#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -23,22 +22,26 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
+CaseLogicalFunction::~CaseLogicalFunction() noexcept = default;
+
 CaseLogicalFunction::CaseLogicalFunction(const CaseLogicalFunction& other) : LogicalFunction(other)
 {
-    auto otherWhenChildren = getWhenChildren();
-    for (auto& whenItr : otherWhenChildren)
-    {
-        children.push_back(whenItr->clone());
+    for (const auto& whenChild : other.whenChildren) {
+        whenChildren.push_back(whenChild->clone());
     }
-    children.push_back(getDefaultExp()->clone());
+    defaultChild = other.defaultChild->clone();
+    allChildren = whenChildren;
+    allChildren.push_back(defaultChild);
 }
 
-CaseLogicalFunction::CaseLogicalFunction(const std::vector<std::shared_ptr<LogicalFunction>>& whenExps, const std::shared_ptr<LogicalFunction>& defaultExp) : LogicalFunction(defaultExp->getStamp(), "Case")
+CaseLogicalFunction::CaseLogicalFunction(const std::vector<std::shared_ptr<LogicalFunction>>& whenExps, const std::shared_ptr<LogicalFunction>& defaultExp)
+    : LogicalFunction(defaultExp->getStamp())
 {
-    this->setChildren(whenExps, defaultExp);
+    setChildren(whenExps, defaultExp);
 }
 
 void CaseLogicalFunction::inferStamp(const Schema& schema)
@@ -76,34 +79,22 @@ void CaseLogicalFunction::inferStamp(const Schema& schema)
 void CaseLogicalFunction::setChildren(
     std::vector<std::shared_ptr<LogicalFunction>> const& whenExps, std::shared_ptr<LogicalFunction> const& defaultExp)
 {
-    for (auto elem : whenExps)
-    {
-        children.push_back(elem);
-    }
-    children.push_back(defaultExp);
+    whenChildren = whenExps;
+    defaultChild = defaultExp;
+
+    // Update the combined container.
+    allChildren = whenChildren;
+    allChildren.push_back(defaultChild);
 }
 
 std::vector<std::shared_ptr<LogicalFunction>> CaseLogicalFunction::getWhenChildren() const
 {
-    if (children.size() < 2)
-    {
-        NES_FATAL_ERROR("A case function always should have at least two children, but it had: {}", children.size());
-    }
-    std::vector<std::shared_ptr<LogicalFunction>> whenChildren;
-    for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter)
-    {
-        whenChildren.push_back(Util::as<LogicalFunction>(*whenIter));
-    }
     return whenChildren;
 }
 
 std::shared_ptr<LogicalFunction> CaseLogicalFunction::getDefaultExp() const
 {
-    if (children.size() <= 1)
-    {
-        NES_FATAL_ERROR("A case function always should have at least two children, but it had: {}", children.size());
-    }
-    return Util::as<LogicalFunction>(*(children.end() - 1));
+    return defaultChild;
 }
 
 bool CaseLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -111,13 +102,17 @@ bool CaseLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
     if (NES::Util::instanceOf<CaseLogicalFunction>(rhs))
     {
         auto otherCaseNode = NES::Util::as<CaseLogicalFunction>(rhs);
-        if (children.size() != otherCaseNode->children.size())
+        if (defaultChild != otherCaseNode->defaultChild)
         {
             return false;
         }
-        for (std::size_t i = 0; i < children.size(); i++)
+        if (whenChildren.size() != otherCaseNode->whenChildren.size())
         {
-            if (children.at(i) != otherCaseNode->children.at(i))
+            return false;
+        }
+        for (std::size_t i = 0; i < whenChildren.size(); i++)
+        {
+            if (whenChildren.at(i) != otherCaseNode->whenChildren.at(i))
             {
                 return false;
             }
@@ -155,6 +150,33 @@ bool CaseLogicalFunction::validateBeforeLowering() const
 {
     ///LogicalFunction Currently, we do not have any validation for Case before lowering
     return true;
+}
+
+std::span<const std::shared_ptr<LogicalFunction>> CaseLogicalFunction::getChildren() const
+{
+    return { allChildren.data(), allChildren.size() };
+}
+
+SerializableFunction CaseLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    auto* funcDesc = new SerializableFunction_NaryFunction();
+
+    NES::FunctionList list;
+    auto* defaultFunc = list.add_functions();
+    defaultFunc->CopyFrom(this->defaultChild->serialize());
+    for (const auto& function : this->whenChildren)
+    {
+        auto* whenFunc = list.add_functions();
+        whenFunc->CopyFrom(function->serialize());
+    }
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

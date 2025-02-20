@@ -12,20 +12,21 @@
     limitations under the License.
 */
 
-#include "Operators/MapLogicalOperator.hpp"
+#include <Operators/MapLogicalOperator.hpp>
 #include <memory>
 #include <string>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
-#include "Functions/FunctionSerializationUtil.hpp"
-#include "LogicalOperatorRegistry.hpp"
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
+#include <LogicalOperatorRegistry.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Operator.hpp>
-#include "SerializableOperator.pb.h"
-#include "SerializableSchema.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <SerializableOperator.pb.h>
+#include <SerializableSchema.pb.h>
+#include <ErrorHandling.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -110,9 +111,9 @@ SerializableOperator MapLogicalOperator::serialize() const
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    FunctionSerializationUtil::serializeFunction(this->getMapFunction(), serializedFunction);
+    serializedFunction->CopyFrom(getMapFunction()->serialize());
 
-    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
         Configurations::descriptorConfigTypeToProto(configVariant);
     (*opDesc->mutable_config())["functionList"] = variantDescriptor;
@@ -138,7 +139,7 @@ SerializableOperator MapLogicalOperator::serialize() const
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<MapLogicalOperator::ConfigParameters>(std::move(config), NAME);
+    return NES::Configurations::DescriptorConfig::validateAndFormat<MapLogicalOperator::ConfigParameters>(std::move(config), NAME);
 }
 
 std::unique_ptr<LogicalOperator>
@@ -149,11 +150,24 @@ LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperat
         const auto& functionList = std::get<NES::FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
         INVARIANT(functions.size() == 1, "Expected exactly one function");
-        auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        return std::make_unique<MapLogicalOperator>(Util::as<FieldAssignmentLogicalFunction>(fieldAssignmentFunction));
 
+        auto functionType = functions[0].functiontype();
+        NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
+        for (const auto& [key, value] : functions[0].config())
+        {
+            functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        }
+
+        if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+        {
+            std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
+            std::shared_ptr<NES::FieldAssignmentLogicalFunction> derivedSharedPtr =
+                std::dynamic_pointer_cast<NES::FieldAssignmentLogicalFunction>(sharedBase);
+            return std::make_unique<MapLogicalOperator>(derivedSharedPtr);
+        }
+
+        return nullptr;
     }
-    //throw CannotDeserialize("Error while deserializing MapLogicalOperator with config {}", config);
     return nullptr;
 }
 

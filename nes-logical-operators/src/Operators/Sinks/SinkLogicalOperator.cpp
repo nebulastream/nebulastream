@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include "Operators/Sinks/SinkLogicalOperator.hpp"
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <memory>
 #include <utility>
 #include <ErrorHandling.hpp>
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
-#include "Sinks/SinkDescriptor.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Sinks/SinkDescriptor.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES
 {

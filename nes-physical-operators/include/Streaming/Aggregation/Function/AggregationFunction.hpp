@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>

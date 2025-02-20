@@ -14,18 +14,17 @@
 
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(DataTypeFactory::createBoolean(), "Negate")
+NegateLogicalFunction::NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(DataTypeFactory::createBoolean(), child)
 {
-    this->setChild(child);
 }
 
 NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -68,6 +67,20 @@ std::shared_ptr<LogicalFunction> NegateLogicalFunction::clone() const
 bool NegateLogicalFunction::validateBeforeLowering() const
 {
     return NES::Util::instanceOf<Boolean>(Util::as<LogicalFunction>(getChild())->getStamp());
+}
+
+SerializableFunction NegateLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

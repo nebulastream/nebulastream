@@ -22,16 +22,21 @@ namespace NES
 class EqualsLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Equals";
+
     EqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     ~EqualsLogicalFunction() override = default;
 
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     bool validateBeforeLowering() const;
+
+    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
     [[nodiscard]]  std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit EqualsLogicalFunction(const EqualsLogicalFunction& other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::EqualsLogicalFunction);

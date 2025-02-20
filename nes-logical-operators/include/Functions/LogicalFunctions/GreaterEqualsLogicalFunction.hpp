@@ -18,18 +18,22 @@
 
 namespace NES
 {
-
 class GreaterEqualsLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "GreaterEquals";
+
     GreaterEqualsLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~GreaterEqualsLogicalFunction() override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::GreaterEqualsLogicalFunction);

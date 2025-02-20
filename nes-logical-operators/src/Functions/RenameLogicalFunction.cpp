@@ -12,22 +12,23 @@
     limitations under the License.
 */
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
-
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName)
-    : LogicalFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
+    : UnaryLogicalFunction(originalField->getStamp(), originalField), newFieldName(std::move(newFieldName))
+{
+};
 
 RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
     : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
@@ -38,14 +39,14 @@ bool RenameLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
     if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
     {
         auto otherFieldRead = NES::Util::as<RenameLogicalFunction>(rhs);
-        return otherFieldRead->getOriginalField() == getOriginalField() and  this->newFieldName == otherFieldRead->getNewFieldName();
+        return otherFieldRead->child[0] == getOriginalField() and  this->newFieldName == otherFieldRead->getNewFieldName();
     }
     return false;
 }
 
 std::shared_ptr<FieldAccessLogicalFunction> RenameLogicalFunction::getOriginalField() const
 {
-    return this->originalField;
+    return Util::as<FieldAccessLogicalFunction>(child[0]);
 }
 
 std::string RenameLogicalFunction::getNewFieldName() const
@@ -55,8 +56,7 @@ std::string RenameLogicalFunction::getNewFieldName() const
 
 std::string RenameLogicalFunction::toString() const
 {
-    auto node = getOriginalField();
-    return "FieldRenameFunction(" + fmt::format("{}", *node) + " => " + newFieldName + " : " + stamp->toString() + ")";
+    return "FieldRenameFunction(" + fmt::format("{}", *child[0]) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
 void RenameLogicalFunction::inferStamp(const Schema& schema)
@@ -91,15 +91,29 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
     stamp = fieldAttribute.value()->getDataType();
 }
 
-std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
+std::span<const std::shared_ptr<LogicalFunction>> RenameLogicalFunction::getChildren() const
 {
-    return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(originalField->clone()), newFieldName);
+    return child;
 }
 
-bool RenameLogicalFunction::validateBeforeLowering() const
+std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
 {
-    ///LogicalFunction Currently, we do not have any validation for FieldRename before lowering
-    return true;
+    return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(child[0]->clone()), newFieldName);
+}
+
+SerializableFunction RenameLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

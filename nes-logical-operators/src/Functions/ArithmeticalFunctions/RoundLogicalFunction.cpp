@@ -12,23 +12,20 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Round")
+RoundLogicalFunction::RoundLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), child)
 {
-    this->setChild(child);
 };
 
 RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -56,4 +53,19 @@ std::shared_ptr<LogicalFunction> RoundLogicalFunction::clone() const
 {
     return std::make_shared<RoundLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
 }
+
+SerializableFunction RoundLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
 }

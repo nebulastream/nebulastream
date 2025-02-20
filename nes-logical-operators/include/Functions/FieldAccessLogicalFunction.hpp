@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
@@ -24,21 +25,41 @@ namespace NES
 class FieldAccessLogicalFunction : public LogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "FieldAccess";
+
     explicit FieldAccessLogicalFunction(std::string fieldName);
     explicit FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    void inferStamp(const Schema& schema) override;
+
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-protected:
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
+            "fieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(FIELD_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);
+    };
+
+private:
     explicit FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
     std::string toString() const override;
-
     std::string fieldName;
 };
 
 }
+FMT_OSTREAM(NES::FieldAccessLogicalFunction);

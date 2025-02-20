@@ -26,6 +26,8 @@
 #include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -33,18 +35,14 @@ using namespace Functions;
 
 std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::shared_ptr<LogicalFunction>& logicalFunction)
 {
-    /// 1. Check if the function is valid.
-    auto ret = nodeFunction->validateBeforeLowering();
-    INVARIANT(ret, "Function not valid: {}", *nodeFunction);
-
-    /// 2. Recursively lower the children of the function node.
+    /// 1. Recursively lower the children of the function node.
     std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
-    for (const auto& child : logicalFunction->children)
+    for (const auto& child : logicalFunction->getChildren())
     {
         childFunction.emplace_back(lowerFunction(NES::Util::as<LogicalFunction>(child)));
     }
 
-    /// 3. The field access and constant value nodes are special as they require a different treatment,
+    /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessNode = NES::Util::as_if<FieldAccessLogicalFunction>(logicalFunction); fieldAccessNode != nullptr)
     {
@@ -55,12 +53,12 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::sha
         return lowerConstantFunction(constantValueNode);
     }
 
-    /// 4. Calling the registry to create an executable function.
+    /// 3. Calling the registry to create an executable function.
     auto executableFunctionArguments = PhysicalFunctionRegistryArguments(std::move(childFunction));
     auto function = PhysicalFunctionRegistry::instance().create(logicalFunction->getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
-        throw UnknownFunctionType(fmt::format("Can not lower function: {}", logicalFunction->getType()));
+        throw UnknownFunctionType(fmt::format("Can not lower function: {}", *logicalFunction));
     }
 
     return std::move(function.value());
@@ -127,7 +125,7 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const 
     }
     else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
     {
-        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
+        return std::make_unique<ConstantValueVariableSizePhysicalFunction>(
             reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
     }
     throw UnknownPhysicalType("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString());

@@ -18,6 +18,7 @@
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
@@ -27,10 +28,9 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLo
 {
 }
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "GreaterEquals")
+GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
 bool GreaterEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -54,4 +54,21 @@ std::shared_ptr<LogicalFunction> GreaterEqualsLogicalFunction::clone() const
 {
     return std::make_shared<GreaterEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
+
+SerializableFunction GreaterEqualsLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
 }

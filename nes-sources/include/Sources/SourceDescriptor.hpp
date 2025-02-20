@@ -40,7 +40,7 @@ struct SourceDescriptor : public Configurations::Descriptor
         std::string logicalSourceName,
         std::string sourceType,
         ParserConfig parserConfig,
-        Configurations::DescriptorConfig::Config&& config);
+        NES::Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
     const std::shared_ptr<Schema> schema;

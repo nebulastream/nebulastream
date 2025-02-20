@@ -21,19 +21,22 @@
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-
 class FloorLogicalFunction final : public UnaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Floor";
+
     explicit FloorLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~FloorLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
-protected:
-    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit FloorLogicalFunction(const FloorLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::FloorLogicalFunction);

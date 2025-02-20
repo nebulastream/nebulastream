@@ -16,9 +16,9 @@
 #include <memory>
 #include <sstream>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
+
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>

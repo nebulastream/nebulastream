@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
@@ -24,10 +25,9 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 {
 }
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "LessEquals")
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
 bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -50,6 +50,22 @@ std::string LessEqualsLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
 {
     return std::make_shared<LessEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+}
+
+SerializableFunction LessEqualsLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

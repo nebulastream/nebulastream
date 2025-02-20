@@ -24,19 +24,19 @@ namespace NES
 class WhenLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "When";
+
     explicit WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     ~WhenLogicalFunction() noexcept override = default;
-    void inferStamp(const Schema& schema) override;
 
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    void inferStamp(const Schema& schema) override;
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
-    bool validateBeforeLowering() const;
-
-protected:
-    [[nodiscard]] std::string toString() const override;
-
 private:
     explicit WhenLogicalFunction(const WhenLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::WhenLogicalFunction);

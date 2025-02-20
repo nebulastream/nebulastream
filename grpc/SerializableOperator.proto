@@ -15,7 +15,6 @@
 syntax = "proto3";
 import "SerializableFunction.proto";
 import "SerializableSchema.proto";
-import "SerializableAggregationFunction.proto";
 package NES;
 
 message ParserConfig {
@@ -23,29 +22,6 @@ message ParserConfig {
   string tupleDelimiter = 2;
   string fieldDelimiter = 3;
 };
-
-message SerializableEnumWrapper {
-    string value = 1;
-}
-
-message FunctionList {
-  repeated SerializableFunction functions = 1;
-}
-
-message SerializableVariantDescriptor {
-  oneof value {
-    int32 int_value = 1;
-    uint32 uint_value = 2;
-    bool bool_value = 3;
-    fixed32 char_value = 4;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
-    float float_value = 5;
-    double double_value = 6;
-    string string_value = 7;
-    SerializableEnumWrapper enum_value = 8;
-    FunctionList function_list = 9;
-    AggregationFunctionList aggregation_function_list = 10;
-  }
-}
 
 message SerializableOperator {
 
@@ -101,5 +77,5 @@ message LogicalOperator {
   }
   uint64 operatorid = 4;
   repeated uint64 childrenIds = 5;
-    SerializableSchema outputSchema = 6;
+  SerializableSchema outputSchema = 6;
 }

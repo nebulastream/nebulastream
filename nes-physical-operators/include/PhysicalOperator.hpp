@@ -16,7 +16,6 @@
 #include <memory>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <ExecutionContext.hpp>
 #include <Plans/Operator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Util/Common.hpp>
@@ -24,7 +23,9 @@
 
 namespace NES
 {
+using namespace Nautilus;
 using namespace Nautilus::Interface::MemoryProvider;
+struct ExecutionContext;
 
 /// Each operator can implement setup, open, close, execute, and terminate.
 struct PhysicalOperator : public virtual Operator
@@ -61,11 +62,11 @@ struct PhysicalOperator : public virtual Operator
     /// @param record the record that should be processed.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    std::shared_ptr<TupleBufferMemoryProvider> getMemoryProvider() const {
+    [[nodiscard]] std::shared_ptr<TupleBufferMemoryProvider> getMemoryProvider() const {
         return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders.front().get());
     }
 
-    std::shared_ptr<PhysicalOperator> child() const {
+    [[nodiscard]] std::shared_ptr<PhysicalOperator> child() const {
         INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
         return NES::Util::as<PhysicalOperator>(children.front());
     }

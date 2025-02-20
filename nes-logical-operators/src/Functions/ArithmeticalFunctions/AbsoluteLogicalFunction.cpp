@@ -16,13 +16,16 @@
 #include <sstream>
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Util/Common.hpp>
+#include <SerializableFunction.pb.h>
+#include <LogicalFunctionRegistry.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Abs")
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const std::shared_ptr<LogicalFunction>& child)
+    : UnaryLogicalFunction(child->getStamp(), child)
 {
-    this->setChild(child);
 }
 
 AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -49,6 +52,27 @@ std::string AbsoluteLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
 {
     return Util::as<LogicalFunction>(std::make_shared<AbsoluteLogicalFunction>(getChild())->clone());
+}
+
+SerializableFunction AbsoluteLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+std::unique_ptr<LogicalFunctionRegistryReturnType>
+LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<AbsoluteLogicalFunction>(
+        arguments.stamp, arguments.config);
 }
 
 }

@@ -37,6 +37,7 @@
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
+#include <Functions/ConcatLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
@@ -52,6 +53,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Operators/BinaryLogicalOperator.hpp>
 
 
 namespace NES::Parsers
@@ -635,7 +637,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         std::string implicitFieldName;
         const std::shared_ptr<LogicalFunction> mapFunction = helper.functionBuilder.back();
         /// there must be a field access function node in mapFunction.
-        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->children)
+        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
         {
             if (NES::Util::instanceOf<FieldAccessLogicalFunction>(child))
             {
@@ -886,7 +888,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
 
         const auto dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
-        auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
+        auto constFunctionItem = FunctionItem(std::make_shared<NES::ConstantValueLogicalFunction>(dataType, constantText));
 
         helper.functionBuilder.push_back(constFunctionItem);
     }
@@ -932,7 +934,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 const auto leftFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
 
-                parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
+                parentHelper.functionBuilder.push_back(std::make_shared<ConcatLogicalFunction>(leftFunction, rightFunction));
             }
             else
             {

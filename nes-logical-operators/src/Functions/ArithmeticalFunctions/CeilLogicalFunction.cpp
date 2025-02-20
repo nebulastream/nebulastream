@@ -14,16 +14,14 @@
 
 #include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(child->getStamp(), "Ceil")
+CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(child->getStamp(), child)
 {
-    this->setChild(child);
 };
 
 CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -50,5 +48,19 @@ std::string CeilLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> CeilLogicalFunction::clone() const
 {
     return std::make_shared<CeilLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+}
+
+SerializableFunction CeilLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 }

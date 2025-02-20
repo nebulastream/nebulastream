@@ -19,7 +19,6 @@
 #include <PhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 
-
 namespace NES
 {
 

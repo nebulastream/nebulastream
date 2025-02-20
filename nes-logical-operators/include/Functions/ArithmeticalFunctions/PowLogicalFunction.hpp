@@ -18,21 +18,24 @@
 
 namespace NES
 {
-
 class PowLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Pow";
+
     explicit PowLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~PowLogicalFunction() noexcept override = default;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     bool validateBeforeLowering() const;
 
-protected:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 private:
     explicit PowLogicalFunction(const PowLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::PowLogicalFunction);

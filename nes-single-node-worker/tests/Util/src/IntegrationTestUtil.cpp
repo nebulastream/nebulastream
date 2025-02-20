@@ -23,8 +23,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Serialization/OperatorSerializationUtil.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
@@ -465,7 +465,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
             if (sourceDescriptor.sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
-                Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
+                NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                 configUpdated.at("filePath") = newInputFileName;
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                     sourceDescriptor.schema,
@@ -503,7 +503,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                 if (sourceNumber == queryPlanTCPSourceCounter)
                 {
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
-                    Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
+                    NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                     configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                         sourceDescriptor.schema,

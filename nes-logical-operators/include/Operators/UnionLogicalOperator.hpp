@@ -43,8 +43,8 @@ public:
 
     struct ConfigParameters
     {
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap();
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap();
     };
 
 protected:

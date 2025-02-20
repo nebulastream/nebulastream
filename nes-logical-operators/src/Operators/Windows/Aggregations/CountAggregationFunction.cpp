@@ -21,9 +21,9 @@
 #include "API/Schema.hpp"
 #include <ErrorHandling.hpp>
 #include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/FunctionSerializationUtil.hpp"
+
 #include "Functions/LogicalFunction.hpp"
-#include "SerializableAggregationFunction.pb.h"
+#include <SerializableFunction.pb.h>
 #include "Util/Common.hpp"
 
 namespace NES::Windowing
@@ -101,10 +101,10 @@ NES::SerializableAggregationFunction CountAggregationFunction::serialize() const
     serializedAggregationFunction.set_type(NAME);
 
     auto *onFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+    onFieldFuc->CopyFrom(onField->serialize());
 
     auto *asFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+    asFieldFuc->CopyFrom(asField->serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

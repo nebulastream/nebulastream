@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <span>
 #include <atomic>
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
@@ -31,6 +32,34 @@ OperatorId getNextOperatorId()
 
 Operator::Operator() : id(getNextOperatorId())
 {
+}
+
+bool Operator::operator==(const Operator& rhs) const
+{
+    const Operator& leftRef = *this;
+    const Operator& rightRef = rhs;
+    if (typeid(leftRef) != typeid(rightRef)) {
+        return false;
+    }
+    if (children.size() != rhs.children.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < children.size(); ++i) {
+        if (!children[i] || !rhs.children[i]) {
+            if (children[i] != rhs.children[i]) {
+                return false;
+            }
+        }
+        else if (!(*children[i] == *rhs.children[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::span<const std::shared_ptr<Operator>> Operator::getChildren() const
+{
+    return children;
 }
 
 std::ostream& operator<<(std::ostream& os, const Operator& op)

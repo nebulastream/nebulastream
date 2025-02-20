@@ -13,7 +13,7 @@
 */
 
 #include <fstream>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>

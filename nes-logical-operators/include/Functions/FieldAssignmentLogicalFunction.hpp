@@ -21,22 +21,26 @@ namespace NES
 {
 
 /// @brief A FieldAssignmentLogicalFunction represents the assignment of a function result to a specific field.
-class FieldAssignmentLogicalFunction : public BinaryLogicalFunction
+class FieldAssignmentLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "FieldAssignment";
+
     explicit FieldAssignmentLogicalFunction(
         std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
     [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getField() const;
     [[nodiscard]] std::shared_ptr<LogicalFunction> getAssignment() const;
-    void inferStamp(const Schema& schema) override;
 
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    void inferStamp(const Schema& schema) override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]]  std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::FieldAssignmentLogicalFunction);

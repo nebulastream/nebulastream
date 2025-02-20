@@ -12,21 +12,22 @@
     limitations under the License.
 */
 
-#include "Operators/ProjectionLogicalOperator.hpp"
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <ranges>
 #include <utility>
+#include <variant>
+#include <memory>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include "API/AttributeField.hpp"
 #include <ErrorHandling.hpp>
-#include "Functions/FieldAccessLogicalFunction.hpp"
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
-#include "Functions/FunctionSerializationUtil.hpp"
-#include "LogicalOperatorRegistry.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "SerializableOperator.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <LogicalOperatorRegistry.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -129,7 +130,7 @@ bool ProjectionLogicalOperator::inferSchema()
 std::shared_ptr<Operator> ProjectionLogicalOperator::clone() const
 {
     auto copyOfProjectionFunctions
-        = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | ranges::to<std::vector>();
+        = functions | std::views::transform([](const auto& fn) { return fn->clone(); }) | std::ranges::to<std::vector>();
     auto copy = std::make_shared<ProjectionLogicalOperator>(copyOfProjectionFunctions);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -149,13 +150,25 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
         std::vector<std::shared_ptr<LogicalFunction>> functionVec(functions.size());
         for (const auto &function : functions)
         {
-            functionVec.push_back(FunctionSerializationUtil::deserializeFunction(function));
+            auto functionType = function.functiontype();
+            NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
+            for (const auto& [key, value] : function.config())
+            {
+                functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+            }
+
+            if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+            {
+                std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
+                functionVec.emplace_back(sharedBase);
+            }
+            else
+            {
+                return nullptr;
+            }
         }
-
         return std::make_unique<ProjectionLogicalOperator>(functionVec);
-
     }
-    //throw CannotDeserialize("Error while deserializing MapLogicalOperator with config {}", config);
     return nullptr;
 }
 
@@ -173,10 +186,10 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
     for (const auto& function : this->getFunctions())
     {
         auto* serializedFunction = list.add_functions();
-        FunctionSerializationUtil::serializeFunction(function, serializedFunction);
+        serializedFunction->CopyFrom(function->serialize());
     }
 
-    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
         Configurations::descriptorConfigTypeToProto(configVariant);
     (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;

@@ -41,17 +41,17 @@ namespace NES::Sources
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(HOST, config);
+            return NES::Configurations::DescriptorConfig::tryGet(HOST, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
             /// Mandatory (no default value)
-            const auto portNumber = Configurations::DescriptorConfig::tryGet(PORT, config);
+            const auto portNumber = NES::Configurations::DescriptorConfig::tryGet(PORT, config);
             if (portNumber.has_value())
             {
                 constexpr uint32_t PORT_NUMBER_MAX = 65535;
@@ -63,7 +63,7 @@ struct ConfigParametersTCP
             }
             return portNumber;
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
         "socketDomain",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
@@ -81,7 +81,7 @@ struct ConfigParametersTCP
             NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
             return std::nullopt;
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> TYPE{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<int32_t> TYPE{
         "socketType",
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
@@ -117,29 +117,29 @@ struct ConfigParametersTCP
                 socketTypeString)
             return std::nullopt;
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tupleDelimiter", '\n', [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(SEPARATOR, config);
+            return NES::Configurations::DescriptorConfig::tryGet(SEPARATOR, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flushIntervalMS", 0, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
+            return NES::Configurations::DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
         "socketBufferSize", 1024, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config);
+            return NES::Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
         "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
+            return NES::Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
         "connectTimeoutSeconds", 10, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(CONNECT_TIMEOUT, config);
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(
+    static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(
             HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
 };
 

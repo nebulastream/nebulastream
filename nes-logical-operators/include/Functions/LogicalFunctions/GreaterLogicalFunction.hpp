@@ -18,18 +18,22 @@
 
 namespace NES
 {
-
 class GreaterLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Greater";
+
     GreaterLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~GreaterLogicalFunction() override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit GreaterLogicalFunction(const GreaterLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::GreaterLogicalFunction);

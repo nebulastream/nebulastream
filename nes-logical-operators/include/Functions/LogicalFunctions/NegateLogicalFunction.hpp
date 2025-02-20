@@ -22,18 +22,23 @@ namespace NES
 class NegateLogicalFunction final : public UnaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Negate";
+
     explicit NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~NegateLogicalFunction() override = default;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
-    void inferStamp(const Schema& schema) override;
-
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
     bool validateBeforeLowering() const;
 
-protected:
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    void inferStamp(const Schema& schema) override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+
+private:
     explicit NegateLogicalFunction(const NegateLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::NegateLogicalFunction);
+

@@ -22,6 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
@@ -30,10 +31,9 @@ WhenLogicalFunction::WhenLogicalFunction(const WhenLogicalFunction& other) : Bin
 {
 }
 
-WhenLogicalFunction::WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)  : BinaryLogicalFunction(std::move(stamp), "When")
+WhenLogicalFunction::WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)  : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
+    PRECONDITION(NES::Util::instanceOf<Boolean>(getLeftChild()->getStamp()), "Left function has to be boolean");
 }
 
 void WhenLogicalFunction::inferStamp(const Schema& schema)
@@ -78,11 +78,21 @@ std::shared_ptr<LogicalFunction> WhenLogicalFunction::clone() const
     return std::make_shared<WhenLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
-bool WhenLogicalFunction::validateBeforeLowering() const
+SerializableFunction WhenLogicalFunction::serialize() const
 {
-    /// left function has to be boolean
-    const auto functionLeft = this->getLeftChild();
-    return NES::Util::instanceOf<Boolean>(functionLeft->getStamp());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

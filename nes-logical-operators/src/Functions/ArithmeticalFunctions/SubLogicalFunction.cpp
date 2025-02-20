@@ -13,19 +13,16 @@
 */
 
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), "Sub")
+SubLogicalFunction::SubLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 };
 
 SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : BinaryLogicalFunction(other)
@@ -52,6 +49,22 @@ std::string SubLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> SubLogicalFunction::clone() const
 {
     return std::make_shared<SubLogicalFunction>(Util::as<LogicalFunction>(children[0])->clone(), Util::as<LogicalFunction>(children[1])->clone());
+}
+
+SerializableFunction SubLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

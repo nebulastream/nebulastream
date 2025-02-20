@@ -52,13 +52,13 @@ public:
 
     struct ConfigParameters
     {
-        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
             "mapFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                return Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
+                return NES::Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
             }};
 
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
     };
 
 protected:

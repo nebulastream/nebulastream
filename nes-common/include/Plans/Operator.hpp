@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <span>
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -29,6 +31,10 @@ struct Operator {
     virtual ~Operator() = default;
     [[nodiscard]] virtual std::string toString() const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Operator& op);
+    /// Compares operator content ignoring 'id'
+    [[nodiscard]] virtual bool operator==(const Operator& rhs) const;
+    /// Needed for concepts requiring getChildren func.
+    [[nodiscard]] std::span<const std::shared_ptr<Operator>> getChildren() const;
     /// Unique identifier for the operator during runtime
     const OperatorId id;
     std::vector<std::shared_ptr<Operator>> children;

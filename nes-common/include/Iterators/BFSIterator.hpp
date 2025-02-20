@@ -50,7 +50,7 @@ public:
             auto current = nodeQueue.front();
             nodeQueue.pop();
 
-            for (auto& child : current->children)
+            for (auto& child : current->getChildren())
             {
                 nodeQueue.push(child);
             }

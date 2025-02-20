@@ -21,19 +21,23 @@ namespace NES
 class AndLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "And";
+
     AndLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~AndLogicalFunction() override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    bool validateBeforeLowering() const;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     void inferStamp(const Schema& schema) override;
     std::shared_ptr<LogicalFunction> clone() const override;
-    bool validateBeforeLowering() const;
-
-protected:
-    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit AndLogicalFunction(const AndLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
 
 }
+FMT_OSTREAM(NES::AndLogicalFunction);

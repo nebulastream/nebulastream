@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
-#include "Operators/UnionLogicalOperator.hpp"
+#include <Operators/UnionLogicalOperator.hpp>
 #include <memory>
 #include <magic_enum.hpp>
-#include "API/Schema.hpp"
+#include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
-#include "Functions/FunctionSerializationUtil.hpp"
-#include "LogicalOperatorRegistry.hpp"
-#include "Operators/BinaryLogicalOperator.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "SerializableOperator.pb.h"
-#include "SerializableSchema.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <LogicalOperatorRegistry.hpp>
+#include <Operators/BinaryLogicalOperator.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableSchema.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -121,7 +120,7 @@ void UnionLogicalOperator::inferInputOrigins()
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);
+    return NES::Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);
 }
 
 std::unique_ptr<LogicalOperator>

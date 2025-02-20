@@ -21,17 +21,22 @@ namespace NES
 class OrLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Or";
+
     OrLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    ~OrLogicalFunction() override = default;
-     
+
+    bool validateBeforeLowering() const;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     void inferStamp(const Schema& schema) override;
-
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit OrLogicalFunction(const OrLogicalFunction& other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::OrLogicalFunction);
+

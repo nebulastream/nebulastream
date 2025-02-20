@@ -25,7 +25,7 @@ class GreaterEqualsPhysicalFunction final : public PhysicalFunction
 {
 public:
     GreaterEqualsPhysicalFunction(std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction);
-    [[nodiscard]] VarVal execute(const Record& record) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     const std::unique_ptr<PhysicalFunction> leftPhysicalFunction;

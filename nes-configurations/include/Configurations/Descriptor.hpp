@@ -335,7 +335,8 @@ private:
     friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
 
-SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var);
+SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurations::DescriptorConfig::ConfigType& var);
+NES::Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var);
 
 }
 

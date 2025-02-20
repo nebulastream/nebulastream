@@ -21,17 +21,19 @@ namespace NES
 class AddLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Add";
+
     explicit AddLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~AddLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
-    [[nodiscard]] std::string toString() const override;
-
 private:
     explicit AddLogicalFunction(const AddLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::AddLogicalFunction);

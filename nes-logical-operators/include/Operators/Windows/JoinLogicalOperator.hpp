@@ -106,23 +106,23 @@ public:
 
     struct ConfigParameters
     {
-        static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, JoinType>
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<NES::Configurations::EnumWrapper, JoinType>
             JOIN_TYPE{"joinType", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                             return Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config);
+                             return NES::Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config);
                          }};
 
-        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string>
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string>
             WINDOW_START_FIELD_NAME{"windowStartFieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                          return Configurations::DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config);
+                          return NES::Configurations::DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config);
                       }};
 
-        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string>
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string>
             WINDOW_END_FIELD_NAME{"windowEndFieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                                        return Configurations::DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config);
+                                        return NES::Configurations::DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config);
                                     }};
 
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap(JOIN_TYPE, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(JOIN_TYPE, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
     };
 
     [[nodiscard]] SerializableOperator serialize() const override;

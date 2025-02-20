@@ -14,22 +14,25 @@
 
 #pragma once
 #include <Functions/BinaryLogicalFunction.hpp>
+
 namespace NES
 {
-
 class ModuloLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Modulo";
+
     explicit ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     ~ModuloLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
-    [[nodiscard]] std::string toString() const override;
-
 private:
     explicit ModuloLogicalFunction(const ModuloLogicalFunction& other);
+    [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::ModuloLogicalFunction);

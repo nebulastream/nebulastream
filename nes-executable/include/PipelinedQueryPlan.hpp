@@ -33,7 +33,7 @@ struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
         std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
         for (const auto &pipeline : pipelines)
         {
-            if (Util::instanceOf<SourcePipeline>(pipeline))
+            if (NES::Util::instanceOf<SourcePipeline>(pipeline))
             {
                 sourcePipelines.emplace_back(pipeline);
             }
@@ -45,7 +45,7 @@ struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
         std::vector<std::shared_ptr<Pipeline>> sinkPipelines;
         for (const auto &pipeline : pipelines)
         {
-            if (Util::instanceOf<SinkPipeline>(pipeline))
+            if (NES::Util::instanceOf<SinkPipeline>(pipeline))
             {
                 sinkPipelines.emplace_back(pipeline);
             }

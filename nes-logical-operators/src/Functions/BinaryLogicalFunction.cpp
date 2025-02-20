@@ -12,13 +12,9 @@
     limitations under the License.
 */
 
-#include <vector>
 #include <memory>
-#include <string>
 #include <utility>
 #include <Functions/BinaryLogicalFunction.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -27,10 +23,11 @@ namespace NES
 constexpr size_t LEFT_CHILD_INDEX = 0;
 constexpr size_t RIGHT_CHILD_INDEX = 1;
 
-BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
-    : LogicalFunction(std::move(stamp), std::move(name))
+BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::shared_ptr<LogicalFunction> left, std::shared_ptr<LogicalFunction> right)
+    : LogicalFunction(std::move(stamp))
 {
-    children.resize(2);
+    children[LEFT_CHILD_INDEX] = left;
+    children[RIGHT_CHILD_INDEX] = right;
 }
 
 BinaryLogicalFunction::BinaryLogicalFunction(const BinaryLogicalFunction& other) : LogicalFunction(other)
@@ -57,6 +54,11 @@ std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeftChild() const
 std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRightChild() const
 {
     return children[RIGHT_CHILD_INDEX];
+}
+
+std::span<const std::shared_ptr<LogicalFunction>> BinaryLogicalFunction::getChildren() const
+{
+    return children;
 }
 
 }

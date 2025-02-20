@@ -14,7 +14,7 @@
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegatePhysicalFunction.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>

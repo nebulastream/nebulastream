@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
 
 namespace NES

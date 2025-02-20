@@ -15,21 +15,18 @@
 #include <memory>
 #include <sstream>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-
+#include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-EqualsLogicalFunction::EqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Equals")
+EqualsLogicalFunction::EqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
 EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other) : BinaryLogicalFunction(other)
@@ -73,6 +70,23 @@ bool EqualsLogicalFunction::validateBeforeLowering() const
     }
 
     return true;
+}
+
+SerializableFunction EqualsLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

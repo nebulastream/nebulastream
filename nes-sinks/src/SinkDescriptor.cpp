@@ -24,7 +24,7 @@
 namespace NES::Sinks
 {
 
-SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorConfig::Config&& config, bool addTimestamp)
+SinkDescriptor::SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp)
     : Descriptor(std::move(config)), sinkType(std::move(sinkType)), addTimestamp(addTimestamp)
 {
 }

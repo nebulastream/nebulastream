@@ -24,22 +24,29 @@ namespace NES
 
 /// This function node represents a constant value and a fixed data type.
 /// Thus the samp of this function is always fixed.
-class ConstantValueLogicalFunction : public LogicalFunction
+class ConstantValueLogicalFunction final : public LogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "ConstantValue";
+
     ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
     std::string getConstantValue() const;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     void inferStamp(const Schema& schema) override;
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+
+private:
     explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
     std::string toString() const override;
 
-private:
     const std::string constantValue;
 };
 }
+FMT_OSTREAM(NES::ConstantValueLogicalFunction);

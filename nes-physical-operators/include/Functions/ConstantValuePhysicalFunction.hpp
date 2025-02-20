@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <ExecutionContext.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
@@ -28,7 +29,7 @@ class ConstantValuePhysicalFunction final : public PhysicalFunction
 {
 public:
     explicit ConstantValuePhysicalFunction(T value) : value(value) { }
-    VarVal execute(Record&) const override { return VarVal(value); }
+    VarVal execute(const Record&, ArenaRef&) const override { return VarVal(value); }
 
 private:
     const T value;

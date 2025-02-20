@@ -12,25 +12,20 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
-#include <utility>
-
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-
+#include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), "Sqrt")
+SqrtLogicalFunction::SqrtLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), child)
 {
-    this->setChild(child);
 };
 
 SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -57,6 +52,20 @@ std::string SqrtLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> SqrtLogicalFunction::clone() const
 {
     return std::make_shared<SqrtLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+}
+
+SerializableFunction SqrtLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

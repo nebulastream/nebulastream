@@ -17,24 +17,26 @@
 #include <memory>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnaryLogicalFunction.hpp>
-
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
-
 class SqrtLogicalFunction final : public UnaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Sqrt";
+
     explicit SqrtLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~SqrtLogicalFunction() noexcept override = default;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit SqrtLogicalFunction(const SqrtLogicalFunction& other);
-
     [[nodiscard]] std::string toString() const override;
 };
-
 }
+FMT_OSTREAM(NES::SqrtLogicalFunction);

@@ -14,15 +14,11 @@
 
 #include <memory>
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/BinaryLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
@@ -31,10 +27,8 @@ ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other)
 {
 }
 
-ModuloLogicalFunction::ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(std::move(stamp), "Mod")
+ModuloLogicalFunction::ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp()->join(right->getStamp()), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
 bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -57,6 +51,22 @@ std::string ModuloLogicalFunction::toString() const
 std::shared_ptr<LogicalFunction> ModuloLogicalFunction::clone() const
 {
     return std::make_shared<ModuloLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+}
+
+SerializableFunction ModuloLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

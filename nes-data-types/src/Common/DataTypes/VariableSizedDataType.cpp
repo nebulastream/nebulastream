@@ -27,12 +27,12 @@ bool VariableSizedDataType::operator==(const NES::DataType& other) const
 }
 
 /// A VariableSizedData type cannot be joined with another type.
-std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType>)
+std::shared_ptr<DataType> VariableSizedDataType::join(const std::shared_ptr<DataType>&) const
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 
-std::string VariableSizedDataType::toString()
+std::string VariableSizedDataType::toString() const
 {
     return "VARSIZED";
 }

@@ -15,9 +15,9 @@
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
+
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
@@ -102,9 +102,9 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    FunctionSerializationUtil::serializeFunction(this->onField, serializedFunction);
+    serializedFunction->CopyFrom(onField->serialize());
 
-    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
         Configurations::descriptorConfigTypeToProto(configVariant);
     (*opDesc->mutable_config())["functionList"] = variantDescriptor;

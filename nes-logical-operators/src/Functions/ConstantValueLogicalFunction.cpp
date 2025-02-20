@@ -21,16 +21,17 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value)
-    : LogicalFunction(type, "ConstantValue"), constantValue(std::move(value))
+    : LogicalFunction(type), constantValue(std::move(value))
 {
 }
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : LogicalFunction(other.getStamp(), "ConstantValue"), constantValue(other.constantValue)
+    : LogicalFunction(other.getStamp()), constantValue(other.constantValue)
 {
 }
 
@@ -60,9 +61,25 @@ void ConstantValueLogicalFunction::inferStamp(const Schema&)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
+std::span<const std::shared_ptr<LogicalFunction>> ConstantValueLogicalFunction::getChildren() const
+{
+    return {};
+}
+
 std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::clone() const
 {
     return std::make_shared<ConstantValueLogicalFunction>(getStamp(), constantValue);
+}
+
+SerializableFunction ConstantValueLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }

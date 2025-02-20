@@ -15,33 +15,35 @@
 #pragma once
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Functions/UnaryLogicalFunction.hpp>
 
 namespace NES
 {
-/// @brief A RenameLogicalFunction allows us to rename an attribute value via .as in the query
-class RenameLogicalFunction : public LogicalFunction
+/// @brief A RenameLogicalFunction allows us to rename an attribute value via `as` in the query
+class RenameLogicalFunction final : public UnaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Rename";
+
     RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
     void inferStamp(const Schema& schema) override;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] std::string getNewFieldName() const;
     [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
 
+    [[nodiscard]] std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
-    bool validateBeforeLowering() const;
 
-protected:
+private:
     explicit RenameLogicalFunction(const RenameLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;
 
-private:
-    const std::shared_ptr<FieldAccessLogicalFunction> originalField;
+    std::array<std::shared_ptr<LogicalFunction>, 1> child;
     std::string newFieldName;
 };
-
 }
+FMT_OSTREAM(NES::RenameLogicalFunction);

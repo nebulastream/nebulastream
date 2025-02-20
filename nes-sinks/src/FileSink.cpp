@@ -123,7 +123,7 @@ void FileSink::stop(PipelineExecutionContext&)
 
 Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)

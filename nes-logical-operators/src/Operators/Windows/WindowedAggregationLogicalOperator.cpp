@@ -23,7 +23,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

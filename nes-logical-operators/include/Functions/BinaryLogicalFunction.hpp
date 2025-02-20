@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
+#include <span>
 #include <string>
 #include <Functions/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -29,12 +31,16 @@ public:
 
     void setRightChild(std::shared_ptr<LogicalFunction> right);
     void setLeftChild(std::shared_ptr<LogicalFunction> left);
-
     [[nodiscard]] std::shared_ptr<LogicalFunction> getLeftChild() const;
     [[nodiscard]] std::shared_ptr<LogicalFunction> getRightChild() const;
+    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+
 protected:
-    explicit BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name);
-    explicit BinaryLogicalFunction(const BinaryLogicalFunction& other);
+    BinaryLogicalFunction(std::shared_ptr<DataType> stamp,
+                                                 std::shared_ptr<LogicalFunction> left,
+                                                 std::shared_ptr<LogicalFunction> right);
+    BinaryLogicalFunction(const BinaryLogicalFunction& other);
+    std::array<std::shared_ptr<LogicalFunction>, 2> children;
 };
 
 }

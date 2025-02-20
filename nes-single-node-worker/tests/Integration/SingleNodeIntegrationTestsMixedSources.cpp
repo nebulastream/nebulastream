@@ -128,7 +128,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryOptimizer.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 

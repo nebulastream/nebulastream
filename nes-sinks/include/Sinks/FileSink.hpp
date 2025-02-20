@@ -69,21 +69,21 @@ private:
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersFile
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
         INPUT_FORMAT{"inputFormat", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                         return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config);
+                         return NES::Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config);
                      }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
+            return NES::Configurations::DescriptorConfig::tryGet(FILEPATH, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<bool> APPEND{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<bool> APPEND{
         "append", false, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(APPEND, config);
+            return NES::Configurations::DescriptorConfig::tryGet(APPEND, config);
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, FILEPATH, APPEND);
+    static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, FILEPATH, APPEND);
 };
 
 }

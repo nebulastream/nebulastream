@@ -20,14 +20,19 @@ namespace NES
 class LessLogicalFunction final : public BinaryLogicalFunction
 {
 public:
+    static constexpr std::string_view NAME = "Less";
+
     LessLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~LessLogicalFunction() override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+private:
     explicit LessLogicalFunction(const LessLogicalFunction& other);
     std::string toString() const override;
 };
 }
+FMT_OSTREAM(NES::LessLogicalFunction);

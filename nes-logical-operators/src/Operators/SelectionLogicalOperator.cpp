@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#include "Operators/SelectionLogicalOperator.hpp"
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 #include <ErrorHandling.hpp>
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/FunctionSerializationUtil.hpp"
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Iterators/DFSIterator.hpp"
-#include "LogicalOperatorRegistry.hpp"
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "SerializableOperator.pb.h"
-#include "SerializableSchema.pb.h"
-#include "Util/Common.hpp"
+#include <LogicalOperatorRegistry.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableSchema.pb.h>
+#include <Operators/SelectionLogicalOperator.hpp>
 
 namespace NES
 {
@@ -98,11 +95,21 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::Logical
         const auto& functionList = std::get<NES::FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
         INVARIANT(functions.size() == 1, "Expected exactly one function");
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        return std::make_unique<SelectionLogicalOperator>(function);
 
+        auto functionType = functions[0].functiontype();
+        NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
+        for (const auto& [key, value] : functions[0].config())
+        {
+            functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        }
+
+        if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+        {
+            std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
+            return std::make_unique<SelectionLogicalOperator>(sharedBase);
+        }
+        return nullptr;
     }
-    //throw CannotDeserialize("Error while deserializing SelectionLogicalOperator with config {}", config);
     return nullptr;
 }
 
@@ -117,9 +124,9 @@ SerializableOperator SelectionLogicalOperator::serialize() const
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    FunctionSerializationUtil::serializeFunction(this->getPredicate(), serializedFunction);
+    serializedFunction->CopyFrom(getPredicate()->serialize());
 
-    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
         Configurations::descriptorConfigTypeToProto(configVariant);
     (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;

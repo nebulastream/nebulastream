@@ -13,18 +13,15 @@
 */
 
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), "Div")
+DivLogicalFunction::DivLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), left, right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 };
 
 DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : BinaryLogicalFunction(other)
@@ -53,5 +50,20 @@ std::shared_ptr<LogicalFunction> DivLogicalFunction::clone() const
     return std::make_shared<DivLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
+SerializableFunction DivLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild()->serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild()->serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
 
 }

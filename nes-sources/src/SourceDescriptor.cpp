@@ -25,7 +25,7 @@ SourceDescriptor::SourceDescriptor(
     std::string logicalSourceName,
     std::string sourceType,
     ParserConfig parserConfig,
-    Configurations::DescriptorConfig::Config&& config)
+    NES::Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config))
     , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
