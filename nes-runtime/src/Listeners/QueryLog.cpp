@@ -93,43 +93,41 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         /// For now, we count the number of Running and Stopped events to determine the number of restarts and if the query is currently running.
         /// Failures are counting towards the number of stops. If a query has equally (or more) Stopped than Running events, the QueryLog
         /// assumes it to be in the Stopped state.
-        constexpr auto INVALID_TIME = std::chrono::system_clock::time_point(std::chrono::seconds(0));
         std::vector<QueryRunSummary> runs;
         for (const auto& statusChange : queryLog->second)
         {
             if (statusChange.state == Execution::QueryStatus::Failed)
             {
-                if (runs.empty() || runs.back().stop != INVALID_TIME)
+                if (runs.empty() || runs.back().stop)
                 {
-                    runs.emplace_back(INVALID_TIME, statusChange.timestamp, statusChange.exception);
+                    runs.emplace_back();
                 }
-                else
-                {
-                    runs.back().stop = statusChange.timestamp;
-                    runs.back().error = statusChange.exception;
-                }
+                runs.back().stop = statusChange.timestamp;
+                runs.back().error = statusChange.exception;
             }
             else if (statusChange.state == Execution::QueryStatus::Stopped)
             {
-                if (runs.empty() || runs.back().stop != INVALID_TIME)
+                if (runs.empty() || runs.back().stop)
                 {
-                    runs.emplace_back(INVALID_TIME, statusChange.timestamp, std::nullopt);
+                    runs.emplace_back();
                 }
-                else
+                runs.back().stop = statusChange.timestamp;
+            }
+            else if (statusChange.state == Execution::QueryStatus::Started)
+            {
+                if (runs.empty() || runs.back().start)
                 {
-                    runs.back().stop = statusChange.timestamp;
+                    runs.emplace_back();
                 }
+                runs.back().start = statusChange.timestamp;
             }
             else if (statusChange.state == Execution::QueryStatus::Running)
             {
-                if (runs.empty() || runs.back().start != INVALID_TIME)
+                if (runs.empty() || runs.back().running)
                 {
-                    runs.emplace_back(statusChange.timestamp, INVALID_TIME, std::nullopt);
+                    runs.emplace_back();
                 }
-                else
-                {
-                    runs.back().start = statusChange.timestamp;
-                }
+                runs.back().running = statusChange.timestamp;
             }
         }
 
@@ -139,7 +137,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         {
             summary.currentStatus = Execution::QueryStatus::Registered;
         }
-        else if (summary.runs.back().stop == INVALID_TIME)
+        else if (!summary.runs.back().stop)
         {
             summary.currentStatus = Execution::QueryStatus::Running;
         }
