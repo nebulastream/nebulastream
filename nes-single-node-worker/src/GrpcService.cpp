@@ -100,11 +100,21 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         if (summary.has_value())
         {
             reply->set_status(QueryStatus(summary->currentStatus));
-            for (const auto& [start, stop, error] : summary->runs)
+            for (const auto& [start, running, stop, error] : summary->runs)
             {
                 const auto replyRun = reply->add_runs();
-                replyRun->set_startunixtimeinms(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
-                replyRun->set_stopunixtimeinms(std::chrono::duration_cast<std::chrono::milliseconds>(stop.time_since_epoch()).count());
+                replyRun->set_startunixtimeinms(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                        .count());
+                replyRun->set_runningunixtimeinms(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        running.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                        .count());
+                replyRun->set_stopunixtimeinms(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                        .count());
                 if (error)
                 {
                     const auto runError = replyRun->mutable_error();

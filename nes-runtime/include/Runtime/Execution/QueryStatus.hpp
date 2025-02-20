@@ -23,6 +23,7 @@ namespace NES::Runtime::Execution
 enum class QueryStatus : uint8_t
 {
     Registered,
+    Started,
     Running, /// Deployed->Running when calling start()
     Stopped, /// Running->Stopped when calling stop() and in Running state
     Failed,
