@@ -21,6 +21,7 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <CompiledQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
