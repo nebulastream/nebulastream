@@ -157,6 +157,8 @@ std::shared_ptr<AttributeField> Schema::getFieldByIndex(const size_t index) cons
     throw FieldNotFound("field with index {}  does not exist", std::to_string(index));
 }
 
+
+
 bool Schema::operator==(const Schema& other) const
 {
     if (other.fields.size() != fields.size())

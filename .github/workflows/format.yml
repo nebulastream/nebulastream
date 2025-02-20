@@ -1,3 +1,5 @@
+name: Run format.sh
+
 # This workflow calls our formatting script to verify the commit conforms to our formatting rules.
 on:
   workflow_call:
@@ -10,10 +12,6 @@ on:
         type: string
         required: true
         description: "commit sha of head"
-      base_sha:
-        type: string
-        required: true
-        description: "commit sha of base"
       number_of_commits:
         type: number
         required: false
@@ -27,7 +25,7 @@ jobs:
       options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
-        BASE_REF: ${{ inputs.base_sha }}
+        NUM_COMMITS: ${{ inputs.number_of_commits }}
     permissions:
       issues: read
       contents: read

@@ -15,12 +15,14 @@ jobs:
   fetch-current-main-commit:
     runs-on: [ self-hosted ]
     outputs:
-      sha: ${{ steps.fetch-sha.sha }}
+      sha: ${{ steps.fetch-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Fetch SHA
+        id: fetch-sha
+        run: |
+          git rev-parse --verify HEAD
           echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
-        name: fetch-sha
 
   get-dev-images:
     needs: fetch-current-main-commit
@@ -35,15 +37,15 @@ jobs:
     secrets: inherit
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   compile-time-regression:
-    needs: [ fetch-current-main-commit, get-dev-images, full-clang-tidy ]
+    needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/compile_time_regression.yml
     secrets: inherit
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   build-and-test:
     name: "Run build and test"
@@ -51,7 +53,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long-running-tests:

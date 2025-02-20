@@ -119,10 +119,8 @@ WarningsAsErrors: '
   -google-runtime-operator,
   -hicpp-exception-baseclass,
   -misc-header-include-cycle,
-  -modernize-raw-string-literal,
   -modernize-use-std-numbers,
   -modernize-use-transparent-functors,
-  -readability-non-const-parameter,
   -readability-string-compare,
   -bugprone-multi-level-implicit-pointer-conversion,
   -bugprone-suspicious-string-compare,
@@ -139,11 +137,9 @@ WarningsAsErrors: '
   -bugprone-move-forwarding-reference,
   -cert-env33-c,
   -clang-analyzer-optin.cplusplus.VirtualCall,
-  -modernize-deprecated-headers,
   -modernize-use-nullptr,
   -readability-redundant-string-init,
   -bugprone-exception-escape,
-  -bugprone-unhandled-self-assignment,
   -bugprone-unused-return-value,
   -google-global-names-in-headers,
   -performance-no-int-to-ptr,
@@ -161,7 +157,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-interfaces-global-init,
   -cppcoreguidelines-pro-type-const-cast,
   -misc-throw-by-value-catch-by-reference,
-  -cppcoreguidelines-no-malloc,
   -readability-suspicious-call-argument,
   -bugprone-throw-keyword-missing,
   -modernize-use-bool-literals,
@@ -170,21 +165,15 @@ WarningsAsErrors: '
   -cert-err33-c,
   -cppcoreguidelines-pro-type-vararg,
   -misc-unconventional-assign-operator,
-  -modernize-use-auto,
-  -modernize-use-emplace,
   -readability-duplicate-include,
   -cert-dcl21-cpp,
   -fuchsia-trailing-return,
-  -readability-container-size-empty,
-  -clang-analyzer-deadcode.DeadStores,
   -readability-container-data-pointer,
   -bugprone-implicit-widening-of-multiplication-result,
-  -modernize-loop-convert,
   -performance-noexcept-move-constructor,
   -bugprone-branch-clone,
   -cppcoreguidelines-virtual-class-destructor,
   -readability-redundant-smartptr-get,
-  -performance-inefficient-vector-operation,
   -readability-static-accessed-through-instance,
   -cppcoreguidelines-rvalue-reference-param-not-moved,
   -bugprone-unchecked-optional-access,
@@ -193,7 +182,6 @@ WarningsAsErrors: '
   -readability-make-member-function-const,
   -cppcoreguidelines-macro-usage,
   -google-readability-avoid-underscore-in-googletest-name,
-  -bugprone-use-after-move,
   -fuchsia-virtual-inheritance,
   -readability-simplify-boolean-expr,
   -google-build-using-namespace,
@@ -298,11 +286,12 @@ CheckOptions:
   readability-identifier-naming.ParameterCase: camelBack
   modernize-loop-convert.UseCxx20ReverseRanges: false
   performance-move-const-arg.CheckTriviallyCopyableMove: false
+  google-runtime-int.TypeSuffix: '_t'
   # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
   # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
-  readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op'
-  readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op'
+  readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
+  readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

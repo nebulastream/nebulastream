@@ -31,7 +31,6 @@ jobs:
                     "keyseven123": "@**Nils**",
                     "zeuchste": "@**Steffen Zeuch**",
                     "yschroeder97": "@**Yannik Schröder**",
-                    "pfeiffer-tim": "@**Tim Pfeiffer**",
                     "Artraxon": "@**Leonhard Rose**"
                   }
                 bot-api-key: ${{ secrets.PRBOT_API_KEY }}
