@@ -294,6 +294,11 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
             case Runtime::Execution::QueryStatus::Registered:
                 EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Registered, ::testing::_)).Times(1);
                 break;
+            case Runtime::Execution::QueryStatus::Started:
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Started, ::testing::_))
+                    .Times(1)
+                    .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
+                break;
             case Runtime::Execution::QueryStatus::Running:
                 EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running, ::testing::_))
                     .Times(1)
