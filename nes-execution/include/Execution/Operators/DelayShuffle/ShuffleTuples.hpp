@@ -38,7 +38,7 @@ public:
     std::vector<uint64_t> getEmitIndicesForWorker(WorkerThreadId workerThreadId);
 
 private:
-    const float unorderedness;
+    const double unorderedness;
     std::mt19937 gen;
     uint64_t numberOfWorkerThreads;
     std::vector<std::vector<uint64_t>> emitIndicesForWorker;

@@ -50,12 +50,14 @@ MicroBenchmarkUtils::MicroBenchmarkUtils(
 std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     folly::MPMCQueue<Runtime::WorkTask>& taskQueue,
     const uint64_t numberOfTasks,
-    const uint64_t numberOfTuplesPerTask,
+    const std::vector<uint64_t>& numberOfTuplesPerTask,
     Runtime::WorkEmitter& emitter,
     Memory::AbstractBufferProvider& bufferProvider,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
     std::chrono::nanoseconds sleepDurationPerTuple) const
 {
+    PRECONDITION(numberOfTuplesPerTask.size() == numberOfTasks, "The number of tasks and the number of tuples per task do not match.");
+
     /// Defining the query and pipeline id
     constexpr QueryId queryId(1);
     constexpr PipelineId pipelineId(1);
@@ -86,12 +88,12 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     /// Thus, we can then afterwards use the stored information to create tuple buffers concurrently
     SequenceNumber::Underlying seqNumber = SequenceNumber::INITIAL;
     uint64_t ts = 0;
-    for (uint64_t i = 0; i < numberOfTasks; i++)
+    for (const auto tuplesPerTask : numberOfTuplesPerTask)
     {
-        InfoForThread infoForThread{SequenceNumber(seqNumber), ts, numberOfTuplesPerTask};
+        InfoForThread infoForThread{SequenceNumber(seqNumber), ts, tuplesPerTask};
         infoForThreads.write(std::move(infoForThread));
         seqNumber += 1;
-        ts += numberOfTuplesPerTask;
+        ts += tuplesPerTask;
     }
 
     auto populateTupleBufferFunction = [&taskQueue, &infoForThreads, &runningQueryPlanNode, this, &bufferProvider, &queryId, &pipelineId]()
@@ -142,8 +144,7 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     const auto endTime = std::chrono::high_resolution_clock::now();
     const auto duration = endTime - startTime;
 
-    std::cout << "Created " << numberOfTasks << " tuple buffers with no. tuples " << numberOfTuplesPerTask << " totaling "
-              << (numberOfTasks * numberOfTuplesPerTask) << " tuples with a buffer size of " << bufferSize << std::endl;
+    std::cout << "Created " << numberOfTasks << " tuple buffers with a buffer size of " << bufferSize << std::endl;
     std::cout << "Taskqueue has " << taskQueue.size() << " elements" << std::endl;
     std::cout << "Took a total of " << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " s" << " with "
               << numberOfWorkerThreads << " threads" << std::endl;

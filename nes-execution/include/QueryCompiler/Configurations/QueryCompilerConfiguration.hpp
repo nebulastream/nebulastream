@@ -22,7 +22,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/BooleanValidation.hpp>
-#include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/FloatRangeValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
@@ -104,7 +104,7 @@ public:
            "Strategy for introducing delays by shuffling tuples or buffers in the stream"
            "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
     NES::Configurations::FloatOption unorderedness
-        = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatValidation>()}};
+        = {"unorderedness", "0.0", "Percentage of unorderedness", {std::make_shared<NES::Configurations::FloatRangeValidation>(0, 1)}};
     NES::Configurations::UIntOption minDelay
         = {"minDelay", "1", "Minimum delay in milliseconds", {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxDelay

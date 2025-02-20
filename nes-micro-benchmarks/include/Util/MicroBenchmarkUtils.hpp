@@ -39,7 +39,7 @@ public:
     std::shared_ptr<Runtime::RunningQueryPlanNode> createTasks(
         folly::MPMCQueue<Runtime::WorkTask>& taskQueue,
         const uint64_t numberOfTasks,
-        const uint64_t numberOfTuplesPerTask,
+        const std::vector<uint64_t>& numberOfTuplesPerTask,
         Runtime::WorkEmitter& emitter,
         Memory::AbstractBufferProvider& bufferProvider,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,

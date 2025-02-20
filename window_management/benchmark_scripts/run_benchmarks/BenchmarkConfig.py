@@ -76,7 +76,7 @@ def create_all_benchmark_configs():
     TIMESTAMP_INCREMENT = [1]
     SHUFFLE_STRATEGY = ["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
     MIN_MAX_DELAYS = [(0, 10)] # in milliseconds
-    UNORDEREDNESS = [0, 100] # in percentage
+    UNORDEREDNESS = [0, 1] # in percentage
     BUFFER_SIZES = [8196]  # [1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
     NO_PHYSICAL_SOURCES = [1]

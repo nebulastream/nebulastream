@@ -68,7 +68,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
     buffer.setSequenceNumber(sequenceNumber);
     buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
     buffer.setLastChunk(true);
-    NES_DEBUG(
+    NES_TRACE(
         "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
         buffer.getOriginId(),
         buffer.getOriginId(),

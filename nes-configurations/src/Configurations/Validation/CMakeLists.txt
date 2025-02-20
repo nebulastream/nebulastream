@@ -15,5 +15,6 @@ add_source_files(nes-configurations
         NumberValidation.cpp
 	NonZeroValidation.cpp
         FloatValidation.cpp
+        FloatRangeValidation.cpp
         BooleanValidation.cpp
         )
