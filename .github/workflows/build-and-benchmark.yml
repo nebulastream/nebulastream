@@ -19,7 +19,7 @@ jobs:
   build-and-benchmark:
     runs-on: [ self-hosted, linux, Build ]
     container:
-      image: nebulastream/nes-benchmarking:${{ inputs.dev_image_tag }}
+      image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
       env:
