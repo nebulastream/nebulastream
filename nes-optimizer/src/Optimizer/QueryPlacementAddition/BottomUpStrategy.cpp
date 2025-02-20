@@ -125,6 +125,10 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
             candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
         }
     }
+
+    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()) {
+            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+    }
     NES_DEBUG("Place {}", logicalOperator->toString());
 
 
