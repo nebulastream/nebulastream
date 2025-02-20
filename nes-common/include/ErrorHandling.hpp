@@ -73,11 +73,12 @@ private:
 #include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 
-#ifdef DISABLE_ASSERTS
+#ifdef NDEBUG
+    #define USED_IN_DEBUG [[maybe_unused]]
     #define PRECONDITION(condition, formatString, ...) ((void)0)
     #define INVARIANT(condition, formatString, ...) ((void)0)
 #else
-
+    #define USED_IN_DEBUG
     /// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
     /// the caller of the functions made an error.
     /// @param condition The condition that should be true

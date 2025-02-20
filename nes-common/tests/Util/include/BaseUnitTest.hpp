@@ -24,7 +24,7 @@ namespace NES::Testing
 {
 
 /// Test with EXPECT_DEATH_DEBUG and ASSERT_DEATH_DEBUG for testing correct behaviour when asserts are disabled
-#if defined(DISABLE_ASSERTS)
+#if defined(NDEBUG)
     /// In Release: Death-Tests as No-Op
     #define EXPECT_DEATH_DEBUG(statement, regex) \
         do \

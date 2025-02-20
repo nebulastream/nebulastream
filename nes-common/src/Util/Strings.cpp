@@ -138,7 +138,7 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
 
 namespace
 {
-constexpr void verifyAsciiString(std::string_view input)
+constexpr void verifyAsciiString(USED_IN_DEBUG std::string_view input)
 {
     PRECONDITION(
         std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; }),
