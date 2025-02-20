@@ -65,8 +65,8 @@ class BenchmarkConfig:
 
 
 def create_all_benchmark_configs():
-    NUMBER_OF_WORKER_THREADS = [1, 8]
-    CACHE_SIZES = [1, 100]
+    NUMBER_OF_WORKER_THREADS = [1, 4, 16]
+    CACHE_SIZES = [1, 10, 20, 100]
     CACHE_TYPES = ["LRU", "FIFO", "SECOND_CHANCE"]
     LOCKED_SLICE_CACHE = [False]  # True or False
     SLICE_CACHE_TYPE_AND_SIZE = [(type, size, locked_slice_cache) for type in CACHE_TYPES for size in CACHE_SIZES for
