@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
+#include <nlohmann/json.hpp>
 
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
@@ -267,7 +268,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     }
                     worker.startQuery(queryId);
 
-                    const RunningQuery runningQuery = {query, queryId};
+                    const RunningQuery runningQuery = {query, queryId, {}};
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
 
@@ -350,7 +351,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
                     const auto queryId = client.registerQuery(*query.queryPlan);
                     client.start(queryId);
-                    const RunningQuery runningQuery = {query, QueryId(queryId)};
+                    const RunningQuery runningQuery = {query, QueryId(queryId), {}};
 
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
@@ -395,6 +396,68 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
     }
 
     return failedQueries.copy();
+}
+
+std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQuery>& queries, nlohmann::json& resultJson)
+{
+    std::vector<RunningQuery> failedQueries;
+    for (const auto& queryRan : queries)
+    {
+        if (!queryRan.queryExecutionInfo.passed)
+        {
+            failedQueries.emplace_back(queryRan);
+        }
+        resultJson.push_back({{"query name", queryRan.query.name}, {"time", queryRan.queryExecutionInfo.executionTimeInNanos}});
+    }
+    return failedQueries;
+}
+
+Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
+{
+    while (true)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        const auto summary = worker.getQuerySummary(queryId);
+        if (summary)
+        {
+            if (summary->currentStatus == Runtime::Execution::QueryStatus::Stopped)
+            {
+                return *summary;
+            }
+        }
+    }
+}
+
+std::vector<RunningQuery> runQueriesAndBenchmark(
+    const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+{
+    SingleNodeWorker worker(configuration);
+    std::vector<RunningQuery> ranQueries;
+    std::size_t queryFinishedCounter = 0;
+    const auto totalQueries = queries.size();
+    for (const auto& queryToRun : queries)
+    {
+        const auto queryId = worker.registerQuery(queryToRun.queryPlan);
+        ranQueries.emplace_back(queryToRun, queryId);
+        worker.startQuery(queryId);
+        const auto summary = waitForQueryTermination(worker, queryId);
+        const auto duration = summary.runs.back().stop.value() - summary.runs.back().start.value();
+
+        if (summary.runs.back().error)
+        {
+            fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
+            continue;
+        }
+
+        auto errorMessage = checkResult(ranQueries.back());
+        ranQueries.back().queryExecutionInfo.passed = !errorMessage.has_value();
+        ranQueries.back().queryExecutionInfo.executionTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+        printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+        worker.unregisterQuery(queryId);
+        queryFinishedCounter += 1;
+    }
+
+    return serializeExecutionResults(ranQueries, resultJson);
 }
 
 void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)

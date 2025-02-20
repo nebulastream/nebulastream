@@ -30,6 +30,8 @@
 #include <fmt/ranges.h>
 #include <folly/MPMCQueue.h>
 #include <google/protobuf/text_format.h>
+#include <nlohmann/json.hpp>
+
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
@@ -85,9 +87,29 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .default_value(std::vector<std::string>{})
         .remaining();
 
+    /// Benchmark (time) all specified queries
+    program.add_argument("-b")
+        .help("Benchmark (time) all specified queries and store results into 'BenchmarkResults.json' in the result directory")
+        .default_value(false)
+        .implicit_value(true);
+
     program.parse_args(argc, argv);
 
     auto config = Configuration::SystestConfiguration();
+
+    if (program.is_used("-b"))
+    {
+        config.benchmark = true;
+        if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries"))
+            && (program.get<int>("--numberConcurrentQueries") > 1 || program.get<int>("-n") > 1))
+        {
+            NES_FATAL_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
+            std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
+            exit(-1);
+        }
+        std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
+        config.numberConcurrentQueries = 1;
+    }
 
     if (program.is_used("-d"))
     {
@@ -312,7 +334,6 @@ int main(int argc, const char** argv)
         {
             shuffleQueries(queries);
         }
-
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
@@ -330,10 +351,21 @@ int main(int argc, const char** argv)
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
-
-            failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+            if (config.benchmark)
+            {
+                nlohmann::json benchmarkResults;
+                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                std::cout << benchmarkResults.dump(4);
+                const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
+                std::ofstream outputFile(outputPath);
+                outputFile << benchmarkResults.dump(4);
+                outputFile.close();
+            }
+            else
+            {
+                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+            }
         }
-
         if (failedQueries.empty())
         {
             std::stringstream outputMessage;
