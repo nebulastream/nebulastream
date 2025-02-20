@@ -574,7 +574,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                    engine,
                                    1,
                                    getTestResourceFolder() / "qep1.txt",
-                                   true, , FaultToleranceType::NONE);
+                                   true, FaultToleranceType::NONE);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),

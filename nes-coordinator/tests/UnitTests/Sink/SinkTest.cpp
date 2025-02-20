@@ -477,8 +477,8 @@ TEST_F(SinkTest, testMonitoringSink) {
                                                             1,
                                                             SharedQueryId(0),
                                                             INVALID_DECOMPOSED_QUERY_PLAN_ID,
-                                                            INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
-                                                            1, FaultToleranceType::NONE);
+                                                            INVALID_DECOMPOSED_QUERY_PLAN_VERSION, FaultToleranceType::NONE,
+                                                            1);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
@@ -489,8 +489,8 @@ TEST_F(SinkTest, testMonitoringSink) {
                                                                1,
                                                                SharedQueryId(0),
                                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
-                                                               INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
-                                                               1, FaultToleranceType::NONE);
+                                                               INVALID_DECOMPOSED_QUERY_PLAN_VERSION, FaultToleranceType::NONE,
+                                                               1);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics

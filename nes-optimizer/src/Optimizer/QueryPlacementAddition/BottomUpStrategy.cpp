@@ -18,6 +18,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
@@ -134,7 +135,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         }
     }
 
-    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
+    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>() && !logicalOperator->instanceOf<LogicalWindowOperator>()
         && faultTolerance == FaultToleranceType::NONE) {
             candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
     }

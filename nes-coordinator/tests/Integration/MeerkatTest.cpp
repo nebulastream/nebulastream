@@ -483,7 +483,7 @@ TEST_F(MeerkatTest, testDecisionTime) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-
+    auto sourceNodeId = WorkerId(var);
     while (var < numberOfNodes) {
         // Create child node under the root.
         auto childNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
@@ -505,18 +505,19 @@ TEST_F(MeerkatTest, testDecisionTime) {
 
                 // Level 3: Create source nodes under the sub-sub-child.
                 for (uint64_t l = 0; l < numberOfNodesPerLevel3 && var < numberOfNodes; l++) {
-                    auto sourceNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
+                    sourceNodeId = topology->registerWorker(WorkerId(var), "localhost", 123, 124, 4000000000, properties, 0, 0);
                     topology->removeTopologyNodeAsChild(rootNodeId, sourceNodeId);
                     topology->addTopologyNodeAsChild(subSubChildNodeId, sourceNodeId);
                     var++;
 
-                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-                        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId);
-                    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+
                 }
             }
         }
     }
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
     std::cout << "numberOfNodes created: " << var << std::endl;
 
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
@@ -571,7 +572,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     wrkLeaf1->removeParent(crd->getNesWorker()->getWorkerId());
     wrkLeaf1->addParent(wrk1->getWorkerId());
 
-    auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
                                                                                    FaultToleranceType::NONE);
