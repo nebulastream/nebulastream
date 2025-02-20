@@ -19,7 +19,7 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <ExecutableQueryPlan.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
 namespace NES::Runtime
@@ -47,7 +47,7 @@ public:
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine);
 
-    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan);
+    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan);
     void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has

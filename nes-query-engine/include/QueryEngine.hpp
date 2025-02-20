@@ -17,7 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <InstantiatedQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
@@ -36,7 +36,7 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<Memory::BufferManager> bm);
     void stop(QueryId queryId);
-    void start(std::unique_ptr<InstantiatedQueryPlan> instantiatedQueryPlan);
+    void start(std::unique_ptr<ExecutableQueryPlan> instantiatedQueryPlan);
     ~QueryEngine();
 
     /// Order of Member construction is top to bottom and order of destruction is reversed

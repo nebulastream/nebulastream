@@ -31,7 +31,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <InstantiatedQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
@@ -581,7 +581,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
 
     std::vector<QueryPlanBuilder::identifier_t> sources;
     std::vector<QueryPlanBuilder::identifier_t> sinks;
-    std::vector<std::unique_ptr<Runtime::InstantiatedQueryPlan>> queryPlans;
+    std::vector<std::unique_ptr<Runtime::ExecutableQueryPlan>> queryPlans;
     for (size_t i = 0; i < numberOfQueries; i++)
     {
         auto builder = test.buildNewQuery();
@@ -613,7 +613,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
         dataGenerator.start(sourcesCtrls);
         auto queryIds = queryPlans
             | std::views::transform(
-                            [&test](std::unique_ptr<Runtime::InstantiatedQueryPlan>& query) -> QueryId
+                            [&test](std::unique_ptr<Runtime::ExecutableQueryPlan>& query) -> QueryId
                             {
                                 auto queryId = query->queryId;
                                 test.startQuery(std::move(query));
@@ -657,7 +657,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 
     std::vector<QueryPlanBuilder::identifier_t> sources;
     std::vector<QueryPlanBuilder::identifier_t> sinks;
-    std::vector<std::unique_ptr<Runtime::InstantiatedQueryPlan>> queryPlans;
+    std::vector<std::unique_ptr<Runtime::ExecutableQueryPlan>> queryPlans;
     for (size_t i = 0; i < numberOfQueries; i++)
     {
         auto builder = test.buildNewQuery();
@@ -1000,7 +1000,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     std::vector<QueryPlanBuilder::identifier_t> sources;
     std::vector<QueryPlanBuilder::identifier_t> pipelines;
     std::vector<QueryPlanBuilder::identifier_t> sinks;
-    std::vector<std::unique_ptr<Runtime::InstantiatedQueryPlan>> queryPlans;
+    std::vector<std::unique_ptr<Runtime::ExecutableQueryPlan>> queryPlans;
     for (size_t i = 0; i < numberOfQueries; i++)
     {
         auto builder = test.buildNewQuery();

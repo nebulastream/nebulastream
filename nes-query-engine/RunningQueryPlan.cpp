@@ -30,11 +30,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <absl/functional/any_invocable.h>
+#include <CompiledQueryPlan.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
@@ -200,7 +200,7 @@ void RunningQueryPlanNode::fail(Exception exception) const
 std::
     pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
         QueryId queryId,
-        InstantiatedQueryPlan& queryPlan,
+        ExecutableQueryPlan& queryPlan,
         std::function<void(Exception)> unregisterWithError,
         const CallbackRef& terminationCallbackRef,
         const CallbackRef& pipelineSetupCallbackRef,
@@ -251,7 +251,7 @@ std::
 
 std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::start(
     QueryId queryId,
-    std::unique_ptr<InstantiatedQueryPlan> plan,
+    std::unique_ptr<ExecutableQueryPlan> plan,
     QueryLifetimeController& controller,
     WorkEmitter& emitter,
     std::shared_ptr<QueryLifetimeListener> listener)
@@ -376,13 +376,13 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
 }
 
 
-std::unique_ptr<InstantiatedQueryPlan> StoppingQueryPlan::dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan)
+std::unique_ptr<ExecutableQueryPlan> StoppingQueryPlan::dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan)
 {
     ENGINE_LOG_DEBUG("Disposing Stopping Query Plan");
     return std::move(stoppingQueryPlan->plan);
 }
 
-std::unique_ptr<InstantiatedQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
+std::unique_ptr<ExecutableQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
     ENGINE_LOG_DEBUG("Disposing Running Query Plan");
 

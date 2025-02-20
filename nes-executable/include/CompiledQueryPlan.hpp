@@ -37,7 +37,7 @@ struct ExecutablePipeline
 
 struct Source
 {
-    /// The Source representation in the `ExecutableQueryPlan` is still an abstract source representation. During Query Instantiation
+    /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
     /// the descriptor and originId are instantiated into concrete source implementation.
     OriginId originId;
     std::shared_ptr<Sources::SourceDescriptor> descriptor;
@@ -48,7 +48,7 @@ struct Source
 
 struct Sink
 {
-    /// The Sink representation in the `ExecutableQueryPlan` is still an abstract sink representation. During Query Instantiation
+    /// The Sink representation in the `CompiledQueryPlan` is still an abstract sink representation. During Query Instantiation
     /// the descriptor is instantiated into concrete sink implementation.
     std::shared_ptr<Sinks::SinkDescriptor> descriptor;
 
@@ -56,9 +56,9 @@ struct Sink
     std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> predecessor;
 };
 
-struct ExecutableQueryPlan
+struct CompiledQueryPlan
 {
-    static std::unique_ptr<ExecutableQueryPlan> create(
+    static std::unique_ptr<CompiledQueryPlan> create(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
 
     QueryId queryId;

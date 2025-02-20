@@ -51,10 +51,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest-assertion-result.h>
 #include <gtest/gtest.h>
+#include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <MemoryTestUtils.hpp>
 #include <QueryEngine.hpp>
@@ -351,7 +351,7 @@ struct QueryPlanBuilder
 
     struct TestPlanCtrl
     {
-        std::unique_ptr<Runtime::InstantiatedQueryPlan> query;
+        std::unique_ptr<Runtime::ExecutableQueryPlan> query;
         std::unordered_map<identifier_t, OriginId> sourceIds;
         std::unordered_map<identifier_t, PipelineId> pipelineIds;
 
@@ -416,7 +416,7 @@ struct TestingHarness
     ///   auto query = test.addNewQuery(std::move(builder));
     /// ```
     QueryPlanBuilder buildNewQuery() const;
-    std::unique_ptr<Runtime::InstantiatedQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
+    std::unique_ptr<Runtime::ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
     void expectQueryStatusEvents(QueryId id, std::initializer_list<Runtime::Execution::QueryStatus> states);
@@ -434,7 +434,7 @@ struct TestingHarness
     void start();
 
     /// Inserts a new Query into the Query Engine. Requires `start` to be called beforehand.
-    void startQuery(std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const;
+    void startQuery(std::unique_ptr<Runtime::ExecutableQueryPlan> query) const;
     /// Stops a Query. Requires `start` to be called beforehand.
     void stopQuery(QueryId id) const;
 

@@ -33,8 +33,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Ranges.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableQueryPlan.hpp>
 
 
 namespace NES::QueryCompilation
@@ -149,8 +149,7 @@ std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
 }
 }
 
-std::unique_ptr<Runtime::Execution::ExecutableQueryPlan>
-LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan)
+std::unique_ptr<Runtime::Execution::CompiledQueryPlan> LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan)
 {
     LoweringContext loweringContext;
     ///Process all pipelines recursively.
@@ -167,7 +166,7 @@ LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelineQueryPlan>&
                      { return Runtime::Execution::Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)); })
         | ranges::to<std::vector>();
 
-    return Runtime::Execution::ExecutableQueryPlan::create(
+    return Runtime::Execution::CompiledQueryPlan::create(
         pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
 }
 
