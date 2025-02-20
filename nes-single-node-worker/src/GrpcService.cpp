@@ -100,15 +100,19 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         if (summary.has_value())
         {
             reply->set_status(QueryStatus(summary->currentStatus));
-            reply->set_numberofrestarts(summary->numberOfRestarts);
-            for (const auto& exception : summary->exceptions)
+            for (const auto& [start, stop, error] : summary->runs)
             {
-                Error error;
-                error.set_message(exception.what());
-                error.set_stacktrace(exception.trace().to_string());
-                error.set_code(exception.code());
-                error.set_location(std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
-                reply->add_error()->CopyFrom(error);
+                const auto replyRun = reply->add_runs();
+                replyRun->set_startunixtimeinms(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
+                replyRun->set_stopunixtimeinms(std::chrono::duration_cast<std::chrono::milliseconds>(stop.time_since_epoch()).count());
+                if (error)
+                {
+                    const auto runError = replyRun->mutable_error();
+                    runError->set_message(error->what());
+                    runError->set_stacktrace(error->trace().to_string());
+                    runError->set_code(error->code());
+                    runError->set_location(std::string(error->where()->filename) + ":" + std::to_string(error->where()->line.value_or(0)));
+                }
             }
             return grpc::Status::OK;
         }
