@@ -206,10 +206,10 @@ class QueryReconfigurationTest : public Testing::BaseIntegrationTest, public tes
         // create network sink
         auto migrateSink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create(1));
         migrateSink->addProperty(QueryCompilation::MIGRATION_SINK, true);
-        auto joinSinkOperator = decomposedPlan->getRootOperators()[0];
-        auto joinOperator = joinSinkOperator->getChildren()[0];
-        joinOperator->as<Operator>()->addProperty(QueryCompilation::MIGRATION_FLAG, true);
-        migrateSink->addChild(joinOperator);
+        auto sinkOperator = decomposedPlan->getRootOperators()[0];
+        auto curOperator = sinkOperator->getChildren()[0];
+        curOperator->as<Operator>()->addProperty(QueryCompilation::MIGRATION_FLAG, true);
+        migrateSink->addChild(curOperator);
         decomposedPlan->addRootOperator(migrateSink);
     }
 
@@ -703,6 +703,111 @@ TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForJoinWithMigration) {
                          .joinWith(subQuery)
                          .where(Attribute("value") == Attribute("value"))
                          .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(1000)))
+                         .sink(printSinkDescriptor);
+
+    // add query and check that it is started
+    QueryId addedQueryId =
+        crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(mainQuery.getQueryPlan(),
+                                                                         Optimizer::PlacementStrategy::BottomUp);
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(addedQueryId, crd->getQueryCatalog()));
+
+    // get and copy plan on the worker 1
+    SharedQueryId sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(addedQueryId);
+    auto decompPlanIds = wrk->getNodeEngine()->getDecomposedQueryIds(sharedQueryId);
+    auto [decompPlanIdToCopy, decompPlanVersionToCopy] = decompPlanIds.front();
+    auto decomposedQueryPlanToStart =
+        crd->getGlobalExecutionPlan()->getCopyOfDecomposedQueryPlan(wrk->getWorkerId(), sharedQueryId, decompPlanIdToCopy);
+    decomposedQueryPlanToStart->setVersion(DecomposedQueryPlanVersion(2));
+    decomposedQueryPlanToStart->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+
+    // add migration sink operator
+    addMigrationPipelineToDecomposedQueryPlan(decomposedQueryPlanToStart);
+
+    // register new decomposed query plan
+    crd->getGlobalExecutionPlan()->addDecomposedQueryPlan(wrk->getWorkerId(), decomposedQueryPlanToStart);
+    crd->getQueryCatalog()->updateDecomposedQueryPlanStatus(decomposedQueryPlanToStart->getSharedQueryId(),
+                                                            decomposedQueryPlanToStart->getDecomposedQueryId(),
+                                                            decomposedQueryPlanToStart->getVersion(),
+                                                            QueryState::MARKED_FOR_DEPLOYMENT,
+                                                            wrk->getWorkerId());
+    auto res = wrk->getNodeEngine()->registerDecomposableQueryPlan(decomposedQueryPlanToStart);
+    ASSERT_TRUE(res);
+
+    // create marker to drain old and start new plan
+    auto reconfigMarker = ReconfigurationMarker::create();
+    auto updateAndDrainMetadata =
+        std::make_shared<UpdateAndDrainQueryMetadata>(wrk->getWorkerId(),
+                                                      decomposedQueryPlanToStart->getSharedQueryId(),
+                                                      decomposedQueryPlanToStart->getDecomposedQueryId(),
+                                                      decomposedQueryPlanToStart->getVersion(),
+                                                      decomposedQueryPlanToStart->getSourceOperators().size());
+    auto updateAndDrainEvent = ReconfigurationMarkerEvent::create(QueryState::RUNNING, updateAndDrainMetadata);
+    reconfigMarker->addReconfigurationEvent(decompPlanIdToCopy, decompPlanVersionToCopy, updateAndDrainEvent);
+
+    auto drainMetadata = std::make_shared<DrainQueryMetadata>(1);
+    auto drainEvent = ReconfigurationMarkerEvent::create(QueryState::RUNNING, drainMetadata);
+    reconfigMarker->addReconfigurationEvent(decomposedQueryPlanToStart->getDecomposedQueryId(),
+                                            decomposedQueryPlanToStart->getVersion(),
+                                            drainEvent);
+    reconfigMarker->addReconfigurationEvent(wrk3->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front(), drainEvent);
+    reconfigMarker->addReconfigurationEvent(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId)[0], drainEvent);
+    reconfigMarker->addReconfigurationEvent(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId)[1], drainEvent);
+    reconfigMarker->addReconfigurationEvent(crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front(), drainEvent);
+
+    // insert reconfiguration marker at the sources
+    auto wrk3PlanId = wrk3->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
+    auto wrk3Source = wrk3->getNodeEngine()->getExecutableQueryPlan(wrk3PlanId.id, wrk3PlanId.version)->getSources().front();
+    wrk3Source->handleReconfigurationMarker(reconfigMarker);
+
+    auto wrk2PlanIds = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId);
+    for (auto id : wrk2PlanIds) {
+        auto source = wrk2->getNodeEngine()->getExecutableQueryPlan(id.id, id.version)->getSources().front();
+        if (source->getType() == SourceType::LAMBDA_SOURCE) {
+            source->handleReconfigurationMarker(reconfigMarker);
+        }
+    }
+
+    // check that source workers are stopped
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk2));
+    // check that both plans are drained and now are in finished state
+    ASSERT_TRUE(TestUtils::checkRemovedDecomposedQueryOrTimeoutAtWorker(decompPlanIdToCopy, decompPlanVersionToCopy, wrk));
+    ASSERT_TRUE(TestUtils::checkRemovedDecomposedQueryOrTimeoutAtWorker(decomposedQueryPlanToStart->getDecomposedQueryId(),
+                                                                        decomposedQueryPlanToStart->getVersion(),
+                                                                        wrk));
+    // check that worker is also stopped
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk));
+    stop();
+}
+
+/*
+ * Test UpdateAndDrain marker, starting decomposed query plan with keyed window operator and migration pipeline
+ */
+TEST_F(QueryReconfigurationTest, testUpdateAndDrainPlanForKeyedWindowWithMigration) {
+    // source names
+    auto logicalSourceName = "seq1";
+    auto physicalSourceName = "test_stream";
+    auto logicalSourceName2 = "seq2";
+    auto physicalSourceName2 = "test_stream2";
+    // start workers
+    startCoordinator();
+    ASSERT_NE(crd, nullptr);
+    auto wrk = startWorker({});
+    ASSERT_NE(wrk, nullptr);
+    auto wrk2 = startWorkerWithLambdaSource(logicalSourceName2, physicalSourceName2, wrk);
+    ASSERT_NE(wrk2, nullptr);
+    auto wrk3 = startWorkerWithLambdaSource(logicalSourceName, physicalSourceName, wrk2);
+    ASSERT_NE(wrk3, nullptr);
+
+    auto lessExpression = Attribute("value") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+
+    // start query
+    auto mainQuery = Query::from("seq1")
+                         .filter(lessExpression)
+                         .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(1000)))
+                         .byKey(Attribute("value"))
+                         .apply(Sum(Attribute("value")))
                          .sink(printSinkDescriptor);
 
     // add query and check that it is started

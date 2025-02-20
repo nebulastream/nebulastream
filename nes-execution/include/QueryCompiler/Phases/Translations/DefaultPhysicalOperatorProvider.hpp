@@ -128,8 +128,11 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @brief Lowers a unary operator
     * @param decomposedQueryPlan current plan
     * @param operatorNode current operator
+    * @param operatorHandlerStore storage for created operator handlers
     */
-    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode);
+    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan,
+                        const LogicalOperatorPtr& operatorNode,
+                        OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
     * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
@@ -173,14 +176,26 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     /**
     * @brief Lowers a window operator
     * @param operatorNode current operator
+    * @param queryId id of query decomposed query plan belongs to
+    * @param planId id of decomposed query plan
+    * @param operatorHandlerStore storage for created operator handlers
     */
-    void lowerWindowOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerWindowOperator(const LogicalOperatorPtr& operatorNode,
+                             SharedQueryId queryId,
+                             DecomposedQueryId planId,
+                             OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
     * @brief Lowers a thread local window operator
     * @param operatorNode current operator
+    * @param queryId id of query decomposed query plan belongs to
+    * @param planId id of decomposed query plan
+    * @param operatorHandlerStore storage for created operator handlers
     */
-    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode,
+                                      SharedQueryId queryId,
+                                      DecomposedQueryId planId,
+                                      OperatorHandlerStorePtr& operatorHandlerStore);
 
     /**
     * @brief Lowers a watermark assignment operator

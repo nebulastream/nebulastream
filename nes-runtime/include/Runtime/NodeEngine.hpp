@@ -15,11 +15,11 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
-#include "OperatorHandlerStore.hpp"
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/OperatorHandlerStore.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -373,20 +373,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
    * @return true if the plan was successfully updated
    */
     bool updateExecutablePlanVersion(DecomposedQueryIdWithVersion idAndVersion, DecomposedQueryPlanVersion newVersion);
-
-    /**
-     * @brief This method passes the storage as binary to be used as a checkpoint
-     * @param nesPartitionId the id of the corresponding partition
-     * @param binaryStorage storage in binary
-     */
-    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage);
-
-    /**
-     * @brief This method trims the checkpoints saved at coordinator
-     * @param nesPartitionId the id of the corresponding partition
-     * @param timestamp up to which timestamp the checkpoints will be trimmed
-     */
-    void rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp);
 
     /**
      * @brief This method passes the storage as binary to be used as a checkpoint

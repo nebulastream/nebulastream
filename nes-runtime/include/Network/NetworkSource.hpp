@@ -173,24 +173,6 @@ class NetworkSource : public DataSource {
     NesPartition getNesPartition() const;
 
     /**
-    * @brief This method returns nes partition
-    * @return nesPartition
-    */
-    NesPartition getNesPartition() const;
-
- /**
-     * @brief This method is called once an event is triggered for the current source
-     * @param event
-     */
- void onEvent(Runtime::BaseEvent& event) override;
-
-    /**
-    * @brief This method returns nes partition
-    * @return nesPartition
-    */
-    NesPartition getNesPartition() const;
-
-    /**
      * @brief set a new source descriptor to be applied once startNewVersion() is called
      * @param networkSourceDescriptor the new descriptor
      * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.

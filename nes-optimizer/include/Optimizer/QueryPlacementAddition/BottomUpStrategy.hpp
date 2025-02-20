@@ -48,8 +48,6 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
 
     TopologyNodePtr findCandidateTopologyNode(TopologyNodePtr startNode);
 
-    TopologyNodePtr findCandidateTopologyNode(TopologyNodePtr startNode);
-
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
                               const TypeInferencePhasePtr& typeInferencePhase,

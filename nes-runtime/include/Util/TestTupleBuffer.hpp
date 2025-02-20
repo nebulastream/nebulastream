@@ -321,16 +321,6 @@ class TestTupleBuffer {
     void setWatermark(uint64_t value) const;
 
     /**
-   * @brief set the creation timestamp in milliseconds
-   */
-    void setCreationTimestampInMS(uint64_t value) const;
-
-    /**
-   * @brief set watermark to a tuple buffer
-   */
-    void setWatermark(uint64_t value) const;
-
-    /**
      * @brief Accesses an individual tuple in the buffer.
      * @param tupleIndex the index of the record.
      * @throws BufferAccessException if index is larger then buffer capacity

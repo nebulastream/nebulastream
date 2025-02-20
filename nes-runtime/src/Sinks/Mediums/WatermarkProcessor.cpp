@@ -55,8 +55,4 @@ bool WatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber) const {
     return currentSequenceNumber >= sequenceNumber;
 }
 
-bool WatermarkProcessor::isDuplicate(SequenceNumber sequenceNumber) const {
-    return currentSequenceNumber >= sequenceNumber;
-}
-
 }// namespace NES::Windowing

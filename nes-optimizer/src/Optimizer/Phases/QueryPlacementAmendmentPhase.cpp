@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
@@ -100,6 +101,45 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
+                // P0: Identify workers where reconfiguration markers need to be sent
+                computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
+
+                // Identify stateful operators that possibly needs to be migrated
+                std::vector<OperatorPtr> statefulOperatorsPossiblyToBeMigrated;
+                // Save old decomposed plan id and old worker id for this stateful operators
+                std::unordered_map<OperatorId, std::pair<DecomposedQueryId, WorkerId>> statefulOperatorToOldProperties;
+                // Make a copy of current decomposed plan, which includes this stateful operators
+                std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToPlanCopy;
+
+                // TODO [#5149]: rewrite to give stateful operators not including upstream and downstream [https://github.com/nebulastream/nebulastream/issues/5149]
+                for (auto operatorId : changeLogEntry->poSetOfSubQueryPlan) {
+                    auto logicalOperator = queryPlan->getOperatorWithOperatorId(operatorId);
+                    // TODO [#5149]: convert to property isStatefulOperator [https://github.com/nebulastream/nebulastream/issues/5149]
+                    if (logicalOperator->instanceOf<LogicalJoinOperator>() || logicalOperator->instanceOf<LogicalWindowOperator>()) {
+                        NES_DEBUG("QueryPlacementAmendmentPhase: Stateful operator with id {} found", logicalOperator->getId());
+                        // get operator's worker and plan Ids and save
+                        if (logicalOperator->hasProperty(PINNED_WORKER_ID)
+                            && logicalOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
+                            auto executionNode = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
+                            auto decomposedPlanId =
+                                std::any_cast<DecomposedQueryId>(logicalOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            NES_DEBUG("QueryPlacementAmendmentPhase: Stateful operator with id {} belongs to plan {} and is "
+                                      "placed on node {}",
+                                      logicalOperator->getId(),
+                                      decomposedPlanId,
+                                      executionNode);
+                            statefulOperatorsPossiblyToBeMigrated.push_back(logicalOperator);
+                            statefulOperatorToOldProperties.insert(
+                                std::pair(operatorId, std::pair(decomposedPlanId, executionNode)));
+                            // make copy of old decomposed plan
+                            planIdToPlanCopy.insert(
+                                std::pair(decomposedPlanId,
+                                          globalExecutionPlan->getCopyOfDecomposedQueryPlan(executionNode,
+                                                                                            sharedQueryId,
+                                                                                            decomposedPlanId)));
+                        }
+                    }
+                }
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 

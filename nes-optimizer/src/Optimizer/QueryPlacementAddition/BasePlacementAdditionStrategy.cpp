@@ -836,8 +836,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 PlacementAdditionResult
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                                    FaultToleranceType faultToleranceType) {
+                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
 
     std::unordered_map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
     for (const auto& path : pathsFound) {

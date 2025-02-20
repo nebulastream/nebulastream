@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
@@ -81,6 +82,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
 #include <utility>
+#include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -119,7 +121,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
     }
 
     if (operatorNode->instanceOf<UnaryOperator>()) {
-        lowerUnaryOperator(decomposedQueryPlan, operatorNode);
+        lowerUnaryOperator(decomposedQueryPlan, operatorNode, operatorHandlerStore);
     } else if (operatorNode->instanceOf<BinaryOperator>()) {
         lowerBinaryOperator(operatorNode,
                             decomposedQueryPlan->getSharedQueryId(),
@@ -133,7 +135,8 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 }
 
 void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                                         const LogicalOperatorPtr& operatorNode) {
+                                                         const LogicalOperatorPtr& operatorNode,
+                                                         OperatorHandlerStorePtr& operatorHandlerStore) {
 
     // If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
@@ -175,7 +178,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
         physicalFilterOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperator>()) {
-        lowerWindowOperator(operatorNode);
+        lowerWindowOperator(operatorNode, decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryId(), operatorHandlerStore);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
         lowerWatermarkAssignmentOperator(operatorNode);
     } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
@@ -706,7 +709,10 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Log
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode,
+                                                                   SharedQueryId queryId,
+                                                                   DecomposedQueryId planId,
+                                                                   OperatorHandlerStorePtr& operatorHandlerStore) {
 
     NES_DEBUG("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperator>();
@@ -748,10 +754,39 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
                                                                             windowInputSchema,
                                                                             windowOutputSchema,
                                                                             windowDefinition);
+
+    Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr windowOperatorHandler;
+    auto window_migration_flag = false;
+
+    auto operatorId = any_cast<OperatorId>(windowOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
+    auto migrationFlagVal = windowOperator->getProperty(MIGRATION_FLAG);
+    // check if operator handler for this operator was already created before
+    if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
+        && std::any_cast<bool>(migrationFlagVal)) {
+        // use already created operator handler
+        windowOperatorHandler = std::dynamic_pointer_cast<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+            operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+        // mark window to be migrated
+        window_migration_flag = true;
+        } else {
+            // create new operator handler and store it
+            const auto TimeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+            const auto& windowSize = TimeBasedWindowType->getSize().getTime();
+            const auto& windowSlide = TimeBasedWindowType->getSlide().getTime();
+
+            windowOperatorHandler = std::make_unique<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSlide, windowOperator->getInputOriginIds());
+            operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, windowOperatorHandler);
+        }
+
+    windowSink->addProperty(MIGRATION_FLAG, window_migration_flag);
+
     operatorNode->replace(windowSink);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode,
+                                                          SharedQueryId queryId,
+                                                          DecomposedQueryId planId,
+                                                          OperatorHandlerStorePtr& operatorHandlerStore) {
     auto windowOperator = operatorNode->as<WindowOperator>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -761,6 +796,9 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     }
     // TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
+
+    Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr windowOperatorHandler;
+    auto window_migration_flag = false;
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     if (operatorNode->instanceOf<LogicalWindowOperator>()) {
@@ -778,8 +816,27 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
                                                                                windowInputSchema,
                                                                                windowOutputSchema,
                                                                                windowDefinition);
-                thresholdWindowPhysicalOperator->addProperty(LOGICAL_OPERATOR_ID_KEY,
-                                                             operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
+
+                auto operatorId = any_cast<OperatorId>(windowOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
+                auto migrationFlagVal = windowOperator->getProperty(MIGRATION_FLAG);
+                // check if operator handler for this operator was already created before
+                if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
+                    && std::any_cast<bool>(migrationFlagVal)) {
+                    // use already created operator handler
+                    windowOperatorHandler = std::dynamic_pointer_cast<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                        operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+                    // mark window to be migrated
+                    window_migration_flag = true;
+                } else {
+                    // create new operator handler and store it
+                    const auto TimeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+                    const auto& windowSize = TimeBasedWindowType->getSize().getTime();
+                    const auto& windowSlide = TimeBasedWindowType->getSlide().getTime();
+
+                    windowOperatorHandler = std::make_unique<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSlide, windowOperator->getInputOriginIds());
+                    operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, windowOperatorHandler);
+                }
+                thresholdWindowPhysicalOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
 
                 operatorNode->replace(thresholdWindowPhysicalOperator);
                 return;
@@ -788,7 +845,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
                                                 + windowDefinition->getWindowType()->toString());
             }
         } else if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
-            lowerTimeBasedWindowOperator(operatorNode);
+            lowerTimeBasedWindowOperator(operatorNode, queryId, planId, operatorHandlerStore);
         }
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");

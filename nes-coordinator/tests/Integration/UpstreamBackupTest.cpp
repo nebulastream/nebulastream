@@ -159,7 +159,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 
     auto querySubPlanIds = crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryId);
     for (auto querySubPlanId : querySubPlanIds) {
-        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
+        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId.id, querySubPlanId.version)->getSinks();
         for (auto& sink : sinks) {
             auto buffer1 = bufferManager->getUnpooledBuffer(timestamp);
             buffer1->setWatermark(timestamp);
@@ -241,7 +241,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingBetweenWorkers) {
     auto querySubPlanIds = crd->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
     ASSERT_TRUE(!querySubPlanIds.empty());
     for (auto querySubPlanId : querySubPlanIds) {
-        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
+        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId.id, querySubPlanId.version)->getSinks();
         for (auto& sink : sinks) {
             sink->notifyEpochTermination(timestamp);
         }
@@ -250,7 +250,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingBetweenWorkers) {
     auto isTrimming = false;
     querySubPlanIds = wrk1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
     for (auto querySubPlanId : querySubPlanIds) {
-        auto sinks = wrk1->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
+        auto sinks = wrk1->getNodeEngine()->getExecutableQueryPlan(querySubPlanId.id, querySubPlanId.version)->getSinks();
         for (auto& sink : sinks) {
             if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
                 while (!(isTrimming = std::dynamic_pointer_cast<Network::NetworkSink>(sink)->hasTrimmed())) {

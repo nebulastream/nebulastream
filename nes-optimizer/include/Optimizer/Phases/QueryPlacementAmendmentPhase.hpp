@@ -274,6 +274,25 @@ class QueryPlacementAmendmentPhase {
                                                const ChangeLogEntryPtr& changeLogEntry,
                                                std::set<ReconfigurationMarkerUnit>& reconfigurationMarkerUnitComparator) const;
 
+    /**
+     * @brief perform placement for migrating operators
+     * @param placementStrategy: the placement strategy
+     * @param migratingOperatorToProperties: operator id to operator properties (old and new node id, old decomposed plan id)
+     * @param planIdToCopy: decomposed plan copy saved by operator id
+     * @param sharedQueryId: id of the shared query plan
+     * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
+     * @param deploymentContexts: map containing deployment contexts
+     */
+    void handleMigrationPlacement(
+        Optimizer::PlacementStrategy placementStrategy,
+        const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
+        std::unordered_map<OperatorId, std::string>& migratingOperatorToFileSink,
+        std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+        std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
+        FaultToleranceType faultTolerance);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;

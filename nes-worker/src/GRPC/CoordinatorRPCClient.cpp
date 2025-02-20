@@ -700,7 +700,7 @@ bool CoordinatorRPCClient::requestQueryOffload(WorkerId originWorkerId, SharedQu
     request.set_originworkerid(originWorkerId.getRawValue());
     request.set_sharedqueryid(sharedQueryId.getRawValue());
     request.set_decomposedqueryid(decomposedQueryId.getRawValue());
-request.set_targetworkerid(targetWorkerId.getRawValue());
+    request.set_targetworkerid(targetWorkerId.getRawValue());
     RequestQueryOffloadResponse response;
     ClientContext context;
 
