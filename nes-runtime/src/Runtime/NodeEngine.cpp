@@ -26,9 +26,9 @@
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
+#include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
 namespace NES::Runtime
@@ -38,7 +38,7 @@ class QueryTracker
 {
     struct Idle
     {
-        std::unique_ptr<Execution::ExecutableQueryPlan> qep;
+        std::unique_ptr<Execution::CompiledQueryPlan> qep;
     };
     struct Executing
     {
@@ -47,7 +47,7 @@ class QueryTracker
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    QueryId registerQuery(std::unique_ptr<Execution::ExecutableQueryPlan> qep)
+    QueryId registerQuery(std::unique_ptr<Execution::CompiledQueryPlan> qep)
     {
         NES_INFO("Register {}", qep->queryId);
         QueryId queryId = qep->queryId;
@@ -55,10 +55,10 @@ public:
         return queryId;
     }
 
-    std::unique_ptr<Execution::ExecutableQueryPlan> moveToExecuting(QueryId qid)
+    std::unique_ptr<Execution::CompiledQueryPlan> moveToExecuting(QueryId qid)
     {
         auto rlocked = queries.rlock();
-        std::unique_ptr<Execution::ExecutableQueryPlan> qep;
+        std::unique_ptr<Execution::CompiledQueryPlan> qep;
         if (auto it = rlocked->find(qid); it != rlocked->end())
         {
             it->second->transition(
@@ -86,7 +86,7 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan)
+QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan)
 {
     auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
     queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered, std::chrono::system_clock::now());
@@ -98,7 +98,7 @@ void NodeEngine::startQuery(QueryId queryId)
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
         systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-        queryEngine->start(InstantiatedQueryPlan::instantiate(std::move(qep), bufferManager));
+        queryEngine->start(ExecutableQueryPlan::instantiate(*qep, bufferManager));
     }
     else
     {

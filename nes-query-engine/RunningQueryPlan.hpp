@@ -27,7 +27,7 @@
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <InstantiatedQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <RunningSource.hpp>
 
@@ -87,7 +87,7 @@ private:
     std::weak_ptr<Callback> owner;
 };
 
-/// Running Query Plan represents a InstantiatedQueryPlan which is currently running.
+/// Running Query Plan represents a ExecutableQueryPlan which is currently running.
 /// The lifetime of the RunningQueryPlan is tied to the lifetime of the query. As long as the RunningQueryPlan object
 /// is alive the query is conceptional (at least partially) running.
 /// If the lifetime of the RunningQueryPlan object ends, all sources, pipelines are terminated.
@@ -157,9 +157,9 @@ struct QueryLifetimeListener
 
 struct StoppingQueryPlan
 {
-    static std::unique_ptr<InstantiatedQueryPlan> dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan);
+    static std::unique_ptr<ExecutableQueryPlan> dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan);
 
-    std::unique_ptr<InstantiatedQueryPlan> plan;
+    std::unique_ptr<ExecutableQueryPlan> plan;
     std::vector<std::shared_ptr<QueryLifetimeListener>> listeners;
     CallbackOwner allPipelinesExpired;
 };
@@ -173,7 +173,7 @@ struct RunningQueryPlan
     /// The main purpose is to allow the owner of the RQP to release locks before the listeners can be called.
     static std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> start(
         QueryId queryId,
-        std::unique_ptr<InstantiatedQueryPlan> plan,
+        std::unique_ptr<ExecutableQueryPlan> plan,
         QueryLifetimeController&,
         WorkEmitter&,
         std::shared_ptr<QueryLifetimeListener>);
@@ -187,7 +187,7 @@ struct RunningQueryPlan
     /// Disposing a RunningQueryPlan will:
     /// 1. Not notify any listeners. `onDestruction` will not be called.
     /// 2. Pipelines are not terminated, just destroyed.
-    static std::unique_ptr<InstantiatedQueryPlan> dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+    static std::unique_ptr<ExecutableQueryPlan> dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
 
     /// Destroying a RunningQueryPlan will:
     /// 1. Will invoke listeners!
@@ -202,7 +202,7 @@ private:
             std::vector<std::shared_ptr<QueryLifetimeListener>> listeners,
             std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources,
             std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines,
-            std::unique_ptr<InstantiatedQueryPlan> qep,
+            std::unique_ptr<ExecutableQueryPlan> qep,
             CallbackOwner all_pipelines_expired,
             CallbackOwner pipeline_setup_done)
             : listeners(std::move(listeners))
@@ -223,7 +223,7 @@ private:
         std::vector<std::shared_ptr<QueryLifetimeListener>> listeners;
         std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources;
         std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
-        std::unique_ptr<InstantiatedQueryPlan> qep;
+        std::unique_ptr<ExecutableQueryPlan> qep;
 
         /// The entire graph of the query has been destroyed.
         CallbackOwner allPipelinesExpired;

@@ -20,8 +20,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Ranges.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <ExecutableQueryPlan.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -34,9 +34,9 @@ std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
         std::views::transform(successors, [](const auto& strong) { return std::weak_ptr(strong); }) | ranges::to<std::vector>());
 }
 
-std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::create(
+std::unique_ptr<CompiledQueryPlan> CompiledQueryPlan::create(
     QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
 {
-    return std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sinks), std::move(sources));
+    return std::make_unique<CompiledQueryPlan>(queryId, std::move(pipelines), std::move(sinks), std::move(sources));
 }
 }

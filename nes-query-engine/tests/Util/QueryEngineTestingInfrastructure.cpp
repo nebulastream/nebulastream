@@ -39,10 +39,10 @@
 #include <Util/Overloaded.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
@@ -237,7 +237,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     }
 
     return {
-        std::make_unique<Runtime::InstantiatedQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
+        std::make_unique<Runtime::ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
         sourceIds,
         pipelineIds,
         sourceCtrls,
@@ -263,7 +263,7 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
     return QueryPlanBuilder{lastIdentifier, lastPipelineIdCounter, lastOriginIdCounter};
 }
 
-std::unique_ptr<Runtime::InstantiatedQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
+std::unique_ptr<Runtime::ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
     const auto queryId = QueryId(queryIdCounter++);
     lastIdentifier = builder.nextIdentifier;
@@ -345,7 +345,7 @@ void TestingHarness::start()
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
     qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
-void TestingHarness::startQuery(std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const
+void TestingHarness::startQuery(std::unique_ptr<Runtime::ExecutableQueryPlan> query) const
 {
     qm->start(std::move(query));
 }
