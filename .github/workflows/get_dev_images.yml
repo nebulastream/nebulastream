@@ -150,6 +150,14 @@ jobs:
           build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
           context: .
           file: docker/dependency/DevelopmentCI.dockerfile
+      - name: Build benchmark image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+          context: .
+          file: docker/dependency/Benchmark.dockerfile
   merge-dev-images:
     # This Job merges platform specific images into a single multi-platform image
     name: "Merge Dev Images"
@@ -176,7 +184,7 @@ jobs:
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
           
-          for image_tag in development-dependency development ci; do
+          for image_tag in development-dependency development ci benchmark; do
             docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }} \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
@@ -196,7 +204,7 @@ jobs:
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
           
-          for image_tag in development-dependency development ci; do
+          for image_tag in development-dependency development ci benchmark; do
             docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
