@@ -63,6 +63,22 @@ jobs:
       - name: Print Placeholder Message
         run: echo "Long running tests will be added in the future."
 
+  build-and-benchmark:
+    uses: ./.github/workflows/build-and-benchmark.yml
+    secrets: inherit
+    with:
+      run_reason: "Nightly Benchmark"
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
+  benchmark-compile-time:
+    uses: ./.github/workflows/benchmark-compile-time.yml
+    secrets: inherit
+    with:
+      run_reason: "Nightly Benchmark"
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
   create-nightly-image:
     needs: [ build-and-test ]
     if: ${{ !github.event.act }}
