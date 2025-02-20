@@ -337,9 +337,9 @@ int main(int argc, const char** argv)
         if (failedQueries.empty())
         {
             std::stringstream outputMessage;
-            outputMessage << std::endl << "All queries passed.";
+            outputMessage << '\n' << "All queries passed.";
             NES_INFO("{}", outputMessage.str());
-            std::cout << outputMessage.str() << std::endl;
+            std::cout << outputMessage.str() << '\n';
             std::exit(0);
         }
         else
@@ -347,7 +347,7 @@ int main(int argc, const char** argv)
             std::stringstream outputMessage;
             outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
             NES_ERROR("{}", outputMessage.str());
-            std::cout << std::endl << outputMessage.str() << std::endl;
+            std::cout << '\n' << outputMessage.str() << '\n';
             std::exit(1);
         }
     }
