@@ -824,9 +824,11 @@ void QueryCatalog::start(
     };
 
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener);
+    const auto startTimestamp = std::chrono::system_clock::now();
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);
 
     auto state = std::make_shared<StateRef>(Starting{std::move(runningQueryPlan)});
+    listener->logQueryStatusChange(queryId, Execution::QueryStatus::Started, startTimestamp);
     queryListener->state = state;
     this->queryStates.emplace(queryId, state);
 }
