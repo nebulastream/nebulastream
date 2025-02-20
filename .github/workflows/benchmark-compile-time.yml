@@ -1,0 +1,37 @@
+name: Benchmark Nebulastream compile time
+on:
+  workflow_call:
+    inputs:
+      run_reason:
+        required: true
+        type: string
+        description: "Reason why benchmark suite is being run"
+      ref:
+        type: string
+        required: true
+        description: "ref of the branch"
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the benchmarking image"
+
+
+jobs:
+  benchmark-compile-time:
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
+    timeout-minutes: 40
+    env:
+      CONBENCH_PROJECT_COMMIT: ${{ inputs.ref }}
+      CONBENCH_URL: "https://bench.nebula.stream"
+      CONBENCH_EMAIL: ${{ secrets.CONBENCH_USR }}
+      CONBENCH_PASSWORD: ${{ secrets.CONBENCH_PWD }}
+      CONBENCH_PROJECT_REPOSITORY: "https://github.com/${{ github.repository }}"
+      CONBENCH_RUN_REASON: ${{ inputs.run_reason }}
+      CONBENCH_MACHINE_INFO_NAME: "Github Runner"
+    steps:
+      - uses: actions/checkout@v4
+      - name: time build
+        run: |
+          python3 ./scripts/benchmarking/benchmark.py --compile-time
