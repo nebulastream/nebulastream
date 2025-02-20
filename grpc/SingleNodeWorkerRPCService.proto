@@ -51,9 +51,10 @@ message StopQueryRequest {
 
 enum QueryStatus {
     Registered = 0;
-    Running = 1;
-    Stopped = 2;
-    Failed = 3;
+    Started = 1;
+    Running = 2;
+    Stopped = 3;
+    Failed = 4;
 }
 
 message Error {
@@ -69,8 +70,9 @@ message QuerySummaryRequest {
 
 message QueryRunSummary {
    uint64 startUnixTimeInMs = 1;
-   uint64 stopUnixTimeInMs = 2;
-   optional Error error = 3;
+   uint64 runningUnixTimeInMs = 2;
+   uint64 stopUnixTimeInMs = 3;
+   optional Error error = 4;
 }
 
 message QuerySummaryReply {
