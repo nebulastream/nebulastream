@@ -70,6 +70,7 @@ public:
      */
     std::optional<PinnedBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override;
     size_t getBufferSize() const override;
+    RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     std::optional<PinnedBuffer> getBufferNoBlocking() override;

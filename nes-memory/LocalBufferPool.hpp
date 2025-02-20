@@ -57,6 +57,7 @@ public:
     * @return a new buffer
     */
     PinnedBuffer getBufferBlocking() override;
+    RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept override;
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;

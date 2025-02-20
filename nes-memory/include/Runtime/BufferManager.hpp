@@ -14,6 +14,8 @@
 
 #pragma once
 
+
+
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -27,12 +29,13 @@
 #include <vector>
 #include <liburing.h>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/BufferRecycler.hpp>
-#include <Runtime/DataSegment.hpp>
-#include <folly/MPMCQueue.h>
 #include <Runtime/BufferFiles.hpp>
 #include <Runtime/BufferManagerImpl.hpp>
+#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/DataSegment.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferManagerFuture.hpp>
+#include <folly/MPMCQueue.h>
 #include <gtest/gtest_prod.h>
 
 namespace NES::Memory
@@ -43,7 +46,6 @@ namespace detail
 // class SubmitIOWriteTask;
 // class NewSegmentAwaiter;
 }
-class NewBufferTask;
 class PinnedBuffer;
 class FloatingBuffer;
 
@@ -89,6 +91,7 @@ private:
     static constexpr auto DEFAULT_BUFFER_CHECKS_THRESHOLD = 128;
     static constexpr auto DEFAULT_URING_RING_SIZE = 2048;
     static constexpr auto DEFAULT_SPILL_BATCH_SIZE = 128;
+    static constexpr auto DEFAULT_MAX_ZERO_WRITE_ROUNDS = 32;
     static constexpr auto DEFAULT_MAX_CONCURRENT_MEMORY_REQS = DEFAULT_URING_RING_SIZE;
     static constexpr auto DEFAULT_MAX_CONCURRENT_READ_SUBMISSIONS = DEFAULT_URING_RING_SIZE;
     static constexpr auto DEFAULT_MAX_CONCURRENT_PUNCH_HOLE_SUBMISSIONS = DEFAULT_URING_RING_SIZE;
@@ -109,6 +112,7 @@ public:
         uint64_t bufferChecksThreshold,
         uint32_t uringRingSize,
         uint32_t uringBatchSize,
+        uint32_t maxZeroWriteRounds,
         uint32_t maxConcurrentMemoryReqs,
         uint32_t maxConcurrentReadSubmissions,
         uint32_t maxConcurrentHolePunchSubmissions,
@@ -129,6 +133,7 @@ public:
         uint64_t bufferChecksThreshold = DEFAULT_BUFFER_CHECKS_THRESHOLD,
         uint32_t uringRingSize = DEFAULT_URING_RING_SIZE,
         uint32_t spillBatchSize = DEFAULT_SPILL_BATCH_SIZE,
+        uint32_t maxZeroWriteRounds = DEFAULT_MAX_ZERO_WRITE_ROUNDS,
         uint32_t maxConcurrentMemoryReqs = DEFAULT_MAX_CONCURRENT_MEMORY_REQS,
         uint32_t maxConcurrentReadSubmissions = DEFAULT_MAX_CONCURRENT_READ_SUBMISSIONS,
         uint32_t maxConcurrentHolePunchSubmissions = DEFAULT_MAX_CONCURRENT_PUNCH_HOLE_SUBMISSIONS,
@@ -153,12 +158,12 @@ private:
 
 public:
     [[nodiscard]] PinnedBuffer pinBuffer(FloatingBuffer&&);
-    [[nodiscard]] detail::GetInMemorySegmentFuture getInMemorySegment(size_t amount) noexcept;
-    [[nodiscard]] detail::ReadSegmentFuture
+    [[nodiscard]] GetInMemorySegmentFuture getInMemorySegment(size_t amount) noexcept;
+    [[nodiscard]] ReadSegmentFuture
     readOnDiskSegment(detail::DataSegment<detail::OnDiskLocation> source, detail::DataSegment<detail::InMemoryLocation> target) noexcept;
-    [[nodiscard]] NewBufferTask getBuffer() noexcept;
+    [[nodiscard]] GetInMemorySegmentFuture getBuffer() noexcept;
 
-    [[nodiscard]] detail::RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept;
+    [[nodiscard]] RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept override;
 
     /// This blocks until a buffer is available.
     PinnedBuffer getBufferBlocking() override;
@@ -228,7 +233,7 @@ private:
 
     folly::MPMCQueue<detail::BufferControlBlock*> newBuffers;
 
-    mutable std::shared_mutex allBuffersMutex;
+    mutable std::shared_mutex allBuffersMutex{};
     //All pooled buffers
     std::vector<detail::BufferControlBlock*> allBuffers;
     ///How many buffer checks (for example with cleanupAllBuffers) are outstanding.
@@ -242,10 +247,9 @@ private:
     folly::MPMCQueue<detail::DataSegment<detail::InMemoryLocation>> availableBuffers;
     std::vector<detail::BufferControlBlock*> unpooledBuffers;
 
-    mutable std::recursive_mutex availableBuffersMutex;
-    std::condition_variable_any availableBuffersCvar;
+    mutable std::recursive_mutex availableBuffersMutex{};
 
-    mutable std::recursive_mutex unpooledBuffersMutex;
+    mutable std::recursive_mutex unpooledBuffersMutex{};
 
     unsigned int bufferSize;
     size_t numOfBuffers;
@@ -253,7 +257,7 @@ private:
     uint8_t* bufferBasePointer{nullptr};
     size_t allocatedBufferAreaSize;
 
-    mutable std::recursive_mutex localBufferPoolsMutex;
+    mutable std::recursive_mutex localBufferPoolsMutex{};
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
@@ -262,11 +266,11 @@ private:
     const std::filesystem::path spillDirectory;
 
     //Writing to disk
-    folly::MPMCQueue<std::shared_ptr<detail::AvailableSegmentAwaiter<detail::GetInMemorySegmentPromise<detail::GetInMemorySegmentFuture>>>>
+    folly::MPMCQueue<std::shared_ptr<detail::AvailableSegmentAwaiter<GetInMemorySegmentPromise<GetInMemorySegmentFuture>>>>
         waitingSegmentRequests;
     std::atomic_flag isSpilling = false;
-    mutable std::shared_mutex writeSqeMutex;
-    mutable std::recursive_mutex writeCqeMutex;
+    mutable std::shared_mutex writeSqeMutex{};
+    mutable std::recursive_mutex writeCqeMutex{};
     //Access to everything from here must be synchronized
     io_uring uringWriteRing;
     std::atomic<size_t> buffersBeingSpilled{0};
@@ -274,15 +278,16 @@ private:
     std::map<uint8_t, detail::File> files;
     uint64_t fileOffset{0};
     uint32_t spillBatchSize;
+    uint32_t maxZeroWriteRounds;
     uint64_t clockAt{0};
     int writeErrorCounter{0};
 
     //Reading from disk
-    folly::MPMCQueue<std::shared_ptr<detail::SubmitSegmentReadAwaiter<detail::ReadSegmentPromise<detail::ReadSegmentFuture>>>>
+    folly::MPMCQueue<std::shared_ptr<detail::SubmitSegmentReadAwaiter<ReadSegmentPromise<ReadSegmentFuture>>>>
         waitingReadRequests;
 
-    mutable std::mutex readSqeMutex;
-    mutable std::mutex readCqeMutex;
+    mutable std::mutex readSqeMutex{};
+    mutable std::mutex readCqeMutex{};
     io_uring uringReadRing;
     size_t readsInFlight;
     int readErrorCounter{0};
@@ -290,16 +295,16 @@ private:
 
 
     //Deleting from file
-    folly::MPMCQueue<std::shared_ptr<detail::SubmitPunchHoleSegmentAwaiter<detail::PunchHolePromise<detail::PunchHoleFuture>>>>
+    folly::MPMCQueue<std::shared_ptr<detail::SubmitPunchHoleSegmentAwaiter<PunchHolePromise<PunchHoleFuture>>>>
         waitingPunchHoleRequests;
 
-    mutable std::mutex punchHoleSqeMutex;
-    mutable std::mutex punchHoleCqeMutex;
+    mutable std::mutex punchHoleSqeMutex{};
+    mutable std::mutex punchHoleCqeMutex{};
     io_uring uringPunchHoleRing;
     int punchHoleErrorCounter{0};
 
-    folly::MPMCQueue<detail::PunchHoleFuture> holesInProgress;
-    mutable std::mutex holeMutex;
+    folly::MPMCQueue<PunchHoleFuture> holesInProgress;
+    mutable std::mutex holeMutex{};
     //For guaranteed cleanup with FALLOC_FL_COLLAPSE_RANGE that will only work with larger continuous blocks
     std::set<detail::DataSegment<detail::OnDiskLocation>> holePunchedSegments;
     //DataSegments that for whatever reason could not be holepunched.
@@ -355,7 +360,7 @@ private:
 
     static detail::File prepareFile(const std::filesystem::path& dirPath, uint8_t id);
 
-    detail::PunchHoleFuture punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept;
+    PunchHoleFuture punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept;
 
     void pollPunchHoleSubmissionEntriesOnce() noexcept;
     void waitForPunchHoleSubmissionEntriesOnce() noexcept;

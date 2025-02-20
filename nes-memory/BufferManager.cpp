@@ -31,6 +31,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/DataSegment.hpp>
 #include <Runtime/PinnedBuffer.hpp>
+#include <Runtime/FloatingBuffer.hpp>
+#include <Runtime/BufferManagerFuture.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <folly/MPMCQueue.h>
@@ -44,8 +46,8 @@
 
 #include <Runtime/BufferManagerImpl.hpp>
 #include <folly/Synchronized.h>
+#include <nautilus/val.hpp>
 
-#include <Runtime/FloatingBuffer.hpp>
 namespace NES::Memory
 {
 
@@ -58,6 +60,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
     uint64_t bufferChecksThreshold,
     uint32_t uringRingSize,
     uint32_t spillBatchSize,
+    uint32_t maxZeroWriteRounds,
     uint32_t maxConcurrentMemoryReqs,
     uint32_t maxConcurrentReadSubmissions,
     uint32_t maxConcurrentHolePunchSubmissions,
@@ -73,6 +76,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
         bufferChecksThreshold,
         uringRingSize,
         spillBatchSize,
+        maxZeroWriteRounds,
         maxConcurrentMemoryReqs,
         maxConcurrentReadSubmissions,
         maxConcurrentHolePunchSubmissions,
@@ -90,6 +94,7 @@ BufferManager::BufferManager(
     const uint64_t bufferChecksThreshold,
     const uint32_t uringRingSize,
     const uint32_t spillBatchSize,
+    const uint32_t maxZeroWriteRounds,
     const uint32_t maxConcurrentMemoryReqs,
     const uint32_t maxConcurrentReadSubmissions,
     const uint32_t maxConcurrentHolePunchSubmissions,
@@ -105,6 +110,7 @@ BufferManager::BufferManager(
     , waitingSegmentRequests(maxConcurrentMemoryReqs)
     , files{std::pair{1, prepareFile(spillDirectory, 1)}}
     , spillBatchSize(spillBatchSize)
+    , maxZeroWriteRounds(maxZeroWriteRounds)
     , waitingReadRequests(maxConcurrentReadSubmissions)
     , waitingPunchHoleRequests(maxConcurrentHolePunchSubmissions)
     , holesInProgress(maxConcurrentHolePunchSubmissions * 10)
@@ -338,15 +344,15 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
         const auto secondRemovedFrom = std::remove_if(allBuffers.begin(), secondEnd, check);
         erased = allBuffers.erase(secondRemovedFrom, secondEnd);
     }
+    ptrdiff_t difference = erased - allBuffers.begin();
     allBuffers.shrink_to_fit();
 
-    ptrdiff_t difference = erased - allBuffers.begin();
     clockAt = difference;
 }
 
-detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
+RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
 {
-    using Promise = detail::RepinBufferPromise<detail::RepinBufferFuture>;
+    using Promise = RepinBufferPromise<RepinBufferFuture>;
     /* Repinning Buffers in a thread safe manner:
      * 1. Acquire lock on BCB with startRepinning. StartRepinning also indicates to second chance that this buffer should be skipped.
      * 2. Do the actual repinning:
@@ -389,20 +395,20 @@ detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) 
         //get in memory segments for segments that need to be unspilled
         auto memorySegmentFuture = getInMemorySegment(toRepin.size());
         auto awaitMemorySegments
-            = detail::AwaitExternalProgress<Promise, decltype(memorySegmentFuture.waitUntilDone()), detail::GetInMemorySegmentFuture>{
-                std::bind(&detail::GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
-                std::bind(&detail::GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
+            = detail::AwaitExternalProgress<Promise, decltype(memorySegmentFuture.waitUntilDone()), GetInMemorySegmentFuture>{
+                std::bind(&GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
+                std::bind(&GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
                 memorySegmentFuture};
         auto memorySegmentsOrError = co_await awaitMemorySegments;
-        if (!std::holds_alternative<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError))
+        if (auto error = getOptional<CoroutineError>(memorySegmentsOrError))
         {
-            co_return static_cast<uint32_t>(ErrorCode::BufferAllocationFailure);
+            co_return *error;
         }
         auto memorySegments = std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError);
 
         //Read data from on disk segments in to in memory segments.
         //First initiate all reading, then await reading
-        std::vector<detail::ReadSegmentFuture> readSegmentFutures{};
+        std::vector<ReadSegmentFuture> readSegmentFutures{};
         readSegmentFutures.reserve(toRepin.size());
         for (unsigned long i = 0; i < toRepin.size(); ++i)
         {
@@ -414,13 +420,13 @@ detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) 
         {
             auto readFuture = readSegmentFutures[i];
             auto awaitReadSegment
-                = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, detail::CoroutineError>, detail::ReadSegmentFuture>{
-                    std::bind(&detail::ReadSegmentFuture::pollOnce, readFuture),
-                    std::bind(&detail::ReadSegmentFuture::waitOnce, readFuture),
+                = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, CoroutineError>, ReadSegmentFuture>{
+                    std::bind(&ReadSegmentFuture::pollOnce, readFuture),
+                    std::bind(&ReadSegmentFuture::waitOnce, readFuture),
                     readFuture};
 
             const auto readBytesOrError = co_await awaitReadSegment;
-            if (const auto error = getOptional<detail::CoroutineError>(readBytesOrError))
+            if (const auto error = getOptional<CoroutineError>(readBytesOrError))
             {
                 co_return *error;
             }
@@ -456,7 +462,7 @@ detail::RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) 
 PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
 {
     auto repinResult = repinBuffer(std::move(floating)).waitUntilDone();
-    if (const auto error = getOptional<detail::CoroutineError>(repinResult))
+    if (const auto error = getOptional<CoroutineError>(repinResult))
     {
         throw ErrorCode::typeFromCode(*error).create();
     }
@@ -464,9 +470,9 @@ PinnedBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
 }
 
 
-detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount) noexcept
+GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount) noexcept
 {
-    using Promise = detail::GetInMemorySegmentPromise<detail::GetInMemorySegmentFuture>;
+    using Promise =GetInMemorySegmentPromise<GetInMemorySegmentFuture>;
     //Making a shared ptr out of this is probably not worth it, as in most request amount == 1 and DataSegments are small,
     //so copying is probably cheaper
     std::vector<detail::DataSegment<detail::InMemoryLocation>> result{};
@@ -514,6 +520,7 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount
         checkNeedLock.unlock();
     }
 
+    unsigned int zeroRounds = 0;
     while (fillSQE)
     {
         //atomic flag is not strictly necessary for this method, but it allows the other member functions to know whether we currently spill
@@ -533,6 +540,14 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount
         {
             fillSQE = false;
         }
+        if (added == 0)
+        {
+            zeroRounds++;
+        }
+        if (zeroRounds == maxZeroWriteRounds)
+        {
+            co_return static_cast<CoroutineError>(ErrorCode::CannotSpillEnoughBuffers);
+        }
         sqeLock.unlock();
     }
 
@@ -551,7 +566,7 @@ detail::GetInMemorySegmentFuture BufferManager::getInMemorySegment(size_t amount
                 *segmentAwaiter};
         auto freedSegment = co_await awaitForProgress;
         INVARIANT(freedSegment, "GetInMemorySegmentFuture resumed before inMemory segment was set");
-        requiredSegments.fetch_sub(missingSegments);
+        requiredSegments.fetch_sub(1);
         result.push_back(*freedSegment);
     }
     co_return result;
@@ -753,8 +768,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
         }
         if (successFullSwap)
         {
-            buffersBeingSpilled.fetch_sub(1);
-            if (std::shared_ptr<detail::AvailableSegmentAwaiter<detail::GetInMemorySegmentPromise<detail::GetInMemorySegmentFuture>>>
+            if (std::shared_ptr<detail::AvailableSegmentAwaiter<GetInMemorySegmentPromise<GetInMemorySegmentFuture>>>
                     awaiter;
                 waitingSegmentRequests.read(awaiter))
             {
@@ -766,6 +780,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
                 availableBuffers.write(uringData->getSegment());
             }
         }
+        buffersBeingSpilled.fetch_sub(1);
         delete uringData;
         io_uring_cqe_seen(&uringWriteRing, completion);
         ++counter;
@@ -774,7 +789,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
 }
 
 
-detail::ReadSegmentFuture BufferManager::readOnDiskSegment(
+ReadSegmentFuture BufferManager::readOnDiskSegment(
     detail::DataSegment<detail::OnDiskLocation> source, detail::DataSegment<detail::InMemoryLocation> target) noexcept
 {
     PRECONDITION(
@@ -782,7 +797,7 @@ detail::ReadSegmentFuture BufferManager::readOnDiskSegment(
         "Target in memory segment was {} bytes big, must be at least as big as the on disk segment with {} bytes",
         target.getSize(),
         source.getSize());
-    using Promise = detail::ReadSegmentPromise<detail::ReadSegmentFuture>;
+    using Promise = ReadSegmentPromise<ReadSegmentFuture>;
     auto underlyingSubmissionAwaiter = detail::SubmitSegmentReadAwaiter<Promise>::create(waitingReadRequests, source, target);
     if (!underlyingSubmissionAwaiter)
     {
@@ -821,7 +836,7 @@ void BufferManager::waitForReadSubmissionEntriesOnce() noexcept
 int64_t BufferManager::processReadSubmissionEntries() noexcept
 {
     //If this method should be shared by other coroutines, it would need to be templated accordingly
-    using Promise = detail::ReadSegmentPromise<detail::ReadSegmentFuture>;
+    using Promise = ReadSegmentPromise<ReadSegmentFuture>;
     std::shared_ptr<detail::SubmitSegmentReadAwaiter<Promise>> nextRequest{};
     //Process a fixed amount of requests, if another request comes it while flushing its fine, its coroutine can flush again itself
     auto numRequests = waitingReadRequests.size();
@@ -873,7 +888,7 @@ void BufferManager::waitForReadCompletionEntriesOnce() noexcept
 
 size_t BufferManager::processReadCompletionEvents() noexcept
 {
-    using Promise = detail::ReadSegmentPromise<detail::ReadSegmentFuture>;
+    using Promise = ReadSegmentPromise<ReadSegmentFuture>;
     size_t counter = 0;
     io_uring_cqe* completion = nullptr;
     while (io_uring_peek_cqe(&uringReadRing, &completion) == 0)
@@ -896,7 +911,8 @@ PinnedBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<deta
 {
     auto* const controlBlock = new detail::BufferControlBlock{segment, this};
     //Ensure that BCBs main segment doesn't get spilled until we create the pinned buffer
-    controlBlock->pinnedRetain();
+    //auto pin = controlBlock->getCounter<true>();
+    auto pin = controlBlock->getCounter<true>();
     {
         auto savedNewBuffer = newBuffers.write(controlBlock);
         INVARIANT(savedNewBuffer, "Could not save newly created buffer");
@@ -911,9 +927,7 @@ PinnedBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<deta
             buffersToCheck.fetch_sub(bufferChecksThreshold);
         }
     }
-
     PinnedBuffer newBuffer{controlBlock, segment, detail::ChildOrMainDataKey::MAIN()};
-    controlBlock->pinnedRelease();
     return newBuffer;
 }
 PinnedBuffer BufferManager::getBufferBlocking()
@@ -1012,11 +1026,10 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
     auto* controlBlock = reinterpret_cast<detail::BufferControlBlock*>(ptr);
     new (controlBlock) detail::BufferControlBlock{dataSegment, this};
 
-    controlBlock->pinnedRetain();
+    auto pin = controlBlock->getCounter<true>();
     std::unique_lock allBuffersLock{allBuffersMutex};
     allBuffers.push_back(controlBlock);
     PinnedBuffer pinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
-    controlBlock->pinnedRelease();
 
     return pinnedBuffer;
 }
@@ -1047,9 +1060,9 @@ bool BufferManager::recycleSegment(detail::DataSegment<detail::OnDiskLocation>&&
     return true;
 }
 
-detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept
+PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDiskLocation>&& segment) noexcept
 {
-    using Promise = detail::PunchHolePromise<detail::PunchHoleFuture>;
+    using Promise = PunchHolePromise<PunchHoleFuture>;
 
     //Process previously started hole punching coroutines
     //Fixate number of entries to process
@@ -1063,12 +1076,12 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
         {
             for (size_t i = 0; i < holesInProgressSize; ++i)
             {
-                detail::PunchHoleFuture future{};
+                PunchHoleFuture future{};
                 if (holesInProgress.read(future))
                 {
                     if (auto result = future.getResult())
                     {
-                        if (auto uringSuccessOrError = NES::getOptional<detail::UringSuccessOrError>(*result))
+                        if (auto uringSuccessOrError = NES::getOptional<UringSuccessOrError>(*result))
                         {
                             INVARIANT(
                                 uringSuccessOrError->isSuccess() || uringSuccessOrError->getUringError(),
@@ -1087,7 +1100,7 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
                                 failedToHolePunch.insert(future.getTarget());
                             }
                         }
-                        else if (auto internalError = NES::getOptional<detail::CoroutineError>(*result))
+                        else if (auto internalError = NES::getOptional<CoroutineError>(*result))
                         {
                             NES_WARNING(
                                 "Failed to delete on disk segment in file {}, offset {} with error message \"{}\"",
@@ -1120,18 +1133,18 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
     //to store the handle somewhere.
     //This essentially transfers ownership from the caller to the queue, so that the cleanup step can process it.
     auto handle = co_await detail::GetCoroutineHandle<Promise>{};
-    auto future = detail::PunchHoleFuture{handle};
+    auto future = PunchHoleFuture{handle};
     bool ownershipTransferrred = holesInProgress.write(future);
     co_yield ownershipTransferrred;
     if (!ownershipTransferrred)
     {
-        co_return static_cast<detail::CoroutineError>(ErrorCode::FailedToTransferCleanupOwnership);
+        co_return static_cast<CoroutineError>(ErrorCode::FailedToTransferCleanupOwnership);
     }
 
     auto underlyingSubmissionAwaiter = detail::SubmitPunchHoleSegmentAwaiter<Promise>::create(waitingPunchHoleRequests, segment);
     if (!underlyingSubmissionAwaiter)
     {
-        co_return static_cast<detail::CoroutineError>(ErrorCode::CannotSubmitBufferIO);
+        co_return static_cast<CoroutineError>(ErrorCode::CannotSubmitBufferIO);
     }
 
     auto submissionAwaiter = detail::AwaitExternalProgress<
@@ -1151,10 +1164,10 @@ detail::PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<deta
     auto returnCode = co_await *underlyingDeletion;
     if (!returnCode)
     {
-        co_return static_cast<detail::CoroutineError>(ErrorCode::CoroutineContinuedWithoutResult);
+        co_return static_cast<CoroutineError>(ErrorCode::CoroutineContinuedWithoutResult);
     }
 
-    co_return detail::UringSuccessOrError{static_cast<uint32_t>(-*returnCode)};
+    co_return UringSuccessOrError{static_cast<uint32_t>(-*returnCode)};
 }
 
 void BufferManager::pollPunchHoleSubmissionEntriesOnce() noexcept
@@ -1172,7 +1185,7 @@ void BufferManager::waitForPunchHoleSubmissionEntriesOnce() noexcept
 }
 size_t BufferManager::processPunchHoleSubmissionEntries() noexcept
 {
-    using Promise = detail::PunchHolePromise<detail::PunchHoleFuture>;
+    using Promise = PunchHolePromise<PunchHoleFuture>;
     std::shared_ptr<detail::SubmitPunchHoleSegmentAwaiter<Promise>> nextRequest{};
     //Process a fixed amount of requests, if another request comes it while flushing its fine, its coroutine can flush again itself
     auto numRequests = waitingPunchHoleRequests.size();
@@ -1221,7 +1234,7 @@ void BufferManager::waitForPunchHoleCompletionEntriesOnce() noexcept
 }
 size_t BufferManager::processPunchHoleCompletionEntriesOnce() noexcept
 {
-    using Promise = detail::PunchHolePromise<detail::PunchHoleFuture>;
+    using Promise = PunchHolePromise<PunchHoleFuture>;
     size_t counter = 0;
     io_uring_cqe* completion = nullptr;
     while (io_uring_peek_cqe(&uringReadRing, &completion) == 0)

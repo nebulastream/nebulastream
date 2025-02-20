@@ -27,6 +27,10 @@ add_library(nes-memory
         BufferManagerImpl.cpp
         BufferFiles.cpp
         BufferPrimitives.cpp
+        BufferManagerPromise.cpp
+        include/Runtime/BufferManagerPromise.hpp
+        BufferManagerFuture.cpp
+        include/Runtime/BufferManagerFuture.hpp
 )
 
 target_include_directories(nes-memory

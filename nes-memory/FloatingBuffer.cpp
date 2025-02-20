@@ -18,6 +18,9 @@
 
 namespace NES::Memory
 {
+FloatingBuffer::FloatingBuffer() noexcept : controlBlock(nullptr), childOrMainData(detail::ChildOrMainDataKey::UNKNOWN())
+{
+}
 
 FloatingBuffer::FloatingBuffer(FloatingBuffer const& other) noexcept : controlBlock(other.controlBlock), childOrMainData(other.childOrMainData)
 {

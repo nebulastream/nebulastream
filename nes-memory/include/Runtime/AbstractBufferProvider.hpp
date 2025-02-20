@@ -13,11 +13,15 @@
 */
 #pragma once
 
+
+
 #include <chrono>
 #include <cstddef>
 #include <optional>
 #include <vector>
 #include <Runtime/PinnedBuffer.hpp>
+#include <Runtime/FloatingBuffer.hpp>
+#include <Runtime/BufferManagerFuture.hpp>
 
 /**
  * This enum reflects the different types of buffer managers in the system
@@ -68,6 +72,7 @@ public:
      */
     virtual PinnedBuffer getBufferBlocking() = 0;
 
+    virtual RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept = 0;
     /**
      * @brief Returns a new TupleBuffer wrapped in an optional or an invalid option if there is no buffer.
      * @return a new buffer

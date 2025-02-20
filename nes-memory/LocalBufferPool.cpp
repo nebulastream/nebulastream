@@ -118,7 +118,10 @@ PinnedBuffer LocalBufferPool::getBufferBlocking()
         return bufferManager->getBufferBlocking();
     }
 }
-
+RepinBufferFuture LocalBufferPool::repinBuffer(FloatingBuffer&&) noexcept
+{
+    co_return static_cast<CoroutineError>(ErrorCode::NotImplemented);
+}
 void LocalBufferPool::recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment)
 {
     INVARIANT(memSegment.getLocation().getPtr(), "null memory segment");
@@ -164,11 +167,10 @@ std::optional<PinnedBuffer> LocalBufferPool::getBufferNoBlocking()
     if (exclusiveBuffers.read(inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
-        controlBlock->dataRetain();
+        auto pin = controlBlock->getCounter<true>();
         const std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
         auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};
-        controlBlock->dataRelease();
         return pinnedBuffer;
     }
     return std::nullopt;
@@ -182,7 +184,7 @@ std::optional<PinnedBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::m
         //TODO use buffer count correctly
         exclusiveBufferCount.fetch_sub(1);
         auto* const controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
-        controlBlock->dataRetain();
+        auto pin = controlBlock->getCounter<true>();
         const std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
         auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};

@@ -268,7 +268,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             //All children and the parent are spilled, so the clock should move forward
             ASSERT_EQ(manager->clockAt, 1);
 
-            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[15]).isSpilled());manager->flushNewBuffers();
+            manager->flushNewBuffers();
             ASSERT_EQ(manager->allBuffers.size(), 9);
 
             //Unpin last four buffers, then initiate spilling once, where second chance should take 5, 6, 7 and tag 8,
@@ -289,6 +289,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             std::ranges::for_each(
                 buffers.begin() + 12, buffers.begin() + 15, [](const auto& it) { ASSERT_TRUE(std::get<FloatingBuffer>(it).isSpilled()); });
             ASSERT_EQ(manager->clockAt, 8);
+            ASSERT_FALSE(std::get<FloatingBuffer>(buffers[15]).isSpilled());
 
             //Unpin (by allBuffers offset), 1, 2, 3
             //Spilled should be 8, 1, 2, because 8 was already tagged before
@@ -306,6 +307,7 @@ TEST_F(BufferManagerTest, SpillChildBufferClock)
             }
 
             ASSERT_EQ(manager->clockAt, 3);
+            manager->flushNewBuffers();
             ASSERT_EQ(manager->allBuffers.size(), 15);
 
             ASSERT_TRUE(std::get<FloatingBuffer>(buffers[15]).isSpilled());

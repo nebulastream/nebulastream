@@ -32,6 +32,8 @@ class FloatingBuffer
 
     detail::DataSegment<detail::DataLocation> getSegment() const noexcept;
 public:
+
+    [[nodiscard]] explicit FloatingBuffer() noexcept;
     [[nodiscard]] FloatingBuffer(FloatingBuffer const& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.

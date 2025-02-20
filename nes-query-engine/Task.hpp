@@ -22,7 +22,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/PinnedBuffer.hpp>
-#include <Runtime/>
 #include <Runtime/FloatingBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <InstantiatedQueryPlan.hpp>
@@ -68,7 +67,7 @@ struct WorkTask : BaseTask
         QueryId queryId,
         PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
-        std::variant<Memory::FloatingBuffer, Memory::RepinningBufferTask> buf,
+        std::variant<Memory::FloatingBuffer, Memory::RepinBufferFuture> buf,
         WorkEmitter::onComplete complete,
         WorkEmitter::onFailure failure)
         : BaseTask(queryId, std::move(complete), std::move(failure))
@@ -81,7 +80,7 @@ struct WorkTask : BaseTask
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
-    std::variant<Memory::FloatingBuffer, Memory::RepinningBufferTask> buf;
+    std::variant<Memory::FloatingBuffer, Memory::RepinBufferFuture> buf;
 };
 
 struct StartPipelineTask : BaseTask

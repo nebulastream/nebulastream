@@ -86,16 +86,18 @@ std::optional<PinnedBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std:
     if (exclusiveBuffers.tryReadUntil(now + timeout, inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
-        controlBlock->dataRetain();
+        auto pin = controlBlock->getCounter<true>();
         std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
         PinnedBuffer pinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
-        controlBlock->dataRelease();
         return pinnedBuffer;
     }
     return std::nullopt;
 }
-
+RepinBufferFuture FixedSizeBufferPool::repinBuffer(FloatingBuffer&&) noexcept
+{
+    co_return static_cast<CoroutineError>(ErrorCode::NotImplemented);
+}
 PinnedBuffer FixedSizeBufferPool::getBufferBlocking()
 {
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
@@ -158,11 +160,10 @@ std::optional<PinnedBuffer> FixedSizeBufferPool::getBufferNoBlocking()
     if (exclusiveBuffers.read(inMemorySegment))
     {
         const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
-        controlBlock->dataRetain();
+        auto pin = controlBlock->getCounter<true>();
         std::unique_lock lock{allBuffersMutex};
         allBuffers.push_back(controlBlock);
         auto pinnedBuffer = PinnedBuffer{controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN()};
-        controlBlock->dataRelease();
         return pinnedBuffer;
     }
     return std::nullopt;
