@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <iostream>
-#include <sstream>
+
+#include <memory>
+#include <string_view>
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
-#include <API/Query.hpp>
-#include <API/Schema.hpp>
+#include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -75,7 +75,7 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
             return API::Milliseconds(size);
         case AntlrSQLLexer::SEC:
             return API::Seconds(size);
-        case AntlrSQLLexer::MIN:
+        case AntlrSQLLexer::MINUTE:
             return API::Minutes(size);
         case AntlrSQLLexer::HOUR:
             return API::Hours(size);
