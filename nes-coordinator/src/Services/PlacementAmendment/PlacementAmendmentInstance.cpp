@@ -98,7 +98,7 @@ void PlacementAmendmentInstance::execute() {
                 return;
             }
         }
-        NES_DEBUG("Processing placement amendment request with type {}", magic_enum::enum_name(requestType));
+        NES_ERROR("Processing placement amendment request with type {}", magic_enum::enum_name(requestType));
         // 4. Call the placement amendment phase to remove/add invalid placements
         auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                             topology,
@@ -117,7 +117,7 @@ void PlacementAmendmentInstance::execute() {
             //Deploy all newly placed deployment contexts
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
 
-            NES_DEBUG("Incremental placement: {}", incrementalPlacement);
+            NES_ERROR("Incremental placement: {}", incrementalPlacement);
             if (incrementalPlacement && !deploymentUnit.reconfigurationMarkerUnits.empty()) {
                 // Compute reconfiguration marker based on deployment contexts
                 auto reconfigurationMarker = ReconfigurationMarker::create();
@@ -126,7 +126,7 @@ void PlacementAmendmentInstance::execute() {
             }
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
-            NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")
+            NES_ERROR("Update global execution plan to reflect state of decomposed query plans")
             auto sharedQueryId = sharedQueryPlan->getId();
             // Iterate over deployment context and update execution plan
             for (const auto& deploymentContext : deploymentUnit.getAllDeploymentContexts()) {
