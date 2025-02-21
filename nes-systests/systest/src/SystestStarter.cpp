@@ -249,11 +249,9 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 }
 }
 
-void shuffleQueries(std::vector<NES::Systest::Query> queries)
+void shuffleQueries(std::vector<NES::Systest::Query>& queries, std::mt19937& rng)
 {
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(queries.begin(), queries.end(), g);
+    std::shuffle(queries.begin(), queries.end(), rng);
 }
 
 void setupLogging()
@@ -290,7 +288,7 @@ int main(int argc, const char** argv)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(testMap, config.workingDir.getValue());
+        auto queries = loadQueries(testMap, config.workingDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
         if (queries.empty())
         {
@@ -301,10 +299,10 @@ int main(int argc, const char** argv)
             std::exit(1);
         }
 
-
         if (config.randomQueryOrder)
         {
-            shuffleQueries(queries);
+            std::mt19937 rng(std::random_device{}());
+            shuffleQueries(queries, rng);
         }
 
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
