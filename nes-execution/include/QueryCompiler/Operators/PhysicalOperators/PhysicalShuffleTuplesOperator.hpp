@@ -25,7 +25,8 @@ class PhysicalShuffleTuplesOperator : public PhysicalUnaryOperator, public Abstr
 {
 public:
     PhysicalShuffleTuplesOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const float& degreeOfDisorder);
     static std::shared_ptr<PhysicalOperator> create(std::shared_ptr<Schema> inputSchema, const float& degreeOfDisorder);
     float getUnorderedness() const;
     std::string toString() const override;

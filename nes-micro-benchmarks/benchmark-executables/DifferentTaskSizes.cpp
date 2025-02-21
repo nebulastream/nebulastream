@@ -223,7 +223,18 @@ static void BM_SkewedPipeline(benchmark::State& state)
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
-    std::vector<std::vector<Memory::TupleBuffer> > tupleBufferEmitStorage(numberOfWorkerThreads);
+
+    struct TaskMeasurements
+    {
+        TaskMeasurements(SequenceNumber sequenceNumber, uint64_t numberOfInputTuples, uint64_t latencyInUs)
+            : sequenceNumber(sequenceNumber), numberOfInputTuples(numberOfInputTuples), latencyInUs(latencyInUs)
+        {
+        }
+        SequenceNumber sequenceNumber;
+        uint64_t numberOfInputTuples;
+        uint64_t latencyInUs;
+    };
+    std::vector<std::vector<TaskMeasurements> > tupleBufferEmitStorage(numberOfWorkerThreads);
     auto workerFunction = [&](const WorkerThreadId threadId)
     {
         Runtime::WorkTask task;
@@ -238,16 +249,15 @@ static void BM_SkewedPipeline(benchmark::State& state)
                     bufferProvider,
                     [&](const Memory::TupleBuffer& buffer, auto)
                     {
-                        tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(buffer);
+                        /// Calculating the duration in milliseconds. We assume that the tuple buffer has a creation timestamp set.
+                        /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
+                        const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                            std::chrono::system_clock::now().time_since_epoch() - std::chrono::microseconds(
+                                buffer.getCreationTimestampInMS().getRawValue()));
+                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getNumberOfTuples(), static_cast<uint64_t>(duration.count())};
+                        tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
                 pipeline->stage->execute(task.buf, pec);
-
-                /// Calculating the duration in milliseconds. We assume that the tuple buffer has a creation timestamp set.
-                /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
-                const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                    std::chrono::system_clock::now().time_since_epoch() - std::chrono::microseconds(
-                        task.buf.getCreationTimestampInMS().getRawValue()));
-                task.buf.setCreationTimestamp(Runtime::Timestamp(duration.count()));
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
             }
             else
@@ -276,21 +286,21 @@ static void BM_SkewedPipeline(benchmark::State& state)
     }
 
     /// Combining all emitted buffers into a single vector
-    std::vector<Memory::TupleBuffer> emittedBuffers;
-    for (auto buffer : tupleBufferEmitStorage)
+    std::vector<TaskMeasurements> emittedMeasurements;
+    for (auto tasks : tupleBufferEmitStorage)
     {
-        emittedBuffers.insert(emittedBuffers.end(), buffer.begin(), buffer.end());
+        emittedMeasurements.insert(emittedMeasurements.end(), tasks.begin(), tasks.end());
     }
 
     /// Now we can write the latency per task buffer to a csv file, such that we can analyze the latency of each task buffer.
     /// Additionally, we would like to write the other parameters to the csv file as well.
     std::ofstream latencyFile("/tmp/latency_per_task_buffer.csv", std::ios::app);
     latencyFile << "SequenceNumber,LatencyInUS,NumberOfTuplesInput,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
-    for (auto& taskBuffer : emittedBuffers)
+    for (auto& taskMeasurement : emittedMeasurements)
     {
-        const auto latency = taskBuffer.getCreationTimestampInMS();
-        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskBuffer.getSequenceNumber().getRawValue() - SequenceNumber::INITIAL];
-        latencyFile << taskBuffer.getSequenceNumber() << "," << latency << "," << numberOfTuplesInput << "," << selectivity << "," <<
+        const auto latency = taskMeasurement.latencyInUs;
+        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() - SequenceNumber::INITIAL];
+        latencyFile << taskMeasurement.sequenceNumber << "," << latency << "," << numberOfTuplesInput << "," << selectivity << "," <<
             providerName << ","
             << numberOfWorkerThreads << "," << skewness << "\n";
     }
@@ -325,23 +335,23 @@ constexpr auto NUM_REPETITIONS = 3;
 //      ->Iterations(1)
 //      ->Repetitions(NUM_REPETITIONS);
 
-BENCHMARK(NES::BM_SkewedPipeline)
-    ->ArgsProduct(
-    {
-        {1 * 1000 * 1000}, /// Number of tuples that should be processed
-        {1000}, /// Max number of tuples per task/buffer.
-        {100}, /// Sleep duration per tuple in nanoseconds
-        {10, 50, 90}, /// Selectivity
-        {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
-        {1, 8}, ///benchmark::CreateRange(1, 16, 2), /// Number of worker threads
-        {100}, /// Skewness (will be divided by 100 to achieve a double value)
-        {10} /// Minimum number of tuples per task (should be set in accordance to the max number of tuples per task)
-    })
-    ->Setup(NES::DoSetup)
-    ->Teardown(NES::DoTearDown)
-    ->UseRealTime()
-    ->Unit(benchmark::kMillisecond)
-    ->Iterations(1)
-    ->Repetitions(NUM_REPETITIONS);
+// BENCHMARK(NES::BM_SkewedPipeline)
+//     ->ArgsProduct(
+//     {
+//         {100 * 1000}, /// Number of tuples that should be processed
+//         {1000}, /// Max number of tuples per task/buffer.
+//         {100}, /// Sleep duration per tuple in nanoseconds
+//         {10, 50, 90}, /// Selectivity
+//         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
+//         {1, 4, 8, 16}, ///benchmark::CreateRange(1, 16, 2), /// Number of worker threads
+//         {1, 20, 50, 55, 60, 70, 100}, /// Skewness (will be divided by 100 to achieve a double value)
+//         {10} /// Minimum number of tuples per task (should be set in accordance to the max number of tuples per task)
+//     })
+//     ->Setup(NES::DoSetup)
+//     ->Teardown(NES::DoTearDown)
+//     ->UseRealTime()
+//     ->Unit(benchmark::kMillisecond)
+//     ->Iterations(1)
+//     ->Repetitions(NUM_REPETITIONS);
 
 BENCHMARK_MAIN();

@@ -15,7 +15,8 @@
 #include <regex>
 #include <Configurations/Validation/FloatRangeValidation.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 FloatRangeValidation::FloatRangeValidation(const double min, const double max) : min(min), max(max)
 {
 }
