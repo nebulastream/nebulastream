@@ -198,7 +198,7 @@ public:
     [[nodiscard]] bool isLastChunk() const noexcept;
 
     /// @brief set the creation timestamp in milliseconds
-    void setCreationTimestampInMS(Runtime::Timestamp value) noexcept;
+    void setCreationTimestamp(Runtime::Timestamp value) noexcept;
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;

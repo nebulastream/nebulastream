@@ -158,7 +158,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(const Runtime::Timestamp value) noexcept
+void TupleBuffer::setCreationTimestamp(const Runtime::Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }

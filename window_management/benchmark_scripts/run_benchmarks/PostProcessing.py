@@ -73,7 +73,6 @@ def find_pipeline_number(log_text):
                 if "Pipeline:" in lines[j]:
                     break
                 elif "Build" in lines[j]:
-                    print(f"Found interesting pipeline: {pipeline_number}")
                     return [pipeline_number]
     return None
 

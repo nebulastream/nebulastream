@@ -177,7 +177,7 @@ static void BM_SkewedPipeline(benchmark::State& state)
     int64_t remainingItems = numberOfTuples;
     const auto maxNumberOfTuples = bufferSize / schemaInput->getSchemaSizeInBytes();
     uint64_t rank = 1;
-    const auto incrementEvery = 5;
+    constexpr auto incrementEvery = 3;
     uint64_t counter = 1;
     while (remainingItems > 0)
     {
@@ -186,6 +186,7 @@ static void BM_SkewedPipeline(benchmark::State& state)
         const auto itemsInPackage = std::max(minNumberOfTuples, std::min(skewedNumberOfTuples, remainingItems));
         numberOfTuplesPerTaskVector.push_back(itemsInPackage);
         remainingItems -= itemsInPackage;
+        ++counter;
         if (counter % incrementEvery == 0)
         {
             ++rank;
@@ -243,10 +244,10 @@ static void BM_SkewedPipeline(benchmark::State& state)
 
                 /// Calculating the duration in milliseconds. We assume that the tuple buffer has a creation timestamp set.
                 /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
-                const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch() - std::chrono::milliseconds(
+                const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::system_clock::now().time_since_epoch() - std::chrono::microseconds(
                         task.buf.getCreationTimestampInMS().getRawValue()));
-                task.buf.setCreationTimestampInMS(Runtime::Timestamp(duration.count()));
+                task.buf.setCreationTimestamp(Runtime::Timestamp(duration.count()));
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
             }
             else
@@ -283,13 +284,13 @@ static void BM_SkewedPipeline(benchmark::State& state)
 
     /// Now we can write the latency per task buffer to a csv file, such that we can analyze the latency of each task buffer.
     /// Additionally, we would like to write the other parameters to the csv file as well.
-    std::ofstream latencyFile("latency_per_task_buffer.csv", std::ios::app);
-    latencyFile << "SequenceNumber,LatencyInMS,NumberOfTuples,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
+    std::ofstream latencyFile("/tmp/latency_per_task_buffer.csv", std::ios::app);
+    latencyFile << "SequenceNumber,LatencyInUS,NumberOfTuplesInput,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
     for (auto& taskBuffer : emittedBuffers)
     {
         const auto latency = taskBuffer.getCreationTimestampInMS();
-        const auto numberOfTuples = taskBuffer.getNumberOfTuples();
-        latencyFile << taskBuffer.getSequenceNumber() << "," << latency << "," << numberOfTuples << "," << selectivity << "," <<
+        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskBuffer.getSequenceNumber().getRawValue() - SequenceNumber::INITIAL];
+        latencyFile << taskBuffer.getSequenceNumber() << "," << latency << "," << numberOfTuplesInput << "," << selectivity << "," <<
             providerName << ","
             << numberOfWorkerThreads << "," << skewness << "\n";
     }
@@ -327,14 +328,14 @@ constexpr auto NUM_REPETITIONS = 3;
 BENCHMARK(NES::BM_SkewedPipeline)
     ->ArgsProduct(
     {
-        {10 * 1000}, /// Number of tuples that should be processed
+        {1 * 1000 * 1000}, /// Number of tuples that should be processed
         {1000}, /// Max number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
         {10, 50, 90}, /// Selectivity
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
         {1, 8}, ///benchmark::CreateRange(1, 16, 2), /// Number of worker threads
         {100}, /// Skewness (will be divided by 100 to achieve a double value)
-        {100} /// Minimum number of tuples per task (should be set in accordance to the max number of tuples per task)
+        {10} /// Minimum number of tuples per task (should be set in accordance to the max number of tuples per task)
     })
     ->Setup(NES::DoSetup)
     ->Teardown(NES::DoTearDown)

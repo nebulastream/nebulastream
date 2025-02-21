@@ -74,8 +74,8 @@ def create_all_benchmark_configs():
     #SLICE_CACHE_TYPE_AND_SIZE = SLICE_CACHE_TYPE_AND_SIZE[:1]
     SLICE_STORE_TYPE = ["MAP"]  # MAP or LIST
     TIMESTAMP_INCREMENT = [1]
-    SHUFFLE_STRATEGY = ["NONE", "BUFFER_TUPLES"]  #["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
-    MIN_MAX_DELAYS = [(1, 10)] # in milliseconds
+    SHUFFLE_STRATEGY = ["NONE", "BUFFER", "BUFFER_TUPLES"]  #["NONE", "BUFFER", "TUPLES", "BUFFER_TUPLES"]
+    MIN_MAX_DELAYS = [(5, 50)] # in milliseconds
     UNORDEREDNESS = [0, 1] # in percentage
     BUFFER_SIZES = [8196]  # [1024, 4096, 8196, 102400]  # 1KB, 4KB, 8KB, 100KB
     QUERIES = []
@@ -86,16 +86,16 @@ def create_all_benchmark_configs():
         # Representing a tumbling window of 10s, resulting in 1 concurrent window
         (10 * 1000, 10 * 1000),
 
-        # # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
-        # (10 * 1000, 100),
-        #
-        # # Representing a sliding window of 1000s with slide of 10s, resulting in 100 concurrent windows.
-        # # This is to test our approach for the same no. concurrent windows but with larger window sizes
-        # (1 * 1000 * 1000, 10 * 1000),
-        #
-        # # Representing a sliding window of 1000s with slide of 100ms, resulting in 10000 concurrent windows
-        # # Testing our approach with a lot of small slices and a lot of concurrent windows
-        # (1 * 1000 * 1000, 100)
+        # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
+        (10 * 1000, 100),
+
+        # Representing a sliding window of 1000s with slide of 10s, resulting in 100 concurrent windows.
+        # This is to test our approach for the same no. concurrent windows but with larger window sizes
+        (1 * 1000 * 1000, 10 * 1000),
+
+        # Representing a sliding window of 1000s with slide of 100ms, resulting in 10000 concurrent windows
+        # Testing our approach with a lot of small slices and a lot of concurrent windows
+        (1 * 1000 * 1000, 100)
     ]
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
