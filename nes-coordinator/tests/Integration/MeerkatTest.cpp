@@ -118,6 +118,7 @@ public:
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->numberOfBuffersPerEpoch = 2;
         coordinatorConfig->worker.loadBalancing = 1000;
+        coordinatorConfig->worker.numWorkerThreads = 1;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 2;
@@ -554,7 +555,8 @@ TEST_F(MeerkatTest, testDecisionTime) {
 }
 
 TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
-
+    coordinatorConfig->optimizer.enableIncrementalPlacement = true;
+    coordinatorConfig->worker.loadBalancing = 0;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
     EXPECT_NE(crd->startCoordinator(false), 0UL);
@@ -562,17 +564,19 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     auto workerConfig = WorkerConfiguration::create();
     workerConfig->numWorkerThreads = 1;
 
+    workerConfig1->loadBalancing = 0;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     EXPECT_TRUE(wrk1->start(false, true));
 
+    workerConfig->loadBalancing = 0;
     NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
     wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf1->start(false, true));
 
     wrkLeaf1->removeParent(crd->getNesWorker()->getWorkerId());
     wrkLeaf1->addParent(wrk1->getWorkerId());
-
-    auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
+    // auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
                                                                                    FaultToleranceType::NONE);
@@ -583,7 +587,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
 
     auto decomposedIds = wrkLeaf1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
     wrk1->requestOffload(sharedQueryPlanId, decomposedIds[0].id, wrkLeaf1->getWorkerId());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));
 

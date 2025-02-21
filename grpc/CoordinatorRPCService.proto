@@ -236,9 +236,9 @@ message GetNodesInRangeReply{
 }
 
 message RequestQueryOffloadRequest {
-  int64 sharedQueryId = 1;
-  int64 decomposedQueryId = 2;
-  int64 originWorkerId = 3;
+  int64 originWorkerId = 1;
+  int64 sharedQueryId = 2;
+  int64 decomposedQueryId = 3;
   int64 targetWorkerId = 4;
 }
 

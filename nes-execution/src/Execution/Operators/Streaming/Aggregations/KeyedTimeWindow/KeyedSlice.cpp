@@ -91,9 +91,8 @@ KeyedSlicePtr KeyedSlice::deserialize(std::span<const Runtime::TupleBuffer> buff
     uint64_t sliceEnd = readFromMetadata();
     uint64_t hashMapSize = readFromMetadata();
 
-    auto allocator = std::make_unique<std::pmr::monotonic_buffer_resource>();
-    std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap = Nautilus::Interface::ChainedHashMap::deserialize(hashMapData, hashMapSize, std::unique_ptr<std::pmr::memory_resource>(std::move(allocator)));
-
+    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap = Nautilus::Interface::ChainedHashMap::deserialize(hashMapData, hashMapSize, std::move(allocator));
     auto newSlice = std::make_unique<KeyedSlice>(std::move(hashMap), sliceStart, sliceEnd);
 
     return newSlice;
