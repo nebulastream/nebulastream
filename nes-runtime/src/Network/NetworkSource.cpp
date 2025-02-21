@@ -433,6 +433,9 @@ std::optional<ReconfigurationMarkerEventPtr> NetworkSource::getReconfigurationEv
     NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
 
     auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(*executablePlanIds.begin(), maxVersion);
+    if (marker->getReconfigurationEvent(decomposedQueryIdWithVersion)) {
+        NES_ERROR("Found event for plan {} version {}", decomposedQueryIdWithVersion.id, decomposedQueryIdWithVersion.version);
+    }
     return marker->getReconfigurationEvent(decomposedQueryIdWithVersion);
 }
 
