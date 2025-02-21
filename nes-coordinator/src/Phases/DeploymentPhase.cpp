@@ -46,8 +46,10 @@ void DeploymentPhase::execute(const std::set<Optimizer::DeploymentContextPtr>& d
 void DeploymentPhase::execute(const std::set<Optimizer::ReconfigurationMarkerUnit>& reconfigurationMarkerUnits,
                               const ReconfigurationMarkerPtr& reconfigurationMarker) {
     if (!reconfigurationMarkerUnits.empty()) {
+        NES_ERROR("{} marker units to deploy", reconfigurationMarkerUnits.size());
         std::vector<RpcAsyncRequest> asyncRequests;
         for (const auto& reconfigurationMarkerUnit : reconfigurationMarkerUnits) {
+            NES_ERROR("Handling reconfig marker unit for worker {}", reconfigurationMarkerUnit.workerId)
             auto queueForReconfigurationMarker = std::make_shared<CompletionQueue>();
             workerRPCClient->addReconfigurationMarker(reconfigurationMarkerUnit.address,
                                                       reconfigurationMarkerUnit.sharedQueryId,
@@ -55,10 +57,13 @@ void DeploymentPhase::execute(const std::set<Optimizer::ReconfigurationMarkerUni
                                                       reconfigurationMarker,
                                                       queueForReconfigurationMarker,
                                                       reconnectCounter);
+            NES_ERROR("Initiated rpc, add it to outstanding requests");
             asyncRequests.emplace_back(RpcAsyncRequest{queueForReconfigurationMarker, RpcClientMode::Reconfiguration});
         }
+        NES_ERROR("Deployed all marker units, waiting for result");
         workerRPCClient->checkAsyncResult(asyncRequests);
     }
+    NES_ERROR("finished marker deployment");
 }
 
 void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
