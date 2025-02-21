@@ -937,20 +937,28 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 continue;
                                             }
 
+                                            //                                            auto sourceOperator = upstreamOperator->as_if<SourceLogicalOperator>();
+                                            //                                            if (sourceOperator) {
+                                            //                                                auto networkSourceDescriptor = sourceOperator->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+                                            //                                                if (networkSourceDescriptor) {
+                                            //                                                    for (auto child : matchingPinnedRootOperator->getChildren()) {
+                                            //                                                        auto existingSource = child->as_if<SourceLogicalOperator>();
+                                            //                                                        if (existingSource) {
+                                            //                                                            auto existingNetworkDescriptor = existingSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+                                            //                                                            if (existingNetworkDescriptor && existingNetworkDescriptor->getNesPartition() == networkSourceDescriptor->getNesPartition()) {
+                                            //                                                                NES_ERROR("Removing existing network source with partition {}", existingNetworkDescriptor->getNesPartition());
+                                            //                                                                matchingPinnedRootOperator->removeChild(child);
+                                            //                                                            }
+                                            //                                                        }
+                                            //                                                    }
+                                            //                                                }
+                                            //                                            }
                                             auto sourceOperator = upstreamOperator->as_if<SourceLogicalOperator>();
                                             if (sourceOperator) {
-                                                auto networkSourceDescriptor = sourceOperator->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-                                                if (networkSourceDescriptor) {
-                                                    for (auto child : matchingPinnedRootOperator->getChildren()) {
-                                                        auto existingSource = child->as_if<SourceLogicalOperator>();
-                                                        if (existingSource) {
-                                                            auto existingNetworkDescriptor = existingSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-                                                            if (existingNetworkDescriptor && existingNetworkDescriptor->getNesPartition() == networkSourceDescriptor->getNesPartition()) {
-                                                                NES_ERROR("Removing existing network source with partition {}", existingNetworkDescriptor->getNesPartition());
-                                                                matchingPinnedRootOperator->removeChild(child);
-                                                            }
-                                                        }
-                                                    }
+                                                if (tryMergingNetworkSource(decomposedQueryPlanVersion,
+                                                                            matchingPinnedRootOperator,
+                                                                            sourceOperator)) {
+                                                    continue;
                                                 }
                                             }
                                             matchingPinnedRootOperator->addChild(upstreamOperator);
@@ -1202,7 +1210,8 @@ LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(Shar
                                                                                              SINK_RETRIES,
                                                                                              sinkVersion,
                                                                                              numberOfOrigins,
-                                                                                             id, downstreamLogicalOperatorId),
+                                                                                             id,
+                                                                                             downstreamLogicalOperatorId),
                                                       INVALID_WORKER_NODE_ID,
                                                       id);
 }
