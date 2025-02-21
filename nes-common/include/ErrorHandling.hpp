@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <optional>
@@ -30,6 +31,10 @@ class Exception final : public cpptrace::lazy_exception
 {
 public:
     Exception(std::string message, uint64_t code);
+
+    /// copy-constructor is unsaved noexcept because of std::string copy
+    Exception(const Exception&) noexcept = default;
+    Exception& operator=(const Exception&) noexcept = default;
 
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
