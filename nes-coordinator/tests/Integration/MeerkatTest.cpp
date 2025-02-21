@@ -585,7 +585,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(qId, queryCatalog));
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
 
-    auto decomposedIds = wrkLeaf1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
+    auto decomposedIds = wrk1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
     wrk1->requestOffload(sharedQueryPlanId, decomposedIds[0].id, wrkLeaf1->getWorkerId());
     std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
