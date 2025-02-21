@@ -122,7 +122,9 @@ void PlacementAmendmentInstance::execute() {
                 // Compute reconfiguration marker based on deployment contexts
                 auto reconfigurationMarker = ReconfigurationMarker::create();
                 updateReconfigurationMarker(deploymentUnit, reconfigurationMarker);
+                NES_ERROR("computes reconfig markers, deploy markers next")
                 deploymentPhase->execute(deploymentUnit.reconfigurationMarkerUnits, reconfigurationMarker);
+                NES_ERROR("marker deployment done")
             }
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans
@@ -190,7 +192,7 @@ void PlacementAmendmentInstance::execute() {
 
 void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::DeploymentUnit& deploymentUnit,
                                                              ReconfigurationMarkerPtr reconfigurationMarker) {
-    NES_DEBUG("Computing reconfiguration marker.")
+    NES_ERROR("Computing reconfiguration marker.")
 
     // There should not be anything to be removed
     if (!deploymentUnit.deploymentRemovalContexts.empty()) {
