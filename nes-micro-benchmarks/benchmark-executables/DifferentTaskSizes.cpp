@@ -13,7 +13,9 @@
 */
 #include <chrono>
 #include <thread>
+#include <random>
 
+#include "../../nes-common/include/Util/Ranges.hpp"
 #include <benchmark/benchmark.h>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
@@ -140,7 +142,8 @@ static void DoTearDown(const benchmark::State&)
                         const auto startTime = task.buf.getCreationTimestamp();
                         const auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
-                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), task.buf.getOriginId(), task.buf.getNumberOfTuples(),
+                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), task.buf.getOriginId(),
+                                                            task.buf.getNumberOfTuples(),
                                                             startTime.getRawValue(), static_cast<uint64_t>(endTime)};
                         tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
@@ -180,42 +183,70 @@ static void DoTearDown(const benchmark::State&)
     }
 
     /// Post processing the emitted measurements and then writing them to a csv file
-    std::map<std::tuple<OriginId, uint64_t>, uint64_t> lastStartTime;
-    std::vector<std::tuple<OriginId, uint64_t, uint64_t>> timeDiffData;
+    /// We want to calculate the time difference between two consecutive tasks of the same origin id
 
     // Sort measurements by OriginId, numberOfInputTuples, and startTime
-    std::ranges::sort(emittedMeasurements, [](const TaskMeasurements& a, const TaskMeasurements& b) {
-        return std::tie(a.originId, a.startTime) < std::tie(b.originId, b.startTime);
-    });
+    std::ranges::sort(
+        emittedMeasurements,
+        [](const TaskMeasurements& a, const TaskMeasurements& b)
+        {
+            return std::tie(a.originId, a.startTime) < std::tie(b.originId, b.startTime);
+        });
 
-    /// Calculate time differences
-    for (const auto& measurement : emittedMeasurements) {
-        auto key = std::make_tuple(measurement.originId, measurement.startTime);
-        if (lastStartTime.contains(key)) {
-            uint64_t timeDiff = measurement.startTime - lastStartTime[key];
-            timeDiffData.emplace_back(measurement.originId, measurement.numberOfInputTuples, timeDiff);
-        }
-        lastStartTime[key] = measurement.startTime;
+
+    std::map<OriginId, std::vector<uint64_t> > originIdToStartTimes;
+    for (const auto& measurement : emittedMeasurements)
+    {
+        originIdToStartTimes[measurement.originId].emplace_back(measurement.startTime);
     }
 
-    // Write to CSV file
+    /// Calculating the time difference between two consecutive tasks of the same origin id
+    std::map<OriginId, std::vector<uint64_t> > originIdToTimeDifferences;
+    for (const auto& [originId, startTimes] : originIdToStartTimes)
+    {
+        for (const auto& [i, startTime] : startTimes | NES::views::enumerate)
+        {
+            if (i > 0)
+            {
+                const auto timeDiff = startTime - startTimes[i - 1];
+                originIdToTimeDifferences[originId].emplace_back(timeDiff);
+            }
+        }
+    }
+
+
+    /// To reduce the number of lines in the csv file, we will write the time difference for 10k tasks.
+    /// We will shuffle the vector of time differences to get a random sample of 10k tasks.
     std::ofstream latencyFile("/tmp/latency_per_task_buffer.csv", std::ios::app);
-    if (latencyFile.is_open()) {
+    if (latencyFile.is_open())
+    {
         latencyFile << "OriginId,NumberOfInputTuples,TimeDifference,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
-        for (const auto& data : timeDiffData) {
-            latencyFile << std::get<0>(data) << ","
-                      << std::get<1>(data) << ","
-                      << std::get<2>(data) << ","
-            << selectivity << ","
-            << providerName << ","
-            << numberOfWorkerThreads << ","
-            << 0.0 << "\n";
+        for (auto& [originId, timeDifferences] : originIdToTimeDifferences)
+        {
+            std::random_device rd;
+            std::mt19937 g(rd());
+            std::ranges::shuffle(timeDifferences, g);
+            for (const auto& [i, timeDiff] : timeDifferences | NES::views::enumerate)
+            {
+                if (i > 10000)
+                {
+                    break;
+                }
+                latencyFile << originId << ","
+                    << numberOfTuplesPerTask << ","
+                    << timeDiff << ","
+                    << selectivity << ","
+                    << providerName << ","
+                    << numberOfWorkerThreads << ","
+                    << 0.0 << "\n";
+            }
         }
         latencyFile.close();
-    } else {
+    }
+    else
+    {
         std::cerr << "Unable to open file for writing." << std::endl;
     }
-
 
     /// Reporting additional statistics
     state.counters["Number_Of_Tasks"] = numberOfTasks;
@@ -419,13 +450,13 @@ constexpr auto NUM_REPETITIONS = 3;
 BENCHMARK(NES::BM_UniformPipeline)
      ->ArgsProduct(
     {
-        {10 * 1000}, /// Number of tuples that should be processed
-        {1000, 3000}, //{1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
+        {100 * 1000 * 1000}, /// Number of tuples that should be processed
+        {1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
         {10, 50, 90}, //benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
         {8}, //benchmark::CreateRange(1, 16, 2) /// Number of worker threads
-        {2} /// Number of origins
+        {10} /// Number of origins
     })
      ->Setup(NES::DoSetup)
      ->Teardown(NES::DoTearDown)
