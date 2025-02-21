@@ -388,6 +388,13 @@ bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
     this->successor = successor;
     if (allSourcesDrained()) {
         if (*drainMarker.rlock() == nullptr) {
+            auto lockedSuccessor = this->successor.rlock();
+            auto expectedDrainCount = sources.size() - (*lockedSuccessor)->getSourcesToReuseCount();
+            auto toReuse = (*lockedSuccessor)->getSourcesToReuseCount();
+            NES_ERROR("expected drain count {} (sources - {} sources to reuse {}", expectedDrainCount, sources.size(), toReuse)
+            for (auto s : sources) {
+                NES_ERROR("Running source {}", s.)
+            }
             NES_ERROR("Reusing all sources of a plan is currently not supported")
             NES_NOT_IMPLEMENTED();
         }
