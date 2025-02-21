@@ -134,13 +134,13 @@ static void DoTearDown(const benchmark::State&)
                     threadId,
                     pipeline->id,
                     bufferProvider,
-                    [&](const Memory::TupleBuffer& buffer, auto)
+                    [&](const Memory::TupleBuffer&, auto)
                     {
                         /// We assume that the tuple buffer has a creation timestamp set.
-                        const auto startTime = buffer.getCreationTimestamp();
+                        const auto startTime = task.buf.getCreationTimestamp();
                         const auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
-                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getOriginId(), buffer.getNumberOfTuples(),
+                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), task.buf.getOriginId(), task.buf.getNumberOfTuples(),
                                                             startTime.getRawValue(), static_cast<uint64_t>(endTime)};
                         tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
@@ -179,20 +179,41 @@ static void DoTearDown(const benchmark::State&)
         emittedMeasurements.insert(emittedMeasurements.end(), tasks.begin(), tasks.end());
     }
 
-    /// Now we can write the latency per task buffer to a csv file, such that we can analyze the latency of each task buffer.
-    /// Additionally, we would like to write the other parameters to the csv file as well.
+    /// Post processing the emitted measurements and then writing them to a csv file
+    std::map<std::tuple<OriginId, uint64_t>, uint64_t> lastStartTime;
+    std::vector<std::tuple<OriginId, uint64_t, uint64_t>> timeDiffData;
+
+    // Sort measurements by OriginId, numberOfInputTuples, and startTime
+    std::ranges::sort(emittedMeasurements, [](const TaskMeasurements& a, const TaskMeasurements& b) {
+        return std::tie(a.originId, a.startTime) < std::tie(b.originId, b.startTime);
+    });
+
+    /// Calculate time differences
+    for (const auto& measurement : emittedMeasurements) {
+        auto key = std::make_tuple(measurement.originId, measurement.startTime);
+        if (lastStartTime.contains(key)) {
+            uint64_t timeDiff = measurement.startTime - lastStartTime[key];
+            timeDiffData.emplace_back(measurement.originId, measurement.numberOfInputTuples, timeDiff);
+        }
+        lastStartTime[key] = measurement.startTime;
+    }
+
+    // Write to CSV file
     std::ofstream latencyFile("/tmp/latency_per_task_buffer.csv", std::ios::app);
-    latencyFile <<
-        "SequenceNumber,StartTimeInUs,EndTimeInUs,NumberOfTuplesInput,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness,OriginId\n";
-    for (auto& taskMeasurement : emittedMeasurements)
-    {
-        constexpr auto skewness = 0.0; /// In this method, we do not have any skewness
-        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() -
-            SequenceNumber::INITIAL];
-        latencyFile << taskMeasurement.sequenceNumber << "," << taskMeasurement.startTime << "," << taskMeasurement.endTime << "," <<
-            numberOfTuplesInput << "," << selectivity << "," <<
-            providerName << ","
-            << numberOfWorkerThreads << "," << skewness << "," << taskMeasurement.originId << "\n";
+    if (latencyFile.is_open()) {
+        latencyFile << "OriginId,NumberOfInputTuples,TimeDifference,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness\n";
+        for (const auto& data : timeDiffData) {
+            latencyFile << std::get<0>(data) << ","
+                      << std::get<1>(data) << ","
+                      << std::get<2>(data) << ","
+            << selectivity << ","
+            << providerName << ","
+            << numberOfWorkerThreads << ","
+            << 0.0 << "\n";
+        }
+        latencyFile.close();
+    } else {
+        std::cerr << "Unable to open file for writing." << std::endl;
     }
 
 
@@ -398,13 +419,13 @@ constexpr auto NUM_REPETITIONS = 3;
 BENCHMARK(NES::BM_UniformPipeline)
      ->ArgsProduct(
     {
-        {100 * 1000}, //{100 * 1000 * 1000}, /// Number of tuples that should be processed
-        {1, 3000}, //{1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
+        {10 * 1000}, /// Number of tuples that should be processed
+        {1000, 3000}, //{1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
         {10, 50, 90}, //benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
         {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
-        {1, 16}, //benchmark::CreateRange(1, 16, 2) /// Number of worker threads
-        {20} /// Number of origins
+        {8}, //benchmark::CreateRange(1, 16, 2) /// Number of worker threads
+        {2} /// Number of origins
     })
      ->Setup(NES::DoSetup)
      ->Teardown(NES::DoTearDown)
