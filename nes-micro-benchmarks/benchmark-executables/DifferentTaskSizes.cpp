@@ -39,6 +39,7 @@ static void DoTearDown(const benchmark::State&)
 /// 4. The selectivity of the filter operator
 /// 5. The index of the provider name in: {"INTERPRETER", "COMPILER"}
 /// 6. The number of worker threads
+/// 6. The number of different origin ids
 [[maybe_unused]] static void BM_UniformPipeline(benchmark::State& state)
 {
     /// Extracting the parameters from the state
@@ -48,6 +49,7 @@ static void DoTearDown(const benchmark::State&)
     const auto selectivity = state.range(3);
     const auto providerName = std::array{"Interpreter"s, "Compilation"s}[state.range(4)];
     const auto numberOfWorkerThreads = state.range(5);
+    const auto numberOfOrigins = state.range(6);
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -86,10 +88,40 @@ static void DoTearDown(const benchmark::State&)
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
     const auto runningQueryPlanNode
-        = utils.createTasks(taskQueue, numberOfTasks, numberOfTuplesPerTaskVector, emitter, *bufferProvider, pec, sleepDurationPerTuple);
+        = utils.createTasks(
+            taskQueue,
+            numberOfTasks,
+            numberOfTuplesPerTaskVector,
+            emitter,
+            *bufferProvider,
+            pec,
+            numberOfOrigins,
+            sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
+    struct TaskMeasurements
+    {
+        TaskMeasurements(
+            SequenceNumber sequenceNumber,
+            OriginId originId,
+            const uint64_t numberOfInputTuples,
+            const uint64_t startTime,
+            const uint64_t endTime)
+            : sequenceNumber(std::move(sequenceNumber))
+            , originId(std::move(originId))
+            , numberOfInputTuples(numberOfInputTuples)
+            , startTime(startTime)
+            , endTime(endTime)
+        {
+        }
+        SequenceNumber sequenceNumber;
+        OriginId originId;
+        uint64_t numberOfInputTuples;
+        uint64_t startTime;
+        uint64_t endTime;
+    };
+    std::vector<std::vector<TaskMeasurements> > tupleBufferEmitStorage(numberOfWorkerThreads);
     auto workerFunction = [&](const WorkerThreadId threadId)
     {
         Runtime::WorkTask task;
@@ -98,12 +130,19 @@ static void DoTearDown(const benchmark::State&)
             if (auto pipeline = task.pipeline.lock())
             {
                 BenchmarkPEC pec(
-                    state.threads(),
-                    WorkerThreadId(state.thread_index()),
+                    numberOfWorkerThreads,
+                    threadId,
                     pipeline->id,
                     bufferProvider,
-                    [&](const Memory::TupleBuffer&, auto)
+                    [&](const Memory::TupleBuffer& buffer, auto)
                     {
+                        /// We assume that the tuple buffer has a creation timestamp set.
+                        const auto startTime = buffer.getCreationTimestamp();
+                        const auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getOriginId(), buffer.getNumberOfTuples(),
+                                                            startTime.getRawValue(), static_cast<uint64_t>(endTime)};
+                        tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
                 pipeline->stage->execute(task.buf, pec);
                 countProcessedTuples[threadId.getRawValue()] += task.buf.getNumberOfTuples();
@@ -133,6 +172,30 @@ static void DoTearDown(const benchmark::State&)
         }
     }
 
+    /// Combining all emitted buffers into a single vector
+    std::vector<TaskMeasurements> emittedMeasurements;
+    for (auto tasks : tupleBufferEmitStorage)
+    {
+        emittedMeasurements.insert(emittedMeasurements.end(), tasks.begin(), tasks.end());
+    }
+
+    /// Now we can write the latency per task buffer to a csv file, such that we can analyze the latency of each task buffer.
+    /// Additionally, we would like to write the other parameters to the csv file as well.
+    std::ofstream latencyFile("/tmp/latency_per_task_buffer.csv", std::ios::app);
+    latencyFile <<
+        "SequenceNumber,StartTimeInUs,EndTimeInUs,NumberOfTuplesInput,Selectivity,ProviderName,NumberOfWorkerThreads,Skewness,OriginId\n";
+    for (auto& taskMeasurement : emittedMeasurements)
+    {
+        constexpr auto skewness = 0.0; /// In this method, we do not have any skewness
+        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() -
+            SequenceNumber::INITIAL];
+        latencyFile << taskMeasurement.sequenceNumber << "," << taskMeasurement.startTime << "," << taskMeasurement.endTime << "," <<
+            numberOfTuplesInput << "," << selectivity << "," <<
+            providerName << ","
+            << numberOfWorkerThreads << "," << skewness << "," << taskMeasurement.originId << "\n";
+    }
+
+
     /// Reporting additional statistics
     state.counters["Number_Of_Tasks"] = numberOfTasks;
     state.counters["Tuples_Processed"] = numberOfTasks * numberOfTuplesPerTask;
@@ -151,7 +214,7 @@ static void DoTearDown(const benchmark::State&)
 /// 6. The number of worker threads
 /// 7. The skewness of the distribution of tasks
 /// 8. Minimum number of tuples per task
-static void BM_SkewedPipeline(benchmark::State& state)
+[[maybe_unused]] static void BM_SkewedPipeline(benchmark::State& state)
 {
     /// Extracting the parameters from the state
     const auto numberOfTuples = state.range(0);
@@ -162,6 +225,7 @@ static void BM_SkewedPipeline(benchmark::State& state)
     const auto numberOfWorkerThreads = state.range(5);
     const auto skewness = state.range(6) / 100.0;
     const auto minNumberOfTuples = state.range(7);
+    constexpr auto numberOfOrigins = 1;
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -219,7 +283,15 @@ static void BM_SkewedPipeline(benchmark::State& state)
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
     const auto runningQueryPlanNode
-        = utils.createTasks(taskQueue, numberOfTasks, numberOfTuplesPerTaskVector, emitter, *bufferProvider, pec, sleepDurationPerTuple);
+        = utils.createTasks(
+            taskQueue,
+            numberOfTasks,
+            numberOfTuplesPerTaskVector,
+            emitter,
+            *bufferProvider,
+            pec,
+            numberOfOrigins,
+            sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
@@ -227,7 +299,9 @@ static void BM_SkewedPipeline(benchmark::State& state)
     struct TaskMeasurements
     {
         TaskMeasurements(SequenceNumber sequenceNumber, uint64_t numberOfInputTuples, uint64_t latencyInUs)
-            : sequenceNumber(sequenceNumber), numberOfInputTuples(numberOfInputTuples), latencyInUs(latencyInUs)
+            : sequenceNumber(sequenceNumber)
+            , numberOfInputTuples(numberOfInputTuples)
+            , latencyInUs(latencyInUs)
         {
         }
         SequenceNumber sequenceNumber;
@@ -253,8 +327,9 @@ static void BM_SkewedPipeline(benchmark::State& state)
                         /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
                         const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
                             std::chrono::system_clock::now().time_since_epoch() - std::chrono::microseconds(
-                                buffer.getCreationTimestampInMS().getRawValue()));
-                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getNumberOfTuples(), static_cast<uint64_t>(duration.count())};
+                                buffer.getCreationTimestamp().getRawValue()));
+                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getNumberOfTuples(),
+                                                            static_cast<uint64_t>(duration.count())};
                         tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
                 pipeline->stage->execute(task.buf, pec);
@@ -299,7 +374,8 @@ static void BM_SkewedPipeline(benchmark::State& state)
     for (auto& taskMeasurement : emittedMeasurements)
     {
         const auto latency = taskMeasurement.latencyInUs;
-        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() - SequenceNumber::INITIAL];
+        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() -
+            SequenceNumber::INITIAL];
         latencyFile << taskMeasurement.sequenceNumber << "," << latency << "," << numberOfTuplesInput << "," << selectivity << "," <<
             providerName << ","
             << numberOfWorkerThreads << "," << skewness << "\n";
@@ -319,21 +395,23 @@ static void BM_SkewedPipeline(benchmark::State& state)
 constexpr auto NUM_REPETITIONS = 3;
 
 /// Registering all benchmark functions
-// BENCHMARK(NES::BM_UniformPipeline)
-//      ->ArgsProduct({
-//          {100 * 1000 * 1000}, /// Number of tuples that should be processed
-//          {1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
-//          {100}, /// Sleep duration per tuple in nanoseconds
-//          benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
-//          {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
-//          benchmark::CreateRange(1, 16, 2) /// Number of worker threads
-//      })
-//      ->Setup(NES::DoSetup)
-//      ->Teardown(NES::DoTearDown)
-//      ->UseRealTime()
-//      ->Unit(benchmark::kMillisecond)
-//      ->Iterations(1)
-//      ->Repetitions(NUM_REPETITIONS);
+BENCHMARK(NES::BM_UniformPipeline)
+     ->ArgsProduct(
+    {
+        {100 * 1000}, //{100 * 1000 * 1000}, /// Number of tuples that should be processed
+        {1, 3000}, //{1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
+        {100}, /// Sleep duration per tuple in nanoseconds
+        {10, 50, 90}, //benchmark::CreateDenseRange(0, 100, 10), /// Selectivity
+        {1}, /// Provider name: 0 -> INTERPRETER, 1 -> COMPILER
+        {1, 16}, //benchmark::CreateRange(1, 16, 2) /// Number of worker threads
+        {20} /// Number of origins
+    })
+     ->Setup(NES::DoSetup)
+     ->Teardown(NES::DoTearDown)
+     ->UseRealTime()
+     ->Unit(benchmark::kMillisecond)
+     ->Iterations(1)
+     ->Repetitions(NUM_REPETITIONS);
 
 // BENCHMARK(NES::BM_SkewedPipeline)
 //     ->ArgsProduct(

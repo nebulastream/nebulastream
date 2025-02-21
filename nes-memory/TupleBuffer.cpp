@@ -128,7 +128,7 @@ void TupleBuffer::setWatermark(const Runtime::Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-Runtime::Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
+Runtime::Timestamp TupleBuffer::getCreationTimestamp() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }

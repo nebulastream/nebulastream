@@ -36,7 +36,7 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
     copiedBuffer.setWatermark(buffer.getWatermark());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
-    copiedBuffer.setCreationTimestamp(buffer.getCreationTimestampInMS());
+    copiedBuffer.setCreationTimestamp(buffer.getCreationTimestamp());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setOriginId(buffer.getOriginId());
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());

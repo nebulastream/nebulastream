@@ -43,6 +43,7 @@ public:
         Runtime::WorkEmitter& emitter,
         Memory::AbstractBufferProvider& bufferProvider,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        const uint64_t numberOfOrigins,
         std::chrono::nanoseconds sleepDurationPerTuple) const;
 
 private:

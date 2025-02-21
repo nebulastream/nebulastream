@@ -174,8 +174,8 @@ public:
     /// @brief set the watermark from a timestamp
     void setWatermark(Runtime::Timestamp value) noexcept;
 
-    /// @brief get the creation timestamp in milliseconds
-    [[nodiscard]] Runtime::Timestamp getCreationTimestampInMS() const noexcept;
+    /// @brief get the creation timestamp
+    [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
 
     /// @brief set the sequence number
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;

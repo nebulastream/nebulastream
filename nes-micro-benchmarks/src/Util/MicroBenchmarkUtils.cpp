@@ -54,6 +54,7 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     Runtime::WorkEmitter& emitter,
     Memory::AbstractBufferProvider& bufferProvider,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+    const uint64_t numberOfOrigins,
     std::chrono::nanoseconds sleepDurationPerTuple) const
 {
     PRECONDITION(numberOfTuplesPerTask.size() == numberOfTasks, "The number of tasks and the number of tuples per task do not match.");
@@ -73,12 +74,13 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
 
     struct InfoForThread
     {
-        InfoForThread() : sequenceNumber(SequenceNumber::INVALID), startTimestamp(0), numberOfTuples(0) { }
-        InfoForThread(SequenceNumber sequenceNumber, const uint64_t startTimestamp, const uint64_t numberOfTuples)
-            : sequenceNumber(std::move(sequenceNumber)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples)
+        InfoForThread() : sequenceNumber(SequenceNumber::INVALID), originId(OriginId::INVALID), startTimestamp(0), numberOfTuples(0) { }
+        InfoForThread(SequenceNumber sequenceNumber, OriginId originId, const uint64_t startTimestamp, const uint64_t numberOfTuples)
+            : sequenceNumber(std::move(sequenceNumber)), originId(std::move(originId)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples)
         {
         }
         SequenceNumber sequenceNumber;
+        OriginId originId;
         uint64_t startTimestamp;
         uint64_t numberOfTuples;
     };
@@ -87,10 +89,14 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     /// First, we are creating the necessary information for the threads and emplacing it into the queue
     /// Thus, we can then afterwards use the stored information to create tuple buffers concurrently
     SequenceNumber::Underlying seqNumber = SequenceNumber::INITIAL;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<OriginId::Underlying> dis(OriginId::INVALID + 1, OriginId::INVALID + numberOfOrigins);
     uint64_t ts = 0;
     for (const auto tuplesPerTask : numberOfTuplesPerTask)
     {
-        InfoForThread infoForThread{SequenceNumber(seqNumber), ts, tuplesPerTask};
+        const OriginId::Underlying originId = dis(gen);
+        InfoForThread infoForThread{SequenceNumber(seqNumber), OriginId(originId), ts, tuplesPerTask};
         infoForThreads.write(std::move(infoForThread));
         seqNumber += 1;
         ts += tuplesPerTask;
@@ -110,7 +116,8 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
             tupleBuffer.setSequenceNumber(infoForThread.sequenceNumber);
             tupleBuffer.setCreationTimestamp(Runtime::Timestamp(
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
-            tupleBuffer.setWatermark(tupleBuffer.getCreationTimestampInMS());
+            tupleBuffer.setWatermark(tupleBuffer.getCreationTimestamp());
+            tupleBuffer.setOriginId(infoForThread.originId);
 
             Memory::MemoryLayouts::TestTupleBuffer testTupleBuffer
                 = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schemaInput);
