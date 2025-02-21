@@ -435,6 +435,9 @@ std::optional<ReconfigurationMarkerEventPtr> NetworkSource::getReconfigurationEv
     auto decomposedQueryIdWithVersion = DecomposedQueryIdWithVersion(*executablePlanIds.begin(), maxVersion);
     if (marker->getReconfigurationEvent(decomposedQueryIdWithVersion)) {
         NES_ERROR("Found event for plan {} version {}", decomposedQueryIdWithVersion.id, decomposedQueryIdWithVersion.version);
+        for (auto& [i, e] : marker->getAllReconfigurationMarkerEvents()) {
+            NES_ERROR("Marker at sources contains event for for plan {} version {} of type {}", i.id, i.version, magic_enum::enum_name(e->reconfigurationMetadata->reconfigurationMetadataType));
+        }
     }
     return marker->getReconfigurationEvent(decomposedQueryIdWithVersion);
 }

@@ -80,6 +80,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
+    NES_ERROR("Placement strategy {}", magic_enum::enum_name(placementStrategy));
     NES_DEBUG("QueryPlacementAmendmentPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
     // Get current time stamp
