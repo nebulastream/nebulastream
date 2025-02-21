@@ -982,6 +982,8 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
             }
         }
     }
+    //FIXME: return actualy succecc when also adding of drain markers is implemented
+    addedMarker = true;
     return addedMarker;
 }
 
