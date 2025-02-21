@@ -218,12 +218,12 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
         case ReconfigurationType::ReconfigurationMarker: {
             auto marker = task.getUserData<ReconfigurationMarkerPtr>();
             auto event = marker->getReconfigurationEvent(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
-            if (!event) {
-                NES_ERROR("No event found for plan {} version {}", decomposedQueryId, decomposedQueryVersion);
-                for (auto& [i, e] : marker->getAllReconfigurationMarkerEvents()) {
-                    NES_ERROR("Marker contains event for for plan {} version {} of type {}", i.id, i.version, magic_enum::enum_name(e->reconfigurationMetadata->reconfigurationMetadataType));
-                }
-            }
+//            if (!event) {
+//                NES_ERROR("No event found for plan {} version {}", decomposedQueryId, decomposedQueryVersion);
+//                for (auto& [i, e] : marker->getAllReconfigurationMarkerEvents()) {
+//                    NES_ERROR("Marker contains event for for plan {} version {} of type {}", i.id, i.version, magic_enum::enum_name(e->reconfigurationMetadata->reconfigurationMetadataType));
+//                }
+//            }
             NES_ASSERT2_FMT(event, "Markers should only be propagated to a pipeline if the plan is to be reconfigured");
 
             // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started

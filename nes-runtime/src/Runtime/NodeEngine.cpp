@@ -124,14 +124,14 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
              decomposedQueryPlan->getDecomposedQueryId(),
              decomposedQueryPlan->getVersion());
 
-    NES_ERROR("Registering plan {}", decomposedQueryPlan->toString());
+    NES_DEBUG("Registering plan {}", decomposedQueryPlan->toString());
     std::vector<OperatorId> sourcesToReuse;
     // if the plan is marked for redeployment, we must check for sources to be reused
     if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_DEPLOYMENT) {
         for (auto src : decomposedQueryPlan->getSourceOperators()) {
             auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
             if (networkSourceDescriptor) {
-                NES_ERROR("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
+                NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
                 auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
                 if (source) {
                     sourcesToReuse.push_back(networkSourceDescriptor->getUniqueId());
@@ -140,7 +140,7 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
             }
         }
     }
-    NES_ERROR("Reusing {} sources", sourcesToReuse.size());
+    NES_DEBUG("Reusing {} sources", sourcesToReuse.size());
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, inherited1::shared_from_this());
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
