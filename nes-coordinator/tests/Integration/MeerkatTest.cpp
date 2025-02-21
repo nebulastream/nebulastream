@@ -557,6 +557,8 @@ TEST_F(MeerkatTest, testDecisionTime) {
 TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     coordinatorConfig->optimizer.enableIncrementalPlacement = true;
     coordinatorConfig->worker.loadBalancing = 0;
+    coordinatorConfig->worker.connectSinksAsync = true;
+    coordinatorConfig->worker.connectSourceEventChannelsAsync = true;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
     EXPECT_NE(crd->startCoordinator(false), 0UL);
@@ -565,10 +567,14 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     workerConfig->numWorkerThreads = 1;
 
     workerConfig1->loadBalancing = 0;
+    workerConfig1->connectSinksAsync = true;
+    workerConfig1->connectSourceEventChannelsAsync = true;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     EXPECT_TRUE(wrk1->start(false, true));
 
     workerConfig->loadBalancing = 0;
+    workerConfig->connectSinksAsync = true;
+    workerConfig->connectSourceEventChannelsAsync = true;
     NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
     wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf1->start(false, true));
@@ -586,7 +592,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(qId);
 
     auto decomposedIds = wrk1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
-    wrk1->requestOffload(sharedQueryPlanId, decomposedIds[0].id, wrkLeaf1->getWorkerId());
+    wrk1->requestOffload(sharedQueryPlanId, decomposedIds[0].id, crd->getNesWorker()->getWorkerId());
     std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     crd->getRequestHandlerService()->validateAndQueueStopQueryRequest(qId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(qId, queryCatalog));

@@ -63,7 +63,7 @@ bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
     std::unique_lock lock(writeMutex);
 
     // Process the buffer if it is not a duplicate.
-    if (!duplicateDetectionCallback(inputBuffer)) {
+    if (!duplicateDetectionCallback(inputBuffer))std::cout << "print" << std::endl;
         updateWatermarkCallback(inputBuffer);
         std::string str = "";
 
