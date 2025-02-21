@@ -123,6 +123,7 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
         // The tag in this example is the memory location of the call object
         bool status;
         auto requestClientMode = rpcAsyncRequest.rpcClientMode;
+        NES_DEBUG("Handling async response {}", magic_enum::enum_name(requestClientMode));
         if (requestClientMode == RpcClientMode::Register) {
             auto* call = static_cast<AsyncClientCall<RegisterDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
@@ -148,14 +149,17 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
             status = call->status.ok();
             delete call;
         } else {
+            NES_ERROR("RPC kind not implemented")
             NES_NOT_IMPLEMENTED();
         }
 
         if (!status) {
+            NES_ERROR("RPC failed")
             failedRPCCalls.push_back(rpcAsyncRequest);
         }
     }
     if (!failedRPCCalls.empty()) {
+        NES_ERROR("Some RPCs did not succeed")
         throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls);
     }
     NES_DEBUG("All rpc async requests succeeded");
