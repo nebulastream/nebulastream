@@ -75,9 +75,9 @@ private:
     /// and increases for each window info.
     std::atomic<SequenceNumber::Underlying> sequenceNumber;
 
-    /// Depending, if we have one or two input origins, we have to treat the slices differently
-    /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
-    uint8_t numberOfInputOrigins;
+    /// Depending on the number of origins, we have to handle the slices differently.
+    /// For example, in getAllNonTriggeredSlices(), we have to wait until all origins have called this method to ensure correctness
+    std::atomic<uint64_t> numberOfInputOriginsTerminated;
 };
 
 }

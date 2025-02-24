@@ -65,6 +65,13 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
 {
     const auto newGlobalWaterMarkProbe
         = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+
+    NES_TRACE(
+        "New global watermark probe: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
+        newGlobalWaterMarkProbe,
+        bufferMetaData.originId,
+        bufferMetaData.seqNumber.toString(),
+        bufferMetaData.watermarkTs);
     sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
 }
 
@@ -73,7 +80,8 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    NES_DEBUG("New global watermark: {} using buffer metadata: {}", newGlobalWatermark, bufferMetaData.toString());
+    NES_TRACE(
+        "New global watermark: {} using buffer metadata: {}", newGlobalWatermark, bufferMetaData.toString());
 
     /// Getting all slices that can be triggered and triggering them
     const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
@@ -84,6 +92,7 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
 void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
 {
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
+    NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 }

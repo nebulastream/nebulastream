@@ -55,9 +55,8 @@ protected:
     virtual void emitSliceIdsToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
-        const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
-        const ChunkNumber& chunkNumber,
-        bool isLastChunk,
+        const WindowInfo& windowInfo,
+        const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
