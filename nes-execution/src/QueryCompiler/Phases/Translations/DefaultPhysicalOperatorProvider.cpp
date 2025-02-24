@@ -360,6 +360,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     // TODO(nikla44): ask Nils how to use config for setting the slice store, also in the CMakeLists.txt for the systests
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore
+        = std::make_unique<FileBackedTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],

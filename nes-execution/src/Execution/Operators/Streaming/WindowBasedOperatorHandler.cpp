@@ -20,7 +20,6 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
