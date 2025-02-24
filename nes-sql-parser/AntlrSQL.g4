@@ -64,7 +64,7 @@ dropSource: SOURCE name=IDENTIFIER;
 showStatement: SHOW DB_OBJECT_TYPE (FORMAT format=('TEXT' | 'JSON'))?;
 
 
-query : queryTerm queryOrganization;
+query : queryTerm queryOrganization | queryControlStatement ;
 
 queryOrganization:
          (ORDER BY order+=sortItem (',' order+=sortItem)*)?
@@ -435,6 +435,20 @@ LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
+
+queryControlStatement
+    : STOP 'QUERY' QUERYID           # stopQuery
+      | STATUS 'QUERY' QUERYID         # statusQuery
+      | REGISTER 'QUERY' selectClause # registerQuery
+      | UNREGISTER 'QUERY' QUERYID     # unregisterQuery
+    ;
+
+STOP     : 'STOP';
+STATUS   : 'STATUS';
+REGISTER : 'REGISTER';
+UNREGISTER : 'UNREGISTER';
+QUERYID : DIGIT;
+
 
 
 DB_OBJECT_TYPE : SOURCES | QUERIES;

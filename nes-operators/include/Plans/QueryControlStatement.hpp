@@ -11,16 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <memory>
-#include <string_view>
+#include <variant>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/QueryControlStatement.hpp>
 
-namespace NES::AntlrSQLQueryParser
+namespace NES
 {
 
-QueryParseResult createLogicalQueryPlanFromSQLString(std::string_view queryString);
+enum class QueryControlStatement
+{
+    STOP,
+    STATUS,
+    REGISTER,
+    UNREGISTER,
+    START
+};
+
+struct QueryParseResult
+{
+    QueryControlStatement type;
+    std::shared_ptr<NES::QueryPlan> queryPlan;
+    std::optional<QueryId> queryId;
+};
+
 }

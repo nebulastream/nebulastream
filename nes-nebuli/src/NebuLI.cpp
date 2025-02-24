@@ -36,6 +36,7 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryControlStatement.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
@@ -199,10 +200,9 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : config.logical)
@@ -237,22 +237,36 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
-    validateAndSetSinkDescriptors(*query, config);
-    semanticQueryValidation->validate(query); /// performs the first type inference
+    auto queryPlan = query.queryPlan;
 
-    logicalSourceExpansionRule->apply(query);
-    typeInference->performTypeInferenceQuery(query);
+    if (query.type != QueryControlStatement::START)
+    {
+        return query;
+    }
 
-    originIdInferencePhase->execute(query);
-    queryRewritePhase->execute(query);
-    typeInference->performTypeInferenceQuery(query);
+    validateAndSetSinkDescriptors(*queryPlan, config);
+    semanticQueryValidation->validate(queryPlan); /// performs the first type inference
 
+    logicalSourceExpansionRule->apply(queryPlan);
+    typeInference->performTypeInferenceQuery(queryPlan);
+
+    originIdInferencePhase->execute(queryPlan);
+    queryRewritePhase->execute(queryPlan);
+    typeInference->performTypeInferenceQuery(queryPlan);
+
+    originIdInferencePhase->execute(queryPlan);
+    queryRewritePhase->execute(queryPlan);
+    typeInference->performTypeInferenceQuery(queryPlan);
+
+    NES_INFO("QEP:\n {}", queryPlan->toString());
+    NES_INFO("Sink Schema: {}", queryPlan->getRootOperators()[0]->getOutputSchema());
+    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, queryPlan->getRootOperators());
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema());
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -271,7 +285,7 @@ SchemaField::SchemaField(std::string name, NES::DataType type) : name(std::move(
 {
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
+std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> loadFrom(std::istream& inputStream)
 {
     try
     {

@@ -44,14 +44,17 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+
 
 namespace NES::Parsers
 {
@@ -982,4 +985,45 @@ void AntlrSQLQueryPlanCreator::exitAggregationClause(AntlrSQLParser::Aggregation
     poppush(helper);
     AntlrSQLBaseListener::exitAggregationClause(context);
 }
+
+void AntlrSQLQueryPlanCreator::enterStopQuery(AntlrSQLParser::StopQueryContext* context)
+{
+    AntlrSQLBaseListener::enterStopQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitStopQuery(AntlrSQLParser::StopQueryContext* context)
+{
+    AntlrSQLBaseListener::exitStopQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterStatusQuery(AntlrSQLParser::StatusQueryContext* context)
+{
+    AntlrSQLBaseListener::enterStatusQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitStatusQuery(AntlrSQLParser::StatusQueryContext* context)
+{
+    AntlrSQLBaseListener::exitStatusQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterRegisterQuery(AntlrSQLParser::RegisterQueryContext* context)
+{
+    AntlrSQLBaseListener::enterRegisterQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitRegisterQuery(AntlrSQLParser::RegisterQueryContext* context)
+{
+    AntlrSQLBaseListener::exitRegisterQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterUnregisterQuery(AntlrSQLParser::UnregisterQueryContext* context)
+{
+    AntlrSQLBaseListener::enterUnregisterQuery(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitUnregisterQuery(AntlrSQLParser::UnregisterQueryContext* context)
+{
+    AntlrSQLBaseListener::exitUnregisterQuery(context);
+}
+
 }

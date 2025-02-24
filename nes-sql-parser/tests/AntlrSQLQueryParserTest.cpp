@@ -45,9 +45,9 @@ public:
 
 bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query& internalLogicalQuery)
 {
-    const std::shared_ptr<QueryPlan> antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
-    NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
-    return antlrQueryParsed->compare(internalLogicalQuery.getQueryPlan());
+    const auto antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed.queryPlan->toString(), internalLogicalQuery.getQueryPlan()->toString());
+    return antlrQueryParsed.queryPlan->compare(internalLogicalQuery.getQueryPlan());
 }
 
 TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
@@ -848,4 +848,28 @@ TEST_F(AntlrSQLQueryParserTest, failProjectJoinKeyword)
 {
     const auto inputQuery = "SELECT JOIN FROM stream"s;
     EXPECT_ANY_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery));
+}
+
+TEST_F(AntlrSQLQueryParserTest, queryControlStop)
+{
+    const std::string antlrQueryString = "STOP QUERY 1;";
+    auto antlrStartQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    EXPECT_TRUE(antlrStartQueryParsed.type == NES::QueryControlStatement::STOP);
+    EXPECT_TRUE(antlrStartQueryParsed.queryId.value().getRawValue() == 1);
+}
+
+TEST_F(AntlrSQLQueryParserTest, queryControlStatus)
+{
+    const std::string antlrQueryString = "STATUS QUERY 1;";
+    auto antlrStartQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    EXPECT_TRUE(antlrStartQueryParsed.type == NES::QueryControlStatement::STATUS);
+    EXPECT_TRUE(antlrStartQueryParsed.queryId.value().getRawValue() == 1);
+}
+
+TEST_F(AntlrSQLQueryParserTest, queryControlUnregister)
+{
+    const std::string antlrQueryString = "UNREGISTER QUERY 1;";
+    auto antlrStartQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    EXPECT_TRUE(antlrStartQueryParsed.type == NES::QueryControlStatement::UNREGISTER);
+    EXPECT_TRUE(antlrStartQueryParsed.queryId.value().getRawValue() == 1);
 }
