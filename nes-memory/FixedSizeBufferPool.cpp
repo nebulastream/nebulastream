@@ -100,7 +100,7 @@ RepinBufferFuture FixedSizeBufferPool::repinBuffer(FloatingBuffer&&) noexcept
 }
 PinnedBuffer FixedSizeBufferPool::getBufferBlocking()
 {
-    auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
+    auto buffer = getBufferWithTimeout(std::chrono::hours(1));
     if (buffer.has_value())
     {
         return buffer.value();
