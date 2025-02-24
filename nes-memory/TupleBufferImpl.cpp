@@ -195,7 +195,6 @@ bool BufferControlBlock::pinnedRelease()
 {
     if (const uint32_t prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
     {
-        numberOfTuples = 0;
         skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
