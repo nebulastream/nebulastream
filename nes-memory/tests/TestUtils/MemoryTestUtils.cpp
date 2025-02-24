@@ -16,14 +16,14 @@
 #include <cstddef>
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
 
 namespace NES::Testing
 {
-Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
+Memory::PinnedBuffer copyBuffer(const Memory::PinnedBuffer& buffer, Memory::AbstractBufferProvider& provider)
 {
     auto copiedBuffer = provider.getBufferBlocking();
     PRECONDITION(
@@ -46,10 +46,10 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildrenBuffer(); ++childIdx)
     {
-        auto childBuffer = buffer.loadChildBuffer(childIdx);
+        auto childBuffer = *buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
         INVARIANT(
-            copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx,
+            copiedBuffer.storeReturnChildIndex(std::move(copiedChildBuffer)) == childIdx,
             "Child buffer index: {}, does not match index: {}, childIdx, copiedBuffer.storeChildBuffer(copiedChildBuffer)");
     }
 

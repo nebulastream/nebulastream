@@ -330,7 +330,7 @@ std::variant<PinnedBuffer, uint32_t> RepinBufferFuture::await_resume() const noe
     return *promise->getResult();
 }
 
-RepinBufferFuture RepinBufferFuture::fromPinnedBuffer(PinnedBuffer& buffer) noexcept
+RepinBufferFuture RepinBufferFuture::fromPinnedBuffer(PinnedBuffer buffer) noexcept
 {
     co_return buffer;
 }

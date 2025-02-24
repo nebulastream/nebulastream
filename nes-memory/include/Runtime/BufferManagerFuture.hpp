@@ -185,6 +185,6 @@ public:
     std::variant<PinnedBuffer, uint32_t> await_resume() const noexcept;
 
 
-    static RepinBufferFuture fromPinnedBuffer(PinnedBuffer&) noexcept;
+    static RepinBufferFuture fromPinnedBuffer(PinnedBuffer) noexcept;
 };
 }

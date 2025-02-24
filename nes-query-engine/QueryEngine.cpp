@@ -49,6 +49,7 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
+#include "Runtime/BufferManagerFuture.hpp"
 
 namespace NES::Runtime
 {
@@ -296,8 +297,7 @@ public:
             std::move(source),
             [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
             {}};
-        writeToTaskQueue(
-            task);
+        writeToTaskQueue(task);
     }
 
     void
@@ -316,8 +316,9 @@ public:
         : listener(std::move(listener))
         , statistic(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
-        , taskQueueHead(taskQueueSize * 0.1)
-        , taskQueueTail(taskQueueSize * 0.9)
+        // , taskQueueHead(taskQueueSize * 0.1)
+    , taskQueueHead(taskQueueSize * 0.1)
+    , taskQueueTail(taskQueueSize * 0.9)
     {
     }
 

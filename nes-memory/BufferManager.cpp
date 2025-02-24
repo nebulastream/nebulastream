@@ -45,8 +45,8 @@
 #include <liburing.h>
 
 #include <Runtime/BufferManagerImpl.hpp>
+#include <fmt/core.h>
 #include <folly/Synchronized.h>
-#include <nautilus/val.hpp>
 
 namespace NES::Memory
 {
@@ -217,6 +217,7 @@ void BufferManager::destroy()
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
         std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex, writeSqeMutex, allBuffersMutex);
+        flushNewBuffers();
         NES_DEBUG("Shutting down Buffer Manager");
         for (auto& localPool : localBufferPools)
         {
@@ -282,6 +283,7 @@ void BufferManager::destroy()
 void BufferManager::flushNewBuffers() noexcept
 {
     auto toFlush = newBuffers.size();
+    NES_DEBUG("Flushing {} new buffers to allBuffers", toFlush);
     allBuffers.reserve(allBuffers.size() + toFlush);
     detail::BufferControlBlock* bcb;
     while (toFlush-- > 0 && newBuffers.read(bcb))
@@ -326,21 +328,11 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
         secondEnd = allBuffers.begin() + ((clockAt + maxIter) - allBuffers.size());
     }
 
-    auto check = [&](const detail::BufferControlBlock* bcb)
+    auto check = [&](detail::BufferControlBlock* bcb)
     {
         if (bcb->getDataReferenceCount() == 0)
         {
-            if (bcb->getData().isNotPreAllocated())
-            {
-                const auto alignedBufferSize = alignBufferSize(bcb->data.load().getSize(), DEFAULT_ALIGNMENT);
-                constexpr auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
-                const auto alignedBufferSizePlusControlBlock = alignBufferSize(alignedBufferSize + controlBlockSize, DEFAULT_ALIGNMENT);
-                memoryResource->deallocate(bcb->getData().get<detail::InMemoryLocation>()->getLocation().getPtr(), alignedBufferSizePlusControlBlock);
-            }
-            else
-            {
-                delete bcb;
-            }
+            delete bcb;
             return true;
         }
         return false;
@@ -349,10 +341,12 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     //Remove-Erase idiom two times
     const auto firstRemovedFrom = std::remove_if(begin, firstEnd, check);
     auto erased = allBuffers.erase(firstRemovedFrom, firstEnd);
+    NES_DEBUG("Freed {} buffer control blocks.", erased - begin);
     if (secondEnd != firstEnd)
     {
         const auto secondRemovedFrom = std::remove_if(allBuffers.begin(), secondEnd, check);
         erased = allBuffers.erase(secondRemovedFrom, secondEnd);
+        NES_DEBUG("Freed {} buffer control blocks.", erased - allBuffers.begin());
     }
     ptrdiff_t difference = erased - allBuffers.begin();
     allBuffers.shrink_to_fit();
@@ -617,7 +611,7 @@ int64_t BufferManager::secondChancePass() noexcept
         detail::BufferControlBlock* const currentBCB = allBuffers[clockAt];
         //Do cleanup of unused BCBs as we go
         if (currentBCB->getDataReferenceCount() == 0
-            && ((clockStart + deleted < allBuffers.size() && (clockAt > (clockStart + deleted) || clockAt < clockStart))
+            && ((clockStart + deleted < allBuffers.size() && (clockAt >= (clockStart + deleted) || clockAt < clockStart))
                 || (clockStart + deleted >= allBuffers.size() && (clockAt > (clockStart + deleted) % allBuffers.size())
                     && clockAt < clockStart)))
         {
@@ -690,7 +684,7 @@ int64_t BufferManager::secondChancePass() noexcept
         auto firstBegin = allBuffers.begin() + clockStart;
         auto firstEnd = allBuffers.begin() + std::min(clockStart + deleted, allBuffers.size());
         auto oldAllBuffersSize = allBuffers.size();
-        std::for_each(firstBegin, firstEnd, [](const auto* bcb) { delete bcb; });
+        std::for_each(firstBegin, firstEnd, [&](detail::BufferControlBlock* bcb) { delete bcb; });
         allBuffers.erase(firstBegin, firstEnd);
 
         if (clockStart + deleted > oldAllBuffersSize)
@@ -710,7 +704,11 @@ int64_t BufferManager::secondChancePass() noexcept
         clockAt = (clockAt + 1) % allBuffers.size();
     }
 
-    return io_uring_submit(&uringWriteRing);
+    const int uringSubmitted = io_uring_submit(&uringWriteRing);
+    NES_DEBUG(
+        "Did second chance pass to try spill buffers, send requests for {} buffers, and deleted {} empty BCB.", uringSubmitted, deleted);
+
+    return uringSubmitted;
 }
 
 void BufferManager::pollWriteCompletionEventsOnce() noexcept
@@ -763,10 +761,30 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
 
         if (uringData->getKey() == detail::ChildOrMainDataKey::MAIN())
         {
+            NES_DEBUG(
+                fmt::runtime("Trying to swap out main in memory segment at {:x} for on disk segment at {:x} in file {:x}"),
+                static_cast<void*>(uringData->getControlBlock()
+                                       ->getData()
+                                       .get<detail::InMemoryLocation>()
+                                       .value_or(detail::DataSegment<detail::InMemoryLocation>{})
+                                       .getLocation()
+                                       .getPtr()),
+                onDiskSegment.getLocation().getOffset(),
+                onDiskSegment.getLocation().getFileID());
             successFullSwap = uringData->getControlBlock()->swapDataSegment(onDiskSegment);
         }
         else if (auto childKey = uringData->getKey().asChildKey())
         {
+            NES_DEBUG(
+                fmt::runtime("Trying to swap out child in memory segment at {:x} for on disk segment at {:x} in file {:x}"),
+                static_cast<void*>(uringData->getControlBlock()
+                                       ->getChild(*childKey)
+                                       ->get<detail::InMemoryLocation>()
+                                       .value_or(detail::DataSegment<detail::InMemoryLocation>{})
+                                       .getLocation()
+                                       .getPtr()),
+                onDiskSegment.getLocation().getOffset(),
+                onDiskSegment.getLocation().getFileID());
             successFullSwap = uringData->getControlBlock()->swapChild(onDiskSegment, *childKey);
         }
         else
@@ -920,7 +938,7 @@ PinnedBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<deta
     //auto pin = controlBlock->getCounter<true>();
     auto pin = controlBlock->getCounter<true>();
     {
-        auto savedNewBuffer = newBuffers.write(controlBlock);
+        const auto savedNewBuffer = newBuffers.write(controlBlock);
         INVARIANT(savedNewBuffer, "Could not save newly created buffer");
         size_t checks = buffersToCheck.fetch_add(checksAddedPerNewBuffer);
         //If checksAddedPerBuffer > 1, then 2nd chance might make checks == bufferChecksThreshold miss.
@@ -991,20 +1009,17 @@ std::optional<PinnedBuffer> BufferManager::getUnpooledBuffer(const size_t buffer
     std::unique_lock lock(unpooledBuffersMutex);
 
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
-    auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + controlBlockSize, DEFAULT_ALIGNMENT);
-    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
-    INVARIANT(ptr, "Unpooled memory allocation failed");
-    NES_TRACE(
-        "Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
-        reinterpret_cast<uintptr_t>(ptr),
-        alignedBufferSize,
-        alignedBufferSizePlusControlBlock,
-        controlBlockSize);
-    auto dataSegment = detail::DataSegment{detail::InMemoryLocation{ptr + controlBlockSize, true}, bufferSize};
-    auto* controlBlock = reinterpret_cast<detail::BufferControlBlock*>(ptr);
-    new (controlBlock) detail::BufferControlBlock{dataSegment, this};
+    auto* bufferPtr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize, DEFAULT_ALIGNMENT));
+    INVARIANT(bufferPtr, "Unpooled memory allocation for buffer failed");
+    auto dataSegment = detail::DataSegment{detail::InMemoryLocation{bufferPtr, true}, bufferSize};
+    auto* controlBlock = new detail::BufferControlBlock{dataSegment, this};
+    INVARIANT(controlBlock, "Unpooled memory allocation for buffer control block failed");
 
+    NES_TRACE(
+        "BCB Ptr: {}, Buffer Ptr: {} alignedBufferSize: {}",
+        reinterpret_cast<uintptr_t>(controlBlock),
+        reinterpret_cast<uintptr_t>(bufferPtr),
+        alignedBufferSize);
     auto pin = controlBlock->getCounter<true>();
     std::unique_lock allBuffersLock{allBuffersMutex};
     allBuffers.push_back(controlBlock);
@@ -1017,7 +1032,7 @@ void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>
 {
     if (segment.isNotPreAllocated())
     {
-        // memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
+        memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
     }
     else
     {

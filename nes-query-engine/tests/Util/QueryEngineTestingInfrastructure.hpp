@@ -43,7 +43,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -74,7 +74,7 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::mi
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
 std::vector<std::byte> identifiableData(size_t identifier);
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
+bool verifyIdentifier(const Memory::PinnedBuffer& buffer, size_t identifier);
 
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
@@ -161,7 +161,7 @@ struct TestWorkEmitter : Runtime::WorkEmitter
     MOCK_METHOD(
         void,
         emitWork,
-        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure),
+        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Memory::PinnedBuffer, onComplete, onFailure),
         (override));
     MOCK_METHOD(
         void, emitPipelineStart, (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure), (override));
@@ -244,7 +244,7 @@ struct TestPipeline final : Runtime::Execution::ExecutablePipelineStage
     }
 
     void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override
+    execute(const Memory::PinnedBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override
     {
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
@@ -264,9 +264,9 @@ struct TestSinkController
 {
     testing::AssertionResult waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers);
 
-    void insertBuffer(Memory::TupleBuffer&& buffer);
+    void insertBuffer(Memory::PinnedBuffer&& buffer);
 
-    std::vector<Memory::TupleBuffer> takeBuffers();
+    std::vector<Memory::PinnedBuffer> takeBuffers();
 
     testing::AssertionResult waitForInitialization(std::chrono::milliseconds timeout) const { return waitForFuture(setup_future, timeout); }
     testing::AssertionResult waitForDestruction(std::chrono::milliseconds timeout) const
@@ -278,7 +278,7 @@ struct TestSinkController
     std::atomic<size_t> invocations = 0;
 
 private:
-    folly::Synchronized<std::vector<Memory::TupleBuffer>, std::mutex> receivedBuffers;
+    folly::Synchronized<std::vector<Memory::PinnedBuffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;
     std::promise<void> setup;
     std::promise<void> shutdown;
@@ -293,7 +293,7 @@ class TestSink final : public Runtime::Execution::ExecutablePipelineStage
 {
 public:
     void start(Runtime::Execution::PipelineExecutionContext&) override { controller->setup.set_value(); }
-    void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override
+    void execute(const Memory::PinnedBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override
     {
         controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
     }

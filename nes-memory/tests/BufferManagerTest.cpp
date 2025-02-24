@@ -86,13 +86,15 @@ TEST_F(BufferManagerTest, FixedSizePoolRunsOut)
 {
     const std::shared_ptr<BufferManager> manager = BufferManager::create(1024, 2, std::make_shared<NesDefaultMemoryAllocator>(), 64);
 
-    const auto fixedSizeBufferPool = *manager->createFixedSizeBufferPool(1);
+    {
+        const auto fixedSizeBufferPool = *manager->createFixedSizeBufferPool(1);
 
-    const auto validBuffer = fixedSizeBufferPool->getBufferNoBlocking();
-    const auto invalidBuffer = fixedSizeBufferPool->getBufferNoBlocking();
+        const auto validBuffer = fixedSizeBufferPool->getBufferNoBlocking();
+        const auto invalidBuffer = fixedSizeBufferPool->getBufferNoBlocking();
 
-    ASSERT_TRUE(validBuffer.has_value());
-    ASSERT_FALSE(invalidBuffer.has_value());
+        ASSERT_TRUE(validBuffer.has_value());
+        ASSERT_FALSE(invalidBuffer.has_value());
+    }
 }
 
 TEST_F(BufferManagerTest, SpillBuffer)
@@ -160,8 +162,13 @@ TEST_F(BufferManagerTest, SpillChildBuffer)
         rawData = parentBuffer.getBuffer();
         std::fill_n(rawData, bufferSize / sizeof(int8_t), 2);
         auto childBuffer = parentBuffer.storeReturnAsChildBuffer(std::move(futureChildBuffer));
-        auto floatChildBuffer = FloatingBuffer(std::move(*childBuffer));
         auto floatParentBuffer = FloatingBuffer(std::move(parentBuffer));
+
+        //All child buffers need to be unpinned as well before the main buffer can get spilled
+        auto unsuccessfull = manager->getBufferNoBlocking();
+        ASSERT_FALSE(unsuccessfull);
+
+        auto floatChildBuffer = FloatingBuffer(std::move(*childBuffer));
 
         {
             auto newPinned = manager->getBufferBlocking();
@@ -344,6 +351,41 @@ TEST_F(BufferManagerTest, GetFreeSegment)
 }
 
 
+TEST_F(BufferManagerTest, AttachUnpooledBufferAsChild)
+{
+    constexpr int bufferSize = 1024;
+    const std::shared_ptr<BufferManager> manager = BufferManager::create(bufferSize, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64);
+    {
+        auto parent = manager->getBufferBlocking();
+        auto rawData = parent.getBuffer();
+        std::fill_n(rawData, bufferSize / sizeof(int8_t), 1);
+
+        auto toBeChild = *manager->getUnpooledBuffer(bufferSize * 16);
+        rawData = toBeChild.getBuffer();
+        std::fill_n(rawData, (bufferSize * 16) / sizeof(int8_t), 2);
+
+        auto childFloating = FloatingBuffer{*parent.storeReturnAsChildBuffer(std::move(toBeChild))};
+        auto parentFloating = FloatingBuffer{std::move(parent)};
+
+        {
+            auto thirdBuffer = manager->getBufferBlocking();
+            rawData = thirdBuffer.getBuffer();
+            std::fill_n(rawData, bufferSize / sizeof(int8_t), 3);
+        }
+        auto repinnedChild = *getOptional<PinnedBuffer>(manager->repinBuffer(std::move(childFloating)).waitUntilDone());
+
+        bool restoredChildData = std::all_of(
+            repinnedChild.getBuffer(), repinnedChild.getBuffer() + (bufferSize * 16 / sizeof(int8_t)), [](int8_t i) { return i == 2; });
+        ASSERT_TRUE(restoredChildData);
+
+        auto repinnedParent = *getOptional<PinnedBuffer>(manager->repinBuffer(std::move(parentFloating)).waitUntilDone());
+
+        bool restoredParentData = std::all_of(
+            repinnedParent.getBuffer(), repinnedParent.getBuffer() + (bufferSize / sizeof(int8_t)), [](int8_t i) { return i == 1; });
+        ASSERT_TRUE(restoredParentData);
+    }
+}
+
 TEST_F(BufferManagerTest, OnDiskSegmentSpilled)
 {
     constexpr uint8_t fileID = 2;
@@ -368,6 +410,19 @@ TEST_F(BufferManagerTest, InMemorySegmentNotSpilled)
     ASSERT_TRUE(segment.has_value());
     ASSERT_EQ(segment->getLocation().getPtr(), &someData);
     ASSERT_EQ(segment->getSize(), size);
+}
+
+TEST_F(BufferManagerTest, NotPreAllocatedSegment)
+{
+    uint8_t someData = 12349;
+    constexpr unsigned long size = 16 * 1024;
+    const auto inMemorySegment = detail::DataSegment{detail::InMemoryLocation{&someData, true}, size};
+    const auto unionSegment = Memory::detail::DataSegment<detail::DataLocation>{inMemorySegment};
+    const auto segment = unionSegment.get<detail::InMemoryLocation>();
+    ASSERT_TRUE(segment.has_value());
+    ASSERT_EQ(segment->getLocation().getPtr(), &someData);
+    ASSERT_EQ(segment->getSize(), size);
+    ASSERT_TRUE(segment->isNotPreAllocated());
 }
 
 

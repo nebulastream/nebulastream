@@ -34,7 +34,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <gmock/gmock.h>
@@ -63,7 +63,7 @@ std::vector<std::byte> identifiableData(size_t identifier)
     return data;
 }
 
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
+bool verifyIdentifier(const Memory::PinnedBuffer& buffer, size_t identifier)
 {
     if (buffer.getBufferSize() == 0)
     {
@@ -104,14 +104,14 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
     return testing::AssertionFailure() << "The expected number of tuple buffers were not received after 100ms";
 }
 
-void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
+void TestSinkController::insertBuffer(Memory::PinnedBuffer&& buffer)
 {
     ++invocations;
     receivedBuffers.lock()->push_back(std::move(buffer));
     receivedBufferTrigger.notify_one();
 }
 
-std::vector<Memory::TupleBuffer> TestSinkController::takeBuffers()
+std::vector<Memory::PinnedBuffer> TestSinkController::takeBuffers()
 {
     return receivedBuffers.exchange({});
 }

@@ -73,15 +73,15 @@ bool OnDiskLocation::isNotPreAllocated() const noexcept
 
 InMemoryLocation::InMemoryLocation(const uint8_t* ptr) noexcept
 {
-    constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
+    constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(62)) - 1;
     data = reinterpret_cast<uintptr_t>(ptr) & mask;
 }
 
 InMemoryLocation::InMemoryLocation(const uint8_t* ptr, bool notPreAllocated) noexcept
 {
-    constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
+    constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(62)) - 1;
     data = notPreAllocated ? 1 : 0;
-    data <<= 15;
+    data <<= 62;
     data |= reinterpret_cast<uintptr_t>(ptr) & mask;
 }
 InMemoryLocation::InMemoryLocation() noexcept
@@ -90,7 +90,7 @@ InMemoryLocation::InMemoryLocation() noexcept
 }
 uint8_t* InMemoryLocation::getPtr() const noexcept
 {
-    constexpr uintptr_t mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(63)) - 1;
+    constexpr uintptr_t mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(62)) - 1;
     return reinterpret_cast<uint8_t*>(data & mask);
 }
 bool InMemoryLocation::isNotPreAllocated() const noexcept
