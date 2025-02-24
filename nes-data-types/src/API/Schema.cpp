@@ -158,6 +158,15 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
         return std::nullopt;
     }
 
+    /// For potential matches with ambiguous field names, we must filter some matches out.
+    /// We do this by checking if the field name contains a qualifier.
+    /// If this is the case, we can filter out all fields that are not 100% equal to the input field name.
+    /// Otherwise, we return the first field and log a warning.
+    if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+    {
+        potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field->getName() == fieldName; }) | NES::ranges::to<std::vector>();
+    }
+
     /// Check how many matching fields were found and raise appropriate exception
     if (not potentialMatches.empty())
     {
