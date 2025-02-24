@@ -16,6 +16,7 @@
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -65,5 +66,12 @@ SerializableFunction DivLogicalFunction::serialize() const
 
     return serializedFunction;
 }
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterDivBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<DivLogicalFunction>(arguments.leftChild, arguments.rightChild);
+}
+
 
 }

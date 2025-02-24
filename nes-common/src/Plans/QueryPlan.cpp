@@ -52,6 +52,34 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<std::shared_ptr<Operator>> roo
 {
 }
 
+void QueryPlan::addRootOperator(const std::shared_ptr<Operator>& newRootOperator)
+{
+    /// Check if a root with the id already present
+    auto found = std::find_if(
+        rootOperators.begin(),
+        rootOperators.end(),
+        [&](const std::shared_ptr<Operator>& root) { return newRootOperator->id == root->id; });
+    if (found == rootOperators.end())
+    {
+        rootOperators.push_back(newRootOperator);
+    }
+    else
+    {
+        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator->id);
+    }
+}
+
+void QueryPlan::promoteOperatorToRoot(const std::shared_ptr<Operator>& newRoot)
+{
+    for (auto& oldRoot : rootOperators)
+    {
+        oldRoot->parents.emplace_back(newRoot);
+        newRoot->children.push_back(oldRoot);
+    }
+    rootOperators.clear();
+    rootOperators.push_back(newRoot);
+}
+
 std::vector<std::shared_ptr<SinkLogicalOperator>> QueryPlan::getSinkOperators() const
 {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
@@ -139,17 +167,6 @@ QueryId QueryPlan::getQueryId() const
 void QueryPlan::setQueryId(QueryId queryId)
 {
     this->queryId = queryId;
-}
-
-void QueryPlan::appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode)
-{
-    for (const auto& rootOperator : rootOperators)
-    {
-        const auto result = rootOperator->parents.emplace_back(operatorNode);
-        PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
-    }
-    rootOperators.clear();
-    rootOperators.push_back(operatorNode);
 }
 
 std::set<std::shared_ptr<Operator>> QueryPlan::findAllOperatorsBetween(

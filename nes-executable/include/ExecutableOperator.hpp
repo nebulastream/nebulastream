@@ -36,7 +36,6 @@ public:
     /// @return std::vector<std::shared_ptr<OperatorHandler>>>
     std::vector<std::shared_ptr<OperatorHandler>> getOperatorHandlers();
 
-protected:
     std::string toString() const override;
 
 private:

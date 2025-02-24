@@ -86,6 +86,71 @@ std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getRightOperators(
     return getOperatorsBySchema(getRightInputSchema());
 }
 
+void BinaryLogicalOperator::setRightInputSchema(std::shared_ptr<Schema> schema)
+{
+    rightInputSchema = schema;
+}
+std::shared_ptr<Schema> BinaryLogicalOperator::getRightInputSchema() const
+{
+    return rightInputSchema;
+}
+
+void BinaryLogicalOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+{
+    if (outputSchema)
+    {
+        this->outputSchema = std::move(outputSchema);
+    }
+}
+
+std::shared_ptr<Schema> BinaryLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+void BinaryLogicalOperator::setLeftInputSchema(std::shared_ptr<Schema> schema)
+{
+    leftInputSchema = schema;
+}
+std::shared_ptr<Schema> BinaryLogicalOperator::getLeftInputSchema() const
+{
+    return leftInputSchema;
+}
+
+void BinaryLogicalOperator::setLeftInputOriginIds(std::vector<OriginId> originIds)
+{
+    leftInputOriginIds = originIds;
+}
+
+std::vector<OriginId> BinaryLogicalOperator::getLeftInputOriginIds() const
+{
+    return leftInputOriginIds;
+}
+
+void BinaryLogicalOperator::setRightInputOriginIds(std::vector<OriginId> originIds)
+{
+    rightInputOriginIds = originIds;
+}
+std::vector<OriginId> BinaryLogicalOperator::getRightInputOriginIds() const
+{
+    return rightInputOriginIds;
+}
+
+std::vector<OriginId> BinaryLogicalOperator::getOutputOriginIds() const
+{
+    std::vector<OriginId> outputOriginIds = leftInputOriginIds;
+    outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
+    return outputOriginIds;
+}
+
+std::vector<OriginId> BinaryLogicalOperator::getAllInputOriginIds()
+{
+    std::vector<OriginId> vec;
+    vec.insert(vec.end(), leftInputOriginIds.begin(), leftInputOriginIds.end());
+    vec.insert(vec.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
+    return vec;
+}
+
 void BinaryLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators

@@ -38,6 +38,17 @@ public:
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> NEW_FIELD_NAME{
+            "newFieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(NEW_FIELD_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(NEW_FIELD_NAME);
+    };
+
 private:
     explicit RenameLogicalFunction(const RenameLogicalFunction& other);
     [[nodiscard]] std::string toString() const override;

@@ -21,6 +21,7 @@
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -87,6 +88,12 @@ SerializableFunction EqualsLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<EqualsLogicalFunction>(arguments.leftChild, arguments.rightChild);
 }
 
 }

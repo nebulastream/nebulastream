@@ -15,28 +15,29 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
+#ifndef INCLUDED_FROM_REGISTRY_UNARY_LOGICAL_FUNCTION
 #    error "This file should not be included directly! " \
-"Include instead include <LogicalFunctionRegistry.hpp>"
+"Include instead include <UnaryLogicalFunctionRegistry.hpp>"
 #endif
 
 #include <memory>
 #include <string>
 #include <Util/Registry.hpp>
 
-namespace NES::LogicalFunctionGeneratedRegistrar
+namespace NES::UnaryLogicalFunctionGeneratedRegistrar
 {
 
-/// declarations of register functions for 'LogicalFunction'
+/// declarations of register functions for 'UnaryLogicalFunction'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<LogicalFunctionRegistry, std::string, LogicalFunctionRegistryReturnType, LogicalFunctionRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<UnaryLogicalFunctionRegistry, std::string, UnaryLogicalFunctionRegistryReturnType, UnaryLogicalFunctionRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::LogicalFunctionGeneratedRegistrar;
+    using namespace NES::UnaryLogicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
+
 }

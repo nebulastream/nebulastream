@@ -21,6 +21,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
+
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
@@ -107,6 +109,13 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+std::unique_ptr<LogicalFunctionRegistryReturnType>
+LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    auto fieldName = get<std::string>(arguments.config["FieldName"]);
+    return std::make_unique<FieldAccessLogicalFunction>(arguments.stamp, fieldName);
 }
 
 }

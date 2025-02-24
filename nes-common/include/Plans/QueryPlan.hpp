@@ -42,34 +42,14 @@ public:
 
     std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
-    void appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode);
+    /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
+    void promoteOperatorToRoot(const std::shared_ptr<Operator>& newRoot);
+    /// Adds operator to roots vector
+    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator);
 
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
-    /// in certain stages the sink operators might not be the root operators
     std::vector<std::shared_ptr<Operator>> getRootOperators() const;
-
-    /// add subQuery's rootnode into the current node for merging purpose.
-    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator)
-    {
-        ///Check if a root with the id already present
-        auto found = std::find_if(
-            rootOperators.begin(),
-            rootOperators.end(),
-            [&](const std::shared_ptr<Operator>& root) { return newRootOperator->id == root->id; });
-
-        /// If not present then add it
-        if (found == rootOperators.end())
-        {
-            rootOperators.push_back(newRootOperator);
-        }
-        else
-        {
-            NES_WARNING("Root operator with id {} already present int he plan", newRootOperator->id);
-        }
-    }
-
-    void removeAsRootOperator(std::shared_ptr<Operator> root);
 
     template <class T>
     std::vector<std::shared_ptr<T>> getOperatorByType() const

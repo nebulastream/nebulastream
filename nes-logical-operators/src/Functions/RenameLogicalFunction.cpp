@@ -22,6 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -110,10 +111,23 @@ SerializableFunction RenameLogicalFunction::serialize() const
     auto* child = funcDesc->mutable_child();
     child->CopyFrom(getChild()->serialize());
 
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())["NewFieldName"] = variantDescriptor;
+
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterRenameUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
+    return std::make_unique<RenameLogicalFunction>(NES::Util::as<FieldAccessLogicalFunction>(arguments.child), newFieldName);
 }
 
 }

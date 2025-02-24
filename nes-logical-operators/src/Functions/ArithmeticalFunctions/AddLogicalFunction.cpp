@@ -17,6 +17,7 @@
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
@@ -69,6 +70,12 @@ SerializableFunction AddLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterAddBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<AddLogicalFunction>(arguments.leftChild, arguments.rightChild);
 }
 
 }

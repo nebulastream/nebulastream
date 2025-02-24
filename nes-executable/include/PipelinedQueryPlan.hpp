@@ -22,38 +22,16 @@
 namespace NES
 {
 /// Representation of a query plan of pipelines
-struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
+struct PipelinedQueryPlan
 {
-    PipelinedQueryPlan(QueryId id) : queryId(id){
-    }
-
+    PipelinedQueryPlan(QueryId id);
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const
-    {
-        std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
-        for (const auto &pipeline : pipelines)
-        {
-            if (NES::Util::instanceOf<SourcePipeline>(pipeline))
-            {
-                sourcePipelines.emplace_back(pipeline);
-            }
-        }
-        return sourcePipelines;
-    }
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const
-    {
-        std::vector<std::shared_ptr<Pipeline>> sinkPipelines;
-        for (const auto &pipeline : pipelines)
-        {
-            if (NES::Util::instanceOf<SinkPipeline>(pipeline))
-            {
-                sinkPipelines.emplace_back(pipeline);
-            }
-        }
-        return sinkPipelines;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const;
 
     const QueryId queryId;
     std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }
+FMT_OSTREAM(NES::PipelinedQueryPlan);

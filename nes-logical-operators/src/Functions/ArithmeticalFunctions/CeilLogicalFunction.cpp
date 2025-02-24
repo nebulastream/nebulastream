@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -63,4 +64,11 @@ SerializableFunction CeilLogicalFunction::serialize() const
 
     return serializedFunction;
 }
+
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterCeilUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<CeilLogicalFunction>(arguments.child);
+}
+
 }

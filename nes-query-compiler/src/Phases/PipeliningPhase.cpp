@@ -22,6 +22,7 @@
 #include <Plans/QueryPlan.hpp>
 #include <PhysicalOperator.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -66,11 +67,7 @@ void processSink(
     std::shared_ptr<Pipeline> currentPipeline,
     std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
-    // goes through all the children of the sink operator. creates a new operator pipeline.
-    // The pipeline plan holds a plan with all currently existing pipelines. We add it there.
-    // the new pipeline will be added to the current pipeline (source pipelines to sink pipelines)
-    // the next operator after the sink gets processed
-    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
+    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<SinkLogicalOperator>>(*currentOperator))->children)
     {
         auto newPipeline = std::make_shared<SinkPipeline>();
         pipelinePlan->pipelines.emplace_back(newPipeline);
@@ -102,11 +99,11 @@ void process(
 {
     if (std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(*currentOperator))
     {
-        processSink(pipelinePlan, currentPipeline, currentOperator);
+        processSource(pipelinePlan, currentPipeline, currentOperator);
     }
     else if (std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(*currentOperator))
     {
-        processSource(pipelinePlan, currentPipeline, currentOperator);
+        processSink(pipelinePlan, currentPipeline, currentOperator);
     }
     else if (auto op = std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator); op->isPipelineBreaker)
     {
@@ -118,21 +115,22 @@ void process(
     }
 }
 
-/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
 std::shared_ptr<PipelinedQueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
 {
     auto pipelinePlan = std::make_shared<PipelinedQueryPlan>(queryPlan->getQueryId());
 
-    // Here we get source operators as the root, but we expected sink operators
-    for (const auto& sourceOperator : queryPlan->getRootOperators())
+    for (const auto& sinkOperator : queryPlan->getRootOperators())
     {
-        /// Create a new pipeline for each source
-        auto pipeline = std::make_shared<SourcePipeline>();
-        pipeline->prependOperator(Util::as<Pipeline::PipelineOperator>(sourceOperator));
+        /// Create a new pipeline for each sink
+        auto pipeline = std::make_shared<SinkPipeline>();
+        auto castedOperator = std::dynamic_pointer_cast<SinkLogicalOperator>(sinkOperator);
+        INVARIANT(castedOperator, "SinkOperator must be of type SinkLogicalOperator");
+        pipeline->prependOperator(std::make_shared<Pipeline::PipelineOperator>(castedOperator));
         pipelinePlan->pipelines.emplace_back(pipeline);
 
-        process(pipelinePlan, pipeline, NES::Util::as<Pipeline::PipelineOperator>(sourceOperator));
+        process(pipelinePlan, pipeline, std::make_shared<Pipeline::PipelineOperator>(castedOperator));
     }
+    std::cout << pipelinePlan->toString() << std::endl;
     return pipelinePlan;
 }
 

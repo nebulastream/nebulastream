@@ -21,7 +21,7 @@
 namespace NES
 {
 
-UnaryLogicalOperator::UnaryLogicalOperator() : Operator(), LogicalOperator()
+UnaryLogicalOperator::UnaryLogicalOperator() : Operator(), LogicalOperator(), inputSchema(Schema::create())
 {
 }
 

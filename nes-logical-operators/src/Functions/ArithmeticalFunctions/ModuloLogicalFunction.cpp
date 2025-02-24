@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -68,5 +69,12 @@ SerializableFunction ModuloLogicalFunction::serialize() const
 
     return serializedFunction;
 }
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterModuloBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<ModuloLogicalFunction>(arguments.leftChild, arguments.rightChild);
+}
+
 
 }

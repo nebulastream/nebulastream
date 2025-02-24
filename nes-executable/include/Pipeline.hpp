@@ -25,24 +25,16 @@
 
 namespace NES
 {
-
-namespace
-{
-PipelineId getNextPipelineId()
-{
-    static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
-    return PipelineId(id++);
-}
-}
-
 /// @brief Defines a single pipeline, which contains of a query plan of operators.
 /// Each pipeline can have N successor and predecessor pipelines.
-struct Pipeline : std::enable_shared_from_this<Pipeline>
+struct Pipeline
 {
-    explicit Pipeline() : id(getNextPipelineId()), providerType(ProviderType::Compiler) {};
+    explicit Pipeline();
     /// Virtual destructor to make Pipeline polymorphic
     virtual ~Pipeline() = default;
-    [[nodiscard]] std::string toString() const;
+
+    virtual std::string toString() const = 0;
+    friend std::ostream& operator<<(std::ostream& os, const Pipeline& t);
 
     const PipelineId id;
 
@@ -69,14 +61,17 @@ struct Pipeline : std::enable_shared_from_this<Pipeline>
 
 struct OperatorPipeline : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op)
+    void prependOperator(std::shared_ptr<PipelineOperator> op) override
     {
         PRECONDITION(std::holds_alternative<std::shared_ptr<PhysicalOperator>>(*op), "Should have hold a PhysicalOperator");
         operators.insert(operators.begin(), std::get<std::shared_ptr<PhysicalOperator>>(*op));
-        //plan->appendOperatorAsNewRoot(std::get<std::shared_ptr<PhysicalOperator>>(*op)); ///.emplace_back(std::get<std::shared_ptr<PhysicalOperator>>(*op));
+        //plan->promoteOperatorToRoot(std::get<std::shared_ptr<PhysicalOperator>>(*op)); ///.emplace_back(std::get<std::shared_ptr<PhysicalOperator>>(*op));
     }
 
-    bool hasOperators()
+
+    [[nodiscard]] std::string toString() const override;
+
+    bool hasOperators() override
     {
         return operators.size() != 0;
     }
@@ -88,13 +83,15 @@ struct OperatorPipeline : public Pipeline
 
 struct SourcePipeline : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op)
+    void prependOperator(std::shared_ptr<PipelineOperator> op) override
     {
         PRECONDITION(std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(*op), "Should have hold a SourceDescriptorLogicalOperator");
         sourceOperator = (std::get<std::shared_ptr<SourceDescriptorLogicalOperator>>(*op));
     }
 
-    bool hasOperators()
+    [[nodiscard]] std::string toString() const override;
+
+    bool hasOperators() override
     {
         return sourceOperator != nullptr;
     }
@@ -104,13 +101,15 @@ struct SourcePipeline : public Pipeline
 
 struct SinkPipeline : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op)
+    void prependOperator(std::shared_ptr<PipelineOperator> op) override
     {
         PRECONDITION(std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(*op), "Should have hold a SinkLogicalOperator");
         sinkOperator = (std::get<std::shared_ptr<SinkLogicalOperator>>(*op));
     }
 
-    bool hasOperators()
+    [[nodiscard]] std::string toString() const override;
+
+    bool hasOperators() override
     {
         return sinkOperator != nullptr;
     }

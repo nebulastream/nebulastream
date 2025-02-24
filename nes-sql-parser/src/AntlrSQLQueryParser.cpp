@@ -12,12 +12,18 @@
     limitations under the License.
 */
 #include <memory>
+#include <string_view>
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <AntlrSQLParser.h>
+#include <CommonTokenStream.h>
+#include <Plans/QueryPlan.hpp>
+#include <Exceptions.h>
+#include <BailErrorStrategy.h>
 
 namespace NES::AntlrSQLQueryParser
 {
@@ -26,11 +32,12 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
 {
     try
     {
+        NES_DEBUG("Creating antlr AST for query string: \n{}", queryString);
         antlr4::ANTLRInputStream input(queryString.data(), queryString.length());
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        /// Enable that antlr throws exeptions on parsing errors
+        /// Enable that antlr throws exceptions on parsing errors
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         AntlrSQLParser::QueryContext* tree = parser.query();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;

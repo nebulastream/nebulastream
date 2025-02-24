@@ -58,7 +58,7 @@ QueryPlanBuilder::addProjection(const std::vector<std::shared_ptr<LogicalFunctio
 {
     NES_TRACE("QueryPlanBuilder: add projection operator to query plan");
     const std::shared_ptr<Operator> op = std::make_shared<ProjectionLogicalOperator>(functions);
-    queryPlan->appendOperatorAsNewRoot(op);
+    queryPlan->promoteOperatorToRoot(op);
     return queryPlan;
 }
 
@@ -71,7 +71,7 @@ QueryPlanBuilder::addSelection(std::shared_ptr<LogicalFunction> const& selection
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
     const std::shared_ptr<Operator> op = std::make_shared<SelectionLogicalOperator>(selectionFunction);
-    queryPlan->appendOperatorAsNewRoot(op);
+    queryPlan->promoteOperatorToRoot(op);
     return queryPlan;
 }
 
@@ -84,7 +84,7 @@ QueryPlanBuilder::addMap(std::shared_ptr<FieldAssignmentLogicalFunction> const& 
         throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
     const std::shared_ptr<Operator> op = std::make_shared<MapLogicalOperator>(mapFunction);
-    queryPlan->appendOperatorAsNewRoot(op);
+    queryPlan->promoteOperatorToRoot(op);
     return queryPlan;
 }
 
@@ -101,10 +101,10 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
         switch (timeBasedWindowType->getTimeCharacteristic()->getType())
         {
             case Windowing::TimeCharacteristic::Type::IngestionTime:
-                queryPlan->appendOperatorAsNewRoot(std::make_shared<IngestionTimeWatermarkAssignerLogicalOperator>());
+                queryPlan->promoteOperatorToRoot(std::make_shared<IngestionTimeWatermarkAssignerLogicalOperator>());
                 break;
             case Windowing::TimeCharacteristic::Type::EventTime:
-                queryPlan->appendOperatorAsNewRoot(std::make_shared<EventTimeWatermarkAssignerLogicalOperator>(
+                queryPlan->promoteOperatorToRoot(std::make_shared<EventTimeWatermarkAssignerLogicalOperator>(
                         std::make_shared<FieldAccessLogicalFunction>(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
                 break;
@@ -118,7 +118,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
     auto inputSchema = dynamic_cast<LogicalOperator*>(queryPlan->getRootOperators()[0].get())->getOutputSchema();
     const auto windowOperator = std::make_shared<WindowedAggregationLogicalOperator>(onKeys, windowAggs, windowType);
 
-    queryPlan->appendOperatorAsNewRoot(windowOperator);
+    queryPlan->promoteOperatorToRoot(windowOperator);
     return queryPlan;
 }
 
@@ -190,7 +190,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::
 {
     auto sinkOperator = std::make_shared<SinkLogicalOperator>(std::move(sinkName));
     std::shared_ptr<Operator> const op = sinkOperator;
-    queryPlan->appendOperatorAsNewRoot(op);
+    queryPlan->promoteOperatorToRoot(op);
     return queryPlan;
 }
 
@@ -200,7 +200,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::assignWatermark(
 {
     const std::shared_ptr<Operator> op
         = std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor);
-    queryPlan->appendOperatorAsNewRoot(op);
+    queryPlan->promoteOperatorToRoot(op);
     return queryPlan;
 }
 
@@ -233,7 +233,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
     std::shared_ptr<Operator> operatorNode, std::shared_ptr<QueryPlan> leftQueryPlan, std::shared_ptr<QueryPlan> rightQueryPlan)
 {
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-    leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
+    leftQueryPlan->promoteOperatorToRoot(operatorNode);
     NES_TRACE("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
     return leftQueryPlan;
 }

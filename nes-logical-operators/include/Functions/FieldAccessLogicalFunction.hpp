@@ -41,9 +41,6 @@ public:
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
     [[nodiscard]] std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
 
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
-
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{

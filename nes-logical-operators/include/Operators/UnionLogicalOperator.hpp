@@ -47,7 +47,6 @@ public:
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap();
     };
 
-protected:
     std::string toString() const override;
 };
 

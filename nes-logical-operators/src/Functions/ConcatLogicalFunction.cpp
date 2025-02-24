@@ -23,6 +23,7 @@
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -30,15 +31,17 @@ namespace NES
 ConcatLogicalFunction::ConcatLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
     : BinaryLogicalFunction(left->getStamp()->join(right->getStamp()), left, right)
 {
-    PRECONDITION(NES::Util::instanceOf<VariableSizedDataType>(getLeftChild()->getStamp())
-                  and NES::Util::instanceOf<VariableSizedDataType>(getRightChild()->getStamp()),
-                      "Expected VariableSizedDataTypes");
 }
 
 
 std::shared_ptr<LogicalFunction> ConcatLogicalFunction::clone() const
 {
     return std::make_shared<ConcatLogicalFunction>(Util::as<LogicalFunction>(getLeftChild())->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+}
+
+void ConcatLogicalFunction::inferStamp(const Schema&)
+{
+    /// no-op
 }
 
 bool ConcatLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
@@ -71,6 +74,12 @@ SerializableFunction ConcatLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterConcatBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<ConcatLogicalFunction>(arguments.leftChild, arguments.rightChild);
 }
 
 }

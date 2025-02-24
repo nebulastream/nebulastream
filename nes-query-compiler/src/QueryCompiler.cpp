@@ -19,6 +19,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <Phases/AddScanAndEmitPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 
 namespace NES::QueryCompilation
@@ -36,7 +37,7 @@ std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr
     {
         auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
 
-        //pipelinedQueryPlan = AddScanAndEmitPhase::apply(pipelinedQueryPlan);
+        pipelinedQueryPlan = AddScanAndEmitPhase::apply(pipelinedQueryPlan);
 
         /// auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
 

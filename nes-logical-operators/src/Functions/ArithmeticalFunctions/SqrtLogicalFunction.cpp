@@ -18,6 +18,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
@@ -66,6 +67,12 @@ SerializableFunction SqrtLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterSqrtUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<SqrtLogicalFunction>(arguments.child);
 }
 
 }

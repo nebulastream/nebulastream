@@ -13,20 +13,23 @@
 */
 
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
+#include "SerializableFunction.pb.h"
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value)
-    : LogicalFunction(type), constantValue(std::move(value))
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& stamp, std::string value)
+    : LogicalFunction(stamp), constantValue(std::move(value))
 {
 }
 
@@ -79,7 +82,19 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
 
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
+
     return serializedFunction;
+}
+
+std::unique_ptr<LogicalFunctionRegistryReturnType>
+LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
+    return std::make_unique<ConstantValueLogicalFunction>(arguments.stamp, constantValueAsString);
 }
 
 }

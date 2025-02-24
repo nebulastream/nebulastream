@@ -36,8 +36,6 @@ public:
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
-    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
-
 private:
     explicit ConcatLogicalFunction(const ConcatLogicalFunction& other);
     std::string toString() const override;

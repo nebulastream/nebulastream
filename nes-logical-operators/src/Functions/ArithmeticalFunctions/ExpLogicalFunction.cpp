@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -62,5 +63,12 @@ SerializableFunction ExpLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterExpUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<ExpLogicalFunction>(arguments.child);
 }
 }

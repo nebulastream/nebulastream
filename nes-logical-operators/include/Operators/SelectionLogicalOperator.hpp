@@ -57,7 +57,6 @@ public:
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
     };
 
-protected:
     std::string toString() const override;
 
 private:

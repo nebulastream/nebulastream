@@ -25,7 +25,6 @@ namespace NES::Optimizer
 using RewriteRuleRegistryReturnType = NES::Optimizer::AbstractRewriteRule;
 struct RewriteRuleRegistryArguments
 {
-    NES::Configurations::QueryOptimizerConfiguration conf;
 };
 
 class RewriteRuleRegistry : public BaseRegistry<RewriteRuleRegistry, std::string, RewriteRuleRegistryReturnType, RewriteRuleRegistryArguments>

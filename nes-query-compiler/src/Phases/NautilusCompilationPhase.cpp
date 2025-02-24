@@ -32,7 +32,7 @@ std::shared_ptr<Pipeline> apply(std::shared_ptr<Pipeline>)
     //PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");
 
     //const auto& rootOperator = pipelineRoots[0];
-    nautilus::engine::Options options;
+    //nautilus::engine::Options options;
     //auto identifier = fmt::format(
     //    "NautilusCompilation-{}-{}-{}",
     //    pipeline->getDecomposedQueryPlan()->getWorkerId(),
@@ -42,12 +42,12 @@ std::shared_ptr<Pipeline> apply(std::shared_ptr<Pipeline>)
     /// enable dump to console or file if the compiler options are set
     //options.setOption(
     //    "toConsole",
-        compilerOptions.dumpMode == NES::Configurations::DumpMode::CONSOLE
-            || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
+    //    compilerOptions.dumpMode == NES::Configurations::DumpMode::CONSOLE
+    //        || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
     //options.setOption(
-        "toFile",
-        compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE
-            || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
+    //    "toFile",
+    //    compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE
+    //        || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
 /*
     auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
     if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getPipelineProviderType(), providerArguments))

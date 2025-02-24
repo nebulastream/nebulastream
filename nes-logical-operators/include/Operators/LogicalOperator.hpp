@@ -27,7 +27,7 @@ class SerializableOperator;
 class LogicalOperator : public virtual Operator
 {
 public:
-    explicit LogicalOperator() = default;
+    explicit LogicalOperator() : outputSchema(Schema::create()) {};
     explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp)
         : outputSchema(logicalOp->outputSchema)
       {

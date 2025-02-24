@@ -40,12 +40,12 @@ public:
     std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
     std::shared_ptr<Operator> clone() const override;
-    void inferStringSignature() override;
 
     std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
-protected:
+    [[nodiscard]] SerializableOperator serialize() const override;
+
     std::string toString() const override;
 };
 }

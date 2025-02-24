@@ -52,7 +52,6 @@ public:
         /// TODO: noop for now. Will change after we added the new inference operator
         return SerializableOperator{};
     }
-protected:
     std::string toString() const override;
 
 private:

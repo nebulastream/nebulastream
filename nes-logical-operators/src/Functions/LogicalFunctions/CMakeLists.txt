@@ -10,12 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And LogicalFunction nes-logical-operators AndLogicalFunction.cpp)
-add_plugin(Equals LogicalFunction nes-logical-operators EqualsLogicalFunction.cpp)
-add_plugin(Greater LogicalFunction nes-logical-operators GreaterLogicalFunction.cpp)
-add_plugin(GreaterEquals LogicalFunction nes-logical-operators GreaterEqualsLogicalFunction.cpp)
-add_plugin(Less LogicalFunction nes-logical-operators LessLogicalFunction.cpp)
-add_plugin(LessEquals LogicalFunction nes-logical-operators LessEqualsLogicalFunction.cpp)
-add_plugin(Negate LogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
-add_plugin(Or LogicalFunction nes-logical-operators OrLogicalFunction.cpp)
+add_plugin(And BinaryLogicalFunction nes-logical-operators AndLogicalFunction.cpp)
+add_plugin(Equals BinaryLogicalFunction nes-logical-operators EqualsLogicalFunction.cpp)
+add_plugin(Greater BinaryLogicalFunction nes-logical-operators GreaterLogicalFunction.cpp)
+add_plugin(GreaterEquals BinaryLogicalFunction nes-logical-operators GreaterEqualsLogicalFunction.cpp)
+add_plugin(Less BinaryLogicalFunction nes-logical-operators LessLogicalFunction.cpp)
+add_plugin(LessEquals BinaryLogicalFunction nes-logical-operators LessEqualsLogicalFunction.cpp)
+add_plugin(Negate UnaryLogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
+add_plugin(Or BinaryLogicalFunction nes-logical-operators OrLogicalFunction.cpp)
 

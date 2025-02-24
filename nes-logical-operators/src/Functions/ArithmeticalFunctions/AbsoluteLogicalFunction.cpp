@@ -17,7 +17,7 @@
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <SerializableFunction.pb.h>
-#include <LogicalFunctionRegistry.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 
 namespace NES
@@ -68,11 +68,10 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<LogicalFunctionRegistryReturnType>
-LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterAbsoluteUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AbsoluteLogicalFunction>(
-        arguments.stamp, arguments.config);
+    return std::make_unique<AbsoluteLogicalFunction>(arguments.child);
 }
 
 }

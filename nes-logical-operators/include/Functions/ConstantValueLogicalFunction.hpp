@@ -16,8 +16,11 @@
 
 #include <memory>
 #include <string>
-#include <Functions/LogicalFunction.hpp>
+#include <string_view>
+#include <Abstract/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include "SerializableFunction.pb.h"
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
@@ -29,7 +32,7 @@ class ConstantValueLogicalFunction final : public LogicalFunction
 public:
     static constexpr std::string_view NAME = "ConstantValue";
 
-    ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value);
+    ConstantValueLogicalFunction(const std::shared_ptr<DataType>& stamp, std::string constantValueAsString);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
     std::string getConstantValue() const;
@@ -41,6 +44,17 @@ public:
     std::shared_ptr<LogicalFunction> clone() const override;
 
     std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
+            "constantValueAsString", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
+    };
 
 private:
     explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);

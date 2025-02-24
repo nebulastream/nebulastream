@@ -49,7 +49,6 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    protected:
     [[nodiscard]] std::string toString() const override;
 
 private:

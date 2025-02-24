@@ -56,7 +56,6 @@ public:
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME);
     };
 
-protected:
     [[nodiscard]] std::string toString() const override;
 
 private:

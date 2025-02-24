@@ -17,6 +17,7 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <utility>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
@@ -28,7 +29,6 @@
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
@@ -38,12 +38,10 @@
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/ThresholdWindow.hpp>
@@ -52,9 +50,6 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Operators/BinaryLogicalOperator.hpp>
-
 
 namespace NES::Parsers
 {
@@ -70,7 +65,8 @@ std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
 std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo #421: support multiple sinks
-    return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
+    std::cout << queryPlans.top()->toString() << std::endl;
+    return QueryPlanBuilder::addSink(sinkNames.front(), queryPlans.top());
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)

@@ -15,12 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <stack>
 #include <string>
+#include <vector>
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Parsers
 {
@@ -34,7 +34,6 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 public:
     [[nodiscard]] std::shared_ptr<QueryPlan> getQueryPlan() const;
     void poppush(const AntlrSQLHelper& helper);
-
     /// enter/exit parsing pairs
     void enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
     void exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
@@ -61,7 +60,6 @@ public:
     void enterJoinCriteria(AntlrSQLParser::JoinCriteriaContext* context) override;
     void enterJoinType(AntlrSQLParser::JoinTypeContext* context) override;
     void exitJoinType(AntlrSQLParser::JoinTypeContext* context) override;
-
 
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;
