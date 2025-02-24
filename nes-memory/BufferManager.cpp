@@ -762,7 +762,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
         if (uringData->getKey() == detail::ChildOrMainDataKey::MAIN())
         {
             NES_DEBUG(
-                fmt::runtime("Trying to swap out main in memory segment at {:x} for on disk segment at {:x} in file {:x}"),
+                fmt::runtime("Trying to swap out main in memory segment at {} for on disk segment at {} in file {}"),
                 static_cast<void*>(uringData->getControlBlock()
                                        ->getData()
                                        .get<detail::InMemoryLocation>()
@@ -776,7 +776,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
         else if (auto childKey = uringData->getKey().asChildKey())
         {
             NES_DEBUG(
-                fmt::runtime("Trying to swap out child in memory segment at {:x} for on disk segment at {:x} in file {:x}"),
+                fmt::runtime("Trying to swap out child in memory segment at {} for on disk segment at {} in file {}"),
                 static_cast<void*>(uringData->getControlBlock()
                                        ->getChild(*childKey)
                                        ->get<detail::InMemoryLocation>()
