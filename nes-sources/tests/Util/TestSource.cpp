@@ -43,7 +43,7 @@ namespace
 {
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
-constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
+constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 64;
 }
 
 template <typename QueueType, typename Args>
@@ -55,7 +55,7 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
         {
             return true;
         }
-        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), std::forward<Args>(args)))
+        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1000000), std::forward<Args>(args)))
         {
             return true;
         }
@@ -164,7 +164,6 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::PinnedBuffer& tupl
             },
             [](TestSourceControl::Data data)
             {
-                NES_DEBUG("Test Source is injecting data");
                 return std::optional(data);
             },
             [](TestSourceControl::EoS) -> std::optional<TestSourceControl::Data>

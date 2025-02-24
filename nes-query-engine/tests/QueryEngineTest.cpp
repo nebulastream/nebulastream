@@ -485,10 +485,10 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 
 TEST_F(QueryEngineTest, singleQueryWithManySources)
 {
-    constexpr size_t numberOfSources = 100;
-    constexpr size_t numberOfBuffersBeforeTermination = 1000;
+    constexpr size_t numberOfSources = 64;
+    constexpr size_t numberOfBuffersBeforeTermination = 10000;
 
-    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
+    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources + 20);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
     for (size_t i = 0; i < numberOfSources; i++)
@@ -516,10 +516,15 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     test.start();
     {
         test.startQuery(std::move(query));
-        DataGenerator dataGenerator;
+        DataGenerator<NeverFailPolicy, numberOfBuffersBeforeTermination> dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
-        sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination);
+        EXPECT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination));
         dataGenerator.stop();
+
+        auto uniqueIdentifier = sinkCtrl->takeBuffers() | std::views::transform([](const auto& buffer) { return readIdentifier(buffer); })
+            | ranges::to<std::unordered_set>();
+
+        EXPECT_EQ(uniqueIdentifier.size(), numberOfBuffersBeforeTermination);
 
         test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT);
     }

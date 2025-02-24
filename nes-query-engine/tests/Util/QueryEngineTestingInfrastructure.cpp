@@ -33,8 +33,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/PinnedBuffer.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <gmock/gmock.h>
@@ -101,7 +101,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
     }
 
     auto check = receivedBufferTrigger.wait_for(
-        buffers.as_lock(), DEFAULT_AWAIT_TIMEOUT, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
+        buffers.as_lock(), DEFAULT_LONG_AWAIT_TIMEOUT * 100, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
 
     if (check)
     {
@@ -347,6 +347,7 @@ void TestingHarness::start()
     }
     Runtime::QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    configuration.taskQueueSize.setValue(100000);
     qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const

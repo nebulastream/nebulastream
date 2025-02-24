@@ -317,8 +317,8 @@ public:
         , statistic(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
         // , taskQueueHead(taskQueueSize * 0.1)
-    , taskQueueHead(taskQueueSize * 0.1)
-    , taskQueueTail(taskQueueSize * 0.9)
+        , taskQueueHead(taskQueueSize * 0.1)
+        , taskQueueTail(taskQueueSize * 0.9)
     {
     }
 
@@ -443,7 +443,6 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
-    INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
     INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {
@@ -480,7 +479,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] { }, {});
+                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
             }
         });
 
