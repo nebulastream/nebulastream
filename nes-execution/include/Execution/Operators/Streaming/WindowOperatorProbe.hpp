@@ -38,9 +38,6 @@ public:
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-    /// Terminates the operator by deleting all slices and windows
-    void terminate(ExecutionContext& executionCtx) const override;
-
 protected:
     uint64_t operatorHandlerIndex;
     WindowMetaData windowMetaData;
