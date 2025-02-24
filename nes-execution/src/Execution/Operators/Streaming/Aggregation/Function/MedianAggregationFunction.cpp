@@ -88,68 +88,75 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
         },
         pagedVectorPtr);
 
-    /// Iterating in two nested loops over all the records in the paged vector to get the median.
-    /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
-    const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
-    const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
-    nautilus::val<uint64_t> medianItemPos1 = 0;
-    nautilus::val<uint64_t> medianItemPos2 = 0;
-    nautilus::val<bool> medianFound1 = false;
-    nautilus::val<bool> medianFound2 = false;
-
-
-    /// Picking a candidate and counting how many items are smaller or equal to the candidate
-    const auto endIt = pagedVectorRef.end(allFieldNames);
-    for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
-    {
-        nautilus::val<int64_t> countLessThan = 0;
-        nautilus::val<int64_t> countEqual = 0;
-        const auto candidateRecord = *candidateIt;
-        const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
-
-        /// Counting how many items are smaller or equal for the current candidate
-        for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
-        {
-            const auto itemRecord = *itemIt;
-            const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
-            if (itemValue < candidateValue)
-            {
-                countLessThan = countLessThan + 1;
-            }
-            if (itemValue == candidateValue)
-            {
-                countEqual = countEqual + 1;
-            }
-        }
-
-        /// Checking if the current candidate is the median, and if so, storing the position of the median
-        /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
-        if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
-        {
-            medianItemPos1 = candidateIt - pagedVectorRef.begin(allFieldNames);
-            medianFound1 = true;
-        }
-        if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
-        {
-            medianItemPos2 = candidateIt - pagedVectorRef.begin(allFieldNames);
-            medianFound2 = true;
-        }
-    }
-
-    /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
-    /// For even numbers of entries, this is its natural definition.
-    /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
-    const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
-    const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
-
-    const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
-    const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
-    const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue = (medianValue1.castToType(resultType) + medianValue2.castToType(resultType)) / two.castToType(resultType);
-
-    /// Adding the median to the result record
+    /// Unless there are no entries, we return the result record with the median value
     Nautilus::Record resultRecord;
-    resultRecord.write(resultFieldIdentifier, medianValue);
+    const Nautilus::VarVal zero = nautilus::val<uint64_t>(0);
+    resultRecord.write(resultFieldIdentifier, zero.castToType(resultType));
+
+    if (numberOfEntries > 0)
+    {
+        /// Iterating in two nested loops over all the records in the paged vector to get the median.
+        /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
+        const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
+        const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
+        nautilus::val<uint64_t> medianItemPos1 = 0;
+        nautilus::val<uint64_t> medianItemPos2 = 0;
+        nautilus::val<bool> medianFound1 = false;
+        nautilus::val<bool> medianFound2 = false;
+
+
+        /// Picking a candidate and counting how many items are smaller or equal to the candidate
+        const auto endIt = pagedVectorRef.end(allFieldNames);
+        for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
+        {
+            nautilus::val<int64_t> countLessThan = 0;
+            nautilus::val<int64_t> countEqual = 0;
+            const auto candidateRecord = *candidateIt;
+            const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
+
+            /// Counting how many items are smaller or equal for the current candidate
+            for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
+            {
+                const auto itemRecord = *itemIt;
+                const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
+                if (itemValue < candidateValue)
+                {
+                    countLessThan = countLessThan + 1;
+                }
+                if (itemValue == candidateValue)
+                {
+                    countEqual = countEqual + 1;
+                }
+            }
+
+            /// Checking if the current candidate is the median, and if so, storing the position of the median
+            /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
+            if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
+            {
+                medianItemPos1 = candidateIt - pagedVectorRef.begin(allFieldNames);
+                medianFound1 = true;
+            }
+            if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
+            {
+                medianItemPos2 = candidateIt - pagedVectorRef.begin(allFieldNames);
+                medianFound2 = true;
+            }
+        }
+
+        /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
+        /// For even numbers of entries, this is its natural definition.
+        /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
+        const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
+        const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
+
+        const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
+        const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
+        const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
+        const auto medianValue = (medianValue1.castToType(resultType) + medianValue2.castToType(resultType)) / two.castToType(resultType);
+
+        /// Adding the median to the result record
+        resultRecord.write(resultFieldIdentifier, medianValue);
+    }
 
     return resultRecord;
 }

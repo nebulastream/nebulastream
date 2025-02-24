@@ -87,7 +87,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
-        /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
+        /// We have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
         if (const auto storeFunction = Nautilus::Util::storeValueFunctionMap.find(NES::Util::as<BasicPhysicalType>(type)->nativeType);
             storeFunction != Nautilus::Util::storeValueFunctionMap.end())
