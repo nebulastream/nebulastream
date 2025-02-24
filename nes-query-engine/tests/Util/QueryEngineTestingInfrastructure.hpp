@@ -74,6 +74,7 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::mi
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
 std::vector<std::byte> identifiableData(size_t identifier);
+size_t readIdentifier(const Memory::PinnedBuffer& buffer);
 bool verifyIdentifier(const Memory::PinnedBuffer& buffer, size_t identifier);
 
 
@@ -250,6 +251,8 @@ struct TestPipeline final : Runtime::Execution::ExecutablePipelineStage
         {
             throw Exception("I should throw here.", 9999);
         }
+        auto outputBuffer = copyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 

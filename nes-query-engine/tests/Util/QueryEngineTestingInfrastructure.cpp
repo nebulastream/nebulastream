@@ -57,10 +57,17 @@ std::vector<std::byte> identifiableData(size_t identifier)
     const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
     for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
     {
-        *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
+        *std::bit_cast<size_t*>(&data[index]) = identifier;
     }
 
     return data;
+}
+
+size_t readIdentifier(const Memory::PinnedBuffer& buffer)
+{
+    auto identifier = *buffer.getBuffer<size_t>();
+    INVARIANT(verifyIdentifier(buffer, identifier), "invalid identifier found");
+    return identifier;
 }
 
 bool verifyIdentifier(const Memory::PinnedBuffer& buffer, size_t identifier)
