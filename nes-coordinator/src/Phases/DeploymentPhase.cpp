@@ -35,11 +35,13 @@ DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCa
 
 void DeploymentPhase::execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType) {
     if (!deploymentContexts.empty()) {
-        NES_INFO("Register or unregister {} decomposed queries.", deploymentContexts.size());
+        NES_ERROR("Register or unregister {} decomposed queries.", deploymentContexts.size());
         registerOrStopDecomposedQueryPlan(deploymentContexts, requestType);
+        NES_ERROR("Register or unregister {} decomposed queries completed.", deploymentContexts.size());
 
-        NES_INFO("Start or stop {} decomposed queries.", deploymentContexts.size());
+        NES_ERROR("Start or stop {} decomposed queries.", deploymentContexts.size());
         startOrUnregisterDecomposedQueryPlan(deploymentContexts, requestType);
+        NES_ERROR("Start or stop {} decomposed queries completed.", deploymentContexts.size());
     }
 }
 
