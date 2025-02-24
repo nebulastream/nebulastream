@@ -79,9 +79,8 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const Memory::AbstractBufferProvi
 void NLJOperatorHandler::emitSliceIdsToProbe(
     Slice& sliceLeft,
     Slice& sliceRight,
-    const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
-    const ChunkNumber& chunkNumber,
-    const bool isLastChunk,
+    const WindowInfo& windowInfo,
+    const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
@@ -96,15 +95,15 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
     /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
     tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(windowInfoAndSeqNumber.sequenceNumber);
-    tupleBuffer.setChunkNumber(chunkNumber);
-    tupleBuffer.setLastChunk(isLastChunk);
-    tupleBuffer.setWatermark(Timestamp(std::min(sliceLeft.getSliceStart().getRawValue(), sliceRight.getSliceStart().getRawValue())));
+    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
+    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
+    tupleBuffer.setLastChunk(sequenceData.lastChunk);
+    tupleBuffer.setWatermark(windowInfo.windowStart);
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
-    bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
+    bufferMemory->windowInfo = windowInfo;
 
     pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
     NES_DEBUG(
@@ -117,8 +116,8 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         tupleBuffer.getOriginId(),
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
-        windowInfoAndSeqNumber.windowInfo.windowStart,
-        windowInfoAndSeqNumber.windowInfo.windowEnd);
+        windowInfo.windowStart,
+        windowInfo.windowEnd);
 
     /// Calculating a rolling average of the number of tuples in the slices
     const auto averageNumberLeft = this->averageNumberOfTuplesLeft.wlock();

@@ -348,8 +348,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         leftMemoryProvider->getMemoryLayout()->getBufferSize(),
         rightMemoryProvider->getMemoryLayout()->getBufferSize());
 
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, 2);
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+        streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],
@@ -433,7 +433,6 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
 
     /// For now, we always use the default time beased slice store
     const auto numberOfInputOrigins = windowOperator->getInputOriginIds().size();
-    INVARIANT(numberOfInputOrigins == 1, "We expect exactly one input origin for a time based window operator");
     std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
             timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);

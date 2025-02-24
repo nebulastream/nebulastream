@@ -46,5 +46,6 @@ public:
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
+    std::mutex combinePagedVectorsMutex;
 };
 }

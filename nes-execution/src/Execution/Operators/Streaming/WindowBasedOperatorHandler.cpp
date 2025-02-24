@@ -82,6 +82,7 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
 void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
 {
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
+    NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
