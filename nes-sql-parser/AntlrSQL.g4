@@ -44,7 +44,9 @@ singleStatement: statement ';'* EOF;
 
 statement: query;
 
-query : queryTerm queryOrganization;
+query: queryTerm queryOrganization
+     | queryControlStatement
+     ;
 
 queryOrganization:
          (ORDER BY order+=sortItem (',' order+=sortItem)*)?
@@ -538,6 +540,20 @@ LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
+
+queryControlStatement
+    : STOP 'QUERY' INTEGER_VALUE                # stopQuery
+    | STATUS 'QUERY' INTEGER_VALUE              # statusQuery
+    | REGISTER 'QUERY' selectClause             # registerQuery
+    | UNREGISTER 'QUERY' INTEGER_VALUE          # unregisterQuery
+    ;
+
+STOP: 'STOP' | 'stop';
+STATUS: 'STATUS' | 'status';
+REGISTER: 'REGISTER' | 'register';
+UNREGISTER: 'UNREGISTER' | 'unregister';
+
+///--NebulaSQL-KEYWORD-LIST-END
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list

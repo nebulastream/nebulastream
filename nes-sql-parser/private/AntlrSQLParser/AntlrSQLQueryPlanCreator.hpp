@@ -83,6 +83,15 @@ public:
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
     void enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
+
+    void enterStopQuery(AntlrSQLParser::StopQueryContext* context) override;
+    void exitStopQuery(AntlrSQLParser::StopQueryContext* context) override;
+    void enterStatusQuery(AntlrSQLParser::StatusQueryContext* context) override;
+    void exitStatusQuery(AntlrSQLParser::StatusQueryContext* context) override;
+    void enterRegisterQuery(AntlrSQLParser::RegisterQueryContext* context) override;
+    void exitRegisterQuery(AntlrSQLParser::RegisterQueryContext* context) override;
+    void enterUnregisterQuery(AntlrSQLParser::UnregisterQueryContext* context) override;
+    void exitUnregisterQuery(AntlrSQLParser::UnregisterQueryContext* context) override;
 };
 
 

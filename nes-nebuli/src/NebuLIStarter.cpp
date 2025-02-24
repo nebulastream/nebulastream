@@ -23,6 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
+#include <boost/asio/query.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
@@ -218,14 +219,48 @@ int main(int argc, char** argv)
         std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
+
+        std::variant<std::shared_ptr<NES::DecomposedQueryPlan>, NES::QueryParseResult> resultQuery;
         if (input == "-")
         {
-            decomposedQueryPlan = NES::CLI::loadFrom(std::cin);
+            resultQuery = NES::CLI::loadFrom(std::cin);
         }
         else
         {
-            decomposedQueryPlan = NES::CLI::loadFromYAMLFile(input);
+            resultQuery = NES::CLI::loadFromYAMLFile(input);
         }
+
+        if (std::holds_alternative<NES::QueryParseResult>(resultQuery))
+        {
+            const auto& queryResult = std::get<NES::QueryParseResult>(resultQuery);
+            auto& parser = program.at<ArgumentParser>(command);
+            auto serverUri = parser.get<std::string>("-s");
+            GRPCClient client(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+            auto queryId = queryResult.queryId;
+            if (queryResult.type == NES::QueryControlStatement::STOP)
+            {
+                INVARIANT(queryId.has_value(), "invalid queryId during STOP");
+                client.stop(queryId.value().getRawValue());
+                return 0;
+            }
+            else if (queryResult.type == NES::QueryControlStatement::STATUS)
+            {
+                INVARIANT(queryId.has_value(), "invalid queryId during STATUS");
+                client.status(queryId.value().getRawValue());
+                return 0;
+            }
+            else if (queryResult.type == NES::QueryControlStatement::UNREGISTER)
+            {
+                INVARIANT(queryId.has_value(), "invalid queryId during UNREGISTER");
+                client.unregister(queryId.value().getRawValue());
+                return 0;
+            }
+        }
+        else
+        {
+            decomposedQueryPlan = std::get<std::shared_ptr<NES::DecomposedQueryPlan>>(resultQuery);
+        }
+
 
         std::string output;
         NES::SerializableDecomposedQueryPlan serialized;

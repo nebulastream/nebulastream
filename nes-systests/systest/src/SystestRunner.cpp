@@ -217,7 +217,12 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
-            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
+
+            INVARIANT(
+                std::holds_alternative<std::shared_ptr<DecomposedQueryPlan>>(plan),
+                "Currently only support query Start commands in system tests");
+            const auto& decomposedPlan = std::get<std::shared_ptr<DecomposedQueryPlan>>(plan);
+            plans.emplace_back(decomposedPlan, query, sinkNamesToSchema[sinkName]);
         });
     try
     {
