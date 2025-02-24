@@ -205,7 +205,7 @@ public:
         INVARIANT(prev == std::coroutine_handle<>{}, "Multiple coroutines where awaiting the same ResumeAfterBlockAwaiter");
         if (!hasPassed.test())
         {
-            return {};
+            return std::noop_coroutine();
         }
         return handle.exchange(std::coroutine_handle{});
     }
