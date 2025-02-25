@@ -27,6 +27,9 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
                                              StreamSlice& sliceRight,
                                              const WindowInfo& windowInfo,
                                              PipelineExecutionContext* pipelineCtx) {
+    if (windowInfo.windowStart == 2000) {
+
+    }
     if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
         dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
@@ -50,7 +53,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
         // The tupleBuffer is emitted to the Query manager, where a new task is created for it
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} [{}, {}] rightSliceId {} [{}, {}] with watermarkTs {} sequenceNumber {} originId {} for "
+        NES_DEBUG("Emitted leftSliceId {} [{}, {}] rightSliceId {} [{}, {}] with watermarkTs {} sequenceNumber {} originId {} for "
                  "no. left tuples "
                  "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
@@ -86,7 +89,7 @@ void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, u
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
+   //  NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
     switch (joinBuildSide) {
         case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerThreadId);
         case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerThreadId);

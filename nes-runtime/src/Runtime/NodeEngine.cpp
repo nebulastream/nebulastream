@@ -33,6 +33,7 @@
 #include <QueryCompiler/QueryCompiler.hpp>          // member variable (QueryCompilation::QueryCompilerPtr queryCompiler)
 
 #include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -978,6 +979,15 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                             }
                         }
                     }
+                } else if (event->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
+//                    for (const auto& source : qep->getSources()) {
+//                        if (source) {
+//                            source->handleReconfigurationMarker(reconfigurationMarker);
+//                            addedMarker = true;
+//                        }
+//                    }
+                    // TODO: REMOVE PROPAGATION OF EOS FROM UPSTREAM
+                    return true;
                 }
             }
         }

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -105,7 +106,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
 
     auto mainMetadata = bufferManager->getBufferBlocking();
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
-    auto metadataBuffersCount = 1;
+    uint64_t metadataBuffersCount = 1;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -113,31 +114,18 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
             "Buffer size has to be at least greater or equal to uint64_t in size for successful state migration.");
     }
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
-    auto metadataIdx = 1ULL;
+    uint64_t metadataIdx = 1;
 
-    /** @brief Lambda to write to metadata buffers
-     * captured variables:
-     * mainMetadata - generic metadata buffer, used for checking space left
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersCount - number of metadata buffers
-     * buffers - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to metadata buffers */
     auto writeToMetadata = [&mainMetadata, &metadataPtr, &metadataIdx, &bufferManager, &metadataBuffersCount, &buffersToTransfer](
                                uint64_t dataToWrite) {
-        // check that current metadata buffer has enough space, by sending used space and space needed
-        if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // if current buffer does not contain enough space then
-            // get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
-            // add this buffer to vector of buffers
-            buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
-            // reset pointer to point new buffer and reset index to 0
-            metadataPtr = newBuffer.getBuffer<uint64_t>();
-            metadataIdx = 0;
-        }
-        metadataPtr[metadataIdx++] = dataToWrite;
+        StateSerializationUtil::writeToBuffer(bufferManager,
+                                              mainMetadata.getBufferSize(),
+                                              metadataPtr,
+                                              metadataIdx,
+                                              metadataBuffersCount,
+                                              buffersToTransfer,
+                                              dataToWrite);
     };
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
     // 0. Store slice id
@@ -184,29 +172,16 @@ StreamSlicePtr NLJSlice::deserialize(BufferManagerPtr& bufferManager,
     auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, 0, bufferManager, leftSchema, leftPageSize, rightSchema, rightPageSize);
 
     // get main metadata buffer
-    auto metadataBuffersIdx = 0;
+    uint64_t metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
-    auto metadataIdx = 0;
+    uint64_t metadataIdx = 0;
 
     // read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
 
-    /** @brief Lambda to read from metadata buffers
-     * captured variables:
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
+    /** @brief Lambda to read from metadata buffers */
     auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // if no space left inside current buffer
-            // reset metadata pointer and reset index
-            metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
-            metadataIdx = 0;
-        }
-        return metadataPtr[metadataIdx++];
+        return StateSerializationUtil::readFromBuffer(metadataPtr, metadataIdx, metadataBuffersIdx, buffers);
     };
     // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
     // 0. Retrieve slice id

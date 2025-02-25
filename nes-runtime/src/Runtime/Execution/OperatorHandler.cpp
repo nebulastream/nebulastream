@@ -15,6 +15,25 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution {
+
+std::vector<Runtime::TupleBuffer> OperatorHandler::serializeOperatorHandlerForMigration() {
+    NES_WARNING("No state inside abstract operator handler");
+    return {};
+}
+
+std::vector<Runtime::TupleBuffer> OperatorHandler::getSerializedPortion(uint64_t) {
+    NES_WARNING("No state inside abstract operator handler");
+    return {};
+}
+
+void OperatorHandler::recreate() {
+    return;
+};
+
+bool OperatorHandler::shouldRecreate() {
+    return false;
+};
+
 std::vector<Runtime::TupleBuffer> OperatorHandler::getStateToMigrate(uint64_t, uint64_t) {
     NES_WARNING("No state inside abstract operator handler");
     return {};

@@ -143,9 +143,6 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                         }
                     }
                 }
-                // P0: Identify workers where reconfiguration markers need to be sent
-                computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
-
                 deploymentTime = deploymentTime + (getTimestamp() - deploymentTimeStart);
 
                 // P1: Compute placement removal
@@ -177,10 +174,18 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                             migratingOperatorToProperties.insert(
                                 std::pair(logicalOperatorId, MigrateOperatorProperties::create(oldPlanId, oldNodeId, newNodeId)));
                             // store recreation of operator handler file name and add it to logical operator on new node
-                            std::string recreationFileName = sharedQueryId.toString() + "-" + oldPlanId.toString() + "-"
-                                + logicalOperatorId.toString() + ".bin";
-                            migratingOperatorToFileSink.insert(std::pair(logicalOperatorId, recreationFileName));
-                            logicalOperator->addProperty(QueryCompilation::MIGRATION_FILE, recreationFileName);
+                            auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                            std::string recreationFileName = std::to_string(time) + "-" + sharedQueryId.toString() + "-" + oldPlanId.toString() + "-"
+                                + logicalOperatorId.toString();
+                            migratingOperatorToFileSink.insert(std::pair(logicalOperatorId, recreationFileName + ".bin"));
+                            if (logicalOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
+                                auto newDecomposedPlanId = std::any_cast<DecomposedQueryId>(logicalOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                auto newDecomposedPlan = deploymentContexts.find(newDecomposedPlanId);
+                                if (newDecomposedPlan != deploymentContexts.end()) {
+                                    auto copyOfLogicalOperator = newDecomposedPlan->second->getDecomposedQueryPlan()->getOperatorWithOperatorId(logicalOperatorId);
+                                    copyOfLogicalOperator->addProperty(QueryCompilation::MIGRATION_FILE, recreationFileName + "-completed.bin");
+                                }
+                            }
                             NES_DEBUG("QueryPlacementAmendmentPhase: Location of stateful operator with id {} changed, state "
                                       "needs to be migrated",
                                       logicalOperator->getId());
@@ -297,65 +302,67 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
     for (const auto& [migratingOperatorId, migratingOperatorProperties] : migratingOperatorToProperties) {
         // 1. Create new operators for state migration
         // create source operator for gathering state on the source node
-        // TODO [#5151] change source operator
-        auto migrateSourceOperator =
-            LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("state_gathering"));
+        // TODO: REMOVE THIS SOURCE. Check why it can't find path without source in updateGlobalExecutionPlan
+        auto fakeMigrateSourceOperator =
+            LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("fake_migration_source"));
         // set node id where operator was located
-        migrateSourceOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getOldWorkerId());
+        fakeMigrateSourceOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getOldWorkerId());
 
         // create sink operator to save state to the file on destination node
-        // TODO [#5151] change sink operator
         auto recreationFileName = migratingOperatorToFileSink[migratingOperatorId];
         auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(
             FileSinkDescriptor::create(recreationFileName, "MIGRATION_FORMAT", "OVERWRITE"));
         // set node id where operator is located now
         migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getNewWorkerId());
         // set downstream sink as a parent to source
-        migrateSourceOperator->addParent(migrateSinkOperator);
+        fakeMigrateSourceOperator->addParent(migrateSinkOperator);
 
         // 2. Make placement of new operators and path between them
         auto strategy = getStrategy(placementStrategy);
         auto placementResults = strategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                    {migrateSourceOperator},
+                                                                    {fakeMigrateSourceOperator},
                                                                     {migrateSinkOperator},
                                                                     nextDecomposedQueryPlanVersion);
 
         // save new contexts
-        for (const auto& [decomposedQueryPlanId, deploymentContext] : placementResults.deploymentContexts) {
+        for (auto& [decomposedQueryPlanId, deploymentContext] : placementResults.deploymentContexts) {
+            deploymentContext->setForMigration(true);
             deploymentContexts[decomposedQueryPlanId] = deploymentContext;
         }
 
         // 3. Get necessary information to link old stateful operator decomposed plan and newly created migration plan
         // get copy of plan before migration
         auto statefulOperatorOldPlan = planIdToCopy.find(migratingOperatorProperties->getOldDecomposedQueryId());
-        auto newPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+        auto migrationPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
         // get plan id of the newly created plan for migration
-        if (migrateSourceOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
-            newPlanId = std::any_cast<DecomposedQueryId>(migrateSourceOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+        if (fakeMigrateSourceOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
+            migrationPlanId = std::any_cast<DecomposedQueryId>(fakeMigrateSourceOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
         } else {
             NES_ERROR("Failed to get migration decomposed plan id");
         }
         // find deployment context for this plan
-        auto statefulOperatorNewPlan = deploymentContexts.find(newPlanId);
+        auto migrationFlowNewPlan = deploymentContexts.find(migrationPlanId);
 
         // 4. Link old stateful operator decomposed plan and newly created migration plan
-        if (statefulOperatorOldPlan != planIdToCopy.end() && statefulOperatorNewPlan != deploymentContexts.end()) {
+        if (statefulOperatorOldPlan != planIdToCopy.end() && migrationFlowNewPlan != deploymentContexts.end()) {
             // get stateful operator
             auto statefulOperatorInOldPlan = statefulOperatorOldPlan->second->getOperatorWithOperatorId(migratingOperatorId);
+            statefulOperatorInOldPlan->addProperty("MIGRATION_FLAG", true);
             // get source operator in newly created plan
-            auto sourceOperatorInNewPlan = statefulOperatorNewPlan->second->getDecomposedQueryPlan()->getOperatorWithOperatorId(
-                migrateSourceOperator->getId());
+            auto networkSinkOperatorInMigrationPlan = migrationFlowNewPlan->second->getDecomposedQueryPlan()->getRootOperators().front();
+            networkSinkOperatorInMigrationPlan->removeChildren();
+            networkSinkOperatorInMigrationPlan->addProperty("MIGRATION_SINK", true);
 
             // link operators
-            statefulOperatorInOldPlan->addParent(sourceOperatorInNewPlan);
-            statefulOperatorOldPlan->second->addRootOperator(
-                statefulOperatorNewPlan->second->getDecomposedQueryPlan()->getRootOperators()[0]);
+            statefulOperatorInOldPlan->addParent(networkSinkOperatorInMigrationPlan);
+            statefulOperatorOldPlan->second->addRootOperator(networkSinkOperatorInMigrationPlan);
 
+            statefulOperatorOldPlan->second->setOldVersion(statefulOperatorOldPlan->second->getVersion());
             statefulOperatorOldPlan->second->setVersion(nextDecomposedQueryPlanVersion);
             statefulOperatorOldPlan->second->setState(QueryState::MARKED_FOR_UPDATE_AND_DRAIN);
 
             // delete old migrating deployment context for the old node
-            deploymentContexts.erase(newPlanId);
+            deploymentContexts.erase(migrationPlanId);
             auto oldDeploymentContext = deploymentContexts[migratingOperatorProperties->getOldDecomposedQueryId()];
             // create new context for the updated plan
             auto newContext = DeploymentContext::create(oldDeploymentContext->getGrpcAddress(), statefulOperatorOldPlan->second);
@@ -363,7 +370,7 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
             deploymentContexts[migratingOperatorProperties->getOldDecomposedQueryId()] = newContext;
             globalExecutionPlan->removeDecomposedQueryPlan(migratingOperatorProperties->getOldWorkerId(),
                                                            sharedQueryId,
-                                                           newPlanId,
+                                                           migrationPlanId,
                                                            nextDecomposedQueryPlanVersion);
             globalExecutionPlan->addDecomposedQueryPlan(migratingOperatorProperties->getOldWorkerId(),
                                                         {statefulOperatorOldPlan->second});
@@ -416,7 +423,7 @@ void QueryPlacementAmendmentPhase::computeReconfigurationMarkerDeploymentUnit(
                 auto downstreamOperator = node->as<LogicalOperator>();
                 // Check the operator states
                 if (downstreamOperator->getOperatorState() == OperatorState::PLACED
-                    || downstreamOperator->getOperatorState() == OperatorState::TO_BE_REMOVED) {
+                    || downstreamOperator->getOperatorState() == OperatorState::TO_BE_REMOVED || downstreamOperator->getOperatorState() == OperatorState::TO_BE_REPLACED ) {
 
                     // Fetch the worker id where downstream logical operator is placed
                     const auto& downstreamLogicalOperatorPinnedWorkerID =

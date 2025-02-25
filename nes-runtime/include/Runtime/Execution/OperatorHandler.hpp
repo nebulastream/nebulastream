@@ -55,6 +55,10 @@ class OperatorHandler : public virtual Reconfigurable, public virtual Migratable
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
+    virtual void recreate();
+
+    virtual bool shouldRecreate();
+
     /**
      * @brief Gets the state
      * @param startTS
@@ -62,6 +66,11 @@ class OperatorHandler : public virtual Reconfigurable, public virtual Migratable
      * @return list of TupleBuffers
      */
     std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
+
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
+
+    virtual std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t);
+
 
     /**
      * @brief Merges migrated slices

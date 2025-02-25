@@ -46,6 +46,8 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
+    NES_DEBUG("Watermark: {}, id: {}, min: {}, origin: {}", watermarkTs, workerCtx->getId(), minWatermark, originId);
+
     BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }

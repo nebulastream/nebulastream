@@ -28,6 +28,9 @@
 
 namespace NES::Sequencing {
 
+template<class T>
+using ContainerState = std::tuple<SequenceNumber, ChunkNumber, uint64_t, T>;
+
 /**
  * @brief This class implements a non blocking monotonic sequence queue,
  * which is mainly used as a foundation for an efficient watermark processor.
@@ -94,6 +97,23 @@ class NonBlockingMonotonicSeqQueue {
         [[nodiscard]] SequenceNumber getSeqNumber() const { return seqNumber; }
 
         bool seenAllChunks() { return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber); }
+
+        /**
+         * @brief Gets the state of every container with valid sequence number
+         * @return container state
+         */
+        ContainerState<T> serialize() { return ContainerState<T>(seqNumber, lastChunkNumber, seenChunks, value); }
+
+        /**
+         * @brief Gets the state of every container with valid sequence number
+         * @return container state
+         */
+        void deserialize(ContainerState<T> state) {
+            seqNumber = std::get<0>(state);
+            lastChunkNumber = std::get<1>(state);
+            seenChunks = std::get<2>(state);
+            value = std::get<3>(state);
+        }
 
       private:
         SequenceNumber seqNumber;
@@ -165,6 +185,66 @@ class NonBlockingMonotonicSeqQueue {
         auto seqIndexInBlock = currentSequenceNumber % blockSize;
         auto& value = currentBlock->log[seqIndexInBlock];
         return value.getValue();
+    }
+
+    /**
+     * @warning !NOTE!
+     * Do not run this function concurrently
+     * @brief serialize watermark processor
+     * @return vector of ContainerState
+     */
+    std::vector<ContainerState<T>> serialize() const {
+        std::vector<ContainerState<T>> states;
+        auto currentBlock = head;
+        // go over all blocks and serialize them
+        while (currentBlock != nullptr) {
+            for (auto& container : currentBlock->log) {
+                if (container.getValue() != INVALID_SEQ_NUMBER && container.getSeqNumber() >= currentSeq) {
+                    states.emplace_back(container.serialize());
+                }
+            }
+            currentBlock = currentBlock->next;
+        }
+
+        return states;
+    }
+
+    /**
+     * @warning !NOTE!
+     * Do not run this function concurrently
+     * @brief Gets the state of every container with valid sequence number
+     * @return container state
+     */
+    void deserialize(std::vector<ContainerState<T>> states) {
+        if (states.empty()) {
+            // nothing to recreate
+            return;
+        }
+
+        // get new current sequence number
+        auto firstSeqNumber = std::get<0>(states[0]);
+        // set read sequence number
+        currentSeq = firstSeqNumber;
+        head = std::make_shared<Block>(firstSeqNumber / blockSize);
+        auto currBlock = head;
+
+        // go over states and set them to the right block
+        for (auto& state : states) {
+            auto targetSeqNumber = std::get<0>(state);
+            auto targetBlockIndex = targetSeqNumber / blockSize;
+            while (currBlock->blockIndex < targetBlockIndex) {
+                auto nextBlock = currBlock->next;
+                if (nextBlock == nullptr) {
+                    // create this blocks if they don't exist
+                    auto newBlock = std::make_shared<Block>(currBlock->blockIndex + 1);
+                    currBlock->next = newBlock;
+                    currBlock = newBlock;
+                } else {
+                    currBlock = currBlock->next;
+                }
+            }
+            currBlock->log[targetSeqNumber % blockSize].deserialize(state);
+        }
     }
 
   private:

@@ -130,6 +130,8 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     bool start();
 
+    bool checkRecreation();
+
     /**
      * @brief Stop the query plan and free all associated resources.
      */
@@ -240,6 +242,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @brief adds a successor plan that will reuse sources of the current plan
      */
     bool addSuccessorPlan(ExecutableQueryPlanPtr successor);
+    bool shouldDelayStart();
 
   protected:
     /**

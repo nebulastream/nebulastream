@@ -40,6 +40,17 @@ DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return 
 
 DecomposedQueryPlanVersion PartitionManager::PartitionConsumerEntry::getVersion() { return consumer->getVersion(); }
 
+uint64_t PartitionManager::PartitionConsumerEntry::getMaxRegisteredSeqNumber() {
+    return maxRegisteredSeqNumber;
+}
+void PartitionManager::PartitionConsumerEntry::updateMaxRegisteredSeqNumber(uint64_t newMaxRegisteredSequenceNumber) {
+    maxRegisteredSeqNumber = std::max(maxRegisteredSeqNumber, newMaxRegisteredSequenceNumber);
+}
+
+void PartitionManager::PartitionConsumerEntry::resetMaxRegisteredSeqNumber() {
+    maxRegisteredSeqNumber = 0;
+}
+
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation)) {
     // nop
@@ -85,7 +96,27 @@ bool PartitionManager::registerSubpartitionConsumer(NesPartition partition,
     return (*it).second.count() == 1;
 }
 
-bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
+uint64_t PartitionManager::getMaxRegisteredSequenceNumber(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+
+    auto it = consumerPartitions.find(partition);
+    NES_ASSERT2_FMT(it != consumerPartitions.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    return it->second.getMaxRegisteredSeqNumber();
+}
+
+void PartitionManager::resetMaxRegisteredSequenceNumber(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+
+    auto it = consumerPartitions.find(partition);
+    NES_ASSERT2_FMT(it != consumerPartitions.end(),
+                    "PartitionManager: error while resetting partition " << partition << " reason: partition not found");
+
+    it->second.resetMaxRegisteredSeqNumber();
+}
+
+bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition, uint64_t newMaxRegisteredSeqNumber) {
     std::unique_lock lock(consumerPartitionsMutex);
 
     auto it = consumerPartitions.find(partition);
@@ -98,6 +129,7 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
         return true;
     }
 
+    it->second.updateMaxRegisteredSeqNumber(newMaxRegisteredSeqNumber);
     it->second.unpin();
 
     NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());
@@ -194,16 +226,14 @@ bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
                                                     Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);
     //check if partition is present
-    auto it = producerPartitions.find(partition);
-    if (it == producerPartitions.end()) {
+    if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
         it->second.registerEventListener(eventListener);
         NES_DEBUG("PartitionManager: Registering Subpartition Event Consumer {}={}", partition.toString(), (*it).second.count());
         return true;
     }
-    NES_DEBUG("PartitionManager: Partition already registered, pinning {}", partition.toString());
-    it->second.pin();
-    return true;
+    NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
+    return false;
 }
 
 bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition) {

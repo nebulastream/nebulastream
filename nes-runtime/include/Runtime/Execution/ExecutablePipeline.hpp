@@ -23,6 +23,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/ThreadBarrier.hpp>
 #include <atomic>
 #include <memory>
 #include <variant>
@@ -109,11 +110,15 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
 
     /**
+     *
      * @brief Starts a pipeline stage and passes statemanager and local state counter further to the operator handler
      * @param stateManager pointer to the current state manager
      * @return Success if pipeline stage started 
      */
     bool start();
+
+    bool shouldRecreate();
+    bool recreate();
 
     /**
      * @brief Stops pipeline stage
@@ -232,6 +237,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     void propagateEndOfStream(ReconfigurationMessage& task);
 
+    void sendBuffers(OperatorHandlerPtr operatorHandler, WorkerContext& context);
+
     const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
@@ -241,6 +248,11 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
     std::atomic<bool> isMigrationPipeline;
+    ThreadBarrierPtr preSerBarrier = std::make_shared<ThreadBarrier>(4);
+    std::condition_variable conditionSerialized;
+    std::once_flag serializeOnceFlag;
+    std::mutex serializeMtx;
+    std::atomic<bool> serialized = false;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;

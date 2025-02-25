@@ -84,7 +84,12 @@ class DeploymentContext {
      */
     std::string getGrpcAddress() const;
 
+    void setForMigration(bool flag);
+
+    bool isForMigration();
+
   private:
+    bool migration{false};
     std::string grpcAddress;
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;

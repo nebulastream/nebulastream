@@ -138,8 +138,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
                         "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
-        const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
-        NES_DEBUG("Received lastEOS {}", lastEOS);
+        const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition, endOfStreamMessage.getMaxMessageSequenceNumber());
+        NES_DEBUG("Received lastEOS {}, max message seq number {} and max stored seq number {} for parition {}", lastEOS, endOfStreamMessage.getMaxMessageSequenceNumber(), partitionManager->getMaxRegisteredSequenceNumber(eosNesPartition), eosNesPartition.getOperatorId());
 //        if (lastEOS) {
 //            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
 //            while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {

@@ -112,6 +112,15 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 
                 break;
             }
+            case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
+                if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
+                    && sharedQueryState != QueryState::MIGRATING) {
+                    sharedQueryState = QueryState::RUNNING;
+                }
+                workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext, replay);
+                asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
+                break;
+            }
             case QueryState::MARKED_FOR_REDEPLOYMENT: {
                 if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED) {
                     sharedQueryState = QueryState::MIGRATING;
@@ -263,6 +272,14 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                 asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Start});
                 break;
             }
+//            case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {x
+//                workerRPCClient->startDecomposedQueryAsync(grpcAddress,
+//                                                           sharedQueryId,
+//                                                           decomposedQueryId,
+//                                                           queueForDeploymentContext);
+//                asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Start});
+//                break;
+//            }
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
                     /* todo #5133: In the new redeployment logic migrated plans get undeployed via reconfiguration markers they

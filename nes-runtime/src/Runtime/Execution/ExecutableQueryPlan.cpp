@@ -109,6 +109,16 @@ bool ExecutableQueryPlan::fail() {
     return ret;
 }
 
+bool ExecutableQueryPlan::shouldDelayStart() {
+    auto shouldRecreate = false;
+
+    for (auto& pipeline : pipelines) {
+        shouldRecreate |= pipeline->shouldRecreate();
+    }
+
+    return shouldRecreate;
+}
+
 ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() const { return qepStatus.load(); }
 
 bool ExecutableQueryPlan::setup() {
@@ -135,6 +145,24 @@ bool ExecutableQueryPlan::start() {
         for (auto& stage : pipelines) {
             NES_DEBUG("ExecutableQueryPlan::start qep={} pipe={}", stage->getDecomposedQueryId(), stage->getPipelineId());
             if (!stage->start()) {
+                NES_ERROR("QueryExecutionPlan: start failed! query={} decomposedplan={}", sharedQueryId, decomposedQueryId);
+                this->stop();
+                return false;
+            }
+        }
+    } else {
+        NES_THROW_RUNTIME_ERROR("QEP expected to be Deployed but was not");
+    }
+    return true;
+}
+
+bool ExecutableQueryPlan::checkRecreation() {
+    NES_DEBUG("QueryExecutionPlan: check recreations for query={} decomposedplan={}", sharedQueryId, decomposedQueryId);
+    auto expected = Execution::ExecutableQueryPlanStatus::Running;
+    if (qepStatus == expected) {
+        for (auto& stage : pipelines) {
+            NES_DEBUG("ExecutableQueryPlan::recreate qep={} pipe={}", stage->getDecomposedQueryId(), stage->getPipelineId());
+            if (!stage->recreate()) {
                 NES_ERROR("QueryExecutionPlan: start failed! query={} decomposedplan={}", sharedQueryId, decomposedQueryId);
                 this->stop();
                 return false;

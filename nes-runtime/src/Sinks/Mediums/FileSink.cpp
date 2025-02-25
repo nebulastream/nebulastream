@@ -172,88 +172,122 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
-    (void) context;
-    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-    NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
-    if (!getReplayData()) {
-        NES_DEBUG("replay data not activated writing buffer");
+    if (!timestampAndWriteToSocket) {
+        if (!isOpen) {
+            NES_DEBUG("The output file could not be opened during setup of the file sink.");
+            return false;
+        }
+        std::unique_lock lock(writeMutex);
+
+        if (!inputBuffer) {
+            NES_ERROR("Invalid input buffer");
+            return false;
+        }
+
+        if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+            NES_DEBUG("Writing schema to file sink; filePath = {}, schema = {}, sinkFormat = {}",
+                      filePath,
+                      sinkFormat->getSchemaPtr()->toString(),
+                      sinkFormat->toString());
+            auto schemaStr = sinkFormat->getFormattedSchema();
+            outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+            schemaWritten = true;
+        } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+            NES_DEBUG("Writing the schema is not supported for NES_FORMAT");
+        } else {
+            NES_DEBUG("Schema already written");
+        }
+
+        auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+        NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
+        outputFile.write(fBuffer.c_str(), fBuffer.size());
+        outputFile.flush();
+        return true;
+    } else {
+        (void) context;
+        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+
+        NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
+        if (!getReplayData()) {
+            NES_DEBUG("replay data not activated writing buffer");
+            std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
+            return writeDataToTCP(vec, sinkInfo);
+        }
+
+        // Stop execution if the file could not be opened during setup.
+        // This results in ExecutionResult::Error for the task.
+        numberOfReceivedBuffers++;
+
+        if (!inputBuffer) {
+            NES_ERROR("Invalid input buffer");
+            return false;
+        }
+
+        //todo: get source id
+        //todo: check if we can use origin id
+        NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
+        auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
+        NES_DEBUG("writing data for source id {}", sourceId);
+        const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+        auto seqQueueMap = nodeEngine->writeLockSeqQueue(filePath);
+        auto bufferStorage = nodeEngine->writeLockSinkStorage(filePath);
+        {
+
+            if (!seqQueueMap->contains(sourceId)) {
+                Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
+                seqQueueMap->operator[](sourceId) = newQueue;
+                NES_DEBUG("creating new queue with start {}", seqQueueMap->at(sourceId).getCurrentValue());
+            }
+        }
+
+        auto currentSeqNumberBeforeAdding = seqQueueMap->at(sourceId).getCurrentValue();
+
+        //ignore this buffer if it was already written
+        if (bufferSeqNumber <= currentSeqNumberBeforeAdding) {
+            NES_DEBUG("seq {} is less than {} for id {}", bufferSeqNumber, currentSeqNumberBeforeAdding, sourceId);
+            return true;
+        }
+
+        {
+            if (bufferStorage->operator[](sourceId).contains(bufferSeqNumber)) {
+                NES_DEBUG("buffer already recorded, exiting");
+                return true;
+            }
+            NES_DEBUG("buffer not yet recored, proceeedign");
+            bufferStorage->operator[](sourceId).emplace(bufferSeqNumber);
+        }
+        NES_DEBUG("increase seq nr")
+
+        // save the highest consecutive sequence number in the queue
+
+        // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
+        const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+        // insert input buffer sequence number to the queue
+        seqQueueMap->at(sourceId).emplace(seqData, bufferSeqNumber);
+
+        // get the highest consecutive sequence number in the queue after adding new value
+        auto currentSeqNumberAfterAdding = seqQueueMap->at(sourceId).getCurrentValue();
+
+        NES_DEBUG("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}",
+                  currentSeqNumberBeforeAdding,
+                  currentSeqNumberAfterAdding,
+                  sourceId,
+                  sharedQueryId);
+        // check if top value in the queue has changed after adding new sequence number
+        NES_DEBUG("writing data: seq number before adding {}, after adding {}, source id {}, sharedQueryId {}",
+                  currentSeqNumberBeforeAdding,
+                  currentSeqNumberAfterAdding,
+                  sourceId,
+                  sharedQueryId);
+        //        auto bufferStorageLocked = bufferStorage.wlock();
+        NES_DEBUG("erasing elements");
+        bufferStorage->operator[](sourceId).erase(bufferStorage->operator[](sourceId).begin(),
+                                                  bufferStorage->operator[](sourceId).find(currentSeqNumberAfterAdding));
+        NES_DEBUG("returning")
         std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
         return writeDataToTCP(vec, sinkInfo);
     }
-
-    // Stop execution if the file could not be opened during setup.
-    // This results in ExecutionResult::Error for the task.
-    numberOfReceivedBuffers++;
-
-    if (!inputBuffer) {
-        NES_ERROR("Invalid input buffer");
-        return false;
-    }
-
-    //todo: get source id
-    //todo: check if we can use origin id
-    NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
-    auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
-    NES_DEBUG("writing data for source id {}", sourceId);
-    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
-    auto seqQueueMap = nodeEngine->writeLockSeqQueue(filePath);
-    auto bufferStorage = nodeEngine->writeLockSinkStorage(filePath);
-    {
-
-        if (!seqQueueMap->contains(sourceId)) {
-            Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
-            seqQueueMap->operator[](sourceId) = newQueue;
-            NES_DEBUG("creating new queue with start {}", seqQueueMap->at(sourceId).getCurrentValue());
-        }
-    }
-
-    auto currentSeqNumberBeforeAdding = seqQueueMap->at(sourceId).getCurrentValue();
-
-    //ignore this buffer if it was already written
-    if (bufferSeqNumber <= currentSeqNumberBeforeAdding) {
-        NES_DEBUG("seq {} is less than {} for id {}", bufferSeqNumber, currentSeqNumberBeforeAdding, sourceId);
-        return true;
-    }
-
-    {
-        if (bufferStorage->operator[](sourceId).contains(bufferSeqNumber)) {
-            NES_DEBUG("buffer already recorded, exiting");
-            return true;
-        }
-        NES_DEBUG("buffer not yet recored, proceeedign");
-        bufferStorage->operator[](sourceId).emplace(bufferSeqNumber);
-    }
-    NES_DEBUG("increase seq nr")
-
-    // save the highest consecutive sequence number in the queue
-
-    // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
-    const auto seqData = SequenceData(bufferSeqNumber, 1, true);
-    // insert input buffer sequence number to the queue
-    seqQueueMap->at(sourceId).emplace(seqData, bufferSeqNumber);
-
-    // get the highest consecutive sequence number in the queue after adding new value
-    auto currentSeqNumberAfterAdding = seqQueueMap->at(sourceId).getCurrentValue();
-
-    NES_DEBUG("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}",
-              currentSeqNumberBeforeAdding,
-              currentSeqNumberAfterAdding,
-              sourceId,
-              sharedQueryId);
-    // check if top value in the queue has changed after adding new sequence number
-    NES_DEBUG("writing data: seq number before adding {}, after adding {}, source id {}, sharedQueryId {}",
-              currentSeqNumberBeforeAdding,
-              currentSeqNumberAfterAdding,
-              sourceId,
-              sharedQueryId);
-    //        auto bufferStorageLocked = bufferStorage.wlock();
-    NES_DEBUG("erasing elements");
-    bufferStorage->operator[](sourceId).erase(bufferStorage->operator[](sourceId).begin(),
-                                            bufferStorage->operator[](sourceId).find(currentSeqNumberAfterAdding));
-    NES_DEBUG("returning")
-    std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
-    return writeDataToTCP(vec, sinkInfo);
 }
 
 //bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
@@ -569,6 +603,9 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    if (fBuffer.empty()) {
+
+    }
     NES_DEBUG("Writing tuples to file sink; decomposed query id={} filePath={}, fBuffer={}",
               decomposedQueryId,
               filePath,

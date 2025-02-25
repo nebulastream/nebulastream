@@ -122,6 +122,7 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
     std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
     bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+    bufferCopy.setChunkNumber(buffer.getChunkNumber());
     bufferCopy.setOriginId(buffer.getOriginId());
     bufferCopy.setWatermark(buffer.getWatermark());
     bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
@@ -190,7 +191,8 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectB
 //    return {};
 }
 
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::
+    removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
     if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
         auto buffer = iteratorAtOperatorId->second.front();

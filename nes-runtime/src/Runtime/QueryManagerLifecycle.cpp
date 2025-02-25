@@ -107,106 +107,103 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         return false;
     }
 
-    std::vector<AsyncTaskExecutor::AsyncTaskFuture<bool>> startFutures;
+    if (!executableQueryPlan->shouldDelayStart()) {
+        std::vector<AsyncTaskExecutor::AsyncTaskFuture<bool>> startFutures;
 
-    std::vector<Network::NetworkSourcePtr> netSources;
-    std::vector<Network::NetworkSinkPtr> netSinks;
+        std::vector<Network::NetworkSourcePtr> netSources;
+        std::vector<Network::NetworkSinkPtr> netSinks;
 
-    // 2a. sort net sinks and sources
-    for (const auto& sink : executableQueryPlan->getSinks()) {
-        if (auto netSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink); netSink) {
-            netSinks.emplace_back(netSink);
+        // 2a. sort net sinks and sources
+        for (const auto& sink : executableQueryPlan->getSinks()) {
+            if (auto netSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink); netSink) {
+                netSinks.emplace_back(netSink);
+            }
         }
-    }
-    std::sort(netSinks.begin(), netSinks.end(), [](const Network::NetworkSinkPtr& lhs, const Network::NetworkSinkPtr& rhs) {
-        return *lhs < *rhs;
-    });
-    for (const auto& sink : executableQueryPlan->getSources()) {
-        if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(sink); netSource) {
-            netSources.emplace_back(netSource);
+        std::sort(netSinks.begin(), netSinks.end(), [](const Network::NetworkSinkPtr& lhs, const Network::NetworkSinkPtr& rhs) {
+            return *lhs < *rhs;
+        });
+        for (const auto& sink : executableQueryPlan->getSources()) {
+            if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(sink); netSource) {
+                netSources.emplace_back(netSource);
+            }
         }
-    }
-    std::sort(netSources.begin(),
-              netSources.end(),
-              [](const Network::NetworkSourcePtr& lhs, const Network::NetworkSourcePtr& rhs) {
-                  return *lhs < *rhs;
-              });
+        std::sort(netSources.begin(),
+                  netSources.end(),
+                  [](const Network::NetworkSourcePtr& lhs, const Network::NetworkSourcePtr& rhs) {
+                      return *lhs < *rhs;
+                  });
 
-    // 2b. pre-start net sinks
-    for (const auto& netSink : netSinks) {
-        netSink->preSetup();
-    }
+        // 2b. pre-start net sinks
+        for (const auto& netSink : netSinks) {
+            netSink->preSetup();
+        }
 
-    // 2b. start net sinks
-    for (const auto& sink : netSinks) {
-        startFutures.emplace_back(asyncTaskExecutor->runAsync([sink]() {
-            NES_DEBUG("AbstractQueryManager: start network sink  {}", sink->toString());
-            sink->setup();
-            return true;
-        }));
-    }
+        // 2b. start net sinks
+        for (const auto& sink : netSinks) {
+            startFutures.emplace_back(asyncTaskExecutor->runAsync([sink]() {
+                NES_DEBUG("AbstractQueryManager: start network sink  {}", sink->toString());
+                sink->setup();
+                return true;
+            }));
+        }
 
-    auto sourcesToReuse = executableQueryPlan->getSourcesToReuse();
-    bool registeredAsSuccessor = false;
+        auto sourcesToReuse = executableQueryPlan->getSourcesToReuse();
+        bool registeredAsSuccessor = false;
 
-    // 3a. pre-start net sources
-    for (const auto& source : netSources) {
+        // 3a. pre-start net sources
+        for (const auto& source : netSources) {
 
-        //check if source is an existing source to be reused
-        if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
-            if (!registeredAsSuccessor) {
-                auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+            //check if source is an existing source to be reused
+            if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
+                if (!registeredAsSuccessor) {
+                    auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
 
-                if (predecessorPlans.size() > 1) {
-                    NES_FATAL_ERROR(
-                        "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
-                        source->getOperatorId());
+                    if (predecessorPlans.size() > 1) {
+                        NES_FATAL_ERROR(
+                            "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+                            source->getOperatorId());
+                    }
+
+                    auto predecessorPlan = predecessorPlans.front();
+
+                    predecessorPlan->addSuccessorPlan(executableQueryPlan);
+                    registeredAsSuccessor = true;
                 }
 
-                auto predecessorPlan = predecessorPlans.front();
-
-                predecessorPlan->addSuccessorPlan(executableQueryPlan);
-                registeredAsSuccessor = true;
+                //do not bind
+                continue;
             }
 
-            //do not bind
-            continue;
+            std::stringstream s;
+            s << source;
+            std::string sourceString = s.str();
+            if (!source->bind()) {
+                NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
+            } else {
+                NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+            }
+        }
+		//todo: before starting any sources, check that incremental property is set
+        // 3b. start net sources
+        for (const auto& source : netSources) {
+            std::stringstream s;
+            s << source;
+            std::string sourceString = s.str();
+            if (!source->start()) {
+                NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
+            } else {
+                NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+            }
         }
 
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        if (!source->bind()) {
-            NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
-        } else {
-            NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+        // 4. start data sinks
+        for (const auto& sink : executableQueryPlan->getSinks()) {
+            if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
+                continue;
+            }
+            NES_DEBUG("AbstractQueryManager: start sink  {}", sink->toString());
+            sink->setup();
         }
-    }
-
-    //todo: before starting any sources, check that incremental property is set
-    // 3b. start net sources
-    for (const auto& source : netSources) {
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        if (!source->start()) {
-            NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
-        } else {
-            NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
-        }
-    }
-
-    for (auto& future : startFutures) {
-        NES_ASSERT(future.wait(), "Cannot start query");
-    }
-
-    // 4. start data sinks
-    for (const auto& sink : executableQueryPlan->getSinks()) {
-        if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
-            continue;
-        }
-        NES_DEBUG("AbstractQueryManager: start sink  {}", sink->toString());
-        sink->setup();
     }
 
     {
@@ -238,47 +235,202 @@ bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQ
                         << qep->getSharedQueryId() << " and decomposed query id " << qep->getDecomposedQueryId());
     //    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
     //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
-    for (const auto& sink : qep->getSinks()) {
-        //cast to network sink
-        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-        if (networkSink) {
-            networkSink->setReconnectCount(reconnectCount);
-        }
+    if (qep->shouldDelayStart()) {
+        std::thread thread([qep = qep,
+                            queryToStatisticsMap = queryToStatisticsMap,
+                            asyncTaskExecutor = asyncTaskExecutor,
+                            sourceToQEPMapping = sourceToQEPMapping,
+                            reconnectCount = reconnectCount]() mutable {
+            // Recreate
+            if (!qep->checkRecreation()) {
+                NES_FATAL_ERROR("AbstractQueryManager: query execution plan could not started");
+            }
 
-    }
+            std::vector<AsyncTaskExecutor::AsyncTaskFuture<bool>> startFutures;
 
-    // 5. start data sources
-    for (const auto& source : qep->getSources()) {
-        if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-            continue;
-        }
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        NES_DEBUG("AbstractQueryManager: start source  {}  str= {}", sourceString, source->toString());
-        if (!source->start()) {
-            NES_WARNING("AbstractQueryManager: source {} could not started as it is already running", sourceString);
-        } else {
-            NES_DEBUG("AbstractQueryManager: source  {}  started successfully", sourceString);
-        }
-    }
+            std::vector<Network::NetworkSourcePtr> netSources;
+            std::vector<Network::NetworkSinkPtr> netSinks;
 
-    // register start timestamp of query in statistics
-    if (queryToStatisticsMap.contains(qep->getDecomposedQueryId())) {
-        auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryId());
-        if (statistics->getTimestampQueryStart() == 0) {
-            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                           .count();
-            statistics->setTimestampQueryStart(now, true);
-        } else {
-            NES_DEBUG("Start timestamp already exists, this is expected in case of query reconfiguration");
-        }
+            // 2a. sort net sinks and sources
+            for (const auto& sink : qep->getSinks()) {
+                if (auto netSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink); netSink) {
+                    netSinks.emplace_back(netSink);
+                }
+            }
+            std::sort(netSinks.begin(), netSinks.end(), [](const Network::NetworkSinkPtr& lhs, const Network::NetworkSinkPtr& rhs) {
+                return *lhs < *rhs;
+            });
+            for (const auto& sink : qep->getSources()) {
+                if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(sink); netSource) {
+                    netSources.emplace_back(netSource);
+                }
+            }
+            std::sort(netSources.begin(),
+                      netSources.end(),
+                      [](const Network::NetworkSourcePtr& lhs, const Network::NetworkSourcePtr& rhs) {
+                          return *lhs < *rhs;
+                      });
+
+            // 2b. pre-start net sinks
+            for (const auto& netSink : netSinks) {
+                netSink->preSetup();
+            }
+
+            // 2b. start net sinks
+            for (const auto& sink : netSinks) {
+                startFutures.emplace_back(asyncTaskExecutor->runAsync([sink]() {
+                    NES_DEBUG("AbstractQueryManager: start network sink  {}", sink->toString());
+                    sink->setup();
+                    return true;
+                }));
+            }
+
+            auto sourcesToReuse = qep->getSourcesToReuse();
+            bool registeredAsSuccessor = false;
+
+            // 3a. pre-start net sources
+            for (const auto& source : netSources) {
+
+                //check if source is an existing source to be reused
+                if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
+                    if (!registeredAsSuccessor) {
+                        auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+
+                        if (predecessorPlans.size() > 1) {
+                            NES_FATAL_ERROR(
+                                "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+                                source->getOperatorId());
+                        }
+
+                        auto predecessorPlan = predecessorPlans.front();
+
+                        predecessorPlan->addSuccessorPlan(qep);
+                        registeredAsSuccessor = true;
+                    }
+
+                    //do not bind
+                    continue;
+                }
+
+                std::stringstream s;
+                s << source;
+                std::string sourceString = s.str();
+                if (!source->bind()) {
+                    NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
+                } else {
+                    NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+                }
+            }
+
+            // 3b. start net sources
+            for (const auto& source : netSources) {
+                std::stringstream s;
+                s << source;
+                std::string sourceString = s.str();
+                if (!source->start()) {
+                    NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
+                } else {
+                    NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+                }
+            }
+
+            for (auto& future : startFutures) {
+                NES_ASSERT(future.wait(), "Cannot start query");
+            }
+
+            // 4. start data sinks
+            for (const auto& sink : qep->getSinks()) {
+                if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
+                    continue;
+                }
+                NES_DEBUG("AbstractQueryManager: start sink  {}", sink->toString());
+                sink->setup();
+            }
+
+			for (const auto& sink : qep->getSinks()) {
+        		//cast to network sink
+        		auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+       		 	if (networkSink) {
+                    networkSink->setReconnectCount(reconnectCount);
+                }
+        	}
+
+            // 5. start data sources
+            for (const auto& source : qep->getSources()) {
+                if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+                    continue;
+                }
+                std::stringstream s;
+                s << source;
+                std::string sourceString = s.str();
+                NES_DEBUG("AbstractQueryManager: start source  {}  str= {}", sourceString, source->toString());
+                if (!source->start()) {
+                    NES_WARNING("AbstractQueryManager: source {} could not started as it is already running", sourceString);
+                } else {
+                    NES_DEBUG("AbstractQueryManager: source  {}  started successfully", sourceString);
+                }
+            }
+
+            // register start timestamp of query in statistics
+            if (queryToStatisticsMap.contains(qep->getDecomposedQueryId())) {
+                auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryId());
+                if (statistics->getTimestampQueryStart() == 0) {
+                    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::high_resolution_clock::now().time_since_epoch())
+                                   .count();
+                    statistics->setTimestampQueryStart(now, true);
+                } else {
+                    NES_DEBUG("Start timestamp already exists, this is expected in case of query reconfiguration");
+                }
+            } else {
+                NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
+                NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
+            }
+        });
+
+        thread.detach();
     } else {
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
-        NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
-    }
 
+        for (const auto& sink : qep->getSinks()) {
+            //cast to network sink
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink) {
+                networkSink->setReconnectCount(reconnectCount);
+            }
+        }
+
+        // 5. start data sources
+        for (const auto& source : qep->getSources()) {
+            if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+                continue;
+            }
+            std::stringstream s;
+            s << source;
+            std::string sourceString = s.str();
+            NES_DEBUG("AbstractQueryManager: start source  {}  str= {}", sourceString, source->toString());
+            if (!source->start()) {
+                NES_WARNING("AbstractQueryManager: source {} could not started as it is already running", sourceString);
+            } else {
+                NES_DEBUG("AbstractQueryManager: source  {}  started successfully", sourceString);
+            }
+        }
+
+        // register start timestamp of query in statistics
+        if (queryToStatisticsMap.contains(qep->getDecomposedQueryId())) {
+            auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryId());
+            if (statistics->getTimestampQueryStart() == 0) {
+                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::high_resolution_clock::now().time_since_epoch())
+                               .count();
+                statistics->setTimestampQueryStart(now, true);
+            } else {
+                NES_DEBUG("Start timestamp already exists, this is expected in case of query reconfiguration");
+            }
+        } else {
+            NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
+            NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
+        }
+    }
     return true;
 }
 

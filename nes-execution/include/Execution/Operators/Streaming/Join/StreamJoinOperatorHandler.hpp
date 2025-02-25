@@ -70,10 +70,22 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    void recreate() override;
+
+    bool shouldRecreate() override;
+
     /**
      * @brief Recreate state and window info from the file
      */
     void recreateOperatorHandlerFromFile();
+
+    /**
+     * @brief Retrieves state, window info and watermarks information from max(last watermark, migrated tmstmp)
+     * @return vector of tuple buffers
+     */
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
+
+    std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t id) override;
 
     /**
      * @brief Retrieve the state as a vector of tuple buffers
@@ -124,6 +136,24 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param buffers with the state
      */
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
+
+    /**
+     * @brief read numberOfBuffers amount of buffers from file
+     * @param numberOfBuffers number of buffers to read
+     * @return read buffers
+     */
+    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+
+    /**
+     * @brief Retrieve watermarks and sequence numbers as a vector of tuple buffers
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build origins (n) | number of probe origins (m)
+     * | watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     */
+    std::vector<TupleBuffer> getWatermarksToMigrate();
 
     /**
      * @brief Retrieves buffers from the file and restores the state
@@ -301,13 +331,19 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * get recreation file name
      */
     std::optional<std::string> getRecreationFileName();
+    bool migrating = false;
 
   private:
     /**
-     * read numberOfBuffers amount of buffers from file
-     * @param numberOfBuffers number of buffers to read
+     * @brief Restores watermarks and sequence numbers in build and probe watermark processors
+     * Format of buffers looks like:
+     * buffers contain metadata in format:
+     * -----------------------------------------
+     * number of build buffers (n) | number of probe buffers (m)
+     * watermark of 1st origin (i_0) | ... | watermark of n-th slice (i_n) | seq number of 1st origin (i_0) | ... | seq number of m-th slice (i_m)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
      */
-    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+    void restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers);
 
     /**
      * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
@@ -315,7 +351,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @return recreated StreamSlicePtr
      */
     virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) = 0;
-
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
@@ -347,6 +382,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     uint64_t currentSliceId = 0;
     bool setForReuse = false;
     SharedJoinApproach approach = SharedJoinApproach::UNSHARED;
+    std::vector<TupleBuffer> stateToTransfer{};
+    std::vector<bool> asked{false, false, false, false};
 };
 
 /**

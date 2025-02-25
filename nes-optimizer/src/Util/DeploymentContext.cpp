@@ -53,4 +53,12 @@ DecomposedQueryPlanVersion DeploymentContext::getDecomposedQueryPlanVersion() co
 
 WorkerId DeploymentContext::getWorkerId() const { return workerId; }
 
+void DeploymentContext::setForMigration(bool flag) {
+    migration = flag;
+}
+
+bool DeploymentContext::isForMigration() {
+    return migration;
+}
+
 }// namespace NES::Optimizer

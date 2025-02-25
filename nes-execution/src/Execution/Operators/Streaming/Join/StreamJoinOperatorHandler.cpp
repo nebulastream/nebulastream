@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -26,9 +27,6 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, u
     NES_INFO("Started StreamJoinOperatorHandler!");
     setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
     setBufferManager(pipelineCtx->getBufferManager());
-    if (shouldBeRecreated) {
-        recreateOperatorHandlerFromFile();
-    }
 }
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
@@ -41,6 +39,16 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
+void StreamJoinOperatorHandler::recreate() {
+    if (shouldBeRecreated) {
+        recreateOperatorHandlerFromFile();
+    }
+};
+
+bool StreamJoinOperatorHandler::shouldRecreate() {
+    return shouldBeRecreated;
+};
+
 void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     NES_INFO("Start of recreation from file");
     if (!recreationFilePath.has_value()) {
@@ -48,12 +56,14 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     }
 
     auto filePath = recreationFilePath.value();
-
+    NES_ERROR("waiting for recreation file");
     while (!std::filesystem::exists(filePath)) {
-        NES_DEBUG("File {} does not exist yet", filePath);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
-
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("started recreating at {}", time);
+    NES_DEBUG("File {} exists. Start of recreation from file", filePath);
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
 
     if (!fileStream.is_open()) {
@@ -64,23 +74,189 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     auto numberOfMetadataBuffers = 1;
     auto metadataBuffers = readBuffers(fileStream, numberOfMetadataBuffers);
     auto metadataPtr = metadataBuffers[0].getBuffer<uint64_t>();
-    uint64_t numberOfStateBuffers = metadataPtr[0];
-    uint64_t numberOfWindowInfoBuffers = metadataPtr[1];
+    uint64_t numberOfWatermarkBuffers = metadataPtr[0];
+    NES_DEBUG("Number of read watermark buffers: {}", numberOfWatermarkBuffers);
+    uint64_t numberOfStateBuffers = metadataPtr[1];
+    NES_DEBUG("Number of read state buffers: {}", numberOfStateBuffers);
+    uint64_t numberOfWindowInfoBuffers = metadataPtr[2];
+    NES_DEBUG("Number of read window info buffers: {}", numberOfWindowInfoBuffers);
+    currentSliceId = metadataPtr[3];
 
-    // 2. read state buffers
-    std::vector<TupleBuffer> recreatedStateBuffers = readBuffers(fileStream, numberOfStateBuffers);
+    // 2. read watermarks buffers
+    auto recreatedWatermarkBuffers = readBuffers(fileStream, numberOfWatermarkBuffers);
 
-    // 3. read window info buffers
-    std::vector<TupleBuffer> recreatedWindowInfoBuffers = readBuffers(fileStream, numberOfWindowInfoBuffers);
+    // 3. read state buffers
+    auto recreatedStateBuffers = readBuffers(fileStream, numberOfStateBuffers);
+
+    // 4. read window info buffers
+    auto recreatedWindowInfoBuffers = readBuffers(fileStream, numberOfWindowInfoBuffers);
 
     fileStream.close();
 
-    // 4. recreate state and window info from read buffers
+    // 5. recreate state and window info from read buffers
+    restoreWatermarks(recreatedWatermarkBuffers);
     restoreState(recreatedStateBuffers);
     restoreWindowInfo(recreatedWindowInfoBuffers);
     // reset recreation flag and delete file
     shouldBeRecreated = false;
-    std::remove(recreationFilePath->c_str());
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("State finished recreating at {}", endTime);
+    if (std::remove(recreationFilePath->c_str()) == 0) {
+        NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
+    } else {
+        NES_WARNING("File {} was not deleted after recreation", recreationFilePath->c_str());
+    }
+}
+
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHandlerForMigration() {
+    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Started serializing at {}", startTime);
+    // get timestamp of not probed slices
+    auto migrationTimestamp =
+        std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
+
+    // add sizes to metadata
+    auto metadata = bufferManager->getBufferBlocking();
+    auto metadataPtr = metadata.getBuffer<uint64_t>();
+    metadata.setSequenceNumber(++lastMigratedSeqNumber);
+
+    // get watermarks, state and windows info to migrate
+    auto watermarkBuffers = getWatermarksToMigrate();
+    auto stateBuffers = getStateToMigrate(migrationTimestamp, UINT64_MAX);
+    auto windowInfoBuffers = getWindowInfoToMigrate();
+
+    metadataPtr[0] = watermarkBuffers.size();
+    NES_DEBUG("Number of serialized watermark buffers: {}", watermarkBuffers.size());
+    metadataPtr[1] = stateBuffers.size();
+    NES_DEBUG("Number of serialized state buffers: {}", stateBuffers.size());
+    metadataPtr[2] = windowInfoBuffers.size();
+    NES_DEBUG("Number of serialized window info buffers: {}", windowInfoBuffers.size());
+    metadataPtr[3] = currentSliceId;
+
+    std::vector<TupleBuffer> mergedBuffers = {metadata};
+
+    mergedBuffers.insert(mergedBuffers.end(),
+                         std::make_move_iterator(watermarkBuffers.begin()),
+                         std::make_move_iterator(watermarkBuffers.end()));
+
+    mergedBuffers.insert(mergedBuffers.end(),
+                         std::make_move_iterator(stateBuffers.begin()),
+                         std::make_move_iterator(stateBuffers.end()));
+
+    mergedBuffers.insert(mergedBuffers.end(),
+                         std::make_move_iterator(windowInfoBuffers.begin()),
+                         std::make_move_iterator(windowInfoBuffers.end()));
+    NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
+    for (auto& buffer: mergedBuffers) {
+        buffer.setWatermark(mergedBuffers.size());
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    stateToTransfer = mergedBuffers;
+    NES_ERROR("Finished serializing at {}", endTime);
+    return mergedBuffers;
+}
+
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortion(uint64_t id) {
+    if (asked[id]) {
+        return {};
+    }
+    asked[id] = true;
+    auto numberOfThreads = 4;
+    size_t totalSize = stateToTransfer.size();
+    size_t chunkSize = (totalSize + numberOfThreads - 1) / numberOfThreads;
+
+    size_t startIdx = id * chunkSize;
+    size_t endIdx = std::min(startIdx + chunkSize, totalSize);
+
+    std::vector<Runtime::TupleBuffer> portion;
+    for (size_t i = id; i < totalSize; i += numberOfThreads) {
+        portion.push_back(stateToTransfer[i]);
+    }
+
+    return portion;
+}
+
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigrate() {
+    auto watermarksBuffers = std::vector<Runtime::TupleBuffer>();
+
+    // metadata buffer
+    auto buffer = bufferManager->getBufferBlocking();
+    watermarksBuffers.emplace_back(buffer);
+    uint64_t buffersCount = 1;
+
+    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
+    if (!buffer.hasSpaceLeft(0, sizeof(uint64_t))) {
+        NES_THROW_RUNTIME_ERROR("Buffer is too small");
+    }
+
+    // metadata pointer
+    auto bufferPtr = buffer.getBuffer<uint64_t>();
+    uint64_t bufferIdx = 0;
+
+    /** @brief Lambda to write to watermark buffers */
+    auto writeToBuffer = [&buffer, &bufferPtr, &bufferIdx, this, &buffersCount, &watermarksBuffers](uint64_t dataToWrite) {
+        StateSerializationUtil::writeToBuffer(bufferManager,
+                                              buffer.getBufferSize(),
+                                              bufferPtr,
+                                              bufferIdx,
+                                              buffersCount,
+                                              watermarksBuffers,
+                                              dataToWrite);
+    };
+
+    auto buildWatermarksBuffers = watermarkProcessorBuild->serializeWatermarks(bufferManager);
+    NES_DEBUG("build buffers size {}", buildWatermarksBuffers.size());
+
+    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    // 1. Insert number of build origins to metadata buffer
+    writeToBuffer(buildWatermarksBuffers.size());
+
+    auto probeWatermarks = watermarkProcessorProbe->serializeWatermarks(bufferManager);
+    NES_DEBUG("probe buffers size {}", probeWatermarks.size());
+
+    // 3. Insert number of probe origins to metadata buffer
+    writeToBuffer(probeWatermarks.size());
+
+    // 4. insert build and probe buffers
+    watermarksBuffers.insert(watermarksBuffers.end(), buildWatermarksBuffers.begin(), buildWatermarksBuffers.end());
+    watermarksBuffers.insert(watermarksBuffers.end(), probeWatermarks.begin(), probeWatermarks.end());
+
+    // set order of tuple buffers
+    // TODO: #5027 change if getStateToMigrate will be used by several threads
+    for (auto& buffer : watermarksBuffers) {
+        buffer.setSequenceNumber(++lastMigratedSeqNumber);
+    }
+
+    return watermarksBuffers;
+}
+
+void StreamJoinOperatorHandler::restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers) {
+    // get data buffer
+    uint64_t dataBuffersIdx = 0;
+    auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
+    uint64_t dataIdx = 0;
+
+    /** @brief Lambda to read from data buffers
+     * captured variables:
+     * dataPtr - pointer to the start of current metadata buffer
+     * dataIdx - index of size64_t data inside metadata buffer
+     * dataBuffersIdx - index of current buffer to read
+     * buffers - vector of buffers
+    */
+    auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
+        return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
+    };
+
+    // NOTE: Do not change the order of reads from data buffers(order is documented in function declaration)
+    // 1. Retrieve number of build origins
+    auto numberOfBuildBuffers = deserializeNextValue();
+    watermarkProcessorBuild->restoreWatermarks(
+        std::span<const Runtime::TupleBuffer>(buffers.data() + dataBuffersIdx + 1, numberOfBuildBuffers));
+
+    // 3. Retrieve number of build origins
+    auto numberOfProbeBuffers = deserializeNextValue();
+    watermarkProcessorProbe->restoreWatermarks(
+        std::span<const Runtime::TupleBuffer>(buffers.data() + numberOfBuildBuffers + dataBuffersIdx + 1, numberOfProbeBuffers));
 }
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
@@ -102,7 +278,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata buffer
     auto mainMetadata = bufferManager->getBufferBlocking();
-    auto metadataBuffersCount = 0;
+    uint64_t metadataBuffersCount = 0;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -111,30 +287,18 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata pointer
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
-    auto metadataIdx = 1ULL;
+    uint64_t metadataIdx = 1;
 
-    /** @brief Lambda to write to metadata buffers
-     * captured variables:
-     * mainMetadata - generic metadata buffer, used for checking space left
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersCount - number of metadata buffers
-     * buffers - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to metadata buffers */
     auto writeToMetadata =
         [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
-            // check that current metadata buffer has enough space, by sending used space and space needed
-            if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-                // if current buffer does not contain enough space then
-                // get new buffer and insert to vector of buffers
-                auto newBuffer = bufferManager->getBufferBlocking();
-                buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
-                // update pointer and index
-                metadataPtr = newBuffer.getBuffer<uint64_t>();
-                metadataIdx = 0;
-            }
-            metadataPtr[metadataIdx++] = dataToWrite;
+            StateSerializationUtil::writeToBuffer(bufferManager,
+                                                  mainMetadata.getBufferSize(),
+                                                  metadataPtr,
+                                                  metadataIdx,
+                                                  metadataBuffersCount,
+                                                  buffersToTransfer,
+                                                  dataToWrite);
         };
 
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
@@ -157,8 +321,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // set order of tuple buffers
     // TODO: #5027 change if getStateToMigrate will be used by several threads
-    for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
-        buffersToTransfer[i].setSequenceNumber(++lastMigratedSeqNumber);
+    for (auto& buffer : buffersToTransfer) {
+        buffer.setSequenceNumber(++lastMigratedSeqNumber);
     }
 
     return buffersToTransfer;
@@ -170,7 +334,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
     // metadata buffer
     auto dataBuffer = bufferManager->getBufferBlocking();
-    auto dataBuffersCount = 0;
+    uint64_t dataBuffersCount = 0;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -180,30 +344,18 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
     // get buffer data pointer
     auto dataInBufferPtr = dataBuffer.getBuffer<uint64_t>();
     // starting from 1st index to later write number of windows to the 0 place in the buffer
-    auto dataInBufferIdx = 1ULL;
+    uint64_t dataInBufferIdx = 1;
 
-    /** @brief Lambda to write to data buffers
-     * captured variables:
-     * dataBuffer - generic metadata buffer, used for checking space left
-     * dataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersCount - number of metadata buffers
-     * buffersToTransfer - vector of buffers
-     * @param dataToWrite - value to write to the buffer
-    */
+    /** @brief Lambda to write to data buffers */
     auto serializeNextValue =
         [&dataBuffer, &dataInBufferPtr, &dataInBufferIdx, this, &dataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
-            // check that current metadata buffer has enough space, by sending used space and space needed
-            if (!dataBuffer.hasSpaceLeft(dataInBufferIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-                // if current buffer does not contain enough space then
-                // get new buffer and insert to vector of buffers
-                auto newBuffer = bufferManager->getBufferBlocking();
-                buffersToTransfer.emplace(buffersToTransfer.begin() + dataBuffersCount++, newBuffer);
-                // update pointer and index
-                dataInBufferPtr = newBuffer.getBuffer<uint64_t>();
-                dataInBufferIdx = 0;
-            }
-            dataInBufferPtr[dataInBufferIdx++] = dataToWrite;
+            StateSerializationUtil::writeToBuffer(bufferManager,
+                                                  dataBuffer.getBufferSize(),
+                                                  dataInBufferPtr,
+                                                  dataInBufferIdx,
+                                                  dataBuffersCount,
+                                                  buffersToTransfer,
+                                                  dataToWrite);
         };
 
     // counter for number of windows
@@ -237,8 +389,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
     // 5. set sequence numbers, starting from 1
     // TODO: #5027 change if getStateToMigrate will be used by several threads
-    for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
-        buffersToTransfer[i].setSequenceNumber(++lastMigratedSeqNumber);
+    for (auto& buffer : buffersToTransfer) {
+        buffer.setSequenceNumber(++lastMigratedSeqNumber);
     }
 
     return buffersToTransfer;
@@ -246,25 +398,13 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigr
 
 void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuffer>& buffers) {
     // get data buffer
-    auto dataBuffersIdx = 0;
+    uint64_t dataBuffersIdx = 0;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
-    auto dataIdx = 0;
+    uint64_t dataIdx = 0;
 
-    /** @brief Lambda to read from data buffers
-     * captured variables:
-     * dataPtr - pointer to the start of current metadata buffer
-     * dataIdx - index of size64_t data inside metadata buffer
-     * dataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
+    /** @brief Lambda to read from data buffers */
     auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[dataBuffersIdx].hasSpaceLeft(dataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // update metadata pointer and index
-            dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
-            dataIdx = 0;
-        }
-        return dataPtr[dataIdx++];
+        return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
     };
 
     // NOTE: Do not change the order of reads from data buffers(order is documented in function declaration)
@@ -300,28 +440,16 @@ void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuff
 void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
 
     // get main metadata buffer
-    auto metadataBuffersIdx = 0;
+    uint64_t metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx].getBuffer<uint64_t>();
-    auto metadataIdx = 0;
+    uint64_t metadataIdx = 0;
 
     // read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
 
-    /** @brief Lambda to read from metadata buffers
-     * captured variables:
-     * metadataPtr - pointer to the start of current metadata buffer
-     * metadataIdx - index of size64_t data inside metadata buffer
-     * metadataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
+    /** @brief Lambda to read from metadata buffers */
     auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t {
-        // check left space in metadata buffer
-        if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
-            // update metadata pointer and index
-            metadataPtr = buffers[++metadataBuffersIdx].getBuffer<uint64_t>();
-            metadataIdx = 0;
-        }
-        return metadataPtr[metadataIdx++];
+        return StateSerializationUtil::readFromBuffer(metadataPtr, metadataIdx, metadataBuffersIdx, buffers);
     };
     // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
     // 1. Retrieve number of slices from metadata buffer
@@ -337,7 +465,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
-        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        auto recreatedSlice = deserializeSlice(std::span<Runtime::TupleBuffer>(spanStart, numberOfBuffers));
 
         // insert recreated slice
         auto indexToInsert = std::find_if(slicesLocked->begin(),
@@ -414,7 +542,7 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
 
 void StreamJoinOperatorHandler::deleteAllSlices() {
     {
-        if (setForReuse) {
+        if (setForReuse || migrating) {
             return;
         }
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
@@ -516,7 +644,7 @@ uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     auto minVal = std::min_element(std::begin(workerThreadIdToWatermarkMap),
                                    std::end(workerThreadIdToWatermarkMap),
                                    [](const auto& l, const auto& r) {
-                                       return l.second < r.second;
+                                       return  l.second < r.second;
                                    });
     return minVal == workerThreadIdToWatermarkMap.end() ? -1 : minVal->second;
 }
