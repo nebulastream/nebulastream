@@ -58,8 +58,8 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    virtual void writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections);
-    virtual void readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections);
+    virtual void writeToFile(FileStorage fileStorage, FileLayout fileLayout);
+    virtual void readFromFile(FileStorage fileStorage, FileLayout fileLayout);
     virtual void truncate(std::vector<std::string> projections);
 
     bool operator==(const Slice& rhs) const;

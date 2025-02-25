@@ -15,6 +15,7 @@
 #pragma once
 
 #include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
+#include <Execution/Operators/SliceStore/Slice.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -22,11 +23,15 @@ namespace NES::Runtime::Execution
 class MemoryController
 {
 public:
-    void storeSliceOnDisk(SliceEnd sliceEnd, std::shared_ptr<Slice> slice);
+    MemoryController() = default;
 
-    std::shared_ptr<Slice> readSliceFromDisk(SliceEnd sliceEnd);
+    bool writeSliceToFile(SliceEnd sliceEnd);
 
-    bool isSliceOnDisk(SliceEnd sliceEnd);
+    bool readSliceFromFile(SliceEnd sliceEnd);
+
+    FileLayout getFileLayout(SliceEnd sliceEnd);
+    FileStorage getFileStorage(SliceEnd sliceEnd);
+    std::vector<std::string> getProjections(SliceEnd sliceEnd);
 
 private:
     std::map<SliceEnd, std::string> filePathForSlice;

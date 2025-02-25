@@ -13,6 +13,7 @@
 add_source_files(nes-execution
         Slice.cpp
         DefaultTimeBasedSliceStore.cpp
+        FileBackedTimeBasedSliceStore.cpp
 )
 
 add_subdirectory(FileStorage)

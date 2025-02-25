@@ -13,6 +13,7 @@
 */
 
 #pragma once
+
 #include <atomic>
 #include <cstdint>
 #include <functional>
@@ -20,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
@@ -32,7 +34,6 @@
 namespace NES::Runtime::Execution
 {
 
-
 /// This struct stores a slice ptr and the state. We require this information, as we have to know the state of a slice for a given window
 struct SlicesAndState
 {
@@ -40,16 +41,16 @@ struct SlicesAndState
     WindowInfoState windowState;
 };
 
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
-    DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept;
-    DefaultTimeBasedSliceStore& operator=(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore& operator=(DefaultTimeBasedSliceStore&& other) noexcept;
+    FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
+    FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);
+    FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
+    FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);
+    FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore&& other) noexcept;
 
-    ~DefaultTimeBasedSliceStore() override;
+    ~FileBackedTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
@@ -60,10 +61,29 @@ public:
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
+    void update(MetatData metaData)
+    {
+        /// building hashmap of sizes
+        const auto threadId = metaData.threadId;
+
+        std::map<SliceEnd, size_t> someCoolMap;
+        auto slicesLocked = slices.rlock();
+        for (const auto& [sliceEnd, slice] : *slicesLocked)
+        {
+            if (slice.)
+            someCoolMap.emplace({slice->getSliceEnd(), slice.getStateSizeWOrkethread(threadId)});
+        }
+
+
+    }
+
 private:
+    void writeSlicesToFile(const std::vector<std::shared_ptr<Slice>>& slices);
+
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
+    MemoryController memCtrl;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
@@ -75,10 +95,9 @@ private:
     /// and increases for each window info.
     std::atomic<SequenceNumber::Underlying> sequenceNumber;
 
-    /// Depending on the number of origins, we have to handle the slices differently.
-    /// For example, in getAllNonTriggeredSlices(), we have to wait until all origins have called this method to ensure correctness
-    /// The numberOfActiveOrigins shall be guarded by the windows Mutex.
-    uint64_t numberOfActiveOrigins;
+    /// Depending, if we have one or two input origins, we have to treat the slices differently
+    /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
+    uint8_t numberOfInputOrigins;
 };
 
 }

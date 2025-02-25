@@ -115,6 +115,7 @@ DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreate(
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
+    // TODO wie bekomme ich alle slices wenn manche vllt auf der disk liegen
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
@@ -147,6 +148,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
 DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
+    // TODO slices wieder in den main mem laden
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
     const auto windowsWriteLocked = windows.wlock();
@@ -179,7 +181,14 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
-        return slicesReadLocked->find(sliceEnd)->second;
+        auto slice = slicesReadLocked->find(sliceEnd)->second;
+/*
+        if (memCtrl.isSliceOnDisk(sliceEnd))
+        {
+            memCtrl.bringIntoMainMemory(slice);
+        }
+        */
+        return slice;
     }
     return {};
 }
@@ -248,6 +257,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 
 void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
+    // TODO ssd löschen
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)
     {
@@ -300,6 +310,7 @@ void DefaultTimeBasedSliceStore::deleteState()
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
+    memCtrl->clear();
 }
 
 uint64_t DefaultTimeBasedSliceStore::getWindowSize() const

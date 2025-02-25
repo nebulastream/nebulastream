@@ -21,6 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -30,11 +31,13 @@ NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const u
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
         leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        keysOnlyLeftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
         rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        keysOnlyRightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
     }
 }
 
@@ -97,7 +100,7 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections)
+void NLJSlice::writeTuplesToDisk(FileStorage fileStorage, FileLayout fileLayout)
 {
     auto leftMemoryLayout = leftPagedVectors[0]->getMemoryLayout();
     for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
@@ -114,7 +117,7 @@ void NLJSlice::writeTuplesToDisk(FileStorage fileStorage, std::vector<std::strin
     }
 }
 
-void NLJSlice::readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections)
+void NLJSlice::readTuplesFromDisk(FileStorage fileStorage, FileLayout fileLayout)
 {
 }
 
