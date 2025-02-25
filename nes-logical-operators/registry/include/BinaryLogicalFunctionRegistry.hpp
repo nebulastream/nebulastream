@@ -28,9 +28,9 @@ using BinaryLogicalFunctionRegistryReturnType = BinaryLogicalFunction;
 struct BinaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
-    std::shared_ptr<LogicalFunction> leftChild;
-    std::shared_ptr<LogicalFunction> rightChild;
-    std::shared_ptr<DataType> stamp;
+    std::unique_ptr<LogicalFunction> leftChild;
+    std::unique_ptr<LogicalFunction> rightChild;
+    std::unique_ptr<DataType> stamp;
 };
 
 class BinaryLogicalFunctionRegistry

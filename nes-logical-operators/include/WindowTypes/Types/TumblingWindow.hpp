@@ -33,20 +33,15 @@ public:
     /// time windows start at 0:15:00,1:15:00,2:15:00,etc.
     /// @param size
     /// @return std::shared_ptr<WindowType>
-    static std::shared_ptr<WindowType> of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size);
-
+    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size);
     TimeMeasure getSize() override;
-
     TimeMeasure getSlide() override;
-
     std::string toString() const override;
-
-    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
-
+    bool operator==(const WindowType& otherWindowType) override;
     uint64_t hash() const override;
 
 private:
-    TumblingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 

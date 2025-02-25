@@ -27,7 +27,7 @@ bool isSpecificBasicType(const PhysicalType& physicalType, BasicPhysicalType::Na
 
 bool isChar(const PhysicalType& physicalType);
 
-bool isVariableSizedData(const std::shared_ptr<PhysicalType>& physicalType);
+bool isVariableSizedData(const PhysicalType& physicalType);
 
 bool isBool(const PhysicalType& physicalType);
 
@@ -58,7 +58,7 @@ bool isDouble(const PhysicalType& physicalType);
 /// @param physicalType the physical type at runtime
 /// @return returns true if the type is correct.
 template <class Type>
-bool isSamePhysicalType(const std::shared_ptr<PhysicalType>& physicalType)
+bool isSamePhysicalType(const PhysicalType& physicalType)
 {
     if (isVariableSizedData(physicalType) && std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
@@ -66,51 +66,51 @@ bool isSamePhysicalType(const std::shared_ptr<PhysicalType>& physicalType)
     }
     if constexpr (std::is_same_v<std::remove_cvref_t<Type>, char>)
     {
-        return isChar(*physicalType);
+        return isChar(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint8_t>)
     {
-        return isUInt8(*physicalType);
+        return isUInt8(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, bool>)
     {
-        return isBool(*physicalType);
+        return isBool(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint16_t>)
     {
-        return isUInt16(*physicalType);
+        return isUInt16(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
-        return isUInt32(*physicalType);
+        return isUInt32(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>)
     {
-        return isUInt64(*physicalType);
+        return isUInt64(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int8_t>)
     {
-        return isInt8(*physicalType);
+        return isInt8(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int16_t>)
     {
-        return isInt16(*physicalType);
+        return isInt16(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int32_t>)
     {
-        return isInt32(*physicalType);
+        return isInt32(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int64_t>)
     {
-        return isInt64(*physicalType);
+        return isInt64(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, float>)
     {
-        return isFloat(*physicalType);
+        return isFloat(physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, double>)
     {
-        return isDouble(*physicalType);
+        return isDouble(physicalType);
     }
     return false;
 }

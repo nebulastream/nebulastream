@@ -20,26 +20,26 @@
 
 namespace NES {
 
-std::vector<std::shared_ptr<Operator>> getAllLeafNodes(std::shared_ptr<Operator> op)
+std::vector<Operator*> getAllLeafNodes(const Operator& op)
 {
-    std::vector<std::shared_ptr<Operator>> leafNodes;
+    std::vector<Operator*> leafNodes;
 
-    if (op->children.empty())
+    if (op.children.empty())
     {
-        leafNodes.push_back(op);
+        leafNodes.push_back(&op);
     }
 
     for (auto& child : op->children)
     {
         if (child->children.empty())
         {
-            leafNodes.push_back(child);
+            leafNodes.push_back(child.get());
         }
         else
         {
             for (const auto& childOfChild : child->children)
             {
-                std::vector<std::shared_ptr<Operator>> childrenLeafNodes = getAllLeafNodes(childOfChild);
+                std::vector<Operator*> childrenLeafNodes = getAllLeafNodes(childOfChild);
                 leafNodes.insert(leafNodes.end(), childrenLeafNodes.begin(), childrenLeafNodes.end());
             }
         }

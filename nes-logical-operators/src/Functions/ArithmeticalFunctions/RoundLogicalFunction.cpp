@@ -25,7 +25,7 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(const std::shared_ptr<LogicalFunction>& child) : UnaryLogicalFunction(child->getStamp(), child)
+RoundLogicalFunction::RoundLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(child->getStamp().clone(), std::move(child))
 {
 };
 
@@ -33,12 +33,12 @@ RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : 
 {
 }
 
-bool RoundLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool RoundLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<RoundLogicalFunction>(rhs))
+    auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherRoundNode = NES::Util::as<RoundLogicalFunction>(rhs);
-        return getChild() == otherRoundNode->getChild();
+        return getChild() == other->getChild();
     }
     return false;
 }
@@ -46,13 +46,13 @@ bool RoundLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rh
 std::string RoundLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ROUND(" << *getChild() << ")";
+    ss << "ROUND(" << getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> RoundLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> RoundLogicalFunction::clone() const
 {
-    return std::make_shared<RoundLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_unique<RoundLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction RoundLogicalFunction::serialize() const
@@ -61,7 +61,7 @@ SerializableFunction RoundLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
     auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild()->serialize());
+    child->CopyFrom(getChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -72,7 +72,7 @@ SerializableFunction RoundLogicalFunction::serialize() const
 std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRoundUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<RoundLogicalFunction>(arguments.child);
+    return std::make_unique<RoundLogicalFunction>(std::move(arguments.child));
 }
 
 }

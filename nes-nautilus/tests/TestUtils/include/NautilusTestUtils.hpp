@@ -135,28 +135,28 @@ public:
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
     /// For example, the call createSchemaFromBasicTypes({BasicType::INT_32, BasicType::FLOAT}, 1) will create a schema with the fields field1 and field2
-    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes);
-    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, uint64_t typeIdxOffset);
+    static Schema createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes);
+    static Schema createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema,
+        const Schema& schema,
         uint64_t numberOfTuples,
         Memory::BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager, uint64_t minSizeVarSizedData);
+        const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager, uint64_t minSizeVarSizedData);
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager);
+        const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,
         Configurations::NautilusBackend backend,
         nautilus::engine::Options& options,
-        const std::shared_ptr<Schema>& schema,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer);
+        const Schema& schema,
+        std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::string

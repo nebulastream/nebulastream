@@ -47,7 +47,7 @@ namespace NES::IntegrationTestUtil
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -65,23 +65,23 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](const std::shared_ptr<Schema>& schema)
+    auto getPhysicalTypes = [](const Schema& schema)
     {
-        std::vector<std::shared_ptr<PhysicalType>> retVector;
+        std::vector<std::unique_ptr<PhysicalType>> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (const auto& field : *schema)
+        for (const auto& field : schema)
         {
-            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field.getDataType());
             retVector.push_back(physicalField);
         }
 
         return retVector;
     };
 
-    const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema->getSchemaSizeInBytes();
+    const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema.getSchemaSizeInBytes();
     auto tupleCount = 0UL;
     auto tupleBuffer = bufferProvider.getBufferBlocking();
-    const auto numberOfSchemaFields = schema->getFieldCount();
+    const auto numberOfSchemaFields = schema.getFieldCount();
     const auto physicalTypes = getPhysicalTypes(schema);
 
     uint64_t sequenceNumber = 0;
@@ -96,7 +96,7 @@ namespace NES::IntegrationTestUtil
         {
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferProvider);
         }
-        if (schema->contains(timestampFieldName))
+        if (schema.contains(timestampFieldName))
         {
             watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldName].read<uint64_t>());
         }
@@ -138,7 +138,7 @@ void writeFieldValueToTupleBuffer(
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
+    auto& dataType = schema->getFieldByIndex(schemaFieldIndex).getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
     INVARIANT(!inputString.empty(), "Input string for parsing is empty");
@@ -230,7 +230,7 @@ void writeFieldValueToTupleBuffer(
     }
 }
 
-std::shared_ptr<Schema> loadSinkSchema(SerializableQueryPlan& queryPlan)
+Schema loadSinkSchema(SerializableQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
@@ -428,8 +428,8 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
 
     EXPECT_TRUE(rootOperator.has_sink())
         << "Redirection expects the single root operator to be a sink operator";
-    const auto deserializedSinkOperator = NES::Util::as<SinkLogicalOperator>(OperatorSerializationUtil::deserializeOperator(rootOperator));
-    auto descriptor = NES::Util::as<SinkLogicalOperator>(deserializedSinkOperator)->getSinkDescriptorRef();
+    const auto deserializedSinkOperator = NES::Util::unique_ptr_dynamic_cast<SinkLogicalOperator>(OperatorSerializationUtil::deserializeOperator(rootOperator));
+    auto descriptor = deserializedSinkOperator->getSinkDescriptorRef();
     if (descriptor.sinkType == Sinks::FileSink::NAME)
     {
         const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
@@ -439,10 +439,10 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
             = std::make_unique<Sinks::SinkDescriptor>(descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
         auto sinkLogicalOperatorUpdated
-            = std::make_shared<SinkLogicalOperator>(deserializedSinkOperator->sinkName);
+            = std::make_unique<SinkLogicalOperator>(deserializedSinkOperator->sinkName);
         sinkLogicalOperatorUpdated->sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated->setOutputSchema(deserializedOutputSchema);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(std::move(sinkLogicalOperatorUpdated));
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
         serializedOperator.set_operatorid(rootOperator.operatorid());
@@ -461,7 +461,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
-                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(std::move(deserializedSourceOperator))->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
@@ -474,10 +474,9 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                     sourceDescriptor.parserConfig,
                     std::move(configUpdated));
 
-                const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
-                    std::move(sourceDescriptorUpdated),
-                    NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
-                auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
+                auto sourceDescriptorLogicalOperatorUpdated = std::make_unique<SourceDescriptorLogicalOperator>(
+                    std::move(sourceDescriptorUpdated), sourceDescriptor.getOriginId());
+                auto serializedOperator = OperatorSerializationUtil::serializeOperator(std::move(sourceDescriptorLogicalOperatorUpdated));
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
                 serializedOperator.set_operatorid(value.operatorid());
@@ -497,7 +496,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
-                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(std::move(deserializedSourceOperator))->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
@@ -514,7 +513,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                         std::move(sourceDescriptorUpdated),
-                        NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
+                        sourceDescriptor->getOriginId());
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.

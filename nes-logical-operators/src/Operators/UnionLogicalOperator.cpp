@@ -23,13 +23,17 @@
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
 
 UnionLogicalOperator::UnionLogicalOperator() : Operator(), BinaryLogicalOperator()
 {
+}
+
+std::string_view UnionLogicalOperator::getName() const noexcept
+{
+    return NAME;
 }
 
 bool UnionLogicalOperator::isIdentical(const Operator& rhs) const
@@ -40,7 +44,7 @@ bool UnionLogicalOperator::isIdentical(const Operator& rhs) const
 bool UnionLogicalOperator::operator==(Operator const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs)) {
-        return (*leftInputSchema == *rhsOperator->getLeftInputSchema()) && (*outputSchema == *rhsOperator->outputSchema);
+        return (leftInputSchema == rhsOperator->getLeftInputSchema()) && (outputSchema == rhsOperator->outputSchema);
     }
     return false;
 }
@@ -59,42 +63,42 @@ bool UnionLogicalOperator::inferSchema()
         return false;
     }
 
-    leftInputSchema->clear();
-    rightInputSchema->clear();
+    leftInputSchema.clear();
+    rightInputSchema.clear();
     if (distinctSchemas.size() == 1)
     {
-        leftInputSchema->copyFields(distinctSchemas[0]);
-        rightInputSchema->copyFields(distinctSchemas[0]);
+        leftInputSchema.copyFields(distinctSchemas[0]);
+        rightInputSchema.copyFields(distinctSchemas[0]);
     }
     else
     {
-        leftInputSchema->copyFields(distinctSchemas[0]);
-        rightInputSchema->copyFields(distinctSchemas[1]);
+        leftInputSchema.copyFields(distinctSchemas[0]);
+        rightInputSchema.copyFields(distinctSchemas[1]);
     }
 
-    if (!(*leftInputSchema == *rightInputSchema))
+    if (!(leftInputSchema == rightInputSchema))
     {
         throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
-            leftInputSchema->toString(),
-            rightInputSchema->toString());
+            leftInputSchema.toString(),
+            rightInputSchema.toString());
     }
 
-    if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
+    if (leftInputSchema.getLayoutType() != rightInputSchema.getLayoutType())
     {
         throw CannotInferSchema("Left and right should have same memory layout");
     }
 
     ///Copy the schema of left input
-    outputSchema->clear();
-    outputSchema->copyFields(leftInputSchema);
-    outputSchema->setLayoutType(leftInputSchema->getLayoutType());
+    outputSchema.clear();
+    outputSchema.copyFields(leftInputSchema);
+    outputSchema.setLayoutType(leftInputSchema.getLayoutType());
     return true;
 }
 
-std::shared_ptr<Operator> UnionLogicalOperator::clone() const
+std::unique_ptr<Operator> UnionLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<UnionLogicalOperator>();
+    auto copy = std::make_unique<UnionLogicalOperator>();
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -107,9 +111,9 @@ void UnionLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> combinedInputOriginIds;
-    for (auto child : this->children)
+    for (auto& child : this->children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        auto childOperator = dynamic_cast<LogicalOperator*>(child.get());
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

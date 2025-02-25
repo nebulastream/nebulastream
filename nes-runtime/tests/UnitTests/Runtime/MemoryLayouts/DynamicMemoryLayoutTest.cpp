@@ -27,7 +27,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, publi
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
@@ -41,25 +41,24 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
 
-        schema
-            = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
+        Schema schema = Schema().addField("t1", BasicType::UINT16).addField("t2", BasicType::BOOLEAN).addField("t3", BasicType::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
-            std::shared_ptr<RowLayout> layout;
+            std::unique_ptr<RowLayout> layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_unique<TestTupleBuffer>(std::move(layout), tupleBuffer);
         }
         else
         {
-            std::shared_ptr<ColumnLayout> layout;
+            std::unique_ptr<ColumnLayout> layout;
             ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_unique<TestTupleBuffer>(std::move(layout), tupleBuffer);
         }
     }
 };

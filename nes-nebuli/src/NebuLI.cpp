@@ -35,6 +35,9 @@
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
@@ -221,6 +224,16 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     }
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
+
+    auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
+    auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
+    auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
+
+    validateAndSetSinkDescriptors(*query, config);
+    logicalSourceExpansionRule->apply(query);
+    typeInference->performTypeInferenceQuery(query);
+    originIdInferencePhase->execute(query);
+    typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->outputSchema->toString());

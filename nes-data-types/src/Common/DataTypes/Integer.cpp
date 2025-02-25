@@ -39,23 +39,27 @@ bool Integer::operator==(const NES::DataType& other) const
     return false;
 }
 
-std::shared_ptr<DataType> Integer::join(const std::shared_ptr<DataType>& otherDataType) const
+std::unique_ptr<DataType> Integer::join(const DataType& otherDataType) const
 {
-    if (NES::Util::instanceOf<Undefined>(otherDataType))
+    if (dynamic_cast<const Undefined*>(&otherDataType) != nullptr)
     {
-        return std::make_shared<Integer>(bits, lowerBound, upperBound);
+        return std::make_unique<Integer>(bits, lowerBound, upperBound);
+    }
+    if (dynamic_cast<const Numeric*>(&otherDataType) == nullptr)
+    {
+        throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType.toString());
     }
 
-    if (not NES::Util::instanceOf<Numeric>(otherDataType))
+    if (auto newDataType = inferDataType(*this, *dynamic_cast<const Numeric*>(&otherDataType)); newDataType.has_value())
     {
-        throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
+        return std::move(newDataType.value());
     }
+    throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType.toString());
+}
 
-    if (const auto newDataType = Numeric::inferDataType(*this, *NES::Util::as<Numeric>(otherDataType)); newDataType.has_value())
-    {
-        return newDataType.value();
-    }
-    throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
+std::unique_ptr<DataType> Integer::clone() const
+{
+    return std::make_unique<Integer>(*this);
 }
 
 std::string Integer::toString()

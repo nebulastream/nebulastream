@@ -29,7 +29,7 @@ namespace NES
 
 /// @brief Basic emit operator that receives records from an upstream operator and
 /// writes them to a tuple buffer according to a memory layout.
-class EmitPhysicalOperator : public PhysicalOperator
+class EmitPhysicalOperator final : public PhysicalOperator
 {
 public:
     explicit EmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<TupleBufferMemoryProvider> memoryProvider);
@@ -42,6 +42,7 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& isLastChunk) const;
 
+    std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 private:

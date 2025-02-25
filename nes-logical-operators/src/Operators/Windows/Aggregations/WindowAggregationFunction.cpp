@@ -24,31 +24,30 @@
 namespace NES::Windowing
 {
 
-WindowAggregationFunction::WindowAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction>& onField)
-    : onField(onField), asField(onField)
+WindowAggregationFunction::WindowAggregationFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<FieldAccessLogicalFunction> onField)
+    :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField->clone()), asField(std::move(onField))
 {
 }
 
 WindowAggregationFunction::WindowAggregationFunction(
-    const std::shared_ptr<LogicalFunction>& onField, const std::shared_ptr<LogicalFunction>& asField)
-    : onField(onField), asField(asField)
+    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField)
+    : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(std::move(onField)), asField(std::move(asField))
 {
 }
 
-std::shared_ptr<WindowAggregationFunction> WindowAggregationFunction::as(const std::shared_ptr<LogicalFunction>& asField)
+std::unique_ptr<WindowAggregationFunction> WindowAggregationFunction::as(std::unique_ptr<LogicalFunction> asField)
 {
-    const auto& field = NES::Util::as<FieldAccessLogicalFunction>(asField);
-    this->asField = field;
-    return this->clone();
+    this->asField = Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(asField));
+    return std::unique_ptr<WindowAggregationFunction>(this);
 }
 
-std::shared_ptr<LogicalFunction> WindowAggregationFunction::as() const
+LogicalFunction& WindowAggregationFunction::as() const
 {
     if (asField == nullptr)
     {
-        return onField;
+        return *onField;
     }
-    return asField;
+    return *asField;
 }
 
 std::string WindowAggregationFunction::toString() const
@@ -72,12 +71,27 @@ std::string WindowAggregationFunction::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-std::shared_ptr<LogicalFunction> WindowAggregationFunction::on() const
+LogicalFunction& WindowAggregationFunction::on() const
 {
-    return onField;
+    return *onField;
 }
 
-bool WindowAggregationFunction::equal(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const
+DataType& WindowAggregationFunction::getInputStamp() const
+{
+    return *inputStamp;
+}
+
+DataType& WindowAggregationFunction::getPartialAggregateStamp() const
+{
+    return *partialAggregateStamp;
+}
+
+DataType& WindowAggregationFunction::getFinalAggregateStamp() const
+{
+    return *finalAggregateStamp;
+}
+
+bool WindowAggregationFunction::operator==(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const
 {
     return this->getType() == otherWindowAggregationFunction->getType() && this->onField == otherWindowAggregationFunction->onField
         && this->asField == otherWindowAggregationFunction->asField;

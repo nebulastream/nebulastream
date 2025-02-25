@@ -31,7 +31,7 @@ namespace NES::Optimizer
 struct LowerToPhysicalSelection : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
 {
     LowerToPhysicalSelection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<std::shared_ptr<PhysicalOperator>> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    std::vector<std::unique_ptr<PhysicalOperator>> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

@@ -54,11 +54,11 @@ void logProxy(const char* message, const LogLevel logLevel)
     }
 }
 
-VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType)
+VarVal createNautilusMinValue(const PhysicalType& physicalType)
 {
-    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+    if (dynamic_cast<const BasicPhysicalType*>(&physicalType))
     {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
+        auto basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType);
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::INT_8:
@@ -82,18 +82,18 @@ VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType)
             case BasicPhysicalType::NativeType::DOUBLE:
                 return Util::createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
             default: {
-                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
+                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType.toString());
             }
         }
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
+    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType.toString());
 }
 
-VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType)
+VarVal createNautilusMaxValue(const PhysicalType& physicalType)
 {
-    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+    if (dynamic_cast<const BasicPhysicalType*>(&physicalType))
     {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
+        auto basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType);
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::INT_8:
@@ -117,11 +117,11 @@ VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType)
             case BasicPhysicalType::NativeType::DOUBLE:
                 return Util::createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
             default: {
-                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
+                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType.toString());
             }
         }
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
+    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType.toString());
 }
 
 }

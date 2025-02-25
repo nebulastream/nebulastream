@@ -115,7 +115,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    getMemoryProvider()->writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
+    getMemoryProvider().writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
@@ -150,7 +150,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
 EmitPhysicalOperator::EmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : PhysicalOperator(std::move(memoryProvider))
     , operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
+    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout().getCapacity())
 {
 }
 

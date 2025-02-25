@@ -39,7 +39,7 @@ public:
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
     std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
 
     std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;

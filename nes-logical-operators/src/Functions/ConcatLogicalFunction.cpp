@@ -28,15 +28,15 @@
 namespace NES
 {
 
-ConcatLogicalFunction::ConcatLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-    : BinaryLogicalFunction(left->getStamp()->join(right->getStamp()), left, right)
+ConcatLogicalFunction::ConcatLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(left->getStamp().join(right->getStamp()), std::move(left),  std::move(right))
 {
 }
 
 
-std::shared_ptr<LogicalFunction> ConcatLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> ConcatLogicalFunction::clone() const
 {
-    return std::make_shared<ConcatLogicalFunction>(Util::as<LogicalFunction>(getLeftChild())->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<ConcatLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 void ConcatLogicalFunction::inferStamp(const Schema&)
@@ -44,19 +44,19 @@ void ConcatLogicalFunction::inferStamp(const Schema&)
     /// no-op
 }
 
-bool ConcatLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
+bool ConcatLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<ConcatLogicalFunction>(rhs))
+    auto other = dynamic_cast<const ConcatLogicalFunction*>(&rhs);
+    if (other)
     {
-        const auto otherMulNode = NES::Util::as<ConcatLogicalFunction>(rhs);
-        return getLeftChild() == otherMulNode->getLeftChild() and getRightChild() == otherMulNode->getRightChild();
+        return getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
     }
     return false;
 }
 
 std::string ConcatLogicalFunction::toString() const
 {
-    return fmt::format("Concat({}, {})", *getLeftChild(), *getRightChild());
+    return fmt::format("Concat({}, {})", getLeftChild(), getRightChild());
 }
 
 SerializableFunction ConcatLogicalFunction::serialize() const
@@ -66,12 +66,11 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(getLeftChild().serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(getRightChild().serialize());
 
-    DataTypeSerializationUtil::serializeDataType(
-        this->getStamp(), serializedFunction.mutable_stamp());
+    DataTypeSerializationUtil::serializeDataType(getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
 }
@@ -79,7 +78,7 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
 BinaryLogicalFunctionGeneratedRegistrar::RegisterConcatBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<ConcatLogicalFunction>(arguments.leftChild, arguments.rightChild);
+    return std::make_unique<ConcatLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 }

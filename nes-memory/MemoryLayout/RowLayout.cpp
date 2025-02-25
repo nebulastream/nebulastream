@@ -20,12 +20,11 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(Schema schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -39,9 +38,9 @@ RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
+std::unique_ptr<RowLayout> RowLayout::create(Schema schema, uint64_t bufferSize)
 {
-    return std::make_shared<RowLayout>(schema, bufferSize);
+    return std::make_unique<RowLayout>(schema, bufferSize);
 }
 
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
@@ -75,8 +74,8 @@ uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fie
     return offSet;
 }
 
-std::shared_ptr<MemoryLayout> RowLayout::clone() const
+std::unique_ptr<MemoryLayout> RowLayout::clone() const
 {
-    return std::make_shared<RowLayout>(*this);
+    return std::make_unique<RowLayout>(*this);
 }
 }

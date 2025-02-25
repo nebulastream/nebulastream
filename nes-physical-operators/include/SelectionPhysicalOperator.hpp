@@ -20,13 +20,14 @@ namespace NES
 {
 
 /// @brief Selection operator that evaluates an boolean function on each record.
-class SelectionPhysicalOperator : public PhysicalOperator
+class SelectionPhysicalOperator final : public PhysicalOperator
 {
 public:
-    SelectionPhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider, std::unique_ptr<Functions::PhysicalFunction> function)
+    SelectionPhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, std::unique_ptr<Functions::PhysicalFunction> function)
         : PhysicalOperator(std::move(memoryProvider)), function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 private:

@@ -21,12 +21,14 @@
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 #include <LogicalFunctionRegistry.hpp>
+#include <UnaryLogicalFunctionRegistry.hpp>
+#include <BinaryLogicalFunctionRegistry.hpp>
 #include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<LogicalFunction> deserializeUnaryFunction(const SerializableFunction& serializedFunction)
+std::unique_ptr<LogicalFunction> deserializeUnaryFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
@@ -39,18 +41,15 @@ std::shared_ptr<LogicalFunction> deserializeUnaryFunction(const SerializableFunc
         functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    if (auto function
-        = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+    if (auto function = UnaryLogicalFunctionRegistry::instance().create(functionType, UnaryLogicalFunctionRegistryArguments(functionDescriptorConfig)))
     {
-        std::shared_ptr<NES::LogicalFunction> sharedFunc = std::move(function.value());
-        std::shared_ptr<NES::UnaryLogicalFunction> unaryFunc = std::dynamic_pointer_cast<NES::UnaryLogicalFunction>(sharedFunc);
-        unaryFunc->setChild(child);
-        return unaryFunc;
+        function.value()->setChild(std::move(child));
+        return std::move(function.value());
     }
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }
 
-std::shared_ptr<LogicalFunction> deserializeBinaryFunction(const SerializableFunction& serializedFunction)
+std::unique_ptr<LogicalFunction> deserializeBinaryFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
@@ -65,18 +64,16 @@ std::shared_ptr<LogicalFunction> deserializeBinaryFunction(const SerializableFun
     }
 
     if (auto function
-        = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+        = BinaryLogicalFunctionRegistry::instance().create(functionType, BinaryLogicalFunctionRegistryArguments(functionDescriptorConfig)))
     {
-        std::shared_ptr<NES::LogicalFunction> const sharedFunc = std::move(function.value());
-        std::shared_ptr<NES::BinaryLogicalFunction> binaryFunc = std::dynamic_pointer_cast<NES::BinaryLogicalFunction>(sharedFunc);
-        binaryFunc->setLeftChild(leftChild);
-        binaryFunc->setRightChild(rightChild);
-        return binaryFunc;
+        function.value()->setLeftChild(std::move(leftChild));
+        function.value()->setRightChild(std::move(rightChild));
+        return std::move(function.value());
     }
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }
 
-std::shared_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
+std::unique_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
 {
     if (serializedFunction.has_unaryfunction())
     {

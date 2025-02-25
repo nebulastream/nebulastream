@@ -33,6 +33,11 @@ WindowOperator::WindowOperator(const OriginId originId)
 {
 }
 
+std::string_view WindowOperator::getName() const noexcept
+{
+    return NAME;
+}
+
 std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();

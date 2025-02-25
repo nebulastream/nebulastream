@@ -15,7 +15,7 @@
 #pragma once
 
 
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
@@ -28,7 +28,7 @@ class SourceNameLogicalOperator : public UnaryLogicalOperator
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
@@ -37,12 +37,11 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     void inferInputOrigins() override;
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
-    void setSchema(std::shared_ptr<Schema> schema);
+    [[nodiscard]] Schema getSchema() const;
+    void setSchema(const Schema& schema);
 
     [[nodiscard]]  SerializableOperator serialize() const override;
 
@@ -50,7 +49,7 @@ public:
 
 private:
     std::string logicalSourceName;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
 };
 
 }

@@ -57,7 +57,7 @@ bool Operator::operator==(const Operator& rhs) const
     return true;
 }
 
-std::span<const std::shared_ptr<Operator>> Operator::getChildren() const
+std::span<const std::unique_ptr<Operator>> Operator::getChildren() const
 {
     return children;
 }

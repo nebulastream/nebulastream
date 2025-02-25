@@ -29,24 +29,24 @@ namespace NES::QueryCompilation::PipeliningPhase
 
 /// forward declaration
 void process(
-    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    PipelinedQueryPlan pipelinePlan,
     std::shared_ptr<Pipeline> currentPipeline,
     std::shared_ptr<Pipeline::PipelineOperator> currentOperator);
 
 void processFusibleOperator(
-    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    PipelinedQueryPlan pipelinePlan,
     std::shared_ptr<Pipeline> currentPipeline,
     std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
     currentPipeline->prependOperator(currentOperator);
-    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
+    for (const auto& op : dynamic_cast<Operator*>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
     {
-        process(pipelinePlan, currentPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
+        process(pipelinePlan, currentPipeline, dynamic_cast<Pipeline::PipelineOperator*>(op.get()));
     }
 }
 
 void processPipelineBreakerOperator(
-    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    PipelinedQueryPlan pipelinePlan,
     std::shared_ptr<Pipeline> currentPipeline,
     std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
@@ -56,14 +56,14 @@ void processPipelineBreakerOperator(
     for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
     {
         auto newPipeline = std::make_shared<OperatorPipeline>();
-        pipelinePlan->pipelines.emplace_back(newPipeline);
+        pipelinePlan.pipelines.emplace_back(newPipeline);
         newPipeline->successorPipelines.emplace_back(currentPipeline);
-        process(pipelinePlan, newPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
+        process(pipelinePlan, newPipeline, dynamic_cast<Pipeline::PipelineOperator*>(op.get()));
     }
 }
 
 void processSink(
-    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    PipelinedQueryPlan pipelinePlan,
     std::shared_ptr<Pipeline> currentPipeline,
     std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
@@ -115,15 +115,15 @@ void process(
     }
 }
 
-std::shared_ptr<PipelinedQueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
+PipelinedQueryPlan apply(QueryPlan queryPlan)
 {
-    auto pipelinePlan = std::make_shared<PipelinedQueryPlan>(queryPlan->getQueryId());
+    auto pipelinePlan = std::make_shared<PipelinedQueryPlan>(queryPlan.getQueryId());
 
-    for (const auto& sinkOperator : queryPlan->getRootOperators())
+    for (const auto& sinkOperator : queryPlan.getRootOperators())
     {
         /// Create a new pipeline for each sink
         auto pipeline = std::make_shared<SinkPipeline>();
-        auto castedOperator = std::dynamic_pointer_cast<SinkLogicalOperator>(sinkOperator);
+        auto castedOperator = dynamic_cast<SinkLogicalOperator*>(sinkOperator.get());
         INVARIANT(castedOperator, "SinkOperator must be of type SinkLogicalOperator");
         pipeline->prependOperator(std::make_shared<Pipeline::PipelineOperator>(castedOperator));
         pipelinePlan->pipelines.emplace_back(pipeline);

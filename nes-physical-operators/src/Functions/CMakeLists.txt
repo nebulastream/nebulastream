@@ -13,10 +13,10 @@
 add_source_files(nes-physical-operators
         FunctionProvider.cpp
         FieldAccessPhysicalFunction.cpp
+        ConstantValueVariableSizePhysicalFunction.cpp
         )
 
 add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
-add_plugin(ConstantValueVariableSize PhysicalFunction nes-physical-operators ConstantValueVariableSizePhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(Comparison)

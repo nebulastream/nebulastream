@@ -27,27 +27,18 @@ namespace NES::Windowing
 class MaxAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static constexpr std::string_view NAME = "Max";
-
-    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
-
-    static std::shared_ptr<WindowAggregationFunction>
-    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
-
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
+    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction>
+    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    MaxAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    explicit MaxAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     void inferStamp(const Schema& schema) override;
-
-    std::shared_ptr<WindowAggregationFunction> clone() override;
-    MaxAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
-
+    std::unique_ptr<WindowAggregationFunction> clone() override;
     virtual ~MaxAggregationFunction() = default;
-
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MaxAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    static constexpr std::string_view NAME = "Max";
 };
 }

@@ -25,11 +25,11 @@ namespace NES::Windowing
 class TimeBasedWindowType : public WindowType
 {
 public:
-    explicit TimeBasedWindowType(std::shared_ptr<TimeCharacteristic> timeCharacteristic);
+    explicit TimeBasedWindowType(TimeCharacteristic timeCharacteristic);
 
     ~TimeBasedWindowType() override = default;
 
-    [[nodiscard]] std::shared_ptr<TimeCharacteristic> getTimeCharacteristic() const;
+    [[nodiscard]] TimeCharacteristic getTimeCharacteristic() const;
 
     /// @brief method to get the window size
     /// @return size of window
@@ -45,7 +45,7 @@ public:
     bool inferStamp(const Schema& schema) override;
 
 protected:
-    std::shared_ptr<TimeCharacteristic> timeCharacteristic;
+    TimeCharacteristic timeCharacteristic;
 };
 
 }

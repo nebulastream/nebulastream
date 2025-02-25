@@ -16,7 +16,6 @@
 #include <memory>
 #include <sstream>
 #include <Configurations/Descriptor.hpp>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
@@ -30,6 +29,11 @@ namespace NES
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator()
 : Operator(), UnaryLogicalOperator()
 {
+}
+
+std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
+{
+    return NAME;
 }
 
 std::string IngestionTimeWatermarkAssignerLogicalOperator::toString() const
@@ -52,9 +56,9 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(Operator const& r
 }
 
 
-std::shared_ptr<Operator> IngestionTimeWatermarkAssignerLogicalOperator::clone() const
+std::unique_ptr<Operator> IngestionTimeWatermarkAssignerLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<IngestionTimeWatermarkAssignerLogicalOperator>();
+    auto copy = std::make_unique<IngestionTimeWatermarkAssignerLogicalOperator>();
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

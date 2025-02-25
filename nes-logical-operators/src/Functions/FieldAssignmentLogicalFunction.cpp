@@ -99,7 +99,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema)
 {
     auto copy = *this;
     /// infer stamp of assignment function
-    getAssignment().inferStamp(schema);
+    copy.logicalFunction = getAssignment().withInferredStamp(schema);
 
     ///Update the field name with fully qualified field name
     auto fieldName = getField().getFieldName();

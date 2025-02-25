@@ -64,7 +64,7 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const uint64_t numberOfTuples,
     Memory::BufferManager& bufferManager,
     const uint64_t minSizeVarSizedData)
@@ -78,14 +78,14 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
+    const Schema& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const uint64_t numberOfTuples,
     Memory::BufferManager& bufferManager,
     const uint64_t seed,
@@ -108,7 +108,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         const auto compilation = backend == Configurations::NautilusBackend::COMPILER;
         options.setOption("engine.Compilation", compilation);
         const nautilus::engine::NautilusEngine engine(options);
-        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
+        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, std::move(memoryProviderInputBuffer));
     }
 
     /// Lambda function that creates a vector from 0 to n-1 and then shuffles it
@@ -124,7 +124,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
     std::vector<Memory::TupleBuffer> buffers;
-    const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
+    const auto capacity = memoryProviderInputBuffer->getMemoryLayout().getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
     for (uint64_t i = 0; i < numberOfTuples; i = i + capacity)
@@ -151,20 +151,20 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return buffers;
 }
 
-std::shared_ptr<Schema> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
+Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-std::shared_ptr<Schema>
+Schema
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
-    const auto schema = Schema::create();
+    auto schema = Schema();
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
-        schema->addField(Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset)), type);
+        schema.addField(Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset)), type);
     }
     return schema;
 }
@@ -173,8 +173,8 @@ void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
     Configurations::NautilusBackend backend,
     nautilus::engine::Options& options,
-    const std::shared_ptr<Schema>& schema,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
+    const Schema& schema,
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -190,19 +190,19 @@ void NautilusTestUtils::compileFillBufferFunction(
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
             Record record;
-            for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema->getFieldCount(); ++fieldIndex)
+            for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema.getFieldCount(); ++fieldIndex)
             {
                 const DefaultPhysicalTypeFactory physicalTypeFactory;
-                const auto field = schema->getFieldByIndex(fieldIndex);
-                const auto type = physicalTypeFactory.getPhysicalType(field->getDataType());
-                const auto fieldName = field->getName();
-                if (NES::Util::instanceOf<BasicPhysicalType>(type))
+                const auto field = schema.getFieldByIndex(fieldIndex);
+                const auto type = physicalTypeFactory.getPhysicalType(field.getDataType());
+                const auto fieldName = field.getName();
+                if (dynamic_cast<BasicPhysicalType*>(type.get()))
                 {
                     const auto varValue = Nautilus::Util::createNautilusConstValue(value, type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
-                else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
+                else if (dynamic_cast<VariableSizedDataPhysicalType*>(type.get()))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
                         +[](const Memory::TupleBuffer* inputBuffer, Memory::AbstractBufferProvider* bufferProviderVal, const uint64_t size)

@@ -46,6 +46,12 @@ std::string SinkLogicalOperator::toString() const
     ss << ")";
     return ss.str();
 }
+
+std::string_view SinkLogicalOperator::getName() const noexcept
+{
+    return sinkName;
+}
+
 bool SinkLogicalOperator::inferSchema()
 {
     const auto result = UnaryLogicalOperator::inferSchema();
@@ -71,11 +77,11 @@ std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() 
     return sinkDescriptor;
 }
 
-std::shared_ptr<Operator> SinkLogicalOperator::clone() const
+std::unique_ptr<Operator> SinkLogicalOperator::clone() const
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
     auto sinkDescriptorPtrCopy = sinkDescriptor;
-    auto copy = std::make_shared<SinkLogicalOperator>(sinkName);
+    auto copy = std::make_unique<SinkLogicalOperator>(sinkName);
     copy->sinkDescriptor = std::move(sinkDescriptorPtrCopy);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);

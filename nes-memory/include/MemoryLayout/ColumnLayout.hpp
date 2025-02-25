@@ -35,10 +35,10 @@ namespace NES::Memory::MemoryLayouts
 class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
 {
 public:
-    ColumnLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    ColumnLayout(const Schema& schema, uint64_t bufferSize);
     ColumnLayout(const ColumnLayout& other);
 
-    static std::shared_ptr<ColumnLayout> create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    static std::unique_ptr<ColumnLayout> create(const Schema& schema, uint64_t bufferSize);
 
     /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// For the column layout the field offset is calculated as follows:
@@ -47,8 +47,7 @@ public:
     /// @return offset in the tuple buffer.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
-    std::shared_ptr<MemoryLayout> clone() const override;
-
+    std::unique_ptr<MemoryLayout> clone() const override;
     uint64_t getColumnOffset(uint64_t fieldIndex) const;
 
 private:

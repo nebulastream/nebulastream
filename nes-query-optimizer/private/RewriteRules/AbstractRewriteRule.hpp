@@ -45,12 +45,18 @@ struct AbstractLowerToPhysicalRewriteRule : public AbstractRewriteRule {
         if (!typedTS) {
             throw std::bad_cast();  // TODO
         }
-        std::vector<std::shared_ptr<PhysicalOperator>> ops = applyToPhysical(typedTS);
-        return new PhysicalOperatorTraitSet(std::move(ops));
+        std::vector<std::unique_ptr<PhysicalOperator>> ops = applyToPhysical(typedTS);
+
+        std::vector<std::shared_ptr<PhysicalOperator>> sharedOps;
+        sharedOps.reserve(ops.size());
+        for (auto& op : ops) {
+            sharedOps.push_back(std::shared_ptr<PhysicalOperator>(std::move(op)));
+        }
+        return new PhysicalOperatorTraitSet(std::move(sharedOps));
     }
 
     // Derived classes will implement this to produce the physical operators.
-    virtual std::vector<std::shared_ptr<PhysicalOperator>> applyToPhysical(DynamicTraitSet<T...>* typedTS) = 0;
+    virtual std::vector<std::unique_ptr<PhysicalOperator>> applyToPhysical(DynamicTraitSet<T...>* typedTS) = 0;
     virtual ~AbstractLowerToPhysicalRewriteRule() = default;
 };
 

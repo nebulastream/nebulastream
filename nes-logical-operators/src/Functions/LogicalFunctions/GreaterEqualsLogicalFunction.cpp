@@ -29,16 +29,16 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLo
 {
 }
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
+GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(left), std::move(right))
 {
 }
 
-bool GreaterEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool GreaterEqualsLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<GreaterEqualsLogicalFunction>(rhs))
+    auto other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<GreaterEqualsLogicalFunction>(rhs);
         return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
@@ -47,13 +47,13 @@ bool GreaterEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> c
 std::string GreaterEqualsLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << ">=" << *getRightChild();
+    ss << getLeftChild() << ">=" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> GreaterEqualsLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> GreaterEqualsLogicalFunction::clone() const
 {
-    return std::make_shared<GreaterEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<GreaterEqualsLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 SerializableFunction GreaterEqualsLogicalFunction::serialize() const
@@ -62,9 +62,9 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(getLeftChild().serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(getRightChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -75,7 +75,7 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
 std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
 BinaryLogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<GreaterEqualsLogicalFunction>(arguments.leftChild, arguments.rightChild);
+    return std::make_unique<GreaterEqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 }

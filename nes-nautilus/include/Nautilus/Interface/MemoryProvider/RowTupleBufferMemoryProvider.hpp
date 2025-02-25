@@ -27,10 +27,10 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
 public:
     /// Creates a row memory provider based on a valid row memory layout pointer.
-    RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
+    RowTupleBufferMemoryProvider(std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
+    Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -44,7 +44,7 @@ private:
 
     /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
     /// the same, during tracing and during the execution of the generated code.
-    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
+    std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
 };
 
 }

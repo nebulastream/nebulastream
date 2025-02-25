@@ -43,6 +43,7 @@
 #include <RewriteRuleRegistry.hpp>
 #include <magic_enum.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Optimizer
 {
@@ -60,7 +61,7 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     }
     for (const auto& descriptor : logicalOperator.getWindowAggregation())
     {
-        if (const auto fieldAccessExpression = NES::Util::as_if<FieldAccessLogicalFunction>(descriptor->on()))
+        if (const auto fieldAccessExpression = dynamic_cast<FieldAccessLogicalFunction*>(*descriptor->on()))
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
@@ -75,7 +76,7 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
 
 std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
 {
-    const auto timeWindow = NES::Util::as_if<Windowing::TimeBasedWindowType>(logicalOperator.getWindowType());
+    const auto timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(*logicalOperator.getWindowType());
     if (not timeWindow)
     {
         throw UnknownWindowType("Window type is not a time based window type");
@@ -116,15 +117,15 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         auto physicalInputType = physicalTypeFactory.getPhysicalType(descriptor->getInputStamp());
         auto physicalFinalType = physicalTypeFactory.getPhysicalType(descriptor->getFinalAggregateStamp());
 
-        auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->on());
-        if (const auto fieldAccessExpression = NES::Util::as_if<FieldAccessLogicalFunction>(descriptor->as()))
+        auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->on().clone());
+        if (const auto fieldAccessExpression = dynamic_cast<FieldAccessLogicalFunction*>(descriptor->as().clone().get()))
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             switch (descriptor->getType())
             {
                 case Windowing::WindowAggregationFunction::Type::Avg: {
                     /// We assume that the count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+                    const auto countType = physicalTypeFactory.getPhysicalType(*DataTypeFactory::createUInt64());
                     aggregationFunctions.emplace_back(std::make_unique<AvgAggregationFunction>(
                         physicalInputType,
                         physicalFinalType,
@@ -140,7 +141,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                 }
                 case Windowing::WindowAggregationFunction::Type::Count: {
                     /// We assume that a count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+                    const auto countType = physicalTypeFactory.getPhysicalType(*DataTypeFactory::createUInt64());
                     aggregationFunctions.emplace_back(std::make_unique<CountAggregationFunction>(
                         countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
@@ -204,11 +205,11 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
     std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions;
     uint64_t keySize = 0;
     auto keyFunctionLogical = ops->getKeys();
-    for (const auto& nodeFunctionKey : keyFunctionLogical)
+    for (auto& nodeFunctionKey : keyFunctionLogical)
     {
         const DefaultPhysicalTypeFactory typeFactory;
-        const auto loweredFunctionType = nodeFunctionKey->getStamp();
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
+        const auto& loweredFunctionType = nodeFunctionKey->getStamp();
+        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(std::move(nodeFunctionKey)));
         keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
     }
     const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
@@ -216,14 +217,14 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(*ops);
     const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(
-        *inSchema, fieldKeyNames, fieldValueNames);
+        inSchema, fieldKeyNames, fieldValueNames);
 
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
         = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), 50 /* TODO */);
-    auto memoryProvider1 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    const auto windowAggregationPhysicalOperator = std::make_shared<WindowAggregation>(
+    auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), 50 /* TODO */);
+    auto memoryProvider1 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
+    const auto windowAggregationPhysicalOperator = std::make_unique<WindowAggregation>(
         std::move(aggregationFunctions),
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
         fieldKeys,
@@ -232,7 +233,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
         entrySize);
 
 
-    auto memoryProvider2 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
+    auto memoryProvider2 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
     const auto build = std::make_shared<AggregationBuildPhysicalOperator>(
         ([](auto ptr) {
              std::vector<std::shared_ptr<TupleBufferMemoryProvider>> vec;
@@ -242,7 +243,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
         operatorHandlerIndex, std::move(timeFunction), std::move(keyFunctions),
         windowAggregationPhysicalOperator);
 
-    auto memoryProvider3 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
+    auto memoryProvider3 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
     const auto probe = std::make_shared<AggregationProbePhysicalOperator>(([](auto ptr) {
                                                              std::vector<std::shared_ptr<TupleBufferMemoryProvider>> vec;
                                                              vec.push_back(std::move(ptr));

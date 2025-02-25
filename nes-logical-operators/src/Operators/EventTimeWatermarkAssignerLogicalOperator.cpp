@@ -28,15 +28,15 @@
 namespace NES
 {
 
-EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
-std::shared_ptr<LogicalFunction> onField, Windowing::TimeUnit unit)
-: Operator()
-, UnaryLogicalOperator()
-, onField(std::move(onField))
-, unit(unit)
+EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(std::unique_ptr<LogicalFunction> onField, Windowing::TimeUnit unit)
+: Operator(), UnaryLogicalOperator(), onField(std::move(onField)), unit(unit)
 {
 }
 
+std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noexcept
+{
+    return NAME;
+}
 
 std::string EventTimeWatermarkAssignerLogicalOperator::toString() const
 {
@@ -66,14 +66,14 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(Operator const& rhs) 
     return false;
 }
 
-std::shared_ptr<Operator> EventTimeWatermarkAssignerLogicalOperator::clone() const
+std::unique_ptr<Operator> EventTimeWatermarkAssignerLogicalOperator::clone() const
 {
-    std::shared_ptr<LogicalFunction> clonedOnField;
+    std::unique_ptr<LogicalFunction> clonedOnField;
     if (onField)
     {
         clonedOnField = onField->clone();
     }
-    auto copy = std::make_shared<EventTimeWatermarkAssignerLogicalOperator>(clonedOnField, unit);
+    auto copy = std::make_unique<EventTimeWatermarkAssignerLogicalOperator>(std::move(clonedOnField), unit);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

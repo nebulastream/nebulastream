@@ -45,16 +45,20 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(std::shared_ptr<QueryPlan> plan)
+QueryId SingleNodeWorker::registerQuery(QueryPlan plan)
 {
     try
     {
-        auto queryPlan
-            = std::make_unique<QueryPlan>(QueryId(queryIdCounter++), plan->getRootOperators());
+        std::vector<std::unique_ptr<Operator>> uniqueOperators;
+        for (Operator* op : plan.getRootOperators())
+        {
+            uniqueOperators.push_back(std::unique_ptr<Operator>(op));
+        }
+        auto queryPlan = std::make_unique<QueryPlan>(QueryId(queryIdCounter++), std::move(uniqueOperators));
 
         queryPlan = optimizer->optimize(std::move(queryPlan));
 
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan->toString()});
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan.toString()});
 
         return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
     }

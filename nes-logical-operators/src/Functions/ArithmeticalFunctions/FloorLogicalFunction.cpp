@@ -21,7 +21,7 @@
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(std::move(stamp), child)
+FloorLogicalFunction::FloorLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(stamp), std::move(child))
 {
 };
 
@@ -29,12 +29,12 @@ FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : 
 {
 }
 
-bool FloorLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool FloorLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<FloorLogicalFunction>(rhs))
+    auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherFloorNode = NES::Util::as<FloorLogicalFunction>(rhs);
-        return getChild() == otherFloorNode->getChild();
+        return getChild() == other->getChild();
     }
     return false;
 }
@@ -42,13 +42,13 @@ bool FloorLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rh
 std::string FloorLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "FLOOR(" << *getChild() << ")";
+    ss << "FLOOR(" << getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> FloorLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> FloorLogicalFunction::clone() const
 {
-    return std::make_shared<FloorLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_unique<FloorLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction FloorLogicalFunction::serialize() const
@@ -57,7 +57,7 @@ SerializableFunction FloorLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
     auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild()->serialize());
+    child->CopyFrom(getChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -68,7 +68,7 @@ SerializableFunction FloorLogicalFunction::serialize() const
 std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterFloorUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<FloorLogicalFunction>(arguments.child);
+    return std::make_unique<FloorLogicalFunction>(std::move(arguments.child));
 }
 
 }

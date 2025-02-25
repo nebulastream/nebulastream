@@ -20,57 +20,56 @@
 namespace NES
 {
 
-std::shared_ptr<SerializableSchema>
-SchemaSerializationUtil::serializeSchema(const std::shared_ptr<Schema>& schema, SerializableSchema* serializedSchema)
+SerializableSchema
+SchemaSerializationUtil::serializeSchema(const Schema& schema, SerializableSchema* serializedSchema)
 {
-    NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
+    NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema.toString());
     /// serialize all field in schema
-    for (const auto& field : *schema)
+    for (const auto& field : schema)
     {
         auto* serializedField = serializedSchema->add_fields();
-        serializedField->set_name(field->getName());
+        serializedField->set_name(field.getName());
         /// serialize data type
-        DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
+        DataTypeSerializationUtil::serializeDataType(field.getDataType(), serializedField->mutable_type());
     }
 
     /// Serialize layoutType
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    if (schema.getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
         NES_DEBUG("SchemaSerializationUtil:: serialize schema Row Layout");
     }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    else if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_COL_LAYOUT);
         NES_DEBUG("SchemaSerializationUtil:: serialize schema Column Layout");
     }
 
-    return std::make_shared<SerializableSchema>(*serializedSchema);
+    return SerializableSchema(*serializedSchema);
 }
 
-std::shared_ptr<Schema> SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
+Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
 {
     /// de-serialize field from serialized schema to the schema object.
-    NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
-    auto deserializedSchema = Schema::create();
+    auto deserializedSchema = Schema();
     for (const auto& serializedField : serializedSchema.fields())
     {
         const auto& fieldName = serializedField.name();
         /// de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
-        deserializedSchema->addField(fieldName, type);
+        deserializedSchema.addField(fieldName, std::move(type));
     }
 
     /// Deserialize layoutType
     switch (serializedSchema.layouttype())
     {
         case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
-            deserializedSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
+            deserializedSchema.setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
             break;
         }
         case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
-            deserializedSchema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+            deserializedSchema.setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
             break;
         }

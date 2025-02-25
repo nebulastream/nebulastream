@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <vector>
 #include <Operators/LogicalOperator.hpp>
 
 namespace NES
@@ -33,21 +34,21 @@ public:
     /// @brief infers the origin id from the child operator.
     void inferInputOrigins() override;
 
-
-    void setOutputSchema(std::shared_ptr<Schema> schema) override
+    void setOutputSchema(const Schema& schema) override
     {
         outputSchema = schema;
     }
 
-    std::shared_ptr<Schema> getOutputSchema() const override
+    Schema getOutputSchema() const override
     {
         return outputSchema;
     }
 
-    void setInputSchema(const std::shared_ptr<Schema> schema) {
+    void setInputSchema(const Schema& schema) {
         inputSchema = schema;
     }
-    [[nodiscard]] std::shared_ptr<Schema> getInputSchema() const
+
+    [[nodiscard]] Schema getInputSchema() const
     {
         return inputSchema;
     }
@@ -56,6 +57,7 @@ public:
     {
         inputOriginIds = originIds;
     }
+
     std::vector<OriginId> getInputOriginIds() const
     {
         return inputOriginIds;
@@ -67,7 +69,7 @@ public:
     }
 
 protected:
-    std::shared_ptr<Schema> inputSchema;
+    Schema inputSchema;
     std::vector<OriginId> inputOriginIds;
 };
 }

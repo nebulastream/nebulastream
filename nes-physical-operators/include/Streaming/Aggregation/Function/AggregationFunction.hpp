@@ -71,8 +71,8 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    const std::shared_ptr<PhysicalType> inputType;
-    const std::shared_ptr<PhysicalType> resultType;
+    const std::unique_ptr<PhysicalType> inputType;
+    const std::unique_ptr<PhysicalType> resultType;
     const std::unique_ptr<Functions::PhysicalFunction> inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };

@@ -29,8 +29,8 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema)
-    : Operator(), UnaryLogicalOperator(), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema)
+    : Operator(), UnaryLogicalOperator(), logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 
@@ -43,7 +43,7 @@ bool SourceNameLogicalOperator::operator==(Operator const& rhs) const
 {
     if (auto rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs)) {
         return this->getSchema() == rhsOperator->getSchema()
-            && this->getLogicalSourceName() == rhsOperator->getLogicalSourceName();
+            && this->getName() == rhsOperator->getName();
     }
     return false;
 }
@@ -60,9 +60,9 @@ bool SourceNameLogicalOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> SourceNameLogicalOperator::clone() const
+std::unique_ptr<Operator> SourceNameLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName);
+    auto copy = std::make_unique<SourceNameLogicalOperator>(logicalSourceName);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
@@ -75,17 +75,18 @@ void SourceNameLogicalOperator::inferInputOrigins()
     NES_INFO("Data sources have no input origins, so inferInputOrigins is a noop.");
 }
 
-std::string SourceNameLogicalOperator::getLogicalSourceName() const
+std::string_view SourceNameLogicalOperator::getName() const noexcept
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
+
+Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+void SourceNameLogicalOperator::setSchema(const Schema& schema)
 {
-    this->schema = std::move(schema);
+    this->schema = schema;
 }
 
 SerializableOperator SourceNameLogicalOperator::serialize() const

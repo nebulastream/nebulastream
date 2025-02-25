@@ -13,8 +13,8 @@
 */
 
 #pragma once
-#include <Common/DataTypes/DataType.hpp>
 
+#include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <string>
 #include <utility>
@@ -27,7 +27,7 @@ namespace NES
 class PhysicalType
 {
 public:
-    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(std::unique_ptr<DataType> type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
@@ -36,17 +36,17 @@ public:
 
     virtual std::string convertRawToString(const void* rawData) const noexcept = 0;
 
+    virtual std::unique_ptr<PhysicalType> clone() const = 0;
+
     /// Converts the binary representation of this value to a string without filling
     /// up the difference between the length of the string and the end of the schema definition
     /// with unrelated characters.
     virtual std::string convertRawToStringWithoutFill(const void* rawData) const noexcept = 0;
-
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
-
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 
     /// Type that is contained by this PhysicalType container
-    std::shared_ptr<DataType> type;
+    std::unique_ptr<DataType> type;
 };
 
 }

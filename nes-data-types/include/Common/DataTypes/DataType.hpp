@@ -29,13 +29,15 @@ public:
     /// @brief Calculates the joined data type between this data type and the other.
     /// If they have no possible joined data type, the coined type is Undefined.
     /// Floats, we can join with all numeric data types.
-    virtual std::shared_ptr<DataType> join(const std::shared_ptr<DataType>& otherDataType) const = 0;
+    virtual std::unique_ptr<DataType> join(const DataType& otherDataType) const = 0;
 
     template <class T>
     static std::shared_ptr<T> as(const std::shared_ptr<DataType>& ptr)
     {
         return std::dynamic_pointer_cast<T>(ptr);
     }
+
+    virtual std::unique_ptr<DataType> clone() const = 0;
     virtual bool operator==(const DataType& other) const = 0;
     bool operator!=(const DataType& other) const { return !(*this == other); }
     [[nodiscard]] virtual std::string toString() const = 0;

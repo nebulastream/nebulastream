@@ -28,16 +28,16 @@
 namespace NES
 {
 
-LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp) : stamp(std::move(stamp))
+LogicalFunction::LogicalFunction(std::unique_ptr<DataType> stamp) : stamp(std::move(stamp))
 {
 }
 
-std::shared_ptr<DataType> LogicalFunction::getStamp() const
+DataType& LogicalFunction::getStamp() const
 {
-    return stamp;
+    return *stamp;
 }
 
-void LogicalFunction::setStamp(std::shared_ptr<DataType> stamp)
+void LogicalFunction::setStamp(std::unique_ptr<DataType> stamp)
 {
     this->stamp = std::move(stamp);
 }
@@ -69,7 +69,8 @@ std::string LogicalFunction::getType() const {
 #endif
 }
 
-LogicalFunction::LogicalFunction(const LogicalFunction& other) : stamp(other.stamp)
+LogicalFunction::LogicalFunction(const LogicalFunction& other) : stamp(other.stamp ? other.stamp->clone() : nullptr)
+
 {
 }
 

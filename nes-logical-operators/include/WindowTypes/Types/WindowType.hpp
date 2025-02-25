@@ -24,13 +24,10 @@ class WindowType : public std::enable_shared_from_this<WindowType>
 {
 public:
     explicit WindowType();
-
     virtual ~WindowType() = default;
 
     virtual std::string toString() const = 0;
-
-    virtual bool equal(std::shared_ptr<WindowType> otherWindowType) = 0;
-
+    virtual bool operator==(const WindowType& otherWindowType) = 0;
     virtual bool inferStamp(const Schema& schema) = 0;
 
     /// @brief Get the hash of the window type

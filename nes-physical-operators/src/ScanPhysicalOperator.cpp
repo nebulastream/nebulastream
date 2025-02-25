@@ -27,7 +27,7 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(
-    std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : PhysicalOperator(std::move(memoryProvider)), projections(std::move(projections))
 {
@@ -48,7 +48,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = getMemoryProvider()->readRecord(projections, recordBuffer, i);
+        auto record = getMemoryProvider().readRecord(projections, recordBuffer, i);
         child()->execute(executionCtx, record);
     }
 }

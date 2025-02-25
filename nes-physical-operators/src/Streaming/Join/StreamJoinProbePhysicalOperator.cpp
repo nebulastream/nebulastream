@@ -75,6 +75,6 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const nautilus::val<Timestamp>& windowEnd) const
 {
     return createJoinedRecord(
-        leftRecord, rightRecord, windowStart, windowEnd, joinSchema.leftSchema->getFieldNames(), joinSchema.rightSchema->getFieldNames());
+        leftRecord, rightRecord, windowStart, windowEnd, joinSchema.leftSchema.getFieldNames(), joinSchema.rightSchema->getFieldNames());
 }
 }

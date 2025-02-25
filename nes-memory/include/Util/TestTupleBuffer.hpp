@@ -52,7 +52,7 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class DynamicField
 {
 public:
-    explicit DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType);
+    explicit DynamicField(const uint8_t* address, std::unique_ptr<PhysicalType> physicalType);
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
@@ -77,7 +77,7 @@ public:
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
     [[nodiscard]] Type& read() const
     {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<Type>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -109,7 +109,7 @@ public:
     requires(IsNesType<Type>)
     void write(Type value)
     {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<Type>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -143,13 +143,13 @@ public:
 
     bool operator!=(const DynamicField& rhs) const;
 
-    [[nodiscard]] const std::shared_ptr<PhysicalType>& getPhysicalType() const;
+    [[nodiscard]] PhysicalType& getPhysicalType() const;
 
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 
 private:
     const uint8_t* address;
-    std::shared_ptr<PhysicalType> physicalType;
+    const std::unique_ptr<PhysicalType> physicalType;
 };
 
 /// The DynamicRecords allows to read individual fields of a tuple.
@@ -158,7 +158,7 @@ class DynamicTuple
 {
 public:
     /// Each tuple contains the index, to the memory layout and to the tuple buffer.
-    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
 
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
@@ -172,7 +172,7 @@ public:
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    [[nodiscard]] std::string toString(const std::shared_ptr<Schema>& schema) const;
+    std::string toString(const Schema& schema) const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different
@@ -181,7 +181,7 @@ public:
 
 private:
     uint64_t tupleIndex;
-    std::shared_ptr<MemoryLayout> memoryLayout;
+    std::unique_ptr<MemoryLayout> memoryLayout;
     Memory::TupleBuffer buffer;
 };
 
@@ -226,9 +226,9 @@ private:
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
+    explicit TestTupleBuffer(std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema);
+    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -288,8 +288,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(const std::shared_ptr<Schema>& schema);
-    std::string toString(const std::shared_ptr<Schema>& schema, bool showHeader);
+    std::string toString(const Schema& schema, bool showHeader = true);
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
@@ -383,10 +382,10 @@ public:
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
         PRECONDITION(
-            (sizeof...(Types)) == memoryLayout->getSchema()->getFieldCount(),
+            (sizeof...(Types)) == memoryLayout->getSchema().getFieldCount(),
             "Provided tuple types: {} do not match the number of fields in the memory layout: {}",
             sizeof...(Types),
-            memoryLayout->getSchema()->getFieldCount());
+            memoryLayout->getSchema().getFieldCount());
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;

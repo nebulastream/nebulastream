@@ -23,10 +23,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-#include "Operators/MapLogicalOperator.hpp"
-#include "Operators/ProjectionLogicalOperator.hpp"
-#include "Operators/SelectionLogicalOperator.hpp"
-#include "Operators/UnionLogicalOperator.hpp"
+#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 
 using namespace NES;
 
@@ -52,24 +52,23 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     ///test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
     ///test addSelection
-    auto filterFunction = std::shared_ptr<LogicalFunction>(
-        std::make_shared<EqualsLogicalFunction>(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
+    auto filterFunction = EqualsLogicalFunction(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction());
     queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<SelectionLogicalOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);
+    EXPECT_TRUE(queryPlan.getOperatorByType<SelectionLogicalOperator>().size() == 1);
+    EXPECT_EQ(queryPlan.getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
-    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    std::vector<std::unique_ptr<LogicalFunction>> functions;
     functions.push_back(Attribute("id").getLogicalFunction());
-    queryPlan = QueryPlanBuilder::addProjection(functions, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<ProjectionLogicalOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<ProjectionLogicalOperator>()[0]->getFunctions(), functions);
+    queryPlan = QueryPlanBuilder::addProjection(std::move(functions), queryPlan);
+    EXPECT_TRUE(queryPlan.getOperatorByType<ProjectionLogicalOperator>().size() == 1);
+    EXPECT_EQ(queryPlan.getOperatorByType<ProjectionLogicalOperator>()[0]->getFunctions(), functions);
     ///test addMap
     queryPlan = QueryPlanBuilder::addMap(Attribute("b") = 1, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<MapLogicalOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan.getOperatorByType<MapLogicalOperator>().size() == 1);
     ///test addUnion
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<UnionLogicalOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan.getOperatorByType<UnionLogicalOperator>().size() == 1);
     queryPlan = QueryPlanBuilder::addSink("print_source", queryPlan, WorkerId(0));
-    EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan.getOperatorByType<SinkLogicalOperator>().size() == 1);
 }

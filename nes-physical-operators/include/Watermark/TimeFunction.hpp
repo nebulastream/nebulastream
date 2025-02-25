@@ -35,8 +35,8 @@ using namespace Nautilus;
 class TimeFunction
 {
 public:
-    virtual void open(ExecutionContext& ctx, RecordBuffer& buffer);
-    virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record);
+    virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) = 0;
+    virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
 

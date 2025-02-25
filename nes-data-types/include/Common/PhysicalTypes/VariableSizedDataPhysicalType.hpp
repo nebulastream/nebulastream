@@ -27,14 +27,23 @@ namespace NES
 class VariableSizedDataPhysicalType final : public PhysicalType
 {
 public:
-    explicit VariableSizedDataPhysicalType(std::shared_ptr<DataType> type) noexcept : PhysicalType(std::move(type)) { }
+    explicit VariableSizedDataPhysicalType(std::unique_ptr<DataType> type) noexcept : PhysicalType(std::move(type)) { }
 
     ~VariableSizedDataPhysicalType() override = default;
 
-    static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type) noexcept
+    VariableSizedDataPhysicalType(const VariableSizedDataPhysicalType& type) : PhysicalType(type.type->clone()) { }
+
+    static inline std::unique_ptr<PhysicalType> create(std::unique_ptr<DataType> type) noexcept
     {
-        return std::make_shared<VariableSizedDataPhysicalType>(type);
+        return std::make_unique<VariableSizedDataPhysicalType>(std::move(type));
     }
+
+    static inline std::unique_ptr<PhysicalType> create(const DataType& type) noexcept
+    {
+        return std::make_unique<VariableSizedDataPhysicalType>(type.clone());
+    }
+
+    [[nodiscard]] std::unique_ptr<PhysicalType> clone() const override;
 
     [[nodiscard]] uint64_t size() const override;
 

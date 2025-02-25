@@ -26,28 +26,28 @@
 
 namespace NES
 {
-RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName)
-    : UnaryLogicalFunction(originalField->getStamp(), originalField), newFieldName(std::move(newFieldName))
+RenameLogicalFunction::RenameLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName)
+    : UnaryLogicalFunction(originalField->getStamp().clone(), std::move(originalField)), newFieldName(std::move(newFieldName))
 {
 };
 
 RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
-    : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
+    : RenameLogicalFunction(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(other.getOriginalField().clone()), other.getNewFieldName()) {};
 
 
-bool RenameLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool RenameLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
+    auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherFieldRead = NES::Util::as<RenameLogicalFunction>(rhs);
-        return otherFieldRead->child[0] == getOriginalField() and  this->newFieldName == otherFieldRead->getNewFieldName();
+        return *(other->child[0]) == getOriginalField() && this->newFieldName == other->getNewFieldName();
     }
     return false;
 }
 
-std::shared_ptr<FieldAccessLogicalFunction> RenameLogicalFunction::getOriginalField() const
+FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
 {
-    return Util::as<FieldAccessLogicalFunction>(child[0]);
+    return static_cast<FieldAccessLogicalFunction&>(*child[0]);
 }
 
 std::string RenameLogicalFunction::getNewFieldName() const
@@ -62,9 +62,9 @@ std::string RenameLogicalFunction::toString() const
 
 void RenameLogicalFunction::inferStamp(const Schema& schema)
 {
-    auto originalFieldName = getOriginalField();
-    originalFieldName->inferStamp(schema);
-    auto fieldName = originalFieldName->getFieldName();
+    auto& originalFieldName = getOriginalField();
+    originalFieldName.inferStamp(schema);
+    auto fieldName = originalFieldName.getFieldName();
     auto fieldAttribute = schema.getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
@@ -89,17 +89,17 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
         }
     }
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute.value()->getDataType();
+    stamp = fieldAttribute.value().getDataType().clone();
 }
 
-std::span<const std::shared_ptr<LogicalFunction>> RenameLogicalFunction::getChildren() const
+std::span<const std::unique_ptr<LogicalFunction>> RenameLogicalFunction::getChildren() const
 {
     return child;
 }
 
-std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> RenameLogicalFunction::clone() const
 {
-    return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(child[0]->clone()), newFieldName);
+    return std::make_unique<RenameLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(child[0]->clone()), newFieldName);
 }
 
 SerializableFunction RenameLogicalFunction::serialize() const
@@ -109,7 +109,7 @@ SerializableFunction RenameLogicalFunction::serialize() const
 
     auto* funcDesc = new SerializableFunction_UnaryFunction();
     auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild()->serialize());
+    child->CopyFrom(getChild().serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
     SerializableVariantDescriptor variantDescriptor =
@@ -127,7 +127,7 @@ std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRenameUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
-    return std::make_unique<RenameLogicalFunction>(NES::Util::as<FieldAccessLogicalFunction>(arguments.child), newFieldName);
+    return std::make_unique<RenameLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(arguments.child)), newFieldName);
 }
 
 }

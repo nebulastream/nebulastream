@@ -27,7 +27,7 @@ class SerializableOperator;
 class LogicalOperator : public virtual Operator
 {
 public:
-    explicit LogicalOperator() : outputSchema(Schema::create()) {};
+    explicit LogicalOperator() : outputSchema(Schema()) {};
     explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp);
     virtual std::string_view getName() const noexcept = 0;
 
@@ -41,18 +41,17 @@ public:
     /// @return true if schema was correctly inferred
     virtual bool inferSchema() = 0;
 
-    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
-    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
+    virtual Schema getOutputSchema() const = 0;
+    virtual void setOutputSchema(const Schema& outputSchema) = 0;
 
     virtual SerializableOperator serialize() const = 0;
 
-    virtual std::shared_ptr<Operator> clone() const = 0;
     virtual bool operator==(Operator const& rhs) const = 0;
     virtual bool isIdentical(Operator const& rhs) const = 0;
 
 protected:
     /// The output schema of this operator
-    std::shared_ptr<Schema> outputSchema;
+    Schema outputSchema;
 };
 }
 FMT_OSTREAM(NES::LogicalOperator);

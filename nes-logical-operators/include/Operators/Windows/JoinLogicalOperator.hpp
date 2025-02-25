@@ -38,10 +38,8 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    static constexpr std::string_view NAME = "Join";
-
-    explicit JoinLogicalOperator(const std::shared_ptr<LogicalFunction>& joinFunction,
-                                 const std::shared_ptr<Windowing::WindowType>& windowType,
+    explicit JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFunction,
+                                 std::unique_ptr<Windowing::WindowType> windowType,
                                  uint64_t numberOfInputEdgesLeft,
                                  uint64_t numberOfInputEdgesRight,
                                  JoinType joinType,
@@ -51,23 +49,21 @@ public:
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
-    [[nodiscard]]  std::shared_ptr<LogicalFunction> getJoinFunction() const;
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSchema() const;
-
-    [[nodiscard]] std::shared_ptr<Schema> getRightSchema() const;
-
-    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
+    [[nodiscard]] LogicalFunction& getJoinFunction() const;
+    [[nodiscard]] Schema getLeftSchema() const;
+    [[nodiscard]] Schema getRightSchema() const;
+    [[nodiscard]] Windowing::WindowType& getWindowType() const;
     [[nodiscard]] JoinType getJoinType() const;
 
-    void updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema);
+    void updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema);
 
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -103,11 +99,13 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::shared_ptr<LogicalFunction> joinFunction;
-    std::shared_ptr<Schema> leftSourceSchema = Schema::create();
-    std::shared_ptr<Schema> rightSourceSchema = Schema::create();
-    std::shared_ptr<Schema> outputSchema = Schema::create();
-    std::shared_ptr<Windowing::WindowType> windowType;
+    static constexpr std::string_view NAME = "Join";
+
+    std::unique_ptr<LogicalFunction> joinFunction;
+    Schema leftSourceSchema;
+    Schema rightSourceSchema;
+    Schema outputSchema ;
+    std::unique_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
     std::string windowStartFieldName;

@@ -16,7 +16,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -32,7 +32,7 @@
 using namespace std::string_literals;
 
 /*
-namespace NES::Optimizer
+namespace NES::LegacyOptimizer
 {
 SemanticQueryValidation::SemanticQueryValidation(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
     : sourceCatalog(sourceCatalog)

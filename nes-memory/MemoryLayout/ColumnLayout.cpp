@@ -25,7 +25,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -40,9 +40,9 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
+std::unique_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
 {
-    return std::make_shared<ColumnLayout>(schema, bufferSize);
+    return std::make_unique<ColumnLayout>(schema, bufferSize);
 }
 
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
@@ -72,8 +72,8 @@ uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
     return columnOffsets[fieldIndex];
 }
 
-std::shared_ptr<MemoryLayout> ColumnLayout::clone() const
+std::unique_ptr<MemoryLayout> ColumnLayout::clone() const
 {
-    return std::make_shared<ColumnLayout>(*this);
+    return std::make_unique<ColumnLayout>(*this);
 }
 }

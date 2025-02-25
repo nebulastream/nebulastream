@@ -37,11 +37,11 @@ class OperatorSerializationUtil
 {
 public:
     /// Serializes an operator node and all its children to a SerializableOperator object.
-    static SerializableOperator serializeOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static SerializableOperator serializeOperator(std::unique_ptr<LogicalOperator> operatorNode);
 
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static std::shared_ptr<LogicalOperator> deserializeOperator(SerializableOperator serializedOperator);
+    static std::unique_ptr<LogicalOperator> deserializeOperator(SerializableOperator serializedOperator);
 
     static std::unique_ptr<LogicalOperator> deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
 
@@ -49,11 +49,10 @@ public:
     static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
-    static void serializeSinkDescriptor(
-        std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);
+    static void serializeSinkDescriptor(const Schema& schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);
 
-    static std::shared_ptr<UnaryLogicalOperator> deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
-    static std::shared_ptr<UnaryLogicalOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
+    static std::unique_ptr<UnaryLogicalOperator> deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
+    static std::unique_ptr<UnaryLogicalOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor>

@@ -36,7 +36,8 @@ bool BinaryLogicalOperator::inferSchema()
     /// Infer schema of all child operators
     for (const auto& child : children)
     {
-        if (!NES::Util::as<LogicalOperator>(child)->inferSchema())
+        auto logOp = dynamic_cast<LogicalOperator*>(child.get());
+        if (!logOp->inferSchema())
         {
             throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
         }
@@ -45,11 +46,12 @@ bool BinaryLogicalOperator::inferSchema()
     ///Identify different type of schemas from children operators
     for (const auto& child : children)
     {
-        auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
+        auto logOp = dynamic_cast<LogicalOperator*>(child.get());
+        auto childOutputSchema = logOp->getOutputSchema();
         auto found = std::find_if(
             distinctSchemas.begin(),
             distinctSchemas.end(),
-            [&](const std::shared_ptr<Schema>& distinctSchema) { return (*childOutputSchema == *distinctSchema); });
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);
@@ -62,62 +64,61 @@ bool BinaryLogicalOperator::inferSchema()
     return true;
 }
 
-std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const
+std::vector<std::unique_ptr<Operator>> BinaryLogicalOperator::getOperatorsBySchema(const Schema& schema) const
 {
-    std::vector<std::shared_ptr<Operator>> operators;
+    std::vector<std::unique_ptr<Operator>> operators;
     for (const auto& child : children)
     {
-        auto childOperator = NES::Util::as<LogicalOperator>(child);
-        if (*childOperator->getOutputSchema() == *schema)
+        auto logOp = dynamic_cast<LogicalOperator*>(child.get());
+        if (logOp->getOutputSchema() == schema)
         {
-            operators.emplace_back(childOperator);
+            operators.emplace_back(logOp->clone());
         }
     }
     return operators;
 }
 
-std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getLeftOperators() const
+std::vector<std::unique_ptr<Operator>> BinaryLogicalOperator::getLeftOperators() const
 {
     return getOperatorsBySchema(getLeftInputSchema());
 }
 
-std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getRightOperators() const
+std::vector<std::unique_ptr<Operator>> BinaryLogicalOperator::getRightOperators() const
 {
     return getOperatorsBySchema(getRightInputSchema());
 }
 
-void BinaryLogicalOperator::setRightInputSchema(std::shared_ptr<Schema> schema)
+void BinaryLogicalOperator::setRightInputSchema(const Schema& schema)
 {
     rightInputSchema = schema;
 }
-std::shared_ptr<Schema> BinaryLogicalOperator::getRightInputSchema() const
+
+Schema BinaryLogicalOperator::getRightInputSchema() const
 {
     return rightInputSchema;
 }
 
-void BinaryLogicalOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+void BinaryLogicalOperator::setOutputSchema(const Schema& outputSchema)
 {
-    if (outputSchema)
-    {
-        this->outputSchema = std::move(outputSchema);
-    }
+    this->outputSchema = std::move(outputSchema);
 }
 
-std::shared_ptr<Schema> BinaryLogicalOperator::getOutputSchema() const
+Schema BinaryLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }
 
-void BinaryLogicalOperator::setLeftInputSchema(std::shared_ptr<Schema> schema)
+void BinaryLogicalOperator::setLeftInputSchema(const Schema& schema)
 {
     leftInputSchema = schema;
 }
-std::shared_ptr<Schema> BinaryLogicalOperator::getLeftInputSchema() const
+
+Schema BinaryLogicalOperator::getLeftInputSchema() const
 {
     return leftInputSchema;
 }
 
-void BinaryLogicalOperator::setLeftInputOriginIds(std::vector<OriginId> originIds)
+void BinaryLogicalOperator::setLeftInputOriginIds(const std::vector<OriginId>& originIds)
 {
     leftInputOriginIds = originIds;
 }
@@ -127,7 +128,7 @@ std::vector<OriginId> BinaryLogicalOperator::getLeftInputOriginIds() const
     return leftInputOriginIds;
 }
 
-void BinaryLogicalOperator::setRightInputOriginIds(std::vector<OriginId> originIds)
+void BinaryLogicalOperator::setRightInputOriginIds(const std::vector<OriginId>& originIds)
 {
     rightInputOriginIds = originIds;
 }
@@ -153,26 +154,32 @@ std::vector<OriginId> BinaryLogicalOperator::getAllInputOriginIds()
 
 void BinaryLogicalOperator::inferInputOrigins()
 {
-    /// in the default case we collect all input origins from the children/upstream operators
-    std::vector<OriginId> leftInputOriginIds;
-    for (auto child : this->getLeftOperators())
+    leftInputOriginIds.clear();
+    rightInputOriginIds.clear();
+
+    for (const auto& child : this->getLeftOperators())
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        std::unique_ptr<Operator> cloned = child->clone();
+        LogicalOperator* rawLogical = dynamic_cast<LogicalOperator*>(cloned.get());
+        INVARIANT(rawLogical, "Clone did not return a LogicalOperator.");
+        cloned.release();
+        std::unique_ptr<LogicalOperator> childOperator(rawLogical);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
-    this->leftInputOriginIds = leftInputOriginIds;
 
-    std::vector<OriginId> rightInputOriginIds;
-    for (auto child : this->getRightOperators())
+    for (const auto& child : this->getRightOperators())
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        std::unique_ptr<Operator> cloned = child->clone();
+        LogicalOperator* rawLogical = dynamic_cast<LogicalOperator*>(cloned.get());
+        INVARIANT(rawLogical, "Clone did not return a LogicalOperator.");
+        cloned.release();
+        std::unique_ptr<LogicalOperator> childOperator(rawLogical);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
-    this->rightInputOriginIds = rightInputOriginIds;
 }
 
 }

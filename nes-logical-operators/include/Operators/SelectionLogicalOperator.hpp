@@ -27,20 +27,18 @@ namespace NES
 class SelectionLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    static constexpr std::string_view NAME = "Selection";
-
-    explicit SelectionLogicalOperator(std::shared_ptr<LogicalFunction> const&);
+    explicit SelectionLogicalOperator(std::unique_ptr<LogicalFunction> predicate);
     ~SelectionLogicalOperator() override = default;
     std::string_view getName() const noexcept override;
 
-    std::shared_ptr<LogicalFunction> getPredicate() const;
-    void setPredicate(std::shared_ptr<LogicalFunction> newPredicate);
+    [[nodiscard]] LogicalFunction& getPredicate() const;
+    void setPredicate(std::unique_ptr<LogicalFunction> newPredicate);
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
     bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -61,6 +59,7 @@ public:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<LogicalFunction> predicate;
+    static constexpr std::string_view NAME = "Selection";
+    std::unique_ptr<LogicalFunction> predicate;
 };
 }

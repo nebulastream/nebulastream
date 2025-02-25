@@ -29,17 +29,22 @@
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(std::shared_ptr<LogicalFunction> const& predicate)
+SelectionLogicalOperator::SelectionLogicalOperator(std::unique_ptr<LogicalFunction> predicate)
     : Operator(), UnaryLogicalOperator(), predicate(std::move(predicate))
 {
 }
 
-std::shared_ptr<LogicalFunction> SelectionLogicalOperator::getPredicate() const
+std::string_view SelectionLogicalOperator::getName() const noexcept
 {
-    return predicate;
+    return NAME;
 }
 
-void SelectionLogicalOperator::setPredicate(std::shared_ptr<LogicalFunction> newPredicate)
+LogicalFunction& SelectionLogicalOperator::getPredicate() const
+{
+    return *predicate;
+}
+
+void SelectionLogicalOperator::setPredicate(std::unique_ptr<LogicalFunction> newPredicate)
 {
     predicate = std::move(newPredicate);
 }
@@ -70,7 +75,7 @@ bool SelectionLogicalOperator::inferSchema()
     {
         return false;
     }
-    predicate->inferStamp(*inputSchema);
+    predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
@@ -78,9 +83,9 @@ bool SelectionLogicalOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> SelectionLogicalOperator::clone() const
+std::unique_ptr<Operator> SelectionLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<SelectionLogicalOperator>(predicate->clone());
+    auto copy = std::make_unique<SelectionLogicalOperator>(predicate->clone());
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -105,8 +110,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::Logical
 
         if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
         {
-            std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
-            return std::make_unique<SelectionLogicalOperator>(sharedBase);
+            return std::make_unique<SelectionLogicalOperator>(std::move(function.value()));
         }
         return nullptr;
     }
@@ -124,7 +128,7 @@ SerializableOperator SelectionLogicalOperator::serialize() const
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(getPredicate()->serialize());
+    serializedFunction->CopyFrom(getPredicate().serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =

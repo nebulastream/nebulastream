@@ -29,8 +29,8 @@ using UnaryLogicalFunctionRegistryReturnType = UnaryLogicalFunction;
 struct UnaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
-    std::shared_ptr<LogicalFunction> child;
-    std::shared_ptr<DataType> stamp;
+    std::unique_ptr<LogicalFunction> child;
+    std::unique_ptr<DataType> stamp;
 };
 
 class UnaryLogicalFunctionRegistry : public BaseRegistry<

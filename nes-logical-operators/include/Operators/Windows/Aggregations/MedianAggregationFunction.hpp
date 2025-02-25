@@ -27,29 +27,23 @@ namespace NES::Windowing
 class MedianAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static constexpr std::string_view NAME = "Median";
-
-    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+    MedianAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    explicit MedianAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     /// Creates a new MedianAggregationFunction
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::shared_ptr<WindowAggregationFunction> create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationFunction> clone() override;
-
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
-
+    std::unique_ptr<WindowAggregationFunction> clone() override;
     virtual ~MedianAggregationFunction() = default;
 
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MedianAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    MedianAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    static constexpr std::string_view NAME = "Median";
 };
 }

@@ -28,16 +28,17 @@ ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other)
 {
 }
 
-ModuloLogicalFunction::ModuloLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp()->join(right->getStamp()), left, right)
+ModuloLogicalFunction::ModuloLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(left->getStamp().join(right->getStamp()), std::move(left), std::move(right))
 {
 }
 
-bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool ModuloLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<ModuloLogicalFunction>(rhs))
+    auto other = dynamic_cast<const ModuloLogicalFunction*>(&rhs);
+    if(other)
     {
-        auto otherAddNode = NES::Util::as<ModuloLogicalFunction>(rhs);
-        return getLeftChild() == otherAddNode->getLeftChild() and getRightChild() == otherAddNode->getRightChild();
+        return getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
     }
     return false;
 }
@@ -45,13 +46,13 @@ bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
 std::string ModuloLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "%" << *getRightChild();
+    ss << getLeftChild() << "%" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> ModuloLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> ModuloLogicalFunction::clone() const
 {
-    return std::make_shared<ModuloLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<ModuloLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 SerializableFunction ModuloLogicalFunction::serialize() const
@@ -60,9 +61,9 @@ SerializableFunction ModuloLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(getLeftChild().serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(getRightChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -73,7 +74,7 @@ SerializableFunction ModuloLogicalFunction::serialize() const
 std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
 BinaryLogicalFunctionGeneratedRegistrar::RegisterModuloBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<ModuloLogicalFunction>(arguments.leftChild, arguments.rightChild);
+    return std::make_unique<ModuloLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 

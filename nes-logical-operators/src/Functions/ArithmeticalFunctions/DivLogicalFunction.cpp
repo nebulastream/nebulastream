@@ -21,7 +21,8 @@
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(left->getStamp(), left, right)
+DivLogicalFunction::DivLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(left->getStamp().clone(), std::move(left), std::move(right))
 {
 };
 
@@ -29,12 +30,12 @@ DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : Binary
 {
 }
 
-bool DivLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool DivLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<DivLogicalFunction>(rhs))
+    auto other = dynamic_cast<const DivLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherDivNode = NES::Util::as<DivLogicalFunction>(rhs);
-        return getLeftChild() == otherDivNode->getLeftChild() and getRightChild() == otherDivNode->getRightChild();
+        return getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
     }
     return false;
 }
@@ -42,13 +43,13 @@ bool DivLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs)
 std::string DivLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "/" << *getRightChild();
+    ss << getLeftChild() << "/" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> DivLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> DivLogicalFunction::clone() const
 {
-    return std::make_shared<DivLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<DivLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 SerializableFunction DivLogicalFunction::serialize() const
@@ -57,9 +58,9 @@ SerializableFunction DivLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(getLeftChild().serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(getRightChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -70,7 +71,7 @@ SerializableFunction DivLogicalFunction::serialize() const
 std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
 BinaryLogicalFunctionGeneratedRegistrar::RegisterDivBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<DivLogicalFunction>(arguments.leftChild, arguments.rightChild);
+    return std::make_unique<DivLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 

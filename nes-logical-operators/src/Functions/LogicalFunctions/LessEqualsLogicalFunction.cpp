@@ -26,16 +26,16 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 {
 }
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), left, right)
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(left), std::move(right))
 {
 }
 
-bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool LessEqualsLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<LessEqualsLogicalFunction>(rhs))
+    auto other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<LessEqualsLogicalFunction>(rhs);
         return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
@@ -44,13 +44,13 @@ bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> cons
 std::string LessEqualsLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "<=" << *getRightChild();
+    ss << getLeftChild() << "<=" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
 {
-    return std::make_shared<LessEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<LessEqualsLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 SerializableFunction LessEqualsLogicalFunction::serialize() const
@@ -59,9 +59,9 @@ SerializableFunction LessEqualsLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(getLeftChild().serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(getRightChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -72,7 +72,7 @@ SerializableFunction LessEqualsLogicalFunction::serialize() const
 std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
 BinaryLogicalFunctionGeneratedRegistrar::RegisterLessEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<LessEqualsLogicalFunction>(arguments.leftChild, arguments.rightChild);
+    return std::make_unique<LessEqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 }

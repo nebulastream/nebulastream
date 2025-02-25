@@ -17,6 +17,7 @@
 #include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -27,9 +28,14 @@ bool VariableSizedDataType::operator==(const NES::DataType& other) const
 }
 
 /// A VariableSizedData type cannot be joined with another type.
-std::shared_ptr<DataType> VariableSizedDataType::join(const std::shared_ptr<DataType>&) const
+std::unique_ptr<DataType> VariableSizedDataType::join(const DataType&) const
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+}
+
+std::unique_ptr<DataType> VariableSizedDataType::clone() const
+{
+    return std::make_unique<VariableSizedDataType>(*this);
 }
 
 std::string VariableSizedDataType::toString() const

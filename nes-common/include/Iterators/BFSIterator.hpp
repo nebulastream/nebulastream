@@ -24,68 +24,59 @@ namespace NES
 
 // Requires that T contains a function getChildren()
 template <typename T>
-class BFSIterator
-{
+class BFSIterator {
 public:
     using iterator_category = std::forward_iterator_tag;
-    using value_type = std::shared_ptr<T>;
+    using value_type = T*;
     using difference_type = std::ptrdiff_t;
-    using pointer = std::shared_ptr<T>*;
-    using reference = std::shared_ptr<T>&;
+    using pointer = T**;
+    using reference = T*&;
 
     BFSIterator() = default;
-
-    explicit BFSIterator(std::shared_ptr<T> root)
-    {
-        if (root)
-        {
-            nodeQueue.push(std::move(root));
+    explicit BFSIterator(T* root) {
+        if (root) {
+            nodeQueue.push(root);
         }
     }
 
-    BFSIterator& operator++()
-    {
-        if (!nodeQueue.empty())
-        {
+    BFSIterator& operator++() {
+        if (!nodeQueue.empty()) {
             auto current = nodeQueue.front();
             nodeQueue.pop();
 
-            for (auto& child : current->getChildren())
-            {
-                nodeQueue.push(child);
+            for (const auto& child : current->getChildren()) {
+                // child is a const std::unique_ptr<T>&, so take its raw pointer.
+                nodeQueue.push(child.get());
             }
         }
         return *this;
     }
 
-    bool operator==(const BFSIterator& other) const { return nodeQueue.empty() && other.nodeQueue.empty(); }
+    bool operator==(const BFSIterator& other) const {
+        return nodeQueue.empty() && other.nodeQueue.empty();
+    }
     bool operator!=(const BFSIterator& other) const { return !(*this == other); }
 
-    std::shared_ptr<T> operator*() const
-    {
-        if (!nodeQueue.empty())
-        {
+    T* operator*() const {
+        if (!nodeQueue.empty()) {
             return nodeQueue.front();
         }
         return nullptr;
     }
 
 private:
-    std::queue<std::shared_ptr<T>> nodeQueue;
+    std::queue<T*> nodeQueue;
 };
 
-/// Wrapper for running ranges
 template <typename T>
-class BFSRange
-{
+class BFSRange {
 public:
-    explicit BFSRange(std::shared_ptr<T> root) : root(std::move(root)) { }
+    explicit BFSRange(T* root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
-
     BFSIterator<T> end() const { return BFSIterator<T>(); }
 
 private:
-    std::shared_ptr<T> root;
+    T* root;
 };
 }

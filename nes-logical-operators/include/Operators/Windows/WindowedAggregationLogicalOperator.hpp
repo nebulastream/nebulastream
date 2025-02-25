@@ -27,14 +27,16 @@ namespace NES
 class WindowedAggregationLogicalOperator : public WindowOperator
 {
 public:
-    static constexpr std::string_view NAME = "WindowedAggregation";
+    WindowedAggregationLogicalOperator(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
+                          std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation,
+                          std::unique_ptr<Windowing::WindowType> windowType);
+    virtual ~WindowedAggregationLogicalOperator() = default;
 
-    WindowedAggregationLogicalOperator(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& onKey,
-                          std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggregation,
-                          std::shared_ptr<Windowing::WindowType> windowType);
+    std::string_view getName() const noexcept override;
+
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
     std::vector<std::string> getGroupByKeyNames() const;
@@ -44,17 +46,15 @@ public:
     [[nodiscard]] uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
-    [[nodiscard]] std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> getWindowAggregation() const;
-    void setWindowAggregation(const std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>>& windowAggregation);
+    [[nodiscard]] const std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>>& getWindowAggregation() const;
+    void setWindowAggregation(std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation);
 
-    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
+    [[nodiscard]] Windowing::WindowType& getWindowType() const;
+    void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
 
-    void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
+    [[nodiscard]] const std::vector<std::unique_ptr<FieldAccessLogicalFunction>>& getKeys() const;
+    void setOnKey(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
 
-    [[nodiscard]] std::vector<std::shared_ptr<FieldAccessLogicalFunction>> getKeys() const;
-    void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& onKeys);
-
-    [[nodiscard]] uint64_t getAllowedLateness() const;
     [[nodiscard]] OriginId getOriginId() const;
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
@@ -66,13 +66,13 @@ public:
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     std::string toString() const override;
 
 private:
-    std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggregation;
-    std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
+    static constexpr std::string_view NAME = "WindowedAggregation";
+    std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation;
+    std::unique_ptr<Windowing::WindowType> windowType;
+    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;

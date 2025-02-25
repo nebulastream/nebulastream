@@ -30,7 +30,7 @@ struct ExecutionContext;
 /// Each operator can implement setup, open, close, execute, and terminate.
 struct PhysicalOperator : public virtual Operator
 {
-    PhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders, bool isPipelineBreaker = false)
+    PhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders, bool isPipelineBreaker = false)
         : memoryProviders(std::move(memoryProviders)), isPipelineBreaker(isPipelineBreaker) {
                                                            PRECONDITION(not memoryProviders.empty(), "Memory providers vector should have at least one element");
     }
@@ -38,7 +38,7 @@ struct PhysicalOperator : public virtual Operator
     PhysicalOperator(std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
                      bool isPipelineBreaker = false)
         : PhysicalOperator([&]{
-                               std::vector<std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>> vec;
+                               std::vector<std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>> vec;
                                vec.push_back(std::move(memoryProvider));
                                return vec;
                            }(), isPipelineBreaker)
@@ -62,21 +62,21 @@ struct PhysicalOperator : public virtual Operator
     /// @param record the record that should be processed.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    [[nodiscard]] std::shared_ptr<TupleBufferMemoryProvider> getMemoryProvider() const {
-        return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders.front().get());
+    [[nodiscard]] TupleBufferMemoryProvider& getMemoryProvider() const {
+        return *memoryProviders.front();
     }
 
-    [[nodiscard]] std::shared_ptr<PhysicalOperator> child() const {
-        INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
-        return NES::Util::as<PhysicalOperator>(children.front());
+    [[nodiscard]] PhysicalOperator* child() const {
+        //INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
+        return dynamic_cast<PhysicalOperator*>(children.front().get());;
     }
 
-    void setChild(std::shared_ptr<PhysicalOperator> op) {
+    void setChild(std::unique_ptr<PhysicalOperator> op) {
         children.clear();
         children.push_back(std::move(op));
     }
 
-    std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders;
+    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders;
     const bool isPipelineBreaker = false;
 
 private:

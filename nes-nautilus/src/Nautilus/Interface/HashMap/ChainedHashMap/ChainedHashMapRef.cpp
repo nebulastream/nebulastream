@@ -291,11 +291,11 @@ ChainedHashMapRef::ChainedHashMapRef(
     /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
     for (const auto& field : nautilus::static_iterable(fieldKeys))
     {
-        if (std::dynamic_pointer_cast<Float>(field.type->type))
+        if (dynamic_cast<Float*>(field.type->type.get()))
         {
             throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
         }
-        if (std::dynamic_pointer_cast<VariableSizedDataType>(field.type->type))
+        if (dynamic_cast<VariableSizedDataType*>(field.type->type.get()))
         {
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
         }

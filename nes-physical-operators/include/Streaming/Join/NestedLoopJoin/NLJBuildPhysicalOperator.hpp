@@ -74,6 +74,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     std::string toString() const override {return typeid(this).name(); }
+    std::unique_ptr<Operator> clone() const override;
 
 private:
     /// Returns the populated local join state for the current timestamp

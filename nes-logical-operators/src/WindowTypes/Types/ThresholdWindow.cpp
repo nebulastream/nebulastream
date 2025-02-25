@@ -27,31 +27,30 @@
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<LogicalFunction> predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(std::unique_ptr<LogicalFunction> predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<LogicalFunction> predicate, uint64_t minCount)
-    : ContentBasedWindowType(), predicate(predicate), minimumCount(minCount)
+ThresholdWindow::ThresholdWindow(std::unique_ptr<LogicalFunction> predicate, uint64_t minCount)
+    : ContentBasedWindowType(), predicate(std::move(predicate)), minimumCount(minCount)
 {
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<LogicalFunction> predicate)
+std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction> predicate)
 {
-    return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
+    return std::make_unique<ThresholdWindow>(std::move(predicate));
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<LogicalFunction> predicate, uint64_t minimumCount)
+std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction> predicate, uint64_t minimumCount)
 {
-    return std::reinterpret_pointer_cast<WindowType>(
-        std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
+    return std::make_unique<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount));
 }
 
-bool ThresholdWindow::equal(std::shared_ptr<WindowType> otherWindowType)
+bool ThresholdWindow::operator==(const WindowType& otherWindowType)
 {
-    if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType))
+    if (auto other = dynamic_cast<const ThresholdWindow*>(&otherWindowType))
     {
-        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate == otherThresholdWindow->predicate;
+        return this->minimumCount == other->minimumCount && this->predicate == other->predicate;
     }
     return false;
 }
@@ -61,9 +60,9 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const std::shared_ptr<LogicalFunction>& ThresholdWindow::getPredicate() const
+const LogicalFunction& ThresholdWindow::getPredicate() const
 {
-    return predicate;
+    return *predicate;
 }
 
 uint64_t ThresholdWindow::getMinimumCount() const

@@ -15,8 +15,8 @@
 #pragma once
 
 #include <Operators/OriginIdAssignmentOperator.hpp>
-#include "Operators/UnaryLogicalOperator.hpp"
-#include "Sources/SourceDescriptor.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
@@ -43,7 +43,7 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
@@ -52,6 +52,7 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 private:
+    static constexpr std::string_view NAME = "SourceDescriptor";
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 

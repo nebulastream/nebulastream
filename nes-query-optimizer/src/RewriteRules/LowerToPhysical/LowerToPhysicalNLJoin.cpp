@@ -24,7 +24,7 @@
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
@@ -82,20 +82,29 @@ public:
                 return std::make_unique<IngestionTimeFunction>();
         }
     }
-    static TimestampField IngestionTime();
-    static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
+    static TimestampField IngestionTime()
+    {
+        return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME};
+    }
+    static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm)
+    {
+        return {std::move(fieldName), std::move(tm), EVENT_TIME};
+    }
 
 private:
     std::string fieldName;
     Windowing::TimeUnit unit;
     TimeFunctionType timeFunctionType;
-    TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
+    TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType)
+        : fieldName(std::move(fieldName)), unit(std::move(unit)), timeFunctionType(timeFunctionType)
+    {
+    }
 };
 
 
-std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(JoinLogicalOperator joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(JoinLogicalOperator joinOperator, const Windowing::TimeBasedWindowType& windowType)
 {
-    if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+    if (windowType.getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
         NES_DEBUG("Skip eventime identification as we use ingestion time");
         return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
@@ -103,17 +112,17 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(JoinLogicalO
     else
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldName = windowType.getTimeCharacteristic().getField().getName();
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const std::shared_ptr<Schema>& schema)
+        auto findTimeStampFieldName = [&](const Schema& schema)
         {
-            for (const auto& field : *schema)
+            for (const auto& field : schema)
             {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
+                if (field.getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
                 {
-                    return field->getName();
+                    return field.getName();
                 }
             }
             return std::string();
@@ -129,20 +138,20 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(JoinLogicalO
             timeStampFieldNameWithoutSourceName);
 
         return {
-            TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
-            TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
+            TimestampField::EventTime(timeStampFieldNameLeft, windowType.getTimeCharacteristic().getTimeUnit()),
+            TimestampField::EventTime(timeStampFieldNameRight, windowType.getTimeCharacteristic().getTimeUnit())};
     }
 }
 
 /// TODO we want to return here all three operators
-std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
     const auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<JoinLogicalOperator*>(op);
     const auto outSchema = ops->getOutputSchema();
-    const std::shared_ptr<Functions::PhysicalFunction> joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(ops->getJoinFunction());
+    const std::shared_ptr<Functions::PhysicalFunction> joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(ops->getJoinFunction().clone());
 
     const auto leftSchema = ops->getLeftInputSchema();
     const auto rightSchema = ops->getRightInputSchema();
@@ -155,40 +164,29 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhy
     auto probeMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
         conf.pageSize.getValue(), outputSchema);
 
-    const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(ops->getWindowType());
+    const auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&ops->getWindowType());
     const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(*ops, windowType);
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getLeftInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider1 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto leftBuildOp = std::make_shared<NLJBuildPhysicalOperator>(
-        ([](auto ptr) {
-             std::vector<std::shared_ptr<TupleBufferMemoryProvider>> vec;
-             vec.push_back(std::move(ptr));
-             return vec;
-         })(std::move(memoryProvider1)),
+    auto leftBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>>{std::move(leftMemoryProvider)},
         operatorHandlerIndex,
         JoinBuildSideType::Left,
-        timeStampFieldLeft.toTimeFunction(),
-        leftMemoryProvider);
+        timeStampFieldLeft.toTimeFunction());
 
-    auto memoryProvider2 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto rightBuildOp = NLJBuildPhysicalOperator(
-        {std::move(memoryProvider2)},
+    auto rightBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>>{std::move(rightMemoryProvider)},
         operatorHandlerIndex,
         JoinBuildSideType::Right,
-        timeStampFieldRight.toTimeFunction(),
-        rightMemoryProvider);
+        timeStampFieldRight.toTimeFunction());
 
     auto joinSchema = JoinSchema(leftSchema, rightSchema, outputSchema);
-    auto memoryProvider3 = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto probeOp = new NLJProbePhysicalOperator(
+    auto probeOp = std::make_unique<NLJProbePhysicalOperator>(
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>>{std::move(leftMemoryProvider), std::move(rightMemoryProvider)},
         operatorHandlerIndex,
         joinFunction,
         ops->getWindowStartFieldName(),
         ops->getWindowEndFieldName(),
-        joinSchema,
-        leftMemoryProvider,
-        rightMemoryProvider);
+        joinSchema);
 
     constexpr uint64_t numberOfOriginIds = 2;
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
@@ -197,8 +195,8 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhy
         ops->getAllInputOriginIds(),
         ops->getOutputOriginIds()[0],
         std::move(sliceAndWindowStore),
-        leftMemoryProvider,
-        rightMemoryProvider);
+        std::move(leftMemoryProvider),
+        std::move(rightMemoryProvider));
     return {probeOp, rightBuildOp, leftBuildOp};
 };
 

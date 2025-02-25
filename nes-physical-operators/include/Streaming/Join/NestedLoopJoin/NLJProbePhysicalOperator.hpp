@@ -40,6 +40,7 @@ public:
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::string toString() const override {return typeid(this).name(); }
+    std::unique_ptr<Operator> clone() const override;
 
 protected:
     std::shared_ptr<TupleBufferMemoryProvider> getLeftMemoryProvider() const

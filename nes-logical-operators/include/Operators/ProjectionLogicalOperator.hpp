@@ -26,19 +26,18 @@ namespace NES
 class ProjectionLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    static constexpr std::string_view NAME = "Projection";
-
-    explicit ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions);
+    explicit ProjectionLogicalOperator(std::vector<std::unique_ptr<LogicalFunction>> functions);
     ~ProjectionLogicalOperator() override = default;
+    std::string_view getName() const noexcept override;
 
-    const std::vector<std::shared_ptr<LogicalFunction>>& getFunctions() const;
+    const std::vector<std::unique_ptr<LogicalFunction>>& getFunctions() const;
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
 
     bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -59,7 +58,8 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    static constexpr std::string_view NAME = "Projection";
+    std::vector<std::unique_ptr<LogicalFunction>> functions;
 };
 
 }

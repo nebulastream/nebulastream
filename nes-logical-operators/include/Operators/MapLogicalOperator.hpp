@@ -27,12 +27,10 @@ namespace NES
 class MapLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    static constexpr std::string_view NAME = "Map";
-
-    MapLogicalOperator(std::shared_ptr<FieldAssignmentLogicalFunction> const& mapFunction);
+    MapLogicalOperator(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] std::shared_ptr<FieldAssignmentLogicalFunction> getMapFunction() const;
+    [[nodiscard]] FieldAssignmentLogicalFunction& getMapFunction() const;
 
     /// @brief Infers the schema of the map operator. We support two cases:
     /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
@@ -44,7 +42,7 @@ public:
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -65,6 +63,7 @@ public:
     std::string toString() const override;
 
 private:
-    const std::shared_ptr<FieldAssignmentLogicalFunction> mapFunction;
+    static constexpr std::string_view NAME = "Map";
+    std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction;
 };
 }

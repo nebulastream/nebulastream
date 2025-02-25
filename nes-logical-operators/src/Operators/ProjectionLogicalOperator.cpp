@@ -32,17 +32,17 @@
 namespace NES
 {
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions)
+ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::unique_ptr<LogicalFunction>> functions)
     : Operator(), UnaryLogicalOperator(), functions(std::move(functions))
 {
-    const auto functionTypeNotSupported = [](const std::shared_ptr<LogicalFunction>& function) -> bool
+    const auto functionTypeNotSupported = [](const std::unique_ptr<LogicalFunction>& function) -> bool
     {
         return not(
-            NES::Util::instanceOf<FieldAccessLogicalFunction>(function)
-            or NES::Util::instanceOf<FieldAssignmentLogicalFunction>(function));
+            dynamic_cast<FieldAccessLogicalFunction*>(function.get())
+            or dynamic_cast<FieldAssignmentLogicalFunction*>(function.get()));
     };
     bool allFunctionsAreSupported = true;
-    for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
+    for (const auto& function : std::views::all(this->functions) | std::views::filter(functionTypeNotSupported))
     {
         NES_ERROR("The projection operator does not support the function: {}", *function);
         allFunctionsAreSupported = false;
@@ -52,7 +52,12 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::shared_ptr
         "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentLogicalFunction functions.");
 }
 
-const std::vector<std::shared_ptr<LogicalFunction>>& ProjectionLogicalOperator::getFunctions() const
+std::string_view ProjectionLogicalOperator::getName() const noexcept
+{
+    return NAME;
+}
+
+const std::vector<std::unique_ptr<LogicalFunction>>& ProjectionLogicalOperator::getFunctions() const
 {
     return functions;
 }
@@ -65,7 +70,7 @@ bool ProjectionLogicalOperator::isIdentical(const Operator& rhs) const
 bool ProjectionLogicalOperator::operator==(Operator const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs)) {
-        return (*outputSchema == *rhsOperator->outputSchema);
+        return (outputSchema == rhsOperator->outputSchema);
     }
     return false;
 };
@@ -77,15 +82,15 @@ std::string getFieldName(const LogicalFunction& function)
     {
         return FieldAccessLogicalFunction->getFieldName();
     }
-    return dynamic_cast<FieldAssignmentLogicalFunction const*>(&function)->getField()->getFieldName();
+    return dynamic_cast<FieldAssignmentLogicalFunction const*>(&function)->getField().getFieldName();
 }
 
 std::string ProjectionLogicalOperator::toString() const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
-    if (not outputSchema->getFieldNames().empty())
+    if (not outputSchema.getFieldNames().empty())
     {
-        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
+        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema.toString());
     }
     return fmt::format(
         "PROJECTION(opId: {}, fields: [{}])",
@@ -99,39 +104,38 @@ bool ProjectionLogicalOperator::inferSchema()
     {
         return false;
     }
-    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
-    outputSchema->clear();
+    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema.toString(), outputSchema.toString(), toString());
+    outputSchema.clear();
     for (const auto& function : functions)
     {
-        ///Infer schema of the field function
-        function->inferStamp(*inputSchema);
+        // Infer the stamp for the function using the input schema.
+        function->inferStamp(inputSchema);
 
-        if (NES::Util::instanceOf<FieldAccessLogicalFunction>(function))
+        // Try casting to FieldAccessLogicalFunction.
+        if (auto* fieldAccess = dynamic_cast<FieldAccessLogicalFunction*>(function.get()))
         {
-            const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(function);
-            outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
+            outputSchema.addField(fieldAccess->getFieldName(), fieldAccess->getStamp().clone());
         }
-        else if (NES::Util::instanceOf<FieldAssignmentLogicalFunction>(function))
+        // Otherwise, try casting to FieldAssignmentLogicalFunction.
+        else if (auto* fieldAssignment = dynamic_cast<FieldAssignmentLogicalFunction*>(function.get()))
         {
-            const auto fieldAssignment = NES::Util::as<FieldAssignmentLogicalFunction>(function);
-            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
+            outputSchema.addField(fieldAssignment->getField().getFieldName(), fieldAssignment->getField().getStamp().clone());
         }
         else
         {
             throw CannotInferSchema(fmt::format(
-                "ProjectionLogicalOperator: Function has to be an FieldAccessLogicalFunction, a "
-                "RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
+                "ProjectionLogicalOperator: Function has to be a FieldAccessLogicalFunction, a RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
                 *function));
         }
     }
     return true;
 }
 
-std::shared_ptr<Operator> ProjectionLogicalOperator::clone() const
+std::unique_ptr<Operator> ProjectionLogicalOperator::clone() const
 {
     auto copyOfProjectionFunctions
         = functions | std::views::transform([](const auto& fn) { return fn->clone(); }) | std::ranges::to<std::vector>();
-    auto copy = std::make_shared<ProjectionLogicalOperator>(copyOfProjectionFunctions);
+    auto copy = std::make_unique<ProjectionLogicalOperator>(std::move(copyOfProjectionFunctions));
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -147,7 +151,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
         const auto& functionList = std::get<FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
 
-        std::vector<std::shared_ptr<LogicalFunction>> functionVec(functions.size());
+        std::vector<std::unique_ptr<LogicalFunction>> functionVec(functions.size());
         for (const auto &function : functions)
         {
             auto functionType = function.functiontype();
@@ -159,15 +163,14 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
 
             if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
             {
-                std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
-                functionVec.emplace_back(sharedBase);
+                functionVec.emplace_back(std::move(function.value()));
             }
             else
             {
                 return nullptr;
             }
         }
-        return std::make_unique<ProjectionLogicalOperator>(functionVec);
+        return std::make_unique<ProjectionLogicalOperator>(std::move(functionVec));
     }
     return nullptr;
 }

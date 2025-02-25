@@ -33,7 +33,7 @@ public:
     ///infer schema of two child operators
     bool inferSchema() override;
     void inferInputOrigins() override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;

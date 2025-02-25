@@ -31,14 +31,19 @@
 namespace NES
 {
 
-MapLogicalOperator::MapLogicalOperator(const std::shared_ptr<FieldAssignmentLogicalFunction>& mapFunction)
-    : Operator(), UnaryLogicalOperator(), mapFunction(mapFunction)
+MapLogicalOperator::MapLogicalOperator(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction)
+    : Operator(), UnaryLogicalOperator(), mapFunction(std::move(mapFunction))
 {
 }
 
-std::shared_ptr<FieldAssignmentLogicalFunction> MapLogicalOperator::getMapFunction() const
+std::string_view MapLogicalOperator::getName() const noexcept
 {
-    return mapFunction;
+    return NAME;
+}
+
+FieldAssignmentLogicalFunction& MapLogicalOperator::getMapFunction() const
+{
+    return *mapFunction;
 }
 
 bool MapLogicalOperator::isIdentical(const Operator& rhs) const
@@ -48,9 +53,10 @@ bool MapLogicalOperator::isIdentical(const Operator& rhs) const
 
 bool MapLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (auto rhsOperator = dynamic_cast<const MapLogicalOperator*>(&rhs))
+    auto other = dynamic_cast<const MapLogicalOperator*>(&rhs);
+    if (other)
     {
-        return this->mapFunction == rhsOperator->mapFunction;
+        return this->mapFunction == other->mapFunction;
     }
     return false;
 };
@@ -64,22 +70,21 @@ bool MapLogicalOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction->inferStamp(*getInputSchema());
+    mapFunction->inferStamp(getInputSchema());
 
-    const auto assignedField = mapFunction->getField();
-    if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))
+    if (std::string fieldName = mapFunction->getField().getFieldName(); outputSchema.getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
         NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-        outputSchema->replaceField(fieldName, assignedField->getStamp());
+        outputSchema.replaceField(fieldName, mapFunction->getField().getStamp().clone());
     }
     else
     {
         /// The assigned field is not part of the current schema.
         /// Thus we extend the schema by the new attribute.
         NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-        outputSchema->addField(fieldName, assignedField->getStamp());
+        outputSchema.addField(fieldName, mapFunction->getField().getStamp().clone());
     }
     return true;
 }
@@ -87,13 +92,13 @@ bool MapLogicalOperator::inferSchema()
 std::string MapLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << mapFunction << ")";
     return ss.str();
 }
 
-std::shared_ptr<Operator> MapLogicalOperator::clone() const
+std::unique_ptr<Operator> MapLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<MapLogicalOperator>(Util::as<FieldAssignmentLogicalFunction>(mapFunction->clone()));
+    auto copy = std::make_unique<MapLogicalOperator>(Util::unique_ptr_dynamic_cast<FieldAssignmentLogicalFunction>(mapFunction->clone()));
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -111,7 +116,7 @@ SerializableOperator MapLogicalOperator::serialize() const
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(getMapFunction()->serialize());
+    serializedFunction->CopyFrom(getMapFunction().serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
@@ -160,10 +165,9 @@ LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperat
 
         if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
         {
-            std::shared_ptr<NES::LogicalFunction> sharedBase(function.value().get());
-            std::shared_ptr<NES::FieldAssignmentLogicalFunction> derivedSharedPtr =
-                std::dynamic_pointer_cast<NES::FieldAssignmentLogicalFunction>(sharedBase);
-            return std::make_unique<MapLogicalOperator>(derivedSharedPtr);
+
+            auto derivedPtr = Util::unique_ptr_dynamic_cast<NES::FieldAssignmentLogicalFunction>(std::move(function.value()));
+            return std::make_unique<MapLogicalOperator>(std::move(derivedPtr));
         }
 
         return nullptr;

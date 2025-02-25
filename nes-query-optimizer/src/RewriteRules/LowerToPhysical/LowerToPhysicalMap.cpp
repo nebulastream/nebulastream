@@ -25,17 +25,19 @@
 namespace NES::Optimizer
 {
 
-std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<std::make_unique<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<MapLogicalOperator*>(op);
-    auto function = ops->getMapFunction();
-    auto fieldName = function->getField()->getFieldName();
-    auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto phyOp = std::make_shared<MapPhysicalOperator>(std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, fieldName, std::move(func));
-    return {phyOp};
+    auto& function = ops->getMapFunction();
+    auto fieldName = function.getField().getFieldName();
+    auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
+    auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
+    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
+    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> providerVec;
+    providerVec.push_back(std::move(memoryProvider));
+    auto phyOp = std::make_unique<MapPhysicalOperator>(std::move(providerVec), fieldName, std::move(func));
+    return {std::move(phyOp)};
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)

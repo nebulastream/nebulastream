@@ -24,7 +24,7 @@
 namespace NES::Sinks
 {
 
-struct SinkDescriptor : Configurations::Descriptor
+struct SinkDescriptor final : Configurations::Descriptor
 {
     explicit SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
     ~SinkDescriptor() = default;
@@ -34,7 +34,7 @@ struct SinkDescriptor : Configurations::Descriptor
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
     const std::string sinkType;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     bool addTimestamp;
 
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);

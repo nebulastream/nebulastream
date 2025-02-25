@@ -53,16 +53,18 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    WindowAggregation(std::shared_ptr<WindowAggregation>& other) noexcept
-        : aggregationFunctions(std::move(other->aggregationFunctions))
-        , hashFunction(std::move(other->hashFunction))
-        , fieldKeys(std::move(other->fieldKeys))
-        , fieldValues(std::move(other->fieldValues))
+    /*
+    WindowAggregation(const std::unique_ptr<WindowAggregation>& other) noexcept
+        : aggregationFunctions(copyAggregationFunctions(other->aggregationFunctions))
+        , hashFunction(other->hashFunction ? other->hashFunction : nullptr)
+        , fieldKeys(other->fieldKeys)
+        , fieldValues(other->fieldValues)
         , entriesPerPage(other->entriesPerPage)
         , entrySize(other->entrySize)
     {
     }
-
+     */
+    std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 protected:

@@ -25,12 +25,12 @@
 namespace NES::Windowing
 {
 
-TumblingWindow::TumblingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size)
+TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size)
     : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size))
 {
 }
 
-std::shared_ptr<WindowType> TumblingWindow::of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size)
+std::shared_ptr<WindowType> TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size)
 {
     return std::dynamic_pointer_cast<WindowType>(
         std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
@@ -50,16 +50,16 @@ std::string TumblingWindow::toString() const
 {
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << " timeCharacteristic=" << timeCharacteristic.toString();
     ss << std::endl;
     return ss.str();
 }
 
-bool TumblingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
+bool TumblingWindow::operator==(const WindowType& otherWindowType)
 {
-    if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType))
+    if (auto other = dynamic_cast<const TumblingWindow*>(&otherWindowType))
     {
-        return (this->size == otherTumblingWindow->size) && (*this->timeCharacteristic == (*otherTumblingWindow->timeCharacteristic));
+        return (this->size == other->size) && (this->timeCharacteristic == (other->timeCharacteristic));
     }
     return false;
 }
@@ -68,7 +68,7 @@ uint64_t TumblingWindow::hash() const
 {
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic.hash());
     return hashValue;
 }
 }

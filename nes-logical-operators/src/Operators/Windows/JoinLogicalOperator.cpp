@@ -17,6 +17,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
@@ -264,47 +265,6 @@ Schema JoinLogicalOperator::getRightSchema() const
 Windowing::WindowType& JoinLogicalOperator::getWindowType() const
 {
     return *windowType;
-}
-
-std::shared_ptr<Schema> JoinLogicalOperator::getLeftSchema() const
-{
-    return leftSourceSchema;
-}
-
-std::shared_ptr<Schema> JoinLogicalOperator::getRightSchema() const
-{
-    return rightSourceSchema;
-}
-
-std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() const
-{
-    return windowType;
-}
-
-JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const {
-    return joinType;
-}
-
-void JoinLogicalOperator::updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema)
-{
-    if (leftSourceSchema)
-    {
-        this->leftSourceSchema = std::move(leftSourceSchema);
-    }
-    if (rightSourceSchema)
-    {
-        this->rightSourceSchema = std::move(rightSourceSchema);
-    }
-}
-
-std::shared_ptr<Schema> JoinLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-OriginId JoinLogicalOperator::getOriginId() const
-{
-    return originId;
 }
 
 std::string JoinLogicalOperator::getWindowStartFieldName() const {

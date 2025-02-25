@@ -32,7 +32,7 @@ public:
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
     [[nodiscard]] SerializableOperator serialize() const override;

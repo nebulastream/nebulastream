@@ -35,42 +35,36 @@ class QueryPlan
 {
 public:
     QueryPlan() = default;
-    explicit QueryPlan(std::shared_ptr<Operator> rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
-    static std::shared_ptr<QueryPlan> create(std::shared_ptr<Operator> rootOperator);
-    static std::shared_ptr<QueryPlan> create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
+    explicit QueryPlan(std::unique_ptr<Operator> rootOperator);
+    explicit QueryPlan(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
+    static std::unique_ptr<QueryPlan> create(std::unique_ptr<Operator> rootOperator);
+    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
 
-    std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
+    std::vector<SinkLogicalOperator*> getSinkOperators() const;
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
-    void promoteOperatorToRoot(const std::shared_ptr<Operator>& newRoot);
+    void promoteOperatorToRoot(std::unique_ptr<Operator> newRoot);
     /// Adds operator to roots vector
-    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator);
+    void addRootOperator(std::unique_ptr<Operator> newRootOperator);
 
     [[nodiscard]] std::string toString() const;
 
-    std::vector<std::shared_ptr<Operator>> getRootOperators() const;
+    const std::vector<Operator*> getRootOperators() const;
 
     template <class T>
-    std::vector<std::shared_ptr<T>> getOperatorByType() const
+    std::vector<T*> getOperatorByType() const
     {
-        /// Find all the nodes in the query plan
-        std::vector<std::shared_ptr<T>> operators;
-        /// Maintain a list of visited nodes as there are multiple root nodes
+        std::vector<T*> operators;
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            for (auto itr : BFSRange<Operator>(rootOperator))
-            {
-                if (visitedOpIds.contains(itr->id))
-                {
-                    /// skip rest of the steps as the node found in already visited node list
+            for (Operator* op : BFSRange<Operator>(rootOperator.get())) {
+                if (visitedOpIds.contains(op->id)) {
                     continue;
                 }
-                visitedOpIds.insert(itr->id);
-                if (NES::Util::instanceOf<T>(itr))
-                {
-                    operators.push_back(NES::Util::as<T>(itr));
+                visitedOpIds.insert(op->id);
+                if (T* casted = dynamic_cast<T*>(op)) {
+                    operators.push_back(casted);
                 }
             }
         }
@@ -79,29 +73,26 @@ public:
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators
-    std::vector<std::shared_ptr<Operator>> getLeafOperators() const;
+    std::vector<Operator*> getLeafOperators() const;
 
-    std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
+    std::unordered_set<Operator*> getAllOperators() const;
 
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    std::shared_ptr<QueryPlan> clone() const;
+    std::unique_ptr<QueryPlan> clone() const;
 
     /// Find all operators between given set of downstream and upstream operators
     /// @return all operators between (excluding) downstream and upstream operators
-    std::set<std::shared_ptr<Operator>> findAllOperatorsBetween(
-        const std::set<std::shared_ptr<Operator>>& downstreamOperators, const std::set<std::shared_ptr<Operator>>& upstreamOperators);
+    std::set<Operator*> findAllOperatorsBetween(
+        const std::set<Operator*>& downstreamOperators,
+        const std::set<Operator*>& upstreamOperators) const;
 
     [[nodiscard]] bool operator==(const std::shared_ptr<QueryPlan>& otherPlan) const;
 
 private:
-    /// Find operators between source and target operators
-    /// @return empty or operators between source and target operators
-    static std::set<std::shared_ptr<Operator>> findOperatorsBetweenSourceAndTargetOperators(
-        const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators);
-
-    std::vector<std::shared_ptr<Operator>> rootOperators;
+    /// Owning pointers to the operators
+    std::vector<std::unique_ptr<Operator>> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
 };
 }

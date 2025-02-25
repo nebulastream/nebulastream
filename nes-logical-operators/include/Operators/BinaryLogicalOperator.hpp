@@ -28,37 +28,32 @@ public:
     bool inferSchema() override;
     void inferInputOrigins() override;
 
-    /// @brief Get all left input operators.
-    /// @return std::vector<std::shared_ptr<Operator>>
-    std::vector<std::shared_ptr<Operator>> getLeftOperators() const;
+    std::vector<std::unique_ptr<Operator>> getLeftOperators() const;
+    std::vector<std::unique_ptr<Operator>> getRightOperators() const;
 
-    /// @brief Get all right input operators.
-    /// @return std::vector<std::shared_ptr<Operator>>
-    std::vector<std::shared_ptr<Operator>> getRightOperators() const;
+    void setRightInputSchema(const Schema& schema);
+    Schema getRightInputSchema() const;
+    void setOutputSchema(const Schema& outputSchema) override;
+    Schema getOutputSchema() const override;
+    void setLeftInputSchema(const Schema& schema);
+    Schema getLeftInputSchema() const;
 
-    void setRightInputSchema(std::shared_ptr<Schema> schema);
-    std::shared_ptr<Schema> getRightInputSchema() const;
-    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override;
-    std::shared_ptr<Schema> getOutputSchema() const override;
-    void setLeftInputSchema(std::shared_ptr<Schema> schema);
-    std::shared_ptr<Schema> getLeftInputSchema() const;
-
-    void setLeftInputOriginIds(std::vector<OriginId> originIds);
+    void setLeftInputOriginIds(const std::vector<OriginId>& originIds);
     std::vector<OriginId> getLeftInputOriginIds() const;
-    void setRightInputOriginIds(std::vector<OriginId> originIds);
+    void setRightInputOriginIds(const std::vector<OriginId>& originIds);
     std::vector<OriginId> getRightInputOriginIds() const;
     std::vector<OriginId> getOutputOriginIds() const override;
     std::vector<OriginId> getAllInputOriginIds();
 
 protected:
-    std::shared_ptr<Schema> leftInputSchema;
-    std::shared_ptr<Schema> rightInputSchema;
-    std::vector<std::shared_ptr<Schema>> distinctSchemas;
+    Schema leftInputSchema;
+    Schema rightInputSchema;
+    std::vector<Schema> distinctSchemas;
 
     std::vector<OriginId> leftInputOriginIds;
     std::vector<OriginId> rightInputOriginIds;
 
 private:
-    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const;
+    std::vector<std::unique_ptr<Operator>> getOperatorsBySchema(const Schema& schema) const;
 };
 }

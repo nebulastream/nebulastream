@@ -87,9 +87,9 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
+        boundaryChecks && fieldIndex < layout->getSchema().getFieldCount(),
         "fieldIndex out of bounds! {} >= {}",
-        layout->getSchema()->getFieldCount(),
+        layout->getSchema().getFieldCount(),
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address

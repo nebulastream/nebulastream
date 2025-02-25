@@ -19,9 +19,9 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-
 #include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 #include <Util/Common.hpp>
@@ -30,61 +30,58 @@
 namespace NES::Windowing
 {
 
-AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
-{
-    this->aggregationType = Type::Avg;
-}
-AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(field, asField)
+AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeFactory::createUndefined(), DataTypeFactory::createDouble(), std::move(field))
 {
     this->aggregationType = Type::Avg;
 }
 
-std::shared_ptr<WindowAggregationFunction>
-AvgAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
+AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeFactory::createUndefined(), DataTypeFactory::createDouble(), std::move(field), std::move(asField))
 {
-    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(std::move(onField), std::move(asField)));
+    this->aggregationType = Type::Avg;
 }
 
-std::shared_ptr<WindowAggregationFunction> AvgAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
+std::unique_ptr<WindowAggregationFunction>
+AvgAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
-    {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
-    }
-    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
-    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(fieldAccess));
+    return std::make_unique<AvgAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::shared_ptr<WindowAggregationFunction> AvgAggregationFunction::clone()
+std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
 {
-    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(this->onField->clone(), this->asField->clone()));
+    return std::make_unique<AvgAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+}
+
+std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::clone()
+{
+    return std::make_unique<AvgAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->onField->clone()), Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->asField->clone()));
 }
 
 void AvgAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
     {
         NES_FATAL_ERROR("AvgAggregationFunction: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
-    auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
-    auto asFieldName = NES::Util::as<FieldAccessLogicalFunction>(asField)->getFieldName();
+    const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
+    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + asFieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + fieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp());
+    asField->setStamp(getFinalAggregateStamp().clone());
 }
 
 std::shared_ptr<DataType> AvgAggregationFunction::getInputStamp()

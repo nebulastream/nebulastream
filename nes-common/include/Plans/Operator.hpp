@@ -33,12 +33,14 @@ struct Operator {
     friend std::ostream& operator<<(std::ostream& os, const Operator& op);
     /// Compares operator content ignoring 'id'
     [[nodiscard]] virtual bool operator==(const Operator& rhs) const;
-    /// Needed for concepts requiring getChildren func.
-    [[nodiscard]] std::span<const std::shared_ptr<Operator>> getChildren() const;
+    /// Expose children as a non-owning view.
+    [[nodiscard]] std::span<const std::unique_ptr<Operator>> getChildren() const;
+    virtual std::unique_ptr<Operator> clone() const = 0;
     /// Unique identifier for the operator during runtime
     const OperatorId id;
-    std::vector<std::shared_ptr<Operator>> children;
-    std::vector<std::shared_ptr<Operator>> parents;
+    /// A operator owns it children and has non-owning pointers to its parents
+    std::vector<Operator*> parents;
+    std::vector<std::unique_ptr<Operator>> children;
 };
 }
 FMT_OSTREAM(NES::Operator);

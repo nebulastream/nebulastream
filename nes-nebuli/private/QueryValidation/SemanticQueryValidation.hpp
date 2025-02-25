@@ -17,7 +17,7 @@
 #include <memory>
 #include <SourceCatalogs/SourceCatalog.hpp>
 /*
-namespace NES::Optimizer
+namespace NES::LegacyOptimizer
 {
 
 class SemanticQueryValidation;

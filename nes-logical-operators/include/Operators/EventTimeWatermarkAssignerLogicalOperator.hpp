@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "API/TimeUnit.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "UnaryLogicalOperator.hpp"
+#include <API/TimeUnit.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
@@ -24,21 +24,19 @@ namespace NES
 class EventTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
-
-    EventTimeWatermarkAssignerLogicalOperator(std::shared_ptr<LogicalFunction> onField, Windowing::TimeUnit unit);
+    EventTimeWatermarkAssignerLogicalOperator(std::unique_ptr<LogicalFunction> onField, Windowing::TimeUnit unit);
     std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     [[nodiscard]] std::string toString() const override;
 private:
-    std::shared_ptr<LogicalFunction> onField;
+    static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
+    std::unique_ptr<LogicalFunction> onField;
     Windowing::TimeUnit unit;
 };
 }

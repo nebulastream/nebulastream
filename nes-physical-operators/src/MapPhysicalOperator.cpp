@@ -19,7 +19,7 @@
 
 namespace NES
 {
-MapPhysicalOperator::MapPhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider, Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction)
+MapPhysicalOperator::MapPhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction)
     : PhysicalOperator(std::move(memoryProvider)), fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
 {
 }
