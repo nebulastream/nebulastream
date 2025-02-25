@@ -21,9 +21,10 @@
 
 #include <memory>
 #include <string>
-#include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources::SourceGeneratedRegistrar
 {
@@ -36,7 +37,7 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
     using namespace NES::Sources::SourceGeneratedRegistrar;

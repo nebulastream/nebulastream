@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
 namespace NES::Runtime::Execution

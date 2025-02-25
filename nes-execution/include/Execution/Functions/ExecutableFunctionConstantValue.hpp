@@ -14,9 +14,7 @@
 #pragma once
 #include <type_traits>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -27,7 +25,7 @@ class ExecutableFunctionConstantValue final : public Function
 {
 public:
     explicit ExecutableFunctionConstantValue(T value) : value(value) { }
-    [[nodiscard]] VarVal execute(const Record&, ArenaRef&) const override { return VarVal(value); }
+    VarVal execute(Record&) const override { return VarVal(value); }
 
 private:
     const T value;

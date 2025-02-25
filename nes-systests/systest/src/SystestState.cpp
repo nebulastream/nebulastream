@@ -17,7 +17,6 @@
 #include <ostream>
 #include <ranges>
 #include <vector>
-#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -50,9 +49,9 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir)
+void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name());
+    auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
     uint64_t queryIdInFile = 0;
     for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
@@ -62,13 +61,13 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                      | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
                 testfile.queries.emplace_back(
-                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, resultDir, sinkSchema);
             }
         }
         else
         {
             testfile.queries.emplace_back(
-                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, resultDir, sinkSchema);
         }
         ++queryIdInFile;
     }
@@ -109,33 +108,17 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) {};
 
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir)
+std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir)
 {
     std::vector<Query> queries;
-    uint64_t loadedFiles = 0;
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
-        try
+        loadQueriesFromTestFile(testfile, resultDir);
+        for (auto& query : testfile.queries)
         {
-            loadQueriesFromTestFile(testfile, workingDir);
-            for (auto& query : testfile.queries)
-            {
-                queries.emplace_back(std::move(query));
-            }
-            ++loadedFiles;
+            queries.emplace_back(std::move(query));
         }
-        catch (const Exception& exception)
-        {
-            tryLogCurrentException();
-            std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.file.string(), exception.what());
-        }
-    }
-    std::cout << "Loaded test files: " << loadedFiles << "/" << testmap.size() << '\n' << std::flush;
-    if (loadedFiles != testmap.size())
-    {
-        std::cerr << "Could not load all test files. Terminating.\n" << std::flush;
-        std::exit(1);
     }
     return queries;
 }
@@ -159,7 +142,6 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     }
 
     std::vector<TestGroupFiles> testGroups;
-    testGroups.reserve(groupFilesMap.size());
     for (const auto& [groupName, files] : groupFilesMap)
     {
         testGroups.push_back(TestGroupFiles{groupName, files});

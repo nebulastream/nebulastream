@@ -15,22 +15,29 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
 
+namespace NES
+{
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
+}
 
 namespace NES::Windowing
 {
 
+class WatermarkStrategyDescriptor;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
 class WatermarkStrategyDescriptor : public std::enable_shared_from_this<WatermarkStrategyDescriptor>
 {
 public:
     WatermarkStrategyDescriptor();
     virtual ~WatermarkStrategyDescriptor() = default;
-    virtual bool equal(std::shared_ptr<WatermarkStrategyDescriptor> other) = 0;
+    virtual bool equal(WatermarkStrategyDescriptorPtr other) = 0;
 
     virtual std::string toString() = 0;
 
-    virtual bool inferStamp(const std::shared_ptr<Schema>& schema) = 0;
+    virtual bool inferStamp(SchemaPtr schema) = 0;
 };
 }

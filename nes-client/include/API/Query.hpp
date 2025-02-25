@@ -18,30 +18,59 @@
 #include <string>
 #include <vector>
 #include <API/Functions/Functions.hpp>
-#include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Types/WindowType.hpp>
 
 namespace NES
 {
+
 class Query;
-namespace JoinOperatorBuilder
+class Operator;
+
+class NodeFunction;
+using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
+
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
+
+class SourceNameLogicalOperator;
+using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace API
 {
-class JoinWhere;
+class WindowAggregation;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 }
+
 namespace WindowOperatorBuilder
 {
+
 class WindowedQuery;
 class KeyedWindowedQuery;
+
 }
+namespace Windowing
+{
+class WindowType;
+using WindowTypePtr = std::shared_ptr<WindowType>;
+
+class WindowAggregationDescriptor;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
+
+class WatermarkStrategyDescriptor;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
+}
+
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
+
 namespace JoinOperatorBuilder
 {
+
+class JoinWhere;
+
 class Join
 {
 public:
@@ -58,7 +87,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which window function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(std::shared_ptr<NodeFunction> joinFunction) const;
+    [[nodiscard]] JoinWhere where(NodeFunctionPtr joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -74,19 +103,19 @@ public:
      * @param originalQuery
      * @param joinFunction : a set of binary functions to compare left and right tuples
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared_ptr<NodeFunction> joinFunctions);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, NodeFunctionPtr joinFunctions);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
 private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunctions;
+    NodeFunctionPtr joinFunctions;
 };
 
 }
@@ -100,6 +129,7 @@ private:
 namespace Experimental::BatchJoinOperatorBuilder
 {
 
+class JoinWhere;
 
 class Join
 {
@@ -116,7 +146,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] Query& where(const std::shared_ptr<NodeFunction>& joinFunction) const;
+    [[nodiscard]] Query& where(const NodeFunctionPtr& joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -143,12 +173,12 @@ public:
      * @param windowType
      * @return the query with the result of the original andWith function is returned.
      */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunction;
+    NodeFunctionPtr joinFunction;
 };
 
 class Seq
@@ -166,12 +196,12 @@ public:
      * @param windowType
      * @return the query with the result of the original seqWith function is returned.
      */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunction;
+    NodeFunctionPtr joinFunction;
 };
 
 /**
@@ -215,7 +245,7 @@ public:
      * @param windowType
      * @return the query with the result of the original seqWith function is returned.
      */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
 private:
     Query& originalQuery;
@@ -252,7 +282,7 @@ public:
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
-    WindowOperatorBuilder::WindowedQuery window(const std::shared_ptr<Windowing::WindowType>& windowType);
+    WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr const& windowType);
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -313,7 +343,7 @@ public:
 
     /// Creates a query from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static Query from(const std::string& logicalSourceName);
+    static Query from(std::string const& logicalSourceName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -338,7 +368,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(const std::vector<std::shared_ptr<NodeFunction>>& functions);
+    Query& project(const std::vector<NodeFunctionPtr>& functions);
 
     /**
      * @brief: Filter records according to the predicate. An
@@ -346,7 +376,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& selection(const std::shared_ptr<NodeFunction>& filterFunction);
+    Query& selection(NodeFunctionPtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -360,7 +390,7 @@ public:
      * @param watermarkStrategyDescriptor
      * @return query.
      */
-    Query& assignWatermark(const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
+    Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
      * @brief: Map records according to a map function. An
@@ -368,20 +398,20 @@ public:
      * @param map function
      * @return query
      */
-    Query& map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
+    Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
     virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
-    [[nodiscard]] std::shared_ptr<QueryPlan> getQueryPlan() const;
+    QueryPlanPtr getQueryPlan() const;
 
     /// creates a new query object
-    explicit Query(std::shared_ptr<QueryPlan> queryPlan);
+    Query(QueryPlanPtr queryPlan);
 
 protected:
     /// query plan containing the operators.
-    std::shared_ptr<QueryPlan> queryPlan;
+    QueryPlanPtr queryPlan;
 
 private:
     /**
@@ -394,10 +424,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(
-        const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunction,
-        const std::shared_ptr<Windowing::WindowType>& windowType);
+    Query& joinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -408,7 +435,7 @@ private:
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction);
+    Query& batchJoinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -420,10 +447,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(
-        const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunctions,
-        const std::shared_ptr<Windowing::WindowType>& windowType);
+    Query& andWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -435,10 +459,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(
-        const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunctions,
-        const std::shared_ptr<Windowing::WindowType>& windowType);
+    Query& seqWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -447,14 +468,11 @@ private:
      * @param aggregations Window aggregation function.
      * @return query.
      */
-    Query&
-    window(const std::shared_ptr<Windowing::WindowType>& windowType, std::vector<std::shared_ptr<API::WindowAggregation>> aggregations);
+    Query& window(Windowing::WindowTypePtr const& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
 
     Query& windowByKey(
-        std::vector<std::shared_ptr<NodeFunction>> keys,
-        const std::shared_ptr<Windowing::WindowType>& windowType,
-        std::vector<std::shared_ptr<API::WindowAggregation>> aggregations);
+        std::vector<NodeFunctionPtr> keys, const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
       * @brief: Given a Function is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
@@ -462,8 +480,9 @@ private:
       * @param joinFunctions key functions
       * @return joinType
       */
-    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(const std::shared_ptr<NodeFunction>& joinFunctions);
+    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(const NodeFunctionPtr& joinFunctions);
 };
 
+using QueryPtr = std::shared_ptr<Query>;
 
 }

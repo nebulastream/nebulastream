@@ -104,7 +104,8 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer)
+    const auto result = emitState->outputIndex >= maxRecordsPerBuffer;
+    if (result)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
@@ -151,7 +152,7 @@ void Emit::emitRecordBuffer(
 
 Emit::Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
+    , maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity())
     , memoryProvider(std::move(memoryProvider))
 {
 }

@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <cstring>
 #include <memory>
-#include <string>
-#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -30,10 +27,10 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
+std::string readVarSizedData(const Memory::TupleBuffer& buffer, uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
-    const auto stringSize = *childBuffer.getBuffer<uint32_t>();
+    auto stringSize = *childBuffer.getBuffer<uint32_t>();
     std::string varSizedData(stringSize, '\0');
     std::memcpy(varSizedData.data(), childBuffer.getBuffer<char>() + sizeof(uint32_t), stringSize);
     return varSizedData;
@@ -59,18 +56,17 @@ uint64_t MemoryLayout::getTupleSize() const
     return recordSize;
 }
 
-uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
+const std::vector<uint64_t>& MemoryLayout::getFieldSizes() const
 {
-    return physicalFieldSizes[fieldIndex];
+    return physicalFieldSizes;
 }
 
-MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
-    : bufferSize(bufferSize), schema(schema), recordSize(0)
+MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0)
 {
-    for (size_t fieldIndex = 0; fieldIndex < this->schema->getFieldCount(); fieldIndex++)
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (size_t fieldIndex = 0; fieldIndex < schema->getFieldCount(); fieldIndex++)
     {
-        const DefaultPhysicalTypeFactory physicalDataTypeFactory;
-        const auto field = this->schema->getFieldByIndex(fieldIndex);
+        auto field = schema->getFieldByIndex(fieldIndex);
         auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalFieldSizes.emplace_back(physicalFieldSize->size());
         physicalTypes.emplace_back(physicalFieldSize);
@@ -83,7 +79,7 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Sche
 
 std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& fieldName) const
 {
-    const auto nameFieldIt = nameFieldIndexMap.find(fieldName);
+    auto nameFieldIt = nameFieldIndexMap.find(fieldName);
     if (!nameFieldIndexMap.contains(fieldName))
     {
         return std::nullopt;
@@ -91,12 +87,24 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
     return {nameFieldIt->second};
 }
 
+std::optional<uint64_t> MemoryLayout::getFieldOffset(uint64_t tupleIndex, std::string_view fieldName) const
+{
+    const auto fieldIndex = getFieldIndexFromName(std::string(fieldName));
+    if (fieldIndex.has_value())
+    {
+        const auto fieldIndexValue = fieldIndex.value();
+        return getFieldOffset(tupleIndex, fieldIndexValue);
+    }
+    NES_ERROR("Field with name {} not found in schema {}", fieldName, schema->toString());
+    return {};
+}
+
 uint64_t MemoryLayout::getCapacity() const
 {
     return capacity;
 }
 
-const std::shared_ptr<Schema>& MemoryLayout::getSchema() const
+const SchemaPtr& MemoryLayout::getSchema() const
 {
     return schema;
 }
@@ -106,14 +114,14 @@ uint64_t MemoryLayout::getBufferSize() const
     return bufferSize;
 }
 
-void MemoryLayout::setBufferSize(const uint64_t bufferSize)
+void MemoryLayout::setBufferSize(uint64_t bufferSize)
 {
     MemoryLayout::bufferSize = bufferSize;
 }
 
-std::shared_ptr<PhysicalType> MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
+const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
 {
-    return physicalTypes[fieldIndex];
+    return physicalTypes;
 }
 
 std::vector<std::string> MemoryLayout::getKeyFieldNames() const
@@ -132,8 +140,7 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
     return bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
-        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap
-        && keyFieldNames == rhs.keyFieldNames;
+        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap;
 }
 
 bool MemoryLayout::operator!=(const MemoryLayout& rhs) const

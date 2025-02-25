@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <optional>
@@ -32,10 +31,6 @@ class Exception final : public cpptrace::lazy_exception
 public:
     Exception(std::string message, uint64_t code);
 
-    /// copy-constructor is unsaved noexcept because of std::string copy
-    Exception(const Exception&) noexcept = default;
-    Exception& operator=(const Exception&) noexcept = default;
-
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] uint64_t code() const noexcept;
@@ -46,13 +41,14 @@ private:
     uint64_t errorCode;
 };
 
-
-/// This macro is used to define exceptions in <ExceptionDefinitions.hpp>
-/// @param name The name of the exception
-/// @param code The code of the exception
-/// @param message The message of the exception
-/// @return The exception object
-/// @note the enum value of the exception can be used to compare with the code of the exception in the catch block
+/**
+ * This macro is used to define exceptions in <ExceptionDefinitions.hpp>
+ * @param name The name of the exception
+ * @param code The code of the exception
+ * @param message The message of the exception
+ * @return The exception object
+ * @note the enum value of the exception can be used to compare with the code of the exception in the catch block
+ */
 #define EXCEPTION(name, code, message) \
     inline Exception name() \
     { \
@@ -78,55 +74,55 @@ private:
 #include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 
-#ifdef NDEBUG
-    #define USED_IN_DEBUG [[maybe_unused]]
-    #define PRECONDITION(condition, formatString, ...) ((void)0)
-    #define INVARIANT(condition, formatString, ...) ((void)0)
-#else
-    #define USED_IN_DEBUG
-    /// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
-    /// the caller of the functions made an error.
-    /// @param condition The condition that should be true
-    /// @param message The message that should be printed if the condition is false
-    #define PRECONDITION(condition, formatString, ...) \
-        do \
+/**
+ * A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
+ * the caller of the functions made an error.
+ * @param condition The condition that should be true
+ * @param message The message that should be printed if the condition is false
+ */
+#define PRECONDITION(condition, formatString, ...) \
+    do \
+    { \
+        if (!(condition)) \
         { \
-            if (!(condition)) \
-            { \
-                std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-                cpptrace::generate_trace().print(); \
-                std::terminate(); \
-            } \
-        } while (false)
+            std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+            cpptrace::generate_trace().print(); \
+            std::terminate(); \
+        } \
+    } while (false)
 
-    /// @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
-    /// means that there is a bug in the program.
-    /// @param condition The condition that should be true
-    /// @param message The message that should be printed if the condition is false
-    #define INVARIANT(condition, formatString, ...) \
-        do \
+/**
+ * @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
+ * means that there is a bug in the program.
+ * @param condition The condition that should be true
+ * @param message The message that should be printed if the condition is false
+ */
+#define INVARIANT(condition, formatString, ...) \
+    do \
+    { \
+        if (!(condition)) \
         { \
-            if (!(condition)) \
-            { \
-                std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-                cpptrace::generate_trace().print(); \
-                std::terminate(); \
-            } \
-        } while (false)
+            std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
+                      << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
+            cpptrace::generate_trace().print(); \
+            std::terminate(); \
+        } \
+    } while (false)
 
-#endif
-
-/// @brief This function is used to log the current exception.
-/// @warning This function should be used only in a catch block.
+/**
+ * @brief This function is used to log the current exception.
+ * @warning This function should be used only in a catch block.
+ */
 void tryLogCurrentException();
 
 /// The wrapped exception gets the error code 9999.
 Exception wrapExternalException();
 
-/// @brief This function is used to get the current exception code.
-/// @warning This function should be used only in a catch block.
+/**
+ * @brief This function is used to get the current exception code.
+ * @warning This function should be used only in a catch block.
+ */
 [[nodiscard]] uint64_t getCurrentExceptionCode();
 
 }

@@ -13,13 +13,8 @@
 */
 
 #pragma once
-#include <memory>
-#include <string>
-#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -34,13 +29,13 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
 protected:
-    explicit NodeFunctionArithmeticalBinary(std::shared_ptr<DataType> stamp, std::string name);
+    explicit NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name);
     explicit NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other);
     ~NodeFunctionArithmeticalBinary() noexcept override = default;
 

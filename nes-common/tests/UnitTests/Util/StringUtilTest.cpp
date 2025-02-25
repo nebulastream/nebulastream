@@ -12,13 +12,11 @@
     limitations under the License.
 */
 #include <cmath>
-#include <limits>
 #include <optional>
 #include <string>
 #include <Util/Strings.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <BaseUnitTest.hpp>
 
 namespace NES::Util
 {
@@ -26,92 +24,6 @@ namespace NES::Util
 TEST(TrimWhiteSpacesTest, TrimLeadingAndTrailingSpaces)
 {
     EXPECT_EQ(trimWhiteSpaces("   hello world   "), "hello world");
-}
-
-TEST(TestTrimCharRight, TrimTrailingZeros)
-{
-    EXPECT_EQ(trimCharsRight("", '0'), "");
-    EXPECT_EQ(trimCharsRight("0", '0'), "");
-    EXPECT_EQ(trimCharsRight("1.2340000", '0'), "1.234");
-    EXPECT_EQ(trimCharsRight("1.230040000", '0'), "1.23004");
-    EXPECT_EQ(trimCharsRight("001.230040000", '0'), "001.23004");
-}
-
-TEST(FormatFloatTests, HandlesNoDecimalPoint)
-{
-    EXPECT_EQ(formatFloat(12345.0F), "12345.0");
-    EXPECT_EQ(formatFloat(0.0F), "0.0");
-}
-
-TEST(FormatFloatTests, HandlesEdgeCases2)
-{
-    EXPECT_EQ(formatFloat(0.), "0.0");
-    EXPECT_EQ(formatFloat(123.45000), "123.45");
-    EXPECT_EQ(formatFloat(.0000), "0.0");
-    EXPECT_EQ(formatFloat(0.000100), "0.0001");
-    EXPECT_EQ(formatFloat(0.000001F), "0.000001");
-    EXPECT_EQ(formatFloat(0.0000001F), "0.0");
-    EXPECT_EQ(formatFloat(0.0000005F), "0.0");
-    EXPECT_EQ(formatFloat(0.0000006F), "0.000001");
-}
-
-TEST(FormatFloatTests, HandlesInfinity)
-{
-    constexpr float floatInfinity = std::numeric_limits<float>::infinity();
-    constexpr double doubleInfinity = std::numeric_limits<double>::infinity();
-    EXPECT_EQ(formatFloat(floatInfinity), "inf");
-    EXPECT_EQ(formatFloat(doubleInfinity), "inf");
-}
-TEST(FormatFloatTests, HandlesNaN)
-{
-    constexpr float floatQuietNan = std::numeric_limits<float>::quiet_NaN();
-    constexpr float floatSignalingNan = std::numeric_limits<float>::signaling_NaN();
-    EXPECT_EQ(formatFloat(floatQuietNan), "nan");
-    EXPECT_EQ(formatFloat(floatSignalingNan), "nan");
-    constexpr double doubleQuietNan = std::numeric_limits<double>::quiet_NaN();
-    constexpr double doubleSignalingNan = std::numeric_limits<double>::signaling_NaN();
-    EXPECT_EQ(formatFloat(doubleQuietNan), "nan");
-    EXPECT_EQ(formatFloat(doubleSignalingNan), "nan");
-}
-TEST(FormatFloatTests, HandlesMax)
-{
-    constexpr float floatMax = std::numeric_limits<float>::max();
-    constexpr double doubleMax = std::numeric_limits<double>::max();
-    EXPECT_EQ(formatFloat(floatMax), "340282346638528859811704183484516925440.0");
-    EXPECT_EQ(
-        formatFloat(doubleMax),
-        "1797693134862315708145274237317043567980705675258449965989174768031572607800285387605895586327668781715404589535143824642343213268"
-        "8946418276846754670353751698604991057655128207624549009038932894407586850845513394230458323690322294816580855933212334827479782620"
-        "4144723168738177180919299881250404026184124858368.0");
-}
-
-TEST(FormatFloatTests, HandlesTrailingZerosAfterDecimal)
-{
-    EXPECT_EQ(formatFloat(0.234000), "0.234");
-    EXPECT_EQ(formatFloat(34.0000), "34.0");
-    EXPECT_EQ(formatFloat(45.0), "45.0");
-}
-
-TEST(FormatFloatTests, HandlesAllZerosAfterDecimal)
-{
-    EXPECT_EQ(formatFloat(0.0000), "0.0");
-    EXPECT_EQ(formatFloat(123.000000), "123.0");
-    EXPECT_EQ(formatFloat(0.0), "0.0");
-}
-
-TEST(FormatFloatTests, HandlesEdgeCases)
-{
-    EXPECT_EQ(formatFloat(0.), "0.0");
-    EXPECT_EQ(formatFloat(123.45000), "123.45");
-    EXPECT_EQ(formatFloat(.0000), "0.0");
-    EXPECT_EQ(formatFloat(0.000100), "0.0001");
-}
-
-TEST(FormatFloatTests, HandlesNegativeNumbers)
-{
-    EXPECT_EQ(formatFloat(-123.45000), "-123.45");
-    EXPECT_EQ(formatFloat(-0.0000), "-0.0");
-    EXPECT_EQ(formatFloat(-0.1000), "-0.1");
 }
 
 TEST(TrimWhiteSpacesTest, TrimLeadingSpacesOnly)
@@ -352,8 +264,8 @@ TEST(StringCaseConversionTest, ToLowerCaseSpecialCharacters)
 
 TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
 {
-    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"); }(), "Precondition violated:.*");
-    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("éçàô"); }(), "Precondition violated:.*");
+    EXPECT_DEATH([[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"), "Precondition violated:.*");
+    EXPECT_DEATH([[maybe_unused]] auto testString = toUpperCase("éçàô"), "Precondition violated:*");
 }
 
 TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
@@ -395,9 +307,9 @@ TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
 TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
 {
     std::string lowerStr = "héllô!123";
-    EXPECT_DEATH_DEBUG(toUpperCaseInplace(lowerStr), "Precondition violated:.*");
+    EXPECT_DEATH(toUpperCaseInplace(lowerStr), "Precondition violated:.*");
     std::string str = "HÉLLÔ!123";
-    EXPECT_DEATH_DEBUG(toLowerCaseInplace(str), "Precondition violated:.*");
+    EXPECT_DEATH(toLowerCaseInplace(str), "Precondition violated:.*");
 }
 
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)

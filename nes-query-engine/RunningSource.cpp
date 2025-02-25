@@ -18,7 +18,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
@@ -31,7 +31,7 @@ namespace NES::Runtime
 
 namespace
 {
-Sources::SourceReturnType::EmitFunction emitFunction(
+Sources::EmitFunction emitFunction(
     QueryId queryId,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -39,24 +39,19 @@ Sources::SourceReturnType::EmitFunction emitFunction(
     WorkEmitter& emitter)
 {
     return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               OriginId sourceId, Sources::SourceReturnType::SourceReturnType event)
+               OriginId sourceId, Sources::SourceReturnType event)
     {
         std::visit(
             Overloaded{
-                [&](Sources::SourceReturnType::Data data)
+                [&](Sources::Data data)
                 {
                     for (const auto& successor : successors)
                     {
-                        ENGINE_LOG_DEBUG("Source Emitted Data to sucessor: {}-{}", queryId, successor->id);
                         emitter.emitWork(queryId, successor, data.buffer, {}, {});
                     }
                 },
-                [&](Sources::SourceReturnType::EoS)
-                {
-                    ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
-                    controller.initializeSourceStop(queryId, sourceId, source);
-                },
-                [&](Sources::SourceReturnType::Error error)
+                [&](Sources::EoS) { controller.initializeSourceStop(queryId, sourceId, source); },
+                [&](Sources::Error error)
                 { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
             std::move(event));
     };
@@ -65,7 +60,7 @@ Sources::SourceReturnType::EmitFunction emitFunction(
 
 OriginId RunningSource::getOriginId() const
 {
-    return source->getSourceId();
+    return source->getOriginId();
 }
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,

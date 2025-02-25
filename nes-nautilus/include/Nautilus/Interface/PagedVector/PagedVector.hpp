@@ -31,16 +31,13 @@ namespace NES::Nautilus::Interface
 class PagedVector
 {
 public:
-    PagedVector() = default;
+    PagedVector(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+    void appendPageIfFull();
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
-
-    /// Copies all pages from other to this
-    void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
     [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
@@ -54,6 +51,8 @@ public:
     [[nodiscard]] uint64_t getNumberOfPages() const;
 
 private:
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     std::vector<Memory::TupleBuffer> pages;
 };
 

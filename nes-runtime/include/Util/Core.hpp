@@ -15,21 +15,47 @@
 #pragma once
 
 #include <any>
-#include <cstdint>
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 /**
  * @brief a collection of shared utility functions
  */
 namespace NES
 {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class Query;
+using QueryPtr = std::shared_ptr<Query>;
+
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+class Operator;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+namespace Catalogs
+{
+
+namespace Source
+{
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}
+
+namespace Query
+{
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}
+
+}
 
 namespace Util
 {
@@ -47,29 +73,29 @@ std::string printTupleBufferAsText(Memory::TupleBuffer& buffer);
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema);
+std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
 * @brief Returns the physical types of all fields of the schema
 * @param schema
-* @reconst turn PhysicalTypes of t&he schema's field
+* @return PhysicalTypes of the schema's field
 */
-std::vector<std::shared_ptr<PhysicalType>> getPhysicalTypes(const Schema& schema);
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 
 /**
  * @brief method to get the schema as a csv string
  * @param schema
  * @return schema as csv string
  */
-std::string toCSVString(const Schema& schema);
+std::string toCSVString(const SchemaPtr& schema);
 
 /**
  * @brief Creates a memory layout from the schema and the buffer Size
  * @param schema
  * @param bufferSize
- * @const return MemoryLayoutPtr
-& */
-std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+ * @return MemoryLayoutPtr
+ */
+std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
 
 /**
  *
@@ -77,7 +103,7 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(con
  * @param properties properties to assign
  * @return true if the assignment success, and false otherwise
  */
-bool assignPropertiesToQueryOperators(const std::shared_ptr<QueryPlan>& queryPlan, std::vector<std::map<std::string, std::any>> properties);
+bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 }
 }

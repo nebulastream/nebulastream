@@ -78,6 +78,7 @@ private:
     }
 };
 
+using BufferSequenceNumberPtr = std::shared_ptr<BufferSequenceNumber>;
 }
 
 namespace std

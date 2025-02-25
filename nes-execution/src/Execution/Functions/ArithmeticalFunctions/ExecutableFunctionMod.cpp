@@ -16,19 +16,16 @@
 #include <vector>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMod.hpp>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionMod::execute(const Record& record, ArenaRef& arena) const
+VarVal ExecutableFunctionMod::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record, arena);
-    const auto rightValue = rightExecutableFunctionSub->execute(record, arena);
+    const auto leftValue = leftExecutableFunctionSub->execute(record);
+    const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue % rightValue;
 }
 
@@ -39,12 +36,10 @@ ExecutableFunctionMod::ExecutableFunctionMod(
 }
 
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
-ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+std::unique_ptr<Function> RegisterExecutableFunctionMod(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionMod>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionMod>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }

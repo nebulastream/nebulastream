@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -22,7 +21,7 @@
 namespace NES::Optimizer
 {
 
-std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRule::create()
+BinaryOperatorSortRulePtr BinaryOperatorSortRule::create()
 {
     return std::make_shared<BinaryOperatorSortRule>(BinaryOperatorSortRule());
 }
@@ -32,26 +31,26 @@ BinaryOperatorSortRule::BinaryOperatorSortRule()
     NES_DEBUG("BinaryOperatorSortRule()");
 };
 
-std::shared_ptr<QueryPlan> BinaryOperatorSortRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr)
 {
     NES_INFO("Apply BinaryOperatorSortRule ");
     /// Find all join operators in the query plan and sort children individually.
-    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
+    auto joinOperators = queryPlanPtr->getOperatorByType<LogicalJoinOperator>();
     for (const auto& joinOperator : joinOperators)
     {
         sortChildren(joinOperator);
     }
     /// Find all Union operators in the query plan and sort children individually.
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+    auto unionOperators = queryPlanPtr->getOperatorByType<LogicalUnionOperator>();
     for (const auto& unionOperator : unionOperators)
     {
         sortChildren(unionOperator);
     }
     /// Return the updated query plan
-    return queryPlan;
+    return queryPlanPtr;
 }
 
-void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<BinaryOperator>& binaryOperator)
+void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr& binaryOperator)
 {
     /// Extract the children operators
     auto children = binaryOperator->getChildren();

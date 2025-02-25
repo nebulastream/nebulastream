@@ -15,13 +15,15 @@
 #pragma once
 
 #include <chrono>
-#include <memory>
 #include <API/Query.hpp>
-#include <API/Schema.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
 
+namespace NES
+{
+class Query;
+}
 namespace NES::Client
 {
 /**
@@ -116,11 +118,11 @@ public:
 
     /**
      * @brief add a logical source
-     * @param std::shared_ptr<Schema> schema of the new logical source
+     * @param SchemaPtr schema of the new logical source
      * @param string name of the new logical source
      * @return successfully added
      */
-    bool addLogicalSource(std::shared_ptr<Schema> schema, const std::string& sourceName);
+    bool addLogicalSource(const SchemaPtr schema, const std::string& sourceName);
 
     /**
      * @brief get logical sources
@@ -142,4 +144,5 @@ private:
 
     std::string getHostName();
 };
+using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 }

@@ -33,7 +33,7 @@ namespace NES::InputFormatters
 /// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVInputFormatter final : public InputFormatter
+class CSVInputFormatter : public InputFormatter
 {
 public:
     using CastFunctionSignature
@@ -51,7 +51,7 @@ public:
         const Memory::TupleBuffer& tbRaw,
         Memory::AbstractBufferProvider& bufferProvider,
         size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

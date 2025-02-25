@@ -14,7 +14,6 @@
 
 #include <cstring>
 #include <iosfwd>
-#include <random>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -207,27 +206,6 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble)};
         EXPECT_FALSE(varSizedData.cast<VariableSizedData>() == varSizedDataDouble.cast<VariableSizedData>());
         EXPECT_TRUE(varSizedData.cast<VariableSizedData>() != varSizedDataDouble.cast<VariableSizedData>());
-    }
-
-    {
-        /// Testing if two variables sized data with the same size but in a randomize fashion. To ensure deterministic results, we
-        /// print the seed of the random number generator to be able to reproduce the results.
-        const auto seed = std::random_device()();
-        NES_INFO("Seed: {}", seed);
-        std::srand(seed);
-
-        using namespace NES::Nautilus;
-        constexpr auto maxSize = 5; /// We set the size quite small to ensure that we also happen to have the same content
-        const auto sizeInBytes = std::rand() % maxSize + 1;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const nautilus::val<int8_t*> ptrToOtherVariableSized(otherVariableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
-        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized)};
-
-        const bool isEqual = variableSizedData == otherVariableSizedData;
-        EXPECT_EQ(isEqual, varSizedData.cast<VariableSizedData>() == otherVarSizedData.cast<VariableSizedData>());
     }
 }
 

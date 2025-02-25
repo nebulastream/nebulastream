@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <memory>
 #include <tuple>
 
 #include <API/AttributeField.hpp>
@@ -28,7 +26,7 @@
 
 namespace NES::QueryCompilation::Util
 {
-std::tuple<uint64_t, uint64_t, std::unique_ptr<Runtime::Execution::Operators::TimeFunction>>
+std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
 {
     const auto& windowSize = windowType.getSize().getTime();
@@ -50,4 +48,5 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
     }
 }
+
 }

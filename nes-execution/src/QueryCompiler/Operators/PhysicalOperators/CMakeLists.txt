@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-execution
+        PhysicalInferModelOperator.cpp
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp

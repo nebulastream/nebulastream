@@ -14,14 +14,23 @@
 
 #pragma once
 
-#include <memory>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+
+class LogicalSelectionOperator;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
+}
 
 namespace NES::Optimizer
 {
 
+class FilterSplitUpRule;
+using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
 
 /**
  * @brief This class is responsible for altering the query plan to split up each filter operator into as small parts as possible.
@@ -31,9 +40,9 @@ namespace NES::Optimizer
 class FilterSplitUpRule : public BaseRewriteRule
 {
 public:
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-    static std::shared_ptr<FilterSplitUpRule> create();
+    static FilterSplitUpRulePtr create();
     virtual ~FilterSplitUpRule() = default;
 
 private:
@@ -48,7 +57,7 @@ private:
      * reformulate the predicate to an andFunction and call splitUpFilter on the Filter.
      * @param filterOperator the filter operator node that we want to split up
      */
-    void splitUpFilters(const std::shared_ptr<LogicalSelectionOperator>& filterOperator);
+    void splitUpFilters(LogicalSelectionOperatorPtr filterOperator);
 };
 
 }

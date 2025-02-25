@@ -17,11 +17,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -30,13 +26,12 @@
 namespace NES::Experimental
 {
 
-LogicalBatchJoinOperator::LogicalBatchJoinOperator(
-    std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> batchJoinDefinition, OperatorId id)
+LogicalBatchJoinOperator::LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition, OperatorId id)
     : Operator(id), LogicalBinaryOperator(id), batchJoinDefinition(std::move(batchJoinDefinition))
 {
 }
 
-bool LogicalBatchJoinOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool LogicalBatchJoinOperator::isIdentical(NodePtr const& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalBatchJoinOperator>(rhs)->getId() == id;
 }
@@ -48,7 +43,7 @@ std::string LogicalBatchJoinOperator::toString() const
     return ss.str();
 }
 
-std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> LogicalBatchJoinOperator::getBatchJoinDefinition() const
+Join::Experimental::LogicalBatchJoinDescriptorPtr LogicalBatchJoinOperator::getBatchJoinDefinition() const
 {
     return batchJoinDefinition;
 }
@@ -71,14 +66,14 @@ bool LogicalBatchJoinOperator::inferSchema()
     rightInputSchema->clear();
 
     ///Find the schema for left join key
-    const std::shared_ptr<NodeFunctionFieldAccess> buildJoinKey = batchJoinDefinition->getBuildJoinKey();
+    NodeFunctionFieldAccessPtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
     {
         if ((*itr)->getFieldByName(buildJoinKeyName))
         {
             leftInputSchema->copyFields(*itr);
-            buildJoinKey->inferStamp(*leftInputSchema);
+            buildJoinKey->inferStamp(leftInputSchema);
             ///remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -87,14 +82,14 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     ///Find the schema for right join key
-    const std::shared_ptr<NodeFunctionFieldAccess> probeJoinKey = batchJoinDefinition->getProbeJoinKey();
+    NodeFunctionFieldAccessPtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
     {
         if (schema->getFieldByName(probeJoinKeyName))
         {
             rightInputSchema->copyFields(schema);
-            probeJoinKey->inferStamp(*rightInputSchema);
+            probeJoinKey->inferStamp(rightInputSchema);
         }
     }
 
@@ -153,6 +148,7 @@ std::shared_ptr<Operator> LogicalBatchJoinOperator::copy()
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {
@@ -161,33 +157,33 @@ std::shared_ptr<Operator> LogicalBatchJoinOperator::copy()
     return copy;
 }
 
-bool LogicalBatchJoinOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const
 {
     return NES::Util::instanceOf<LogicalBatchJoinOperator>(rhs);
 } /// todo
 
 void LogicalBatchJoinOperator::inferStringSignature()
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", *operatorNode);
     PRECONDITION(children.size() == 2, "Join should have 2 children but got: {}", children.size());
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
     signatureStream << "BATCHJOIN(LEFT-KEY=" << *batchJoinDefinition->getBuildJoinKey() << ",";
     signatureStream << "RIGHT-KEY=" << *batchJoinDefinition->getProbeJoinKey() << ",";
 
-    const auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    const auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
+    auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
     signatureStream << *rightChildSignature.begin()->second.begin() + ").";
     signatureStream << *leftChildSignature.begin()->second.begin();
 
     ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
+    auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

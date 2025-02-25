@@ -12,26 +12,21 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <fmt/format.h>
 const NES::QueryCompilation::TimestampField::TimeFunctionType& NES::QueryCompilation::TimestampField::getTimeFunctionType() const
 {
     return timeFunctionType;
 }
-
 NES::Windowing::TimeUnit NES::QueryCompilation::TimestampField::getUnit() const
 {
     return unit;
 }
-
 const std::string& NES::QueryCompilation::TimestampField::getName() const
 {
     return fieldName;
 }
-
-std::unique_ptr<NES::Runtime::Execution::Operators::TimeFunction> NES::QueryCompilation::TimestampField::toTimeFunction() const
+NES::Runtime::Execution::Operators::TimeFunctionPtr NES::QueryCompilation::TimestampField::toTimeFunction() const
 {
     switch (timeFunctionType)
     {
@@ -50,8 +45,7 @@ NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::Eve
 {
     return {std::move(fieldName), std::move(tm), EVENT_TIME};
 }
-NES::QueryCompilation::TimestampField::TimestampField(
-    std::string fieldName, Windowing::TimeUnit unit, const TimeFunctionType timeFunctionType)
+NES::QueryCompilation::TimestampField::TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType)
     : fieldName(std::move(fieldName)), unit(std::move(unit)), timeFunctionType(timeFunctionType)
 {
 }

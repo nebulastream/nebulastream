@@ -12,14 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <ostream>
 #include <sstream>
-#include <string>
-#include <utility>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES::Sinks
 {
@@ -32,8 +29,7 @@ SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorC
 std::unique_ptr<Configurations::DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
-    auto sinkValidationRegistryArguments = NES::Sinks::SinkValidationRegistryArguments(std::move(configPairs));
-    if (auto validatedConfig = SinkValidationRegistry::instance().create(sinkType, std::move(sinkValidationRegistryArguments)))
+    if (auto validatedConfig = SinkValidationRegistry::instance().create(sinkType, std::move(configPairs)))
     {
         return std::move(validatedConfig.value());
     }

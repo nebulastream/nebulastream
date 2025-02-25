@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <vector>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -25,12 +23,12 @@
 namespace NES::Optimizer
 {
 
-std::shared_ptr<PredicateReorderingRule> PredicateReorderingRule::create()
+PredicateReorderingRulePtr PredicateReorderingRule::create()
 {
     return std::make_shared<PredicateReorderingRule>();
 }
 
-std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan)
 {
     std::set<OperatorId> visitedOperators;
     auto filterOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
@@ -40,18 +38,18 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
     {
         if (visitedOperators.find(filter->getId()) == visitedOperators.end())
         {
-            std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = getConsecutiveFilters(filter);
+            std::vector<LogicalSelectionOperatorPtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_TRACE(
                 "PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2)
             {
-                const std::vector<std::shared_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
-                const std::vector<std::shared_ptr<Node>> filterChainChildren = consecutiveFilters.back()->getChildren();
+                std::vector<NodePtr> filterChainParents = consecutiveFilters.front()->getParents();
+                std::vector<NodePtr> filterChainChildren = consecutiveFilters.back()->getChildren();
                 NES_TRACE("PredicateReorderingRule: If the filters are already sorted, no change is needed");
                 auto already_sorted = std::is_sorted(
                     consecutiveFilters.begin(),
                     consecutiveFilters.end(),
-                    [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
+                    [](const LogicalSelectionOperatorPtr& lhs, const LogicalSelectionOperatorPtr& rhs)
                     { return lhs->getSelectivity() < rhs->getSelectivity(); });
                 if (!already_sorted)
                 {
@@ -59,7 +57,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                     std::sort(
                         consecutiveFilters.begin(),
                         consecutiveFilters.end(),
-                        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
+                        [](const LogicalSelectionOperatorPtr& lhs, const LogicalSelectionOperatorPtr& rhs)
                         { return lhs->getSelectivity() < rhs->getSelectivity(); });
                     NES_TRACE("PredicateReorderingRule: Start re-writing the new query plan");
                     NES_TRACE("PredicateReorderingRule: Remove parent/children references");
@@ -106,10 +104,9 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
     return queryPlan;
 }
 
-std::vector<std::shared_ptr<LogicalSelectionOperator>>
-PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
+std::vector<LogicalSelectionOperatorPtr> PredicateReorderingRule::getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& filter)
 {
-    std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
+    std::vector<LogicalSelectionOperatorPtr> consecutiveFilters = {};
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);

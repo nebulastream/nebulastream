@@ -14,13 +14,14 @@
 
 #pragma once
 
-#include <memory>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES::Optimizer
 {
 
+class RenameSourceToProjectOperatorRule;
+using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
 /**
  * @brief This rule is responsible for transforming Source Rename operator to the projection operator
@@ -28,10 +29,10 @@ namespace NES::Optimizer
 class RenameSourceToProjectOperatorRule : public BaseRewriteRule
 {
 public:
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
     virtual ~RenameSourceToProjectOperatorRule() = default;
 
-    static std::shared_ptr<RenameSourceToProjectOperatorRule> create();
+    static RenameSourceToProjectOperatorRulePtr create();
 
 private:
     RenameSourceToProjectOperatorRule() = default;

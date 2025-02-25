@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -33,8 +32,8 @@ using FixedSizedDataTuple = std::tuple<FIXED_SIZED_DATA_TYPES>;
 class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema, varSizedDataSchema;
+    Memory::BufferManagerPtr bufferManager;
+    SchemaPtr schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
     static void SetUpTestCase()
@@ -69,7 +68,7 @@ public:
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 {
-    const std::shared_ptr<Memory::BufferManager> bufferManager = Memory::BufferManager::create(4096, 2);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 2);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     try
@@ -90,7 +89,7 @@ TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmptyAfterSequenceOfPulls)
 {
-    const std::shared_ptr<Memory::BufferManager> bufferManager = Memory::BufferManager::create(4096, 3);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 3);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     auto tupleBuffer3 = bufferManager->getBufferBlocking();

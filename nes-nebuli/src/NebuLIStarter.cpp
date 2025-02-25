@@ -215,10 +215,10 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
+    DecomposedQueryPlanPtr decomposedQueryPlan;
     try
     {
-        const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
+        std::string const command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<ArgumentParser>(command).get("-i");
         if (input == "-")
         {

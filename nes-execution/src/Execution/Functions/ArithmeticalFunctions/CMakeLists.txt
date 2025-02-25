@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Add ExecutableFunction nes-execution ExecutableFunctionAdd.cpp)
-add_plugin(Div ExecutableFunction nes-execution ExecutableFunctionDiv.cpp)
-add_plugin(Mod ExecutableFunction nes-execution ExecutableFunctionMod.cpp)
-add_plugin(Mul ExecutableFunction nes-execution ExecutableFunctionMul.cpp)
-add_plugin(Sub ExecutableFunction nes-execution ExecutableFunctionSub.cpp)
+add_source_files(nes-execution
+        ExecutableFunctionAdd.cpp
+        ExecutableFunctionMul.cpp
+        ExecutableFunctionDiv.cpp
+        ExecutableFunctionMod.cpp
+        ExecutableFunctionSub.cpp
+        )

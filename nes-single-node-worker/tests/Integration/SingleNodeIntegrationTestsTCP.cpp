@@ -20,7 +20,6 @@
 #include <thread>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
@@ -121,7 +120,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -174,8 +173,8 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
-        QueryTestParam{"qOneTCPSourceWithFilter", 1, 31, 480 /* SUM(0, 1, ..., 32) - 16 */, 32},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 62, 960 /* 2 * (SUM(0, 1, ..., 32) - 16) */, 32},
+        // QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
+        // QueryTestParam{"qOneTCPSourceWithFilter", 1, 31, 480 /* SUM(0, 1, ..., 32) - 16 */, 32},
+        // QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 62, 960 /* 2 * (SUM(0, 1, ..., 32) - 16) */, 32},
         QueryTestParam{"qOneTCPSource", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
 }

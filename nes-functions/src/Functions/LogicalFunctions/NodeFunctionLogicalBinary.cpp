@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Char.hpp>
@@ -34,7 +32,7 @@ NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* 
 {
 }
 
-bool NodeFunctionLogicalBinary::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionLogicalBinary::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLogicalBinary>(rhs))
     {

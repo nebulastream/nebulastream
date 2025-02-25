@@ -14,26 +14,19 @@
 
 #pragma once
 
-#include <filesystem>
-#include <istream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::CLI
 {
 
 struct SchemaField
 {
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
-    SchemaField() = default;
-
     std::string name;
-    std::shared_ptr<NES::DataType> type;
+    BasicType type;
 };
 
 struct Sink
@@ -64,7 +57,7 @@ struct QueryConfig
     std::vector<PhysicalSource> physical;
 };
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
+DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
+DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
+DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

@@ -19,10 +19,11 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -33,10 +34,10 @@ class PhysicalStreamJoinBuildOperator : public PhysicalUnaryOperator, public Abs
 {
 public:
     PhysicalStreamJoinBuildOperator(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-        Configurations::StreamJoinStrategy joinStrategy,
+        QueryCompilation::StreamJoinStrategy joinStrategy,
         TimestampField timestampField,
         JoinBuildSideType buildSide,
         OperatorId id = getNextOperatorId());
@@ -45,13 +46,13 @@ public:
     std::shared_ptr<Operator> copy() override;
 
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
-    Configurations::StreamJoinStrategy getJoinStrategy() const;
+    StreamJoinStrategy getJoinStrategy() const;
     const TimestampField& getTimeStampField() const;
     JoinBuildSideType getBuildSide() const;
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
-    Configurations::StreamJoinStrategy joinStrategy;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
     TimestampField timeStampField;
     JoinBuildSideType buildSide;
 };

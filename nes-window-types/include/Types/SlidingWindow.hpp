@@ -13,11 +13,8 @@
 */
 
 #pragma once
-#include <memory>
-#include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
 namespace NES::Windowing
 {
 /**
@@ -26,7 +23,7 @@ namespace NES::Windowing
 class SlidingWindow : public TimeBasedWindowType
 {
 public:
-    static std::shared_ptr<WindowType> of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
     /**
     * @brief return size of the window
@@ -42,12 +39,12 @@ public:
 
     std::string toString() const override;
 
-    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
+    bool equal(WindowTypePtr otherWindowType) override;
 
     uint64_t hash() const override;
 
 private:
-    SlidingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };

@@ -14,24 +14,27 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/WindowType.hpp>
 namespace NES::Windowing
 {
 
+class TimeBasedWindowType;
+using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
 class TimeBasedWindowType : public WindowType
 {
 public:
-    explicit TimeBasedWindowType(std::shared_ptr<TimeCharacteristic> timeCharacteristic);
+    explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
     ~TimeBasedWindowType() override = default;
-
-    [[nodiscard]] std::shared_ptr<TimeCharacteristic> getTimeCharacteristic() const;
+    /**
+     * @brief Get the time characteristic of the window.
+     * @return
+     */
+    [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
 
     /**
      * @brief method to get the window size
@@ -45,10 +48,15 @@ public:
      */
     virtual TimeMeasure getSlide() = 0;
 
-    bool inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infer stamp of time based window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    bool inferStamp(const SchemaPtr& schema) override;
 
 protected:
-    std::shared_ptr<TimeCharacteristic> timeCharacteristic;
+    TimeCharacteristicPtr timeCharacteristic;
 };
 
 }

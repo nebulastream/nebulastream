@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <vector>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/Operator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -28,26 +25,25 @@ OriginIdInferencePhase::OriginIdInferencePhase()
 {
 }
 
-std::shared_ptr<OriginIdInferencePhase> OriginIdInferencePhase::create()
+OriginIdInferencePhasePtr OriginIdInferencePhase::create()
 {
     return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
 }
 
-std::shared_ptr<QueryPlan> OriginIdInferencePhase::execute(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan)
 {
     performInference(queryPlan->getOperatorByType<OriginIdAssignmentOperator>(), queryPlan->getRootOperators());
     return queryPlan;
 }
 
-std::shared_ptr<DecomposedQueryPlan> OriginIdInferencePhase::execute(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan)
+DecomposedQueryPlanPtr OriginIdInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
     performInference(decomposedQueryPlan->getOperatorByType<OriginIdAssignmentOperator>(), decomposedQueryPlan->getRootOperators());
     return decomposedQueryPlan;
 }
 
 void OriginIdInferencePhase::performInference(
-    const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-    const std::vector<std::shared_ptr<Operator>>& rootOperators)
+    std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<std::shared_ptr<Operator>> rootOperators)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();

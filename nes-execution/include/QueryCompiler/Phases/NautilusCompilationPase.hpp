@@ -13,10 +13,9 @@
 */
 #pragma once
 #include <functional>
-#include <memory>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -25,15 +24,15 @@ namespace NES::QueryCompilation
 class NautilusCompilationPhase
 {
 public:
-    explicit NautilusCompilationPhase(Configurations::QueryCompilerConfiguration compilerOptions);
+    explicit NautilusCompilationPhase(const std::shared_ptr<QueryCompilerOptions>& compilerOptions);
 
     /// Generates code for all pipelines in a pipelined query plan.
-    std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr queryPlan);
 
     /// Generates code for a particular pipeline.
-    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
 private:
-    Configurations::QueryCompilerConfiguration compilerOptions;
+    std::shared_ptr<QueryCompilerOptions> compilerOptions;
 };
 }

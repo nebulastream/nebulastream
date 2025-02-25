@@ -14,8 +14,6 @@
 
 #include <chrono>
 #include <thread>
-#include <vector>
-#include <Nautilus/NautilusBackend.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>
@@ -61,7 +59,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -78,7 +76,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     EXPECT_EQ(reply.error_size(), 0);
 
     auto log = IntegrationTestUtil::queryLog(queryId, uut);
-    const std::vector<QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
+    std::vector<QueryStatus> const expected = {Registered, Running, Stopped, Running, Stopped};
 
     for (size_t i = 0; i < log.size(); ++i)
     {
@@ -104,7 +102,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::INTERPRETER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 

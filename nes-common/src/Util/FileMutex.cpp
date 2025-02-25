@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <cerrno>
 #include <cstring>
+#include <errno.h>
 #include <unistd.h>
 #include <Util/FileMutex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #if defined(linux) || defined(__APPLE__)
-    #include <fcntl.h>
+#    include <fcntl.h>
 #else
-    #error "Unsupported platform"
+#    error "Unsupported platform"
 #endif
 
 namespace NES::Util
@@ -29,7 +29,7 @@ namespace NES::Util
 
 FileMutex::FileMutex(const std::string filePath) : fileName(filePath)
 {
-    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU); /// NOLINT (cppcoreguidelines-prefer-member-initializer)
+    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (fd == -1 && errno == EEXIST)
     {
         fd = open(filePath.c_str(), O_RDWR);
@@ -50,8 +50,7 @@ void FileMutex::lock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    auto ret = ::fcntl(fd, F_SETLKW, &lock);
-    INVARIANT(-1 != ret, "Cannot acquire lock");
+    INVARIANT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
 }
 
 bool FileMutex::try_lock()
@@ -76,8 +75,7 @@ void FileMutex::unlock()
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
     lock.l_len = 0;
-    auto ret = fcntl(fd, F_SETLK, &lock);
-    INVARIANT(-1 != ret, "Cannot acquire lock");
+    INVARIANT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
 }
 
 }

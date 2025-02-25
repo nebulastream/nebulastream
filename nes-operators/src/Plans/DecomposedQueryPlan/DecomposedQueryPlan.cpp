@@ -13,12 +13,10 @@
 */
 
 #include <algorithm>
-#include <deque>
 #include <memory>
 #include <queue>
 #include <unordered_set>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -108,10 +106,10 @@ void DecomposedQueryPlan::setQueryId(QueryId queryId)
     this->queryId = queryId;
 }
 
-std::vector<std::shared_ptr<SinkLogicalOperator>> DecomposedQueryPlan::getSinkOperators() const
+std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() const
 {
     NES_DEBUG("Get all sink operators by traversing all the root nodes.");
-    std::vector<std::shared_ptr<SinkLogicalOperator>> sinkOperators;
+    std::vector<SinkLogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : rootOperators)
     {
         auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
@@ -205,12 +203,12 @@ std::unordered_set<std::shared_ptr<Operator>> DecomposedQueryPlan::getAllOperato
     return visitedOperators;
 }
 
-std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
+DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
 {
     NES_INFO("DecomposedQueryPlan: make copy.");
     /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
     std::map<OperatorId, std::shared_ptr<Operator>> operatorIdToOperatorMap;
-    std::deque<std::shared_ptr<Node>> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
+    std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty())
     {
         auto operatorNode = NES::Util::as<Operator>(operatorsToProcess.front());

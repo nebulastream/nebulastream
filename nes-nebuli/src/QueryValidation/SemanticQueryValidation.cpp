@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -25,7 +24,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
@@ -35,18 +33,16 @@ using namespace std::string_literals;
 
 namespace NES::Optimizer
 {
-SemanticQueryValidation::SemanticQueryValidation(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
-    : sourceCatalog(sourceCatalog)
+SemanticQueryValidation::SemanticQueryValidation(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) : sourceCatalog(sourceCatalog)
 {
 }
 
-std::shared_ptr<SemanticQueryValidation>
-SemanticQueryValidation::create(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
+SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     return std::make_shared<SemanticQueryValidation>(sourceCatalog);
 }
 
-void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPlan) const
+void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan)
 {
     /// check if we have valid root operators, i.e., sinks
     sinkOperatorValidityCheck(queryPlan);
@@ -58,7 +54,8 @@ void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPl
     try
     {
         const auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
-        typeInferencePhase->performTypeInferenceSources(queryPlan->getSourceOperators<SourceNameLogicalOperator>());
+        typeInferencePhase->performTypeInferenceSources(
+            queryPlan->getSourceOperators<SourceNameLogicalOperator>(), queryPlan->getQueryId());
         typeInferencePhase->performTypeInferenceQuery(queryPlan);
     }
     catch (std::exception& e)
@@ -108,7 +105,7 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::st
 }
 
 void SemanticQueryValidation::logicalSourceValidityCheck(
-    const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
+    const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
@@ -124,7 +121,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
 }
 
 void SemanticQueryValidation::physicalSourceValidityCheck(
-    const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
+    const QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Identify the source operators
     auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
@@ -152,7 +149,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     }
 }
 
-void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
+void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& queryPlan)
 {
     auto rootOperators = queryPlan->getRootOperators();
     /// Check if root operator exists ina query plan
@@ -171,12 +168,12 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<Qu
     }
 }
 
-void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
+void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryPlan)
 {
     auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
     if (!inferModelOperators.empty())
     {
-        std::shared_ptr<DataType> commonStamp;
+        DataTypePtr commonStamp;
         for (const auto& inferModelOperator : inferModelOperators)
         {
             for (const auto& inputField : inferModelOperator->getInputFields())

@@ -18,9 +18,10 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
-#include <ExecutablePipelineStage.hpp>
 namespace NES::Runtime::Execution
 {
+class ExecutablePipelineStage;
+
 /// The executable pipeline provider creates an executable pipeline stage out of a pipeline of physical operators.
 /// We differentiate between different implementations that can use different execution strategies, e.g. compilation or interpretation.
 class ExecutablePipelineProvider

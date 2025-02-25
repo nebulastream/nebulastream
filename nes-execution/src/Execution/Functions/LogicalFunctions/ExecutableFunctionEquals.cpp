@@ -14,30 +14,23 @@
 
 #include <memory>
 #include <utility>
-
-#include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
 #include <function.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionEquals::execute(const Record& record, ArenaRef& arena) const
+VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
-    const auto result = leftValue == rightValue;
-    return result;
+    const auto leftValue = leftExecutableFunction->execute(record);
+    const auto rightValue = rightExecutableFunction->execute(record);
+    return leftValue == rightValue;
 }
 
 ExecutableFunctionEquals::ExecutableFunctionEquals(
@@ -46,12 +39,10 @@ ExecutableFunctionEquals::ExecutableFunctionEquals(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionEquals>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionEquals>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }

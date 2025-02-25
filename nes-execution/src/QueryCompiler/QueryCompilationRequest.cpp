@@ -20,13 +20,12 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<QueryCompilationRequest>
-QueryCompilationRequest::create(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan, size_t bufferSize)
+QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize)
 {
     return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan), bufferSize));
 }
 
-QueryCompilationRequest::QueryCompilationRequest(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan, size_t bufferSize)
+QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize)
     : decomposedQueryPlan(std::move(decomposedQueryPlan)), debug(false), optimize(false), dumpQueryPlans(false), bufferSize(bufferSize)
 {
 }
@@ -61,7 +60,7 @@ bool QueryCompilationRequest::isDumpEnabled() const
     return dumpQueryPlans;
 }
 
-std::shared_ptr<DecomposedQueryPlan> QueryCompilationRequest::getDecomposedQueryPlan()
+DecomposedQueryPlanPtr QueryCompilationRequest::getDecomposedQueryPlan()
 {
     return decomposedQueryPlan;
 }

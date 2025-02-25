@@ -21,14 +21,11 @@
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -37,7 +34,7 @@
 namespace NES
 {
 
-std::shared_ptr<NodeFunction> getNodeFunction(FunctionItem& functionItem)
+std::shared_ptr<NodeFunction> getNodeFunctionPtr(FunctionItem& functionItem)
 {
     return functionItem.getNodeFunction();
 }
@@ -79,6 +76,7 @@ CEPOperatorBuilder::Times Query::times()
 
 namespace JoinOperatorBuilder
 {
+
 JoinWhere Join::where(std::shared_ptr<NodeFunction> joinFunction) const
 {
     return JoinWhere(subQueryRhs, originalQuery, joinFunction);
@@ -93,7 +91,7 @@ JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared
 {
 }
 
-Query& JoinWhere::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
+Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
 {
     return originalQuery.joinWith(subQueryRhs, joinFunctions, windowType); ///call original joinWith() function
 }
@@ -132,7 +130,7 @@ And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     joinFunction = FunctionItem(Attribute(cepLeftKey)).getNodeFunction() == FunctionItem(Attribute(cepRightKey)).getNodeFunction();
 }
 
-Query& And::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
+Query& And::window(const Windowing::WindowTypePtr& windowType) const
 {
     return originalQuery.andWith(subQueryRhs, joinFunction, windowType); ///call original andWith() function
 }
@@ -150,7 +148,7 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     joinFunction = FunctionItem(Attribute(cepLeftKey)).getNodeFunction() == FunctionItem(Attribute(cepRightKey)).getNodeFunction();
 }
 
-Query& Seq::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
+Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
 {
     NES_DEBUG("Sequence enters window function");
     auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)
@@ -161,11 +159,11 @@ Query& Seq::window(const std::shared_ptr<Windowing::WindowType>& windowType) con
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     /// to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
     /// in case of composed streams on the right branch
-    if (sourceNameRight.find('_') != std::string::npos)
+    if (sourceNameRight.find("_") != std::string::npos)
     {
         /// we find the most left source and use its timestamp for the filter constraint
-        uint64_t posStart = sourceNameRight.find('_');
-        uint64_t posEnd = sourceNameRight.find('_', posStart + 1);
+        uint64_t posStart = sourceNameRight.find("_");
+        uint64_t posEnd = sourceNameRight.find("_", posStart + 1);
         sourceNameRight = sourceNameRight.substr(posStart + 1, posEnd - 2) + "$" + timestamp;
     } /// in case the right branch only contains 1 source we can just use it
     else
@@ -173,10 +171,10 @@ Query& Seq::window(const std::shared_ptr<Windowing::WindowType>& windowType) con
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
     /// in case of composed sources on the left branch
-    if (sourceNameLeft.find('_') != std::string::npos)
+    if (sourceNameLeft.find("_") != std::string::npos)
     {
         /// we find the most right source and use its timestamp for the filter constraint
-        uint64_t posStart = sourceNameLeft.find_last_of('_');
+        uint64_t posStart = sourceNameLeft.find_last_of("_");
         sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
     } /// in case the left branch only contains 1 source we can just use it
     else
@@ -209,7 +207,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
     originalQuery.map(Attribute("Count") = 1);
 }
 
-Query& Times::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
+Query& Times::window(const Windowing::WindowTypePtr& windowType) const
 {
     auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName();
     /// if no min and max occurrence is defined, apply count without filter
@@ -246,7 +244,7 @@ Query& Times::window(const std::shared_ptr<Windowing::WindowType>& windowType) c
 
 }
 
-Query::Query(std::shared_ptr<QueryPlan> queryPlan) : queryPlan(std::move(queryPlan))
+Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
 {
 }
 
@@ -273,8 +271,8 @@ Query& Query::unionWith(const Query& subQuery)
     return *this;
 }
 
-Query& Query::joinWith(
-    const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const std::shared_ptr<Windowing::WindowType>& windowType)
+Query&
+Query::joinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
@@ -298,16 +296,16 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<Node
     return *this;
 }
 
-Query& Query::andWith(
-    const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const std::shared_ptr<Windowing::WindowType>& windowType)
+Query&
+Query::andWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(
-    const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const std::shared_ptr<Windowing::WindowType>& windowType)
+Query&
+Query::seqWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
@@ -348,14 +346,14 @@ Query& Query::sink(std::string sinkName, WorkerId workerId)
     return *this;
 }
 
-Query& Query::assignWatermark(const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
+Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor)
 {
     NES_DEBUG("Query: add assignWatermark operator to query");
     this->queryPlan = QueryPlanBuilder::assignWatermark(this->queryPlan, watermarkStrategyDescriptor);
     return *this;
 }
 
-std::shared_ptr<QueryPlan> Query::getQueryPlan() const
+QueryPlanPtr Query::getQueryPlan() const
 {
     return queryPlan;
 }

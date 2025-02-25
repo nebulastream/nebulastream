@@ -14,7 +14,6 @@
 #pragma once
 
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -28,7 +27,7 @@ class ExecutableFunctionReadField : public Function
 {
 public:
     explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    VarVal execute(Record& record) const override;
 
 private:
     const Record::RecordFieldIdentifier field;

@@ -12,8 +12,6 @@
     limitations under the License.
 */
 #include <algorithm>
-#include <memory>
-#include <vector>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Common.hpp>
@@ -50,7 +48,7 @@ bool LogicalBinaryOperator::inferSchema()
         auto found = std::find_if(
             distinctSchemas.begin(),
             distinctSchemas.end(),
-            [&](const std::shared_ptr<Schema>& distinctSchema) { return (*childOutputSchema == *distinctSchema); });
+            [&](const SchemaPtr& distinctSchema) { return (*childOutputSchema == *distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);
@@ -63,7 +61,7 @@ bool LogicalBinaryOperator::inferSchema()
     return true;
 }
 
-std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const
+std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) const
 {
     std::vector<std::shared_ptr<Operator>> operators;
     for (const auto& child : getChildren())
@@ -93,7 +91,7 @@ void LogicalBinaryOperator::inferInputOrigins()
     std::vector<OriginId> leftInputOriginIds;
     for (auto child : this->getLeftOperators())
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
@@ -103,7 +101,7 @@ void LogicalBinaryOperator::inferInputOrigins()
     std::vector<OriginId> rightInputOriginIds;
     for (auto child : this->getRightOperators())
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

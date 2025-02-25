@@ -184,5 +184,12 @@ private:
     T defaultValue;
 };
 
+using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
+using LongConfigOption = std::shared_ptr<ConfigurationOption<uint64_t>>;
+using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
+using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
+using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
+using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
 
 }

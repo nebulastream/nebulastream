@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -26,7 +24,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
@@ -34,19 +31,18 @@
 namespace NES::Optimizer
 {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(
-    const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, bool expandSourceOnly)
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr& sourceCatalog, bool expandSourceOnly)
     : sourceCatalog(sourceCatalog), expandSourceOnly(expandSourceOnly)
 {
 }
 
-std::shared_ptr<LogicalSourceExpansionRule>
-LogicalSourceExpansionRule::create(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, bool expandSourceOnly)
+LogicalSourceExpansionRulePtr
+LogicalSourceExpansionRule::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog, bool expandSourceOnly)
 {
     return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(sourceCatalog, expandSourceOnly));
 }
 
-std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
@@ -88,8 +84,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceOperator->getLogicalSourceName();
 
-        const std::vector<std::shared_ptr<Catalogs::Source::SourceCatalogEntry>> sourceCatalogEntries
-            = sourceCatalog->getPhysicalSources(logicalSourceName);
+        std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty())
         {
@@ -132,7 +127,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             duplicateSourceOperator->setSchema(sourceOperator->getSchema());
 
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
-            const std::vector<std::shared_ptr<Node>>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
+            const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
             std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators)
@@ -195,7 +190,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
     return queryPlan;
 }
 
-void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::shared_ptr<Node>& operatorNode)
+void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr& operatorNode)
 {
     /// Check if downstream (parent) operator of this operator is blocking or not if not then recursively call this method for the
     /// downstream operator
@@ -221,7 +216,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
     }
 }
 
-void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared_ptr<Node>& operatorNode, OperatorId downStreamOperatorId)
+void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
     std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
@@ -239,7 +234,7 @@ void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared
     }
 }
 
-bool LogicalSourceExpansionRule::isBlockingOperator(const std::shared_ptr<Node>& operatorNode)
+bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
 {
     return (
         NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<LogicalWindowOperator>(operatorNode)

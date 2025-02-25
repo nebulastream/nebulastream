@@ -33,4 +33,5 @@ private:
 
     bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 };
+using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
 }

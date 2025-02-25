@@ -14,7 +14,6 @@
 
 #pragma once
 #include <compare>
-#include <cstddef>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -85,9 +84,6 @@ namespace std
 template <typename T, typename Tag, T invalid, T initial>
 struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 {
-    size_t operator()(const NES::NESStrongType<T, Tag, invalid, initial>& strongType) const
-    {
-        return std::hash<T>()(strongType.getRawValue());
-    }
+    size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
 };
 }

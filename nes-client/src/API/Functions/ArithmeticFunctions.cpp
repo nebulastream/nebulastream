@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 
 #include <API/Functions/ArithmeticalFunctions.hpp>
@@ -29,7 +28,6 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -37,254 +35,249 @@ namespace NES
 {
 
 ///NodeFunction calls of binary operators with two FunctionItems
-std::shared_ptr<NodeFunction>
-operator+(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator+(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionAdd::create(std::move(functionLeft), std::move(functionRight));
 }
 
-std::shared_ptr<NodeFunction>
-operator-(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator-(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionSub::create(std::move(functionLeft), std::move(functionRight));
 }
 
-std::shared_ptr<NodeFunction>
-operator*(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator*(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionMul::create(std::move(functionLeft), std::move(functionRight));
 }
 
-std::shared_ptr<NodeFunction>
-operator/(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator/(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionDiv::create(std::move(functionLeft), std::move(functionRight));
 }
 
-std::shared_ptr<NodeFunction>
-operator%(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator%(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionMod::create(std::move(functionLeft), std::move(functionRight));
 }
 
-std::shared_ptr<NodeFunction> MOD(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr MOD(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return std::move(functionLeft) % std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> POWER(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr POWER(NodeFunctionPtr functionLeft, NodeFunctionPtr functionRight)
 {
     return NodeFunctionPow::create(functionLeft, functionRight);
 }
 
-std::shared_ptr<NodeFunction> ABS(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr ABS(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionAbs::create(otherFunction);
+    return NodeFunctionAbs::create(exp);
 }
 
-std::shared_ptr<NodeFunction> SQRT(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr SQRT(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionSqrt::create(otherFunction);
+    return NodeFunctionSqrt::create(exp);
 }
 
-std::shared_ptr<NodeFunction> EXP(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr EXP(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionExp::create(otherFunction);
+    return NodeFunctionExp::create(exp);
 }
 
-std::shared_ptr<NodeFunction> ROUND(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr ROUND(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionRound::create(otherFunction);
+    return NodeFunctionRound::create(exp);
 }
 
-std::shared_ptr<NodeFunction> CEIL(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr CEIL(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionCeil::create(otherFunction);
+    return NodeFunctionCeil::create(exp);
 }
 
-std::shared_ptr<NodeFunction> FLOOR(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr FLOOR(const NodeFunctionPtr& exp)
 {
-    return NodeFunctionFloor::create(otherFunction);
+    return NodeFunctionFloor::create(exp);
 }
 
-std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr operator++(NodeFunctionPtr functionLeft)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
-std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction)
+NodeFunctionPtr operator--(NodeFunctionPtr functionLeft)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
-const std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction, int)
+NodeFunctionPtr operator++(NodeFunctionPtr functionLeft, int)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
-const std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction, int)
+NodeFunctionPtr operator--(NodeFunctionPtr functionLeft, int)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
 /// calls of Binary operators with one or two FunctionItems
 /// functionLeft: item, functionRight: node
-std::shared_ptr<NodeFunction> operator+(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator+(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() + std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> operator-(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator-(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() - std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> operator*(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator*(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() * std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> operator/(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator/(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() / std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> operator%(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr operator%(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() % std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> MOD(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr MOD(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return functionLeft.getNodeFunction() % std::move(functionRight);
 }
 
-std::shared_ptr<NodeFunction> POWER(const FunctionItem& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+NodeFunctionPtr POWER(FunctionItem functionLeft, NodeFunctionPtr functionRight)
 {
     return POWER(functionLeft.getNodeFunction(), std::move(functionRight));
 }
 
 /// functionLeft: node, functionRight: item
-std::shared_ptr<NodeFunction> operator+(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator+(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) + functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator-(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator-(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) - functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator*(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator*(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) * functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator/(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator/(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) / functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator%(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator%(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) % functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> MOD(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr MOD(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return std::move(functionLeft) % functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> POWER(const std::shared_ptr<NodeFunction>& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr POWER(NodeFunctionPtr functionLeft, FunctionItem functionRight)
 {
     return POWER(std::move(functionLeft), functionRight.getNodeFunction());
 }
 
 /// functionLeft: item, rightWxp: item
-std::shared_ptr<NodeFunction> operator+(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator+(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() + functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator-(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator-(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() - functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator*(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator*(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() * functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator/(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator/(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() / functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> operator%(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr operator%(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() % functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> MOD(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr MOD(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return functionLeft.getNodeFunction() % functionRight.getNodeFunction();
 }
 
-std::shared_ptr<NodeFunction> POWER(const FunctionItem& functionLeft, const FunctionItem& functionRight)
+NodeFunctionPtr POWER(FunctionItem functionLeft, FunctionItem functionRight)
 {
     return POWER(functionLeft.getNodeFunction(), functionRight.getNodeFunction());
 }
 
 /// calls of Unary operators with FunctionItem
-std::shared_ptr<NodeFunction> ABS(const FunctionItem& otherFunction)
+NodeFunctionPtr ABS(FunctionItem exp)
 {
-    return ABS(otherFunction.getNodeFunction());
+    return ABS(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> SQRT(const FunctionItem& otherFunction)
+NodeFunctionPtr SQRT(FunctionItem exp)
 {
-    return SQRT(otherFunction.getNodeFunction());
+    return SQRT(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> EXP(const FunctionItem& otherFunction)
+NodeFunctionPtr EXP(FunctionItem exp)
 {
-    return EXP(otherFunction.getNodeFunction());
+    return EXP(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> ROUND(const FunctionItem& otherFunction)
+NodeFunctionPtr ROUND(FunctionItem exp)
 {
-    return ROUND(otherFunction.getNodeFunction());
+    return ROUND(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> CEIL(const FunctionItem& otherFunction)
+NodeFunctionPtr CEIL(FunctionItem exp)
 {
-    return CEIL(otherFunction.getNodeFunction());
+    return CEIL(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> FLOOR(const FunctionItem& otherFunction)
+NodeFunctionPtr FLOOR(FunctionItem exp)
 {
-    return FLOOR(otherFunction.getNodeFunction());
+    return FLOOR(exp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction> operator++(const FunctionItem& otherFunction)
+NodeFunctionPtr operator++(FunctionItem exp)
 {
-    return ++otherFunction.getNodeFunction();
+    return ++exp.getNodeFunction();
 }
 
-const std::shared_ptr<NodeFunction> operator++(const FunctionItem& otherFunction, int)
+NodeFunctionPtr operator++(FunctionItem exp, int)
 {
-    return otherFunction.getNodeFunction()++;
+    return exp.getNodeFunction()++;
 }
 
-std::shared_ptr<NodeFunction> operator--(const FunctionItem& otherFunction)
+NodeFunctionPtr operator--(FunctionItem exp)
 {
-    return --otherFunction.getNodeFunction();
+    return --exp.getNodeFunction();
 }
 
-const std::shared_ptr<NodeFunction> operator--(const FunctionItem& otherFunction, int)
+NodeFunctionPtr operator--(FunctionItem exp, int)
 {
-    return otherFunction.getNodeFunction()--;
+    return exp.getNodeFunction()--;
 }
 
 }

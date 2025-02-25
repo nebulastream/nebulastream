@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES
@@ -41,8 +39,8 @@ public:
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
     /**
     * @brief Infers the input and output schema of this operator depending on its child.

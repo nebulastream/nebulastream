@@ -48,7 +48,7 @@ std::pair<CallbackOwner, CallbackRef> Callback::create(std::string context)
         [=](Callback* ptr)
         {
             std::unique_ptr<Callback> callback(ptr);
-            const std::scoped_lock lock(ptr->mutex);
+            std::scoped_lock const lock(ptr->mutex);
             try
             {
                 if (!callback->callbacks.empty())
@@ -72,7 +72,7 @@ CallbackOwner& CallbackOwner::operator=(CallbackOwner&& other) noexcept
 {
     if (auto ptr = owner.lock())
     {
-        const std::scoped_lock lock(ptr->mutex);
+        std::scoped_lock const lock(ptr->mutex);
         if (!ptr->callbacks.empty())
         {
             ENGINE_LOG_DEBUG("Overwrite {} Callbacks", context);
@@ -90,7 +90,7 @@ CallbackOwner::~CallbackOwner()
     if (auto ptr = owner.lock())
     {
         ENGINE_LOG_DEBUG("Disabling {} Callbacks", context);
-        const std::scoped_lock lock(ptr->mutex);
+        std::scoped_lock const lock(ptr->mutex);
         ptr->callbacks.clear();
     }
 }
@@ -99,7 +99,7 @@ void CallbackOwner::addCallback(absl::AnyInvocable<void()> callbackFunction) con
 {
     if (auto ptr = owner.lock())
     {
-        const std::scoped_lock lock(ptr->mutex);
+        std::scoped_lock const lock(ptr->mutex);
         ptr->callbacks.emplace_back(std::move(callbackFunction));
     }
 }
@@ -308,7 +308,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 ENGINE_LOG_DEBUG("Pipeline Setup Completed");
                 for (auto& [source, successors] : sources)
                 {
-                    auto sourceId = source->getSourceId();
+                    auto sourceId = source->getOriginId();
                     internal.sources.emplace(
                         sourceId,
                         RunningSource::create(

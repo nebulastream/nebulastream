@@ -12,17 +12,13 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <memory>
-#include <type_traits>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <fmt/format.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -90,61 +86,7 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
-{
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(type))
-    {
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                return {cast<nautilus::val<bool>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                return {cast<nautilus::val<int8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                return {cast<nautilus::val<int16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                return {cast<nautilus::val<int32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                return {cast<nautilus::val<int64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                return {cast<nautilus::val<uint8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                return {cast<nautilus::val<uint16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                return {cast<nautilus::val<uint32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                return {cast<nautilus::val<uint64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                return {cast<nautilus::val<float>>()};
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                return {cast<nautilus::val<double>>()};
-            };
-            default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
-            };
-        }
-    }
-    else if (const auto variableSizedData = std::dynamic_pointer_cast<VariableSizedDataType>(type))
-    {
-        return cast<VariableSizedData>();
-    }
-    else
-    {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
-    }
-}
-
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type)
 {
     if (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type))
     {
@@ -199,15 +141,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     return std::visit(
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
-            /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char
-            using Tremoved = std::remove_cvref_t<T>;
-            if constexpr (
-                std::is_same_v<Tremoved, nautilus::val<uint8_t>> || std::is_same_v<Tremoved, nautilus::val<int8_t>>
-                || std::is_same_v<Tremoved, nautilus::val<unsigned char>> || std::is_same_v<Tremoved, nautilus::val<char>>)
-            {
-                return os.operator<<(static_cast<nautilus::val<int>>(value));
-            }
-            else if constexpr (requires(typename T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
+            if constexpr (requires(typename T::basic_type t) { os << (nautilus::val<typename T::basic_type>(t)); })
             {
                 return os.operator<<(nautilus::val<typename T::basic_type>(value));
             }

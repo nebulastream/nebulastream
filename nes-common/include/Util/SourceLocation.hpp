@@ -15,16 +15,16 @@
 #include <cstring>
 /// The following provides a polyfill for the source location standard. On not supported platforms it will return an empty result.
 #if __has_include(<source_location>)
-    #include <source_location>
+#    include <source_location>
 #elif __has_include(<experimental/source_location>)
-    #include <experimental/source_location>
+#    include <experimental/source_location>
 namespace std
 {
 using source_location = std::experimental::source_location;
 }
 #else
-    #include <cstdint>
-    #include <stdint.h>
+#    include <cstdint>
+#    include <stdint.h>
 namespace std
 {
 struct source_location

@@ -18,17 +18,35 @@
 namespace NES::Nautilus::Interface
 {
 
-/// Implementation of the MurMur3 hash function for nautilus types.
-/// This implementation is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
+/**
+ * @brief Implementation of the MurMur3 hash function for nautilus types.
+ * This implementations is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
+ */
 class MurMur3HashFunction : public HashFunction
 {
 public:
     /// Seed as an initialisation.
     const uint64_t SEED = 902850234;
-    [[nodiscard]] HashValue init() const override;
 
-protected:
-    /// Calculates the hash of value and xor-es it with hash
-    [[nodiscard]] HashValue calculate(HashValue& hash, const VarVal& value) const override;
+    /**
+     * @brief Inits the HashValue with the seed
+     * @return HashValue
+     */
+    HashValue init() override;
+
+    /**
+     * @brief Calculates the hash of value and xor-es it with hash
+     * @param hash
+     * @param value
+     * @return HashValue
+     */
+    HashValue calculate(HashValue& hash, VarVal& value) override;
+
+    /**
+     * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
+     * @param value
+     * @return HashValue
+     */
+    HashValue calculate(VarVal& value);
 };
 }

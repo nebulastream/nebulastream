@@ -55,7 +55,7 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace)
     std::exit(1);
 }
 
-void installGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener)
+void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener)
 {
     NES_TRACE("installGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);

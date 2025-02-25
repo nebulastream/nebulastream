@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
@@ -26,47 +24,46 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::API
 {
 
-WindowAggregation::WindowAggregation(std::shared_ptr<Windowing::WindowAggregationDescriptor> windowAggregationDescriptor)
+WindowAggregation::WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor)
     : aggregation(std::move(windowAggregationDescriptor))
 {
 }
 
-std::shared_ptr<API::WindowAggregation> WindowAggregation::as(const NES::FunctionItem& asField) const
+API::WindowAggregationPtr WindowAggregation::as(const NES::FunctionItem& asField)
 {
     return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Sum(const FunctionItem& onField)
+API::WindowAggregationPtr Sum(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::SumAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Avg(const FunctionItem& onField)
+API::WindowAggregationPtr Avg(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Min(const FunctionItem& onField)
+API::WindowAggregationPtr Min(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Max(const FunctionItem& onField)
+API::WindowAggregationPtr Max(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField)
+API::WindowAggregationPtr Count()
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on());
 }
 
-std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)
+API::WindowAggregationPtr Median(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
 }
@@ -121,22 +118,22 @@ Windowing::TimeUnit Days()
     return Windowing::TimeUnit::Days();
 }
 
-std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField)
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField)
 {
     return Windowing::TimeCharacteristic::createEventTime(onField.getNodeFunction());
 }
 
-std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit)
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit)
 {
     return Windowing::TimeCharacteristic::createEventTime(onField.getNodeFunction(), unit);
 }
 
-std::shared_ptr<Windowing::TimeCharacteristic> IngestionTime()
+Windowing::TimeCharacteristicPtr IngestionTime()
 {
     return Windowing::TimeCharacteristic::createIngestionTime();
 }
 
-std::shared_ptr<NodeFunction> RecordCreationTs()
+NodeFunctionPtr RecordCreationTs()
 {
     return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getNodeFunction();
 }

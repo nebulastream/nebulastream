@@ -13,23 +13,19 @@
 */
 
 #pragma once
-#include <memory>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
 class NodeFunctionSqrt final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionSqrt(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionSqrt(DataTypePtr stamp);
     ~NodeFunctionSqrt() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& child);
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionSqrt(NodeFunctionSqrt* other);

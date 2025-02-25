@@ -12,26 +12,15 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
-
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators
 {
-Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction)
-    : fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
-{
-}
 
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// execute map function
-    const auto value = mapFunction->execute(record, ctx.pipelineMemoryProvider.arena);
-    /// write the result to the record
-    record.write(fieldToWriteTo, value);
+    /// assume that map function performs a field write
+    mapFunction->execute(record);
     /// call next operator
     child->execute(ctx, record);
 }

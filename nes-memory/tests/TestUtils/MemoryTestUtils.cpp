@@ -48,9 +48,8 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
     {
         auto childBuffer = buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
-        auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
         INVARIANT(
-            ret == childIdx,
+            copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx,
             "Child buffer index: {}, does not match index: {}, childIdx, copiedBuffer.storeChildBuffer(copiedChildBuffer)");
     }
 

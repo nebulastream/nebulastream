@@ -14,10 +14,8 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
-#include <Nodes/Node.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -33,7 +31,7 @@ NodeFunctionConstantValue::NodeFunctionConstantValue(const NodeFunctionConstantV
 {
 }
 
-bool NodeFunctionConstantValue::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionConstantValue::equal(NodePtr const& rhs) const
 {
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {
@@ -48,7 +46,7 @@ std::string NodeFunctionConstantValue::toString() const
     return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
+NodeFunctionPtr NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
 {
     return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
 }
@@ -58,13 +56,13 @@ std::string NodeFunctionConstantValue::getConstantValue() const
     return constantValue;
 }
 
-void NodeFunctionConstantValue::inferStamp(const Schema&)
+void NodeFunctionConstantValue::inferStamp(SchemaPtr)
 {
     /// the stamp of constant value functions is defined by the constant value type.
-    /// thus it is already assigned correctly when the function node is created.
+    /// thus ut is already assigned correctly when the function node is created.
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionConstantValue::deepCopy()
+NodeFunctionPtr NodeFunctionConstantValue::deepCopy()
 {
     return std::make_shared<NodeFunctionConstantValue>(*this);
 }

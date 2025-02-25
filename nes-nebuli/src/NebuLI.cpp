@@ -12,18 +12,13 @@
     limitations under the License.
 */
 
-#include <NebuLI.hpp>
-
 #include <algorithm>
-#include <filesystem>
 #include <fstream>
-#include <istream>
-#include <memory>
 #include <ranges>
 #include <regex>
-#include <string>
 #include <utility>
-#include <API/Schema.hpp>
+
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -42,92 +37,21 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
+#include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NebuLI.hpp>
 
 namespace YAML
 {
 using namespace NES::CLI;
-
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
-{
-    if (fieldNodeType == "VARSIZED")
-    {
-        return NES::DataTypeFactory::createVariableSizedData();
-    }
-
-    if (fieldNodeType == "BOOLEAN")
-    {
-        return NES::DataTypeFactory::createBoolean();
-    }
-
-    if (fieldNodeType == "INT8")
-    {
-        return NES::DataTypeFactory::createInt8();
-    }
-
-    if (fieldNodeType == "UINT8")
-    {
-        return NES::DataTypeFactory::createUInt8();
-    }
-
-    if (fieldNodeType == "INT16")
-    {
-        return NES::DataTypeFactory::createInt16();
-    }
-
-    if (fieldNodeType == "UINT16")
-    {
-        return NES::DataTypeFactory::createUInt16();
-    }
-
-    if (fieldNodeType == "INT32")
-    {
-        return NES::DataTypeFactory::createInt32();
-    }
-
-    if (fieldNodeType == "UINT32")
-    {
-        return NES::DataTypeFactory::createUInt32();
-    }
-
-    if (fieldNodeType == "INT64")
-    {
-        return NES::DataTypeFactory::createInt64();
-    }
-
-    if (fieldNodeType == "UINT64")
-    {
-        return NES::DataTypeFactory::createUInt64();
-    }
-
-    if (fieldNodeType == "FLOAT32")
-    {
-        return NES::DataTypeFactory::createFloat();
-    }
-
-    if (fieldNodeType == "FLOAT64")
-    {
-        return NES::DataTypeFactory::createDouble();
-    }
-
-    if (fieldNodeType == "CHAR")
-    {
-        return NES::DataTypeFactory::createChar();
-    }
-
-    throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
-}
-
 template <>
 struct convert<SchemaField>
 {
     static bool decode(const Node& node, SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        rhs.type = *magic_enum::enum_cast<NES::BasicType>(node["type"].as<std::string>());
         return true;
     }
 };
@@ -215,7 +139,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    SchemaPtr schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -235,8 +159,8 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
 {
     PRECONDITION(
         query.getSinkOperators().size() == 1,
-        "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-        query.getSinkOperators().size());
+        fmt::format(
+            "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
     PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
@@ -253,7 +177,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -306,7 +230,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -317,15 +241,7 @@ std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::pat
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
-{
-}
-
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
-{
-}
-
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
+DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
 {
     try
     {

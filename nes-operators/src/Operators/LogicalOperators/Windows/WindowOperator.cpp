@@ -12,26 +12,18 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Operators/Operator.hpp>
 
 namespace NES
 {
-WindowOperator::WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id)
-    : WindowOperator(std::move(windowDefinition), id, INVALID_ORIGIN_ID)
+
+WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(windowDefinition)
 {
 }
 
-WindowOperator::WindowOperator(
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, const OperatorId id, const OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(std::move(windowDefinition))
-{
-}
-
-std::shared_ptr<Windowing::LogicalWindowDescriptor> WindowOperator::getWindowDefinition() const
+Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const
 {
     return windowDefinition;
 }
@@ -40,11 +32,10 @@ std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
-void WindowOperator::setOriginId(const OriginId originId)
+void WindowOperator::setOriginId(OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
     windowDefinition->setOriginId(originId);
 }
-
 
 }

@@ -19,6 +19,7 @@
 namespace NES
 {
 class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 }
 
 namespace NES::Optimizer
@@ -29,10 +30,10 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule>
 public:
     /**
      * @brief Apply the rule to the Query plan
-     * @param queryPlan: The original query plan
+     * @param queryPlanPtr : The original query plan
      * @return The updated query plan
      */
-    virtual std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) = 0;
+    virtual QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) = 0;
 
     /**
      * @brief Checks if the current node is of type RuleType

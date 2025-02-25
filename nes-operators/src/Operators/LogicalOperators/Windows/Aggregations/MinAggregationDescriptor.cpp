@@ -12,63 +12,58 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
 {
 
-MinAggregationDescriptor::MinAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& field)
-    : WindowAggregationDescriptor(field)
+MinAggregationDescriptor::MinAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Min;
 }
-MinAggregationDescriptor::MinAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
+MinAggregationDescriptor::MinAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Min;
 }
 
-std::shared_ptr<WindowAggregationDescriptor>
-MinAggregationDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
+WindowAggregationDescriptorPtr MinAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> MinAggregationDescriptor::on(const std::shared_ptr<NodeFunction>& onField)
+WindowAggregationDescriptorPtr MinAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onField))
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
+        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
     }
-    const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(onField);
+    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
-std::shared_ptr<DataType> MinAggregationDescriptor::getInputStamp()
+DataTypePtr MinAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MinAggregationDescriptor::getPartialAggregateStamp()
+DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MinAggregationDescriptor::getFinalAggregateStamp()
+DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }
 
-void MinAggregationDescriptor::inferStamp(const Schema& schema)
+void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
@@ -78,10 +73,10 @@ void MinAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
-    const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
+    auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
+    auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -89,12 +84,12 @@ void MinAggregationDescriptor::inferStamp(const Schema& schema)
     }
     else
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp());
+    asField->setStamp(onField->getStamp());
 }
-std::shared_ptr<WindowAggregationDescriptor> MinAggregationDescriptor::copy()
+WindowAggregationDescriptorPtr MinAggregationDescriptor::copy()
 {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }

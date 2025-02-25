@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -27,14 +26,13 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Systest
 {
 
 struct FieldResult
 {
-    std::shared_ptr<DataType> type;
+    BasicType type;
     std::string valueAsString;
 };
 using MapFieldNameToValue = std::unordered_map<std::string, FieldResult>;

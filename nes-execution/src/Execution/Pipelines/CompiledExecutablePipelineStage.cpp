@@ -47,11 +47,10 @@ void CompiledExecutablePipelineStage::execute(
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    compiledPipelineFunction(&pipelineExecutionContext, std::addressof(inputTupleBuffer));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     Timer timer("compiler");
@@ -59,17 +58,14 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
     /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                               nautilus::val<const Memory::TupleBuffer*> recordBufferRef,
-                                               nautilus::val<const Arena*> arenaRef)
+    const std::function compiledFunction
+        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::TupleBuffer*> recordBufferRef)
     {
-        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        auto ctx = ExecutionContext(pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);
         physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
         physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
     };
-    /// NOLINTEND(performance-unnecessary-value-param)
 
     const nautilus::engine::NautilusEngine engine(options);
     auto executable = engine.registerFunction(compiledFunction);
@@ -82,8 +78,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    auto ctx = ExecutionContext(&pipelineExecutionContext);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
 }
 
@@ -95,8 +90,7 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    auto ctx = ExecutionContext(std::addressof(pipelineExecutionContext));
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
 }

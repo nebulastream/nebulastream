@@ -17,13 +17,12 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
@@ -31,15 +30,16 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
-    const std::shared_ptr<Schema>& leftSchema,
-    const std::shared_ptr<Schema>& rightSchema,
-    const std::shared_ptr<Schema>& outputSchema,
+    const SchemaPtr& leftSchema,
+    const SchemaPtr& rightSchema,
+    const SchemaPtr& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-    const Configurations::StreamJoinStrategy joinStrategy,
+    const StreamJoinStrategy joinStrategy,
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
     const std::vector<std::string>& joinFieldNamesLeft,
     const std::vector<std::string>& joinFieldNamesRight,
-    WindowMetaData windowMetaData,
+    const std::string& windowStartFieldName,
+    const std::string& windowEndFieldName,
     const OperatorId id)
     : Operator(id)
     , PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
@@ -48,7 +48,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     , joinFunction(std::move(joinFunction))
     , joinFieldNamesLeft(joinFieldNamesLeft)
     , joinFieldNamesRight(joinFieldNamesRight)
-    , windowMetaData(std::move(windowMetaData))
+    , windowMetaData(windowStartFieldName, windowEndFieldName)
 {
 }
 
@@ -63,7 +63,8 @@ std::shared_ptr<Operator> PhysicalStreamJoinProbeOperator::copy()
         std::move(joinFunction),
         joinFieldNamesLeft,
         joinFieldNamesRight,
-        windowMetaData,
+        windowMetaData.windowStartFieldName,
+        windowMetaData.windowEndFieldName,
         id);
 }
 
@@ -73,7 +74,7 @@ PhysicalStreamJoinProbeOperator::getJoinOperatorHandler() const
     return streamJoinOperatorHandler;
 }
 
-Configurations::StreamJoinStrategy PhysicalStreamJoinProbeOperator::getJoinStrategy() const
+StreamJoinStrategy PhysicalStreamJoinProbeOperator::getJoinStrategy() const
 {
     return joinStrategy;
 }
@@ -98,7 +99,7 @@ Runtime::Execution::JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() 
     return {leftInputSchema, rightInputSchema, outputSchema};
 }
 
-const WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const
+const Runtime::Execution::WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const
 {
     return windowMetaData;
 }

@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <memory>
 #include <numeric>
 #include <utility>
-#include <vector>
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
@@ -30,7 +27,6 @@
 #include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
@@ -45,15 +41,15 @@
 namespace NES::Optimizer
 {
 
-std::shared_ptr<AttributeSortRule> AttributeSortRule::create()
+AttributeSortRulePtr AttributeSortRule::create()
 {
     return std::make_shared<AttributeSortRule>();
 }
 
-std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 {
     auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
-    for (const auto& selectionOperator : selectionOperators)
+    for (auto const& selectionOperator : selectionOperators)
     {
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
@@ -65,7 +61,7 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
     }
 
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
-    for (const auto& mapOperator : mapOperators)
+    for (auto const& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
@@ -77,7 +73,7 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
     return queryPlan;
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInFunction(std::shared_ptr<NodeFunction> function)
+NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFunctionPtr function)
 {
     NES_DEBUG("Sorting attributed for input function {}", *function);
     if (Util::instanceOf<NES::LogicalNodeFunction>(function))
@@ -103,7 +99,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInFunction(std::s
     throw NotImplemented("No conversion to Z3 function implemented for the function: ", *function);
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function)
+NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
 {
     NES_DEBUG("Create Z3 function for arithmetical function {}", *function);
     if (Util::instanceOf<NES::NodeFunctionAdd>(function))
@@ -116,20 +112,21 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
         auto leftCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedLeft);
         auto rightCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
             sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
-        std::ranges::sort(
-            sortedCommutativeFields,
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+        std::sort(
+            sortedCommutativeFields.begin(),
+            sortedCommutativeFields.end(),
+            [](const NES::NodeFunctionPtr& lhsField, const NES::NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
@@ -220,11 +217,11 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
         auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedLeft);
         auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -234,7 +231,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
@@ -316,7 +313,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
     throw NotImplemented("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function)
+NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
 {
     NES_DEBUG("Create Z3 function node for logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
@@ -330,11 +327,11 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedLeft);
         auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -344,7 +341,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
@@ -424,11 +421,11 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedLeft);
         auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -438,7 +435,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
@@ -606,14 +603,12 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
 }
 
 bool AttributeSortRule::replaceCommutativeFunctions(
-    const std::shared_ptr<NodeFunction>& parentFunction,
-    const std::shared_ptr<NodeFunction>& originalFunction,
-    const std::shared_ptr<NodeFunction>& updatedFunction)
+    const NodeFunctionPtr& parentFunction, const NodeFunctionPtr& originalFunction, const NodeFunctionPtr& updatedFunction)
 {
     auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
 
-    const std::shared_ptr<NodeFunction>& leftChild = binaryFunction->getLeft();
-    const std::shared_ptr<NodeFunction>& rightChild = binaryFunction->getRight();
+    const NodeFunctionPtr& leftChild = binaryFunction->getLeft();
+    const NodeFunctionPtr& rightChild = binaryFunction->getRight();
     if (leftChild.get() == originalFunction.get())
     {
         binaryFunction->removeChildren();
@@ -644,9 +639,9 @@ bool AttributeSortRule::replaceCommutativeFunctions(
     return false;
 }
 
-std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function)
+std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function)
 {
-    std::shared_ptr<NodeFunction> startPoint = std::move(function);
+    NodeFunctionPtr startPoint = std::move(function);
     while (!(Util::instanceOf<NodeFunctionFieldAccess>(startPoint) || Util::instanceOf<NodeFunctionConstantValue>(startPoint)))
     {
         startPoint = Util::as<NodeFunction>(startPoint->getChildren()[0]);

@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <API/Schema.hpp>
 #include <Util/OperatorsUtil.hpp>
 
@@ -25,7 +24,7 @@ std::string detail::concatenateFunctionHelper(uint64_t value)
     return ss.str();
 }
 
-std::string detail::concatenateFunctionHelper(const std::shared_ptr<NES::Schema>& schema)
+std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema)
 {
     return schema->toString();
 }

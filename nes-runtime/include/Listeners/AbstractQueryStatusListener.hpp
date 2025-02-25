@@ -13,7 +13,6 @@
 */
 #pragma once
 
-#include <chrono>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -21,19 +20,14 @@
 
 namespace NES
 {
-/// The QueryEngine is fundamentally multithreaded, and events occur asynchronously in its worker threads.
-/// This has the unfortunate side effect of potentially reporting events out of order.
-/// For example, the thread reporting the `Stopped` QueryStatus might overtake the thread reporting the `Running` QueryStatus.
 struct AbstractQueryStatusListener
 {
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool
-    logSourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType, std::chrono::system_clock::time_point)
-        = 0;
+    virtual bool logSourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point) = 0;
+    virtual bool logQueryFailure(QueryId queryId, Exception exception) = 0;
 
-    virtual bool logQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus status, std::chrono::system_clock::time_point) = 0;
+    virtual bool logQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus Status) = 0;
 };
 }

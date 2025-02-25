@@ -11,9 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
-#include <utility>
-#include <vector>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -23,21 +20,21 @@
 
 namespace NES::QueryCompilation
 {
-PipelineQueryPlanIterator::PipelineQueryPlanIterator(std::shared_ptr<PipelineQueryPlan> queryPlan) : queryPlan(std::move(queryPlan)) {};
+PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {};
 
-PipelineQueryPlanIterator::Iterator PipelineQueryPlanIterator::begin()
+PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::begin()
 {
-    return Iterator(queryPlan);
+    return iterator(queryPlan);
 }
 
-PipelineQueryPlanIterator::Iterator PipelineQueryPlanIterator::end()
+PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::end()
 {
-    return Iterator();
+    return iterator();
 }
 
-std::vector<std::shared_ptr<OperatorPipeline>> PipelineQueryPlanIterator::snapshot()
+std::vector<OperatorPipelinePtr> PipelineQueryPlanIterator::snapshot()
 {
-    std::vector<std::shared_ptr<OperatorPipeline>> nodes;
+    std::vector<OperatorPipelinePtr> nodes;
     for (auto node : *this)
     {
         nodes.emplace_back(node);
@@ -45,18 +42,18 @@ std::vector<std::shared_ptr<OperatorPipeline>> PipelineQueryPlanIterator::snapsh
     return nodes;
 }
 
-PipelineQueryPlanIterator::Iterator::Iterator(const std::shared_ptr<PipelineQueryPlan>& current)
+PipelineQueryPlanIterator::iterator::iterator(const PipelineQueryPlanPtr& current)
 {
-    const auto rootOperators = current->getSourcePipelines();
+    auto rootOperators = current->getSourcePipelines();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--)
     {
         workStack.push(rootOperators[i]);
     }
 }
 
-PipelineQueryPlanIterator::Iterator::Iterator() = default;
+PipelineQueryPlanIterator::iterator::iterator() = default;
 
-bool PipelineQueryPlanIterator::Iterator::operator!=(const Iterator& other) const
+bool PipelineQueryPlanIterator::iterator::operator!=(const iterator& other) const
 {
     if (workStack.empty() && other.workStack.empty())
     {
@@ -65,12 +62,12 @@ bool PipelineQueryPlanIterator::Iterator::operator!=(const Iterator& other) cons
     return true;
 };
 
-std::shared_ptr<OperatorPipeline> PipelineQueryPlanIterator::Iterator::operator*()
+OperatorPipelinePtr PipelineQueryPlanIterator::iterator::operator*()
 {
     return workStack.empty() ? nullptr : workStack.top();
 }
 
-PipelineQueryPlanIterator::Iterator& PipelineQueryPlanIterator::Iterator::operator++()
+PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operator++()
 {
     if (workStack.empty())
     {
@@ -78,12 +75,12 @@ PipelineQueryPlanIterator::Iterator& PipelineQueryPlanIterator::Iterator::operat
     }
     else
     {
-        const auto current = workStack.top();
+        auto current = workStack.top();
         workStack.pop();
-        const auto children = current->getSuccessors();
+        auto children = current->getSuccessors();
         for (int64_t i = children.size() - 1; i >= 0; i--)
         {
-            const auto& child = children[i];
+            auto child = children[i];
             INVARIANT(!child->getPredecessors().empty(), "A child node should have a parent");
 
             /// check if current node is last parent of child.

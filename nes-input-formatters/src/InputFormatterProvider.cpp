@@ -27,9 +27,8 @@ namespace NES::InputFormatters::InputFormatterProvider
 std::unique_ptr<InputFormatter>
 provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    auto inputFormatterArguments
-        = NES::InputFormatters::InputFormatterRegistryArguments(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
-    if (auto inputFormatter = InputFormatterRegistry::instance().create(parserType, inputFormatterArguments))
+    if (auto inputFormatter
+        = InputFormatterRegistry::instance().create(parserType, schema, std::move(tupleDelimiter), std::move(fieldDelimiter)))
     {
         return std::move(inputFormatter.value());
     }

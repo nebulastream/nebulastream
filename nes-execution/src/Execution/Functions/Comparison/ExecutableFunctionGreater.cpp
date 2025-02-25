@@ -17,20 +17,17 @@
 #include <vector>
 #include <Execution/Functions/Comparison/ExecutableFunctionGreater.hpp>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionGreater::execute(const Record& record, ArenaRef& arena) const
+VarVal ExecutableFunctionGreater::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto leftValue = leftExecutableFunction->execute(record);
+    const auto rightValue = rightExecutableFunction->execute(record);
     return leftValue > rightValue;
 }
 
@@ -40,12 +37,10 @@ ExecutableFunctionGreater::ExecutableFunctionGreater(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterGreaterExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+std::unique_ptr<Function> RegisterExecutableFunctionGreater(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionGreater>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionGreater>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }

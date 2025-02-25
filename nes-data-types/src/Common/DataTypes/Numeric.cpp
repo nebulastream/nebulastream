@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <memory>
 #include <optional>
+
 #include <Util/Common.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -26,7 +24,7 @@
 namespace NES
 {
 
-Numeric::Numeric(const int8_t bits) : bits(bits)
+Numeric::Numeric(int8_t bits) : bits(bits)
 {
 }
 
@@ -35,7 +33,7 @@ int8_t Numeric::getBits() const
     return bits;
 }
 
-std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& left, const Numeric& right)
+std::optional<DataTypePtr> Numeric::inferDataType(const Numeric& left, const Numeric& right)
 {
     /// We infer the data types between two numerics by following the c++ rules. For example, anything below i32 will be casted to a i32.
     /// Unsigned and signed of the same data type will be casted to the unsigned data type.

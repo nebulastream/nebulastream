@@ -47,6 +47,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
+#include "QueryEngineConfiguration.hpp"
 
 namespace NES::Testing
 {
@@ -54,7 +55,7 @@ namespace NES::Testing
 std::vector<std::byte> identifiableData(size_t identifier)
 {
     std::vector<std::byte> data(DEFAULT_BUFFER_SIZE);
-    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
+    size_t const stepSize = sizeof(identifier) / sizeof(std::byte);
     for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
     {
         *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
@@ -70,7 +71,7 @@ bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
         return false;
     }
 
-    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
+    size_t const stepSize = sizeof(identifier) / sizeof(std::byte);
     bool allMatch = true;
     for (size_t index = 0; index < buffer.getBufferSize() / stepSize; index += stepSize)
     {
@@ -196,10 +197,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         auto result = std::visit(
             Overloaded{
                 [](SourceDescriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
-                {
-                    INVARIANT(false, "Source cannot be a successor");
-                    std::terminate(); /// Ensures termination if INVARIANT is a no-op in release mode.
-                },
+                { INVARIANT(false, "Source cannot be a successor"); },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 {
                     auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, bm);
@@ -231,7 +229,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
         auto [s, ctrl] = Sources::getTestSource(std::get<SourceDescriptor>(source.second).sourceId, bm);
-        sourceIds.emplace(source.first, s->getSourceId());
+        sourceIds.emplace(source.first, s->getOriginId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;
     }
@@ -265,7 +263,7 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
 
 std::unique_ptr<Runtime::InstantiatedQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
-    const auto queryId = QueryId(queryIdCounter++);
+    auto const queryId = QueryId(queryIdCounter++);
     lastIdentifier = builder.nextIdentifier;
     lastOriginIdCounter = builder.originIdCounter;
     lastPipelineIdCounter = builder.pipelineIdCounter;
@@ -290,33 +288,33 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
         switch (state)
         {
             case Runtime::Execution::QueryStatus::Registered:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Registered, ::testing::_)).Times(1);
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Registered)).Times(1);
                 break;
             case Runtime::Execution::QueryStatus::Running:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
+                        [this](auto id, auto)
                         {
                             queryRunning.at(id)->set_value();
                             return true;
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Stopped:
-                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Stopped, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Stopped))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
+                        [this](auto id, auto)
                         {
                             queryTermination.at(id)->set_value();
                             return true;
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Failed:
-                EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))
+                EXPECT_CALL(*status, logQueryFailure(id, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](const auto& id, const auto&, auto)
+                        [this](const auto& id, const auto&)
                         {
                             queryTermination.at(id)->set_value();
                             return true;
@@ -328,7 +326,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
 
 void TestingHarness::expectSourceTermination(QueryId queryId, QueryPlanBuilder::identifier_t source, Runtime::QueryTerminationType type)
 {
-    EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type, ::testing::_)).WillOnce(::testing::Return(true));
+    EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type)).WillOnce(::testing::Return(true));
 }
 
 void TestingHarness::start()

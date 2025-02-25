@@ -13,7 +13,6 @@
 */
 
 #pragma once
-#include <memory>
 #include <optional>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
@@ -35,7 +34,7 @@ public:
     [[nodiscard]] int8_t getBits() const;
 
     /// Returns the common type of two numeric types. If no conversion exists between the two types, we return an empty optional.
-    static std::optional<std::shared_ptr<DataType>> inferDataType(const Numeric& left, const Numeric& right);
+    static std::optional<DataTypePtr> inferDataType(const Numeric& left, const Numeric& right);
 
 protected:
     const int8_t bits;

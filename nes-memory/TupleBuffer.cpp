@@ -12,37 +12,54 @@
     limitations under the License.
 */
 
-#include <cstdint>
+#include <cstddef>
+#include <functional>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
+#include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
-
+#include "TupleBufferImpl.hpp"
 namespace NES::Memory
 {
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
 {
-    PRECONDITION(bufferPointer != nullptr, "Buffer pointer must not be nullptr");
-    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
-    auto* const buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
-    auto* const memorySegment = block->getOwner();
+    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
+    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
+    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
+    auto memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();
     return tb;
 }
 
-TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, BufferRecycler* parent)
 {
-    if (controlBlock != nullptr)
+    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler)
+    {
+        recycler->recyclePooledBuffer(segment);
+        delete segment;
+    };
+    auto* memSegment = new detail::MemorySegment(ptr, length, parent, std::move(callback), true);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
+}
+
+TupleBuffer
+TupleBuffer::wrapMemory(uint8_t* ptr, const size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback)
+{
+    auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
+}
+TupleBuffer::TupleBuffer(TupleBuffer const& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+{
+    if (controlBlock)
     {
         controlBlock->retain();
     }
 }
-TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
+TupleBuffer& TupleBuffer::operator=(TupleBuffer const& other) noexcept
 {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
     {
@@ -166,6 +183,10 @@ void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
 }
+void TupleBuffer::addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept
+{
+    controlBlock->addRecycleCallback(std::move(newCallback));
+}
 
 uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 {
@@ -180,8 +201,10 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
-    auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
-    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
+    INVARIANT(
+        controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
+        "Cannot load tuple buffer with index={}",
+        bufferIndex);
     return childBuffer;
 }
 

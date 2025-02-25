@@ -11,14 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
-#include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -26,19 +23,18 @@
 
 namespace NES
 {
-NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName)
     : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
-NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other)
     : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
 
-std::shared_ptr<NodeFunction>
-NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
+NodeFunctionPtr NodeFunctionFieldRename::create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName)
 {
     return std::make_shared<NodeFunctionFieldRename>(NodeFunctionFieldRename(originalField, std::move(newFieldName)));
 }
 
-bool NodeFunctionFieldRename::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionFieldRename::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldRename>(rhs))
     {
@@ -48,7 +44,7 @@ bool NodeFunctionFieldRename::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldRename::getOriginalField() const
+NodeFunctionFieldAccessPtr NodeFunctionFieldRename::getOriginalField() const
 {
     return this->originalField;
 }
@@ -64,16 +60,16 @@ std::string NodeFunctionFieldRename::toString() const
     return "FieldRenameFunction(" + fmt::format("{}", *node) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-void NodeFunctionFieldRename::inferStamp(const Schema& schema)
+void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
 {
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema.getFieldByName(fieldName);
+    auto fieldAttribute = schema->getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
     {
-        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema.toString());
+        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
     }
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -86,17 +82,17 @@ void NodeFunctionFieldRename::inferStamp(const Schema& schema)
     }
     else
     {
-        auto newFieldAttribute = schema.getFieldByName(newFieldName);
+        auto newFieldAttribute = schema->getFieldByName(newFieldName);
         if (newFieldAttribute)
         {
-            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema.toString());
+            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
         }
     }
     /// assign the stamp of this field access with the type of this field.
     stamp = fieldAttribute.value()->getDataType();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionFieldRename::deepCopy()
+NodeFunctionPtr NodeFunctionFieldRename::deepCopy()
 {
     return NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalField->deepCopy()), newFieldName);
 }

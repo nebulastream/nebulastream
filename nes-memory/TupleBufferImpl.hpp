@@ -17,17 +17,17 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
-#include <memory>
+#include <sstream>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    #include <deque>
-    #include <mutex>
-    #include <thread>
-    #include <unordered_map>
-    #include <cpptrace.hpp>
+#    include <deque>
+#    include <mutex>
+#    include <thread>
+#    include <unordered_map>
+#    include <cpptrace.hpp>
 #endif
 
 namespace NES::Memory
@@ -73,14 +73,23 @@ class MemorySegment;
 class alignas(64) BufferControlBlock
 {
 public:
-    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
+    explicit BufferControlBlock(
+        MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
-    [[nodiscard]] MemorySegment* getOwner() const;
+    BufferControlBlock(const BufferControlBlock&);
+
+    BufferControlBlock& operator=(const BufferControlBlock&);
+
+    MemorySegment* getOwner() const;
+    void resetBufferRecycler(BufferRecycler* recycler);
+
+    /// Add recycle callback to be called upon reaching 0 as ref cnt
+    void addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept;
 
     /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
     /// reference counter is zero. If that's not the case, an exception is thrown.
     /// Returns true if the mem segment can be used to create a TupleBuffer.
-    bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
+    bool prepare();
 
     /// Increase the reference counter by one.
     BufferControlBlock* retain();
@@ -124,7 +133,7 @@ private:
 
 public:
     MemorySegment* owner;
-    std::shared_ptr<BufferRecycler> owningBufferRecycler = nullptr;
+    std::atomic<BufferRecycler*> owningBufferRecycler{};
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -190,7 +199,11 @@ public:
     MemorySegment() noexcept = default;
 
     explicit MemorySegment(
-        uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, uint8_t* controlBlock);
+        uint8_t* ptr,
+        uint32_t size,
+        BufferRecycler* recycler,
+        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+        uint8_t* controlBlock);
 
     ~MemorySegment();
 
@@ -204,7 +217,12 @@ private:
      * @param recycler
      * @param recycleFunction
      */
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
+    explicit MemorySegment(
+        uint8_t* ptr,
+        uint32_t size,
+        BufferRecycler* recycler,
+        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+        bool);
 
     /**
      * @return true if the segment has a reference counter equals to zero

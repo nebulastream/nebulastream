@@ -12,13 +12,9 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -26,20 +22,20 @@
 namespace NES
 {
 
-NodeFunctionSub::NodeFunctionSub(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
+NodeFunctionSub::NodeFunctionSub(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
 
 NodeFunctionSub::NodeFunctionSub(NodeFunctionSub* other) : NodeFunctionArithmeticalBinary(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionSub::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionSub::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto subNode = std::make_shared<NodeFunctionSub>(left->getStamp());
     subNode->setChildren(left, right);
     return subNode;
 }
 
-bool NodeFunctionSub::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionSub::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSub>(rhs))
     {
@@ -56,7 +52,7 @@ std::string NodeFunctionSub::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionSub::deepCopy()
+NodeFunctionPtr NodeFunctionSub::deepCopy()
 {
     return NodeFunctionSub::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

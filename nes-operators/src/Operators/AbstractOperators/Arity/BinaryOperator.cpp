@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <API/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
@@ -27,7 +26,7 @@ BinaryOperator::BinaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void BinaryOperator::setLeftInputSchema(std::shared_ptr<Schema> inputSchema)
+void BinaryOperator::setLeftInputSchema(SchemaPtr inputSchema)
 {
     if (inputSchema)
     {
@@ -35,31 +34,31 @@ void BinaryOperator::setLeftInputSchema(std::shared_ptr<Schema> inputSchema)
     }
 }
 
-void BinaryOperator::setRightInputSchema(std::shared_ptr<Schema> inputSchema)
+void BinaryOperator::setRightInputSchema(SchemaPtr inputSchema)
 {
     if (inputSchema)
     {
         this->rightInputSchema = std::move(inputSchema);
     }
 }
-void BinaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+void BinaryOperator::setOutputSchema(SchemaPtr outputSchema)
 {
     if (outputSchema)
     {
         this->outputSchema = std::move(outputSchema);
     }
 }
-std::shared_ptr<Schema> BinaryOperator::getLeftInputSchema() const
+SchemaPtr BinaryOperator::getLeftInputSchema() const
 {
     return leftInputSchema;
 }
 
-std::shared_ptr<Schema> BinaryOperator::getRightInputSchema() const
+SchemaPtr BinaryOperator::getRightInputSchema() const
 {
     return rightInputSchema;
 }
 
-std::shared_ptr<Schema> BinaryOperator::getOutputSchema() const
+SchemaPtr BinaryOperator::getOutputSchema() const
 {
     return outputSchema;
 }

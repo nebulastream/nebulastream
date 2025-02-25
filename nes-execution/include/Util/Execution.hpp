@@ -15,16 +15,15 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include "Sequencing/SequenceData.hpp"
 
 
 namespace NES::QueryCompilation
@@ -39,6 +38,18 @@ enum class JoinBuildSideType : uint8_t
 
 namespace NES::Runtime::Execution
 {
+
+/// Stores the window start and window end field names
+struct WindowMetaData
+{
+    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
+        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
+    {
+    }
+
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+};
 
 /// Stores the information of a window. The start, end, and the identifier
 struct WindowInfo
@@ -94,7 +105,7 @@ namespace NES::QueryCompilation::Util
  * @param windowType
  * @return Tuple<WindowSize, WindowSlide, TimeFunction>
  */
-std::tuple<uint64_t, uint64_t, std::unique_ptr<Runtime::Execution::Operators::TimeFunction>>
+std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
 }

@@ -16,19 +16,17 @@
 
 #include <memory>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
 /// Performs leftExecutableFunctionSub % rightExecutableFunctionSub
-class ExecutableFunctionMod final : public Function
+class ExecutableFunctionMod : public Function
 {
 public:
     ExecutableFunctionMod(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    VarVal execute(Record& record) const override;
 
 private:
     std::unique_ptr<Function> leftExecutableFunctionSub;

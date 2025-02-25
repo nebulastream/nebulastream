@@ -13,12 +13,9 @@
 */
 
 #include <memory>
-#include <vector>
 #include <API/QueryAPI.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -72,14 +69,14 @@ public:
     }
 
 protected:
-    std::shared_ptr<NodeFunction> pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    std::shared_ptr<LogicalOperator> sourceOp1, sourceOp2;
+    NodeFunctionPtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    LogicalOperatorPtr sourceOp1, sourceOp2;
 
-    std::shared_ptr<LogicalOperator> filterOp1, filterOp2, filterOp3, filterOp4;
-    std::shared_ptr<LogicalOperator> sinkOp1, sinkOp2, sinkOp3;
+    LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4;
+    LogicalOperatorPtr sinkOp1, sinkOp2, sinkOp3;
 
-    std::vector<std::shared_ptr<Node>> children;
-    std::vector<std::shared_ptr<Node>> parents;
+    std::vector<NodePtr> children{};
+    std::vector<NodePtr> parents{};
 };
 
 /**

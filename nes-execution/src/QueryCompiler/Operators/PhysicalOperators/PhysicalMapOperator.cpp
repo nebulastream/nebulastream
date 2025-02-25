@@ -11,45 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalMapOperator::PhysicalMapOperator(
-    OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
-    std::shared_ptr<NodeFunctionFieldAssignment> mapFunction)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapFunction(std::move(mapFunction))
 {
 }
 
-std::shared_ptr<NodeFunctionFieldAssignment> PhysicalMapOperator::getMapFunction()
+NodeFunctionFieldAssignmentPtr PhysicalMapOperator::getMapFunction()
 {
     return mapFunction;
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalMapOperator::create(
-    OperatorId id,
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction)
+PhysicalOperatorPtr PhysicalMapOperator::create(
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction)
 {
     return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapFunction);
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalMapOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction)
+PhysicalOperatorPtr PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapFunction));
 }

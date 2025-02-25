@@ -17,12 +17,9 @@
 #include <utility>
 #include <vector>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,31 +28,31 @@
 namespace NES
 {
 
-LogicalSelectionOperator::LogicalSelectionOperator(std::shared_ptr<NodeFunction> predicate, OperatorId id)
+LogicalSelectionOperator::LogicalSelectionOperator(NodeFunctionPtr predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(std::move(predicate))
 {
 }
 
-std::shared_ptr<NodeFunction> LogicalSelectionOperator::getPredicate() const
+NodeFunctionPtr LogicalSelectionOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalSelectionOperator::setPredicate(std::shared_ptr<NodeFunction> newPredicate)
+void LogicalSelectionOperator::setPredicate(NodeFunctionPtr newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
-bool LogicalSelectionOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool LogicalSelectionOperator::isIdentical(NodePtr const& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalSelectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalSelectionOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool LogicalSelectionOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<LogicalSelectionOperator>(rhs))
     {
-        const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(rhs);
+        auto filterOperator = NES::Util::as<LogicalSelectionOperator>(rhs);
         return predicate->equal(filterOperator->predicate);
     }
     return false;
@@ -74,7 +71,7 @@ bool LogicalSelectionOperator::inferSchema()
     {
         return false;
     }
-    predicate->inferStamp(*inputSchema);
+    predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
@@ -88,6 +85,7 @@ std::shared_ptr<Operator> LogicalSelectionOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
@@ -99,23 +97,23 @@ std::shared_ptr<Operator> LogicalSelectionOperator::copy()
 
 void LogicalSelectionOperator::inferStringSignature()
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "FILTER(" << *predicate << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
+    auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 float LogicalSelectionOperator::getSelectivity() const
@@ -135,13 +133,13 @@ std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPred
     std::vector<std::string> fieldsInPredicate;
 
     ///iterator to go over all the fields of the predicate
-    const DepthFirstNodeIterator depthFirstNodeIterator(predicate);
+    DepthFirstNodeIterator depthFirstNodeIterator(predicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
         ///NodeFunctionif it finds a fieldAccess this means that the predicate uses this specific field that comes from any source
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
-            const std::shared_ptr<NodeFunctionFieldAccess> accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
             fieldsInPredicate.push_back(accessNodeFunction->getFieldName());
         }
     }

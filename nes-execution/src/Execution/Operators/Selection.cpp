@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Operators
 void Selection::execute(ExecutionContext& ctx, Record& record) const
 {
     /// evaluate function and call child operator if function is valid
-    if (function->execute(record, ctx.pipelineMemoryProvider.arena))
+    if (function->execute(record))
     {
         child->execute(ctx, record);
     }

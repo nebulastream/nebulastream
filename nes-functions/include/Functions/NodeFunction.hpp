@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
@@ -23,6 +22,9 @@
 
 namespace NES
 {
+
+class NodeFunction;
+using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 /**
  * @brief this indicates an function, which is a parameter for a FilterOperator or a MapOperator.
@@ -32,17 +34,21 @@ namespace NES
 class NodeFunction : public Node
 {
 public:
-    explicit NodeFunction(std::shared_ptr<DataType> stamp, std::string type);
+    explicit NodeFunction(DataTypePtr stamp, std::string type);
 
     ~NodeFunction() override = default;
 
+    /**
+     * @brief Indicates if this function is a predicate -> if its result stamp is a boolean
+     * @return
+     */
     bool isPredicate() const;
 
     ///Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(const Schema& schema);
+    virtual void inferStamp(SchemaPtr schema);
 
-    std::shared_ptr<DataType> getStamp() const;
-    void setStamp(std::shared_ptr<DataType> stamp);
+    DataTypePtr getStamp() const;
+    void setStamp(DataTypePtr stamp);
     [[nodiscard]] const std::string& getType() const;
 
     /// Checks if the function is valid. This means that the function can be lowered to an executable function.
@@ -50,7 +56,7 @@ public:
     virtual bool validateBeforeLowering() const = 0;
 
     /// Create a deep copy of this function node.
-    virtual std::shared_ptr<NodeFunction> deepCopy() = 0;
+    virtual NodeFunctionPtr deepCopy() = 0;
 
 protected:
     explicit NodeFunction(const NodeFunction* other);
@@ -59,7 +65,7 @@ protected:
      * @brief declares the type of this function.
      * todo replace the direct usage of data types with a stamp abstraction.
      */
-    std::shared_ptr<DataType> stamp;
+    DataTypePtr stamp;
     const std::string type;
 };
 }

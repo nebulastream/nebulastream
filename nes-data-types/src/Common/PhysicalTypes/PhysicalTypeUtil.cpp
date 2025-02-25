@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Util/Common.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -76,7 +75,7 @@ bool isDouble(const PhysicalType& physicalType)
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::DOUBLE);
 }
 
-bool isVariableSizedData(const std::shared_ptr<PhysicalType>& physicalType)
+bool isVariableSizedData(PhysicalTypePtr physicalType)
 {
     return NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType);
 }

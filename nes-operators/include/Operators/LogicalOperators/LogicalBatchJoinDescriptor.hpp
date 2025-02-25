@@ -30,36 +30,36 @@ class LogicalBatchJoinDescriptor
 
 public:
     static std::shared_ptr<LogicalBatchJoinDescriptor> create(
-        const std::shared_ptr<NodeFunctionFieldAccess>& keyTypeBuild,
-        const std::shared_ptr<NodeFunctionFieldAccess>& keyTypeProbe,
+        const NodeFunctionFieldAccessPtr& keyTypeBuild,
+        const NodeFunctionFieldAccessPtr& keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     explicit LogicalBatchJoinDescriptor(
-        std::shared_ptr<NodeFunctionFieldAccess> keyTypeBuild,
-        std::shared_ptr<NodeFunctionFieldAccess> keyTypeProbe,
+        NodeFunctionFieldAccessPtr keyTypeBuild,
+        NodeFunctionFieldAccessPtr keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key
     */
-    [[nodiscard]] std::shared_ptr<NodeFunctionFieldAccess> getBuildJoinKey() const;
+    NodeFunctionFieldAccessPtr getBuildJoinKey() const;
 
     /**
    * @brief getter/setter for on probe join key
    */
-    [[nodiscard]] std::shared_ptr<NodeFunctionFieldAccess> getProbeJoinKey() const;
+    NodeFunctionFieldAccessPtr getProbeJoinKey() const;
 
     /**
    * @brief getter build schema
    */
-    [[nodiscard]] std::shared_ptr<Schema> getBuildSchema() const;
+    SchemaPtr getBuildSchema() const;
 
     /**
    * @brief getter probe schema
    */
-    [[nodiscard]] std::shared_ptr<Schema> getProbeSchema() const;
+    SchemaPtr getProbeSchema() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
@@ -79,31 +79,32 @@ public:
      * @param buildSchema
      * @param probeSchema
      */
-    void updateInputSchemas(std::shared_ptr<Schema> buildSchema, std::shared_ptr<Schema> probeSchema);
+    void updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema);
 
     /**
      * @brief Update the output stream type upon type inference
      * @param outputSchema the type of the output stream
      */
-    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
+    void updateOutputDefinition(SchemaPtr outputSchema);
 
     /**
      * @brief Getter of the output stream schema
      * @return the output stream schema
      */
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
+    [[nodiscard]] SchemaPtr getOutputSchema() const;
 
     void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
 private:
-    std::shared_ptr<NodeFunctionFieldAccess> keyTypeBuild;
-    std::shared_ptr<NodeFunctionFieldAccess> keyTypeProbe;
-    std::shared_ptr<Schema> buildSchema{nullptr};
-    std::shared_ptr<Schema> probeSchema{nullptr};
-    std::shared_ptr<Schema> outputSchema{nullptr};
+    NodeFunctionFieldAccessPtr keyTypeBuild;
+    NodeFunctionFieldAccessPtr keyTypeProbe;
+    SchemaPtr buildSchema{nullptr};
+    SchemaPtr probeSchema{nullptr};
+    SchemaPtr outputSchema{nullptr};
     uint64_t numberOfInputEdgesBuild;
     uint64_t numberOfInputEdgesProbe;
 };
 
+using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 }

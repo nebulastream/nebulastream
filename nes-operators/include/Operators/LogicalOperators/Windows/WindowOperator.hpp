@@ -14,10 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -26,19 +22,8 @@
 namespace NES
 {
 
-
-/// Stores the window start and window end field names
-struct WindowMetaData
-{
-    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
-        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
-    {
-    }
-    WindowMetaData() = default;
-
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
-};
+class WindowOperator;
+using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
 /**
  * @brief Window operator, which defines the window definition.
@@ -46,13 +31,12 @@ struct WindowMetaData
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id, OriginId originId);
-    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id);
+    WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
-    * @return std::shared_ptr<LogicalWindowDescriptor>
+    * @return LogicalWindowDescriptorPtr
     */
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition() const;
+    Windowing::LogicalWindowDescriptorPtr getWindowDefinition() const;
 
     /**
      * @brief Gets the output origin ids from this operator
@@ -66,11 +50,8 @@ public:
      */
     void setOriginId(OriginId originId) override;
 
-
-    WindowMetaData windowMetaData;
-
 protected:
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
+    const Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
 }

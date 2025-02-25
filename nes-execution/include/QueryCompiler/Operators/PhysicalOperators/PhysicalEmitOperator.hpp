@@ -13,11 +13,7 @@
 */
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -34,22 +30,22 @@ public:
      * @param id operator id
      * @param inputSchema input schema for the emit operator
      */
-    PhysicalEmitOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
      * @param id operator id
      * @param inputSchema
-     * @return std::shared_ptr<PhysicalOperator>
+     * @return PhysicalOperatorPtr
      */
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
      * @param inputSchema
-     * @return std::shared_ptr<PhysicalOperator>
+     * @return PhysicalOperatorPtr
      */
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& inputSchema);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema);
 
     std::shared_ptr<Operator> copy() override;
 

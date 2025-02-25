@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -33,7 +31,7 @@ NodeFunctionLogicalUnary::NodeFunctionLogicalUnary(NodeFunctionLogicalUnary* oth
 {
 }
 
-bool NodeFunctionLogicalUnary::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionLogicalUnary::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLogicalUnary>(rhs))
     {

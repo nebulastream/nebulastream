@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Common.hpp>
@@ -41,7 +40,7 @@ bool LogicalUnaryOperator::inferSchema()
         throw CannotInferSchema("This operator ({}) should have at least one child operator", this->toString());
     }
 
-    const auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();
+    auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();
     for (const auto& child : children)
     {
         if (!(*NES::Util::as<Operator>(child)->getOutputSchema() == *childSchema))
@@ -71,7 +70,7 @@ void LogicalUnaryOperator::inferInputOrigins()
     std::vector<OriginId> inputOriginIds;
     for (auto child : this->children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

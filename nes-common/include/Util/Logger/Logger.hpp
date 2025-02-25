@@ -22,27 +22,27 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>
 
+namespace NES
+{
+
 /// In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
 /// This macro indicates the log level, which was chosen at compilation time and enables the complete
 /// elimination of log messages.
 #if defined(NES_LOGLEVEL_TRACE)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 7;
+#    define NES_COMPILE_TIME_LOG_LEVEL 7
 #elif defined(NES_LOGLEVEL_DEBUG)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 6;
+#    define NES_COMPILE_TIME_LOG_LEVEL 6
 #elif defined(NES_LOGLEVEL_INFO)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 5;
+#    define NES_COMPILE_TIME_LOG_LEVEL 5
 #elif defined(NES_LOGLEVEL_WARN)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 4;
+#    define NES_COMPILE_TIME_LOG_LEVEL 4
 #elif defined(NES_LOGLEVEL_ERROR)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 3;
+#    define NES_COMPILE_TIME_LOG_LEVEL 3
 #elif defined(NES_LOGLEVEL_FATAL_ERROR)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 2;
+#    define NES_COMPILE_TIME_LOG_LEVEL 2
 #elif defined(NES_LOGLEVEL_NONE)
-constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 1;
+#    define NES_COMPILE_TIME_LOG_LEVEL 1
 #endif
-
-namespace NES
-{
 
 /// @brief LogCaller is our compile-time trampoline to invoke the Logger method for the desired level of logging L
 /// @tparam L the level of logging

@@ -18,13 +18,22 @@
 #include <set>
 #include <vector>
 #include <Functions/NodeFunction.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+
+class LogicalSelectionOperator;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
+}
 
 namespace NES::Optimizer
 {
 
+class PredicateReorderingRule;
+using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
 
 /**
  * @brief This rewrite rule identifies chains of adjacent predicates with various expected cardinalities.
@@ -53,7 +62,7 @@ namespace NES::Optimizer
 class PredicateReorderingRule : public BaseRewriteRule
 {
 public:
-    static std::shared_ptr<PredicateReorderingRule> create();
+    static PredicateReorderingRulePtr create();
     PredicateReorderingRule() = default;
     virtual ~PredicateReorderingRule() = default;
 
@@ -62,15 +71,14 @@ public:
      * @param queryPlan: the original query plan
      * @return updated logical query plan
      */
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
 private:
     /**
      * @brief Given a node, check if the parent or the child is a filter.
-     * @param std::shared_ptr<Operator>: the node to be checked
+     * @param std::shared_ptr<Operator>: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
-    static std::vector<std::shared_ptr<LogicalSelectionOperator>>
-    getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& firstFilter);
+    static std::vector<LogicalSelectionOperatorPtr> getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& firstFilter);
 };
 }

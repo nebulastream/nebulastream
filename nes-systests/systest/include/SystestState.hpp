@@ -16,15 +16,12 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -41,28 +38,9 @@ using TestGroup = std::string;
 struct Query
 {
     static std::filesystem::path
-    resultFile(const std::filesystem::path& workingDir, const TestName& testName, const uint64_t queryIdInTestFile)
+    resultFile(const std::filesystem::path& resultDir, const TestName& testName, const uint64_t queryIdInTestFile)
     {
-        auto resultDir = workingDir / "results";
-        if (not is_directory(resultDir))
-        {
-            create_directory(resultDir);
-            std::cout << "Created working directory: file://" << resultDir.string() << "\n";
-        }
-
         return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
-    }
-
-    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, const TestName& testName, const uint64_t sourceId)
-    {
-        auto sourceDir = workingDir / "sources";
-        if (not is_directory(sourceDir))
-        {
-            create_directory(sourceDir);
-            std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
-        }
-
-        return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
     }
 
     Query() = default;
@@ -70,28 +48,28 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        std::shared_ptr<DecomposedQueryPlan> queryPlan,
+        DecomposedQueryPlanPtr queryPlan,
         const uint64_t queryIdInFile,
-        std::filesystem::path workingDir,
+        std::filesystem::path resultFileBaseDir,
         SystestParser::Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
         , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
-        , workingDir(std::move(workingDir))
+        , resultFileBaseDir(std::move(resultFileBaseDir))
         , expectedSinkSchema(std::move(sinkSchema))
     {
     }
 
-    [[nodiscard]] std::filesystem::path resultFile() const { return resultFile(workingDir, name, queryIdInFile); }
+    [[nodiscard]] std::filesystem::path resultFile() const { return resultFile(resultFileBaseDir, name, queryIdInFile); }
 
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    DecomposedQueryPlanPtr queryPlan;
     uint64_t queryIdInFile;
-    std::filesystem::path workingDir;
+    std::filesystem::path resultFileBaseDir;
     SystestParser::Schema expectedSinkSchema;
 };
 
@@ -125,7 +103,7 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir);
+std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir);
 }
 
 template <>

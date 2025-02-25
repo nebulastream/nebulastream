@@ -47,7 +47,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         /// check if config is empty
         if (node.IsScalar())
         {
-            auto value = node.as<std::string>();
+            std::string value = node.as<std::string>();
             if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
             {
                 throw InvalidConfigParameter("Value for: {} is empty.", identifier);
@@ -78,9 +78,10 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
     {
         throw InvalidConfigParameter("Identifier for: {} is not known.", identifier);
     }
-    if (auto* option = dynamic_cast<BaseConfiguration*>(optionMap[identifier]))
+    auto option = optionMap[identifier];
+    if (dynamic_cast<BaseConfiguration*>(option))
     {
-        option->overwriteConfigWithCommandLineInput(inputParams);
+        dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
     }
     else
     {
@@ -116,9 +117,10 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
 void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams)
 {
     std::unordered_map<std::string, std::unordered_map<std::string, std::string>> groupedIdentifiers;
-    for (const auto& [id, value] : inputParams)
+    for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm)
     {
-        std::string identifier{id};
+        auto identifier = parm->first;
+        auto value = parm->second;
         const std::string identifierStart = "--";
         if (identifier.starts_with(identifierStart))
         {

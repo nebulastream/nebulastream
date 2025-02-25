@@ -26,4 +26,3 @@ physical:
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
-      connectTimeoutSeconds: 60

@@ -13,34 +13,53 @@
 */
 
 #pragma once
-#include <memory>
-#include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-/// A FieldAssignmentFunction represents the assignment of an function result to a specific field.
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
+/**
+ * @brief A FieldAssignmentFunction represents the assignment of an function result to a specific field.
+ */
 class NodeFunctionFieldAssignment : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp);
-    static std::shared_ptr<NodeFunctionFieldAssignment>
-    create(const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction);
+    explicit NodeFunctionFieldAssignment(DataTypePtr stamp);
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    /**
+     * @brief Create untyped field read.
+     */
+    static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
+
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
-    std::shared_ptr<NodeFunctionFieldAccess> getField() const;
+    /**
+     * @brief return the field to which a new value is assigned.
+     * @return NodeFunctionFieldAccessPtr
+     */
+    NodeFunctionFieldAccessPtr getField() const;
 
-    std::shared_ptr<NodeFunction> getAssignment() const;
+    /**
+     * @brief returns the functions, which calculates the new value.
+     * @return NodeFunctionPtr
+     */
+    NodeFunctionPtr getAssignment() const;
 
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
+    void inferStamp(SchemaPtr schema) override;
 
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return NodeFunctionPtr
+    */
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other);

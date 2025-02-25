@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_subdirectory(Hash)
-add_subdirectory(HashMap)
 add_subdirectory(MemoryProvider)
 add_subdirectory(PagedVector)
 

@@ -20,7 +20,6 @@
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
-#include <ExecutablePipelineProviderRegistry.hpp>
 #include <ExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution
@@ -36,8 +35,7 @@ std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, std::move(operatorHandlers), options);
 }
 
-std::unique_ptr<ExecutablePipelineProviderRegistryReturnType>
-ExecutablePipelineProviderGeneratedRegistrar::RegistercompilerExecutablePipelineProvider(ExecutablePipelineProviderRegistryArguments)
+std::unique_ptr<ExecutablePipelineProvider> RegisterCompilationPipelineProvider()
 {
     return std::make_unique<CompilationPipelineProvider>();
 }

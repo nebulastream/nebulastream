@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -49,7 +49,7 @@ bool Operator::hasChild() const
     return child != nullptr;
 }
 
-void Operator::setChild(std::shared_ptr<Operators::ExecutableOperator> child)
+void Operator::setChild(Operators::ExecuteOperatorPtr child)
 {
     PRECONDITION(!hasChild(), "This operator already has a child operator");
     this->child = std::move(child);
@@ -63,6 +63,8 @@ void Operator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-Operator::~Operator() = default;
+Operator::~Operator()
+{
+}
 
 }

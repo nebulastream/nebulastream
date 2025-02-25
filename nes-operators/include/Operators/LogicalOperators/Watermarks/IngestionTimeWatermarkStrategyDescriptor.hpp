@@ -14,20 +14,20 @@
 
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing
 {
 
+class IngestionTimeWatermarkStrategyDescriptor;
+using IngestionTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<IngestionTimeWatermarkStrategyDescriptor>;
 
 class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
 {
 public:
-    static std::shared_ptr<WatermarkStrategyDescriptor> create();
+    static WatermarkStrategyDescriptorPtr create();
 
-    bool equal(std::shared_ptr<WatermarkStrategyDescriptor> other) override;
+    bool equal(WatermarkStrategyDescriptorPtr other) override;
     std::string toString() override;
 
     /**
@@ -35,7 +35,7 @@ public:
      * @param schema : the schema to be used for inferring the types
      * @return true if success else false
      */
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(SchemaPtr schema) override;
 
 private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

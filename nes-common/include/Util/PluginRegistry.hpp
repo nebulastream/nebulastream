@@ -1,0 +1,114 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace NES
+{
+
+/// The registry singleton allows registration of factory methods to produce a certain type.
+/// There exists multiple distinct registries for different types.
+template <typename Registrar>
+class Registry
+{
+public:
+    /// Cannot copy and move
+    Registry(const Registry& other) = delete;
+    Registry(Registry&& other) noexcept = delete;
+    Registry& operator=(const Registry& other) = delete;
+    Registry& operator=(Registry&& other) noexcept = delete;
+    ~Registry() = default;
+
+    [[nodiscard]] bool contains(const typename Registrar::Signature::KeyType& key) const { return registryImpl.contains(key); }
+
+    template <typename... Args>
+    [[nodiscard]] std::optional<typename Registrar::Signature::ReturnType>
+    create(const typename Registrar::Signature::KeyType& key, Args&&... args) const
+    {
+        if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
+        {
+            /// Call the creator function of the plugin.
+            return plugin->second(std::forward<Args>(args)...);
+        }
+        return std::nullopt;
+    }
+
+    [[nodiscard]] std::vector<typename Registrar::Signature::KeyType> getRegisteredNames() const
+    {
+        std::vector<typename Registrar::Signature::KeyType> names;
+        names.reserve(registryImpl.size());
+        std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first; });
+        return names;
+    }
+
+protected:
+    /// A single registry will be constructed in the static instance() method. It is impossible to create a registry otherwise.
+    Registry() { Registrar::registerAll(*this); }
+
+private:
+    /// Only the Registrar can register new plugins.
+    void registerPlugin(typename Registrar::Signature::KeyType key, typename Registrar::Signature::CreatorFn creatorFunction)
+    {
+        registryImpl.emplace(std::move(key), std::move(creatorFunction));
+    }
+    friend Registrar;
+
+    std::unordered_map<typename Registrar::Signature::KeyType, typename Registrar::Signature::CreatorFn> registryImpl;
+};
+
+/// Tagging the Registrar avoids the following issue:
+/// If the Registrar is not tagged with a ConcreteRegistry and two registries have the same signature, then we would instantiate
+/// the same 'Registrar<DuplicatedSignature>' for both Registries. Since the registries are templated on the Registrar, both registries
+/// would be instantiated with the same Registrar, leading to the same instantiation of the Registry, leading to the generation of only one
+/// implementation for the Registry. If we then call 'instance()' on the first registry and afterward 'instance()' on the second registry,
+/// both 'instance()' calls would access the same implementation. Since the registry is a singleton, both would access the first registry.
+template <typename ConcreteRegistry, typename RegistrySignature>
+class Registrar
+{
+    using Tag = ConcreteRegistry;
+    using Signature = RegistrySignature;
+    static void registerAll(Registry<Registrar>& registry);
+    template <typename Registrar>
+    friend class Registry;
+};
+
+
+template <typename KeyTypeT, typename ReturnTypeT, typename... Args>
+struct RegistrySignature
+{
+    using KeyType = KeyTypeT;
+    using ReturnType = ReturnTypeT;
+    using CreatorFn = std::function<ReturnType(Args...)>;
+};
+
+/// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
+/// if custom member functions are added to the concrete registry class.
+template <typename ConcreteRegistry, typename RegistrySignature>
+class BaseRegistry : public Registry<Registrar<ConcreteRegistry, RegistrySignature>>
+{
+public:
+    static ConcreteRegistry& instance()
+    {
+        static ConcreteRegistry instance;
+        return instance;
+    }
+};
+}

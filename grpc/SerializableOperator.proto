@@ -250,8 +250,6 @@ message SerializableOperator {
     DistributionCharacteristic distrChar = 3;
     repeated SerializableFunction keys = 4;
     uint64 originId = 5;
-    string windowStartFieldName = 6;
-    string windowEndFieldName = 7;
   }
 
   /**

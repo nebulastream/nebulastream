@@ -13,12 +13,7 @@
 */
 
 #include <cmath>
-#include <memory>
-#include <utility>
-#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -28,20 +23,20 @@
 namespace NES
 {
 
-NodeFunctionExp::NodeFunctionExp(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") {};
+NodeFunctionExp::NodeFunctionExp(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") {};
 
 NodeFunctionExp::NodeFunctionExp(NodeFunctionExp* other) : NodeFunctionArithmeticalUnary(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionExp::create(const std::shared_ptr<NodeFunction>& child)
+NodeFunctionPtr NodeFunctionExp::create(NodeFunctionPtr const& child)
 {
     auto expNode = std::make_shared<NodeFunctionExp>(child->getStamp());
     expNode->setChild(child);
     return expNode;
 }
 
-bool NodeFunctionExp::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionExp::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionExp>(rhs))
     {
@@ -58,7 +53,7 @@ std::string NodeFunctionExp::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionExp::deepCopy()
+NodeFunctionPtr NodeFunctionExp::deepCopy()
 {
     return NodeFunctionExp::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

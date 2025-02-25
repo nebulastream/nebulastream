@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -30,33 +29,28 @@ namespace NES::Windowing
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
 {
 }
-TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
+TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit)
     : type(type), field(std::move(field)), unit(std::move(unit))
 {
 }
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
-{
-    return createEventTime(field, TimeUnit(1));
-}
 
-std::shared_ptr<TimeCharacteristic>
-TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& fieldValue, const TimeUnit& unit)
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(NodeFunctionPtr fieldValue, const TimeUnit& unit)
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
     {
         throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
     }
     auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
-    const std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }
 
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createIngestionTime()
+TimeCharacteristicPtr TimeCharacteristic::createIngestionTime()
 {
     return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
 }
 
-std::shared_ptr<AttributeField> TimeCharacteristic::getField() const
+AttributeFieldPtr TimeCharacteristic::getField() const
 {
     return field;
 }
@@ -103,7 +97,7 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-void TimeCharacteristic::setField(std::shared_ptr<AttributeField> field)
+void TimeCharacteristic::setField(AttributeFieldPtr field)
 {
     this->field = std::move(field);
 }

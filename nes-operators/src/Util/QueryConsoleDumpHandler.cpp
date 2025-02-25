@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <fmt/format.h>
 
 namespace NES
 {
@@ -33,22 +31,20 @@ std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::os
     return std::make_shared<QueryConsoleDumpHandler>(out);
 }
 
-void QueryConsoleDumpHandler::dumpHelper(
-    const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    out << std::string(indent * depth, ' ') << operationNode << '\n';
+    out << std::string(indent * depth, ' ') << op << '\n';
     ++depth;
-    auto children = operationNode->getChildren();
+    auto children = op->getChildren();
     for (auto&& child : children)
     {
         dumpHelper(child, depth, indent, out);
     }
 }
 
-void QueryConsoleDumpHandler::multilineDumpHelper(
-    const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    std::vector<std::string> multiLineNodeString = {fmt::format("{}", *operationNode)};
+    std::vector<std::string> multiLineNodeString = {fmt::format("{}", *op)};
     for (const std::string& line : multiLineNodeString)
     {
         for (auto i{0ULL}; i < indent * depth; ++i)
@@ -76,24 +72,24 @@ void QueryConsoleDumpHandler::multilineDumpHelper(
         out << line << std::endl;
     }
     ++depth;
-    auto children = operationNode->getChildren();
+    auto children = op->getChildren();
     for (auto&& child : children)
     {
         multilineDumpHelper(child, depth, indent, out);
     }
 }
 
-void QueryConsoleDumpHandler::dump(const std::shared_ptr<Node>& node)
+void QueryConsoleDumpHandler::dump(const NodePtr node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::multilineDump(const std::shared_ptr<Node>& node)
+void QueryConsoleDumpHandler::multilineDump(const NodePtr& node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::dump(const std::string&, const std::string&, const std::shared_ptr<QueryPlan>& queryPlan)
+void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan)
 {
     out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
 }

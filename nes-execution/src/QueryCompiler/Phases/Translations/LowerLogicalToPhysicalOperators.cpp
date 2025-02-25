@@ -11,16 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <ranges>
 #include <utility>
-#include <vector>
 
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -32,18 +28,17 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<LowerLogicalToPhysicalOperators>
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(const std::shared_ptr<PhysicalOperatorProvider>& provider)
+LowerLogicalToPhysicalOperatorsPtr
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(const PhysicalOperatorProviderPtr& provider)
 {
     return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(std::shared_ptr<PhysicalOperatorProvider> provider)
-    : provider(std::move(provider))
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(std::move(provider))
 {
 }
 
-std::shared_ptr<DecomposedQueryPlan> LowerLogicalToPhysicalOperators::apply(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan) const
+DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
     auto isAlreadyLowered = [](const auto& node)
     {
@@ -51,10 +46,10 @@ std::shared_ptr<DecomposedQueryPlan> LowerLogicalToPhysicalOperators::apply(std:
             Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
             or Util::instanceOf<SinkLogicalOperator>(node));
     };
-    const std::vector<std::shared_ptr<Node>> nodes = PlanIterator(*decomposedQueryPlan).snapshot();
+    const std::vector<NodePtr> nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
     {
-        provider->lower(*decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));
+        provider->lower(decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));
     }
     return decomposedQueryPlan;
 }

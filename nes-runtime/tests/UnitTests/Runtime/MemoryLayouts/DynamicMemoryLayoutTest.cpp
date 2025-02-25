@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -26,8 +25,8 @@ namespace NES::Memory::MemoryLayouts
 class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema;
+    Memory::BufferManagerPtr bufferManager;
+    SchemaPtr schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
@@ -96,20 +95,20 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout)
         testBuffer->pushRecordToBuffer(std::tuple<uint16_t, bool, double>{i, true, i * 2.0});
     }
 
-    const std::string expectedOutput = "+----------------------------------------------------+\n"
-                                       "|t1:UINT16|t2:BOOLEAN|t3:FLOAT64|\n"
-                                       "+----------------------------------------------------+\n"
-                                       "|0|1|0.0|\n"
-                                       "|1|1|2.0|\n"
-                                       "|2|1|4.0|\n"
-                                       "|3|1|6.0|\n"
-                                       "|4|1|8.0|\n"
-                                       "|5|1|10.0|\n"
-                                       "|6|1|12.0|\n"
-                                       "|7|1|14.0|\n"
-                                       "|8|1|16.0|\n"
-                                       "|9|1|18.0|\n"
-                                       "+----------------------------------------------------+";
+    std::string expectedOutput = "+----------------------------------------------------+\n"
+                                 "|t1:UINT16|t2:BOOLEAN|t3:FLOAT64|\n"
+                                 "+----------------------------------------------------+\n"
+                                 "|0|1|0.000000|\n"
+                                 "|1|1|2.000000|\n"
+                                 "|2|1|4.000000|\n"
+                                 "|3|1|6.000000|\n"
+                                 "|4|1|8.000000|\n"
+                                 "|5|1|10.000000|\n"
+                                 "|6|1|12.000000|\n"
+                                 "|7|1|14.000000|\n"
+                                 "|8|1|16.000000|\n"
+                                 "|9|1|18.000000|\n"
+                                 "+----------------------------------------------------+";
 
     EXPECT_EQ(testBuffer->toString(schema), expectedOutput);
 }

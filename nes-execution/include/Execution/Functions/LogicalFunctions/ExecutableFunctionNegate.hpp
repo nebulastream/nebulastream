@@ -15,9 +15,6 @@
 #pragma once
 
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -27,7 +24,7 @@ class ExecutableFunctionNegate final : public Function
 {
 public:
     explicit ExecutableFunctionNegate(std::unique_ptr<Function> childFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    VarVal execute(Record& record) const override;
 
 private:
     const std::unique_ptr<Function> childFunction;

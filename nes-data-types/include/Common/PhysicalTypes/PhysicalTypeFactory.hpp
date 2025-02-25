@@ -15,11 +15,15 @@
 #pragma once
 
 #include <memory>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
+
+class DataType;
+using DataTypePtr = std::shared_ptr<DataType>;
+
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 /**
  * @brief The physical type factory converts a nes data type into a physical representation.
@@ -34,9 +38,9 @@ public:
     /**
      * @brief Translates a nes data type into a corresponding physical type.
      * @param dataType
-     * @return std::shared_ptr<PhysicalType>
+     * @return PhysicalTypePtr
      */
-    [[nodiscard]] virtual std::shared_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
+    virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
 };
 
 }

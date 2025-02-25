@@ -25,6 +25,7 @@ namespace NES::Runtime
 {
 struct RunningQueryPlan;
 struct RunningQueryPlanNode;
+class QueryEngine;
 
 
 /// The Running Source is a wrapper around the SourceHandle. The Lifecycle of the RunningSource controls start/stop of the source handle.

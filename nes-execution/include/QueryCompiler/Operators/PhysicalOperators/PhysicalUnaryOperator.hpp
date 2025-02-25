@@ -13,9 +13,6 @@
 */
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
@@ -28,7 +25,7 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 {
     /// only other Physical-/UnaryOperators should construct a PhysicalUnaryOperator.
 protected:
-    PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema);
+    PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 
     std::string toString() const override;
 

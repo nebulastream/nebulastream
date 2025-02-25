@@ -12,25 +12,22 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing
 {
 
-TumblingWindow::TumblingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size)
+TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
     : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size))
 {
 }
 
-std::shared_ptr<WindowType> TumblingWindow::of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size)
+WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
 {
     return std::dynamic_pointer_cast<WindowType>(
         std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
@@ -55,7 +52,7 @@ std::string TumblingWindow::toString() const
     return ss.str();
 }
 
-bool TumblingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
+bool TumblingWindow::equal(WindowTypePtr otherWindowType)
 {
     if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType))
     {

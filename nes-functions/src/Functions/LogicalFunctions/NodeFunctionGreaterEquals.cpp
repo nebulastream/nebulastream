@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
 #include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -32,15 +29,14 @@ NodeFunctionGreaterEquals::NodeFunctionGreaterEquals(NodeFunctionGreaterEquals* 
 {
 }
 
-std::shared_ptr<NodeFunction>
-NodeFunctionGreaterEquals::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionGreaterEquals::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto greaterThen = std::make_shared<NodeFunctionGreaterEquals>();
     greaterThen->setChildren(left, right);
     return greaterThen;
 }
 
-bool NodeFunctionGreaterEquals::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionGreaterEquals::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionGreaterEquals>(rhs))
     {
@@ -57,7 +53,7 @@ std::string NodeFunctionGreaterEquals::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionGreaterEquals::deepCopy()
+NodeFunctionPtr NodeFunctionGreaterEquals::deepCopy()
 {
     return NodeFunctionGreaterEquals::create(
         Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());

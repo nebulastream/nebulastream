@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
@@ -31,9 +28,3 @@ target_include_directories(nes-input-formatters PUBLIC
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
-
-# Create library for the registries, and privately link it against nes-input-formatters so that nes-input-formatters can access its registries
-create_plugin_registry_library(nes-input-formatters-registry nes-input-formatters)
-target_link_libraries(nes-input-formatters PRIVATE nes-input-formatters-registry)
-# Generate a registrar for every registry in nes-input-formatters
-generate_plugin_registrars(nes-input-formatters InputFormatter)

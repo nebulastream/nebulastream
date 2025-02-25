@@ -21,11 +21,19 @@
 
 namespace NES
 {
+
 class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
 class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 namespace Catalogs::Source
 {
+
+class SourceCatalogEntry;
+using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
+
 /**
  * @brief one entry in the catalog contains
  *    - the physical data source that can be consumed
@@ -44,20 +52,20 @@ public:
      * @param topologyNodeId: the if of topology node
      * @return shared pointer to Source catalog entry
      */
-    static std::shared_ptr<SourceCatalogEntry>
-    create(std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId);
+    static SourceCatalogEntryPtr
+    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId = INVALID<WorkerId>);
 
     /**
      * @brief Get the physical source
      * @return the shared pointer to the physical source
      */
-    [[nodiscard]] const std::shared_ptr<PhysicalSource>& getPhysicalSource() const;
+    const PhysicalSourcePtr& getPhysicalSource() const;
 
     /**
      * @brief Get the logical source
      * @return the shared pointer to the logical source
      */
-    [[nodiscard]] const std::shared_ptr<LogicalSource>& getLogicalSource() const;
+    const LogicalSourcePtr& getLogicalSource() const;
 
     /**
      * @brief Get the topology node
@@ -78,11 +86,10 @@ private:
      * @param logicalSource : the logical source pointer
      * @param topologyNodeId : the topology node id
      */
-    explicit SourceCatalogEntry(
-        std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId);
+    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
 
-    std::shared_ptr<PhysicalSource> physicalSource;
-    std::shared_ptr<LogicalSource> logicalSource;
+    PhysicalSourcePtr physicalSource;
+    LogicalSourcePtr logicalSource;
     WorkerId topologyNodeId;
 };
 }

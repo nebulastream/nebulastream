@@ -24,6 +24,7 @@ namespace detail
 
 /// true if const iterator, false otherwise
 template <class, bool>
+class CircularBufferIterator;
 
 /**
  * @brief The CircularBufferIterator class holds all iterator

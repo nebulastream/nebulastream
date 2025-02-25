@@ -34,22 +34,22 @@ jobs:
         id: image-tag
         if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development-base:latest nebulastream/nes-development-base:${{ github.head_ref }}
-          docker buildx imagetools create -t nebulastream/nes-development-dependency:latest nebulastream/nes-development-dependency:${{ github.head_ref }}
-          docker buildx imagetools create -t nebulastream/nes-development-dependency:latest-libstdcxx nebulastream/nes-development-dependency:${{ github.head_ref }}-libstdcxx
-          docker buildx imagetools create -t nebulastream/nes-development:latest nebulastream/nes-development:${{ github.head_ref }}
-          docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx nebulastream/nes-development:${{ github.head_ref }}-libstdcxx
-
+          docker buildx imagetools create -t nebulastream/nes-development-base:latest nebulastream/nes-development-base:${{ github.head_ref }}          
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:latest nebulastream/nes-development-dependency:${{ github.head_ref }}          
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:latest-libstdcxx nebulastream/nes-development-dependency:${{ github.head_ref }}-libstdcxx 
+          docker buildx imagetools create -t nebulastream/nes-development:latest nebulastream/nes-development:${{ github.head_ref }}          
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx nebulastream/nes-development:${{ github.head_ref }}-libstdcxx         
+          
           # Arm64 Cache Images
-          docker buildx imagetools create -t nebulastream/nes-development-base-cache:latest-arm64 nebulastream/nes-development-base-cache:${{ github.head_ref }}-arm64
-          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-arm64 nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-arm64-libcxx
-          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-arm64-libstdcxx nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-arm64-libstdcxx
-          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-arm64 nebulastream/nes-development-cache:${{ github.head_ref }}-arm64-libcxx
-          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-arm64-libstdcxx nebulastream/nes-development-cache:${{ github.head_ref }}-arm64-libstdcxx
-
+          docker buildx imagetools create -t nebulastream/nes-development-base-cache:latest-arm64 nebulastream/nes-development-base-cache:${{ github.head_ref }}-arm64          
+          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-arm64 nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-arm64         
+          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-arm64-libstdcxx nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-arm64-libstdcxx         
+          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-arm64 nebulastream/nes-development-cache:${{ github.head_ref }}-arm64           
+          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-arm64-libstdcxx nebulastream/nes-development-cache:${{ github.head_ref }}-arm64-libstdcxx           
+          
           # x64 Cache Images
-          docker buildx imagetools create -t nebulastream/nes-development-base-cache:latest-x64 nebulastream/nes-development-base-cache:${{ github.head_ref }}-x64
-          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-x64 nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-x64-libcxx
-          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-x64-libstdcxx nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-x64-libstdcxx
-          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-x64 nebulastream/nes-development-cache:${{ github.head_ref }}-x64-libcxx
-          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-x64-libstdcxx nebulastream/nes-development-cache:${{ github.head_ref }}-x64-libstdcxx
+          docker buildx imagetools create -t nebulastream/nes-development-base-cache:latest-x64 nebulastream/nes-development-base-cache:${{ github.head_ref }}-x64          
+          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-x64 nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-x64          
+          docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-x64-libstdcxx nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-x64-libstdcxx          
+          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-x64 nebulastream/nes-development-cache:${{ github.head_ref }}-x64          
+          docker buildx imagetools create -t nebulastream/nes-development-cache:latest-x64-libstdcxx nebulastream/nes-development-cache:${{ github.head_ref }}-x64-libstdcxx          

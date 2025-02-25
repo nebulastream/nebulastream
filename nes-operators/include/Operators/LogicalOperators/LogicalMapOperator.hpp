@@ -14,10 +14,7 @@
 
 #pragma once
 
-#include <memory>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 namespace NES
 {
@@ -28,13 +25,13 @@ namespace NES
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, OperatorId id);
+    LogicalMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id);
 
     /**
     * @brief Returns the function of this map operator
-    * @return std::shared_ptr<NodeFunctionFieldAssignment>
+    * @return NodeFunctionFieldAssignmentPtr
     */
-    std::shared_ptr<NodeFunctionFieldAssignment> getMapFunction() const;
+    NodeFunctionFieldAssignmentPtr getMapFunction() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -46,14 +43,15 @@ public:
      */
     bool inferSchema() override;
     void inferStringSignature() override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<NodeFunctionFieldAssignment> mapFunction;
+    const NodeFunctionFieldAssignmentPtr mapFunction;
 };
+using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
 }

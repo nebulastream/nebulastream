@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <API/TimeUnit.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
 {
 
-TimeUnit::TimeUnit(const uint64_t offset) : multiplier(offset) {};
+TimeUnit::TimeUnit(uint64_t offset) : multiplier(offset) {};
 
 uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
 {

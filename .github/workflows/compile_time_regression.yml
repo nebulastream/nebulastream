@@ -4,16 +4,6 @@
 # branch
 name: Compile Time Regression
 on:
-  workflow_call:
-    inputs:
-      dev_image_tag:
-        required: true
-        type: string
-        description: "Docker image tag of the development image"
-      ref:
-        required: true
-        description: "target commit"
-        type: string
   workflow_dispatch:
     inputs:
       dev_image_tag:
@@ -29,24 +19,17 @@ jobs:
   compile-time-regression:
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
     container:
-      options: --user root
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [ x64, arm64 ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - name: analyze-build
         run: |
-          mkdir /tmp/compile-time-logs
-
           echo "# Compile Time Summary for branch ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
           echo '## CMake Configuration Time' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -B build --profiling-output=/tmp/compile-time-logs/cmake-trace.json --profiling-format=google-trace" 2>> $GITHUB_STEP_SUMMARY
+          bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -B build" 2>> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           
           ClangBuildAnalyzer --start build
@@ -58,11 +41,7 @@ jobs:
           
           ClangBuildAnalyzer --stop build build-summary
           
-          ClangBuildAnalyzer --analyze build-summary > /tmp/compile-time-logs/clang-build-analyzer.txt
-
-      - name: Upload compile time analysis
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: compile-time-logs-${{ matrix.arch }}
-          path: /tmp/compile-time-logs
+          echo '## ClangBuildAnalyzer' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ClangBuildAnalyzer --analyze build-summary >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

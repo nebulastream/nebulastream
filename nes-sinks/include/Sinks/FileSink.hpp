@@ -19,7 +19,6 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
@@ -35,10 +34,10 @@ namespace NES::Sinks
 {
 
 /// A sink that writes formatted TupleBuffers to arbitrary files.
-class FileSink final : public Sink
+class FileSink : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "File";
+    static inline std::string NAME = "File";
     explicit FileSink(const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 

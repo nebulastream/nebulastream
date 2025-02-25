@@ -46,26 +46,28 @@ NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceE
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
+    if (const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd); slice.has_value())
+    {
+        return dynamic_cast<NLJSlice*>(slice.value().get());
+    }
 
-    auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
-    INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
-
-    return dynamic_cast<NLJSlice*>(slice.value().get());
+    INVARIANT(false, "Could not find a slice for slice end {}", sliceEnd);
 }
 
-Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
+Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
 {
     PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowStart;
 }
 
-Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
+Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask)
 {
     PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 
-SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const QueryCompilation::JoinBuildSideType joinBuildSide)
+SliceEnd
+getNLJSliceEndProxy(const EmittedNLJWindowTriggerTask* nljWindowTriggerTask, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
 
@@ -102,7 +104,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     Operator::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
-    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
+    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTriggerTask*>>(recordBuffer.getBuffer());
     const auto sliceIdLeft = invoke(
         getNLJSliceEndProxy,
         nljWindowTriggerTaskRef,
@@ -133,15 +135,13 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         workerThreadIdForPages,
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
 
-    const Interface::PagedVectorRef leftPagedVector(
-        leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
-    const Interface::PagedVectorRef rightPagedVector(
-        rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider);
+    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider);
 
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
+    const auto leftKeyFields = leftMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
+    const auto rightKeyFields = rightMemoryProvider->getMemoryLayoutPtr()->getKeyFieldNames();
+    const auto leftFields = leftMemoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames();
+    const auto rightFields = rightMemoryProvider->getMemoryLayoutPtr()->getSchema()->getFieldNames();
 
     nautilus::val<uint64_t> leftItemPos = 0UL;
     for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
@@ -150,7 +150,7 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
         {
             auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            if (joinFunction->execute(joinedKeyFields))
             {
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);

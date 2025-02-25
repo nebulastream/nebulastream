@@ -12,13 +12,9 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
 #include <utility>
 
-#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -27,7 +23,7 @@
 namespace NES
 {
 
-NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name)
+NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name)
     : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
@@ -42,7 +38,7 @@ NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithme
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
+void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
 {
     /// infer stamp of child
     auto child = this->child();
@@ -60,7 +56,7 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalUnary::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionArithmeticalUnary::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalUnary>(rhs))
     {

@@ -14,56 +14,95 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/WrapOption.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
-class WorkerConfiguration final : public BaseConfiguration
+
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+
+namespace Configurations
+{
+
+class WorkerConfiguration;
+using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
+
+class WorkerConfiguration : public BaseConfiguration
 {
 public:
-    WorkerConfiguration() = default;
-    WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+    WorkerConfiguration() : BaseConfiguration() {};
+    WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
 
 
-    StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};
+    static WorkerConfigurationPtr create() { return std::make_shared<WorkerConfiguration>(); }
 
-    /// Port for the RPC server of the Worker. This is used to receive control messages from the coordinator or other workers .
-    UIntOption rpcPort = {"rpcPort", "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
+    StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
+
+    /**
+     * @brief Port for the RPC server of the Worker.
+     * This is used to receive control messages from the coordinator or other workers .
+     */
+    UIntOption rpcPort = {RPC_PORT_CONFIG, "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
 
     EnumOption<LogLevel> logLevel
-        = {"logLevel", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+        = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     Runtime::QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
 
-    /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
+    /**
+     * @brief The number of buffers in the global buffer manager.
+     * Controls how much memory is consumed by the system.
+     */
     UIntOption numberOfBuffersInGlobalBufferManager
-        = {"numberOfBuffersInGlobalBufferManager", "1024", "Number buffers in global buffer pool.", {std::make_shared<NumberValidation>()}};
+        = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
+           "1024",
+           "Number buffers in global buffer pool.",
+           {std::make_shared<NumberValidation>()}};
 
     UIntOption numberOfBuffersPerWorker
-        = {"numberOfBuffersPerWorker", "128", "Number buffers in task local buffer pool.", {std::make_shared<NumberValidation>()}};
+        = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, "128", "Number buffers in task local buffer pool.", {std::make_shared<NumberValidation>()}};
 
-
-    /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
+    /**
+     * @brief Indicates how many buffers a single data source can allocate.
+     * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
+     */
     UIntOption numberOfBuffersInSourceLocalBufferPool
-        = {"numberOfBuffersInSourceLocalBufferPool",
+        = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
            "64",
            "Number buffers in source local buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
-    /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
-    UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
+    /**
+     * @brief Configures the buffer size of individual TupleBuffers in bytes.
+     * This property has to be the same over a whole deployment.
+     */
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
+    BoolOption enableStatisticOuput
+        = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output", {std::make_shared<BooleanValidation>()}};
+
+
+    QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
+
+    /**
+     * @brief Configuration yaml path.
+     * @warning this is just a placeholder configuration
+     */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
+
+    UIntOption senderHighwatermark
+        = {SENDER_HIGH_WATERMARK,
+           "8",
+           "Number of tuple buffers allowed in one network channel before blocking transfer.",
+           {std::make_shared<NumberValidation>()}};
+
 
 private:
     std::vector<Configurations::BaseOption*> getOptions() override
@@ -82,4 +121,5 @@ private:
         };
     }
 };
+}
 }

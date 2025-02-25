@@ -38,8 +38,7 @@ public:
         = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
-    Configurations::StringOption workingDir
-        = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
+    Configurations::StringOption resultDir = {"resultDir", PATH_TO_BINARY_DIR "/nes-systests/result/", "Directory for query results"};
     Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
@@ -63,7 +62,7 @@ protected:
             &testsDiscoverDir,
             &directlySpecifiedTestFiles,
             &testFileExtension,
-            &workingDir,
+            &resultDir,
             &randomQueryOrder,
             &numberConcurrentQueries,
             &testGroup,

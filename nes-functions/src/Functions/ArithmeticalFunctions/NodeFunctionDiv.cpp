@@ -12,32 +12,28 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-NodeFunctionDiv::NodeFunctionDiv(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") {};
+NodeFunctionDiv::NodeFunctionDiv(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") {};
 
 NodeFunctionDiv::NodeFunctionDiv(NodeFunctionDiv* other) : NodeFunctionArithmeticalBinary(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionDiv::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionDiv::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto divNode = std::make_shared<NodeFunctionDiv>(left->getStamp());
     divNode->setChildren(left, right);
     return divNode;
 }
 
-bool NodeFunctionDiv::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionDiv::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionDiv>(rhs))
     {
@@ -54,7 +50,7 @@ std::string NodeFunctionDiv::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionDiv::deepCopy()
+NodeFunctionPtr NodeFunctionDiv::deepCopy()
 {
     return NodeFunctionDiv::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

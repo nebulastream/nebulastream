@@ -17,17 +17,14 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface
 {
-/// Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
 
 /// This class is a nautilus interface to our PagedVector. It provides a way to write and read records to and from the PagedVector
@@ -37,8 +34,7 @@ class PagedVectorRef
 public:
     PagedVectorRef(
         const nautilus::val<PagedVector*>& pagedVectorRef,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -59,8 +55,6 @@ public:
 private:
     nautilus::val<PagedVector*> pagedVectorRef;
     std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
 
 class PagedVectorRefIter
@@ -73,7 +67,6 @@ public:
     PagedVectorRefIter& operator++();
     nautilus::val<bool> operator==(const PagedVectorRefIter& other) const;
     nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
-    nautilus::val<uint64_t> operator-(const PagedVectorRefIter& other) const;
 
 private:
     PagedVectorRef pagedVector;

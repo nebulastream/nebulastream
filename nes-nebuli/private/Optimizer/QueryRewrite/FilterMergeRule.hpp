@@ -18,11 +18,23 @@
 #include <set>
 #include <vector>
 #include <Functions/NodeFunction.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+
+namespace NES
+{
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+
+class LogicalSelectionOperator;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
+}
 
 namespace NES::Optimizer
 {
+
+class FilterMergeRule;
+using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
+
 /**
  * @brief This rewrite rule identifies sequences of consecutive filters. The filters are combined together
  * into one filter where the predicate is a conjunction of the predicates of the original filters.
@@ -46,7 +58,7 @@ namespace NES::Optimizer
 class FilterMergeRule : public BaseRewriteRule
 {
 public:
-    static std::shared_ptr<FilterMergeRule> create();
+    static FilterMergeRulePtr create();
     FilterMergeRule() = default;
     virtual ~FilterMergeRule() = default;
 
@@ -55,7 +67,7 @@ public:
      * @param queryPlan: the original query plan
      * @return updated logical query plan
      */
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
 private:
     /**
@@ -63,7 +75,6 @@ private:
      * @param firstFilter: the filter to check
      * @return vector of filters
      */
-    static std::vector<std::shared_ptr<LogicalSelectionOperator>>
-    getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& firstFilter);
+    static std::vector<LogicalSelectionOperatorPtr> getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& firstFilter);
 };
 }

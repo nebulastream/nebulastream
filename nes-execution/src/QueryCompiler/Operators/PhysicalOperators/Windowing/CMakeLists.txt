@@ -11,9 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-    PhysicalAggregationBuild.cpp
-    PhysicalAggregationProbe.cpp
-    PhysicalWindowOperator.cpp
+        PhysicalWindowOperator.cpp
+        PhysicalSlicePreAggregationOperator.cpp
+        PhysicalWindowSinkOperator.cpp
+        PhysicalSliceMergingOperator.cpp
 )
 
 add_subdirectory(ContentBasedWindow)

@@ -12,20 +12,15 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal ExecutableFunctionNegate::execute(const Record& record, ArenaRef& arena) const
+VarVal ExecutableFunctionNegate::execute(Record& record) const
 {
-    const auto value = childFunction->execute(record, arena);
+    const auto value = childFunction->execute(record);
     return !value;
 }
 
@@ -34,11 +29,10 @@ ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> chi
 }
 
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return std::make_unique<ExecutableFunctionNegate>(std::move(executableFunctionRegistryArguments.childFunctions[0]));
+    PRECONDITION(childFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return std::make_unique<ExecutableFunctionNegate>(std::move(childFunctions[0]));
 }
 
 }

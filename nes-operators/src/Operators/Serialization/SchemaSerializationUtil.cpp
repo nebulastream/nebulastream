@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
@@ -23,8 +22,7 @@
 namespace NES
 {
 
-std::shared_ptr<SerializableSchema>
-SchemaSerializationUtil::serializeSchema(const std::shared_ptr<Schema>& schema, SerializableSchema* serializedSchema)
+SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& schema, SerializableSchema* serializedSchema)
 {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
     /// serialize all field in schema
@@ -51,7 +49,7 @@ SchemaSerializationUtil::serializeSchema(const std::shared_ptr<Schema>& schema, 
     return std::make_shared<SerializableSchema>(*serializedSchema);
 }
 
-std::shared_ptr<Schema> SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
+SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
 {
     /// de-serialize field from serialized schema to the schema object.
     NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");

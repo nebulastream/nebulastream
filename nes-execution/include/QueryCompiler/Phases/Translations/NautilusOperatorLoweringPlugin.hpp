@@ -12,13 +12,16 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
 #include <optional>
 #include <vector>
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
+namespace NES::Runtime::Execution::Operators
+{
+class ExecutableOperator;
+using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
+}
 
 namespace NES::QueryCompilation
 {
@@ -37,8 +40,8 @@ public:
      * @param operatorHandlers operator handlers.
      * @return
      */
-    virtual std::optional<std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>> lower(
-        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& physicalOperator,
+    virtual std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
         std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers)
         = 0;
 

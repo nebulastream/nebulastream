@@ -84,23 +84,25 @@ def main():
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
 
-    if "CI" in os.environ and "NUM_COMMITS" not in os.environ:
-        print("Error: running in CI, but NUM_COMMITS not set")
+    if "CI" in os.environ and "BASE_REF" not in os.environ:
+        print("Error: running in CI, but BASE_REF not set")
         sys.exit(1)
     if "CI" in os.environ and "GH_TOKEN" not in os.environ:
         print("Error: running in CI, but GH_TOKEN not set")
         sys.exit(1)
 
-    if "NUM_COMMITS" in os.environ:
-        distance_main = os.environ["NUM_COMMITS"]
+    if "BASE_REF" in os.environ:
+        base = os.environ["BASE_REF"]
     else:
+        base = "main"
+
         merge_base = run_cmd(["git", "merge-base", "HEAD", "main"]).strip()
         distance_main = int(run_cmd(["git", "rev-list", "--count", f"{merge_base}..HEAD"]).strip())
         print(f"checking added TODOs for last {distance_main} commits (i.e. since forking off 'main')")
-        print("Set env var NUM_COMMITS to override the number of commits to be checked, e.g. call:")
-        print(f"\n  NUM_COMMITS=42 python3 {sys.argv[0]}\n\n")
+        print("Set env var BASE_REF to override base, e.g. call:")
+        print(f"\n  BASE_REF=origin/main python3 {sys.argv[0]}")
 
-    diff = run_cmd(["git", "diff", f"HEAD~{distance_main}", "--",
+    diff = run_cmd(["git", "diff", "--merge-base", base, "--",
                     # Ignore patch files in our vcpkg ports
                     ":!vcpkg/vcpkg-registry/**/*.patch"
                     ])

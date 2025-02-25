@@ -20,7 +20,7 @@ namespace NES::Configurations
 
 bool FloatValidation::isValid(const std::string& parameter) const
 {
-    std::regex numberRegex(R"(^\d*\.?\d+$)");
+    std::regex numberRegex("^\\d*\\.?\\d+$");
     if (!std::regex_match(parameter, numberRegex))
     {
         return false;

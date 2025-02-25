@@ -18,15 +18,13 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
+class TupleBufferMemoryProvider;
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
@@ -35,9 +33,9 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const std::shared_ptr<Schema>& schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const SchemaPtr& schema);
 
-    virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() = 0;
+    virtual Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() = 0;
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
@@ -52,24 +50,18 @@ public:
     /// Writes a record from the given bufferAddress and recordIndex.
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
-    /// @param rec: Record to be stored
     virtual void writeRecord(nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const = 0;
 
-protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal
-    loadValue(const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
+    static VarVal loadValue(const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
 
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal storeValue(
-        const std::shared_ptr<PhysicalType>& type,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<int8_t*>& fieldReference,
-        VarVal value);
+    static VarVal
+    storeValue(const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value);
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);

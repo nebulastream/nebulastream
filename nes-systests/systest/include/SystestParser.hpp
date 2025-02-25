@@ -18,11 +18,10 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Systest
 {
@@ -60,12 +59,12 @@ public:
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
     [[nodiscard]] bool loadString(const std::string& str);
 
-    /// Type definitions ///
+    /// Type defintions ///
     struct Field
     {
-        std::shared_ptr<DataType> type;
+        BasicType type;
         std::string name;
-        bool operator==(const Field& other) const { return *type == *other.type && name == other.name; }
+        bool operator==(const Field& other) const = default;
         bool operator!=(const Field& other) const = default;
     };
     using Schema = std::vector<Field>;

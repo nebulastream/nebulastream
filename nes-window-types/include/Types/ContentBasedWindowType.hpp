@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <Types/WindowType.hpp>
 
@@ -22,7 +21,9 @@ namespace NES::Windowing
 {
 
 class ContentBasedWindowType;
+using ContentBasedWindowTypePtr = std::shared_ptr<ContentBasedWindowType>;
 class ThresholdWindow;
+using ThresholdWindowPtr = std::shared_ptr<ThresholdWindow>;
 
 class ContentBasedWindowType : public WindowType
 {
@@ -46,6 +47,6 @@ public:
        * Cast the current window type as a threshold window type
        * @return a shared pointer of ThresholdWindow
        */
-    static std::shared_ptr<ThresholdWindow> asThresholdWindow(const std::shared_ptr<ContentBasedWindowType>& contentBasedWindowType);
+    static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
 }

@@ -12,9 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <vector>
-#include <Nodes/Node.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -43,9 +40,9 @@ PlanIterator::Iterator PlanIterator::end()
     return Iterator();
 }
 
-std::vector<std::shared_ptr<Node>> PlanIterator::snapshot()
+std::vector<NodePtr> PlanIterator::snapshot()
 {
-    std::vector<std::shared_ptr<Node>> nodes;
+    std::vector<NodePtr> nodes;
     for (auto node : *this)
     {
         nodes.emplace_back(node);
@@ -72,7 +69,7 @@ bool PlanIterator::Iterator::operator!=(const Iterator& other) const
     return true;
 };
 
-std::shared_ptr<Node> PlanIterator::Iterator::operator*()
+NodePtr PlanIterator::Iterator::operator*()
 {
     return workStack.empty() ? nullptr : workStack.top();
 }

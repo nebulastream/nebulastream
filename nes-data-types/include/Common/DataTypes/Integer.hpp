@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
@@ -49,14 +48,14 @@ public:
     * If they have no possible joined data type, the coined type is Undefined.
     * For integers, we can join with all numeric data types.
     * @param other data type
-    * @return std::shared_ptr<DataType> joined data type
+    * @return DataTypePtr joined data type
     */
-    std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
+    DataTypePtr join(DataTypePtr otherDataType) override;
 
     std::string toString() override;
 
-    int64_t lowerBound;
-    int64_t upperBound;
+    int64_t const lowerBound;
+    int64_t const upperBound;
 };
 
 }

@@ -11,18 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
-#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
 {
-bool OperatorAtATimePolicy::isFusible(std::shared_ptr<PhysicalOperators::PhysicalOperator>)
+bool OperatorAtATimePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr)
 {
     return false;
 }
-std::shared_ptr<OperatorFusionPolicy> OperatorAtATimePolicy::create()
+OperatorFusionPolicyPtr OperatorAtATimePolicy::create()
 {
     return std::make_shared<OperatorAtATimePolicy>();
 }

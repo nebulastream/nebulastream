@@ -36,4 +36,5 @@ protected:
 public:
     ~PhysicalOperator() noexcept override = default;
 };
+using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 }

@@ -11,11 +11,11 @@ RUN apt update -y \
 ADD --checksum=sha256:ec28c743ce3354df22b52db59feeac2d98556b8fc81cb7c1a877f3a862ae5726 --chmod=755 \
  https://raw.githubusercontent.com/duckdb/duckdb/52b43b166091c82b3f04bf8af15f0ace18207a64/scripts/clang-tidy-diff.py /usr/bin/
 
-RUN apt-get update && apt-get install -y \
-        default-jre-headless \
-        python3              \
-        python3-venv         \
-        python3-bs4
+RUN apt-get update && \
+        apt-get install -y software-properties-common && \
+        add-apt-repository ppa:deadsnakes/ppa && \
+        apt-get update && \
+        apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils -y
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487 --chmod=744 \

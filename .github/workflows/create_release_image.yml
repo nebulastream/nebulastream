@@ -1,4 +1,4 @@
-name: Create container for ref
+name: Create container from debfile
 
 # builds images for nebuli, worker for the given ref (brach, tag, or commit sha)
 # and publishes the images to nebulastream/nebuli and nebulastream/worker,

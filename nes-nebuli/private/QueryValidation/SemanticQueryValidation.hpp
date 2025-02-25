@@ -15,19 +15,28 @@
 #pragma once
 
 #include <memory>
-#include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+
 namespace NES
 {
+class schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
+class Query;
+using QueryPtr = std::shared_ptr<Query>;
 
 namespace Catalogs::UDF
 {
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }
 
 }
 
 namespace NES::Optimizer
 {
+
+class SemanticQueryValidation;
+using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 /**
  * @brief This class is responsible for Semantic Query Validation
@@ -39,7 +48,7 @@ public:
      * @brief Checks the semantic validity of a Query object
      * @param queryPlan: query to check
      */
-    void validate(const std::shared_ptr<QueryPlan>& queryPlan) const;
+    void validate(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Constructor for the SemanticQueryValidation class
@@ -47,7 +56,7 @@ public:
      * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog);
+    explicit SemanticQueryValidation(const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
@@ -55,36 +64,34 @@ public:
      * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
-    static std::shared_ptr<SemanticQueryValidation> create(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog);
+    static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
 private:
     /**
      * Check if infer model operator is correctly defined or not
      * @param queryPlan: query plan to check
      */
-    static void inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan);
+    void inferModelValidityCheck(const QueryPlanPtr& queryPlan);
 
     /**
      * Performs semantic validation if the query plan has sink as it root operator.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
-    static void sinkOperatorValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan);
+    void sinkOperatorValidityCheck(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void logicalSourceValidityCheck(
-        const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog);
+    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Checks if the physical source for the provided QueryPlan is present
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void physicalSourceValidityCheck(
-        const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog);
+    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
@@ -107,6 +114,9 @@ private:
      */
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
+
+using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
+
 }

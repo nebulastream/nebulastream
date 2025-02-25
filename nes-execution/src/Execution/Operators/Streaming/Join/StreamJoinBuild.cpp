@@ -18,7 +18,6 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -33,12 +32,62 @@
 namespace NES::Runtime::Execution::Operators
 {
 
+/// Updates the sliceState of all slices and emits buffers, if the slices can be emitted
+void checkWindowsTriggerProxy(
+    OperatorHandler* ptrOpHandler,
+    PipelineExecutionContext* pipelineCtx,
+    const Timestamp watermarkTs,
+    const SequenceNumber sequenceNumber,
+    const ChunkNumber chunkNumber,
+    const bool lastChunk,
+    const OriginId originId)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
+    opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
+}
+
+void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    opHandler->triggerAllWindows(piplineContext);
+}
+
 StreamJoinBuild::StreamJoinBuild(
     const uint64_t operatorHandlerIndex,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
-    : WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction)), joinBuildSide(joinBuildSide), memoryProvider(memoryProvider)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , joinBuildSide(joinBuildSide)
+    , timeFunction(std::move(timeFunction))
+    , memoryProvider(memoryProvider)
 {
+}
+
+void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
+{
+    /// Update the watermark for the nlj operator and trigger slices
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    invoke(
+        checkWindowsTriggerProxy,
+        operatorHandlerMemRef,
+        executionCtx.pipelineContext,
+        executionCtx.watermarkTs,
+        executionCtx.sequenceNumber,
+        executionCtx.chunkNumber,
+        executionCtx.lastChunk,
+        executionCtx.originId);
+}
+
+void StreamJoinBuild::terminate(ExecutionContext& executionCtx) const
+{
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
 }
 }

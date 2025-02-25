@@ -11,46 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <vector>
-#include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalProjectOperator::PhysicalProjectOperator(
-    OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
-    std::vector<std::shared_ptr<NodeFunction>> functions)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), functions(std::move(functions))
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalProjectOperator::create(
-    OperatorId id,
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::vector<std::shared_ptr<NodeFunction>>& functions)
+PhysicalOperatorPtr PhysicalProjectOperator::create(
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<NodeFunctionPtr>& functions)
 {
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, functions);
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalProjectOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::vector<std::shared_ptr<NodeFunction>>& functions)
+PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(functions));
 }
 
-std::vector<std::shared_ptr<NodeFunction>> PhysicalProjectOperator::getFunctions()
+std::vector<NodeFunctionPtr> PhysicalProjectOperator::getFunctions()
 {
     return functions;
 }

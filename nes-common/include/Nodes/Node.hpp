@@ -25,10 +25,13 @@
 namespace NES
 {
 
+class Node;
+using NodePtr = std::shared_ptr<Node>;
 
 class Node : public std::enable_shared_from_this<Node>
 {
 public:
+    Node();
     virtual ~Node() = default;
 
     /**
@@ -37,7 +40,7 @@ public:
      * @note A newNode cannot be in its own child.
      * @param newNode
      */
-    bool addChildWithEqual(const std::shared_ptr<Node>& newNode);
+    bool addChildWithEqual(NodePtr const& newNode);
 
     /**
      * @brief adds a newNode as a child to the current newNode.
@@ -45,13 +48,13 @@ public:
      * @note  A newNode cannot be in its own child.
      * @param newNode
      */
-    virtual bool addChild(const std::shared_ptr<Node>& newNode);
+    virtual bool addChild(NodePtr newNode);
 
     /**
      * @brief remove a node from current children.
      * @param node
      */
-    bool removeChild(const std::shared_ptr<Node>& node);
+    bool removeChild(NodePtr const& node);
 
     /**
      * @brief add a parent to vector of parents
@@ -59,13 +62,13 @@ public:
      *        one cannot add current node into its parents.
      * @param newNode
      */
-    virtual bool addParent(const std::shared_ptr<Node>& newNode);
+    virtual bool addParent(NodePtr newNode);
 
     /**
      * @brief remove a parent from vector of parents
      * @param node
      */
-    bool removeParent(const std::shared_ptr<Node>& node);
+    bool removeParent(NodePtr const& node);
 
     /**
      * @brief Remove all parents
@@ -89,14 +92,14 @@ public:
      * @param newNode
      * @param oldNode
      */
-    bool replace(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node>& oldNode);
+    bool replace(const NodePtr& newNode, const NodePtr& oldNode);
 
     /**
      * @brief replace current node with new node
      * @param newNode
      * @return
      */
-    bool replace(const std::shared_ptr<Node>& newNode);
+    bool replace(NodePtr newNode);
 
     /**
      * @brief swap given old node by new node
@@ -104,7 +107,7 @@ public:
      * @param oldNode the node to remove from graph
      * @return true if swapping successfully otherwise false
      */
-    bool swap(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node>& oldNode);
+    bool swap(NodePtr const& newNode, NodePtr const& oldNode);
 
     /**
      * @brief Swaps the left and right branch of binary nodes, by reversing the vector of children.
@@ -117,14 +120,14 @@ public:
      * @param node the given node to remove
      * @return bool true if successful
      */
-    bool remove(const std::shared_ptr<Node>& node);
+    bool remove(NodePtr const& node);
 
     /**
      * @brief remove the given node and add its children to the children of the current node
      * @param node
      * @return bool true if successful
      */
-    bool removeAndLevelUpChildren(const std::shared_ptr<Node>& node);
+    bool removeAndLevelUpChildren(NodePtr const& node);
 
     /**
      * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
@@ -143,28 +146,28 @@ public:
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllChildren(const std::shared_ptr<Node>& node);
+    bool equalWithAllChildren(NodePtr const& node);
 
     /**
      * @brief checks if the current node and its parents are equal a other node and its parents
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllParents(const std::shared_ptr<Node>& node);
+    bool equalWithAllParents(NodePtr const& node);
 
     /**
      * @brief check two node are equal.
      * @param rhs the node to compare
      * @return bool true if they are the same otherwise false
      */
-    virtual bool equal(const std::shared_ptr<Node>& rhs) const { return this->isIdentical(rhs); };
+    virtual bool equal(NodePtr const& rhs) const { return this->isIdentical(rhs); };
 
     /**
      * @brief check two nodes whether are exactly the same object or not
      * @param rhs the node to check
      * @return bool true if they are the same object otherwise false
      */
-    [[nodiscard]] virtual bool isIdentical(const std::shared_ptr<Node>& rhs) const { return rhs.get() == this; };
+    [[nodiscard]] virtual bool isIdentical(NodePtr const& rhs) const { return rhs.get() == this; };
 
     /**
      * @brief split graph into multiple sub-graphs. The graph starts at current splitNode.
@@ -172,7 +175,7 @@ public:
      * @params splitNode the given splitNode to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<std::shared_ptr<Node>> split(const std::shared_ptr<Node>& splitNode);
+    std::vector<NodePtr> split(NodePtr const& splitNode);
 
     /**
      * @brief validation of this node
@@ -205,70 +208,70 @@ public:
      * @param withDuplicateChildren: set true to allow to retrieve duplicate elements
      * @return allChildren a vector to store all children of current node
      */
-    std::vector<std::shared_ptr<Node>> getAndFlattenAllChildren(bool withDuplicateChildren);
+    std::vector<NodePtr> getAndFlattenAllChildren(bool withDuplicateChildren);
 
     /**
      * @brief get direct children.
      * @return vector of children.
      */
-    const std::vector<std::shared_ptr<Node>>& getChildren() const;
+    const std::vector<NodePtr>& getChildren() const;
 
     /**
      * @brief Check if the node is present as the parent or grand-parent
      * @param node: node to look for
      * @return true if present as false
      */
-    virtual bool containAsGrandParent(const std::shared_ptr<Node>& node);
+    virtual bool containAsGrandParent(NodePtr node);
 
     /**
      * @brief Check if input node is present as parent to this
      * @return true if input node is in parent list
      */
-    virtual bool containAsParent(const std::shared_ptr<Node>& node);
+    virtual bool containAsParent(NodePtr node);
 
     /**
      * @brief Check if the node is present as the child or grand-child
      * @param node: node to look for
      * @return true if present as false
      */
-    virtual bool containAsGrandChild(const std::shared_ptr<Node>& node);
+    virtual bool containAsGrandChild(NodePtr node);
 
     /**
      * @brief Check if input node is present as children to this
      * @return true if input node is in children list
      */
-    virtual bool containAsChild(const std::shared_ptr<Node>& node);
+    virtual bool containAsChild(NodePtr node);
 
     /**
      * @brief get direct parents.
      * @return vector of parents.
      */
-    const std::vector<std::shared_ptr<Node>>& getParents() const;
+    const std::vector<NodePtr>& getParents() const;
 
     /**
      * Get all the root nodes
      * @return vector of root nodes
      */
-    std::vector<std::shared_ptr<Node>> getAllRootNodes();
+    std::vector<NodePtr> getAllRootNodes();
 
     /**
      * @brief Get all the leaf nodes
      * @return vector of leaf nodes
      */
-    std::vector<std::shared_ptr<Node>> getAllLeafNodes();
+    std::vector<NodePtr> getAllLeafNodes();
 
     /**
      * @brief Add input node as parent to the current node and move the parents of current node as parent to the input node.
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
      */
-    bool insertBetweenThisAndParentNodes(const std::shared_ptr<Node>& newNode);
+    bool insertBetweenThisAndParentNodes(NodePtr const& newNode);
 
     /**
     * @brief Add input node as child to the current node and add the input node as new parent to the old child
     * @return true if operation succeeded else false
     */
-    bool insertBetweenThisAndChildNodes(const std::shared_ptr<Node>& newNode);
+    bool insertBetweenThisAndChildNodes(NodePtr const& newNode);
 
     /**
      * @brief check if a node is the child or grandchild of the given root node
@@ -276,13 +279,13 @@ public:
      * @param nodeToFind the node to find
      * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
-    static std::shared_ptr<Node> findRecursively(const std::shared_ptr<Node>& root, const std::shared_ptr<Node>& nodeToFind);
+    static NodePtr findRecursively(NodePtr const& root, NodePtr const& nodeToFind);
 
     /**
      * @brief Get all nodes that are parents to this node.
      * @return vector of all of its parent nodes
      */
-    std::vector<std::shared_ptr<Node>> getAndFlattenAllAncestors();
+    std::vector<NodePtr> getAndFlattenAllAncestors();
 
     friend std::ostream& operator<<(std::ostream& os, const Node& node);
 
@@ -291,12 +294,12 @@ protected:
      * @brief the parents of this node. There is no equal nodes
      *        in this vector
      */
-    std::vector<std::shared_ptr<Node>> parents;
+    std::vector<NodePtr> parents{};
     /**
      * @brief the children of this node. There is no equal nodes
      *        in this vector
      */
-    std::vector<std::shared_ptr<Node>> children;
+    std::vector<NodePtr> children{};
 
     /**
      * @brief To string method for the current node.
@@ -328,7 +331,7 @@ private:
      * @param nodeToFind
      * @return return true if the given node is found, otherwise false
      */
-    static bool vectorContainsTheNode(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
+    bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, NodePtr const& nodeToFind);
 
     /**
      * @brief check if an node is in given vector and returns it
@@ -336,7 +339,7 @@ private:
      * @param nodeToFind
      * @return return node if the given node is found, otherwise nullpointer
      */
-    static std::shared_ptr<Node> find(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
+    static NodePtr find(std::vector<NodePtr> const& nodes, NodePtr const& nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *
@@ -344,20 +347,17 @@ private:
     /**
      * @brief helper function of equalWithAllParents() function
      */
-    bool equalWithAllParentsHelper(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
+    bool equalWithAllParentsHelper(NodePtr const& node1, NodePtr const& node2);
     /**
      * @brief helper function of equalWithAllChildren() function
      */
-    bool equalWithAllChildrenHelper(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
+    bool equalWithAllChildrenHelper(NodePtr const& node1, NodePtr const& node2);
 
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
     void getAndFlattenAllChildrenHelper(
-        const std::shared_ptr<Node>& node,
-        std::vector<std::shared_ptr<Node>>& allChildren,
-        const std::shared_ptr<Node>& excludedNode,
-        bool allowDuplicate);
+        NodePtr const& node, std::vector<NodePtr>& allChildren, NodePtr const& excludedNode, bool allowDuplicate);
 
     /**
      * @brief helper function of cycle detector
@@ -372,6 +372,12 @@ private:
      */
     bool visited{false};
     bool recStack{false};
+
+    /**
+     * @brief Stores the stacktrace while node creation.
+     * It is empty if NES_TRACE_NODE_CREATION == false.
+     */
+    std::string stackTrace;
 };
 inline std::ostream& operator<<(std::ostream& os, const Node& node)
 {

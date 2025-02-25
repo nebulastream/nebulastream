@@ -32,6 +32,20 @@ inline std::ostream& operator<<(std::ostream& ostream, const QueryStatus& status
 {
     return ostream << magic_enum::enum_name(status);
 }
+
+namespace QueryStatusUtil
+{
+
+inline bool hasRestarted(QueryStatus previousState, QueryStatus currentState)
+{
+    return (previousState == QueryStatus::Failed || previousState == QueryStatus::Stopped) && currentState == QueryStatus::Running;
+}
+
+inline bool isRegisteredButNotRunning(QueryStatus status)
+{
+    return status == QueryStatus::Registered || status == QueryStatus::Stopped || status == QueryStatus::Failed;
+}
+}
 }
 
 FMT_OSTREAM(NES::Runtime::Execution::QueryStatus);

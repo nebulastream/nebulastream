@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <TaggedPointer.hpp>
-
 #include <cstdint>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <TaggedPointer.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES
@@ -43,9 +43,9 @@ TaggedPointer<T>::operator bool() const
 }
 
 template <typename T>
-void TaggedPointer<T>::reset(T* ptr, const uint16_t tag)
+void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
 {
-    auto pointer = reinterpret_cast<uintptr_t>(ptr);
+    uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
     PRECONDITION(!(pointer >> TAG_SHIFT), "tag out of range");
     pointer |= static_cast<uintptr_t>(tag) << TAG_SHIFT;
     data = pointer;

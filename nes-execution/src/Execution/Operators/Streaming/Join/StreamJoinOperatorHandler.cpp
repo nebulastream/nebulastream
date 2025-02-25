@@ -20,8 +20,8 @@
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -39,6 +39,17 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     , leftMemoryProvider(leftMemoryProvider)
     , rightMemoryProvider(rightMemoryProvider)
 {
+}
+
+void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+{
+    /// The watermark processor handles the minimal watermark across both streams
+    const auto newGlobalWatermark
+        = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+
+    /// Getting all slices that can be triggered and triggering them
+    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
+    triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
 void StreamJoinOperatorHandler::triggerSlices(
@@ -60,6 +71,12 @@ void StreamJoinOperatorHandler::triggerSlices(
             }
         }
     }
+}
+
+void StreamJoinOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
+{
+    const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
+    triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
 

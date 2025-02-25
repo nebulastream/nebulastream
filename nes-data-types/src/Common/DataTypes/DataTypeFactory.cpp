@@ -15,17 +15,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstdint>
 #include <cstring>
 #include <limits>
-#include <memory>
 #include <utility>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -35,100 +31,100 @@
 namespace NES
 {
 
-std::shared_ptr<DataType> DataTypeFactory::createUndefined()
+DataTypePtr DataTypeFactory::createUndefined()
 {
     return std::make_shared<Undefined>();
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createBoolean()
+DataTypePtr DataTypeFactory::createBoolean()
 {
     return std::make_shared<Boolean>();
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createFloat(int8_t bits, double lowerBound, double upperBound)
+DataTypePtr DataTypeFactory::createFloat(int8_t bits, double lowerBound, double upperBound)
 {
     return std::make_shared<Float>(bits, lowerBound, upperBound);
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createFloat()
+DataTypePtr DataTypeFactory::createFloat()
 {
     return createFloat(32, std::numeric_limits<float>::max() * -1, std::numeric_limits<float>::max());
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createFloat(const double lowerBound, const double upperBound)
+DataTypePtr DataTypeFactory::createFloat(double lowerBound, double upperBound)
 {
     auto bits = lowerBound >= std::numeric_limits<float>::max() * -1 && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
     return createFloat(bits, lowerBound, upperBound);
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createDouble()
+DataTypePtr DataTypeFactory::createDouble()
 {
     return createFloat(64, std::numeric_limits<double>::max() * -1, std::numeric_limits<double>::max());
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int64_t upperBound)
+DataTypePtr DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int64_t upperBound)
 {
     return std::make_shared<Integer>(bits, lowerBound, upperBound);
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createInteger(const int64_t lowerBound, const int64_t upperBound)
+DataTypePtr DataTypeFactory::createInteger(int64_t lowerBound, int64_t upperBound)
 {
     /// derive the correct bite size for the correct lower and upper bound
     auto bits = upperBound <= INT8_MAX ? 8 : upperBound <= INT16_MAX ? 16 : upperBound <= INT32_MAX ? 32 : 64;
     return createInteger(bits, lowerBound, upperBound);
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createInt8()
+DataTypePtr DataTypeFactory::createInt8()
 {
     return createInteger(8, INT8_MIN, INT8_MAX);
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createUInt8()
+DataTypePtr DataTypeFactory::createUInt8()
 {
     return createInteger(8, 0, UINT8_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createInt16()
+DataTypePtr DataTypeFactory::createInt16()
 {
     return createInteger(16, INT16_MIN, INT16_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createUInt16()
+DataTypePtr DataTypeFactory::createUInt16()
 {
     return createInteger(16, 0, UINT16_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createInt64()
+DataTypePtr DataTypeFactory::createInt64()
 {
     return createInteger(64, INT64_MIN, INT64_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createUInt64()
+DataTypePtr DataTypeFactory::createUInt64()
 {
     return createInteger(64, 0, UINT64_MAX);
 }; /// TODO 4911: BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1. (https://github.com/nebulastream/nebulastream/issues/4911)
 
-std::shared_ptr<DataType> DataTypeFactory::createInt32()
+DataTypePtr DataTypeFactory::createInt32()
 {
     return createInteger(32, INT32_MIN, INT32_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createUInt32()
+DataTypePtr DataTypeFactory::createUInt32()
 {
     return createInteger(32, 0, UINT32_MAX);
 };
 
-std::shared_ptr<DataType> DataTypeFactory::createVariableSizedData()
+DataTypePtr DataTypeFactory::createVariableSizedData()
 {
     return std::make_shared<VariableSizedDataType>();
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createChar()
+DataTypePtr DataTypeFactory::createChar()
 {
     return std::make_shared<Char>();
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createType(const BasicType type)
+DataTypePtr DataTypeFactory::createType(BasicType type)
 {
     switch (type)
     {
@@ -162,18 +158,18 @@ std::shared_ptr<DataType> DataTypeFactory::createType(const BasicType type)
     }
 }
 
-std::shared_ptr<DataType> DataTypeFactory::copyTypeAndIncreaseLowerBound(std::shared_ptr<DataType> stamp, const double minLowerBound)
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
-        if (const auto floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
             return createFloat(floatStamp->getBits(), minLowerBound, floatStamp->upperBound);
         }
     }
     else if (NES::Util::instanceOf<Integer>(stamp))
     {
-        if (const auto intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < static_cast<int64_t>(minLowerBound))
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
             NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Will be executed "
                         "with the Floor of the Float argument instead.");
@@ -188,18 +184,18 @@ std::shared_ptr<DataType> DataTypeFactory::copyTypeAndIncreaseLowerBound(std::sh
     return stamp; /// increase does not apply -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType> DataTypeFactory::copyTypeAndIncreaseLowerBound(std::shared_ptr<DataType> stamp, const int64_t minLowerBound)
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
-        if (const auto intStamp = DataType::as<Integer>(stamp); static_cast<int64_t>(minLowerBound) < minLowerBound)
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
             return createInteger(intStamp->getBits(), minLowerBound, intStamp->upperBound);
         }
     }
     else if (NES::Util::instanceOf<Float>(stamp))
     {
-        if (const auto floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < static_cast<double>(minLowerBound))
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
             NES_INFO("DataTypeFactory: An Integer is passed as the minimum lower bound of a Float data type. Progresses with "
                      "standard casting to Double.");
@@ -215,18 +211,18 @@ std::shared_ptr<DataType> DataTypeFactory::copyTypeAndIncreaseLowerBound(std::sh
     return stamp; /// increase does not apply -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType> DataTypeFactory::copyTypeAndDecreaseUpperBound(std::shared_ptr<DataType> stamp, const double maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
-        if (const auto floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound)
+        if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound)
         {
             return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
         }
     }
     else if (NES::Util::instanceOf<Integer>(stamp))
     {
-        if (const auto intStamp = DataType::as<Integer>(stamp); maxUpperBound < static_cast<double>(intStamp->upperBound))
+        if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound)
         {
             NES_WARNING("DataTypeFactory: A Float is passed as the maximum upper bound of an Integer data type. Progresses with "
                         "the Ceiling of the Float argument instead.");
@@ -242,18 +238,18 @@ std::shared_ptr<DataType> DataTypeFactory::copyTypeAndDecreaseUpperBound(std::sh
     return stamp; /// decrease does not apply -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType> DataTypeFactory::copyTypeAndDecreaseUpperBound(std::shared_ptr<DataType> stamp, const int64_t maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
-        if (const auto intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound)
+        if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound)
         {
             return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
         }
     }
     else if (NES::Util::instanceOf<Float>(stamp))
     {
-        if (const auto floatStamp = DataType::as<Float>(stamp); static_cast<double>(maxUpperBound) < floatStamp->upperBound)
+        if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound)
         {
             NES_INFO("DataTypeFactory: An Integer is passed as the maximum upper bound of an Float data type. Progresses with "
                      "standard casting to Double.");
@@ -269,12 +265,11 @@ std::shared_ptr<DataType> DataTypeFactory::copyTypeAndDecreaseUpperBound(std::sh
     return stamp; /// decrease does not apply -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType>
-DataTypeFactory::copyTypeAndTightenBounds(std::shared_ptr<DataType> stamp, const int64_t minLowerBound, const int64_t maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
-        if (const auto intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
             /// we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             int64_t newUpperBound = std::min(intStamp->upperBound, maxUpperBound);
@@ -301,12 +296,11 @@ DataTypeFactory::copyTypeAndTightenBounds(std::shared_ptr<DataType> stamp, const
     return stamp; /// neither bound needs to be modified -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType>
-DataTypeFactory::copyTypeAndTightenBounds(std::shared_ptr<DataType> stamp, const double minLowerBound, const double maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
-        if (const auto floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
             /// we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             double newUpperBound = fmin(floatStamp->upperBound, maxUpperBound);
@@ -334,11 +328,11 @@ DataTypeFactory::copyTypeAndTightenBounds(std::shared_ptr<DataType> stamp, const
     return stamp; /// neither bound needs to be modified -> return shared pointer given as argument
 }
 
-std::shared_ptr<DataType> DataTypeFactory::createFloatFromInteger(std::shared_ptr<DataType> stamp)
+DataTypePtr DataTypeFactory::createFloatFromInteger(DataTypePtr stamp)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
-        const auto intStamp = DataType::as<Integer>(stamp);
+        auto const intStamp = DataType::as<Integer>(stamp);
         return DataTypeFactory::createFloat(intStamp->lowerBound, intStamp->upperBound);
     }
     else if (NES::Util::instanceOf<Float>(stamp))

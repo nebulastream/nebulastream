@@ -14,10 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES
@@ -29,7 +25,7 @@ namespace NES
 class RenameSourceOperator : public LogicalUnaryOperator
 {
 public:
-    explicit RenameSourceOperator(const std::string& newSourceName, OperatorId id);
+    explicit RenameSourceOperator(std::string const& newSourceName, OperatorId id);
     ~RenameSourceOperator() override = default;
 
     /**
@@ -37,8 +33,8 @@ public:
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

@@ -14,9 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
@@ -30,10 +27,17 @@ namespace NES
 class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    WatermarkAssignerLogicalOperator(std::shared_ptr<Windowing::WatermarkStrategyDescriptor>, OperatorId id);
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> getWatermarkStrategyDescriptor() const;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
+    /**
+    * @brief Returns the watermark strategy.
+    * @return  Windowing::WatermarkStrategyDescriptorPtr
+    */
+    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
+
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+
     std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
@@ -42,8 +46,9 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor;
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
+using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
 }

@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
@@ -23,7 +21,7 @@
 
 namespace NES
 {
-NodeFunction::NodeFunction(std::shared_ptr<DataType> stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
+NodeFunction::NodeFunction(DataTypePtr stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
 {
 }
 
@@ -32,12 +30,12 @@ bool NodeFunction::isPredicate() const
     return NES::Util::instanceOf<Boolean>(stamp);
 }
 
-std::shared_ptr<DataType> NodeFunction::getStamp() const
+DataTypePtr NodeFunction::getStamp() const
 {
     return stamp;
 }
 
-void NodeFunction::setStamp(std::shared_ptr<DataType> stamp)
+void NodeFunction::setStamp(DataTypePtr stamp)
 {
     this->stamp = std::move(stamp);
 }
@@ -47,7 +45,7 @@ const std::string& NodeFunction::getType() const
     return type;
 }
 
-void NodeFunction::inferStamp(const Schema& schema)
+void NodeFunction::inferStamp(SchemaPtr schema)
 {
     /// infer stamp on all children nodes
     for (const auto& node : children)

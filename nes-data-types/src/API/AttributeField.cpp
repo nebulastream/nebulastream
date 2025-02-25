@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
-#include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -22,11 +20,11 @@
 namespace NES
 {
 
-AttributeField::AttributeField(std::string name, std::shared_ptr<DataType> dataType) : name(std::move(name)), dataType(std::move(dataType))
+AttributeField::AttributeField(std::string name, DataTypePtr dataType) : name(std::move(name)), dataType(std::move(dataType))
 {
 }
 
-std::shared_ptr<AttributeField> AttributeField::create(const std::string& name, const std::shared_ptr<DataType>& dataType)
+AttributeFieldPtr AttributeField::create(const std::string& name, const DataTypePtr& dataType)
 {
     return std::make_shared<AttributeField>(AttributeField(name, dataType));
 }
@@ -41,7 +39,7 @@ void AttributeField::setName(std::string newName)
     this->name = std::move(newName);
 }
 
-std::shared_ptr<DataType> AttributeField::getDataType() const
+DataTypePtr AttributeField::getDataType() const
 {
     return dataType;
 }
@@ -53,7 +51,7 @@ std::string AttributeField::toString() const
     return ss.str();
 }
 
-bool AttributeField::isEqual(const std::shared_ptr<AttributeField>& attr) const
+bool AttributeField::isEqual(const AttributeFieldPtr& attr) const
 {
     if (!attr)
     {
@@ -73,7 +71,7 @@ uint64_t AttributeField::hash() const
     return hashValue;
 }
 
-std::shared_ptr<AttributeField> AttributeField::deepCopy() const
+AttributeFieldPtr AttributeField::deepCopy() const
 {
     return create(name, dataType);
 }

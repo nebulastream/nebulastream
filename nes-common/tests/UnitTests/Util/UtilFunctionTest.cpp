@@ -106,7 +106,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice)
 
 TEST(UtilFunctionTest, splitIntegersWithWhiteSpaces)
 {
-    const std::string line = "123,43,123,532, 12, 432,12,43   ,2341,321";
+    std::string const line = "123,43,123,532, 12, 432,12,43   ,2341,321";
     EXPECT_THAT(NES::Util::splitWithStringDelimiter<int>(line, ","), ::testing::ElementsAre(123, 43, 123, 532, 12, 432, 12, 43, 2341, 321));
 }
 
@@ -117,8 +117,8 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
     test.emplace_back("This is a random ");
     test.emplace_back(" line with ");
     test.emplace_back(" delimiter. ");
-    const std::string line = "This is a random x line with x delimiter. x";
-    const std::string delimiter = "x";
+    std::string const line = "This is a random x line with x delimiter. x";
+    std::string const delimiter = "x";
     tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_EQ(tokens, test);
 }

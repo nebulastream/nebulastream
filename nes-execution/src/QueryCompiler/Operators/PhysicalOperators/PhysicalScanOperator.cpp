@@ -11,27 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const SchemaPtr& outputSchema)
     : Operator(id), PhysicalUnaryOperator(id, outputSchema, outputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(const std::shared_ptr<Schema>& outputSchema)
+PhysicalOperatorPtr PhysicalScanOperator::create(SchemaPtr outputSchema)
 {
     return create(getNextOperatorId(), std::move(outputSchema));
 }
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, const SchemaPtr& outputSchema)
 {
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);
 }

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <string_view>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum.hpp>
 
@@ -23,7 +22,7 @@ namespace NES
  * @param value LogLevel
  * @return string of value
  */
-std::basic_string_view<char> getLogName(const LogLevel value)
+std::basic_string_view<char> getLogName(LogLevel value)
 {
     return magic_enum::enum_name(value);
 }

@@ -23,7 +23,7 @@
 
 namespace NES::Runtime
 {
-/// Forward declaration so that only the QueryEngine can be included
+
 class QueryCatalog;
 class ThreadPool;
 

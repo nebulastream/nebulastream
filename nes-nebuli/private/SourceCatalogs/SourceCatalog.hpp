@@ -16,7 +16,6 @@
 
 #include <deque>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <set>
 #include <string>
@@ -27,6 +26,8 @@
 namespace NES
 {
 
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
 namespace Catalogs::Source
 {
@@ -38,7 +39,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if insert was successful
-    bool addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema);
+    bool addLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     /// @brief method to delete a logical source
     /// @caution this method only remove the entry from the catalog not from the topology
@@ -51,7 +52,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param sourceCatalogEntry the source catalog entry to store
     /// @return bool indicating success of insert source
-    bool addPhysicalSource(const std::string& logicalSourceName, const std::shared_ptr<SourceCatalogEntry>& sourceCatalogEntry);
+    bool addPhysicalSource(const std::string& logicalSourceName, const SourceCatalogEntryPtr& sourceCatalogEntry);
 
     /// @brief method to remove a physical source
     /// @param logicalSourceName name of the logical source
@@ -68,20 +69,20 @@ public:
     /// @brief method to get the schema from the given logical source
     /// @param logicalSourceName name of the logical source name
     /// @return the pointer to the schema
-    std::shared_ptr<Schema> getSchemaForLogicalSource(const std::string& logicalSourceName);
+    SchemaPtr getSchemaForLogicalSource(const std::string& logicalSourceName);
 
     /// @brief method to return the logical source for an existing logical source
     /// @param logicalSourceName name of the logical source
     /// @return smart pointer to the logical source else nullptr
     /// @note the source will also contain the schema
-    std::shared_ptr<LogicalSource> getLogicalSource(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
 
     /// @brief method to return the source for an existing logical source or throw exception
     /// @param logicalSourceName name of logical source
     /// @return smart pointer to a physical source else nullptr
     /// @note the source will also contain the schema
     /// @throws UnknownSourceType
-    std::shared_ptr<LogicalSource> getLogicalSourceOrThrowException(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSourceOrThrowException(const std::string& logicalSourceName);
 
     /// @brief Check if logical source with this name exists
     /// @param logicalSourceName name of the logical source
@@ -99,7 +100,7 @@ public:
 
     /// @brief Return a list of logical source names registered at catalog
     /// @return map containing source name as key and schema object as value
-    std::map<std::string, std::shared_ptr<Schema>> getAllLogicalSource();
+    std::map<std::string, SchemaPtr> getAllLogicalSource();
 
     /// @brief Get all logical sources with their schema as string
     /// @return map of logical source name to schema as string
@@ -112,13 +113,13 @@ public:
     /// @brief get all physical sources for a logical source
     /// @param logicalSourceName name of the logical source
     /// @return vector containing source catalog entries
-    std::vector<std::shared_ptr<SourceCatalogEntry>> getPhysicalSources(const std::string& logicalSourceName);
+    std::vector<SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
 
     /// @brief method to update a logical source schema
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if update was successful
-    bool updateLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema);
+    bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     SourceCatalog();
 
@@ -130,11 +131,12 @@ private:
 
     std::recursive_mutex catalogMutex;
     /// map logical source to schema
-    std::map<std::string, std::shared_ptr<Schema>> logicalSourceNameToSchemaMapping;
+    std::map<std::string, SchemaPtr> logicalSourceNameToSchemaMapping;
     /// map logical source to physical source
-    std::map<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
+    std::map<std::string, std::vector<SourceCatalogEntryPtr>> logicalToPhysicalSourceMapping;
 
     void addDefaultSources();
 };
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }
 }

@@ -13,31 +13,35 @@
 */
 
 #pragma once
-#include <memory>
-#include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-
-/// This node represents an When function.
-/// It is used as part of a case function, if it evaluates the left child to true, the right child will be returned.
+/**
+ * @brief This node represents an When function.
+ * It is used as part of a case function, if it evaluates the left child to true, the right child will be returned.
+ */
 class NodeFunctionWhen final : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionWhen(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionWhen(DataTypePtr stamp);
     ~NodeFunctionWhen() noexcept override = default;
 
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    /**
+     * @brief Create a new When function.
+     */
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
 
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of this function node.
+     * @param typeInferencePhaseContext
+     * @param schema the current schema.
+     */
+    void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
     bool validateBeforeLowering() const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

@@ -14,10 +14,11 @@
 #pragma once
 
 #include <memory>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 namespace NES::QueryCompilation
 {
+class AddScanAndEmitPhase;
+using AddScanAndEmitPhasePtr = std::shared_ptr<AddScanAndEmitPhase>;
 /**
  * @brief Simple phase to add scan and emit operator to pipelines in necessary.
  * A common case would be that, the pipelining phase placed a filter operator in an own pipeline.
@@ -26,8 +27,8 @@ namespace NES::QueryCompilation
 class AddScanAndEmitPhase
 {
 public:
-    static std::shared_ptr<AddScanAndEmitPhase> create();
-    static std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> pipeline);
-    static std::shared_ptr<OperatorPipeline> process(std::shared_ptr<OperatorPipeline> pipeline);
+    static AddScanAndEmitPhasePtr create();
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+    static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
 }

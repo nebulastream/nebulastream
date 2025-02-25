@@ -13,29 +13,32 @@
 */
 
 #pragma once
-#include <memory>
-#include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 namespace NES
 {
 
-/// This node represents a logical OR combination between the two children.
+/**
+ * @brief This node represents an OR combination between the two children.
+ */
 class NodeFunctionOr : public NodeFunctionLogicalBinary
 {
 public:
     NodeFunctionOr();
     ~NodeFunctionOr() override = default;
-
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-
-    /// Infers the stamp of this logical OR function node.
-    /// We assume that both children of an OR function are predicates.
-    void inferStamp(const Schema& schema) override;
+    /**
+    * @brief Create a new OR function
+    */
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    /**
+     * @brief Infers the stamp of this logical OR function node.
+     * We assume that both children of an OR function are predicates.
+     * @param typeInferencePhaseContext
+     * @param schema the current schema.
+     */
+    void inferStamp(SchemaPtr schema) override;
     bool validateBeforeLowering() const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);

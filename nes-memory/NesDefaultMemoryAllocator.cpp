@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -20,17 +20,16 @@
 namespace NES::Memory
 {
 
-void* NesDefaultMemoryAllocator::do_allocate(const size_t bytes, const size_t alignment)
+void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment)
 {
     void* tmp = nullptr;
-    auto ret = posix_memalign(&tmp, alignment, bytes);
-    INVARIANT(ret == 0, "memory allocation failed with alignment");
+    INVARIANT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
     return tmp;
 }
 
 void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t)
 {
-    std::free(p); /// NOLINT(cppcoreguidelines-no-malloc)
+    std::free(p);
 }
 
 }

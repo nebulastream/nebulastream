@@ -12,14 +12,10 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
 #include <utility>
 
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -27,20 +23,20 @@
 namespace NES
 {
 
-NodeFunctionAdd::NodeFunctionAdd(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Add") {};
+NodeFunctionAdd::NodeFunctionAdd(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Add") {};
 
 NodeFunctionAdd::NodeFunctionAdd(NodeFunctionAdd* other) : NodeFunctionArithmeticalBinary(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionAdd::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionAdd::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
 {
     auto addNode = std::make_shared<NodeFunctionAdd>(left->getStamp());
     addNode->setChildren(left, right);
     return addNode;
 }
 
-bool NodeFunctionAdd::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionAdd::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAdd>(rhs))
     {
@@ -59,7 +55,7 @@ std::string NodeFunctionAdd::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionAdd::deepCopy()
+NodeFunctionPtr NodeFunctionAdd::deepCopy()
 {
     return NodeFunctionAdd::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

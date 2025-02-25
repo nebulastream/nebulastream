@@ -13,7 +13,6 @@
 */
 
 #include <iostream>
-#include <memory>
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -39,7 +38,7 @@ public:
 
 TEST_F(QueryPlanTest, testHasOperator)
 {
-    const std::shared_ptr<QueryPlan> queryPlan = std::make_shared<QueryPlan>();
+    const QueryPlanPtr queryPlan = std::make_shared<QueryPlan>();
     const std::shared_ptr<LogicalOperator> op1 = std::make_shared<SourceNameLogicalOperator>("test_source", getNextOperatorId());
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
@@ -52,7 +51,7 @@ TEST_F(QueryPlanTest, testHasOperator)
 TEST_F(QueryPlanTest, testLeafOperators)
 {
     const std::shared_ptr<LogicalOperator> op1 = std::make_shared<SourceNameLogicalOperator>("test_source", getNextOperatorId());
-    const std::shared_ptr<QueryPlan> queryPlan = QueryPlan::create(op1);
+    const QueryPlanPtr queryPlan = QueryPlan::create(op1);
     auto op2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op2);
 

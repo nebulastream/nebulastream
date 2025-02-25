@@ -11,26 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema)
     : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(const std::shared_ptr<Schema>& inputSchema)
+PhysicalOperatorPtr PhysicalEmitOperator::create(SchemaPtr inputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema));
 }
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr& inputSchema)
 {
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }

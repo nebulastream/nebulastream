@@ -12,17 +12,14 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
-#include <val_ptr.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
@@ -243,9 +240,9 @@ TEST_F(VarValTest, writeToMemoryTest)
     auto testVarValWriteToMemory = []<typename T>(const T value)
     {
         using namespace NES::Nautilus;
-        const VarVal varVal = nautilus::val<T>(value);
+        VarVal varVal = nautilus::val<T>(value);
         std::vector<int8_t> memory(sizeof(T));
-        const auto memoryRef = nautilus::val<int8_t*>(memory.data());
+        auto memoryRef = nautilus::val<int8_t*>(memory.data());
         varVal.writeToMemory(memoryRef);
         T valueFromMemory;
         std::memcpy(&valueFromMemory, memory.data(), sizeof(T));
@@ -269,12 +266,12 @@ TEST_F(VarValTest, writeToMemoryTest)
 
 TEST_F(VarValTest, readFromMemoryTest)
 {
-    auto testVarValReadFromMemory = []<typename T>(const T value, const std::shared_ptr<PhysicalType>& type)
+    auto testVarValReadFromMemory = []<typename T>(const T value, const PhysicalTypePtr type)
     {
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
-        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
+        VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
         EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
         return 0;
     };
@@ -299,7 +296,7 @@ TEST_F(VarValTest, operatorBoolTest)
     auto testVarValOperatorBool = []<typename T>(const T value, const bool expectedValue)
     {
         using namespace NES::Nautilus;
-        const VarVal varVal = nautilus::val<T>(value);
+        VarVal varVal = nautilus::val<T>(value);
         const auto varValBool = static_cast<bool>(varVal);
         EXPECT_EQ(varValBool, expectedValue);
         return 0;
@@ -346,15 +343,7 @@ TEST_F(VarValTest, ostreamTest)
         nautilus::stringstream strStreamVarVal;
         std::stringstream strStreamExpected;
         strStreamVarVal << varVal;
-        if constexpr (
-            std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, unsigned char> || std::is_same_v<T, char>)
-        {
-            strStreamExpected << static_cast<int>(value);
-        }
-        else
-        {
-            strStreamExpected << value;
-        }
+        strStreamExpected << value;
 
         /// Writing the actual and the expected output to a file
         /// We have to do this, as it is not possible to access the underlying data of the nautilus::stringstream object

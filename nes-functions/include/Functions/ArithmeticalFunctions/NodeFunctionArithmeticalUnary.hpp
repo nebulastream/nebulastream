@@ -13,27 +13,26 @@
 */
 
 #pragma once
-#include <memory>
-#include <string>
-#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
 class NodeFunctionArithmeticalUnary : public NodeFunctionUnary, public NodeFunctionArithmetical
 {
 public:
-    /// Infers the stamp of this arithmetical function node.
-    /// Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of this arithmetical function node.
+     * Currently the type inference is equal for all arithmetical function and expects numerical data types as operands.
+     * @param typeInferencePhaseContext
+     * @param schema the current schema.
+     */
+    void inferStamp(SchemaPtr schema) override;
     bool validateBeforeLowering() const override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
 protected:
-    explicit NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name);
+    explicit NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name);
     explicit NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other);
     ~NodeFunctionArithmeticalUnary() noexcept override = default;
     [[nodiscard]] std::string toString() const override;

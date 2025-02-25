@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <set>
 #include <vector>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
@@ -25,30 +24,29 @@
 namespace NES::Optimizer
 {
 
-std::shared_ptr<FilterSplitUpRule> FilterSplitUpRule::create()
+FilterSplitUpRulePtr FilterSplitUpRule::create()
 {
     return std::make_shared<FilterSplitUpRule>(FilterSplitUpRule());
 }
 
 FilterSplitUpRule::FilterSplitUpRule() = default;
 
-std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan)
 {
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
-    std::set<std::shared_ptr<LogicalSelectionOperator>> filterOperatorsSet;
+    std::set<LogicalSelectionOperatorPtr> filterOperatorsSet;
     for (const std::shared_ptr<Operator>& rootOperator : rootOperators)
     {
         auto filters = rootOperator->getNodesByType<LogicalSelectionOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
-    std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
+    std::vector<LogicalSelectionOperatorPtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
-        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
-        { return lhs->getId() < rhs->getId(); });
+        [](const LogicalSelectionOperatorPtr& lhs, const LogicalSelectionOperatorPtr& rhs) { return lhs->getId() < rhs->getId(); });
     auto originalQueryPlan = queryPlan->copy();
     try
     {
@@ -67,7 +65,7 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     }
 }
 
-void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOperator>& filterOperator)
+void FilterSplitUpRule::splitUpFilters(LogicalSelectionOperatorPtr filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.

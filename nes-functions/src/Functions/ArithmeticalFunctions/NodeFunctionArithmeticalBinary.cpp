@@ -12,12 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -28,7 +24,7 @@
 namespace NES
 {
 
-NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(std::shared_ptr<DataType> stamp, std::string name)
+NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name)
     : NodeFunctionBinary(std::move(stamp), std::move(name)), NodeFunctionArithmetical()
 {
 }
@@ -43,7 +39,7 @@ NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(NodeFunctionArith
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
+void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
 {
     /// infer the stamps of the left and right child
     const auto left = getLeft();
@@ -79,7 +75,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
     NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
 }
 
-bool NodeFunctionArithmeticalBinary::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionArithmeticalBinary::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalBinary>(rhs))
     {

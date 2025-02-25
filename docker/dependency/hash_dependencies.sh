@@ -10,11 +10,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 # paths of dirs or files that affect the dependency images
-#
-# Do not use trailing slashes on dirs since this leads to diverging hashes on macos.
 HASH_PATHS=(
-  vcpkg
-  docker/dependency
+  vcpkg/
+  docker/dependency/
 )
 
 # we set LC_ALL to override the system-specific locale, to have consistent sort order

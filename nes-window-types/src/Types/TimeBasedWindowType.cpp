@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -26,17 +24,16 @@
 namespace NES::Windowing
 {
 
-TimeBasedWindowType::TimeBasedWindowType(std::shared_ptr<TimeCharacteristic> timeCharacteristic)
-    : timeCharacteristic(std::move(timeCharacteristic))
+TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic))
 {
 }
 
-bool TimeBasedWindowType::inferStamp(const Schema& schema)
+bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
 {
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema.getFieldByName(fieldName);
+        auto existingField = schema->getFieldByName(fieldName);
         if (existingField)
         {
             if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
@@ -56,7 +53,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
     return true;
 }
 
-std::shared_ptr<TimeCharacteristic> TimeBasedWindowType::getTimeCharacteristic() const
+TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const
 {
     return timeCharacteristic;
 }

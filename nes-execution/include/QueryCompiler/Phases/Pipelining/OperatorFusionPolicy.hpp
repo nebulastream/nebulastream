@@ -13,18 +13,24 @@
 */
 #pragma once
 
-#include <memory>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation
 {
 
-/// Policy which determines if an particular operator can be fused with other operators in a pipeline.
-/// A particular policy can make this secession based on rules or costs.
+/**
+ * @brief Policy which determines if an particular operator can be fused with other operators in a pipeline.
+ * A particular policy can make this secession based on rules or costs.
+ */
 class OperatorFusionPolicy
 {
 public:
     virtual ~OperatorFusionPolicy() = default;
-    /// Determines if a particular operator can be fused with other operators.
-    virtual bool isFusible(std::shared_ptr<PhysicalOperators::PhysicalOperator> physicalOperator) = 0;
+    /**
+     * @brief Determines if an particular operator can be fused with other operators.
+     * @param physicalOperator a particular physical operator.
+     * @return true if the operator is fusible
+     */
+    virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
+using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 }

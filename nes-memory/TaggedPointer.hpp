@@ -15,7 +15,7 @@
 #pragma once
 #include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
-    #error "TaggedPointer is x64, arm64 and ppc64 specific code."
+#    error "TaggedPointer is x64, arm64 and ppc64 specific code."
 #endif
 
 namespace NES

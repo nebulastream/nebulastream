@@ -14,7 +14,6 @@
 #pragma once
 
 #include <charconv>
-#include <concepts>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -29,11 +28,6 @@ namespace NES::Util
 /// Removes leading and trailing whitespaces from the input string_view.
 /// This does not modify the underlying data!
 [[nodiscard]] std::string_view trimWhiteSpaces(std::string_view input);
-[[nodiscard]] std::string_view trimCharsRight(std::string_view input, char c);
-
-/// Removes leading and trailing chars from the input string_view.
-/// This does not modify the underlying data!
-[[nodiscard]] std::string_view trimCharacters(std::string_view input, char c);
 
 
 /// From chars attempts to extract a T from string_view after removing surrounding whitespaces.
@@ -65,14 +59,6 @@ template <>
 std::optional<std::string_view> from_chars(std::string_view input);
 template <>
 std::optional<bool> from_chars(std::string_view input);
-
-/// Formats floating points similiar to flink:
-/// We preserve at least 1 digit and at most 6 digits after the decimal point
-/// 0.0 -> 0.0
-/// 1 -> 1.0
-/// 1.2342512342135 -> 1.234251
-/// 1.230000 -> 1.23
-std::string formatFloat(std::floating_point auto value);
 
 
 /// Replaces all occurrences of `search` within `origin` with `replace`. This function will allocate a new string and not

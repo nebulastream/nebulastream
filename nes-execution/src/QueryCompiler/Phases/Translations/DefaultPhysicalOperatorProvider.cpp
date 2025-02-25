@@ -14,22 +14,18 @@
 
 #include <algorithm>
 #include <memory>
-#include <utility>
-#include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -38,13 +34,11 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Operators/Operator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -52,12 +46,13 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
-#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -70,34 +65,33 @@
 namespace NES::QueryCompilation
 {
 
-DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig)
-    : PhysicalOperatorProvider(std::move(queryCompilerConfig))
+DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options)
+    : PhysicalOperatorProvider(std::move(options))
 {
 }
 
-bool DefaultPhysicalOperatorProvider::isDemultiplex(const std::shared_ptr<LogicalOperator>& operatorNode)
+bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& operatorNode)
 {
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode)
 {
-    const auto operatorOutputSchema = operatorNode->getOutputSchema();
+    auto operatorOutputSchema = operatorNode->getOutputSchema();
     /// A demultiplex operator has the same output schema as its child operator.
-    const auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
+    auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode)
 {
     /// the unionOperator operator has the same schema as the output schema of the operator node.
-    const auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getOutputSchema());
+    auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lower(
-    const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator> operatorNode)
+void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode)
 {
     if (isDemultiplex(operatorNode))
     {
@@ -117,10 +111,10 @@ void DefaultPhysicalOperatorProvider::lower(
         throw FunctionNotImplemented("DefaultPhysicalOperatorProvider: lowering of this Operator not supported");
     }
 
-    NES_DEBUG("DefaultPhysicalOperatorProvider:: Plan after lowering \n{}", decomposedQueryPlan.toString());
+    NES_DEBUG("DefaultPhysicalOperatorProvider:: Plan after lowering \n{}", decomposedQueryPlan->toString());
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPtr& operatorNode)
 {
     PRECONDITION(operatorNode->getParents().size() <= 1, "A unary operator should have at most one parent.");
 
@@ -132,11 +126,11 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
 
     if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
     {
-        const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
-        const auto physicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
+        auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
+        auto PhysicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
             filterOperator->getInputSchema(), filterOperator->getOutputSchema(), filterOperator->getPredicate());
-        physicalSelectionOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-        operatorNode->replace(physicalSelectionOperator);
+        PhysicalSelectionOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        operatorNode->replace(PhysicalSelectionOperator);
     }
     else if (NES::Util::instanceOf<WindowOperator>(operatorNode))
     {
@@ -150,14 +144,18 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         lowerMapOperator(operatorNode);
     }
+    else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
+    {
+        lowerInferModelOperator(operatorNode);
+    }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
         lowerProjectOperator(operatorNode);
     }
     else if (NES::Util::instanceOf<LogicalLimitOperator>(operatorNode))
     {
-        const auto limitOperator = NES::Util::as<LogicalLimitOperator>(operatorNode);
-        const auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
+        auto limitOperator = NES::Util::as<LogicalLimitOperator>(operatorNode);
+        auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
             limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
     }
@@ -167,7 +165,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode)
 {
     PRECONDITION(
         NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode),
@@ -183,41 +181,51 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const std::shared_ptr<
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnionOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPtr& operatorNode)
 {
-    const auto unionOperator = NES::Util::as<LogicalUnionOperator>(operatorNode);
+    auto unionOperator = NES::Util::as<LogicalUnionOperator>(operatorNode);
     /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
     PRECONDITION(
         *unionOperator->getLeftInputSchema() == *unionOperator->getRightInputSchema(),
         "The input schemas of a union operators children should be equal");
 
-    const auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
+    auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
     operatorNode->replace(physicalUnionOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerProjectOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperatorPtr& operatorNode)
 {
-    const auto projectOperator = NES::Util::as<LogicalProjectionOperator>(operatorNode);
-    const auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
+    auto projectOperator = NES::Util::as<LogicalProjectionOperator>(operatorNode);
+    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
         projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getFunctions());
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerInferModelOperator(LogicalOperatorPtr operatorNode)
 {
-    const auto mapOperator = NES::Util::as<LogicalMapOperator>(operatorNode);
-    const auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
+    auto inferModelOperator = NES::Util::as<InferModel::LogicalInferModelOperator>(operatorNode);
+    auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(
+        inferModelOperator->getInputSchema(),
+        inferModelOperator->getOutputSchema(),
+        inferModelOperator->getModel(),
+        inferModelOperator->getInputFields(),
+        inferModelOperator->getOutputFields());
+    operatorNode->replace(physicalInferModelOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr& operatorNode)
+{
+    auto mapOperator = NES::Util::as<LogicalMapOperator>(operatorNode);
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
         mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapFunction());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-    const std::shared_ptr<Schema>& outputSchema,
-    std::vector<std::shared_ptr<Operator>> children)
+    const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
@@ -236,14 +244,14 @@ std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOper
     return children[0];
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode)
 {
     using namespace Runtime::Execution::Operators;
 
-    const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
+    auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNames = [](const SchemaPtr& inputSchema, const NodeFunctionPtr& joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;
@@ -285,7 +293,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = queryCompilerConfig.joinStrategy;
+    const auto joinStrategy = options->joinStrategy;
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
@@ -294,21 +302,15 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
     switch (joinStrategy)
     {
-        case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
+        case StreamJoinStrategy::NESTED_LOOP_JOIN:
             joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
             break;
     }
 
-    auto createBuildOperator
-        = [&](const std::shared_ptr<Schema>& inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
+    auto createBuildOperator = [&](const SchemaPtr& inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
     {
         return std::make_shared<PhysicalOperators::PhysicalStreamJoinBuildOperator>(
-            inputSchema,
-            joinOperator->getOutputSchema(),
-            joinOperatorHandler,
-            queryCompilerConfig.joinStrategy,
-            timeStampField,
-            buildSideType);
+            inputSchema, joinOperator->getOutputSchema(), joinOperatorHandler, options->joinStrategy, timeStampField, buildSideType);
     };
     auto joinFunctionLowered = FunctionProvider::lowerFunction(joinOperator->getJoinFunction());
     const auto leftJoinBuildOperator
@@ -320,11 +322,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         joinOperator->getRightInputSchema(),
         joinOperator->getOutputSchema(),
         joinOperatorHandler,
-        queryCompilerConfig.joinStrategy,
+        options->joinStrategy,
         std::move(joinFunctionLowered),
         streamJoinConfig.joinFieldNamesLeft,
         streamJoinConfig.joinFieldNamesRight,
-        joinOperator->windowMetaData);
+        joinOperator->getWindowStartFieldName(),
+        joinOperator->getWindowEndFieldName());
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -332,21 +335,21 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 }
 
 std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
+    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig)
 {
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
-    leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
+        options->joinOptions.pageSize, joinOperator->getLeftInputSchema());
+    leftMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
-    rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
+        options->joinOptions.pageSize, joinOperator->getRightInputSchema());
+    rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",
-        leftMemoryProvider->getMemoryLayout()->getBufferSize(),
-        rightMemoryProvider->getMemoryLayout()->getBufferSize());
+        leftMemoryProvider->getMemoryLayoutPtr()->getBufferSize(),
+        rightMemoryProvider->getMemoryLayoutPtr()->getBufferSize());
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, 2);
@@ -359,7 +362,7 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+    const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType)
 {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -373,7 +376,7 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const std::shared_ptr<Schema>& schema)
+        auto findTimeStampFieldName = [&](const SchemaPtr& schema)
         {
             for (const auto& field : *schema)
             {
@@ -401,10 +404,10 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode)
 {
-    const auto logicalWatermarkAssignment = NES::Util::as<WatermarkAssignerLogicalOperator>(operatorNode);
-    const auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
+    auto logicalWatermarkAssignment = NES::Util::as<WatermarkAssignerLogicalOperator>(operatorNode);
+    auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),
         logicalWatermarkAssignment->getOutputSchema(),
         logicalWatermarkAssignment->getWatermarkStrategyDescriptor());
@@ -412,67 +415,63 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const std
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode)
 {
     NES_DEBUG("Create Thread local window aggregation");
-    const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
-    PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+    auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
+    PRECONDITION(!windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
 
-    const auto windowInputSchema = windowOperator->getInputSchema();
-    const auto windowOutputSchema = windowOperator->getOutputSchema();
-    const auto windowDefinition = windowOperator->getWindowDefinition();
+    auto windowInputSchema = windowOperator->getInputSchema();
+    auto windowOutputSchema = windowOperator->getOutputSchema();
+    auto windowDefinition = windowOperator->getWindowDefinition();
 
-    const auto timeBasedWindowType = NES::Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto timeBasedWindowType = NES::Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
 
     /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
+    auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
+    operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
-    /// For now, we always use the default time beased slice store
-    const auto numberOfInputOrigins = windowOperator->getInputOriginIds().size();
-    INVARIANT(numberOfInputOrigins == 1, "We expect exactly one input origin for a time based window operator");
-    std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
-        = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
-            timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
-    const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
-        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
-
-    const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
-    const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
-        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
-    operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
-    operatorNode->replace(aggregationProbe);
+    /// if we have a sliding window and use slicing we have to create another slice merge operator
+    if (NES::Util::instanceOf<Windowing::SlidingWindow>(timeBasedWindowType))
+    {
+        auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
+            getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
+        operatorNode->insertBetweenThisAndChildNodes(mergingOperator);
+    }
+    auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
+    operatorNode->replace(windowSink);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode)
 {
-    const auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
-    PRECONDITION(
-        not windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+    auto windowOperator = NES::Util::as<WindowOperator>(operatorNode);
+    PRECONDITION(windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
     PRECONDITION(NES::Util::instanceOf<LogicalWindowOperator>(operatorNode), "The operator should be a window operator.");
 
-    const auto windowInputSchema = windowOperator->getInputSchema();
-    const auto windowOutputSchema = windowOperator->getOutputSchema();
-    const auto windowDefinition = windowOperator->getWindowDefinition();
+    auto windowInputSchema = windowOperator->getInputSchema();
+    auto windowOutputSchema = windowOperator->getOutputSchema();
+    auto windowDefinition = windowOperator->getWindowDefinition();
     /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     /// handle if threshold window
     ///TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
-    const auto windowType = NES::Util::as<WindowOperator>(operatorNode)->getWindowDefinition()->getWindowType();
+    auto windowType = NES::Util::as<WindowOperator>(operatorNode)->getWindowDefinition()->getWindowType();
     if (NES::Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
-        const auto contentBasedWindowType = NES::Util::as<Windowing::ContentBasedWindowType>(windowType);
+        auto contentBasedWindowType = NES::Util::as<Windowing::ContentBasedWindowType>(windowType);
         /// check different content-based window types
         if (contentBasedWindowType->getContentBasedSubWindowType()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
             NES_INFO("Lower ThresholdWindow");
-            const auto thresholdWindowPhysicalOperator
+            auto thresholdWindowPhysicalOperator
                 = PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, windowDefinition);
             thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 

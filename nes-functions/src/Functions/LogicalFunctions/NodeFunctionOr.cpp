@@ -12,11 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Boolean.hpp>
@@ -32,14 +28,14 @@ NodeFunctionOr::NodeFunctionOr(NodeFunctionOr* other) : NodeFunctionLogicalBinar
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionOr::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionOr::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
 {
     auto orNode = std::make_shared<NodeFunctionOr>();
     orNode->setChildren(left, right);
     return orNode;
 }
 
-bool NodeFunctionOr::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionOr::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionOr>(rhs))
     {
@@ -58,7 +54,7 @@ std::string NodeFunctionOr::toString() const
     return ss.str();
 }
 
-void NodeFunctionOr::inferStamp(const Schema& schema)
+void NodeFunctionOr::inferStamp(SchemaPtr schema)
 {
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);
@@ -67,7 +63,7 @@ void NodeFunctionOr::inferStamp(const Schema& schema)
     INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionOr::deepCopy()
+NodeFunctionPtr NodeFunctionOr::deepCopy()
 {
     return NodeFunctionOr::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

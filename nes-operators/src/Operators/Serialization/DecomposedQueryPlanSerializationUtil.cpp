@@ -59,7 +59,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan.getQueryId().getRawValue());
 }
 
-std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
+DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
     const NES::SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
 {
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializableDecomposedQueryPlan->DebugString());
@@ -91,7 +91,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlanSerializationUtil::deser
     }
 
     ///set properties of the query plan
-    auto queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
+    QueryId queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, INVALID_WORKER_NODE_ID, rootOperators);
     return decomposedQueryPlan;

@@ -21,14 +21,12 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -51,13 +49,11 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
     return nljSlice->getSliceEnd();
 }
 
-NLJSlice*
-getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp timestamp, const Memory::AbstractBufferProvider* bufferProvider)
+NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp timestamp)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-    const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
+    const auto createFunction = opHandler->getCreateNewSlicesFunction();
     return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
 }
 
@@ -72,11 +68,9 @@ NLJBuild::NLJBuild(
 
 void NLJBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    WindowOperatorBuild::open(executionCtx, recordBuffer);
-
     auto opHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto sliceReference
-        = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs(), executionCtx.pipelineMemoryProvider.bufferProvider);
+
+    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs());
     auto sliceStart = invoke(getNLJSliceStartProxy, sliceReference);
     auto sliceEnd = invoke(getNLJSliceEndProxy, sliceReference);
     const auto pagedVectorReference = invoke(
@@ -97,11 +91,10 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Get the current join state that stores the slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
+    auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(
-        localJoinState->nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(localJoinState->nljPagedVectorMemRef, memoryProvider);
     pagedVectorRef.writeRecord(record);
 }
 
@@ -125,8 +118,7 @@ void NLJBuild::updateLocalJoinState(
     const ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& timestamp) const
 {
-    localJoinState->sliceReference
-        = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
+    localJoinState->sliceReference = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp);
     localJoinState->sliceStart = invoke(getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = invoke(getNLJSliceEndProxy, localJoinState->sliceReference);
     localJoinState->nljPagedVectorMemRef = invoke(

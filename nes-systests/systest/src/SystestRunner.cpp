@@ -13,25 +13,23 @@
 */
 
 #include <atomic>
-#include <cerrno>
 #include <cstddef>
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
 
-#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
@@ -42,9 +40,8 @@
 
 namespace NES::Systest
 {
-
 std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& workingDir, const std::string& testFileName)
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -55,7 +52,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     if (!parser.loadFile(testFilePath))
     {
-        throw TestException("Could not successfully load test file://{}", testFilePath.string());
+        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
+        return {};
     }
 
     /// We create a map from sink names to their schema
@@ -73,7 +71,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& [type, name] : source.fields)
                     {
-                        schema.emplace_back(name, type);
+                        schema.push_back({.name = name, .type = type});
                     }
                     return schema;
                 }()});
@@ -84,6 +82,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
+    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
@@ -94,35 +93,33 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 .schema = [&source]()
                 {
                     std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+                    for (const auto& field : source.fields)
                     {
-                        schema.emplace_back(name, type);
+                        schema.push_back({.name = field.name, .type = field.type});
                     }
                     return schema;
                 }()});
 
-            const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
 
-
+            /// Write the tuples to a tmp file
+            std::ofstream fileSource(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
+            if (!fileSource)
             {
-                std::ofstream testFile(sourceFile);
-                if (!testFile.is_open())
-                {
-                    throw TestException("Could not open source file \"{}\"", sourceFile);
-                }
-
-                for (const auto& tuple : source.tuples)
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
+                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
+                return;
             }
+            ++sourceIndex;
 
-            NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
+            /// Write tuples to csv file
+            for (const auto& tuple : source.tuples)
+            {
+                fileSource << tuple << '\n';
+            }
+            fileSource.flush();
         });
 
     /// We create a new query plan from our config when finding a query
@@ -148,7 +145,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             /// We expect at least one sink to be defined in the test file
             if (sinkNamesToSchema.empty())
             {
-                throw TestException("No sinks defined in test file: {}", testFileName);
+                NES_ERROR("No sinks defined in test file: {}", testFileName);
+                std::exit(1);
             }
 
             /// We have to get all sink names from the query and then create custom paths for each sink.
@@ -176,7 +174,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             }();
             if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
             {
-                throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
+                NES_ERROR("Failed to find sink name <{}>", sinkName);
+                std::exit(1);
             }
 
 
@@ -185,7 +184,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
-            const auto resultFile = Query::resultFile(workingDir, testFileName, currentQueryNumber);
+            const auto resultFile = Query::resultFile(resultDir, testFileName, currentQueryNumber);
             auto sinkCLI = CLI::Sink{
                 sinkForQuery,
                 "File",
@@ -193,18 +192,25 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
 
             config.query = query;
-            auto plan = createFullySpecifiedQueryPlan(config);
-            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
+            try
+            {
+                auto plan = createFullySpecifiedQueryPlan(config);
+                plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
+            }
+            catch (const std::exception& e)
+            {
+                NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
+                std::exit(1);
+            }
         });
     try
     {
         parser.parse();
     }
-    catch (Exception& exception)
+    catch (const Exception&)
     {
         tryLogCurrentException();
-        exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
-        throw exception;
+        return {};
     }
     return plans;
 }
@@ -319,7 +325,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
                     const auto queryId = client.registerQuery(*query.queryPlan);
                     client.start(queryId);
-                    const RunningQuery runningQuery = {query, QueryId(queryId)};
+                    RunningQuery const runningQuery = {query, QueryId(queryId)};
 
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.blockingWrite(std::move(runningQueryPtr));
@@ -330,7 +336,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
             cv.notify_all();
         });
 
-    while (not finishedProducing or runningQueryCount > 0)
+    while (not finishedProducing and runningQueryCount > 0)
     {
         std::shared_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);

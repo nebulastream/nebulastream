@@ -26,7 +26,7 @@ namespace NES::QueryCompilation
 class QueryCompilationRequest
 {
 public:
-    static std::shared_ptr<QueryCompilationRequest> create(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan, size_t bufferSize);
+    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize);
 
     /**
      * @brief Enable debugging for this query.
@@ -63,19 +63,20 @@ public:
 
     /**
      * @brief Gets the Decomposed query plan of this request
-     * @return std::shared_ptr<DecomposedQueryPlan>
+     * @return DecomposedQueryPlanPtr
      */
-    std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
+    DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
     [[nodiscard]] size_t getBufferSize() const;
     void setBufferSize(size_t bufferSize);
 
 private:
-    explicit QueryCompilationRequest(std::shared_ptr<DecomposedQueryPlan> queryPlan, size_t bufferSize);
-    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
+    explicit QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
+    DecomposedQueryPlanPtr decomposedQueryPlan;
     bool debug;
     bool optimize;
     bool dumpQueryPlans;
     size_t bufferSize; /// TODO #403: Use QueryCompiler Configuration instead
 };
+using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 }

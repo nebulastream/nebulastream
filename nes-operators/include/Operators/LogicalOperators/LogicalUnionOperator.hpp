@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 
 namespace NES
@@ -30,13 +28,13 @@ public:
     explicit LogicalUnionOperator(OperatorId id);
     ~LogicalUnionOperator() override = default;
 
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     void inferInputOrigins() override;
     void inferStringSignature() override;
     std::shared_ptr<Operator> copy() override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
 protected:
     std::string toString() const override;

@@ -12,12 +12,10 @@
     limitations under the License.
 */
 #include <fstream>
-#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
@@ -27,7 +25,6 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -35,14 +32,12 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
@@ -184,16 +179,16 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     return serializedOperator;
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
+LogicalUnaryOperatorPtr deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
 {
     const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
     return std::make_shared<LogicalSelectionOperator>(filterFunction, getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
+LogicalUnaryOperatorPtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
 {
     /// serialize and append children if the node has any
-    std::vector<std::shared_ptr<NodeFunction>> exps;
+    std::vector<NodeFunctionPtr> exps;
     for (const auto& serializedFunction : projectionDetails.function())
     {
         auto projectFunction = FunctionSerializationUtil::deserializeFunction(serializedFunction);
@@ -204,7 +199,7 @@ std::shared_ptr<LogicalUnaryOperator> deserializeProjectionOperator(const Serial
 }
 
 
-std::shared_ptr<Experimental::LogicalBatchJoinOperator>
+Experimental::LogicalBatchJoinOperatorPtr
 deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId)
 {
     const auto buildKeyAccessFunction
@@ -219,8 +214,7 @@ deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDe
 }
 
 
-void OperatorSerializationUtil::deserializeInputSchema(
-    const std::shared_ptr<LogicalOperator>& operatorNode, const SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorPtr operatorNode, const SerializableOperator& serializedOperator)
 {
     /// de-serialize operator input schema
     if (!NES::Util::instanceOf<BinaryOperator>(operatorNode))
@@ -236,7 +230,7 @@ void OperatorSerializationUtil::deserializeInputSchema(
     }
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
+LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
 {
     std::vector<std::shared_ptr<NodeFunction>> inputFields;
     std::vector<std::shared_ptr<NodeFunction>> outputFields;
@@ -261,7 +255,7 @@ std::shared_ptr<LogicalUnaryOperator> deserializeInferModelOperator(const Serial
         inferModelDetails.mlfilename(), inputFields, outputFields, getNextOperatorId());
 }
 
-std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
+Windowing::WatermarkStrategyDescriptorPtr
 deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
 {
     NES_TRACE("OperatorSerializationUtil:: de-serialize watermark strategy ");
@@ -295,30 +289,28 @@ deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrat
     }
 }
 
-std::shared_ptr<LogicalUnaryOperator>
-deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
+LogicalUnaryOperatorPtr deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
 {
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
 }
-std::shared_ptr<LogicalUnaryOperator> deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
+LogicalUnaryOperatorPtr deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
 {
     return std::make_shared<LogicalLimitOperator>(limitDetails.limit(), getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator> deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
+LogicalUnaryOperatorPtr deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
 {
     const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
     return std::make_shared<LogicalMapOperator>(NES::Util::as<NodeFunctionFieldAssignment>(fieldAssignmentFunction), getNextOperatorId());
 }
 
-std::shared_ptr<LogicalUnaryOperator>
-deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails, OperatorId operatorId)
+LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails, OperatorId operatorId)
 {
     const auto& serializedWindowAggregations = windowDetails.windowaggregations();
     const auto& serializedWindowType = windowDetails.windowtype();
 
-    std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> aggregation;
+    std::vector<Windowing::WindowAggregationDescriptorPtr> aggregation;
     for (const auto& serializedWindowAggregation : serializedWindowAggregations)
     {
         auto onField
@@ -356,7 +348,7 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         }
     }
 
-    std::shared_ptr<Windowing::WindowType> window;
+    Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>())
     {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
@@ -423,20 +415,17 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> keyAccessFunction;
+    std::vector<NodeFunctionFieldAccessPtr> keyAccessFunction;
     for (auto& key : windowDetails.keys())
     {
         keyAccessFunction.emplace_back(Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(key)));
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
     windowDef->setOriginId(OriginId(windowDetails.originid()));
-    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
-    windowOperator->windowMetaData.windowStartFieldName = windowDetails.windowstartfieldname();
-    windowOperator->windowMetaData.windowEndFieldName = windowDetails.windowendfieldname();
-    return windowOperator;
+    return std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
 }
 
-std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
+LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId)
 {
     const auto& serializedWindowType = joinDetails.windowtype();
     const auto& serializedJoinType = joinDetails.jointype();
@@ -449,7 +438,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
         joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     }
 
-    std::shared_ptr<Windowing::WindowType> window;
+    Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>())
     {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
@@ -509,14 +498,13 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
     }
 
     std::shared_ptr<LogicalOperator> ptr;
-    const auto& serializedJoinFunction = joinDetails.joinfunction();
+    const auto serializedJoinFunction = joinDetails.joinfunction();
     const auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
     const auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
     auto joinOperator = std::make_shared<LogicalJoinOperator>(joinDefinition, operatorId);
-    joinOperator->windowMetaData.windowStartFieldName = joinDetails.windowstartfieldname();
-    joinOperator->windowMetaData.windowEndFieldName = joinDetails.windowendfieldname();
+    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname());
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 }
@@ -524,8 +512,8 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
 std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: de-serialize {}", serializedOperator.DebugString());
-    const auto& details = serializedOperator.details();
-    std::shared_ptr<LogicalOperator> operatorNode;
+    auto details = serializedOperator.details();
+    LogicalOperatorPtr operatorNode;
     if (details.Is<SerializableOperator_SourceDescriptorLogicalOperator>())
     {
         /// de-serialize source operator
@@ -700,10 +688,10 @@ void OperatorSerializationUtil::serializeSourceOperator(
     serializedOperator.mutable_details()->PackFrom(sourceDetails);
 }
 
-std::shared_ptr<LogicalUnaryOperator>
+LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
-    const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
+    const auto serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
     const auto sourceId = sourceDetails.sourceoriginid();
     return std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceId));
@@ -713,15 +701,14 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkLogicalOperator();
-    const auto& sinkDescriptor = sinkOperator.getSinkDescriptorRef();
+    const auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
     serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, sinkDetails);
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
 
-std::shared_ptr<LogicalUnaryOperator>
-OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
+LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
-    const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
+    const auto serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
     auto sinkOperator = std::make_shared<SinkLogicalOperator>(getNextOperatorId());
     sinkOperator->sinkDescriptor = std::move(sinkDescriptor);
@@ -869,10 +856,6 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         }
     }
 
-    windowDetails.set_windowstartfieldname(windowOperator.windowMetaData.windowStartFieldName);
-    windowDetails.set_windowendfieldname(windowOperator.windowMetaData.windowEndFieldName);
-
-
     serializedOperator.mutable_details()->PackFrom(windowDetails);
 }
 
@@ -926,8 +909,8 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 
     joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
-    joinDetails.set_windowstartfieldname(joinOperator.windowMetaData.windowStartFieldName);
-    joinDetails.set_windowendfieldname(joinOperator.windowMetaData.windowEndFieldName);
+    joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
+    joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
     joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN)
@@ -1171,7 +1154,7 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
     }
 }
 
-std::shared_ptr<Windowing::WatermarkStrategyDescriptor> OperatorSerializationUtil::deserializeWatermarkStrategyDescriptor(
+Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserializeWatermarkStrategyDescriptor(
     const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
 {
     NES_TRACE("OperatorSerializationUtil:: de-serialize watermark strategy ");

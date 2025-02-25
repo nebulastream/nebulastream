@@ -16,20 +16,22 @@
 
 #include <string>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources
 {
 
-using SourceValidationRegistryReturnType = NES::Configurations::DescriptorConfig::Config;
+using SourceValidationRegistryReturnType = std::unique_ptr<Configurations::DescriptorConfig::Config>;
 struct SourceValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;
 };
 
-class SourceValidationRegistry final
-    : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
+using SourceValidationRegistrySignature
+    = RegistrySignature<std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>;
+class SourceValidationRegistry final : public BaseRegistry<SourceValidationRegistry, SourceValidationRegistrySignature>
 {
 };
 

@@ -25,9 +25,9 @@ namespace NES::Windowing
 {
 
 LogicalWindowDescriptor::LogicalWindowDescriptor(
-    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
-    std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
-    std::shared_ptr<WindowType> windowType)
+    const std::vector<NodeFunctionFieldAccessPtr>& keys,
+    std::vector<WindowAggregationDescriptorPtr> windowAggregation,
+    WindowTypePtr windowType)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys)
 {
     NES_TRACE("LogicalWindowDescriptor: create new window definition");
@@ -38,16 +38,16 @@ bool LogicalWindowDescriptor::isKeyed() const
     return !onKey.empty();
 }
 
-std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::create(
-    const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregations, const std::shared_ptr<WindowType>& windowType)
+LogicalWindowDescriptorPtr
+LogicalWindowDescriptor::create(const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType)
 {
     return create({}, windowAggregations, windowType);
 }
 
-std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::create(
-    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
-    const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation,
-    const std::shared_ptr<WindowType>& windowType)
+LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
+    const std::vector<NodeFunctionFieldAccessPtr>& keys,
+    std::vector<WindowAggregationDescriptorPtr> windowAggregation,
+    const WindowTypePtr& windowType)
 {
     return std::make_shared<LogicalWindowDescriptor>(keys, windowAggregation, windowType);
 }
@@ -56,41 +56,41 @@ uint64_t LogicalWindowDescriptor::getNumberOfInputEdges() const
 {
     return numberOfInputEdges;
 }
-void LogicalWindowDescriptor::setNumberOfInputEdges(const uint64_t numberOfInputEdges)
+void LogicalWindowDescriptor::setNumberOfInputEdges(uint64_t numberOfInputEdges)
 {
     this->numberOfInputEdges = numberOfInputEdges;
 }
-std::vector<std::shared_ptr<WindowAggregationDescriptor>> LogicalWindowDescriptor::getWindowAggregation() const
+std::vector<WindowAggregationDescriptorPtr> LogicalWindowDescriptor::getWindowAggregation() const
 {
     return windowAggregation;
 }
 
-std::shared_ptr<WindowType> LogicalWindowDescriptor::getWindowType() const
+WindowTypePtr LogicalWindowDescriptor::getWindowType() const
 {
     return windowType;
 }
 
-std::vector<std::shared_ptr<NodeFunctionFieldAccess>> LogicalWindowDescriptor::getKeys() const
+std::vector<NodeFunctionFieldAccessPtr> LogicalWindowDescriptor::getKeys() const
 {
     return onKey;
 }
 
-void LogicalWindowDescriptor::setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation)
+void LogicalWindowDescriptor::setWindowAggregation(const std::vector<WindowAggregationDescriptorPtr>& windowAggregation)
 {
     this->windowAggregation = windowAggregation;
 }
 
-void LogicalWindowDescriptor::setWindowType(std::shared_ptr<WindowType> windowType)
+void LogicalWindowDescriptor::setWindowType(WindowTypePtr windowType)
 {
     this->windowType = windowType;
 }
 
-void LogicalWindowDescriptor::setOnKey(const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKey)
+void LogicalWindowDescriptor::setOnKey(const std::vector<NodeFunctionFieldAccessPtr>& onKey)
 {
     this->onKey = onKey;
 }
 
-std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::copy() const
+LogicalWindowDescriptorPtr LogicalWindowDescriptor::copy() const
 {
     return create(onKey, windowAggregation, windowType);
 }
@@ -112,12 +112,12 @@ OriginId LogicalWindowDescriptor::getOriginId() const
 {
     return originId;
 }
-void LogicalWindowDescriptor::setOriginId(const OriginId originId)
+void LogicalWindowDescriptor::setOriginId(OriginId originId)
 {
     this->originId = originId;
 }
 
-bool LogicalWindowDescriptor::equal(const std::shared_ptr<LogicalWindowDescriptor>& otherWindowDefinition) const
+bool LogicalWindowDescriptor::equal(LogicalWindowDescriptorPtr otherWindowDefinition) const
 {
     if (this->isKeyed() != otherWindowDefinition->isKeyed())
     {

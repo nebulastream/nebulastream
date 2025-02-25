@@ -11,13 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cstdint>
-#include <memory>
-#include <utility>
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -25,27 +20,26 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
-    for (const auto& fieldSize : physicalFieldSizes)
+    for (auto& fieldSize : physicalFieldSizes)
     {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += fieldSize * capacity;
     }
 }
 
-ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-constructor-init)
-    : MemoryLayout(other), columnOffsets(other.columnOffsets)
+ColumnLayout::ColumnLayout(const ColumnLayout& other) : ColumnLayout(other.schema, other.bufferSize)
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
-uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
+uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
 {
     if (fieldIndex >= physicalFieldSizes.size())
     {
@@ -62,14 +56,13 @@ uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t 
             std::to_string(getCapacity()));
     }
 
-    const auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + getColumnOffset(fieldIndex);
+    auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     return fieldOffset;
 }
 
-uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
+const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
 {
-    PRECONDITION(fieldIndex < columnOffsets.size(), "Field index is out of bounds");
-    return columnOffsets[fieldIndex];
+    return columnOffsets;
 }
 
 std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const

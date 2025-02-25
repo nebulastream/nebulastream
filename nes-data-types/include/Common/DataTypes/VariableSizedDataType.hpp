@@ -13,7 +13,6 @@
 */
 #pragma once
 
-#include <memory>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -33,7 +32,7 @@ public:
      */
     bool operator==(const DataType& other) const override;
 
-    std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
+    DataTypePtr join(DataTypePtr otherDataType) override;
 
     std::string toString() override;
 };

@@ -14,9 +14,6 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES
 {
@@ -46,32 +43,33 @@ public:
     /// Constructor for a basic physical type.
     /// @param type the data type represented by this physical type
     /// @param nativeType the native type of the nes type.
-    BasicPhysicalType(std::shared_ptr<DataType> type, NativeType nativeType);
+    BasicPhysicalType(DataTypePtr type, NativeType nativeType);
 
     ~BasicPhysicalType() override = default;
 
     /// Factory function to create a new physical type.
     /// @param type
     /// @param nativeType
-    /// @return std::shared_ptr<PhysicalType>
-    static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type, NativeType nativeType);
+    /// @return PhysicalTypePtr
+    static PhysicalTypePtr create(const DataTypePtr& type, NativeType nativeType);
 
     /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t size() const override;
 
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
-    std::string convertRawToString(const void* rawData) const noexcept override;
+    std::string convertRawToString(void const* rawData) const noexcept override;
 
 
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
-    std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
     [[nodiscard]] std::string toString() const noexcept override;
 
-    NativeType nativeType;
+    NativeType const nativeType;
 };
 
+using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
 }

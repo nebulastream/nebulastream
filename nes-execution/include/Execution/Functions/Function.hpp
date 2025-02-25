@@ -12,9 +12,13 @@
     limitations under the License.
 */
 #pragma once
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+
+namespace NES::Nautilus
+{
+class Record;
+using RecordPtr = std::shared_ptr<Record>;
+}
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -23,7 +27,7 @@ class Function
 {
 public:
     Function() = default;
-    [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual VarVal execute(Record& record) const = 0;
     virtual ~Function() = default;
 };
 

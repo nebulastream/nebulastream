@@ -18,13 +18,12 @@
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 #include <Util/Execution.hpp>
@@ -37,34 +36,35 @@ class PhysicalStreamJoinProbeOperator : public PhysicalBinaryOperator, public Ab
 {
 public:
     PhysicalStreamJoinProbeOperator(
-        const std::shared_ptr<Schema>& leftSchema,
-        const std::shared_ptr<Schema>& rightSchema,
-        const std::shared_ptr<Schema>& outputSchema,
+        const SchemaPtr& leftSchema,
+        const SchemaPtr& rightSchema,
+        const SchemaPtr& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
-        Configurations::StreamJoinStrategy joinStrategy,
+        StreamJoinStrategy joinStrategy,
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
         const std::vector<std::string>& joinFieldNamesLeft,
         const std::vector<std::string>& joinFieldNamesRight,
-        WindowMetaData windowMetaData,
+        const std::string& windowStartFieldName,
+        const std::string& windowEndFieldName,
         OperatorId id = getNextOperatorId());
 
     /// Performs a deep copy of this physical operator
     std::shared_ptr<Operator> copy() override;
 
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
-    Configurations::StreamJoinStrategy getJoinStrategy() const;
+    StreamJoinStrategy getJoinStrategy() const;
     std::unique_ptr<Runtime::Execution::Functions::Function> getJoinFunction();
     std::vector<std::string> getJoinFieldNameLeft() const;
     std::vector<std::string> getJoinFieldNameRight() const;
     Runtime::Execution::JoinSchema getJoinSchema() const;
-    const WindowMetaData& getWindowMetaData() const;
+    const Runtime::Execution::WindowMetaData& getWindowMetaData() const;
 
 protected:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
-    Configurations::StreamJoinStrategy joinStrategy;
+    StreamJoinStrategy joinStrategy;
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
     std::vector<std::string> joinFieldNamesLeft;
     std::vector<std::string> joinFieldNamesRight;
-    WindowMetaData windowMetaData;
+    Runtime::Execution::WindowMetaData windowMetaData;
 };
 }

@@ -25,14 +25,10 @@
 namespace NES::Nautilus::Util
 {
 
-/// Get member returns the MemRef to a specific class member as an offset to a objectReference.
-/// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>
-/// This does not work with multiple inheritance, for example, https://godbolt.org/z/qzExEd
-template <typename T, typename U>
-nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::*member)
+template <typename T>
+void writeValueToMemRef(const nautilus::val<int8_t*>& memRef, nautilus::val<T> value)
 {
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
+    *static_cast<nautilus::val<T*>>(memRef) = value;
 }
 
 template <typename T>

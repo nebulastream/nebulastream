@@ -12,17 +12,9 @@
     limitations under the License.
 */
 
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
 #include <iostream>
-#include <memory>
-#include <ranges>
-#include <span>
-#include <sstream>
-#include <string>
-#include <string_view>
 #include <utility>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -30,47 +22,15 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
-#include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sinks
 {
 
-CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema, bool addTimestamp) : schema(std::move(pSchema)), addTimestamp(addTimestamp)
-{
-    PRECONDITION(schema->getFieldCount() != 0, "Formatter expected a non-empty schema");
-    const DefaultPhysicalTypeFactory factory;
-    size_t offset = 0;
-    for (const auto& f : *schema)
-    {
-        auto physicalType = factory.getPhysicalType(f->getDataType());
-        PRECONDITION(
-            Util::instanceOf<BasicPhysicalType>(physicalType) || Util::instanceOf<VariableSizedDataPhysicalType>(physicalType),
-            "Formatter can only handle basic and variable size physical types");
-
-        formattingContext.offsets.push_back(offset);
-        offset += physicalType->size();
-        if (auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
-        {
-            formattingContext.physicalTypes.emplace_back(std::move(basicType));
-        }
-        else
-        {
-            formattingContext.physicalTypes.emplace_back(std::dynamic_pointer_cast<VariableSizedDataPhysicalType>(physicalType));
-        }
-    }
-    formattingContext.schemaSizeInBytes = schema->getSchemaSizeInBytes();
-}
-
-CSVFormat::CSVFormat(std::shared_ptr<Schema> schema) : CSVFormat(std::move(schema), false)
+CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema(std::move(schema)), addTimestamp(addTimestamp)
 {
 }
 
@@ -83,6 +43,24 @@ std::string CSVFormat::getFormattedSchema() const
     return schema->toString("", ", ", "\n");
 }
 
+constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement)
+{
+    std::string result;
+    result.reserve(input.size());
+
+    for (const char c : input)
+    {
+        if (c == '\n')
+        {
+            result += replacement;
+        }
+        else
+        {
+            result += c;
+        }
+    }
+    return result;
+}
 
 std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
 {
@@ -91,43 +69,58 @@ std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer
     {
         auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
-        bufferContent = Util::replaceAll(bufferContent, "\n", fmt::format(",{}\n", timestamp));
+        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, schema);
+        std::string repReg = "," + std::to_string(timestamp) + "\n";
+        bufferContent = replaceNewlines(bufferContent, repReg);
         schema->addField("timestamp", BasicType::UINT64);
     }
     else
     {
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
+        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, schema);
     }
     return bufferContent;
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext)
+std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = std::span(tbuffer.getBuffer<char>(), numberOfTuples * formattingContext.schemaSizeInBytes);
-    for (size_t i = 0; i < numberOfTuples; i++)
+    auto* buffer = tbuffer.getBuffer<char>();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (uint64_t i = 0; i < numberOfTuples; i++)
     {
-        auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
-        auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
-            | std::views::transform(
-                          [&](const auto& index)
-                          {
-                              return std::visit(
-                                  Overloaded{
-                                      [&](const std::shared_ptr<VariableSizedDataPhysicalType>&)
-                                      {
-                                          auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
-                                          return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
-                                      },
-                                      [&](const std::shared_ptr<BasicPhysicalType>& type)
-                                      { return type->convertRawToString(&tuple[formattingContext.offsets[index]]); },
-                                  },
-                                  formattingContext.physicalTypes[index]);
-                          });
+        uint64_t offset = 0;
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
+        {
+            auto field = schema->getFieldByIndex(j);
+            auto dataType = field->getDataType();
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
+            auto fieldSize = physicalType->size();
+            std::string str;
+            auto indexInBuffer = buffer + offset + i * schema->getSchemaSizeInBytes();
 
-        ss << fmt::format("{}\n", fmt::join(fields, ","));
+            /// handle variable-length field
+            if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
+            {
+                NES_DEBUG("trying to read the variable length TEXT field: {} from the tuple buffer", field->toString());
+
+                /// read the child buffer index from the tuple buffer
+                auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+            }
+            else
+            {
+                str = physicalType->convertRawToString(indexInBuffer);
+            }
+
+            ss << str;
+            if (j < schema->getFieldCount() - 1)
+            {
+                ss << ",";
+            }
+            offset += fieldSize;
+        }
+        ss << std::endl;
     }
     return ss.str();
 }

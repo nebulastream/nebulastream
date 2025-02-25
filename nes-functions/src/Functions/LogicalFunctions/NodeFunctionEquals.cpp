@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <sstream>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -34,15 +31,14 @@ NodeFunctionEquals::NodeFunctionEquals(NodeFunctionEquals* other) : NodeFunction
 {
 }
 
-std::shared_ptr<NodeFunction>
-NodeFunctionEquals::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
+NodeFunctionPtr NodeFunctionEquals::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto equals = std::make_shared<NodeFunctionEquals>();
     equals->setChildren(left, right);
     return equals;
 }
 
-bool NodeFunctionEquals::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionEquals::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionEquals>(rhs))
     {
@@ -61,7 +57,7 @@ std::string NodeFunctionEquals::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionEquals::deepCopy()
+NodeFunctionPtr NodeFunctionEquals::deepCopy()
 {
     return NodeFunctionEquals::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }

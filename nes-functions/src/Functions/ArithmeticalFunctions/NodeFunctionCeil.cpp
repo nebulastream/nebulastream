@@ -12,12 +12,7 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
-#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -26,20 +21,20 @@
 namespace NES
 {
 
-NodeFunctionCeil::NodeFunctionCeil(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
+NodeFunctionCeil::NodeFunctionCeil(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
 
 NodeFunctionCeil::NodeFunctionCeil(NodeFunctionCeil* other) : NodeFunctionArithmeticalUnary(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionCeil::create(const std::shared_ptr<NodeFunction>& child)
+NodeFunctionPtr NodeFunctionCeil::create(NodeFunctionPtr const& child)
 {
     auto ceilNode = std::make_shared<NodeFunctionCeil>(child->getStamp());
     ceilNode->setChild(child);
     return ceilNode;
 }
 
-bool NodeFunctionCeil::equal(const std::shared_ptr<Node>& rhs) const
+bool NodeFunctionCeil::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionCeil>(rhs))
     {
@@ -56,7 +51,7 @@ std::string NodeFunctionCeil::toString() const
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionCeil::deepCopy()
+NodeFunctionPtr NodeFunctionCeil::deepCopy()
 {
     return NodeFunctionCeil::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }

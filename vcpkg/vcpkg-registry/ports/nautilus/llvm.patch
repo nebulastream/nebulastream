@@ -1,0 +1,59 @@
+Subject: [PATCH] WIP:  Cache executable
+---
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.hpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.hpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.hpp	(revision a9224f555adae797ac64f5f0d8fabe8d423319ac)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.hpp	(date 1734430131793)
+@@ -11,6 +11,11 @@
+ class MLIRExecutable : public Executable {
+ public:
+ 	MLIRExecutable(std::unique_ptr<::mlir::ExecutionEngine> engine);
++	~MLIRExecutable() override;
++	MLIRExecutable(const MLIRExecutable& other) = delete;
++	MLIRExecutable(MLIRExecutable&& other) noexcept;
++	MLIRExecutable& operator=(const MLIRExecutable& other) = delete;
++	MLIRExecutable& operator=(MLIRExecutable&& other) noexcept;
+
+ protected:
+ 	void* getInvocableFunctionPtr(const std::string& member) override;
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp	(revision a9224f555adae797ac64f5f0d8fabe8d423319ac)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp	(date 1734430217070)
+@@ -6,10 +6,27 @@
+ #include <mlir/IR/MLIRContext.h>
+
+ namespace nautilus::compiler::mlir {
++static std::mutex llvm_jit_mutex {};
++
+ MLIRExecutable::MLIRExecutable(std::unique_ptr<::mlir::ExecutionEngine> engine) : engine(std::move(engine)) {
+ }
+-
++MLIRExecutable::~MLIRExecutable() {
++	if (engine) {
++		std::scoped_lock lock(llvm_jit_mutex);
++		engine.reset();
++	}
++}
++MLIRExecutable::MLIRExecutable(MLIRExecutable&& other) noexcept
++    : engine(std::move(other.engine)) {
++}
++MLIRExecutable& MLIRExecutable::operator=(MLIRExecutable&& other) noexcept {
++	if (this == &other)
++		return *this;
++	engine = std::move(other.engine);
++	return *this;
++}
+ void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) {
++	std::scoped_lock lock(llvm_jit_mutex);
+ 	return engine->lookup(member).get();
+ }
+ bool MLIRExecutable::hasInvocableFunctionPtr() {

@@ -14,9 +14,7 @@
 
 #pragma once
 
-#include <memory>
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -28,9 +26,9 @@ class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 public:
     /// Creates a column memory provider based on a valid column memory layout pointer.
     ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() override = default;
+    ~ColumnTupleBufferMemoryProvider() = default;
 
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
+    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -43,8 +41,7 @@ private:
     nautilus::val<int8_t*>
     calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
 
-    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
-    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayout;
+    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
 };
 
 }

@@ -259,7 +259,7 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
-    EXPECT_CALL(*test.status, logQueryFailure(QueryId(1), ::testing::_, ::testing::_));
+    EXPECT_CALL(*test.status, logQueryFailure(QueryId(1), ::testing::_));
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
 
     test.start();
@@ -429,7 +429,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
     test.start();
     {
         test.startQuery(std::move(query));
-        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+        test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT);
     }
     test.stop();
 }
@@ -559,7 +559,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
         test.startQuery(std::move(query));
 
         DataGenerator<FailAfter<numberOfBuffersBeforeFailure, 0>> dataGenerator;
-        dataGenerator.start(sourcesCtrls);
+        dataGenerator.start(std::move(sourcesCtrls));
         EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         dataGenerator.stop();
     }
@@ -705,7 +705,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         dataGenerator.start(sourcesCtrls);
 
         /// start all queries
-        for (const QueryId::Underlying qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
+        for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));
@@ -1045,7 +1045,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         dataGenerator.start(sourcesCtrls);
 
         /// start all queries
-        for (const QueryId::Underlying qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
+        for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));

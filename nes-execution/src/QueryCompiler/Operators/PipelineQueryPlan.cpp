@@ -12,10 +12,7 @@
     limitations under the License.
 */
 #include <algorithm>
-#include <iterator>
-#include <memory>
 #include <sstream>
-#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -23,46 +20,48 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<PipelineQueryPlan> PipelineQueryPlan::create(QueryId queryId)
+PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId)
 {
     return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId));
 }
 
 PipelineQueryPlan::PipelineQueryPlan(QueryId queryId) : queryId(queryId) {};
 
-void PipelineQueryPlan::addPipeline(const std::shared_ptr<OperatorPipeline>& pipeline)
+void PipelineQueryPlan::addPipeline(const OperatorPipelinePtr& pipeline)
 {
     pipelines.emplace_back(pipeline);
 }
 
-void PipelineQueryPlan::removePipeline(const std::shared_ptr<OperatorPipeline>& pipeline)
+void PipelineQueryPlan::removePipeline(const OperatorPipelinePtr& pipeline)
 {
     pipeline->clearPredecessors();
     pipeline->clearSuccessors();
-    std::erase(pipelines, pipeline);
+    pipelines.erase(std::remove(pipelines.begin(), pipelines.end(), pipeline), pipelines.end());
 }
 
-std::vector<std::shared_ptr<OperatorPipeline>> PipelineQueryPlan::getSinkPipelines() const
+std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSinkPipelines() const
 {
-    std::vector<std::shared_ptr<OperatorPipeline>> sinks;
-    std::ranges::copy_if(
-        pipelines,
+    std::vector<OperatorPipelinePtr> sinks;
+    std::copy_if(
+        pipelines.begin(),
+        pipelines.end(),
         std::back_inserter(sinks),
-        [](const std::shared_ptr<OperatorPipeline>& pipeline) { return pipeline->getSuccessors().empty(); });
+        [](const OperatorPipelinePtr& pipeline) { return pipeline->getSuccessors().empty(); });
     return sinks;
 }
 
-std::vector<std::shared_ptr<OperatorPipeline>> PipelineQueryPlan::getSourcePipelines() const
+std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const
 {
-    std::vector<std::shared_ptr<OperatorPipeline>> sources;
-    std::ranges::copy_if(
-        pipelines,
+    std::vector<OperatorPipelinePtr> sources;
+    std::copy_if(
+        pipelines.begin(),
+        pipelines.end(),
         std::back_inserter(sources),
-        [](const std::shared_ptr<OperatorPipeline>& pipeline) { return pipeline->getPredecessors().empty(); });
+        [](const OperatorPipelinePtr& pipeline) { return pipeline->getPredecessors().empty(); });
     return sources;
 }
 
-const std::vector<std::shared_ptr<OperatorPipeline>>& PipelineQueryPlan::getPipelines() const
+std::vector<OperatorPipelinePtr> const& PipelineQueryPlan::getPipelines() const
 {
     return pipelines;
 }

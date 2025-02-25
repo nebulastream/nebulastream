@@ -15,8 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 
@@ -29,26 +27,27 @@ namespace NES::Experimental
 class LogicalBatchJoinOperator : public LogicalBinaryOperator
 {
 public:
-    explicit LogicalBatchJoinOperator(std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> batchJoinDefinition, OperatorId id);
+    explicit LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition, OperatorId id);
     ~LogicalBatchJoinOperator() override = default;
 
     /**
     * @brief get join definition.
     * @return LogicalJoinDescriptor
     */
-    std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> getBatchJoinDefinition() const;
+    Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> batchJoinDefinition;
+    Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
+using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
 }

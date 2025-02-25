@@ -14,15 +14,13 @@
 
 #pragma once
 
-#include <chrono>
-#include <ostream>
-#include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+#include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Runtime
 {
@@ -40,11 +38,10 @@ struct QuerySummary
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
 struct QueryStatusChange
 {
-    QueryStatusChange(Execution::QueryStatus state, std::chrono::system_clock::time_point timestamp)
-        : state(state), timestamp(timestamp) {};
+    QueryStatusChange(Execution::QueryStatus state) : state(state), timestamp(std::chrono::system_clock::now()) {};
 
-    QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp)
-        : state(Execution::QueryStatus::Failed), timestamp(timestamp), exception(exception) {};
+    QueryStatusChange(const Exception& exception)
+        : state(Execution::QueryStatus::Failed), timestamp(std::chrono::system_clock::now()), exception(exception) {};
 
     friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 
@@ -62,10 +59,9 @@ struct QueryLog : AbstractQueryStatusListener
     using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStatusChange>>;
 
     /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
-    bool logSourceTermination(
-        QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, Execution::QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
+    bool logSourceTermination(QueryId queryId, OriginId sourceId, QueryTerminationType) override;
+    bool logQueryFailure(QueryId queryId, Exception exception) override;
+    bool logQueryStatusChange(QueryId queryId, Execution::QueryStatus Status) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId);
     [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId);

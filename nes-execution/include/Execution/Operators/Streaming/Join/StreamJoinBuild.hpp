@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Util/Execution.hpp>
@@ -26,7 +25,7 @@ namespace NES::Runtime::Execution::Operators
 {
 /// This class is the first phase of the stream join. The actual implementation is not part of this class
 /// It only takes care of the close() and terminate() functionality as these are universal
-class StreamJoinBuild : public WindowOperatorBuild
+class StreamJoinBuild : public ExecutableOperator
 {
 public:
     StreamJoinBuild(
@@ -35,8 +34,16 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
+    /// Passes emits slices that are ready to the second join phase (NLJProbe) for further processing
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+    /// Emits/Flushes all slices and windows, as the query will be terminated
+    void terminate(ExecutionContext& executionCtx) const override;
+
 protected:
+    const uint64_t operatorHandlerIndex;
     const QueryCompilation::JoinBuildSideType joinBuildSide;
+    const std::unique_ptr<TimeFunction> timeFunction;
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 

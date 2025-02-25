@@ -14,17 +14,20 @@
 
 #pragma once
 
-#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
 
 namespace NES
 {
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 namespace Windowing
 {
 
+class TimeCharacteristic;
+using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
@@ -42,14 +45,14 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
+    TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
     /**
      * @brief Factory to create a time characteristic for ingestion time window
      * @param unit the time unit of the ingestion time
-     * @return std::shared_ptr<TimeCharacteristic>
+     * @return TimeCharacteristicPtr
      */
-    static std::shared_ptr<TimeCharacteristic> createIngestionTime();
+    static TimeCharacteristicPtr createIngestionTime();
 
     /**
      * @brief Factory to create a event time window with an time extractor on a specific field.
@@ -57,8 +60,7 @@ public:
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<NodeFunction>& field, const TimeUnit& unit);
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<NodeFunction>& field);
+    static TimeCharacteristicPtr createEventTime(NodeFunctionPtr field, const TimeUnit& unit = TimeUnit(1));
 
     /**
      * @return The TimeCharacteristic type.
@@ -68,13 +70,13 @@ public:
     /**
      * @return  If it is a event time window this returns the field, from which we extract the time stamp.
      */
-    [[nodiscard]] std::shared_ptr<AttributeField> getField() const;
+    AttributeFieldPtr getField() const;
 
     /**
      * @brief Set the field from which we extract the time stamp.
      * @param field for extracting the time stamp
      */
-    void setField(std::shared_ptr<AttributeField> field);
+    void setField(AttributeFieldPtr field);
 
     /**
      * @brief Compares for equality
@@ -93,7 +95,7 @@ public:
 
 private:
     Type type;
-    std::shared_ptr<AttributeField> field;
+    AttributeFieldPtr field;
     TimeUnit unit;
 };
 }

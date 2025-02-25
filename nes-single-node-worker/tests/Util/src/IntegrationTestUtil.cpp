@@ -35,11 +35,9 @@
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::IntegrationTestUtil
@@ -47,7 +45,7 @@ namespace NES::IntegrationTestUtil
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const SchemaPtr& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -65,9 +63,9 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](const std::shared_ptr<Schema>& schema)
+    auto getPhysicalTypes = [](const SchemaPtr& schema)
     {
-        std::vector<std::shared_ptr<PhysicalType>> retVector;
+        std::vector<PhysicalTypePtr> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& field : *schema)
         {
@@ -134,7 +132,7 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const SchemaPtr& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
@@ -170,6 +168,7 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
+                    auto value = static_cast<uint16_t>(std::stoul(inputString));
                     tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
                     break;
                 }
@@ -230,7 +229,7 @@ void writeFieldValueToTupleBuffer(
     }
 }
 
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);

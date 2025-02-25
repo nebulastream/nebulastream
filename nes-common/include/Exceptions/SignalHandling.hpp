@@ -15,10 +15,10 @@
 #include <exception>
 #include <memory>
 #include <string>
-#include <Exceptions/ErrorListener.hpp>
 
 namespace NES::Exceptions
 {
+class ErrorListener;
 
 /**
  * @brief calls to this function will pass the signal to all system-wide error listeners
@@ -45,7 +45,7 @@ namespace NES::Exceptions
  * @brief make an error listener system-wide
  * @param listener the error listener to make system-wide
  */
-void installGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
+void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
 
 /**
  * @brief remove an error listener system-wide

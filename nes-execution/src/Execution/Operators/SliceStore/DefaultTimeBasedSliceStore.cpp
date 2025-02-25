@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -28,7 +27,6 @@
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
 #include <folly/Synchronized.h>
-#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -75,9 +73,7 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(co
     const auto windowSize = sliceAssigner.getWindowSize();
     const auto windowSlide = sliceAssigner.getWindowSlide();
 
-    /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
-    /// In our window model, a window is always the size of the window size.
-    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
+    const auto firstWindowEnd = sliceEnd;
     const auto lastWindowEnd = sliceStart + windowSize;
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
@@ -107,9 +103,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     }
 
     /// We assume that only one slice is created per timestamp
-    const auto newSlices = createNewSlice(sliceStart, sliceEnd);
-    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our default time-based slice store.");
-    auto newSlice = newSlices[0];
+    auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
@@ -226,7 +220,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    const std::vector<SliceEnd> slicesToDelete;
+    std::vector<SliceEnd> const slicesToDelete;
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;

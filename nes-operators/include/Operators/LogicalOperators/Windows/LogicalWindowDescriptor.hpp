@@ -14,9 +14,7 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -31,17 +29,17 @@ class LogicalWindowDescriptor
 {
 public:
     explicit LogicalWindowDescriptor(
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
-        std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
-        std::shared_ptr<WindowType> windowType);
+        const std::vector<NodeFunctionFieldAccessPtr>& keys,
+        std::vector<WindowAggregationDescriptorPtr> windowAggregation,
+        WindowTypePtr windowType);
+
+    static std::shared_ptr<LogicalWindowDescriptor>
+    create(const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType);
 
     static std::shared_ptr<LogicalWindowDescriptor> create(
-        const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregations, const std::shared_ptr<WindowType>& windowType);
-
-    static std::shared_ptr<LogicalWindowDescriptor> create(
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
-        const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation,
-        const std::shared_ptr<WindowType>& windowType);
+        const std::vector<NodeFunctionFieldAccessPtr>& keys,
+        std::vector<WindowAggregationDescriptorPtr> windowAggregation,
+        const WindowTypePtr& windowType);
 
     /**
      * @brief Returns true if this window is keyed.
@@ -64,27 +62,36 @@ public:
      * @brief Getter for the aggregation functions.
      * @return Vector of WindowAggregations.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationDescriptor>> getWindowAggregation() const;
+    std::vector<WindowAggregationDescriptorPtr> getWindowAggregation() const;
 
     /**
      * @brief Sets the list of window aggregations.
      * @param windowAggregation
      */
-    void setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation);
+    void setWindowAggregation(const std::vector<WindowAggregationDescriptorPtr>& windowAggregation);
 
     /**
      * @brief Getter for the window type.
      */
-    [[nodiscard]] std::shared_ptr<WindowType> getWindowType() const;
+    WindowTypePtr getWindowType() const;
 
     /**
      * @brief Setter of the window type.
      * @param windowType
      */
-    void setWindowType(std::shared_ptr<WindowType> windowType);
+    void setWindowType(WindowTypePtr windowType);
 
-    [[nodiscard]] std::vector<std::shared_ptr<NodeFunctionFieldAccess>> getKeys() const;
-    void setOnKey(const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys);
+    /**
+     * @brief Getter for the key attributes.
+     * @return Vector of key attributes.
+     */
+    std::vector<NodeFunctionFieldAccessPtr> getKeys() const;
+
+    /**
+     * @brief Setter for the keys.
+     * @param keys
+     */
+    void setOnKey(const std::vector<NodeFunctionFieldAccessPtr>& keys);
 
     /**
      * @brief Getter for the allowed lateness. The allowed lateness defines,
@@ -123,16 +130,17 @@ public:
      * @param otherWindowDefinition: The other window definition
      * @return true if they are equal else false
      */
-    [[nodiscard]] bool equal(const std::shared_ptr<LogicalWindowDescriptor>& otherWindowDefinition) const;
+    bool equal(std::shared_ptr<LogicalWindowDescriptor> otherWindowDefinition) const;
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
 private:
-    std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation;
-    std::shared_ptr<WindowType> windowType;
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> onKey;
+    std::vector<WindowAggregationDescriptorPtr> windowAggregation;
+    WindowTypePtr windowType;
+    std::vector<NodeFunctionFieldAccessPtr> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
 };
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 }

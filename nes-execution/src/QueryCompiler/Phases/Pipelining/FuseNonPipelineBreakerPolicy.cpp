@@ -11,33 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
-#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<OperatorFusionPolicy> FuseNonPipelineBreakerPolicy::create()
+OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create()
 {
     return std::make_shared<FuseNonPipelineBreakerPolicy>();
 }
 
-bool FuseNonPipelineBreakerPolicy::isFusible(std::shared_ptr<PhysicalOperators::PhysicalOperator> physicalOperator)
+bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator)
 {
     return (
         NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalSelectionOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(physicalOperator)
-        || NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(physicalOperator)
-        || NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationBuild>(physicalOperator));
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator));
 }
 }

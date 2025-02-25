@@ -14,11 +14,8 @@
 
 #pragma once
 
-#include <memory>
-#include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
 
 namespace NES::Windowing
 {
@@ -37,7 +34,7 @@ public:
     * @param size
     * @return WindowTypePtr
     */
-    static std::shared_ptr<WindowType> of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size);
+    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
 
     /**
     * @brief return size of the window
@@ -49,12 +46,12 @@ public:
 
     std::string toString() const override;
 
-    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
+    bool equal(WindowTypePtr otherWindowType) override;
 
     uint64_t hash() const override;
 
 private:
-    TumblingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 

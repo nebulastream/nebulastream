@@ -13,10 +13,7 @@
 */
 
 #pragma once
-#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -31,9 +28,9 @@ public:
     /**
     * @brief Create a new greater then function
     */
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionGreaterEquals(NodeFunctionGreaterEquals* other);

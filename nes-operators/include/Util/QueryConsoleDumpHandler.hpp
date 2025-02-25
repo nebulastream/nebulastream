@@ -14,15 +14,16 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
-#include <string>
-#include <Nodes/Node.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES
 {
 
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class Node;
+using NodePtr = std::shared_ptr<Node>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
@@ -35,12 +36,12 @@ public:
     /**
     * Dump the specific node and its children.
     */
-    void dump(const std::shared_ptr<Node>& node);
+    void dump(NodePtr node);
 
     /**
     * Dump the specific node and its children with details in multiple lines.
     */
-    void multilineDump(const std::shared_ptr<Node>& node);
+    void multilineDump(NodePtr const& node);
 
     /**
      * @brief Dump a query plan with a specific context and scope.
@@ -48,12 +49,12 @@ public:
      * @param scope the scope
      * @param plan the query plan
      */
-    void dump(const std::string& context, const std::string& scope, const std::shared_ptr<QueryPlan>& plan);
+    void dump(std::string context, std::string scope, QueryPlanPtr plan);
 
 private:
     std::ostream& out;
-    void dumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
 }

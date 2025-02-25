@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <utility>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <Types/WindowType.hpp>
 
 namespace NES::Parsers
 {
@@ -24,14 +22,15 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getWhereClauses() const
+const std::list<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getWhereClauses() const
 {
     return this->whereClauses;
 }
-const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHavingClauses() const
+const std::list<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHavingClauses() const
 {
     return this->havingClauses;
 }
+
 const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getProjectionFields() const
 {
     return this->projectionFields;
@@ -42,28 +41,30 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
-void AntlrSQLHelper::addWhereClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addWhereClause(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
-    this->whereClauses.emplace_back(expressionNode);
+    auto pos = this->whereClauses.begin();
+    this->whereClauses.insert(pos, expressionNode);
 }
-void AntlrSQLHelper::addHavingClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addHavingClause(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
-    this->havingClauses.emplace_back(expressionNode);
+    auto pos = this->havingClauses.begin();
+    this->havingClauses.insert(pos, expressionNode);
 }
-void AntlrSQLHelper::addProjectionField(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addProjectionField(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
     this->projectionFields.push_back(expressionNode);
 }
 
-std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
+const NES::Windowing::WindowTypePtr AntlrSQLHelper::getWindowType() const
 {
-    return {};
+    return NES::Windowing::WindowTypePtr();
 }
 
 void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssignment> expressionNode)
 {
     auto pos = this->mapBuilder.begin();
-    this->mapBuilder.insert(pos, std::move(expressionNode));
+    this->mapBuilder.insert(pos, expressionNode);
 }
 std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> AntlrSQLHelper::getMapExpressions() const
 {

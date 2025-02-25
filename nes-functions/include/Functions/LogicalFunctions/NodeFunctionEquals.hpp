@@ -13,10 +13,7 @@
 */
 
 #pragma once
-#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -31,15 +28,15 @@ public:
     /**
     * @brief Create a new equals function
     */
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
     /**
     * @brief Create a deep copy of this function node.
-    * @return std::shared_ptr<NodeFunction>
+    * @return NodeFunctionPtr
     */
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionEquals(NodeFunctionEquals* other);

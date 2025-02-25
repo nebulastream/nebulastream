@@ -118,3 +118,9 @@ target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
         MLIRFuncToLLVM
         MLIRSCFToControlFlow
 )
+
+#Add the nes nautilus and headers to cpack
+install(TARGETS nes-nautilus
+        EXPORT NebulaStreamTargets
+        COMPONENT nesLibrary
+        DESTINATION lib)

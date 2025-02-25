@@ -23,54 +23,54 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation
 {
+class FunctionProvider;
 
 /// This phase lowers a pipeline plan of physical operators into a pipeline plan of nautilus operators.
 /// The lowering of individual operators is defined by the nautilus operator provider to improve extendability.
 class LowerPhysicalToNautilusOperators : std::enable_shared_from_this<LowerPhysicalToNautilusOperators>
 {
 public:
-    explicit LowerPhysicalToNautilusOperators(Configurations::QueryCompilerConfiguration queryCompilerConfig);
+    explicit LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options);
     ~LowerPhysicalToNautilusOperators();
 
     /// Applies the phase on a pipelined query plan.
-    std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> pipelinedQueryPlan, size_t bufferSize);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
     /// Applies the phase on a pipelined and lower physical operator to generatable once.
-    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline, size_t bufferSize) const;
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
-        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+        std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
+        const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
         size_t bufferSize,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers) const;
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    static std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
-        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
         size_t bufferSize,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers);
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFilter(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
+    lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
-    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerMap(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
-    Configurations::QueryCompilerConfiguration queryCompilerConfig;
+    std::shared_ptr<QueryCompilerOptions> options;
     std::unique_ptr<FunctionProvider> functionProvider;
 };
 }

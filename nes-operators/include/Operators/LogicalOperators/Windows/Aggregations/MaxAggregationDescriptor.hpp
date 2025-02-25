@@ -14,12 +14,7 @@
 
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES::Windowing
 {
 
@@ -33,23 +28,27 @@ public:
     /**
      * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
      */
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
-    static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
+    DataTypePtr getInputStamp() override;
+    DataTypePtr getPartialAggregateStamp() override;
+    DataTypePtr getFinalAggregateStamp() override;
 
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
+    void inferStamp(SchemaPtr schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> copy() override;
-    MaxAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    WindowAggregationDescriptorPtr copy() override;
+    MaxAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 
     virtual ~MaxAggregationDescriptor() = default;
 
 private:
-    explicit MaxAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
+    explicit MaxAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
 };
 }

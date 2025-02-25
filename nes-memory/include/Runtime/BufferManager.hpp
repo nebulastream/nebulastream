@@ -31,6 +31,11 @@
 namespace NES::Memory
 {
 
+class TupleBuffer;
+namespace detail
+{
+class MemorySegment;
+}
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
@@ -153,6 +158,13 @@ public:
     size_t getAvailableBuffersInFixedSizePools() const;
 
     /**
+     * @brief Create a local buffer manager that is assigned to one pipeline or thread
+     * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
+     * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+     */
+    std::optional<std::shared_ptr<AbstractBufferProvider>> createLocalBufferPool(size_t numberOfReservedBuffers) override;
+
+    /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
       * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
       * @return a fixed buffer manager with numberOfReservedBuffers exclusive buffer
@@ -194,18 +206,12 @@ private:
     uint8_t* basePointer{nullptr};
     size_t allocatedAreaSize;
 
-
-    /// A BufferManager may create smaller localBufferPools.
-    /// However, it should not directly own the local buffer pools, but instead leave the ownership to what ever component uses
-    /// the localBufferPool. The BufferManager does require a reference to the localBufferPools to destroy them once the
-    /// BufferManager is destroyed. Destroying the BufferManager potentially creates destroyed local buffer pools which are
-    /// safe to access, but will no longer be able to allocate buffers.
-    std::vector<std::weak_ptr<AbstractBufferProvider>> localBufferPools;
     mutable std::recursive_mutex localBufferPoolsMutex;
-
+    std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
 };
 
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 }

@@ -16,9 +16,7 @@
 
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
@@ -29,18 +27,18 @@ class NodeFunctionConstantValue : public NodeFunction
 {
 public:
     ///Factory method to create a NodeFunctionConstantValue.
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<DataType>& type, std::string value);
+    static NodeFunctionPtr create(const std::shared_ptr<DataType>& type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
     std::string getConstantValue() const;
 
     /// On a constant value function infer stamp has not to perform any action as its result type is always constant.
     /// @param schema
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
-    bool equal(const std::shared_ptr<Node>& rhs) const override;
+    bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
@@ -52,4 +50,5 @@ private:
     /// Value of this function
     std::string constantValue;
 };
+using NodeFunctionConstantValuePtr = std::shared_ptr<NodeFunctionConstantValue>;
 }

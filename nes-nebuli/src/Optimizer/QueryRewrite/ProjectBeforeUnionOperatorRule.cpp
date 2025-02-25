@@ -11,11 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
-#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -28,12 +25,12 @@
 namespace NES::Optimizer
 {
 
-std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRule::create()
+ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create()
 {
     return std::make_shared<ProjectBeforeUnionOperatorRule>(ProjectBeforeUnionOperatorRule());
 }
 
-std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
 {
     NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
     auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
@@ -63,17 +60,17 @@ std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr
     return queryPlan;
 }
 
-std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjectOperator(
-    const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema)
+LogicalOperatorPtr
+ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema)
 {
     NES_TRACE(
         "Computing Projection operator for Source Schema{} and Destination schema {}",
         sourceSchema->toString(),
         destinationSchema->toString());
     /// Fetch source and destination schema fields
-    const auto& sourceFields = sourceSchema;
-    const auto& destinationFields = destinationSchema;
-    std::vector<std::shared_ptr<NodeFunction>> projectFunctions;
+    auto sourceFields = sourceSchema;
+    auto destinationFields = destinationSchema;
+    std::vector<NodeFunctionPtr> projectFunctions;
     /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
     {

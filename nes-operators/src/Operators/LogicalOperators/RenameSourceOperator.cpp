@@ -15,8 +15,6 @@
 #include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,16 +28,16 @@ RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, Ope
 {
 }
 
-bool RenameSourceOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool RenameSourceOperator::isIdentical(NodePtr const& rhs) const
 {
     return equal(rhs) && NES::Util::as<RenameSourceOperator>(rhs)->getId() == id;
 }
 
-bool RenameSourceOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool RenameSourceOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<RenameSourceOperator>(rhs))
     {
-        const auto otherRename = NES::Util::as<RenameSourceOperator>(rhs);
+        auto otherRename = NES::Util::as<RenameSourceOperator>(rhs);
         return newSourceName == otherRename->newSourceName;
     }
     return false;
@@ -59,7 +57,7 @@ bool RenameSourceOperator::inferSchema()
         return false;
     }
     ///Update output schema by changing the qualifier and corresponding attribute names
-    const auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (const auto& field : *outputSchema)
     {
         ///Extract field name without qualifier
@@ -81,6 +79,7 @@ std::shared_ptr<Operator> RenameSourceOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
@@ -92,21 +91,21 @@ std::shared_ptr<Operator> RenameSourceOperator::copy()
 
 void RenameSourceOperator::inferStringSignature()
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "RENAME_STREAM(newStreamName=" << newSourceName << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
+    auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

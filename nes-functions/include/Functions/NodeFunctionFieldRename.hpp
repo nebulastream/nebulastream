@@ -13,40 +13,59 @@
 */
 
 #pragma once
-#include <memory>
-#include <string>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Nodes/Node.hpp>
 namespace NES
 {
 
+class NodeFunctionFieldRename;
+using NodeFunctionFieldRenamePtr = std::shared_ptr<NodeFunctionFieldRename>;
 
+/**
+ * @brief A NodeFunctionFieldRename allows us to rename an attribute value via .as in the query
+ */
 class NodeFunctionFieldRename : public NodeFunction
 {
 public:
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
+    /**
+     * @brief Create FieldRename Function node
+     * @param fieldName : name of the field
+     * @param newFieldName : new name of the field
+     * @param datatype : the data type
+     * @return pointer to the NodeFunctionFieldRename
+     */
+    static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
+
+
     std::string getNewFieldName() const;
 
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
+    void inferStamp(SchemaPtr schema) override;
 
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return NodeFunctionPtr
+    */
+    NodeFunctionPtr deepCopy() override;
 
-    std::shared_ptr<NodeFunctionFieldAccess> getOriginalField() const;
+    NodeFunctionFieldAccessPtr getOriginalField() const;
 
 protected:
-    explicit NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other);
+    explicit NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other);
 
     [[nodiscard]] std::string toString() const override;
 
 private:
-    NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
+    NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName);
 
-    std::shared_ptr<NodeFunctionFieldAccess> originalField;
+    NodeFunctionFieldAccessPtr originalField;
     std::string newFieldName;
 };
 

@@ -12,11 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string>
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
 
 
@@ -25,11 +22,11 @@ namespace NES::Windowing
 
 IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() = default;
 
-std::shared_ptr<WatermarkStrategyDescriptor> IngestionTimeWatermarkStrategyDescriptor::create()
+WatermarkStrategyDescriptorPtr IngestionTimeWatermarkStrategyDescriptor::create()
 {
     return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(Windowing::IngestionTimeWatermarkStrategyDescriptor());
 }
-bool IngestionTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other)
+bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other)
 {
     return NES::Util::instanceOf<IngestionTimeWatermarkStrategyDescriptor>(other);
 }
@@ -39,7 +36,7 @@ std::string IngestionTimeWatermarkStrategyDescriptor::toString()
     return "TYPE = INGESTION-TIME";
 }
 
-bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>&)
+bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr)
 {
     return true;
 }

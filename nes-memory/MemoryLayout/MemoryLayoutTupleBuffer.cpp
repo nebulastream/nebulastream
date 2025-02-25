@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <utility>
 #include <MemoryLayout/MemoryLayoutTupleBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
-MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, const uint64_t capacity)
+MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity)
 {
 }

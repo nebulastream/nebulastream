@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
@@ -30,12 +29,12 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhase::create()
+AddScanAndEmitPhasePtr AddScanAndEmitPhase::create()
 {
     return std::make_shared<AddScanAndEmitPhase>();
 }
 
-std::shared_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<PipelineQueryPlan> pipelineQueryPlan)
+PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan)
 {
     for (const auto& pipeline : pipelineQueryPlan->getPipelines())
     {
@@ -47,22 +46,22 @@ std::shared_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<Pi
     return pipelineQueryPlan;
 }
 
-std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<OperatorPipeline> pipeline)
+OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
 {
-    const auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
-    const auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
+    auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
+    auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
     PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
 
     /// insert buffer scan operator to the pipeline root if necessary
-    const auto& rootOperator = pipelineRootOperators[0];
+    auto rootOperator = pipelineRootOperators[0];
     if (!NES::Util::instanceOf<PhysicalOperators::AbstractScanOperator>(rootOperator))
     {
         PRECONDITION(
             NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
             "Pipeline root should be a unary operator but was: {}",
             *rootOperator);
-        const auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
-        const auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
+        auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
+        auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 

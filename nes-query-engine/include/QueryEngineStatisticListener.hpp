@@ -49,8 +49,8 @@ struct TaskExecutionStart : EventBase
 
 struct TaskEmit : EventBase
 {
-    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId, size_t numberOfTuples)
-        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId), numberOfTuples(numberOfTuples)
+    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId)
+        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId)
     {
     }
     TaskEmit() = default;
@@ -58,7 +58,6 @@ struct TaskEmit : EventBase
     PipelineId fromPipeline = INVALID<PipelineId>;
     PipelineId toPipeline = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
-    size_t numberOfTuples{};
 };
 
 struct TaskExecutionComplete : EventBase

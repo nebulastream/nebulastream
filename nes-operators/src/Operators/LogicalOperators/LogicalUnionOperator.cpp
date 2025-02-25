@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
@@ -29,7 +28,7 @@ LogicalUnionOperator::LogicalUnionOperator(OperatorId id) : Operator(id), Logica
 {
 }
 
-bool LogicalUnionOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool LogicalUnionOperator::isIdentical(NodePtr const& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalUnionOperator>(rhs)->getId() == id;
 }
@@ -95,6 +94,7 @@ std::shared_ptr<Operator> LogicalUnionOperator::copy()
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
+    copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOutputSchema(outputSchema);
     copy->setOperatorState(operatorState);
@@ -105,11 +105,11 @@ std::shared_ptr<Operator> LogicalUnionOperator::copy()
     return copy;
 }
 
-bool LogicalUnionOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
-        const auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
+        auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
         return (*leftInputSchema == *rhsUnion->getLeftInputSchema()) && (*outputSchema == *rhsUnion->getOutputSchema());
     }
     return false;
@@ -117,7 +117,7 @@ bool LogicalUnionOperator::equal(const std::shared_ptr<Node>& rhs) const
 
 void LogicalUnionOperator::inferStringSignature()
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(children.size() == 2, "Union should have 2 children, but got: {}", children.size());
     ///Infer query signatures for child operators
@@ -127,13 +127,13 @@ void LogicalUnionOperator::inferStringSignature()
     }
     std::stringstream signatureStream;
     signatureStream << "UNION(";
-    const auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    const auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
+    auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
     signatureStream << *rightChildSignature.begin()->second.begin() + ").";
     signatureStream << *leftChildSignature.begin()->second.begin();
 
     ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
+    auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
@@ -143,7 +143,7 @@ void LogicalUnionOperator::inferInputOrigins()
     std::vector<OriginId> combinedInputOriginIds;
     for (auto child : this->children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

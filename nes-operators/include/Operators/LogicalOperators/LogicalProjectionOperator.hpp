@@ -15,9 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <Functions/NodeFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
@@ -29,13 +27,13 @@ namespace NES
 class LogicalProjectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id);
+    explicit LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
     const std::vector<std::shared_ptr<NodeFunction>>& getFunctions() const;
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(std::shared_ptr<Node> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(std::shared_ptr<Node> const& rhs) const override;
     void inferStringSignature() override;
 
     bool inferSchema() override;

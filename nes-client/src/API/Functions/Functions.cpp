@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -87,7 +85,7 @@ FunctionItem::FunctionItem(bool value)
 {
 }
 
-FunctionItem::FunctionItem(std::shared_ptr<NodeFunction> exp) : function(std::move(exp))
+FunctionItem::FunctionItem(NodeFunctionPtr exp) : function(std::move(exp))
 {
 }
 
@@ -102,12 +100,12 @@ FunctionItem FunctionItem::as(std::string newName)
     return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(newName));
 }
 
-std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const FunctionItem& assignItem) const
+NodeFunctionFieldAssignmentPtr FunctionItem::operator=(FunctionItem assignItem)
 {
     return operator=(assignItem.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const std::shared_ptr<NodeFunction>& assignFunction) const
+NodeFunctionFieldAssignmentPtr FunctionItem::operator=(NodeFunctionPtr assignFunction)
 {
     PRECONDITION(
         Util::instanceOf<NodeFunctionFieldAccess>(function),
@@ -126,41 +124,39 @@ FunctionItem Attribute(std::string fieldName, BasicType type)
     return FunctionItem(NodeFunctionFieldAccess::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
-std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)
+NodeFunctionPtr WHEN(const NodeFunctionPtr& conditionExp, const NodeFunctionPtr& valueExp)
 {
     return NodeFunctionWhen::create(std::move(conditionExp), std::move(valueExp));
 }
 
-std::shared_ptr<NodeFunction> WHEN(const FunctionItem& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)
+NodeFunctionPtr WHEN(FunctionItem conditionExp, NodeFunctionPtr valueExp)
 {
     return WHEN(conditionExp.getNodeFunction(), std::move(valueExp));
 }
-std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const FunctionItem& valueExp)
+NodeFunctionPtr WHEN(NodeFunctionPtr conditionExp, FunctionItem valueExp)
 {
     return WHEN(std::move(conditionExp), valueExp.getNodeFunction());
 }
-std::shared_ptr<NodeFunction> WHEN(const FunctionItem& conditionExp, const FunctionItem& valueExp)
+NodeFunctionPtr WHEN(FunctionItem conditionExp, FunctionItem valueExp)
 {
     return WHEN(conditionExp.getNodeFunction(), valueExp.getNodeFunction());
 }
 
-std::shared_ptr<NodeFunction>
-CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const std::shared_ptr<NodeFunction>& valueExp)
+NodeFunctionPtr CASE(const std::vector<NodeFunctionPtr>& whenFunctions, NodeFunctionPtr valueExp)
 {
     return NodeFunctionCase::create(std::move(whenFunctions), std::move(valueExp));
 }
-std::shared_ptr<NodeFunction> CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const FunctionItem& valueExp)
+NodeFunctionPtr CASE(std::vector<NodeFunctionPtr> whenFunctions, FunctionItem valueExp)
 {
     return CASE(std::move(whenFunctions), valueExp.getNodeFunction());
 }
 
-
-std::shared_ptr<NodeFunction> FunctionItem::getNodeFunction() const
+NodeFunctionPtr FunctionItem::getNodeFunction() const
 {
     return function;
 }
 
-FunctionItem::operator std::shared_ptr<NodeFunction>()
+FunctionItem::operator NodeFunctionPtr()
 {
     return function;
 }

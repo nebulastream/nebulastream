@@ -13,21 +13,17 @@
 */
 
 #pragma once
-#include <memory>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 class NodeFunctionExp final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionExp(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionExp(DataTypePtr stamp);
     ~NodeFunctionExp() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& child);
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

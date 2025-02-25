@@ -13,10 +13,7 @@
 */
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -29,30 +26,28 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator
 public:
     PhysicalWatermarkAssignmentOperator(
         OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
-        std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor);
-    static std::shared_ptr<PhysicalOperator> create(
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr create(
         OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
-    static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     std::shared_ptr<Operator> copy() override;
 
     /**
     * @brief Returns the watermark strategy.
-    * @return  std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
+    * @return  Windowing::WatermarkStrategyDescriptorPtr
     */
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> getWatermarkStrategyDescriptor() const;
+    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
 protected:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor;
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 }

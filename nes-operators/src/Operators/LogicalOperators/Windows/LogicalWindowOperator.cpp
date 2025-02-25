@@ -17,9 +17,6 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
@@ -28,14 +25,12 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 
 namespace NES
 {
 
-LogicalWindowOperator::LogicalWindowOperator(
-    const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition, const OperatorId id)
+LogicalWindowOperator::LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id)
     : Operator(id), WindowOperator(windowDefinition, id)
 {
 }
@@ -44,26 +39,26 @@ std::string LogicalWindowOperator::toString() const
 {
     std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
-    const auto windowAggregation = windowDefinition->getWindowAggregation();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
     ss << "WINDOW AGGREGATION(OP-" << id << ", ";
-    for (const auto& agg : windowAggregation)
+    for (auto agg : windowAggregation)
     {
-        ss << agg->toString() << ";";
+        ss << agg->getTypeAsString() << ";";
     }
-    ss << ") on window type: " << windowType->toString();
+    ss << ")";
     return ss.str();
 }
 
-bool LogicalWindowOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool LogicalWindowOperator::isIdentical(NodePtr const& rhs) const
 {
     return equal(rhs) && (NES::Util::as<LogicalWindowOperator>(rhs)->getId() == id);
 }
 
-bool LogicalWindowOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool LogicalWindowOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<LogicalWindowOperator>(rhs))
     {
-        const auto rhsWindow = NES::Util::as<LogicalWindowOperator>(rhs);
+        auto rhsWindow = NES::Util::as<LogicalWindowOperator>(rhs);
         return windowDefinition->equal(rhsWindow->windowDefinition);
     }
     return false;
@@ -77,6 +72,7 @@ std::shared_ptr<Operator> LogicalWindowOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
+    copy->setZ3Signature(z3Signature);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
@@ -97,39 +93,34 @@ bool LogicalWindowOperator::inferSchema()
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (const auto& agg : windowAggregation)
     {
-        agg->inferStamp(*inputSchema);
+        agg->inferStamp(inputSchema);
     }
 
     ///Construct output schema
     ///First clear()
     outputSchema->clear();
-
     /// Distinguish process between different window types (currently time-based and content-based)
-    const auto windowType = windowDefinition->getWindowType();
+    auto windowType = windowDefinition->getWindowType();
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
     {
         /// typeInference
-        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(*inputSchema))
+        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(inputSchema))
         {
             return false;
         }
-        const auto& sourceName = inputSchema->getQualifierNameForSystemGeneratedFields();
-        const auto& newQualifierForSystemField = sourceName;
-
-        windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
-        windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-        outputSchema->addField(windowMetaData.windowStartFieldName, BasicType::UINT64);
-        outputSchema->addField(windowMetaData.windowEndFieldName, BasicType::UINT64);
+        outputSchema
+            = outputSchema->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64)
+                  ->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
         /// type Inference for Content-based Windows requires the typeInferencePhaseContext
-        const auto contentBasedWindowType = Util::as<Windowing::ContentBasedWindowType>(windowType);
+        auto contentBasedWindowType = Util::as<Windowing::ContentBasedWindowType>(windowType);
         if (contentBasedWindowType->getContentBasedSubWindowType()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
-            const auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(*inputSchema))
+            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+            if (!thresholdWindow->inferStamp(inputSchema))
             {
                 return false;
             }
@@ -146,14 +137,14 @@ bool LogicalWindowOperator::inferSchema()
         auto keyList = windowDefinition->getKeys();
         for (const auto& key : keyList)
         {
-            key->inferStamp(*inputSchema);
+            key->inferStamp(inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
     for (const auto& agg : windowAggregation)
     {
         outputSchema->addField(
-            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp()));
+            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->on()->getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema->toString());
@@ -163,19 +154,19 @@ bool LogicalWindowOperator::inferSchema()
 
 void LogicalWindowOperator::inferStringSignature()
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    const auto windowType = windowDefinition->getWindowType();
-    const auto windowAggregation = windowDefinition->getWindowAggregation();
+    auto windowType = windowDefinition->getWindowType();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
     if (windowDefinition->isKeyed())
     {
         signatureStream << "WINDOW-BY-KEY(";
@@ -195,22 +186,22 @@ void LogicalWindowOperator::inferStringSignature()
         signatureStream << agg->toString() << ",";
     }
     signatureStream << ")";
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "." << *childSignature.begin()->second.begin();
 
     auto signature = signatureStream.str();
     ///Update the signature
-    const auto hashCode = hashGenerator(signature);
+    auto hashCode = hashGenerator(signature);
     hashBasedSignature[hashCode] = {signature};
 }
 
 std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
 {
     std::vector<std::string> groupByKeyNames = {};
-    const auto windowDefinition = this->getWindowDefinition();
+    auto windowDefinition = this->getWindowDefinition();
     if (windowDefinition->isKeyed())
     {
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByKeys = windowDefinition->getKeys();
+        std::vector<NodeFunctionFieldAccessPtr> groupByKeys = windowDefinition->getKeys();
         groupByKeyNames.reserve(groupByKeys.size());
         for (const auto& groupByKey : groupByKeys)
         {

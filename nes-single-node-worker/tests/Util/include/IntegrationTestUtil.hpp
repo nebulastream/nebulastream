@@ -14,16 +14,13 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
-#include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
 
 
 namespace NES::IntegrationTestUtil
@@ -34,7 +31,7 @@ static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const SchemaPtr& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
@@ -54,13 +51,13 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const SchemaPtr& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider);
 
 /// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
 /// have a single root operator, which is the SinkOperator
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
+SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
 
 QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut);
 

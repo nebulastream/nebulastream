@@ -69,7 +69,7 @@ static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
 static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 300;
 static constexpr size_t NUMBER_OF_THREADS = 2;
 static constexpr size_t LARGE_NUMBER_OF_THREADS = 8;
-constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(500);
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::milliseconds(2000);
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
@@ -149,10 +149,9 @@ struct ExpectStats
 class QueryStatusListener final : public AbstractQueryStatusListener
 {
 public:
-    MOCK_METHOD(
-        bool, logSourceTermination, (QueryId, OriginId, Runtime::QueryTerminationType, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryFailure, (QueryId, Exception, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logSourceTermination, (QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType), (override));
+    MOCK_METHOD(bool, logQueryFailure, (QueryId queryId, Exception exception), (override));
+    MOCK_METHOD(bool, logQueryStatusChange, (QueryId queryId, Runtime::Execution::QueryStatus Status), (override));
 };
 
 /// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal

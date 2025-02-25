@@ -12,10 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,9 +20,9 @@
 #include <magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    #include <mutex>
-    #include <thread>
-    #include <cpptrace.hpp>
+#    include <mutex>
+#    include <thread>
+#    include <cpptrace.hpp>
 #endif
 
 namespace NES::Memory
@@ -46,21 +42,26 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 MemorySegment::MemorySegment(
     uint8_t* ptr,
     uint32_t size,
+    BufferRecycler* recycler,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-    uint8_t* controlBlock) /// NOLINT (readability-non-const-parameter)
-    : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
+    uint8_t* controlBlock)
+    : size(size)
 {
+    this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    this->ptr = ptr;
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
 }
 
 MemorySegment::MemorySegment(
-    uint8_t* ptr, const uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
+    uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
     : ptr(ptr), size(size)
 {
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
-    controlBlock.reset(new BufferControlBlock(this, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
+    controlBlock.reset(
+        new BufferControlBlock(this, recycler, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
+    controlBlock->prepare();
 }
 
 MemorySegment::~MemorySegment()
@@ -72,7 +73,7 @@ MemorySegment::~MemorySegment()
         ///      (I also consider this to be consistent with our handeling of the referenceCount in
         ///      the release function in general. Do you agree?).
         {
-            const auto refCnt = controlBlock->getReferenceCount();
+            auto const refCnt = controlBlock->getReferenceCount();
             INVARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
         }
 
@@ -92,14 +93,56 @@ MemorySegment::~MemorySegment()
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), recycleCallback(std::move(recycleCallback))
+BufferControlBlock::BufferControlBlock(
+    MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
+    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback))
 {
+    /// nop
+}
+
+BufferControlBlock::BufferControlBlock(const BufferControlBlock& that)
+{
+    referenceCounter.store(that.referenceCounter.load());
+    numberOfTuples = that.numberOfTuples;
+    creationTimestamp = that.creationTimestamp;
+    recycleCallback = that.recycleCallback;
+    owner = that.owner;
+    watermark = that.watermark;
+    originId = that.originId;
+}
+
+BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that)
+{
+    referenceCounter.store(that.referenceCounter.load());
+    numberOfTuples = that.numberOfTuples;
+    recycleCallback = that.recycleCallback;
+    owner = that.owner;
+    watermark = that.watermark;
+    creationTimestamp = that.creationTimestamp;
+    originId = that.originId;
+    return *this;
 }
 
 MemorySegment* BufferControlBlock::getOwner() const
 {
     return owner;
+}
+
+void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
+{
+    PRECONDITION(recycler, "invalid recycler");
+    auto* oldRecycler = owningBufferRecycler.exchange(recycler);
+    INVARIANT(recycler != oldRecycler, "invalid recycler");
+}
+
+void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept
+{
+    auto oldRecycleCallback = this->recycleCallback;
+    recycleCallback = [oldRecycleCallback, func](MemorySegment* memorySegment, BufferRecycler* bufferRecycler)
+    {
+        func(memorySegment, bufferRecycler);
+        oldRecycleCallback(memorySegment, bufferRecycler);
+    };
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -118,7 +161,7 @@ void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& calls
     callstack = cpptrace::raw_trace::current(1);
 }
 #endif
-bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler)
+bool BufferControlBlock::prepare()
 {
     int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -130,8 +173,6 @@ bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler
 #endif
     if (referenceCounter.compare_exchange_strong(expected, 1))
     {
-        const auto previousOwner = std::exchange(this->owningBufferRecycler, recycler);
-        INVARIANT(previousOwner == nullptr, "Buffer should not retain a reference to its owner while unused");
         return true;
     }
     NES_ERROR("Invalid reference counter: {}", expected);
@@ -177,7 +218,7 @@ int32_t BufferControlBlock::getReferenceCount() const noexcept
 
 bool BufferControlBlock::release()
 {
-    if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
+    if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
     {
         numberOfTuples = 0;
         for (auto&& child : children)
@@ -185,8 +226,7 @@ bool BufferControlBlock::release()
             child->controlBlock->release();
         }
         children.clear();
-        auto recycler = std::move(owningBufferRecycler);
-        recycleCallback(owner, recycler.get());
+        recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);

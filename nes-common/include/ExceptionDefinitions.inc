@@ -84,13 +84,13 @@ EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
 EXCEPTION(CannotAccessBuffer, 3008, "cannot access buffer")
-EXCEPTION(CannotAllocateBuffer, 3009, "cannot allocate buffer")
+EXCEPTION(QueryRuntimeError, 3009, "general query runtime error")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
 EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
-EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
-EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
+EXCEPTION(DataIngestionFailure, 4002, "error during data ingestion of source")
+EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started")
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(CSVParsingError, 4005, "error during csv parsing")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
@@ -118,6 +118,3 @@ EXCEPTION(NotImplemented, 9005, "not implemented")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
-
-/// Test Exception is thrown in testing related code, to differentiate between system errors and errors during test setup/cleanup
-EXCEPTION(TestException, 10000, "exception in test code")

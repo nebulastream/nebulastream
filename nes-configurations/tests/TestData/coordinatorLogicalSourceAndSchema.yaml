@@ -28,4 +28,4 @@ logicalSources:
   - logicalSourceName: "lsn3"
     fields:
       - name: "csv_id_5"
-        type: "VARSIZED"
+        type: "TEXT"

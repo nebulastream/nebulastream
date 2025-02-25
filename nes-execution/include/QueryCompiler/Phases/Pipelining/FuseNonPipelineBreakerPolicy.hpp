@@ -12,8 +12,6 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
@@ -29,7 +27,7 @@ namespace NES::QueryCompilation
 class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy
 {
 public:
-    static std::shared_ptr<OperatorFusionPolicy> create();
-    bool isFusible(std::shared_ptr<PhysicalOperators::PhysicalOperator> physicalOperator) override;
+    static OperatorFusionPolicyPtr create();
+    bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
 }

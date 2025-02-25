@@ -15,13 +15,9 @@
 #pragma once
 
 #include <memory>
-#include <Functions/NodeFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES
 {
@@ -32,32 +28,56 @@ namespace NES
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id);
-    explicit LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id, OriginId originId);
+    explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     ~LogicalJoinOperator() override = default;
 
     /**
     * @brief get join definition.
     * @return LogicalJoinDescriptor
     */
-    std::shared_ptr<Join::LogicalJoinDescriptor> getJoinDefinition() const;
+    Join::LogicalJoinDescriptorPtr getJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
-    std::shared_ptr<NodeFunction> getJoinFunction() const;
 
-    WindowMetaData windowMetaData;
+    /**
+     * @brief Getter for the window start field name
+     * @return std::string
+     */
+    const std::string& getWindowStartFieldName() const;
+
+    /**
+     * @brief Getter for the window end field name
+     * @return std::string
+     */
+    const std::string& getWindowEndFieldName() const;
+
+    /**
+     * @brief Getter for join function, i.e. a set of binary functions
+     * @return joinFunctions
+     */
+    const NodeFunctionPtr getJoinFunction() const;
+
+    /**
+     * @brief Sets the window start, end, and key field name during the serialization of the operator
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     */
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition;
+    const Join::LogicalJoinDescriptorPtr joinDefinition;
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
 };
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 }

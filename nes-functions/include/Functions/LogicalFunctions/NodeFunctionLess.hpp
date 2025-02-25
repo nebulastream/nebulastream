@@ -13,10 +13,7 @@
 */
 
 #pragma once
-#include <memory>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
 namespace NES
 {
 
@@ -31,10 +28,10 @@ public:
     /**
     * @brief Create a new less function
     */
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
 
-    bool equal(const std::shared_ptr<Node>& rhs) const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    bool equal(NodePtr const& rhs) const override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionLess(NodeFunctionLess* other);

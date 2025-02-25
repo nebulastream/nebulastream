@@ -13,11 +13,7 @@
 */
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -29,32 +25,22 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalMapOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalMapOperator(
-        OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
-        std::shared_ptr<NodeFunctionFieldAssignment> mapFunction);
-    static std::shared_ptr<PhysicalOperator> create(
-        OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
-    static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
+    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
+    static PhysicalOperatorPtr
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
 
     std::shared_ptr<Operator> copy() override;
 
     /**
      * @brief Returns the function of this map operator
-     * @return std::shared_ptr<NodeFunctionFieldAssignment>
+     * @return NodeFunctionFieldAssignmentPtr
      */
-    std::shared_ptr<NodeFunctionFieldAssignment> getMapFunction();
+    NodeFunctionFieldAssignmentPtr getMapFunction();
 
 protected:
     std::string toString() const override;
 
-    std::shared_ptr<NodeFunctionFieldAssignment> mapFunction;
+    const NodeFunctionFieldAssignmentPtr mapFunction;
 };
 }

@@ -12,9 +12,7 @@
 
 add_source_files(nes-execution
         PhysicalOperatorPipeline.cpp
+        InterpretationPipelineProvider.cpp
+        CompilationPipelineProvider.cpp
         CompiledExecutablePipelineStage.cpp
 )
-
-# Register plugins
-add_plugin(compiler ExecutablePipelineProvider nes-execution CompilationPipelineProvider.cpp)
-add_plugin(interpreter ExecutablePipelineProvider nes-execution InterpretationPipelineProvider.cpp)

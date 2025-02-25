@@ -15,12 +15,15 @@
 #pragma once
 
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/QueryState.hpp>
 
 namespace NES
 {
 enum SerializableQueryState : int;
+
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 class SerializableDecomposedQueryPlan;
 
 class DecomposedQueryPlanSerializationUtil
@@ -36,12 +39,11 @@ public:
         const DecomposedQueryPlan& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
     /**
-     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a std::shared_ptr<QueryPlan>
+     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
      * @param serializableDecomposedQueryPlan the serialized decomposed query plan.
      * @return the pointer to the deserialized query plan
      */
-    static std::shared_ptr<DecomposedQueryPlan>
-    deserializeDecomposedQueryPlan(const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+    static DecomposedQueryPlanPtr deserializeDecomposedQueryPlan(const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
     static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
 

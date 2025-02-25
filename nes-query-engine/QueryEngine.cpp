@@ -107,7 +107,7 @@ public:
     void stopQuery(QueryId queryId);
     void clear()
     {
-        const std::scoped_lock lock(mutex);
+        std::scoped_lock const lock(mutex);
         queryStates.clear();
     }
 
@@ -257,8 +257,7 @@ public:
             id,
             std::move(source),
             std::move(exception),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
+            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
             {}});
     }
 
@@ -267,8 +266,7 @@ public:
         taskQueue.blockingWrite(StopSourceTask{
             id,
             std::move(source),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
+            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
             {}});
     }
 
@@ -336,7 +334,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
         return false;
     }
 
-    const auto taskId = TaskId(pool.taskIdCounter++);
+    auto const taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
@@ -351,8 +349,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
-                    pool.statistic->onEvent(
-                        TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                    pool.statistic->onEvent(TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
@@ -403,6 +400,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
+    INVARIANT(pendingPipelineStop.pipeline->requiresTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
     INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had 0 pending tasks.");
     if (pendingPipelineStop.pipeline->pendingTasks != 0)
     {
@@ -593,7 +591,7 @@ void QueryCatalog::start(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    const std::scoped_lock lock(mutex);
+    std::scoped_lock const lock(mutex);
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
@@ -604,21 +602,19 @@ void QueryCatalog::start(
         void onRunning() override
         {
             ENGINE_LOG_DEBUG("Query {} onRunning", queryId);
-            const auto timestamp = std::chrono::system_clock::now();
-            if (const auto locked = state.lock())
+            listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running);
+            if (auto locked = state.lock())
             {
                 locked->transition([](Starting&& starting) { return Running{std::move(starting.plan)}; });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
             }
         }
         void onFailure(Exception exception) override
         {
             ENGINE_LOG_DEBUG("Query {} onFailure", queryId);
-            const auto timestamp = std::chrono::system_clock::now();
-            if (const auto locked = state.lock())
+            if (auto locked = state.lock())
             {
                 /// Regardless of its current state the query should move into the Terminated::Failed state.
-                locked->transition(
+                auto successfulTermination = locked->transition(
                     [](Starting&& starting)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -633,20 +629,25 @@ void QueryCatalog::start(
                     {
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Failed};
-                    },
-                    [](Terminated&&) { return Terminated{Terminated::Failed}; });
+                    });
+
+                /// It should be impossible for a query in the `Terminated` state to emit a failure as the `RunningQueryPlan` which called
+                /// the `onFailure()` method should have been destroyed, once transitioned into the `Terminated` state.
+                INVARIANT(
+                    successfulTermination,
+                    "Query emitted Failure while in the Terminated state. This should never happen! Error: {}",
+                    exception.what());
 
                 exception.what() += fmt::format(" In Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
-                listener->logQueryFailure(queryId, std::move(exception), timestamp);
+                listener->logQueryFailure(queryId, std::move(exception));
             }
         }
         /// OnDestruction is called when the entire query graph is terminated.
         void onDestruction() override
         {
             ENGINE_LOG_DEBUG("Query {} onDestruction", queryId);
-            const auto timestamp = std::chrono::system_clock::now();
-            if (const auto locked = state.lock())
+            if (auto locked = state.lock())
             {
                 locked->transition(
                     [](Starting&& starting)
@@ -664,7 +665,12 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped, timestamp);
+                ENGINE_LOG_DEBUG("Query {} Stopped", queryId);
+                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped);
+            }
+            else
+            {
+                ENGINE_LOG_WARNING("QueryState {} is expired", queryId);
             }
         }
 
@@ -683,10 +689,10 @@ void QueryCatalog::start(
 
 void QueryCatalog::stopQuery(QueryId id)
 {
-    const std::unique_ptr<RunningQueryPlan> toBeDeleted;
+    std::unique_ptr<RunningQueryPlan> const toBeDeleted;
     {
         CallbackRef ref;
-        const std::scoped_lock lock(mutex);
+        std::scoped_lock const lock(mutex);
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;

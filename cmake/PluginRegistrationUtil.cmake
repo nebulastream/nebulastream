@@ -39,7 +39,7 @@ endfunction()
 # adds the name of plugin to the list of plugin names for the plugin registry
 function(add_plugin plugin_name plugin_registry plugin_registry_component)
     set(sources ${ARGN})
-    add_source_files(${plugin_registry_component}
+    add_source_files(nes-sources
             ${sources}
     )
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
@@ -60,15 +60,16 @@ function(generate_plugin_registrar plugin_registry plugin_registry_component)
     # second, remove the configuration and write the modified version of the registrar header template to a temporary file
     # we generate the final '.inc' file from that temporary file
     set(temp_registrar_header_template_file "${CMAKE_CURRENT_BINARY_DIR}/temp_registrar_header_template.inc.in")
-    file(WRITE ${temp_registrar_header_template_file} "${registrar_header_file_data}")
+    string(REGEX REPLACE "// CONFIGURATION\n.*\n// END CONFIGURATION\n" "" in_file_without_configuration "${registrar_header_file_data}")
+    file(WRITE ${temp_registrar_header_template_file} "${in_file_without_configuration}")
 
     # generate the list of declarations of the register functions that the plugins implement to register themselves
     # generate the list of concrete register calls that are called in the 'registerAll' function call of the Registrar to populate the registry
     set(REGISTER_FUNCTION_DECLARATIONS "")
     set(REGISTER_ALL_FUNCTION_CALLS "")
     foreach (reg_func IN LISTS plugin_registry_plugin_names_final)
-        list(APPEND REGISTER_FUNCTION_DECLARATIONS "std::unique_ptr<${plugin_registry}RegistryReturnType> Register${reg_func}${plugin_registry}(${plugin_registry}RegistryArguments)")
-        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.addEntry(\"${reg_func}\", Register${reg_func}${plugin_registry})")
+        list(APPEND REGISTER_FUNCTION_DECLARATIONS "${plugin_registry}RegistryReturnType Register${reg_func}${plugin_registry}(const ${plugin_registry}RegistryArguments&)")
+        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.registerPlugin(\"${reg_func}\", Register${reg_func}${plugin_registry})")
     endforeach ()
 
     # link all plugin libraries against the component that the plugin registry belongs to, this makes the implementation

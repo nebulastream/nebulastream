@@ -15,19 +15,13 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(
-    OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , windowDefinition(std::move(windowDefinition))
@@ -35,14 +29,12 @@ PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(
 }
 
 std::shared_ptr<PhysicalThresholdWindowOperator> PhysicalThresholdWindowOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition)
+    SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition)
 {
     return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }
 
-std::shared_ptr<Windowing::LogicalWindowDescriptor> PhysicalThresholdWindowOperator::getWindowDefinition()
+Windowing::LogicalWindowDescriptorPtr PhysicalThresholdWindowOperator::getWindowDefinition()
 {
     return windowDefinition;
 }

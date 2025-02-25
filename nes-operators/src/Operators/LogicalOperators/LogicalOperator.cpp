@@ -17,6 +17,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
+#include <Util/QuerySignatureContext.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
@@ -25,6 +26,34 @@ namespace NES
 
 LogicalOperator::LogicalOperator(OperatorId id) : Operator(id)
 {
+}
+
+Optimizer::QuerySignaturePtr LogicalOperator::getZ3Signature() const
+{
+    return z3Signature;
+}
+
+void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& context)
+{
+    if (z3Signature)
+    {
+        return;
+    }
+    std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    NES_TRACE("Inferring Z3 functions for {}", *operatorNode);
+
+    ///Infer query signatures for child operators
+    for (const auto& child : children)
+    {
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
+        childOperator->inferZ3Signature(context);
+    }
+    z3Signature = context.createQuerySignatureForOperator(operatorNode);
+}
+
+void LogicalOperator::setZ3Signature(Optimizer::QuerySignaturePtr signature)
+{
+    this->z3Signature = std::move(signature);
 }
 
 std::map<size_t, std::set<std::string>> LogicalOperator::getHashBasedSignature() const

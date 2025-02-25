@@ -156,7 +156,7 @@ public:
     int64_t getRuntimeFromSnapshot(const std::string& snapShotName)
     {
         auto it
-            = std::find_if(snapshots.begin(), snapshots.end(), [&](const Snapshot& snapshot) { return (snapshot.name == snapShotName); });
+            = std::find_if(snapshots.begin(), snapshots.end(), [&](Snapshot const& snapshot) { return (snapshot.name == snapShotName); });
         if (it != snapshots.end())
         {
             return it->getRuntime();

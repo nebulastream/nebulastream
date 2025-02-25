@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -30,7 +29,7 @@ public:
     RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
+    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -42,9 +41,7 @@ public:
 private:
     [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 
-    /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
-    /// the same, during tracing and during the execution of the generated code.
-    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
+    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr;
 };
 
 }

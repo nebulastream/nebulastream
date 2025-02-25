@@ -11,10 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -27,17 +25,16 @@
 namespace NES::Optimizer
 {
 
-TypeInferencePhase::TypeInferencePhase(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
-    : sourceCatalog(std::move(sourceCatalog))
+TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog))
 {
 }
 
-std::shared_ptr<TypeInferencePhase> TypeInferencePhase::create(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
+TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalogPtr sourceCatalog)
 {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
 }
 
-std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPlan)
 {
     /// Infer schema recursively, starting with sinks for sinks.
     auto sinkOperators = queryPlan->getSinkOperators();
@@ -56,10 +53,11 @@ std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::sh
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators) const
+void TypeInferencePhase::performTypeInferenceSources(
+    const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const
 {
     PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
-    PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
+    PRECONDITION(not sourceOperators.empty(), "Query plan with id {} did not contain sources during type inference.", queryId);
 
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)
@@ -67,7 +65,7 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
-        std::shared_ptr<Schema> schema = Schema::create();
+        SchemaPtr schema = Schema::create();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName))
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);

@@ -12,15 +12,11 @@
     limitations under the License.
 */
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -32,15 +28,8 @@
 
 namespace NES::Runtime::Execution
 {
-
-Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* pipelineCtx)
-{
-    return pipelineCtx->getBufferManager().get();
-}
-
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
+ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext)
     : pipelineContext(pipelineContext)
-    , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
@@ -50,27 +39,22 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
+Memory::TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
 {
-    auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
-        {
-            PRECONDITION(pec, "pipeline execution context should not be null");
-            /// We allocate a new tuple buffer for the runtime.
-            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-            /// This increases the reference counter in the buffer.
-            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-            const auto buffer = pec->allocateTupleBuffer();
-            auto* tb = new Memory::TupleBuffer(buffer);
-            return tb;
-        },
-        pipelineContext);
-    return bufferPtr;
+    PRECONDITION(pec, "pipeline execution context should not be null");
+    /// We allocate a new tuple buffer for the runtime.
+    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    /// This increases the reference counter in the buffer.
+    /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+    auto buffer = pec->allocateTupleBuffer();
+    auto* tb = new Memory::TupleBuffer(buffer);
+    return tb;
 }
 
-nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
+nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
+    auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
+    return bufferPtr;
 }
 
 void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)

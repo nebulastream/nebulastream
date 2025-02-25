@@ -17,6 +17,8 @@
 namespace NES::Runtime::Execution::Operators
 {
 
+class ExecutableOperator;
+using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
 /**
  * @brief Base class of executable operators, which receive tuple by tuple.
  * Within a pipeline all operators except the initial scan are executable operators.

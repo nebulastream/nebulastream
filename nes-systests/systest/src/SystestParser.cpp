@@ -19,7 +19,6 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -27,14 +26,11 @@
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Systest
 {
@@ -76,20 +72,14 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        std::shared_ptr<DataType> dataType;
         if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]); type.has_value())
         {
-            dataType = DataTypeFactory::createType(type.value());
-        }
-        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
-        {
-            dataType = DataTypeFactory::createVariableSizedData();
+            schema.emplace_back(type.value(), arguments[i + 1]);
         }
         else
         {
             throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
-        schema.emplace_back(dataType, arguments[i + 1]);
     }
 
     return schema;
@@ -130,7 +120,7 @@ bool SystestParser::loadString(const std::string& str)
     while (std::getline(stream, line))
     {
         /// Remove commented code
-        const size_t commentPos = line.find('#');
+        size_t const commentPos = line.find('#');
         if (commentPos != std::string::npos)
         {
             line = line.substr(0, commentPos);

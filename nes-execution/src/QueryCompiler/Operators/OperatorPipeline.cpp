@@ -18,7 +18,6 @@
 #include <numeric>
 #include <sstream>
 #include <utility>
-#include <vector>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -42,17 +41,17 @@ OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
 {
 }
 
-std::shared_ptr<OperatorPipeline> OperatorPipeline::create()
+OperatorPipelinePtr OperatorPipeline::create()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
 }
 
-std::shared_ptr<OperatorPipeline> OperatorPipeline::createSinkPipeline()
+OperatorPipelinePtr OperatorPipeline::createSinkPipeline()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SinkPipelineType));
 }
 
-std::shared_ptr<OperatorPipeline> OperatorPipeline::createSourcePipeline()
+OperatorPipelinePtr OperatorPipeline::createSourcePipeline()
 {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SourcePipelineType));
 }
@@ -77,13 +76,13 @@ bool OperatorPipeline::isSourcePipeline() const
     return pipelineType == Type::SourcePipelineType;
 }
 
-void OperatorPipeline::addPredecessor(const std::shared_ptr<OperatorPipeline>& pipeline)
+void OperatorPipeline::addPredecessor(const OperatorPipelinePtr& pipeline)
 {
     pipeline->successorPipelines.emplace_back(shared_from_this());
     this->predecessorPipelines.emplace_back(pipeline);
 }
 
-void OperatorPipeline::addSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline)
+void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline)
 {
     if (pipeline)
     {
@@ -92,10 +91,9 @@ void OperatorPipeline::addSuccessor(const std::shared_ptr<OperatorPipeline>& pip
     }
 }
 
-std::vector<std::shared_ptr<OperatorPipeline>> OperatorPipeline::getPredecessors() const
+std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const
 {
-    std::vector<std::shared_ptr<OperatorPipeline>> predecessors;
-    predecessors.reserve(predecessorPipelines.size());
+    std::vector<OperatorPipelinePtr> predecessors;
     for (const auto& predecessor : predecessorPipelines)
     {
         predecessors.emplace_back(predecessor.lock());
@@ -112,7 +110,7 @@ void OperatorPipeline::clearPredecessors()
 {
     for (const auto& pre : predecessorPipelines)
     {
-        if (const auto prePipeline = pre.lock())
+        if (auto prePipeline = pre.lock())
         {
             prePipeline->removeSuccessor(shared_from_this());
         }
@@ -120,7 +118,7 @@ void OperatorPipeline::clearPredecessors()
     predecessorPipelines.clear();
 }
 
-void OperatorPipeline::removePredecessor(const std::shared_ptr<OperatorPipeline>& pipeline)
+void OperatorPipeline::removePredecessor(const OperatorPipelinePtr& pipeline)
 {
     for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter)
     {
@@ -131,7 +129,7 @@ void OperatorPipeline::removePredecessor(const std::shared_ptr<OperatorPipeline>
         }
     }
 }
-void OperatorPipeline::removeSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline)
+void OperatorPipeline::removeSuccessor(const OperatorPipelinePtr& pipeline)
 {
     for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
     {
@@ -151,7 +149,7 @@ void OperatorPipeline::clearSuccessors()
     successorPipelines.clear();
 }
 
-const std::vector<std::shared_ptr<OperatorPipeline>>& OperatorPipeline::getSuccessors() const
+std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const
 {
     return successorPipelines;
 }
@@ -171,7 +169,7 @@ PipelineId OperatorPipeline::getPipelineId() const
     return id;
 }
 
-std::shared_ptr<DecomposedQueryPlan> OperatorPipeline::getDecomposedQueryPlan()
+DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan()
 {
     return decomposedQueryPlan;
 }
@@ -195,7 +193,7 @@ std::string OperatorPipeline::toString() const
         successorPipelines.begin(),
         successorPipelines.end(),
         std::string(),
-        [](const std::string& result, const std::shared_ptr<OperatorPipeline>& succPipeline)
+        [](const std::string& result, const OperatorPipelinePtr& succPipeline)
         {
             auto succPipelineId = fmt::format("{}", succPipeline->id);
             return result.empty() ? succPipelineId : result + ", " + succPipelineId;

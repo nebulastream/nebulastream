@@ -11,18 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalBinaryOperator::PhysicalBinaryOperator(
-    OperatorId id, std::shared_ptr<Schema> leftSchema, std::shared_ptr<Schema> rightSchema, std::shared_ptr<Schema> outputSchema)
+PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema)
     : Operator(id), PhysicalOperator(id), BinaryOperator(id)
 {
     BinaryOperator::setLeftInputSchema(std::move(leftSchema));

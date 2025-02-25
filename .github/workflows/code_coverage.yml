@@ -27,14 +27,14 @@ on:
         type: string
         description: "Commit sha of base"
       number_of_commits:
-        required: true
+        required: false
+        default: -1
         type: number
-        description: distance between base and head
-
 jobs:
+
   build-code-coverage-ref:
     container:
-      image: nebulastream/nes-ci:${{ inputs.base_dev_image_tag }}
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
       env:
@@ -52,8 +52,10 @@ jobs:
       - name: Cache Ref Branch Coverage
         uses: actions/cache@v3
         id: ref-cov-cache
+        env:
+          cache-name: ref-cov-cache
         with:
-          path: /tmp/cov-cache/
+          path: /tmp/cache/ref-coverage.lcov
           key: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}
       - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses:
@@ -70,13 +72,12 @@ jobs:
           cmake -GNinja -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
-          mkdir -p /tmp/cov-cache/
-          cp build/ccov/coverage.lcov /tmp/cov-cache/ref-coverage.lcov
+          mkdir -p /tmp/cache/ && cp build/ccov/coverage.lcov /tmp/cache/ref-coverage.lcov
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}.info
-          path: /tmp/cov-cache/ref-coverage.lcov
+          path: /tmp/cache/ref-coverage.lcov
 
   build-code-coverage-pr-branch:
     container:
@@ -97,11 +98,12 @@ jobs:
       - name: Cache PR Branch Coverage
         uses: actions/cache@v3
         id: pr-cov-cache
+        env:
+          cache-name: pr-cov-cache
         with:
-          path: /tmp/cov-cache/
+          path: /tmp/cache/pr-coverage.lcov
           key: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}
       - name: Include base commit
-        if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
         id: increment
         run: echo "result=$((${{ inputs.number_of_commits }} + 1))" >> $GITHUB_OUTPUT
       - name: Checkout PR Branch
@@ -116,8 +118,7 @@ jobs:
           cmake -DCODE_COVERAGE:BOOL=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
-          mkdir -p /tmp/cov-cache/
-          cp build/ccov/coverage.lcov /tmp/cov-cache/pr-coverage.lcov
+          mkdir -p /tmp/cache/ && cp build/ccov/coverage.lcov /tmp/cache/pr-coverage.lcov
       # We need to call the build target ccov-all to generate the html files for the code coverage
       # We need them as we want to copy the html files of the changed files to the cache such that they can be
       # uploaded as an artifact. This helps the reviewers to see the code coverage of the changed files.
@@ -129,54 +130,41 @@ jobs:
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all
       - name: Copy code coverage of changed files
-        if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
-        id: copy-codecov
         run: |
-          dst=/tmp/cov-cache/code-coverage/
-          iwd=$(pwd)
-
-          mkdir -p $dst
-
-          cd build/ccov/all-merged
-
-          cp style.css "$dst"
-
+          mkdir -p /tmp/cache/code-coverage-${{ matrix.platform }}
+          rm -rf /tmp/cache/code-coverage-${{ matrix.platform }}/*
+          
+          filepath_style_css=$(find build -name "style.css" -print)
+          cp "${filepath_style_css}" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
+          echo "Copying ${filepath_style_css} to /tmp/cache/code-coverage-${{ matrix.platform }}."
+          
           # We only want to copy the html files of the changed files to the cache
           # Otherwise, we would copy all html files, which would be a lot of data and we run into the data limit of github.
-          for file in $(git diff --diff-filter=ACMRT --name-only ${{ inputs.base_sha }} ${{ inputs.head_sha }}); do
-            html_file=$(find -wholename "*$file.html" -printf '%P\n') # use %P to not print leading ./
-            # file might not exists since not all changed files (e.g. CMakeLists.txt) end up in coverage report
-            if [ -n "$html_file" ]; then
-              cp --parents "$html_file" "$dst"
-              echo $html_file >> $iwd/changed_files.txt
+          for file in $(git diff --name-status ${{ inputs.head_sha }} ${{ inputs.base_sha }}); do
+            base_name=$(basename ${file})
+            filepath=$(find build -name "${base_name}.html" -print)
+            echo "Outside of the loop: <${filepath}<"
+            if [ -n "filepath" ]; then
+              for found_file in ${filepath}; do
+                sed -i "s#href='\(\.\.\/\)*style\.css'#href='style.css'#g" "${found_file}"
+                cp "${found_file}" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
+                echo "Copying ${found_file} to /tmp/cache/code-coverage-${{ matrix.platform }}."
+              done 
             fi
           done
-
-          cd $iwd
-
-          # if changed_files.txt wasn't created, there's no relevant coverage
-          if [ -e changed_files.txt ]; then
-            python3 ./scripts/code-coverage-remove-rows-index-html.py \
-              build/ccov/all-merged/index.html \
-              $dst/index.html \
-              changed_files.txt
-
-            echo "coverage_generated=true"  >> $GITHUB_OUTPUT
-          else
-            echo "coverage_generated=false" >> $GITHUB_OUTPUT
-            echo "In ${{inputs.base_sha}}..${{inputs.head_sha}}, no files with generated code coverage info were changed." >> $GITHUB_STEP_SUMMARY
-          fi
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
-        if: ${{ steps.pr-cov-cache.outputs.cache-hit || steps.copy-codecov.outputs.coverage_generated }}
+        if: ${{ !cancelled() && !failure() && !github.event.act }}
         with:
           name: code-coverage-${{ matrix.platform }}
-          path: /tmp/cov-cache/code-coverage/
+          path: /tmp/cache/code-coverage-${{ matrix.platform }}
+
       - name: Upload code coverage for PR branch
+        if: ${{ !cancelled() && !failure() && !github.event.act }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
-          path: /tmp/cov-cache/pr-coverage.lcov
+          path: /tmp/cache/pr-coverage.lcov
   
 
   # For now, we build the code coverage for x64 only

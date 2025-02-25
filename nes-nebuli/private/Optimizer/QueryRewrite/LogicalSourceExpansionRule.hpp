@@ -18,13 +18,29 @@
 #include <set>
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
 
+namespace NES
+{
+
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Catalogs::Source
+{
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}
+
+}
 
 namespace NES::Optimizer
 {
+class LogicalSourceExpansionRule;
+using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
 const std::string LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS = "ListOfBlockingDownStreamOperatorIds";
 const std::string LIST_OF_SIBLING_STATISTIC_IDS = "ListOfSiblingStatisticIds";
@@ -84,20 +100,19 @@ const std::string LIST_OF_SIBLING_STATISTIC_IDS = "ListOfSiblingStatisticIds";
 class LogicalSourceExpansionRule : public BaseRewriteRule
 {
 public:
-    static std::shared_ptr<LogicalSourceExpansionRule>
-    create(const std::shared_ptr<Catalogs::Source::SourceCatalog>&, bool expandSourceOnly);
+    static LogicalSourceExpansionRulePtr create(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
      * @param queryPlan: the original non-expanded query plan
      * @return expanded logical query plan
      */
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     virtual ~LogicalSourceExpansionRule() = default;
 
 private:
-    explicit LogicalSourceExpansionRule(const std::shared_ptr<Catalogs::Source::SourceCatalog>&, bool expandSourceOnly);
+    explicit LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
 
     /**
      * @brief This method starts from an operator and traverse upstream if the corresponding upstream(parent) operator is not a
@@ -105,23 +120,23 @@ private:
      * operator and its information is stored in the operators property.
      * @param operatorNode : operator to check for connected blocking operator
      */
-    void removeConnectedBlockingOperators(const std::shared_ptr<Node>& operatorNode);
+    void removeConnectedBlockingOperators(const NodePtr& operatorNode);
 
     /**
      * @brief Add the upstream operator id to the operator property
      * @param operatorNode operator whose property needs to be updated
      * @param downStreamOperatorId id of the downstream operator to add
      */
-    static void addBlockingDownStreamOperator(const std::shared_ptr<Node>& operatorNode, OperatorId downStreamOperatorId);
+    void addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId);
 
     /**
      * @brief Check if the input operator is a blocking operator or not (operator that can't be expanded, for example, Window Join or Union)
      * @param operatorNode : operator to check
      * @return true if blocking else false
      */
-    static bool isBlockingOperator(const std::shared_ptr<Node>& operatorNode);
+    bool isBlockingOperator(const NodePtr& operatorNode);
 
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 };
 }

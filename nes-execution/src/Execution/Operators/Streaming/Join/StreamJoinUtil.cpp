@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -23,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Util
 {
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema)
+SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema)
 {
     PRECONDITION(
         leftSchema->getLayoutType() == rightSchema->getLayoutType(),

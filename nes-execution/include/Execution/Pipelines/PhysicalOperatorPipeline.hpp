@@ -12,17 +12,27 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
 #include <Execution/Operators/Operator.hpp>
 namespace NES::Runtime::Execution
 {
 
-/// The physical operator pipeline captures a set of operators within a pipeline.
+/**
+ * @brief The physical operator pipeline captures a set of operators within a pipeline.
+ */
 class PhysicalOperatorPipeline
 {
 public:
+    /**
+     * @brief Sets the root operator of an pipeline.
+     * @param rootOperator
+     */
     void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
-    [[nodiscard]] std::shared_ptr<Operators::Operator> getRootOperator() const;
+
+    /**
+     * @brief Returns the root operator of an pipeline
+     * @return operator
+     */
+    std::shared_ptr<Operators::Operator> getRootOperator() const;
 
 private:
     std::shared_ptr<Operators::Operator> rootOperator;

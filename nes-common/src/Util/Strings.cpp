@@ -14,8 +14,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <concepts>
-#include <cstddef>
+#include <iterator>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -23,15 +22,14 @@
 #include <string_view>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Util
 {
 template <>
-std::optional<float> from_chars<float>(const std::string_view input)
+std::optional<float> from_chars<float>(std::string_view input)
 {
-    const std::string str(trimWhiteSpaces(input));
+    std::string const str(trimWhiteSpaces(input));
     try
     {
         return std::stof(str);
@@ -43,7 +41,7 @@ std::optional<float> from_chars<float>(const std::string_view input)
 }
 
 template <>
-std::optional<bool> from_chars<bool>(const std::string_view input)
+std::optional<bool> from_chars<bool>(std::string_view input)
 {
     auto trimmed = trimWhiteSpaces(input);
     if (toLowerCase(trimmed) == "true" || trimmed == "1")
@@ -57,31 +55,10 @@ std::optional<bool> from_chars<bool>(const std::string_view input)
     return {};
 }
 
-std::string formatFloat(std::floating_point auto value)
-{
-    std::string formatted = fmt::format("{:.6f}", value);
-    const size_t decimalPos = formatted.find('.');
-    if (decimalPos == std::string_view::npos)
-    {
-        return formatted;
-    }
-
-    const size_t lastNonZero = formatted.find_last_not_of('0');
-    if (lastNonZero == decimalPos)
-    {
-        return formatted.substr(0, decimalPos + 2);
-    }
-
-    return formatted.substr(0, lastNonZero + 1);
-}
-/// explicit instantiations
-template std::string formatFloat(float);
-template std::string formatFloat(double);
-
 template <>
-std::optional<double> from_chars<double>(const std::string_view input)
+std::optional<double> from_chars<double>(std::string_view input)
 {
-    const std::string str(trimWhiteSpaces(input));
+    std::string const str(trimWhiteSpaces(input));
     try
     {
         return std::stod(str);
@@ -92,7 +69,7 @@ std::optional<double> from_chars<double>(const std::string_view input)
     }
 }
 template <>
-std::optional<std::string> from_chars<std::string>(const std::string_view input)
+std::optional<std::string> from_chars<std::string>(std::string_view input)
 {
     return std::string(input);
 }
@@ -102,7 +79,7 @@ std::optional<std::string_view> from_chars<std::string_view>(std::string_view in
     return input;
 }
 
-std::string replaceAll(std::string_view origin, const std::string_view search, const std::string_view replace)
+std::string replaceAll(std::string_view origin, std::string_view search, std::string_view replace)
 {
     if (search.empty())
     {
@@ -138,7 +115,7 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
 
 namespace
 {
-constexpr void verifyAsciiString(USED_IN_DEBUG std::string_view input)
+constexpr void verifyAsciiString(std::string_view input)
 {
     PRECONDITION(
         std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; }),
@@ -182,24 +159,6 @@ std::string_view trimWhiteSpaces(const std::string_view input)
     const auto start = input.find_first_not_of(" \t\n\r");
     const auto end = input.find_last_not_of(" \t\n\r");
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
-}
-
-std::string_view trimCharacters(const std::string_view input, const char c)
-{
-    const auto start = input.find_first_not_of(c);
-    const auto end = input.find_last_not_of(c);
-    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
-}
-
-std::string_view trimCharsRight(std::string_view input, char character)
-{
-    const std::size_t lastNotC = input.find_last_not_of(character);
-    if (lastNotC == std::string_view::npos)
-    {
-        return std::string_view{};
-    }
-    input.remove_suffix(input.size() - lastNotC - 1);
-    return input;
 }
 
 }

@@ -12,11 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 /**
@@ -35,18 +31,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalUnionOperator : public PhysicalBinaryOperator
 {
 public:
-    PhysicalUnionOperator(
-        OperatorId id,
-        const std::shared_ptr<Schema>& leftSchema,
-        const std::shared_ptr<Schema>& rightSchema,
-        const std::shared_ptr<Schema>& outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(
-        OperatorId id,
-        const std::shared_ptr<Schema>& leftSchema,
-        const std::shared_ptr<Schema>& rightSchema,
-        const std::shared_ptr<Schema>& outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& schema);
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& schema);
+    PhysicalUnionOperator(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr
+    create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
+    static PhysicalOperatorPtr create(const SchemaPtr& schema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

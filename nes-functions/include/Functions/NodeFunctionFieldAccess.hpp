@@ -13,15 +13,12 @@
 */
 
 #pragma once
-#include <memory>
-#include <string>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
+class NodeFunctionFieldAccess;
+using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
 
 /**
  * @brief A FieldAccessFunction reads a specific field of the current record.
@@ -33,14 +30,14 @@ public:
     /**
     * @brief Create typed field read.
     */
-    static std::shared_ptr<NodeFunction> create(std::shared_ptr<DataType> stamp, std::string fieldName);
+    static NodeFunctionPtr create(DataTypePtr stamp, std::string fieldName);
 
     /**
      * @brief Create untyped field read.
      */
-    static std::shared_ptr<NodeFunction> create(std::string fieldName);
+    static NodeFunctionPtr create(std::string fieldName);
 
-    bool equal(const std::shared_ptr<Node>& rhs) const override;
+    bool equal(NodePtr const& rhs) const override;
 
     /**
      * @brief Get field name
@@ -59,20 +56,20 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this function node.
-    * @return std::shared_ptr<NodeFunction>
+    * @return NodeFunctionPtr
     */
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
     bool validateBeforeLowering() const override;
 
 protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
-    NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName);
+    NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName);
 
     std::string toString() const override;
     /**

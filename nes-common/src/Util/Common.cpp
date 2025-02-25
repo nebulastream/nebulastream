@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <numeric>
@@ -70,7 +69,7 @@ std::string updateSourceName(std::string queryPlanSourceConsumed, std::string su
     return updatedSourceName;
 }
 
-uint64_t murmurHash(const uint64_t key)
+uint64_t murmurHash(uint64_t key)
 {
     uint64_t hash = key;
 

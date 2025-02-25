@@ -256,7 +256,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
                 {
-                    const bool value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
+                    bool const value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
                     if (!value)
                     {
                         if ((static_cast<int>(strcasecmp(inputString.c_str(), "false") != 0) != 0)
@@ -287,7 +287,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     physicalTypes.reserve(schema.getFieldCount());
-    for (const std::shared_ptr<AttributeField>& field : schema)
+    for (const AttributeFieldPtr& field : schema)
     {
         physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
     }
@@ -335,9 +335,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
+    NES_DEBUG("Formatting raw bytes into tuple buffer...");
     /// Reset all values that are tied to a specific tbRaw.
     /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
     progressTracker->resetForNewTBRaw(numBytesInTBRaw, tbRaw.getBuffer<const char>());
@@ -381,8 +382,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
         {
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
-            NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
+            NES_DEBUG("Emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+            emitFunction(progressTracker->getTupleBufferFormatted()); /// true triggers adding sequence number, etc.
             progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
@@ -395,10 +396,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
     }
 
     progressTracker->setNumberOfTuplesInTBFormatted();
-    NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+    NES_DEBUG("Emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
+    emitFunction(progressTracker->getTupleBufferFormatted());
     progressTracker->handleResidualBytes(tbRaw);
 }
 
@@ -423,13 +424,10 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatterRegistryReturnType>
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments inputFormatterRegistryArguments)
+std::unique_ptr<InputFormatter>
+InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    return std::make_unique<CSVInputFormatter>(
-        inputFormatterRegistryArguments.schema,
-        inputFormatterRegistryArguments.tupleDelimiter,
-        inputFormatterRegistryArguments.fieldDelimiter);
+    return std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
 }
 
 }

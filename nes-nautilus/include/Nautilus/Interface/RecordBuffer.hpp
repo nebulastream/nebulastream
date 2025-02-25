@@ -25,6 +25,7 @@
 
 namespace NES::Nautilus
 {
+class Record;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.
@@ -40,7 +41,7 @@ public:
     explicit RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
-    [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
+    nautilus::val<uint64_t> getNumRecords();
 
     /// Retrieve the reference to the underling memory area from the record buffer.
     nautilus::val<int8_t*> getBuffer() const;

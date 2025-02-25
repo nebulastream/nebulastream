@@ -11,17 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cstddef>
-#include <cstdint>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
 {
-HashFunction::HashValue MurMur3HashFunction::init() const
+HashFunction::HashValue MurMur3HashFunction::init()
 {
     return SEED;
 }
@@ -30,18 +26,13 @@ HashFunction::HashValue MurMur3HashFunction::init() const
 /// https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
 VarVal hashVarVal(const VarVal& input)
 {
-    /// Define the constants for the hash function.
-    constexpr auto murmurHashXorShift = 33;
-    constexpr auto murmurHashMultiplier1 = UINT64_C(0xff51afd7ed558ccd);
-    constexpr auto murmurHashMultiplier2 = UINT64_C(0xc4ceb9fe1a85ec53);
-
     /// We are not using the input variable here but rather are creating a new one, as otherwise, the underlying value of the input could change.
-    auto hash = input ^ (input >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
-    hash = hash * VarVal(nautilus::val<uint64_t>(murmurHashMultiplier1));
-    hash = hash ^ (hash >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
-    hash = hash * VarVal(nautilus::val<uint64_t>(murmurHashMultiplier2));
-    hash = hash ^ (hash >> VarVal(HashFunction::HashValue(murmurHashXorShift)));
-    return hash;
+    auto x = input ^ (input >> VarVal(33));
+    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
+    x = x ^ (x >> VarVal(33));
+    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xc4ceb9fe1a85ec53)));
+    x = x ^ (x >> VarVal(33));
+    return x;
 }
 
 /**
@@ -56,11 +47,11 @@ uint64_t hashBytes(void* data, uint64_t length)
     static constexpr uint64_t seed = UINT64_C(0xe17a1465);
     static constexpr unsigned int r = 47;
 
-    const auto* const data64 = static_cast<const uint64_t*>(data);
+    auto const* const data64 = static_cast<const uint64_t*>(data);
     uint64_t h = seed ^ (length * m);
 
-    const size_t nBlocks = length / 8;
-    for (size_t i = 0; i < nBlocks; ++i)
+    size_t const n_blocks = length / 8;
+    for (size_t i = 0; i < n_blocks; ++i)
     {
         auto k = *(data64 + i);
 
@@ -72,7 +63,7 @@ uint64_t hashBytes(void* data, uint64_t length)
         h *= m;
     }
 
-    const auto* const data8 = reinterpret_cast<const uint8_t*>(data64 + nBlocks);
+    auto const* const data8 = reinterpret_cast<uint8_t const*>(data64 + n_blocks);
     switch (length & 7U)
     {
         case 7:
@@ -109,7 +100,7 @@ uint64_t hashBytes(void* data, uint64_t length)
     return h;
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const VarVal& value) const
+HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, VarVal& value)
 {
     return value
         .customVisit(
@@ -120,14 +111,9 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
                 }
-                else if constexpr (std::is_same_v<T, nautilus::val<double>> || std::is_same_v<T, nautilus::val<float>>)
-                {
-                    /// For floating points, we do not support the >> operator, as it is not defined for floats.
-                    throw UnsupportedOperation("Cannot hash floating point values.");
-                }
                 else
                 {
-                    return VarVal(hash) ^ hashVarVal(static_cast<nautilus::val<uint64_t>>(val));
+                    return VarVal(hash) ^ hashVarVal(val);
                 }
             })
         .cast<HashValue>();

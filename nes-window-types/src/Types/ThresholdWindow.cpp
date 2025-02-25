@@ -12,43 +12,37 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <functional>
-#include <memory>
 #include <ostream>
-#include <utility>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Types/ContentBasedWindowType.hpp>
 #include <Types/ThresholdWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate) : predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(NodeFunctionPtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount)
-    : predicate(std::move(predicate)), minimumCount(minCount)
+ThresholdWindow::ThresholdWindow(NodeFunctionPtr predicate, uint64_t minCount)
+    : ContentBasedWindowType(), predicate(predicate), minimumCount(minCount)
 {
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate)
+WindowTypePtr ThresholdWindow::of(NodeFunctionPtr predicate)
 {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate, uint64_t minimumCount)
+WindowTypePtr ThresholdWindow::of(NodeFunctionPtr predicate, uint64_t minimumCount)
 {
     return std::reinterpret_pointer_cast<WindowType>(
         std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
 }
 
-bool ThresholdWindow::equal(std::shared_ptr<WindowType> otherWindowType)
+bool ThresholdWindow::equal(WindowTypePtr otherWindowType)
 {
     if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType))
     {
@@ -62,7 +56,7 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const std::shared_ptr<NodeFunction>& ThresholdWindow::getPredicate() const
+const NodeFunctionPtr& ThresholdWindow::getPredicate() const
 {
     return predicate;
 }
@@ -72,7 +66,7 @@ uint64_t ThresholdWindow::getMinimumCount() const
     return minimumCount;
 }
 
-bool ThresholdWindow::inferStamp(const Schema& schema)
+bool ThresholdWindow::inferStamp(const SchemaPtr& schema)
 {
     NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(schema);

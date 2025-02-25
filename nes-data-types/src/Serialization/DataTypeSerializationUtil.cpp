@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <vector>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
@@ -32,8 +31,7 @@
 namespace NES
 {
 
-SerializableDataType*
-DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType)
+SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTypePtr& dataType, SerializableDataType* serializedDataType)
 {
     if (NES::Util::instanceOf<Undefined>(dataType))
     {
@@ -79,7 +77,7 @@ DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& da
     return serializedDataType;
 }
 
-std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
+DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
     NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)

@@ -22,6 +22,7 @@ option(NES_BUILD_NATIVE "Override mtune/march to load native support (might impr
 
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(CODE_COVERAGE "Compute test coverage" OFF)
@@ -36,9 +37,13 @@ option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
+set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
 if (NES_LOG_WITH_STACKTRACE)
     add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+endif ()
+if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
+    set(NES_TEST_PARALLELISM "1")
 endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
@@ -77,17 +82,29 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
+if (NES_ENABLE_CXA_THROW_HOOK)
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
+endif ()
+
+# enables tracing of stack traces if operator / function nodes are created
+if (NES_TRACE_NODE_CREATION)
+    add_compile_definitions(NES_TRACE_NODE_CREATION)
+    message(STATUS "Trace node creation")
+endif ()
+
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
 # Currently we support the following log levels:
 # TRACE, DEBUG, INFO, WARN, ERROR, FATAL_ERROR, and NONE.
 # Notice that these is a compilation time provided value.
 # Consequently, it is not possible to activate at runtime a log level,
 # which is lower then the log level that is provided here.
-set_nes_log_level_value(NES_LOGGING_VALUE)
+get_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-invalid-offsetof ")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
@@ -156,6 +173,34 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
+# folly relies on boost so we set the right configuration flag
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)
+
+# jemalloc
+option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
+message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
+if (CMAKE_ENABLE_JEMALLOC)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(JEMALLOC jemalloc)
+    pkg_search_module(JEMALLOC REQUIRED jemalloc)
+    include_directories(${JEMALLOC_INCLUDE_DIRS})
+    set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
+endif ()
+# lcryto is required for asio to communicate
+if (APPLE)
+    find_library(SSL_LIB libssl.a REQUIRED)
+    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
+    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
+endif ()
+if (UNIX AND NOT APPLE)
+    find_package(OpenSSL REQUIRED)
+    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
+endif ()
+
+# GRPC and protobuf
+set(gRPC_RELEASE "v1.28.1")
+# This assumes that gRPC and all its dependencies are already installed
+# on this system, so they can be located by find_package().
 
 # Find Protobuf installation
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
@@ -280,7 +325,7 @@ if (CODE_COVERAGE)
     list(REMOVE_ITEM NES_DIRECTORIES "nes-nebuli")
     list(REMOVE_ITEM NES_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
-    list(REMOVE_ITEM NES_DIRECTORIES "nes-plugins")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-optional-plugins")
 
     foreach (NES_DIR ${NES_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -49,7 +48,6 @@ class QueryTracker
 public:
     QueryId registerQuery(std::unique_ptr<Execution::ExecutableQueryPlan> qep)
     {
-        NES_INFO("Register {}", qep->queryId);
         QueryId queryId = qep->queryId;
         queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
         return queryId;
@@ -89,7 +87,7 @@ NodeEngine::NodeEngine(
 QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan)
 {
     auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
-    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered, std::chrono::system_clock::now());
+    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered);
     return queryId;
 }
 

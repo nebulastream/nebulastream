@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <API/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
@@ -27,7 +26,7 @@ UnaryOperator::UnaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void UnaryOperator::setInputSchema(std::shared_ptr<Schema> inputSchema)
+void UnaryOperator::setInputSchema(SchemaPtr inputSchema)
 {
     if (inputSchema)
     {
@@ -35,7 +34,7 @@ void UnaryOperator::setInputSchema(std::shared_ptr<Schema> inputSchema)
     }
 }
 
-void UnaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+void UnaryOperator::setOutputSchema(SchemaPtr outputSchema)
 {
     if (outputSchema)
     {
@@ -43,12 +42,12 @@ void UnaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
     }
 }
 
-std::shared_ptr<Schema> UnaryOperator::getInputSchema() const
+SchemaPtr UnaryOperator::getInputSchema() const
 {
     return inputSchema;
 }
 
-std::shared_ptr<Schema> UnaryOperator::getOutputSchema() const
+SchemaPtr UnaryOperator::getOutputSchema() const
 {
     return outputSchema;
 }

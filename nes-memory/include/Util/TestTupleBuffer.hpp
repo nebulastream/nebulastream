@@ -21,7 +21,6 @@
 #include <string>
 #include <type_traits>
 #include <variant>
-#include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -44,6 +43,8 @@ concept ContainsString = requires { requires(std::is_same_v<std::string, Types> 
 template <class Type>
 concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 
+class MemoryLayoutTupleBuffer;
+using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
 /// The DynamicField allows to read and write a field at a
 /// specific address and a specific data type.
@@ -52,7 +53,7 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class DynamicField
 {
 public:
-    explicit DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType);
+    explicit DynamicField(const uint8_t* address, PhysicalTypePtr physicalType);
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
@@ -143,13 +144,13 @@ public:
 
     bool operator!=(const DynamicField& rhs) const;
 
-    [[nodiscard]] const std::shared_ptr<PhysicalType>& getPhysicalType() const;
+    [[nodiscard]] const PhysicalTypePtr& getPhysicalType() const;
 
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 
 private:
     const uint8_t* address;
-    std::shared_ptr<PhysicalType> physicalType;
+    const PhysicalTypePtr physicalType;
 };
 
 /// The DynamicRecords allows to read individual fields of a tuple.
@@ -172,7 +173,7 @@ public:
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    [[nodiscard]] std::string toString(const std::shared_ptr<Schema>& schema) const;
+    [[nodiscard]] std::string toString(const SchemaPtr& schema) const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different
@@ -180,9 +181,9 @@ public:
     bool operator!=(const DynamicTuple& other) const;
 
 private:
-    uint64_t tupleIndex;
-    std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    const uint64_t tupleIndex;
+    const std::shared_ptr<MemoryLayout> memoryLayout;
+    const Memory::TupleBuffer buffer;
 };
 
 /**
@@ -228,7 +229,7 @@ class TestTupleBuffer
 public:
     explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema);
+    static TestTupleBuffer createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -288,8 +289,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(const std::shared_ptr<Schema>& schema);
-    std::string toString(const std::shared_ptr<Schema>& schema, bool showHeader);
+    std::string toString(const SchemaPtr& schema, bool showHeader = true);
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
@@ -383,10 +383,10 @@ public:
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
         PRECONDITION(
-            (sizeof...(Types)) == memoryLayout->getSchema()->getFieldCount(),
+            (sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
             "Provided tuple types: {} do not match the number of fields in the memory layout: {}",
             sizeof...(Types),
-            memoryLayout->getSchema()->getFieldCount());
+            memoryLayout->getFieldSizes().size());
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;
@@ -429,8 +429,9 @@ private:
         }
     }
 
+private:
     std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    mutable Memory::TupleBuffer buffer;
 };
 
 }

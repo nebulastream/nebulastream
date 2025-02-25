@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-test-linux:
-    name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}"
+    name: "Build and test ${{matrix.arch}} with ${{matrix.stdlib}}"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
       volumes:
@@ -31,13 +31,12 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
-        build_type: [ 'Debug', 'RelWithDebInfo' ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake -GNinja -B build
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
@@ -47,5 +46,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}.xml
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}.xml
           path: /junit.xml

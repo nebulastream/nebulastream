@@ -13,12 +13,7 @@
 */
 
 #pragma once
-#include <memory>
-#include <vector>
-#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -28,7 +23,7 @@ namespace NES
 class NodeFunctionCase : public NodeFunction
 {
 public:
-    explicit NodeFunctionCase(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionCase(DataTypePtr stamp);
     ~NodeFunctionCase() noexcept override = default;
 
     /**
@@ -36,32 +31,35 @@ public:
      * @param whenExps : a vector of when function nodes.
      * @param defaultExp : the function to select, if no when function evaluates to a value
      */
-    static std::shared_ptr<NodeFunction>
-    create(const std::vector<std::shared_ptr<NodeFunction>>& whenExps, const std::shared_ptr<NodeFunction>& defaultExp);
+    static NodeFunctionPtr create(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp);
 
     /**
      * @brief set the children nodes of this function.
      * @param whenExps : a vector of when function nodes.
      * @param defaultExp : the function to select, if no when function evaluates to a value
      */
-    void setChildren(const std::vector<std::shared_ptr<NodeFunction>>& whenExps, const std::shared_ptr<NodeFunction>& defaultExp);
+    void setChildren(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp);
 
     /**
      * @brief gets the vector of when children.
      */
-    std::vector<std::shared_ptr<NodeFunction>> getWhenChildren() const;
+    std::vector<NodeFunctionPtr> getWhenChildren() const;
 
     /**
      * @brief gets the node representing the default child.
      */
-    std::shared_ptr<NodeFunction> getDefaultExp() const;
+    NodeFunctionPtr getDefaultExp() const;
 
-    void inferStamp(const Schema& schema) override;
+    /**
+     * @brief Infers the stamp of this function node.
+     * @param schema the current schema.
+     */
+    void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
 
     bool validateBeforeLowering() const override;
-    std::shared_ptr<NodeFunction> deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionCase(NodeFunctionCase* other);

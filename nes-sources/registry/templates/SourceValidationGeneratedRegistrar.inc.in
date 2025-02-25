@@ -23,12 +23,14 @@
 #include <string>
 #include <unordered_map>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources::SourceValidationGeneratedRegistrar
 {
-
 /// declaration of register functions for 'Sources'
+// CONFIGURATION
+@ARGUMENTS=std::unordered_map<std::string, std::string>&&@
+// END CONFIGURATION
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
@@ -37,7 +39,7 @@ namespace NES
 
 template <>
 inline void
-Registrar<Sources::SourceValidationRegistry, std::string, Sources::SourceValidationRegistryReturnType, Sources::SourceValidationRegistryArguments>::registerAll(Registry<Registrar>& registry)
+Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@

@@ -14,19 +14,14 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
-#include <ErrorHandling.hpp>
-#include <val.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Util
 {
+
+
 void logProxy(const char* message, const LogLevel logLevel);
 
 /// Allows to use our general logging calls from our nautilus-runtime
@@ -75,42 +70,5 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
-
-VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType);
-VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType);
-template <typename T>
-static VarVal createNautilusConstValue(T value, const std::shared_ptr<PhysicalType>& physicalType)
-{
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
-    {
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::INT_8:
-                return Nautilus::VarVal(nautilus::val<int8_t>(value));
-            case BasicPhysicalType::NativeType::INT_16:
-                return Nautilus::VarVal(nautilus::val<int16_t>(value));
-            case BasicPhysicalType::NativeType::INT_32:
-                return Nautilus::VarVal(nautilus::val<int32_t>(value));
-            case BasicPhysicalType::NativeType::INT_64:
-                return Nautilus::VarVal(nautilus::val<int64_t>(value));
-            case BasicPhysicalType::NativeType::UINT_8:
-                return Nautilus::VarVal(nautilus::val<uint8_t>(value));
-            case BasicPhysicalType::NativeType::UINT_16:
-                return Nautilus::VarVal(nautilus::val<uint16_t>(value));
-            case BasicPhysicalType::NativeType::UINT_32:
-                return Nautilus::VarVal(nautilus::val<uint32_t>(value));
-            case BasicPhysicalType::NativeType::UINT_64:
-                return Nautilus::VarVal(nautilus::val<uint64_t>(value));
-            case BasicPhysicalType::NativeType::FLOAT:
-                return Nautilus::VarVal(nautilus::val<float>(value));
-            case BasicPhysicalType::NativeType::DOUBLE:
-                return Nautilus::VarVal(nautilus::val<double>(value));
-            default: {
-                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
-            }
-        }
-    }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
-}
 
 }

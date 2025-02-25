@@ -14,14 +14,12 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
+class ColumnLayout;
 /**
  * @brief Implements a columnar layout, that maps all tuples in a tuple buffer to a column-wise layout.
  * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
@@ -35,10 +33,10 @@ namespace NES::Memory::MemoryLayouts
 class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
 {
 public:
-    ColumnLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
     ColumnLayout(const ColumnLayout& other);
 
-    static std::shared_ptr<ColumnLayout> create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// For the column layout the field offset is calculated as follows:
@@ -49,7 +47,7 @@ public:
 
     std::shared_ptr<MemoryLayout> deepCopy() const override;
 
-    uint64_t getColumnOffset(uint64_t fieldIndex) const;
+    const std::vector<uint64_t>& getColumnOffsets() const;
 
 private:
     std::vector<uint64_t> columnOffsets;

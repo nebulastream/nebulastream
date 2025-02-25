@@ -24,14 +24,18 @@
 
 namespace NES::Nautilus::Interface
 {
-
-void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+PagedVector::PagedVector(
+    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+    : bufferProvider(bufferProvider), memoryLayout(std::move(memoryLayout))
 {
-    PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
+    INVARIANT(this->memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
+    INVARIANT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
 
+    appendPageIfFull();
+}
+
+void PagedVector::appendPageIfFull()
+{
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
         if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
@@ -47,13 +51,11 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
 void PagedVector::appendAllPages(PagedVector& other)
 {
-    copyFrom(other);
-    other.pages.clear();
-}
+    PRECONDITION(
+        *memoryLayout->getSchema() == (*other.memoryLayout->getSchema()), "Cannot combine PagedVectors with different PhysicalTypes!");
 
-void PagedVector::copyFrom(const PagedVector& other)
-{
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
+    other.pages.clear();
 }
 
 const Memory::TupleBuffer& PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const

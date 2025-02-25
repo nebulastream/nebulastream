@@ -33,8 +33,8 @@ public:
     SinkLogicalOperator(std::string sinkName, const OperatorId id)
         : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
 
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool inferSchema() override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;

@@ -17,14 +17,18 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
 
 /// This file contains the user facing api to create function nodes in a fluent and easy way.
+
+class NodeFunction;
+using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
+
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
 /// A function item represents the leaf in an function tree.
 /// It is converted to an constant value function or a field access function.
@@ -42,22 +46,17 @@ public:
     FunctionItem(float value); ///NOLINT(google-explicit-constructor)
     FunctionItem(double value); ///NOLINT(google-explicit-constructor)
     FunctionItem(bool value); ///NOLINT(google-explicit-constructor)
-    /// ReSharper disable once CppNonExplicitConvertingConstructor
-    FunctionItem(std::shared_ptr<NodeFunction> exp); /// NOLINT(google-explicit-constructor)
+    FunctionItem(NodeFunctionPtr exp);
 
-    FunctionItem(const FunctionItem&) = default;
+    FunctionItem(FunctionItem const&) = default;
     FunctionItem(FunctionItem&&) = default;
 
-    std::shared_ptr<NodeFunctionFieldAssignment> /// NOLINT(misc-unconventional-assign-operator)
-    operator=(const FunctionItem & assignItem) const;
-
-    std::shared_ptr<NodeFunctionFieldAssignment> /// NOLINT(misc-unconventional-assign-operator)
-    operator=(const std::shared_ptr<NodeFunction>& assignFunction) const;
+    NodeFunctionFieldAssignmentPtr operator=(FunctionItem assignItem);
+    NodeFunctionFieldAssignmentPtr operator=(NodeFunctionPtr assignFunction);
 
     /// Gets the function node of this function item.
-    [[nodiscard]] std::shared_ptr<NodeFunction> getNodeFunction() const;
-    /// ReSharper disable once CppNonExplicitConversionOperator
-    operator std::shared_ptr<NodeFunction>(); /// NOLINT(google-explicit-constructor)
+    [[nodiscard]] NodeFunctionPtr getNodeFunction() const;
+    operator NodeFunctionPtr();
 
     /// Rename the function item
     /// @param name : the new name
@@ -65,7 +64,7 @@ public:
     FunctionItem as(std::string name);
 
 private:
-    std::shared_ptr<NodeFunction> function;
+    NodeFunctionPtr function;
 };
 
 /// Attribute(name) allows the user to reference a field in his function.
@@ -85,18 +84,17 @@ FunctionItem Attribute(std::string name, BasicType type);
 /// Allows to only return the value function if condition is met.
 /// @param conditionExp : a logical condition which will be evaluated.
 /// @param valueExp : the value to return if the condition is the first true one.
-std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp);
-std::shared_ptr<NodeFunction> WHEN(FunctionItem conditionExp, std::shared_ptr<NodeFunction> valueExp);
-std::shared_ptr<NodeFunction> WHEN(std::shared_ptr<NodeFunction> conditionExp, FunctionItem valueExp);
-std::shared_ptr<NodeFunction> WHEN(FunctionItem conditionExp, FunctionItem valueExp);
+NodeFunctionPtr WHEN(const NodeFunctionPtr& conditionExp, const NodeFunctionPtr& valueExp);
+NodeFunctionPtr WHEN(FunctionItem conditionExp, NodeFunctionPtr valueExp);
+NodeFunctionPtr WHEN(NodeFunctionPtr conditionExp, FunctionItem valueExp);
+NodeFunctionPtr WHEN(FunctionItem conditionExp, FunctionItem valueExp);
 
 /// CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
 /// WHEN functions from the vector list and only return the first one where the condition evaluated to true, or the value of the default function.
 /// The CASE({WHEN()},default) is evaluated as a concatenated ternary operator in C++.
 /// @param whenFunctions : a vector of at least one WHEN function to evaluate.
 /// @param defaultValueExp : an function which will be returned if no WHEN condition evaluated to true.
-std::shared_ptr<NodeFunction>
-CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const std::shared_ptr<NodeFunction>& defaultValueExp);
-std::shared_ptr<NodeFunction> CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const FunctionItem& defaultValueExp);
+NodeFunctionPtr CASE(const std::vector<NodeFunctionPtr>& whenFunctions, NodeFunctionPtr defaultValueExp);
+NodeFunctionPtr CASE(std::vector<NodeFunctionPtr> whenFunctions, FunctionItem defaultValueExp);
 
 }

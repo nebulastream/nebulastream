@@ -13,24 +13,47 @@
 */
 
 #pragma once
-#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus::Interface
 {
 
-/// Interface for hash function on Nautilus values.
-/// Subclasses can provide specific hash algorithms.
+/**
+ * @brief Interface for hash function on Nautilus values.
+ * Sub classes can provide specific hash algorithms.
+ */
 class HashFunction
 {
 public:
     using HashValue = nautilus::val<uint64_t>;
-    [[nodiscard]] HashValue calculate(const VarVal& value) const;
-    [[nodiscard]] HashValue calculate(const std::vector<VarVal>& values) const;
+
+    /**
+     * @brief Calculates the hash of one value.
+     * @param value a nautilus value
+     * @return the hash
+     */
+    HashValue calculate(VarVal value);
+
+    /**
+     * @brief Calculates the hash across a set of values.
+     * @param values vector of nautilus values.
+     * @return the hash
+     */
+    HashValue calculate(std::vector<VarVal>& values);
     virtual ~HashFunction() = default;
 
 protected:
-    [[nodiscard]] virtual HashValue init() const = 0;
-    virtual HashValue calculate(HashValue& hash, const VarVal& value) const = 0;
+    /**
+     * @brief Initializes a hash value, e.g. a specific seed.
+     * @return HashValue
+     */
+    virtual HashValue init() = 0;
+    /**
+     * @brief Calculates the hash of a specific value.
+     * @param hash
+     * @param value
+     * @return HashValue
+     */
+    virtual HashValue calculate(HashValue& hash, VarVal& value) = 0;
 };
 }

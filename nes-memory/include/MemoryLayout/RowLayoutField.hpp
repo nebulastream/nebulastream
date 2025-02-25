@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <utility>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -73,11 +72,11 @@ private:
      * @param fieldIndex
      * @param recordSize
      */
-    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, uint64_t fieldIndex, uint64_t recordSize)
+    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) {};
 
-    uint64_t fieldIndex;
-    uint64_t recordSize;
+    const FIELD_SIZE fieldIndex;
+    const FIELD_SIZE recordSize;
     uint8_t* basePointer;
     std::shared_ptr<RowLayout> layout;
 };
@@ -87,9 +86,9 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
+        boundaryChecks && fieldIndex < layout->getFieldOffSets().size(),
         "fieldIndex out of bounds! {} >= {}",
-        layout->getSchema()->getFieldCount(),
+        layout->getFieldOffSets().size(),
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address
@@ -105,8 +104,11 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
-    INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);
-    return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
+    if (fieldIndex.has_value())
+    {
+        return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
+    }
+    INVARIANT(false, "Could not find fieldIndex for {}", fieldName);
 }
 
 template <class T, bool boundaryChecks>

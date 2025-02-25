@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <utility>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -20,7 +19,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <val.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -37,7 +35,7 @@ EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::Function> timest
 
 nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
 {
-    const auto ts = this->timestampFunction->execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
+    const auto ts = this->timestampFunction->execute(record).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
     ctx.currentTs = tsInMs;

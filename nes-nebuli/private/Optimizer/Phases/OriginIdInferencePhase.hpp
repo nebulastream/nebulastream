@@ -14,18 +14,25 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
 #include <Operators/Operator.hpp>
 
 namespace NES
 {
+
 class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 class OriginIdAssignmentOperator;
+using OriginIdAssignmentOperatorPtr = std::shared_ptr<OriginIdAssignmentOperator>;
+
 namespace Optimizer
 {
 
+class OriginIdInferencePhase;
+using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
 /**
  * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
@@ -41,29 +48,28 @@ namespace Optimizer
 class OriginIdInferencePhase
 {
 public:
-    static std::shared_ptr<OriginIdInferencePhase> create();
+    static OriginIdInferencePhasePtr create();
     virtual ~OriginIdInferencePhase() = default;
 
     /**
      * @brief Apply the rule to the Query plan
-     * @param std::shared_ptr<QueryPlan> : The original query plan
+     * @param queryPlanPtr : The original query plan
      * @return The updated query plan
      */
-    std::shared_ptr<QueryPlan> execute(std::shared_ptr<QueryPlan> queryPlan);
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
     /**
      * @brief Apply the rule to the Query plan
      * @param decomposedQueryPlan: The original query plan
      * @return The updated query plan
      */
-    std::shared_ptr<DecomposedQueryPlan> execute(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan);
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
 private:
     explicit OriginIdInferencePhase();
 
     void performInference(
-        const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-        const std::vector<std::shared_ptr<Operator>>& rootOperators);
+        std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<std::shared_ptr<Operator>> rootOperators);
 };
 }
 }
