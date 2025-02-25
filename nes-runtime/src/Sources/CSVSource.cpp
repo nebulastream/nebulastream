@@ -70,9 +70,9 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     NES_DEBUG("Starting tcp source")
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
-        NES_DEBUG("Creating source info")
-        auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-        NES_DEBUG("Created source info with fd {}", sourceInfo->sockfd)
+        // NES_DEBUG("Creating source info")
+        // auto sourceInfo = this->queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        // NES_DEBUG("Created source info with fd {}", sourceInfo->sockfd)
         return;
     }
     struct Deleter {
@@ -148,9 +148,11 @@ CSVSource::CSVSource(SchemaPtr schema,
 
 struct Record {
     uint64_t id;
+    uint64_t joinId;
     uint64_t value;
     uint64_t ingestionTimestamp;
     uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
 };
 
 std::optional<Runtime::TupleBuffer>
@@ -261,16 +263,26 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                             NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                             if (bytesRead == 0) {
                                 if (byteOffset < incomingTupleSize) {
-                                    NES_DEBUG("TCPSource::fillBuffer: inserting eos");
+                                    // NES_ERROR("TCPSource::fillBuffer: inserting eos");
                                     //return std::nullopt;
                                     //                                buffer.setNumberOfTuples(0);
                                     //                                return buffer.getBuffer();
-                                    break;
+                                    if (running) {
+                                        break;
+                                    } else {
+                                        return std::nullopt;
+                                    }
+                                    // buffer.setNumberOfTuples(0);
+                                    // return buffer.getBuffer();
                                 }
                                 //flushIntervalPassed = true;
                             } else if (bytesRead < 0) {
-                                NES_DEBUG("TCPSource::fillBuffer: error while reading from socket");
-                                break;
+                                // NES_ERROR("TCPSource::fillBuffer: error while reading from socket");
+                                if (running) {
+                                    break;
+                                } else {
+                                    return std::nullopt;
+                                }
                             }
                             byteOffset += bytesRead;
                             //todo: this was new
@@ -299,11 +311,13 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                         auto index = i * incomingTupleSize;
                         auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
-                        auto seqenceNr = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + valueSize]));
-                        auto ingestionTime = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 2 * valueSize]));
+                        auto joinId = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + valueSize]));
+                        auto seqenceNr = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 2 * valueSize]));
+                        auto ingestionTime = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 3 * valueSize]));
                         //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                         auto timeStamp = getTimestamp();
                         records[i].id = *id;
+                        records[i].joinId = *joinId;
                         records[i].value = *seqenceNr;
                         records[i].ingestionTimestamp = *ingestionTime;
                         //                    records[i].processingTimestamp = getTimestamp();
@@ -311,7 +325,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                         if (getReplayData()) {
                             //                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
-                            sourceInfo->records.back().emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
+                            sourceInfo->records.back().emplace_back(*id, *seqenceNr, *seqenceNr, *ingestionTime, timeStamp);
                             //totalTupleCount++;
                         }
                     }

@@ -104,23 +104,23 @@ void FileSink::setup() {
         }
     } else {
         NES_DEBUG("creating socket for file sink")
-        auto sockfd = nodeEngine->getTcpDescriptor(filePath);
+        //auto sockfd = nodeEngine->getTcpDescriptor(filePath);
         std::vector<OriginId> origins;
         for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
             origins.emplace_back(OriginId(i));
         }
         watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
         // Open the file stream
-        if (!outputFile.is_open()) {
-            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-        }
-        isOpen = outputFile.is_open() && outputFile.good();
-        if (!isOpen) {
-            NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
-                      filePath,
-                      outputFile.is_open(),
-                      outputFile.good());
-        }
+        //if (!outputFile.is_open()) {
+        //    outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        //}
+        //isOpen = outputFile.is_open() && outputFile.good();
+        //if (!isOpen) {
+        //    NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
+        //              filePath,
+        //              outputFile.is_open(),
+        //              outputFile.good());
+        //}
     }
 }
 
@@ -300,7 +300,10 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
 
             auto* records = bufferToWrite.getBuffer<Record>();
             for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
-                records[i].outputTimestamp = getTimestamp();
+                records[i].outputTimestamp_1 = getTimestamp();
+                records[i].outputTimestamp_2 = getTimestamp();
+                // log the record to error
+                NES_ERROR("writing record win start {}, win end {} Left: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}; Right: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}", records[i].winStart, records[i].winEnd, records[i].id_1, records[i].joinId_1, records[i].value_1, records[i].ingestionTimestamp_1, records[i].processingTimestamp_1, records[i].outputTimestamp_1, records[i].id_2, records[i].joinId_2, records[i].value_2, records[i].ingestionTimestamp_2, records[i].processingTimestamp_2, records[i].outputTimestamp_2);
             }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written =

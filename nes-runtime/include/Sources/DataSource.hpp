@@ -334,6 +334,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
 
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
+    std::optional<Runtime::MemoryLayouts::TestTupleBuffer> allocateBufferTimout(std::chrono::milliseconds timeout);
 
     /*
      * @brief lock this sources executable successors and notify source completion.

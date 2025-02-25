@@ -27,11 +27,20 @@ namespace NES {
 
 
 struct Record {
-    uint64_t id;
-    uint64_t value;
-    uint64_t ingestionTimestamp;
-    uint64_t processingTimestamp;
-    uint64_t outputTimestamp;
+    uint64_t winStart;
+    uint64_t winEnd;
+    uint64_t id_1;
+    uint64_t joinId_1;
+    uint64_t value_1;
+    uint64_t ingestionTimestamp_1;
+    uint64_t processingTimestamp_1;
+    uint64_t outputTimestamp_1;
+    uint64_t id_2;
+    uint64_t joinId_2;
+    uint64_t value_2;
+    uint64_t ingestionTimestamp_2;
+    uint64_t processingTimestamp_2;
+    uint64_t outputTimestamp_2;
 };
 
 /**

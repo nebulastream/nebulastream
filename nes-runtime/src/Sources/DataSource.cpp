@@ -456,6 +456,10 @@ void DataSource::runningRoutineWithIngestionRate() {
                 // here we got a valid buffer
                 NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
+                if (buf.getNumberOfTuples() == 0) {
+                    NES_ERROR("DataSource: Buffer is empty");
+                    continue;
+                }
                 emitWork(buf);
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
@@ -534,6 +538,10 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
+                if (buf.getNumberOfTuples() == 0) {
+                    NES_DEBUG("DataSource: Buffer is empty");
+                    continue;
+                }
                 NES_DEBUG("DataSource produced buffer {} type= {} string={}: Received Data: {} "
                           "operatorId={} orgID={}",
                           numberOfBuffersProduced,
@@ -603,6 +611,18 @@ std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() { return
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+}
+
+std::optional<Runtime::MemoryLayouts::TestTupleBuffer> DataSource::allocateBufferTimout(std::chrono::milliseconds timeout) {
+    // std::chrono::milliseconds timeout(10000);
+    auto bufferOptional = bufferManager->getBufferTimeout(timeout);
+    if (bufferOptional) {
+        return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferOptional.value());
+    }
+    return std::nullopt;
+    // NES_ERROR("Could not get buffer within {} ms", timeout.count())
+    // NES_THROW_RUNTIME_ERROR("Could not get buffer within timeout");
+    // return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferOptional.value());
 }
 
 void DataSource::onEvent(Runtime::BaseEvent& event) {
