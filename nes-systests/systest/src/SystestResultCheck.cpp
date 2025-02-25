@@ -263,9 +263,13 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                     return;
                 }
 
-                /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both
+                /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
+                /// Additionally, we remove double spaces, as we expect a single space between the fields
                 std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
                 std::ranges::for_each(expectedResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
+                std::ranges::for_each(queryResultLines, Util::removeDoubleSpaces);
+                std::ranges::for_each(expectedResultLines, Util::removeDoubleSpaces);
+
 
                 /// 3. Parse the expected result into a hashmap as the order of the fields can be different
                 auto [queryResultExpected, queryResultActual]

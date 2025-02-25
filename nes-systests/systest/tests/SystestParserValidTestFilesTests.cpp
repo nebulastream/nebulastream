@@ -246,4 +246,72 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     EXPECT_NO_THROW(parser.parse());
 }
 
+
+TEST_F(SystestParserValidTestFileTest, SpacesCommaTestFile)
+{
+    const auto* const filename = TEST_DATA_DIR "space_comma_test.dummy";
+
+    SystestParser::SLTSource expectedSLTSource;
+    expectedSLTSource.name = "window";
+    expectedSLTSource.fields
+        = {{DataTypeFactory::createUInt64(), "id"},
+           {DataTypeFactory::createUInt64(), "value"},
+           {DataTypeFactory::createUInt64(), "timestamp"}};
+    expectedSLTSource.tuples = {
+        "1,1,1000",
+        "12,1,1001",
+        "4,1,1002",
+        "1,2,2000",
+        "11,2,2001",
+        "16,2,2002",
+        "1,3,3000",
+        "11,3,3001",
+    };
+
+    std::vector<std::string> expectedQueries = {
+        R"(Query::from("window")
+    .SINK;)"};
+
+    std::vector<std::vector<std::string>> expectedResults = {{
+        "1,1,1000",
+        "12,1,1001",
+        "4,1,1002",
+        "1,2,2000",
+        "11,2,2001",
+        "16,2,2002",
+        "1,3,3000",
+        "11,3,3001",
+
+    }};
+
+    size_t queryCounter = 0;
+
+    SystestParser parser{};
+    parser.registerOnSLTSourceCallback(
+        [&](SystestParser::SLTSource&& source)
+        {
+            ASSERT_EQ(source.name, expectedSLTSource.name);
+            ASSERT_EQ(source.fields, expectedSLTSource.fields);
+            ASSERT_EQ(source.tuples, expectedSLTSource.tuples);
+        });
+
+    parser.registerOnQueryCallback(
+        [&](SystestParser::Query&& query)
+        {
+            ASSERT_LT(queryCounter, expectedQueries.size());
+            ASSERT_EQ(query, expectedQueries[queryCounter]);
+        });
+
+    parser.registerOnResultTuplesCallback(
+        [&](SystestParser::ResultTuples&& result)
+        {
+            ASSERT_LT(queryCounter, expectedResults.size());
+            ASSERT_EQ(result, expectedResults[queryCounter]);
+            queryCounter++;
+        });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    EXPECT_NO_THROW(parser.parse());
+}
+
 }
