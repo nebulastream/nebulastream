@@ -22,10 +22,10 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-using ExecutableFunctionRegistryReturnType = Function;
+using ExecutableFunctionRegistryReturnType = std::unique_ptr<Function>;
 struct ExecutableFunctionRegistryArguments
 {
-    std::vector<std::unique_ptr<ExecutableFunctionRegistryReturnType>> childFunctions;
+    std::vector<ExecutableFunctionRegistryReturnType> childFunctions;
 };
 
 class ExecutableFunctionRegistry : public BaseRegistry<

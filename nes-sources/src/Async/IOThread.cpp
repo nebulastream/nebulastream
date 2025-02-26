@@ -12,32 +12,27 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Async/IOThread.hpp>
 
-#include <functional>
-#include <variant>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 
-namespace NES::Sources::SourceReturnType
+#include <Util/Logger/Logger.hpp>
+
+namespace NES::Sources
 {
-/// Todo #237: Improve error handling in sources
-struct Error
-{
-    Exception ex;
-};
 
-struct Data
+/// The io_context is initialized first from its default constructor.
+IOThread::IOThread() : workGuard(asio::make_work_guard(ioc)), ioThread([this] { ioc.run(); })
 {
-    NES::Memory::TupleBuffer buffer;
-};
+    NES_DEBUG("IOThread: started [{}]", ioThread.get_id());
+}
 
-struct EoS
+IOThread::~IOThread()
 {
-};
-
-using SourceReturnType = std::variant<Error, Data, EoS>;
-using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
+    workGuard.reset();
+    ioc.stop();
+    NES_DEBUG("IOThread: stopped [{}]", ioThread.get_id());
+    /// Thread is joined when leaving this scope
+}
 
 }

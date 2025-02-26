@@ -29,9 +29,8 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
@@ -44,7 +43,7 @@ struct NoOpInputFormatter : NES::InputFormatters::InputFormatter
         const NES::Memory::TupleBuffer& tbRaw,
         NES::Memory::AbstractBufferProvider& bufferProvider,
         size_t,
-        const std::function<void(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        const std::function<void(NES::Memory::TupleBuffer& buffer)>& emitFunction) override;
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << "NoOpInputFormatter"; }
@@ -100,10 +99,10 @@ private:
     folly::MPMCQueue<ControlData> queue{10};
 };
 
-class TestSource : public Source
+class TestSource : public BlockingSource
 {
 public:
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
 

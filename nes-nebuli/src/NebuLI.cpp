@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -240,7 +241,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
-        auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
+        auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         query.getSinkOperators().at(0)->sinkDescriptor
             = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
