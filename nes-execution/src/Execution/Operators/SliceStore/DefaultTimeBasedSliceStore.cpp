@@ -234,6 +234,8 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     }
     auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
 
+    NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
+
     /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
     for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
@@ -260,6 +262,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
+            NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
             slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
