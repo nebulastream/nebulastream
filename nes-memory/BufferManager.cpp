@@ -94,16 +94,16 @@ void BufferManager::destroy()
         allBuffers.clear();
 
         availableBuffers = decltype(availableBuffers)();
-        for (auto& holder : unpooledBuffers)
+        for (auto& [ptr, holder] : unpooledBuffers)
         {
             if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0)
             {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+                #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
                 if (holder.segment)
                 {
                     holder.segment->controlBlock->dumpOwningThreadInfo();
                 }
-#endif
+                #endif
                 INVARIANT(
                     false,
                     "Deletion of unpooled buffer invoked on used memory segment size={} refcnt={}",
@@ -235,34 +235,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    std::unique_lock lock(unpooledBuffersMutex);
-    UnpooledBufferHolder probe(bufferSize);
-    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
-    if (candidate != unpooledBuffers.end())
-    {
-        /// it points to a segment of size at least bufferSize;
-        for (auto it = candidate; it != unpooledBuffers.end(); ++it)
-        {
-            if (it->size == bufferSize)
-            {
-                if (it->free)
-                {
-                    auto* memSegment = it->segment.get();
-                    it->free = false;
-                    if (memSegment->controlBlock->prepare(shared_from_this()))
-                    {
-                        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-                    }
-                    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    /// we could not find a buffer, allocate it
+
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
@@ -281,7 +254,9 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
         [](detail::MemorySegment* segment, BufferRecycler* recycler) { recycler->recycleUnpooledBuffer(segment); },
         ptr);
     auto* leakedMemSegment = memSegment.get();
-    unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
+
+    std::unique_lock lock(unpooledBuffersMutex);
+    unpooledBuffers[leakedMemSegment->ptr] = {std::move(memSegment), alignedBufferSize};
     if (leakedMemSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
@@ -306,25 +281,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
 
-    const auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
-    if (candidate != unpooledBuffers.end())
-    {
-        for (auto it = candidate; it != unpooledBuffers.end(); ++it)
-        {
-            if (it->size == probe.size)
-            {
-                if (it->segment->ptr == segment->ptr)
-                {
-                    it->markFree();
-                    return;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
+    unpooledBuffers[segment->ptr].markFree();
 }
 
 size_t BufferManager::getBufferSize() const
