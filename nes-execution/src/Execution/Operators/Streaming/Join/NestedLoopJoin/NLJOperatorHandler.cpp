@@ -70,8 +70,8 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const Memory::AbstractBufferProvi
             memoryLayoutCopyLeft->setBufferSize(newBufferSizeLeft);
             memoryLayoutCopyRight->setBufferSize(newBufferSizeRight);
 
-
-            NES_INFO("Creating new NLJ slice for sliceStart {} and sliceEnd {}", sliceStart, sliceEnd);
+            NES_TRACE(
+                "Creating new NLJ slice for sliceStart {} and sliceEnd {} and output originId: {}", sliceStart, sliceEnd, outputOriginId);
             return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
 }
@@ -108,12 +108,12 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 
     pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
     NES_DEBUG(
-        "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+        "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequence data {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
         bufferMemory->leftSliceEnd,
         bufferMemory->rightSliceEnd,
         tupleBuffer.getWatermark(),
-        tupleBuffer.getSequenceNumber(),
+        tupleBuffer.getSequenceDataAsString(),
         tupleBuffer.getOriginId(),
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
