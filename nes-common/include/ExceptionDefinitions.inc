@@ -94,6 +94,7 @@ EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was starte
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(CSVParsingError, 4005, "error during csv parsing")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
+EXCEPTION(DataIngestionFailure, 4006, "error during data ingestion")
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
