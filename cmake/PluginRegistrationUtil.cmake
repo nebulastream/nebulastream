@@ -46,9 +46,9 @@ function(add_plugin plugin_name plugin_registry plugin_registry_component)
 endfunction()
 
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
-function(generate_plugin_registrar plugin_registry plugin_registry_component)
-    set(registrar_header_template_path ${CMAKE_CURRENT_LIST_DIR}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
-    set(registrar_header_generated_path ${CMAKE_CURRENT_BINARY_DIR}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
+function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
+    set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
+    set(registrar_header_generated_path ${current_binary_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
 
     # get the names of plugins and all plugin libraries for the plugin registry
     get_property(plugin_registry_plugin_names_final GLOBAL PROPERTY ${plugin_registry}_plugin_names)
@@ -59,7 +59,7 @@ function(generate_plugin_registrar plugin_registry plugin_registry_component)
 
     # second, remove the configuration and write the modified version of the registrar header template to a temporary file
     # we generate the final '.inc' file from that temporary file
-    set(temp_registrar_header_template_file "${CMAKE_CURRENT_BINARY_DIR}/temp_registrar_header_template.inc.in")
+    set(temp_registrar_header_template_file "${current_binary_dir}/temp_registrar_header_template.inc.in")
     file(WRITE ${temp_registrar_header_template_file} "${registrar_header_file_data}")
 
     # generate the list of declarations of the register functions that the plugins implement to register themselves
@@ -92,7 +92,9 @@ function(generate_plugin_registrar plugin_registry plugin_registry_component)
 endfunction()
 
 function(generate_plugin_registrars plugin_registry_component)
-    foreach(plugin_registry ${ARGN})
-        generate_plugin_registrar(${plugin_registry} ${plugin_registry_component})
+    foreach (plugin_registry ${ARGN})
+        cmake_language(EVAL CODE "
+                cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
+        ")
     endforeach ()
 endfunction()
