@@ -73,10 +73,12 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
-    for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
+    for (nautilus::static_val<uint64_t> i = 0; i < fieldKeys.size(); ++i)
     {
+        const auto& [fieldIdentifier, type, fieldOffset] = fieldKeys[i];
+        const auto& function = keyFunctions[i];
         const auto value = function->execute(record, ctx.pipelineMemoryProvider.arena);
-        record.write(field.fieldIdentifier, value);
+        record.write(fieldIdentifier, value);
     }
 
     /// Finding or creating the entry for the provided record
