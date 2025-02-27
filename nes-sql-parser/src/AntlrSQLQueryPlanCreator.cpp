@@ -24,9 +24,9 @@
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
-#include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
@@ -37,7 +37,6 @@
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
-#include <Functions/ConcatLogicalFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
@@ -50,6 +49,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "ParserUtil.hpp"
 
 namespace NES::Parsers
 {

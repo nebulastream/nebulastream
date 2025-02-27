@@ -15,9 +15,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <API/Functions/Functions.hpp>
-#include <API/Query.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,18 +51,19 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     ///test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
     ///test addSelection
-    auto filterFunction = EqualsLogicalFunction(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction());
-    queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
+    auto filterFunction = std::make_unique<EqualsLogicalFunction>(std::make_unique<FieldAccessLogicalFunction>("a"), std::make_unique<FieldAccessLogicalFunction>("b"));
+    queryPlan = QueryPlanBuilder::addSelection(std::move(filterFunction), queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<SelectionLogicalOperator>().size() == 1);
-    EXPECT_EQ(queryPlan.getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);
+    EXPECT_EQ(dynamic_cast<LogicalFunction*>(queryPlan.getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate()), filterFunction.get());
     ///test addProjection
     std::vector<std::unique_ptr<LogicalFunction>> functions;
-    functions.push_back(Attribute("id").getLogicalFunction());
+    functions.push_back(std::make_unique<FieldAccessLogicalFunction>("id"));
     queryPlan = QueryPlanBuilder::addProjection(std::move(functions), queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<ProjectionLogicalOperator>().size() == 1);
     EXPECT_EQ(queryPlan.getOperatorByType<ProjectionLogicalOperator>()[0]->getFunctions(), functions);
     ///test addMap
-    queryPlan = QueryPlanBuilder::addMap(Attribute("b") = 1, queryPlan);
+    queryPlan = QueryPlanBuilder::addMap(std::make_unique<EqualsLogicalFunction>(std::make_unique<FieldAccessLogicalFunction>("b"),
+        std::make_unique<ConstantValueLogicalFunction>("1")), queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<MapLogicalOperator>().size() == 1);
     ///test addUnion
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");

@@ -175,7 +175,7 @@ QueryPlan QueryPlanBuilder::addJoin(
     NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     ///TODO(Ventura?>Steffen) can we know this at this query submission time?
-    leftQueryPlan = addBinaryOperatorAndUpdateSource(std::make_unique<JoinLogicalOperator>(joinFunction, windowType, 1, 1, joinType), leftQueryPlan, rightQueryPlan);
+    leftQueryPlan = addBinaryOperatorAndUpdateSource(std::make_unique<JoinLogicalOperator>(std::move(joinFunction), std::move(windowType), 1, 1, joinType), leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
 
