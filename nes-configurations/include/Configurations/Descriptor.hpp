@@ -137,10 +137,9 @@ public:
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SpecificConfiguration>
     requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
-    static std::unique_ptr<Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config, const std::string_view implementationName)
+    static Config validateAndFormat(std::unordered_map<std::string, std::string>&& config, const std::string_view implementationName)
     {
-        auto validatedConfig = std::make_unique<Config>();
+        auto validatedConfig = Config{};
 
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
@@ -160,13 +159,13 @@ public:
             const auto validatedParameter = configParameter.validate(config);
             if (validatedParameter.has_value())
             {
-                validatedConfig->emplace(key, validatedParameter.value());
+                validatedConfig.emplace(key, validatedParameter.value());
                 continue;
             }
             /// If the user did not specify a parameter that is optional, use the default value.
             if (not config.contains(key) and configParameter.getDefaultValue().has_value())
             {
-                validatedConfig->emplace(key, configParameter.getDefaultValue().value());
+                validatedConfig.emplace(key, configParameter.getDefaultValue().value());
                 continue;
             }
             throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));

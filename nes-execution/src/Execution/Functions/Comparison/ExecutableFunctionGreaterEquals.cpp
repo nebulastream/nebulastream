@@ -40,7 +40,7 @@ ExecutableFunctionGreaterEquals::ExecutableFunctionGreaterEquals(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterGreaterEqualsExecutableFunction(
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterGreaterEqualsExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(

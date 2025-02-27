@@ -29,13 +29,13 @@ SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorC
 {
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config>
+Configurations::DescriptorConfig::Config
 SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
     auto sinkValidationRegistryArguments = NES::Sinks::SinkValidationRegistryArguments(std::move(configPairs));
     if (auto validatedConfig = SinkValidationRegistry::instance().create(sinkType, std::move(sinkValidationRegistryArguments)))
     {
-        return std::move(validatedConfig.value());
+        return validatedConfig.value();
     }
     throw UnknownSinkType(fmt::format("Cannot find sink type: {} in validation registry for sinks.", sinkType));
 }

@@ -37,7 +37,7 @@ ExecutableFunctionAdd::ExecutableFunctionAdd(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterAddExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two sub-functions");

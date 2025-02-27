@@ -121,18 +121,17 @@ void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
     stream->close();
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config> FileSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
-std::unique_ptr<SinkValidationRegistryReturnType>
-SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return FileSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType SinkGeneratedRegistrar::RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<FileSink>(sinkRegistryArguments.sinkDescriptor);
 }

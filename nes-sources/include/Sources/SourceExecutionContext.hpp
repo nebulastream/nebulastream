@@ -12,13 +12,25 @@
     limitations under the License.
 */
 
-#include <Sources/Source.hpp>
+#pragma once
+
+#include <memory>
+
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/BlockingSource.hpp>
 
 namespace NES::Sources
 {
-std::ostream& operator<<(std::ostream& out, const Source& source)
+
+template <typename SourceType>
+struct SourceExecutionContext
 {
-    return source.toString(out);
-}
+    const OriginId originId;
+    std::unique_ptr<SourceType> sourceImpl;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
+};
 
 }

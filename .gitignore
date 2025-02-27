@@ -12,7 +12,7 @@
 
 # Build files
 /build
-/build-docker
+/build-docker*
 /cmake-build*
 CMakeUserPresets.json
 debug*

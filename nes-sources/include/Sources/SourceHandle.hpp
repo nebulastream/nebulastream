@@ -14,59 +14,33 @@
 
 #pragma once
 
-#include <cstddef>
-#include <memory>
-#include <InputFormatters/InputFormatter.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
+#include <ostream>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceUtility.hpp>
 
 namespace NES::Sources
 {
 
-/// Hides SourceThread implementation.
-class SourceThread;
-
-/// Interface class to handle sources.
-/// Created from a source descriptor via the SourceProvider.
-/// start(): The underlying source starts consuming data. All queries using the source start processing.
-/// stop(): The underlying source stops consuming data, notifying the QueryEngine,
-/// that decides whether to keep queries, which used the particular source, alive.
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
+    SourceHandle() = delete;
+    explicit SourceHandle(const OriginId originId) : originId(originId) { }
+    virtual ~SourceHandle() = default;
 
-    ~SourceHandle();
+    virtual bool start(EmitFunction&& emitFn) = 0;
+    virtual bool stop() = 0;
 
-    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
-    [[nodiscard]] bool stop() const;
+    virtual OriginId getOriginId() { return originId; }
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
+    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& handle) { return handle.toString(out); }
 
-    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getSourceId() const;
+protected:
+    /// Implemented by children of SourceHandle. Called by '<<'. Allows to use '<<' on abstract SourceRunner.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 
-private:
-    /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
+    OriginId originId;
 };
 
-}
-
-/// Specializing the fmt ostream_formatter to accept SourceHandle objects.
-/// Allows to call fmt::format("SourceHandle: {}", sourceHandleObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Sources::SourceHandle> : ostream_formatter
-{
-};
 }

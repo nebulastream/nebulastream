@@ -335,7 +335,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
     /// Reset all values that are tied to a specific tbRaw.
@@ -382,7 +382,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
+            emitFunction(progressTracker->getTupleBufferFormatted());
             progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
@@ -398,7 +398,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
+    emitFunction(progressTracker->getTupleBufferFormatted());
     progressTracker->handleResidualBytes(tbRaw);
 }
 
@@ -423,8 +423,7 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatterRegistryReturnType>
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments inputFormatterRegistryArguments)
+InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments inputFormatterRegistryArguments)
 {
     return std::make_unique<CSVInputFormatter>(
         inputFormatterRegistryArguments.schema,

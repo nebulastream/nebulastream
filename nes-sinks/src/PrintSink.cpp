@@ -69,19 +69,19 @@ std::ostream& PrintSink::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config>
+Configurations::DescriptorConfig::Config
 PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
-std::unique_ptr<SinkValidationRegistryReturnType>
+SinkValidationRegistryReturnType
 SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return PrintSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
 }

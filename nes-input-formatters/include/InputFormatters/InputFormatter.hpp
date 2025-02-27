@@ -40,7 +40,7 @@ public:
         const NES::Memory::TupleBuffer& tbRaw,
         NES::Memory::AbstractBufferProvider& bufferProvider,
         size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+        const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
         = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }

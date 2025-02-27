@@ -39,7 +39,7 @@ ExecutableFunctionMod::ExecutableFunctionMod(
 }
 
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");

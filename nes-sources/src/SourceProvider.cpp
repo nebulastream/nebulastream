@@ -11,44 +11,74 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <cstddef>
 #include <memory>
 #include <utility>
+#include <variant>
+
+#include <Async/AsyncSourceHandle.hpp>
+#include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
 namespace NES::Sources
 {
 
-std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
     return std::make_unique<SourceProvider>();
 }
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool)
+    const OriginId originId,
+    const SourceDescriptor& sourceDescriptor,
+    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+    const size_t numBuffersPerSource)
 {
-    /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
-    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
         *sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
-    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
+    auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
-        return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), NUM_SOURCE_LOCAL_BUFFERS, std::move(source.value()), std::move(inputFormatter));
+        if (const auto bufferProvider = poolProvider->createFixedSizeBufferPool(numBuffersPerSource); bufferProvider)
+        {
+            return std::visit(
+                Overloaded{
+                    [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferProvider.value(),
+                            .inputFormatter = std::move(inputFormatter)});
+                    },
+                    [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferProvider.value(),
+                            .inputFormatter = std::move(inputFormatter)});
+                    }},
+                std::move(source.value()));
+        }
+        throw BufferAllocationFailure("Cannot allocate the buffer pool for source: {}", sourceDescriptor.logicalSourceName);
     }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
+    throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }
 
 }

@@ -34,7 +34,7 @@ ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> chi
 }
 
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");

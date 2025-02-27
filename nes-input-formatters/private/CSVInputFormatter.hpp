@@ -51,7 +51,7 @@ public:
         const Memory::TupleBuffer& tbRaw,
         Memory::AbstractBufferProvider& bufferProvider,
         size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
+        const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
