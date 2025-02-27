@@ -33,6 +33,12 @@ Since a design document claims time from multiple people from our team, we propo
 9. The design document is accepted if two code owners and one additional maintainer accept the PR.
 10. Ask one of the code owners to merge the PR.
 
+# Gotchas
+- use active language ('who does what', instead of 'something is done `magically`')
+- only insert manual line brakes after every sentence
+    - one sentence per line improves reviewing
+- the point of a DD is to evaluate **Alternatives** against each other, if there are no alternatives, then implement the sole solution and write documentation instead
+
 # Design Document Template
 Below, we discuss the different sections of the design document template.
 
