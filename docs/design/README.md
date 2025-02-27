@@ -65,6 +65,10 @@ Furthermore, addressing the individual [Goals](#goals) and showing why the propo
 ## Proof Of Concept
 A proof of concept (PoC) should demonstrate that the solution generally works. It is acceptable to create a PoC after creating an initial [Draft](#draft) for the design document.
 
+# Summary
+The main goal is to summarize, for the reviewer, what the problems and goals of the design document are and how the proposed solution addresses all [problems](#the-problem) and achieves all [goals](#goals) and if it does not, why that is ok.
+Additionally, we briefly state why the proposed solution is the best [alternative](#alternatives).
+
 ## (Optional) Open Questions
 All questions that are relevant for the design document but that cannot and do not need to be answered before merging the design document. We might create issues from these questions or revisit them regularly.
 
