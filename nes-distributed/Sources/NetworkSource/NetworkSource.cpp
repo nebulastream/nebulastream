@@ -73,7 +73,8 @@ NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> co
 
 void NetworkSource::close()
 {
-    close_receiver_channel(*receiverServer, channelIdentifier);
+    INVARIANT(channel.has_value(), "Network Source was closed multiple times");
+    close_receiver_channel(std::move(*channel));
 }
 
 std::unique_ptr<SourceValidationRegistryReturnType>

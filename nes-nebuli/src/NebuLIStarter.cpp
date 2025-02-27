@@ -256,7 +256,13 @@ void doDump(argparse::ArgumentParser& parser, std::vector<std::shared_ptr<NES::D
             fmt::print(fmt::emphasis::bold | fg(fmt::color::light_cyan), "{}\n", decomposedQueryPlan->toString());
             fmt::print(fmt::emphasis::bold | fg(fmt::color::light_cyan), "{}\n", std::string(80, '='));
 
-            outputPath = std::filesystem::path(fmt::format("{}.{}", outputPath, decomposedQueryPlan->getGRPC()));
+            if (!std::filesystem::is_directory(outputPath))
+            {
+                NES_FATAL_ERROR("Output should be a directory.");
+                exit(1);
+            }
+
+            outputPath = std::filesystem::path(outputPath) / fmt::format("{}.bin", decomposedQueryPlan->getGRPC());
             file = std::ofstream(outputPath);
             if (!file)
             {

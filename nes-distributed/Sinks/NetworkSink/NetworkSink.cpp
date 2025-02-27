@@ -78,6 +78,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
         .origin_id = inputBuffer.getOriginId().getRawValue(),
         .chunk_number = inputBuffer.getChunkNumber().getRawValue(),
         .number_of_tuples = inputBuffer.getNumberOfTuples(),
+        .watermark = inputBuffer.getWatermark().getRawValue(),
         .last_chunk = inputBuffer.isLastChunk()};
 
     std::vector<rust::slice<const uint8_t>> children;

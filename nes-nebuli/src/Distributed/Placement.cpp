@@ -29,6 +29,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <Util/Ranges.hpp>
+#include <fmt/format.h>
 #include <uuid/uuid.h>
 #include "ErrorHandling.hpp"
 #include "Sources/SourceDescriptor.hpp"
@@ -215,9 +216,9 @@ std::vector<std::shared_ptr<NES::DecomposedQueryPlan>>
 NES::Distributed::connect(DecomposedPlanDAG dag, std::unordered_map<Topology::Node, PhysicalNodeConfig> physicalTopology)
 {
     std::vector<std::shared_ptr<NES::DecomposedQueryPlan>> plans;
-    std::unordered_map<OperatorId, std::string> channels;
-    std::unordered_map<OperatorId, OriginId> originIds;
-    std::unordered_map<OperatorId, std::shared_ptr<Schema>> schemas;
+    std::unordered_map<OperatorId, std::vector<std::string>> channels;
+    std::unordered_map<OperatorId, std::vector<OriginId>> originIds;
+    std::unordered_map<OperatorId, std::vector<std::shared_ptr<Schema>>> schemas;
 
     for (auto node : dag)
     {
@@ -227,23 +228,24 @@ NES::Distributed::connect(DecomposedPlanDAG dag, std::unordered_map<Topology::No
             {
                 auto networkSink = std::make_shared<SinkLogicalOperator>(getNextOperatorId());
                 auto successorOperatorId = std::any_cast<OperatorId>(rootOperator->getProperty(std::string("SUCCESSOR_OPERATOR")));
+                auto channelName = generateUUID();
 
                 networkSink->sinkName = fmt::format("NS:{}", successorOperatorId);
-                channels[successorOperatorId] = generateUUID();
+                channels[successorOperatorId].emplace_back(channelName);
 
                 networkSink->sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(
                     "Network",
                     Configurations::DescriptorConfig::Config{
-                        {"type", "Network"},
-                        {"channel", std::string(std::begin(channels[successorOperatorId]), std::end(channels[successorOperatorId]))},
-                        {"connection", physicalTopology.at(node.successorNode).connection}},
+                        {"type", "Network"}, {"channel", channelName}, {"connection", physicalTopology.at(node.successorNode).connection}},
                     false);
+
                 networkSink->setInputOriginIds(rootOperator->getOutputOriginIds());
                 networkSink->setInputSchema(rootOperator->getOutputSchema());
                 networkSink->setOutputSchema(rootOperator->getOutputSchema());
                 INVARIANT(networkSink->getInputOriginIds().size() == 1, "NetworkSink should only have one output originId");
-                originIds.try_emplace(successorOperatorId, networkSink->getInputOriginIds()[0]);
-                schemas.try_emplace(successorOperatorId, networkSink->getOutputSchema());
+
+                originIds[successorOperatorId].emplace_back(networkSink->getInputOriginIds()[0]);
+                schemas[successorOperatorId].emplace_back(networkSink->getOutputSchema());
 
                 rootOperator->addParent(networkSink);
                 node.plan->replaceRootOperator(rootOperator, networkSink);
@@ -257,22 +259,26 @@ NES::Distributed::connect(DecomposedPlanDAG dag, std::unordered_map<Topology::No
         {
             if (!Util::instanceOf<SourceDescriptorLogicalOperator>(leafOperator))
             {
-                auto descriptor = std::make_shared<Sources::SourceDescriptor>(
-                    leafOperator->getOutputSchema(),
-                    fmt::format("NetworkSource-{}-{}", node.plan->getQueryId(), leafOperator->getId()),
-                    fmt::format("NetworkSource-{}-{}", node.plan->getQueryId(), leafOperator->getId()),
-                    "Network",
-                    Sources::ParserConfig{.parserType = "Raw", .tupleDelimiter = "", .fieldDelimiter = ""},
-                    Configurations::DescriptorConfig::Config{
-                        {"type", "Network"},
-                        {"channel", std::string(std::begin(channels[leafOperator->getId()]), std::end(channels[leafOperator->getId()]))},
-                    });
+                for (const auto& [channelName, inputOrigin, inputSchema] :
+                     std::views::zip(channels[leafOperator->getId()], originIds[leafOperator->getId()], schemas[leafOperator->getId()]))
+                {
+                    auto descriptor = std::make_shared<Sources::SourceDescriptor>(
+                        leafOperator->getOutputSchema(),
+                        fmt::format("NetworkSource-{}-{}-{}", node.plan->getQueryId(), leafOperator->getId(), inputOrigin),
+                        fmt::format("NetworkSource-{}-{}-{}", node.plan->getQueryId(), leafOperator->getId(), inputOrigin),
+                        "Network",
+                        Sources::ParserConfig{.parserType = "Raw", .tupleDelimiter = "", .fieldDelimiter = ""},
+                        Configurations::DescriptorConfig::Config{
+                            {"type", "Network"},
+                            {"channel", channelName},
+                        });
 
-                auto networkSource = std::make_shared<SourceDescriptorLogicalOperator>(std::move(descriptor), getNextOperatorId());
-                networkSource->setOriginId(originIds.at(leafOperator->getId()));
-                networkSource->setInputSchema(schemas.at(leafOperator->getId()));
-                networkSource->setOutputSchema(schemas.at(leafOperator->getId()));
-                networkSource->addParent(leafOperator);
+                    auto networkSource = std::make_shared<SourceDescriptorLogicalOperator>(std::move(descriptor), getNextOperatorId());
+                    networkSource->setOriginId(inputOrigin);
+                    networkSource->setInputSchema(inputSchema);
+                    networkSource->setOutputSchema(inputSchema);
+                    networkSource->addParent(leafOperator);
+                }
             }
         }
 
@@ -281,6 +287,7 @@ NES::Distributed::connect(DecomposedPlanDAG dag, std::unordered_map<Topology::No
     }
     return plans;
 }
+
 void NES::Distributed::pinSourcesAndSinks(
     QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& catalog, std::unordered_map<std::string, Topology::Node> sinks)
 {

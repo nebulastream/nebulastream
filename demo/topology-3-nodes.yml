@@ -1,36 +1,50 @@
 logical:
-  - name: csv_source
+  - name: stream
     schema:
       - name: id
         type: UINT64
+      - name: value
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+  - name: stream2
+    schema:
       - name: id2
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: timestamp
         type: UINT64
 nodes:
   - connection: 127.0.0.1:9092
     grpc: 127.0.0.1:8082
     capacity: 10
     sinks:
-      - name: csv_sink_2
+      - name: sinkStreamStream2
         type: Print
         config:
           inputFormat: CSV
   - connection: 127.0.0.1:9091
     grpc: 127.0.0.1:8081
-    capacity: 10
-    sinks:
-      - name: csv_sink
-        type: Print
-        config:
-          inputFormat: CSV
-  - connection: 127.0.0.1:9090
-    grpc: 127.0.0.1:8080
-    capacity: 0
+    capacity: 2
     links:
-      downstreams: [ 127.0.0.1:9091, 127.0.0.1:9092]
+      downstreams: [ 127.0.0.1:9092 ]
     physical:
-      - logical: csv_source
+      - logical: stream
         parserConfig:
           type: CSV
         sourceConfig:
           type: File
-          filePath: /home/ls/dima/nebulastream-public/nes-single-node-worker/tests/testdata/inputCSVFiles/oneToThirtyOneDoubleColumn.csv
+          filePath: /home/ls/dima/nebulastream-public/nes-systests/testdata/stream.csv
+  - connection: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 2
+    links:
+      downstreams: [ 127.0.0.1:9092 ]
+    physical:
+      - logical: stream2
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: /home/ls/dima/nebulastream-public/nes-systests/testdata/stream2.csv
