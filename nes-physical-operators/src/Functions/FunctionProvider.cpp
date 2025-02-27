@@ -39,18 +39,18 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(std::unique_pt
     std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
     for (auto& child : logicalFunction->getChildren())
     {
-        childFunction.emplace_back(lowerFunction(Util::unique_ptr_dynamic_cast<LogicalFunction>(child.get())));
+        childFunction.emplace_back(lowerFunction(child->clone()));
     }
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = dynamic_cast<FieldAccessLogicalFunction*>(logicalFunction.get()); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = NES::Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(logicalFunction)); fieldAccessNode != nullptr)
     {
         return std::make_unique<FieldAccessPhysicalFunction>(fieldAccessNode->getFieldName());
     }
-    if (const auto constantValueNode = dynamic_cast<ConstantValueLogicalFunction*>(logicalFunction.get()); constantValueNode != nullptr)
+    if (auto constantValueNode = NES::Util::unique_ptr_dynamic_cast<ConstantValueLogicalFunction>(std::move(logicalFunction)); constantValueNode != nullptr)
     {
-        return lowerConstantFunction(constantValueNode->clone());
+        return lowerConstantFunction(std::move(constantValueNode));
     }
 
     /// 3. Calling the registry to create an executable function.

@@ -16,7 +16,6 @@
 #include <API/Schema.hpp>
 
 #include <memory>
-#include <vector>
 
 namespace NES::Windowing
 {
@@ -29,6 +28,7 @@ public:
     virtual std::string toString() const = 0;
     virtual bool operator==(const WindowType& otherWindowType) = 0;
     virtual bool inferStamp(const Schema& schema) = 0;
+    virtual std::unique_ptr<WindowType> clone() const = 0;
 
     /// @brief Get the hash of the window type
     /// This function computes a hash value uniquely identifying the window type including characteristic attributes.

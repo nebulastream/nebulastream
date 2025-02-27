@@ -32,6 +32,7 @@ public:
                                      uint64_t operatorHandlerIndex,
                                      std::string windowStartFieldName,
                                      std::string windowEndFieldName);
+
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::string toString() const override {return typeid(this).name(); }
 };

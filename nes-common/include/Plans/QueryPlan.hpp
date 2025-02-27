@@ -39,6 +39,28 @@ public:
     explicit QueryPlan(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
     static std::unique_ptr<QueryPlan> create(std::unique_ptr<Operator> rootOperator);
     static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
+    QueryPlan(const QueryPlan& other) : queryId(other.queryId)
+    {
+        rootOperators.reserve(other.rootOperators.size());
+        for (const auto& op : other.rootOperators) {
+            if (op) {
+                rootOperators.push_back(op->clone());
+            }
+        }
+    }
+
+    QueryPlan(QueryPlan&& other) noexcept
+        : rootOperators(std::move(other.rootOperators)), queryId(other.queryId)
+    {}
+
+    QueryPlan& operator=(QueryPlan&& other) noexcept {
+        if (this != &other) {
+            rootOperators = std::move(other.rootOperators);
+            queryId = other.queryId;
+        }
+        return *this;
+    }
+
 
     std::vector<SinkLogicalOperator*> getSinkOperators() const;
 

@@ -99,7 +99,7 @@ processSource(std::shared_ptr<Pipeline> pipeline, std::shared_ptr<PipelinedQuery
 void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
 {
     const auto sinkPipeline = NES::Util::as<SinkPipeline>(pipeline);
-    const auto sinkOperatorDescriptor = sinkPipeline->sinkOperator->getSinkDescriptor();
+    const auto sinkOperatorDescriptor = sinkPipeline->sinkOperator->getSinkDescriptorRef();
     loweringContext.sinks[sinkOperatorDescriptor].emplace_back(predecessor);
 }
 

@@ -20,6 +20,7 @@
 
 namespace NES {
 
+/*
 std::vector<Operator*> getAllLeafNodes(const Operator& op)
 {
     std::vector<Operator*> leafNodes;
@@ -29,7 +30,7 @@ std::vector<Operator*> getAllLeafNodes(const Operator& op)
         leafNodes.push_back(&op);
     }
 
-    for (auto& child : op->children)
+    for (auto& child : op.children)
     {
         if (child->children.empty())
         {
@@ -46,4 +47,5 @@ std::vector<Operator*> getAllLeafNodes(const Operator& op)
     }
     return leafNodes;
 }
+*/
 }

@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -23,7 +25,7 @@
 namespace NES::Windowing
 {
 /// A TumblingWindow assigns records to non-overlapping windows.
-class TumblingWindow : public TimeBasedWindowType
+class TumblingWindow final : public TimeBasedWindowType
 {
 public:
     /// Creates a new TumblingWindow that assigns
@@ -33,15 +35,16 @@ public:
     /// time windows start at 0:15:00,1:15:00,2:15:00,etc.
     /// @param size
     /// @return std::shared_ptr<WindowType>
-    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size);
+    static std::unique_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
     std::string toString() const override;
     bool operator==(const WindowType& otherWindowType) override;
     uint64_t hash() const override;
+    [[nodiscard]] std::unique_ptr<WindowType> clone() const override;
 
 private:
-    TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 

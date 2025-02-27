@@ -167,7 +167,7 @@ bool WindowedAggregationLogicalOperator::inferSchema()
     if (isKeyed())
     {
         // Infer the data type of each key field.
-        auto keys = getKeys();
+        auto& keys = getKeys();
         for (const auto& key : keys)
         {
             key->inferStamp(inputSchema);
@@ -183,21 +183,6 @@ bool WindowedAggregationLogicalOperator::inferSchema()
 
     NES_DEBUG("Outputschema for window={}", outputSchema.toString());
     return true;
-}
-
-std::vector<std::string> WindowedAggregationLogicalOperator::getGroupByKeyNames() const
-{
-    std::vector<std::string> groupByKeyNames;
-    if (isKeyed())
-    {
-        auto keys = getKeys();
-        groupByKeyNames.reserve(keys.size());
-        for (const auto& key : keys)
-        {
-            groupByKeyNames.push_back(key->getFieldName());
-        }
-    }
-    return groupByKeyNames;
 }
 
 bool WindowedAggregationLogicalOperator::isKeyed() const

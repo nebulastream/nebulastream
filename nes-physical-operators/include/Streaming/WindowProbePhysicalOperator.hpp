@@ -14,11 +14,11 @@
 
 #pragma once
 
+#include <vector>
 #include <cstdint>
 #include <PhysicalOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
-
 
 namespace NES
 {

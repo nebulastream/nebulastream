@@ -25,7 +25,7 @@
 namespace NES::Optimizer
 {
 
-std::vector<std::make_unique<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<MapLogicalOperator*>(op);
@@ -37,7 +37,9 @@ std::vector<std::make_unique<PhysicalOperator>> LowerToPhysicalMap::applyToPhysi
     std::vector<std::unique_ptr<TupleBufferMemoryProvider>> providerVec;
     providerVec.push_back(std::move(memoryProvider));
     auto phyOp = std::make_unique<MapPhysicalOperator>(std::move(providerVec), fieldName, std::move(func));
-    return {std::move(phyOp)};
+    std::vector<std::unique_ptr<PhysicalOperator>> resultVec;
+    resultVec.emplace_back(std::move(phyOp));
+    return resultVec;
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)

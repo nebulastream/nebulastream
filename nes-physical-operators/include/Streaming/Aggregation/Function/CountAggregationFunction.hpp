@@ -45,6 +45,7 @@ public:
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
+    [[nodiscard]] std::unique_ptr<AggregationFunction> clone() const override;
     ~CountAggregationFunction() override = default;
 };
 

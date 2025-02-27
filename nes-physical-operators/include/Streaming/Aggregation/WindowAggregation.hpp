@@ -53,21 +53,32 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    /*
     WindowAggregation(const std::unique_ptr<WindowAggregation>& other) noexcept
         : aggregationFunctions(copyAggregationFunctions(other->aggregationFunctions))
-        , hashFunction(other->hashFunction ? other->hashFunction : nullptr)
+        , hashFunction(other->hashFunction->clone())
         , fieldKeys(other->fieldKeys)
         , fieldValues(other->fieldValues)
         , entriesPerPage(other->entriesPerPage)
         , entrySize(other->entrySize)
     {
     }
-     */
+
     std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 protected:
+    static std::vector<std::unique_ptr<AggregationFunction>> copyAggregationFunctions(
+        const std::vector<std::unique_ptr<AggregationFunction>>& source)
+    {
+        std::vector<std::unique_ptr<AggregationFunction>> copied;
+        copied.reserve(source.size());
+        for (const auto& func : source)
+        {
+            copied.push_back(func->clone());
+        }
+        return copied;
+    }
+
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
     std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions;
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;

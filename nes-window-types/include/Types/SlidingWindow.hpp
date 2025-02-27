@@ -26,14 +26,15 @@ class SlidingWindow : public TimeBasedWindowType
 {
 public:
     static std::unique_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
     std::string toString() const override;
     bool operator==(const WindowType& otherWindowType) override;
     uint64_t hash() const override;
+    [[nodiscard]] std::unique_ptr<WindowType> clone() const override;
 
 private:
-    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };

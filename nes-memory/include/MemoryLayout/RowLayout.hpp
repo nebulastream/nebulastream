@@ -32,7 +32,7 @@ namespace NES::Memory::MemoryLayouts
  *
  * This may be beneficial for processing performance if all fields of the tuple are accessed.
  */
-class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout>
+class RowLayout final : public MemoryLayout
 {
 public:
     /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.

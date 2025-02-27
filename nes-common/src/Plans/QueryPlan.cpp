@@ -23,7 +23,6 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <Plans/Operator.hpp>
@@ -238,7 +237,10 @@ bool QueryPlan::operator==(const std::shared_ptr<QueryPlan>& otherPlan) const
     std::stack<std::pair<std::shared_ptr<Operator>, std::shared_ptr<Operator>>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
-        stack.emplace(leftRootOperators[i], rightRootOperators[i]);
+        stack.emplace(
+            std::shared_ptr<Operator>(std::move(leftRootOperators[i])),
+            std::shared_ptr<Operator>(std::move(rightRootOperators[i]))
+        );
     }
 
     /// iterate over stack

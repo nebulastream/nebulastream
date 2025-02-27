@@ -36,9 +36,9 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     StreamJoinProbePhysicalOperator(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders,
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+        std::unique_ptr<Functions::PhysicalFunction> joinFunction,
         std::string windowStartFieldName,
         std::string windowEndFieldName,
         JoinSchema joinSchema);
@@ -62,7 +62,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    std::shared_ptr<Functions::PhysicalFunction> joinFunction;
+    std::unique_ptr<Functions::PhysicalFunction> joinFunction;
     JoinSchema joinSchema;
 };
 }

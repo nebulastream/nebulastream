@@ -37,12 +37,11 @@ public:
     bool inferSchema() override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
-    std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
     std::unique_ptr<Operator> clone() const override;
 
     std::string sinkName;
-    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+    std::unique_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 

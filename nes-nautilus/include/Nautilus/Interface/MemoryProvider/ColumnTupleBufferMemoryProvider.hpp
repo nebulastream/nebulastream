@@ -30,7 +30,17 @@ public:
     ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
     ~ColumnTupleBufferMemoryProvider() override = default;
 
-    Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() override;
+    Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() const override;
+    ColumnTupleBufferMemoryProvider(const ColumnTupleBufferMemoryProvider& other)
+        : columnMemoryLayout(other.columnMemoryLayout
+                              ? std::make_unique<Memory::MemoryLayouts::ColumnLayout>(*other.columnMemoryLayout)
+                              : nullptr)
+    {
+    }
+
+    std::unique_ptr<TupleBufferMemoryProvider> clone() const override {
+        return std::make_unique<ColumnTupleBufferMemoryProvider>(*this);
+    }
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

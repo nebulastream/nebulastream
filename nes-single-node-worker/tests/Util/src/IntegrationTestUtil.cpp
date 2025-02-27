@@ -71,8 +71,7 @@ namespace NES::IntegrationTestUtil
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& field : schema)
         {
-            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field.getDataType());
-            retVector.push_back(physicalField);
+            retVector.push_back(defaultPhysicalTypeFactory.getPhysicalType(field.getDataType())->clone());
         }
 
         return retVector;
@@ -145,7 +144,7 @@ void writeFieldValueToTupleBuffer(
     /// TODO #371 replace with csv parsing library
     try
     {
-        if (auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+        if (auto basicPhysicalType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
         {
             switch (basicPhysicalType->nativeType)
             {
@@ -211,7 +210,7 @@ void writeFieldValueToTupleBuffer(
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         }
-        else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
+        else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
@@ -461,13 +460,13 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
-                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(std::move(deserializedSourceOperator))->getSourceDescriptorRef();
+                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(deserializedSourceOperator->clone())->getSourceDescriptor();
             if (sourceDescriptor.sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
                 NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                 configUpdated.at("filePath") = newInputFileName;
-                auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
+                auto sourceDescriptorUpdated = Sources::SourceDescriptor(
                     sourceDescriptor.schema,
                     sourceDescriptor.logicalSourceName,
                     sourceDescriptor.sourceType,
@@ -475,7 +474,8 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                     std::move(configUpdated));
 
                 auto sourceDescriptorLogicalOperatorUpdated = std::make_unique<SourceDescriptorLogicalOperator>(
-                    std::move(sourceDescriptorUpdated), sourceDescriptor.getOriginId());
+                    sourceDescriptorUpdated,
+                    Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(deserializedSourceOperator->clone())->getOriginId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(std::move(sourceDescriptorLogicalOperatorUpdated));
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
@@ -496,7 +496,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
-                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(std::move(deserializedSourceOperator))->getSourceDescriptorRef();
+                = Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(std::move(deserializedSourceOperator))->getSourceDescriptor();
             if (sourceDescriptor.sourceType == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
@@ -504,17 +504,17 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
                     NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                     configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
-                    auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
+                    auto sourceDescriptorUpdated = Sources::SourceDescriptor(
                         sourceDescriptor.schema,
                         sourceDescriptor.logicalSourceName,
                         sourceDescriptor.sourceType,
                         sourceDescriptor.parserConfig,
                         std::move(configUpdated));
 
-                    const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
-                        std::move(sourceDescriptorUpdated),
-                        sourceDescriptor->getOriginId());
-                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
+                    auto sourceDescriptorLogicalOperatorUpdated = std::make_unique<SourceDescriptorLogicalOperator>(
+                        sourceDescriptorUpdated,
+                        Util::unique_ptr_dynamic_cast<SourceDescriptorLogicalOperator>(deserializedSourceOperator->clone())->getOriginId());
+                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(std::move(sourceDescriptorLogicalOperatorUpdated));
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.
                     serializedOperator.set_operatorid(value.operatorid());

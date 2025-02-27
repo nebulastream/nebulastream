@@ -136,7 +136,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.reassignFields(recordKey);
         outputRecord.write(windowStartFieldName, windowStart.convertToValue());
         outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
-        child()->execute(executionCtx, outputRecord);
+        PhysicalOperator::execute(executionCtx, outputRecord);
     }
 }
 

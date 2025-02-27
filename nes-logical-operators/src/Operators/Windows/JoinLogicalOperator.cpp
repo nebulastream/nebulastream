@@ -17,7 +17,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
-#include <Abstract/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>

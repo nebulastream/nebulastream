@@ -144,7 +144,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
     const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue = (medianValue1.castToType(resultType->clone()) + medianValue2.castToType(resultType->clone())) / two.castToType(resultType->clone());
+    const auto medianValue = (medianValue1.castToType(*resultType.get()) + medianValue2.castToType(*resultType.get()) / two.castToType(*resultType.get()));
 
     /// Adding the median to the result record
     Nautilus::Record resultRecord;

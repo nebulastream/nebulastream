@@ -31,8 +31,9 @@ struct ExecutionContext;
 struct PhysicalOperator : public virtual Operator
 {
     PhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders, bool isPipelineBreaker = false)
-        : memoryProviders(std::move(memoryProviders)), isPipelineBreaker(isPipelineBreaker) {
-                                                           PRECONDITION(not memoryProviders.empty(), "Memory providers vector should have at least one element");
+        : memoryProviders(std::move(memoryProviders)), isPipelineBreaker(isPipelineBreaker)
+    {
+        PRECONDITION(not memoryProviders.empty(), "Memory providers vector should have at least one element");
     }
 
     PhysicalOperator(std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
@@ -66,11 +67,6 @@ struct PhysicalOperator : public virtual Operator
         return *memoryProviders.front();
     }
 
-    [[nodiscard]] PhysicalOperator* child() const {
-        //INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
-        return dynamic_cast<PhysicalOperator*>(children.front().get());;
-    }
-
     void setChild(std::unique_ptr<PhysicalOperator> op) {
         children.clear();
         children.push_back(std::move(op));
@@ -80,6 +76,12 @@ struct PhysicalOperator : public virtual Operator
     const bool isPipelineBreaker = false;
 
 private:
+
+    /// raw pointer is only exposed in PhysicalOperator
+    [[nodiscard]] const PhysicalOperator* child() const {
+        INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
+        return dynamic_cast<PhysicalOperator*>(children.front().get());
+    }
     /// Hide the base class 'children' from subclasses of PhysicalOperator
     /// We expect PhysicalOperators to have exactly one child used with the member function child().
     using Operator::children;

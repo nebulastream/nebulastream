@@ -31,9 +31,9 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbePhysicalOperator(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders,
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
         const uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+        const std::unique_ptr<Functions::PhysicalFunction> joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
         const JoinSchema& joinSchema);
@@ -43,13 +43,14 @@ public:
     std::unique_ptr<Operator> clone() const override;
 
 protected:
-    std::shared_ptr<TupleBufferMemoryProvider> getLeftMemoryProvider() const
+    TupleBufferMemoryProvider& getLeftMemoryProvider() const
     {
-        return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders[0].get());
+        return *memoryProviders[0].get();
     };
-    std::shared_ptr<TupleBufferMemoryProvider> getRightMemoryProvider() const
+
+    TupleBufferMemoryProvider& getRightMemoryProvider() const
     {
-        return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders[1].get());
+        return *memoryProviders[1].get();
     };
 };
 }

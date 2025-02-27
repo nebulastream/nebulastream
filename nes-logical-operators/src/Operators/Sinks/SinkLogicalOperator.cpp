@@ -72,17 +72,12 @@ const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
     }
     throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
 }
-std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() const
-{
-    return sinkDescriptor;
-}
 
 std::unique_ptr<Operator> SinkLogicalOperator::clone() const
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
-    auto sinkDescriptorPtrCopy = sinkDescriptor;
     auto copy = std::make_unique<SinkLogicalOperator>(sinkName);
-    copy->sinkDescriptor = std::move(sinkDescriptorPtrCopy);
+    copy->sinkDescriptor = sinkDescriptor->clone();
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

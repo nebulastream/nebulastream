@@ -56,7 +56,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
         state->currentWatermark = tsField;
     }
     /// call next operator
-    child()->execute(ctx, record);
+    PhysicalOperator::execute(ctx, record);
 }
 
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

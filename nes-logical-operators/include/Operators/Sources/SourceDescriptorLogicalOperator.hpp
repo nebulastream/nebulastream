@@ -26,16 +26,14 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
+class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
-    explicit SourceDescriptorLogicalOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OriginId originId);
+    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor, OriginId originId);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
-    std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+    Sources::SourceDescriptor getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -53,7 +51,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "SourceDescriptor";
-    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    const Sources::SourceDescriptor sourceDescriptor;
 };
 
 }

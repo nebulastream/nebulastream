@@ -23,7 +23,7 @@ void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) c
     /// evaluate function and call child operator if function is valid
     if (function->execute(record, ctx.pipelineMemoryProvider.arena))
     {
-        child()->execute(ctx, record);
+        PhysicalOperator::execute(ctx, record);
     }
 }
 

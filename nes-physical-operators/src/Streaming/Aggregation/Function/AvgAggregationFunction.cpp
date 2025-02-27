@@ -98,7 +98,7 @@ Nautilus::Record AvgAggregationFunction::lower(const nautilus::val<AggregationSt
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, *countType);
 
     /// Calculating the average and returning a record with the result
-    const auto avg = sum.castToType(resultType) / count.castToType(resultType);
+    const auto avg = sum.castToType(*resultType.get()) / count.castToType(*resultType.get());
     return Nautilus::Record({{resultFieldIdentifier, avg}});
 }
 

@@ -27,6 +27,7 @@ class ThresholdWindow : public ContentBasedWindowType
 {
 public:
     explicit ThresholdWindow(std::unique_ptr<LogicalFunction> predicate);
+    ThresholdWindow(std::unique_ptr<LogicalFunction> predicate, uint64_t minCount);
 
     /// @brief Constructor for ThresholdWindow
     /// @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
@@ -41,6 +42,7 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool operator==(const WindowType& otherWindowType) override;
+    [[nodiscard]] std::unique_ptr<WindowType> clone() const override;
 
     /// @brief return the content-based Subwindow Type, i.e., THRESHOLDWINDOW
     /// @return enum content-based Subwindow Type
@@ -52,8 +54,6 @@ public:
     [[nodiscard]] uint64_t hash() const override;
 
 private:
-    ThresholdWindow(std::unique_ptr<LogicalFunction> predicate, uint64_t minCount);
-
     std::unique_ptr<LogicalFunction> predicate;
     uint64_t minimumCount = 0;
 };

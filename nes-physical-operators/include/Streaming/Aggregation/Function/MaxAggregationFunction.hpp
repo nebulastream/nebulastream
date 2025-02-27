@@ -26,7 +26,7 @@
 namespace NES
 {
 
-class MaxAggregationFunction : public AggregationFunction
+class MaxAggregationFunction final : public AggregationFunction
 {
 public:
     MaxAggregationFunction(
@@ -45,6 +45,7 @@ public:
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
+    [[nodiscard]] std::unique_ptr<AggregationFunction> clone() const override;
     ~MaxAggregationFunction() override = default;
 };
 

@@ -57,7 +57,7 @@ NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp tim
 }
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
-    std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
     const uint64_t operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction)
@@ -95,7 +95,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(
-        localJoinState->nljPagedVectorMemRef, getMemoryProvider(), executionCtx.pipelineMemoryProvider.bufferProvider);
+        localJoinState->nljPagedVectorMemRef, getMemoryProvider().clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 

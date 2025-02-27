@@ -46,6 +46,7 @@ public:
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MinAggregationFunction() override = default;
+    [[nodiscard]] std::unique_ptr<AggregationFunction> clone() const override;
 };
 
 }

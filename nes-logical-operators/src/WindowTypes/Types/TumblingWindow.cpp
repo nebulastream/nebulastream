@@ -14,8 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
-#include <API/AttributeField.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
@@ -28,12 +26,6 @@ namespace NES::Windowing
 TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size)
     : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size))
 {
-}
-
-std::shared_ptr<WindowType> TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size)
-{
-    return std::dynamic_pointer_cast<WindowType>(
-        std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
 }
 
 TimeMeasure TumblingWindow::getSize()

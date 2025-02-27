@@ -30,11 +30,11 @@ class AggregationBuildPhysicalOperator final : public WindowAggregation,  public
 {
 public:
     AggregationBuildPhysicalOperator(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
         uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
-        std::shared_ptr<WindowAggregation> windowAggregationOperator);
+        std::unique_ptr<WindowAggregation> windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::string toString() const override {return typeid(this).name(); }

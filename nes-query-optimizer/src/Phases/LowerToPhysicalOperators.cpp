@@ -30,7 +30,7 @@ namespace NES::Optimizer::LowerToPhysicalOperators
 
 std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
 {
-    Operator *rootOperator;
+    Operator *rootOperator = nullptr;
     Operator *currentOperator;
 
     INVARIANT(queryPlan->getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
@@ -47,7 +47,7 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
         {
             const auto& tmp = currentOperator;
             currentOperator = dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode);
-            tmp->children.push_back(currentOperator);
+            tmp->children.push_back(currentOperator->clone());
         }
         else if (dynamic_cast<LogicalOperator*>(operatorNode))
         {
@@ -57,7 +57,7 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
                 /// TODO here we apply the rule
                 /// The problem is that we would expect that we take the TraitSet as the input
                 rule.value();
-                operatorNode->children.push_back(currentOperator);
+                operatorNode->children.push_back(currentOperator->clone());
             }
             else
             {
@@ -69,6 +69,8 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
             throw UnknownLogicalOperator("Cannot lower {}", operatorNode->toString());
         }
     }
-    return QueryPlan(queryPlan->getQueryId(), std::vector{rootOperator});
+    std::vector<std::unique_ptr<Operator>> resultVec;
+    resultVec.emplace_back(rootOperator);
+    return std::make_unique<QueryPlan>(queryPlan->getQueryId(), std::move(resultVec));
 }
 }

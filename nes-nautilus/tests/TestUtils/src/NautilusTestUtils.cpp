@@ -93,7 +93,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer
+    auto memoryProviderInputBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferManager.getBufferSize(), schema);
 
 
@@ -178,7 +178,7 @@ void NautilusTestUtils::compileFillBufferFunction(
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function tmp = [=](nautilus::val<Memory::TupleBuffer*> buffer,
+    const std::function tmp = [&](nautilus::val<Memory::TupleBuffer*> buffer,
                                   nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,
                                   nautilus::val<uint64_t> startForValues,
@@ -198,7 +198,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto fieldName = field.getName();
                 if (dynamic_cast<BasicPhysicalType*>(type.get()))
                 {
-                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, type);
+                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, *type.get());
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }

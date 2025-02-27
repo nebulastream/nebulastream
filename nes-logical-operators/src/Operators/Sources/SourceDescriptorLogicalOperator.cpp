@@ -24,12 +24,11 @@
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
-    : Operator(), UnaryLogicalOperator(), OriginIdAssignmentOperator(), sourceDescriptor(std::move(sourceDescriptor))
+    Sources::SourceDescriptor sourceDescriptor) : Operator(), UnaryLogicalOperator(), OriginIdAssignmentOperator(), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OriginId originId)
+    Sources::SourceDescriptor sourceDescriptor, const OriginId originId)
     : Operator(), UnaryLogicalOperator(), OriginIdAssignmentOperator(originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -47,7 +46,7 @@ bool SourceDescriptorLogicalOperator::isIdentical(const Operator& rhs) const
 bool SourceDescriptorLogicalOperator::operator==(Operator const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs)) {
-        return getSourceDescriptorRef() == rhsOperator->getSourceDescriptorRef();
+        return getSourceDescriptor()== rhsOperator->getSourceDescriptor();
     }
     return false;
 }
@@ -60,20 +59,15 @@ std::string SourceDescriptorLogicalOperator::toString() const
     return ss.str();
 }
 
-const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
-{
-    return *sourceDescriptor;
-}
-
-std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
+Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
 }
 
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
-    setInputSchema(sourceDescriptor->schema);
-    setOutputSchema(sourceDescriptor->schema);
+    setInputSchema(sourceDescriptor.schema);
+    setOutputSchema(sourceDescriptor.schema);
     return true;
 }
 
@@ -105,19 +99,19 @@ std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() cons
     const auto serializedSourceDescriptor
         = new SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor();
 
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor->schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor->logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor->sourceType);
+    SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
+    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
+    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor->parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor->parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor->parserConfig.fieldDelimiter);
+    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
+    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
     serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sourceDescriptor->config)
+    for (const auto& [key, value] : sourceDescriptor.config)
     {
         auto* kv = serializedSourceDescriptor->mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));

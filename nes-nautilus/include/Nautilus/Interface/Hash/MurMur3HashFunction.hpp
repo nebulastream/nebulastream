@@ -20,12 +20,13 @@ namespace NES::Nautilus::Interface
 
 /// Implementation of the MurMur3 hash function for nautilus types.
 /// This implementation is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
-class MurMur3HashFunction : public HashFunction
+class MurMur3HashFunction final : public HashFunction
 {
 public:
     /// Seed as an initialisation.
     const uint64_t SEED = 902850234;
     [[nodiscard]] HashValue init() const override;
+    [[nodiscard]] std::unique_ptr<HashFunction> clone() const override;
 
 protected:
     /// Calculates the hash of value and xor-es it with hash

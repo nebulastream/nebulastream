@@ -33,6 +33,8 @@ struct SinkDescriptor final : Configurations::Descriptor
     static Configurations::DescriptorConfig::Config
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
+    [[nodiscard]] std::unique_ptr<SinkDescriptor> clone();
+
     const std::string sinkType;
     Schema schema;
     bool addTimestamp;

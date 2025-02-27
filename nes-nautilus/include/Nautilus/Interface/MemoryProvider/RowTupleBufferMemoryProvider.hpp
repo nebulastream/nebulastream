@@ -30,7 +30,17 @@ public:
     RowTupleBufferMemoryProvider(std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() override;
+    [[nodiscard]] Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() const override;
+    RowTupleBufferMemoryProvider(const RowTupleBufferMemoryProvider& other)
+        : rowMemoryLayout(other.rowMemoryLayout
+                              ? std::make_unique<Memory::MemoryLayouts::RowLayout>(*other.rowMemoryLayout)
+                              : nullptr)
+    {
+    }
+
+    std::unique_ptr<TupleBufferMemoryProvider> clone() const override {
+        return std::make_unique<RowTupleBufferMemoryProvider>(*this);
+    }
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

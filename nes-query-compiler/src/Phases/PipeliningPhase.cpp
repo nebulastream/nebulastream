@@ -70,7 +70,7 @@ void processSink(
     for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<SinkLogicalOperator>>(*currentOperator))->children)
     {
         auto newPipeline = std::make_shared<SinkPipeline>();
-        pipelinePlan->pipelines.emplace_back(newPipeline);
+        pipelinePlan.pipelines.emplace_back(newPipeline);
         newPipeline->successorPipelines.emplace_back(currentPipeline);
         process(pipelinePlan, newPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
     }
@@ -117,20 +117,20 @@ void process(
 
 PipelinedQueryPlan apply(QueryPlan queryPlan)
 {
-    auto pipelinePlan = std::make_shared<PipelinedQueryPlan>(queryPlan.getQueryId());
+    auto pipelinePlan = PipelinedQueryPlan(queryPlan.getQueryId());
 
     for (const auto& sinkOperator : queryPlan.getRootOperators())
     {
         /// Create a new pipeline for each sink
         auto pipeline = std::make_shared<SinkPipeline>();
-        auto castedOperator = dynamic_cast<SinkLogicalOperator*>(sinkOperator.get());
+        auto castedOperator = dynamic_cast<SinkLogicalOperator*>(sinkOperator);
         INVARIANT(castedOperator, "SinkOperator must be of type SinkLogicalOperator");
         pipeline->prependOperator(std::make_shared<Pipeline::PipelineOperator>(castedOperator));
-        pipelinePlan->pipelines.emplace_back(pipeline);
+        pipelinePlan.pipelines.emplace_back(pipeline);
 
         process(pipelinePlan, pipeline, std::make_shared<Pipeline::PipelineOperator>(castedOperator));
     }
-    std::cout << pipelinePlan->toString() << std::endl;
+    std::cout << pipelinePlan.toString() << std::endl;
     return pipelinePlan;
 }
 

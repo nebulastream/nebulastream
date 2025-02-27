@@ -41,7 +41,7 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
 
 void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    child()->execute(executionCtx, record);
+    PhysicalOperator::execute(executionCtx, record);
 }
 
 }

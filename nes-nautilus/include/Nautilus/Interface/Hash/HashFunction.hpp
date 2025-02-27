@@ -28,6 +28,7 @@ public:
     [[nodiscard]] HashValue calculate(const VarVal& value) const;
     [[nodiscard]] HashValue calculate(const std::vector<VarVal>& values) const;
     virtual ~HashFunction() = default;
+    virtual std::unique_ptr<HashFunction> clone() const = 0;
 
 protected:
     [[nodiscard]] virtual HashValue init() const = 0;

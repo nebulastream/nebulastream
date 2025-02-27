@@ -38,8 +38,14 @@ std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalSelection::applyTo
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
     auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
     auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
-    auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::vector<std::unique_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, std::move(func));
-    return {std::move(phyOp)};
+
+    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryPrividerVec;
+    memoryPrividerVec.emplace_back(std::move(memoryProvider));
+    auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::move(memoryPrividerVec), std::move(func));
+
+    std::vector<std::unique_ptr<PhysicalOperator>> physicalOperatorVec;
+    physicalOperatorVec.emplace_back(std::move(phyOp));
+    return physicalOperatorVec;
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)

@@ -47,7 +47,7 @@ void runStoreTest(
     Memory::AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
-    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
     const auto memoryProviderInputBuffer
@@ -56,14 +56,11 @@ void runStoreTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
-        [memoryProvider = std::move(memoryProvider),
-         memoryProviderInputBuffer, // if needed, capture by copy if it’s copyable
-         projections](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-                      nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
-                      nautilus::val<Interface::PagedVector*> pagedVectorVal)
+        [&](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
+            nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             const RecordBuffer recordBuffer(inputBufferRef);
-            // Here, std::move(memoryProvider) now works as intended.
             const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, std::move(memoryProvider), bufferProviderVal);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
@@ -71,7 +68,6 @@ void runStoreTest(
                 pagedVectorRef.writeRecord(record);
             }
         }));
-
     /// NOLINTEND(performance-unnecessary-value-param)
 
     /// Inserting each tuple by iterating over all tuple buffers
@@ -113,21 +109,21 @@ void runRetrieveTest(
     auto outputBuffer = outputBufferVal.value();
 
     /// Creating the memory provider for the input buffers
-    const auto memoryProviderActualBuffer
+    auto memoryProviderActualBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(outputBuffer.getBufferSize(), testSchema);
 
     /// Compiling the function that reads the records from the PagedVector, if it is not already compiled
-    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto readFromPagedVectorIntoTupleBuffer = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
+        [&](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             RecordBuffer recordBuffer(outputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, std::move(memoryProvider), bufferProviderVal);
             nautilus::val<uint64_t> numberOfTuples = 0;
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {

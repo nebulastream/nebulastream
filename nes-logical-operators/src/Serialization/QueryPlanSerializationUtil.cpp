@@ -58,7 +58,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     }
 }
 
-std::shared_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
+std::unique_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
     std::vector<std::unique_ptr<Operator>> rootOperators;
     std::map<uint64_t, std::unique_ptr<Operator>> operatorIdToOperatorMap;
@@ -94,6 +94,6 @@ std::shared_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(cons
         queryId = QueryId(serializedQueryPlan->queryid());
     }
 
-    return QueryPlan::create(queryId, rootOperators);
+    return std::make_unique<QueryPlan>(queryId, std::move(rootOperators));
 }
 }

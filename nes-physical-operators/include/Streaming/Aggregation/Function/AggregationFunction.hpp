@@ -45,6 +45,7 @@ public:
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::PhysicalFunction> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+    virtual ~AggregationFunction();
 
     /// Adds the incoming record to the existing aggregation state
     virtual void
@@ -67,8 +68,7 @@ public:
 
     /// Returns the size of the aggregation state in bytes
     [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;
-
-    virtual ~AggregationFunction();
+    virtual std::unique_ptr<AggregationFunction> clone() const = 0;
 
 protected:
     const std::unique_ptr<PhysicalType> inputType;

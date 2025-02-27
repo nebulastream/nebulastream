@@ -32,7 +32,7 @@ struct ParserConfig
     std::string fieldDelimiter;
 };
 
-struct SourceDescriptor : public Configurations::Descriptor
+struct SourceDescriptor final : public Configurations::Descriptor
 {
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(

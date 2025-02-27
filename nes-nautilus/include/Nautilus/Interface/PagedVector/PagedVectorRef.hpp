@@ -40,6 +40,15 @@ public:
         std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
 
+    PagedVectorRef(const PagedVectorRef& other)
+        : pagedVectorRef(other.pagedVectorRef),
+        // Perform a deep copy of the unique_ptr via clone()
+        memoryProvider(other.memoryProvider ? other.memoryProvider->clone() : nullptr),
+        memoryLayout(other.memoryLayout),
+        bufferProvider(other.bufferProvider)
+    {
+    }
+
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
     void writeRecord(const Record& record) const;

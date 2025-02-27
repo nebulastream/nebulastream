@@ -53,9 +53,9 @@ public:
 
     static std::unique_ptr<UnaryLogicalOperator> deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
     static std::unique_ptr<UnaryLogicalOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
-    static std::unique_ptr<Sources::SourceDescriptor>
+    static Sources::SourceDescriptor
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
-    static std::unique_ptr<Sinks::SinkDescriptor>
+    static Sinks::SinkDescriptor
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
     static std::unique_ptr<Windowing::WindowAggregationFunction>
