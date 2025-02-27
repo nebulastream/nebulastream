@@ -119,7 +119,8 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
     uint64_t loadedFiles = 0;
     for (auto& [testname, testfile] : testmap)
     {
-        std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
+
+        std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
             loadQueriesFromTestFile(testfile, workingDir, testDataDir);
@@ -132,7 +133,7 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
         catch (const Exception& exception)
         {
             tryLogCurrentException();
-            std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.file.string(), exception.what());
+            std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.getLogFilePath(), exception.what());
         }
     }
     std::cout << "Loaded test files: " << loadedFiles << "/" << testmap.size() << '\n' << std::flush;
@@ -216,11 +217,14 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
             {
                 if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(group); }))
                 {
+                    std::cout << fmt::format(
+                        "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
                     return true;
                 }
             }
             if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(group); }))
             {
+                std::cout << fmt::format("Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
                 return true;
             }
             return false;
