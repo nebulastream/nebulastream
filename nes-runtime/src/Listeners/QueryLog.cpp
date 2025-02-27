@@ -38,14 +38,24 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statu
     return os;
 }
 
-bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point)
+bool QueryLog::logSourceTermination(QueryId queryId, OriginId originId, QueryTerminationType type, std::chrono::system_clock::time_point)
 {
+    if (type == QueryTerminationType::Failure)
+    {
+        NES_ERROR("Source {} of Query {} failed", queryId, originId);
+    }
+    else
+    {
+        NES_INFO("Source {} of Query {} terminated", queryId, originId);
+    }
+
     /// TODO #34: part of redesign of single node worker
-    return true; /// nop
+    return true;
 }
 
 bool QueryLog::logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp)
 {
+    NES_ERROR("Query {} failed: {}", queryId, exception.what());
     QueryStatusChange statusChange(std::move(exception), timestamp);
 
     const auto log = queryStatusLog.wlock();
@@ -64,6 +74,7 @@ bool QueryLog::logQueryFailure(QueryId queryId, Exception exception, std::chrono
 
 bool QueryLog::logQueryStatusChange(QueryId queryId, Execution::QueryStatus status, std::chrono::system_clock::time_point timestamp)
 {
+    NES_INFO("Query {} is now: {}", queryId, magic_enum::enum_name(status));
     QueryStatusChange statusChange(std::move(status), timestamp);
 
     const auto log = queryStatusLog.wlock();
