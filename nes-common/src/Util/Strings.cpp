@@ -191,6 +191,36 @@ std::string_view trimCharacters(const std::string_view input, const char c)
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
 }
 
+std::string escapeSpecialCharacters(std::string_view input)
+{
+    const std::pair<char, char> sequences[]{
+        {'\a', 'a'},
+        {'\b', 'b'},
+        {'\f', 'f'},
+        {'\n', 'n'},
+        {'\r', 'r'},
+        {'\t', 't'},
+        {'\v', 'v'},
+    };
+
+    std::string escapedString;
+    escapedString.reserve(input.size());
+    for (char value : input)
+    {
+        if (auto it = std::ranges::find(sequences, value, [](const auto& p) { return p.first; }); it == std::ranges::end(sequences))
+        {
+            escapedString += value;
+        }
+        else
+        {
+            escapedString += "\\";
+            escapedString += it->second;
+        }
+    }
+
+    return escapedString;
+}
+
 std::string_view trimCharsRight(std::string_view input, char character)
 {
     const std::size_t lastNotC = input.find_last_not_of(character);
