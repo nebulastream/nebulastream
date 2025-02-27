@@ -16,6 +16,7 @@
 #include <sstream>
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
 namespace NES::Sources
 {
@@ -39,13 +40,14 @@ SourceDescriptor::SourceDescriptor(
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
-    const auto parserConfigString = fmt::format(
-        "type: {}, tupleDelimiter: {}, stringDelimiter: {}",
-        sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
+    const auto parserConfigString = Util::escapeSpecialCharacters(
+        fmt::format(
+            "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
+            sourceDescriptor.parserConfig.parserType,
+            sourceDescriptor.parserConfig.tupleDelimiter,
+            sourceDescriptor.parserConfig.fieldDelimiter));
     return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, physicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+               "SourceDescriptor(logicalSourceName: {}, physicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {{{}}}, config: {{{}}})",
                sourceDescriptor.logicalSourceName,
                sourceDescriptor.physicalSourceName,
                sourceDescriptor.sourceType,

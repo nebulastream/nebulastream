@@ -85,8 +85,6 @@ std::string TimeCharacteristic::toString() const
     {
         ss << " field=" << field->toString();
     }
-
-    ss << std::endl;
     return ss.str();
 }
 
