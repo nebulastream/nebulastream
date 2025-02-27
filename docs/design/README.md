@@ -46,6 +46,14 @@ This section should precisely state all goals. Furthermore, the goals should add
 This section should list everything related to the design document that is out of the scope of the design document. For every non-goal, explain why it is out of the scope of the design document.
 Enumerate non-goals as NG1, NG2, ..., so we can reference them distinctly.
 
+## Alternatives
+In this section, we discuss alternatives to the proposed solution.
+We enumerate each alternative, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
+We discuss the advantages and disadvantages of each alternative.
+It must be clear why the proposed solution was preferred over the alternatives.
+If possible, we argue why the alternatives do not achieve specific [Goals](#goals).
+Towards the end of this section, we narrow down the alternatives to one, which we discuss in detail in the section [Proposed solution](#proposed-solution). 
+
 ## (Optional) Solution Background
 If the proposed solution builds upon prior work, such as issues and PRs, by the author of the design document or by colleagues, or if it strongly builds on top of designs used by other (open source) projects, then a solution background chapter can provide the necessary link to the prior work, without interfering with the description of the actual solution.
 It is a good idea to label different prior work so that people know how to reference it in the PR discussion.
@@ -56,13 +64,6 @@ Furthermore, addressing the individual [Goals](#goals) and showing why the propo
 
 ## Proof Of Concept
 A proof of concept (PoC) should demonstrate that the solution generally works. It is acceptable to create a PoC after creating an initial [Draft](#draft) for the design document.
-
-## Alternatives
-In this section, we discuss alternatives to the proposed solution.
-We enumerate each alternative, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
-We discuss the advantages and disadvantages of each alternative.
-It must be clear why the proposed solution was preferred over the alternatives.
-If possible, we argue why the alternatives do not achieve specific [Goals](#goals) in contrast to the [Proposed solution](#proposed-solution).
 
 ## (Optional) Open Questions
 All questions that are relevant for the design document but that cannot and do not need to be answered before merging the design document. We might create issues from these questions or revisit them regularly.
