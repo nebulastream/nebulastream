@@ -217,19 +217,19 @@ std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 
 uint64_t TupleBuffer::getNumberOfTuples() const noexcept
 {
-    return controlBlock->getNumberOfTuples();
+    return !controlBlock ? 0 : controlBlock->getNumberOfTuples();
 }
 OriginId TupleBuffer::getOriginId() const noexcept
 {
-    return controlBlock->getOriginId();
+    return !controlBlock ? INVALID<OriginId> : controlBlock->getOriginId();
 }
 uint32_t TupleBuffer::getNumberOfChildrenBuffer() const noexcept
 {
-    return controlBlock->getNumberOfChildrenBuffer();
+    return !controlBlock ? 0 : controlBlock->getNumberOfChildrenBuffer();
 }
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
-    return controlBlock->getChunkNumber();
+    return !controlBlock ? INVALID<ChunkNumber> : controlBlock->getChunkNumber();
 }
 
 
