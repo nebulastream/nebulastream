@@ -17,8 +17,8 @@ HASH_PATHS=(
   docker/dependency
 )
 
-# we set LC_ALL to override the system-specific locale, to have consistent sort order
-find "${HASH_PATHS[@]}" -type f -exec sha256sum {} \; \
+# Find all files, convert CRLF to LF on-the-fly, then hash
+find "${HASH_PATHS[@]}" -type f -exec sh -c ' printf "%s  %s\n" "$(tr -d "\r" < "$1" | sha256sum | cut -d " " -f1)" "$1"' sh {} \; \
   | LC_ALL=C sort -k 2 \
-  | sha256sum          \
+  | sha256sum \
   | cut -d ' ' -f1
