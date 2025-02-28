@@ -38,7 +38,7 @@ ExecutableFunctionMul::ExecutableFunctionMul(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterMulExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two sub-functions");

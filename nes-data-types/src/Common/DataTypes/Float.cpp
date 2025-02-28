@@ -61,12 +61,12 @@ std::string Float::toString()
     return fmt::format("FLOAT{}", bits);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Float>(32, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Float>(64, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
 }

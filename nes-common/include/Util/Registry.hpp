@@ -84,7 +84,7 @@ class Registrar
 {
     using Tag = ConcreteRegistry;
     using KeyType = KeyTypeT;
-    using ReturnType = std::unique_ptr<ReturnTypeT>;
+    using ReturnType = ReturnTypeT;
     using CreatorFn = std::function<ReturnType(Arguments)>;
     static void registerAll(Registry<Registrar>& registry);
     template <typename Registrar>

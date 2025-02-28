@@ -51,7 +51,7 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
     return newVarSizeData;
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");

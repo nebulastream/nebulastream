@@ -40,7 +40,7 @@ ExecutableFunctionLess::ExecutableFunctionLess(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterLessExecutableFunction(
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterLessExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two sub-functions");

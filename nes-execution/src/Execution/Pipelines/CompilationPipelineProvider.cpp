@@ -36,8 +36,8 @@ std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, std::move(operatorHandlers), options);
 }
 
-std::unique_ptr<ExecutablePipelineProviderRegistryReturnType>
-ExecutablePipelineProviderGeneratedRegistrar::RegistercompilerExecutablePipelineProvider(ExecutablePipelineProviderRegistryArguments)
+ExecutablePipelineProviderRegistryReturnType
+ExecutablePipelineProviderGeneratedRegistrar::RegisterCompilerExecutablePipelineProvider(ExecutablePipelineProviderRegistryArguments)
 {
     return std::make_unique<CompilationPipelineProvider>();
 }

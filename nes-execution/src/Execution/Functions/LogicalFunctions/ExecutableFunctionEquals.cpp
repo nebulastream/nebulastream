@@ -46,7 +46,7 @@ ExecutableFunctionEquals::ExecutableFunctionEquals(
 {
 }
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType> ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
