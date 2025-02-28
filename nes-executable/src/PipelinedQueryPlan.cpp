@@ -42,12 +42,12 @@ std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t)
     return os << t.toString();
 }
 
-std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() const
+std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() const
 {
-    std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
+    std::vector<std::unique_ptr<Pipeline>> sourcePipelines;
     for (const auto &pipeline : pipelines)
     {
-        if (NES::Util::instanceOf<SourcePipeline>(pipeline))
+        if (dynamic_cast<SourcePipeline*>(pipeline.get()))
         {
             sourcePipelines.emplace_back(pipeline);
         }
@@ -55,12 +55,12 @@ std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() 
     return sourcePipelines;
 }
 
-std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSinkPipelines() const
+std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::getSinkPipelines() const
 {
-    std::vector<std::shared_ptr<Pipeline>> sinkPipelines;
+    std::vector<std::unique_ptr<Pipeline>> sinkPipelines;
     for (const auto &pipeline : pipelines)
     {
-        if (NES::Util::instanceOf<SinkPipeline>(pipeline))
+        if (dynamic_cast<SinkPipeline*>(pipeline.get()))
         {
             sinkPipelines.emplace_back(pipeline);
         }

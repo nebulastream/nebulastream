@@ -31,5 +31,6 @@ public:
 
 private:
     const std::unique_ptr<Functions::PhysicalFunction> function;
+    static constexpr bool PIPELINE_BREAKER = false;
 };
 }

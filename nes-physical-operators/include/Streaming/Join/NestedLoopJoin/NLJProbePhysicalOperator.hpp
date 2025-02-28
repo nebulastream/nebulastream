@@ -46,5 +46,6 @@ public:
 private:
     std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
     std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
+    static constexpr bool PIPELINE_BREAKER = true;
 };
 }

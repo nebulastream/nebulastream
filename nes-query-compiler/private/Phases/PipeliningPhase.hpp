@@ -35,5 +35,5 @@
 namespace NES::QueryCompilation::PipeliningPhase
 {
 /// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-std::shared_ptr<PipelinedQueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan);
+PipelinedQueryPlan apply(const QueryPlan& queryPlan);
 }

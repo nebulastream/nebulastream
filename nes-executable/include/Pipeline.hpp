@@ -44,26 +44,41 @@ struct Pipeline
     };
     const ProviderType providerType;
 
-    std::vector<std::shared_ptr<Pipeline>> successorPipelines;
+    std::vector<std::unique_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
     std::vector<OperatorHandler> operatorHandlers;
 
-    using PipelineOperator = std::variant<std::shared_ptr<PhysicalOperator>,
-                                          std::shared_ptr<SourceDescriptorLogicalOperator>,
-                                          std::shared_ptr<SinkLogicalOperator>>;
+    using PipelineOperator = std::variant<std::unique_ptr<PhysicalOperator>,
+                                          std::unique_ptr<SourceDescriptorLogicalOperator>,
+                                          std::unique_ptr<SinkLogicalOperator>>;
+    /// non-owning view on pipeline operator
+    using PipelineOperatorView = std::variant<
+        const PhysicalOperator*,
+        const SourceDescriptorLogicalOperator*,
+        const SinkLogicalOperator*
+        >;
+    PipelineOperatorView toOperatorView(const Operator* op) {
+        if (auto phys = dynamic_cast<const PhysicalOperator*>(op))
+            return phys;
+        if (auto src = dynamic_cast<const SourceDescriptorLogicalOperator*>(op))
+            return src;
+        if (auto sink = dynamic_cast<const SinkLogicalOperator*>(op))
+            return sink;
+        throw std::runtime_error("Unsupported operator type");
+    }
 
     virtual bool hasOperators() = 0;
     ///virtual void appendOperator(std::shared_ptr<PipelineOperator> op) = 0;
-    virtual void prependOperator(std::shared_ptr<PipelineOperator> op) = 0;
+    virtual void prependOperator(PipelineOperator op) = 0;
 };
 
 
-struct OperatorPipeline : public Pipeline
+struct OperatorPipeline final : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op) override
+    void prependOperator(PipelineOperator op) override
     {
-        PRECONDITION(std::holds_alternative<std::shared_ptr<PhysicalOperator>>(*op), "Should have hold a PhysicalOperator");
-        operators.insert(operators.begin(), std::get<std::shared_ptr<PhysicalOperator>>(*op));
+        PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperator>>(op), "Should have hold a PhysicalOperator");
+        operators.insert(operators.begin(), std::move(std::get<std::unique_ptr<PhysicalOperator>>(op)));
         //plan->promoteOperatorToRoot(std::get<std::shared_ptr<PhysicalOperator>>(*op)); ///.emplace_back(std::get<std::shared_ptr<PhysicalOperator>>(*op));
     }
 
@@ -75,17 +90,17 @@ struct OperatorPipeline : public Pipeline
         return operators.size() != 0;
     }
 
-    std::shared_ptr<PhysicalOperator> scanOperator;
-    std::vector<std::shared_ptr<PhysicalOperator>> operators;
-    std::shared_ptr<PhysicalOperator> emitOperator;
+    std::unique_ptr<PhysicalOperator> scanOperator;
+    std::vector<std::unique_ptr<PhysicalOperator>> operators;
+    std::unique_ptr<PhysicalOperator> emitOperator;
 };
 
-struct SourcePipeline : public Pipeline
+struct SourcePipeline final : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op) override
+    void prependOperator(PipelineOperator op) override
     {
-        PRECONDITION(std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(*op), "Should have hold a SourceDescriptorLogicalOperator");
-        sourceOperator = (std::get<std::shared_ptr<SourceDescriptorLogicalOperator>>(*op));
+        PRECONDITION(std::holds_alternative<std::unique_ptr<SourceDescriptorLogicalOperator>>(op), "Should have hold a SourceDescriptorLogicalOperator");
+        sourceOperator = std::move((std::get<std::unique_ptr<SourceDescriptorLogicalOperator>>(op)));
     }
 
     [[nodiscard]] std::string toString() const override;
@@ -95,15 +110,16 @@ struct SourcePipeline : public Pipeline
         return sourceOperator != nullptr;
     }
 
-    std::shared_ptr<SourceDescriptorLogicalOperator> sourceOperator;
+    // TODO check if this should be as well use value semantics
+    std::unique_ptr<SourceDescriptorLogicalOperator> sourceOperator;
 };
 
-struct SinkPipeline : public Pipeline
+struct SinkPipeline final : public Pipeline
 {
-    void prependOperator(std::shared_ptr<PipelineOperator> op) override
+    void prependOperator(PipelineOperator op) override
     {
-        PRECONDITION(std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(*op), "Should have hold a SinkLogicalOperator");
-        sinkOperator = (std::get<std::shared_ptr<SinkLogicalOperator>>(*op));
+        PRECONDITION(std::holds_alternative<std::unique_ptr<SinkLogicalOperator>>(op), "Should have hold a SinkLogicalOperator");
+        sinkOperator = std::move((std::get<std::unique_ptr<SinkLogicalOperator>>(op)));
     }
 
     [[nodiscard]] std::string toString() const override;
@@ -113,7 +129,8 @@ struct SinkPipeline : public Pipeline
         return sinkOperator != nullptr;
     }
 
-    std::shared_ptr<SinkLogicalOperator> sinkOperator;
+    // TODO check if this should be as well use value semantics
+    std::unique_ptr<SinkLogicalOperator> sinkOperator;
 };
 
 }

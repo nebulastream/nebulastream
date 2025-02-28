@@ -72,6 +72,10 @@ public:
     [[nodiscard]] std::string toString() const;
 
     const std::vector<Operator*> getRootOperators() const;
+    std::vector<std::unique_ptr<Operator>> releaseRootOperators()
+    {
+        return std::move(rootOperators);
+    }
 
     template <class T>
     std::vector<T*> getOperatorByType() const

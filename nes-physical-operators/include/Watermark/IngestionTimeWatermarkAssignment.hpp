@@ -30,6 +30,7 @@ public:
 
 private:
     std::unique_ptr<TimeFunction> timeFunction;
+    static constexpr bool PIPELINE_BREAKER = false;
 };
 
 }

@@ -40,6 +40,7 @@ public:
 
 private:
     const std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions;
+    static constexpr bool PIPELINE_BREAKER = false;
 };
 
 }

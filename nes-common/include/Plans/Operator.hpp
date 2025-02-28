@@ -35,6 +35,9 @@ struct Operator {
     [[nodiscard]] virtual bool operator==(const Operator& rhs) const;
     /// Expose children as a non-owning view.
     [[nodiscard]] std::span<const std::unique_ptr<Operator>> getChildren() const;
+    /// Transfers ownership of children
+    [[nodiscard]] std::vector<std::unique_ptr<Operator>> releaseChildren() const;
+    /// Creates a new owing instance
     virtual std::unique_ptr<Operator> clone() const = 0;
     /// Unique identifier for the operator during runtime
     const OperatorId id;

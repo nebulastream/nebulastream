@@ -22,7 +22,7 @@
 namespace NES
 {
 
-class SinkLogicalOperator : public UnaryLogicalOperator
+class SinkLogicalOperator final : public UnaryLogicalOperator
 {
 public:
     /// During deserialization, we don't need to know/use the name of the sink anymore.
