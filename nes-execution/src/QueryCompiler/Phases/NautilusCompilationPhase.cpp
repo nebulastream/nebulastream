@@ -56,10 +56,10 @@ std::string getPipelineProviderIdentifier(const Configurations::QueryCompilerCon
     switch (compilerOptions.nautilusBackend)
     {
         case Nautilus::Configurations::NautilusBackend::INTERPRETER: {
-            return "interpreter";
+            return "Interpreter";
         };
         case Nautilus::Configurations::NautilusBackend::COMPILER: {
-            return "compiler";
+            return "Compiler";
         };
         default: {
             INVARIANT(false, "Invalid backend");

@@ -61,8 +61,7 @@ size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const 
     return numBytesRead;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+NES::Configurations::DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
@@ -73,13 +72,13 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationRegistryReturnType
 SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-    return FileSource::validateAndFormat(sourceConfig.config);
+    return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }

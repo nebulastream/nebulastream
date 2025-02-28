@@ -37,7 +37,7 @@ std::string VariableSizedDataType::toString()
     return "VARSIZED";
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
     return std::make_unique<VariableSizedDataType>();
 }

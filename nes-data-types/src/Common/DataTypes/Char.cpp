@@ -42,7 +42,7 @@ std::string Char::toString()
     return std::string(magic_enum::enum_name(BasicType::CHAR));
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Char>();
 }

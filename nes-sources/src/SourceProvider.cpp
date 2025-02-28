@@ -26,23 +26,23 @@
 namespace NES::Sources
 {
 
-std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
     return std::make_unique<SourceProvider>();
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool)
+std::unique_ptr<SourceHandle>
+SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
-    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
         *sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
-    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
+    auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
         return std::make_unique<SourceHandle>(

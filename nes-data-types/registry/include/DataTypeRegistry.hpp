@@ -21,7 +21,7 @@
 namespace NES
 {
 
-using DataTypeRegistryReturnType = DataType;
+using DataTypeRegistryReturnType = std::unique_ptr<DataType>;
 struct DataTypeRegistryArguments
 {
 };

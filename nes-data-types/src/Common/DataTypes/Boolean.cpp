@@ -43,7 +43,7 @@ std::string Boolean::toString()
     return std::string(magic_enum::enum_name(BasicType::BOOLEAN));
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Boolean>();
 }

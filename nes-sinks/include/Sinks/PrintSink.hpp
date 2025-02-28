@@ -50,8 +50,7 @@ public:
     execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static std::unique_ptr<Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
