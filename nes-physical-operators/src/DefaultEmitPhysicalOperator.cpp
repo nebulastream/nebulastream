@@ -24,8 +24,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
+#include <DefaultEmitPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
-#include <EmitPhysicalOperator.hpp>
+#include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <function.hpp>
 
@@ -90,7 +91,7 @@ public:
     nautilus::val<int8_t*> bufferMemoryArea;
 };
 
-void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
+void DefaultEmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
@@ -99,7 +100,7 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
     ctx.setLocalOperatorState(this, std::move(emitState));
 }
 
-void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void DefaultEmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
@@ -119,14 +120,14 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
-void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
+void DefaultEmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 
-void EmitPhysicalOperator::emitRecordBuffer(
+void DefaultEmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
@@ -147,7 +148,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     }
 }
 
-EmitPhysicalOperator::EmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider))
     , operatorHandlerIndex(operatorHandlerIndex)
     , maxRecordsPerBuffer(memoryProvider->getMemoryLayout().getCapacity())

@@ -14,14 +14,14 @@
 #pragma once
 
 #include <iterator>
-#include <vector>
 #include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <PhysicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Plans/QueryPlan.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {

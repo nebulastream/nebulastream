@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <PhysicalOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {

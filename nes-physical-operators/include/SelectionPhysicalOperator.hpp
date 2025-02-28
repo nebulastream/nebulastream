@@ -14,7 +14,7 @@
 #pragma once
 
 #include <Functions/PhysicalFunction.hpp>
-#include <PhysicalOperator.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {

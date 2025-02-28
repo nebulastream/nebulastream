@@ -13,49 +13,48 @@
 */
 
 #include <memory>
+#include <Phases/AddScanAndEmitPhase.hpp>
 #include <Plans/OperatorUtil.hpp>
-#include <EmitPhysicalOperator.hpp>
+#include <DefaultEmitPhysicalOperator.hpp>
+#include <DefaultScanPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelinedQueryPlan.hpp>
-#include <ScanPhysicalOperator.hpp>
-#include <Phases/AddScanAndEmitPhase.hpp>
 
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan)
+PipelinedQueryPlan AddScanAndEmitPhase::apply(const PipelinedQueryPlan& pipelineQueryPlan)
 {
-    /*
-    for (const auto& pipeline : pipelineQueryPlan->pipelines)
+    // Iterate over every pipeline in the query plan.
+    for (auto& pipeline : pipelineQueryPlan.pipelines)
     {
-        if (NES::Util::instanceOf<OperatorPipeline>(pipeline))
+        // Process only OperatorPipelines.
+        if (auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get()))
         {
-            auto opPipeline = Util::as<OperatorPipeline>(pipeline);
             PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
 
-            /// insert buffer scan operator to the pipeline root if necessary
-            const auto& rootOperator = opPipeline
-            if (true) // TODO check if we need ta add a scan
+            auto& rootOperator = opPipeline->operators.front();
+            if (needsScan(*rootOperator))
             {
-                auto newScan = std::make_shared<ScanPhysicalOperator>(
-                    rootOperator->memoryProviders,
+                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(rootOperator->memoryProviders,
                     std::vector<Nautilus::Record::RecordFieldIdentifier>{});
-                opPipeline->operators.insert(opPipeline->operators.begin(), newScan);
+                opPipeline->operators.insert(opPipeline->operators.begin(), std::move(newScan));
             }
 
-            /// insert emit buffer operator if necessary
-            auto pipelineLeafOperators = getAllLeafNodes(rootOperator);
-            for (const auto& leaf : pipelineLeafOperators)
+            auto leafOperators = getAllLeafNodes(*rootOperator);
+            for (auto* leaf : leafOperators)
             {
-                auto leafOperator = NES::Util::as<PhysicalOperator>(leaf);
-                if (true) // TODO check if we need to add an emit
+                if (auto* leafPhys = dynamic_cast<PhysicalOperator*>(leaf))
                 {
-                    auto emitOperator = EmitPhysicalOperator(1 TODO, std::move(leafOperator->memoryProviders[0]));
-                    leafOperator->children.push_back(emitOperator); /// TODO its weird that this does not take a shared ptr
+                    if (needsEmit(*leafPhys))
+                    {
+                        auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(std::move(leafPhys->memoryProviders[0]));
+                        leafPhys->children.push_back(std::move(emitOperator));
+                    }
                 }
             }
         }
-    }*/
+    }
     return pipelineQueryPlan;
 }
 }

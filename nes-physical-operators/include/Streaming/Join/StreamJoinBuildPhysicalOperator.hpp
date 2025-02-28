@@ -17,10 +17,10 @@
 #include <cstdint>
 #include <memory>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
-#include <PhysicalOperator.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {

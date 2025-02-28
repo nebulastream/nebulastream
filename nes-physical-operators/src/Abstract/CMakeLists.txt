@@ -11,14 +11,4 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        MapPhysicalOperator.cpp
-        SelectionPhysicalOperator.cpp
-        DefaultEmitPhysicalOperator.cpp
-        EmitOperatorHandler.cpp
-        DefaultScanPhysicalOperator.cpp)
-
-add_subdirectory(Abstract)
-add_subdirectory(Watermark)
-add_subdirectory(Streaming)
-add_subdirectory(SliceStore)
-add_subdirectory(Functions)
+        PhysicalOperator.cpp)

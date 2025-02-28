@@ -25,15 +25,15 @@
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
 #include <Plans/Operator.hpp>
+#include <Abstract/Scan.hpp>
 
 namespace NES
 {
 
 /// This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
 /// is not part of this class. This class takes care of the close() functionality as this universal.
-/// Furthermore, it provides a method of creating the joined tuple
 class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
-{
+class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator, public Scan
 public:
     StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,

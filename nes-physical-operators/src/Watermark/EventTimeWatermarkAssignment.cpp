@@ -14,10 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <ExecutionContext.hpp>
-#include <OperatorState.hpp>
-#include <Watermark/EventTimeWatermarkAssignment.hpp>
-#include <Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
@@ -25,8 +21,9 @@
 #include <Util/Common.hpp>
 #include <Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <PhysicalOperator.hpp>
+#include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {

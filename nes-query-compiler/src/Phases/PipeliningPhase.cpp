@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Phases/PipeliningPhase.hpp>
 #include <memory>
 #include <utility>
 #include <variant>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Phases/PipeliningPhase.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <PhysicalOperator.hpp>
-#include <PipelinedQueryPlan.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
-#include <Util/Common.hpp>
+#include <PipelinedQueryPlan.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {

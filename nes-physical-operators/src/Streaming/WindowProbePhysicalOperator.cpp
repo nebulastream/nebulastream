@@ -20,10 +20,10 @@
 #include <Streaming/WindowBasedOperatorHandler.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <PhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {

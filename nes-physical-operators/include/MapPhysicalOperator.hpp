@@ -13,11 +13,11 @@
 */
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 #include <Functions/PhysicalFunction.hpp>
-#include <PhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
