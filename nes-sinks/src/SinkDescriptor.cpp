@@ -18,6 +18,8 @@
 #include <string>
 #include <utility>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Strings.hpp>
+
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>
 
@@ -42,7 +44,7 @@ SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unorde
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
-    return out << fmt::format("SinkDescriptor(Type: {}, Config: {{{}}})", sinkDescriptor.sinkType, sinkDescriptor.toStringConfig());
+    return out << fmt::format("SinkDescriptor(Type: {}, Config: {{{}}})", sinkDescriptor.sinkType, Util::escapeSpecialCharacters(sinkDescriptor.toStringConfig()));
 }
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)

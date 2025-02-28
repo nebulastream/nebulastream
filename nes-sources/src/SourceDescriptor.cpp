@@ -52,8 +52,8 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
                sourceDescriptor.physicalSourceName,
                sourceDescriptor.sourceType,
                schemaString,
-               parserConfigString,
-               sourceDescriptor.toStringConfig());
+               Util::escapeSpecialCharacters(parserConfigString),
+               Util::escapeSpecialCharacters(sourceDescriptor.toStringConfig()));
 }
 
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
