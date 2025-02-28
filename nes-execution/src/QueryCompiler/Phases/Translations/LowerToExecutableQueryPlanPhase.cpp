@@ -23,6 +23,8 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterOperatorHandler.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -30,6 +32,8 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Ranges.hpp>
@@ -97,7 +101,12 @@ Runtime::Execution::Source processSource(
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
-    std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+        sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
+        sourceOperator->getSourceDescriptorRef().schema,
+        sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
+        sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
     for (const auto& successor : pipeline->getSuccessors())
     {
         if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, loweringContext))
@@ -105,9 +114,14 @@ Runtime::Execution::Source processSource(
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
+    // Todo: the weak ptr will probably be destroyed
+    // - might need to change from weak to shared_ptr
+    std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> inputFormatterTasks;
+    auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
+        pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
+    inputFormatterTasks.emplace_back(std::move(executableInputFormatterPipeline));
 
-    loweringContext.sources.emplace_back(
-        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), executableSuccessorPipelines);
+    loweringContext.sources.emplace_back(sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), inputFormatterTasks);
     return loweringContext.sources.back();
 }
 

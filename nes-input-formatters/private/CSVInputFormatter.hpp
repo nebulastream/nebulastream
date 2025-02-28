@@ -26,6 +26,7 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
 {
@@ -33,14 +34,17 @@ namespace NES::InputFormatters
 /// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVInputFormatter final : public InputFormatter
+class CSVInputFormatter : public InputFormatter
 {
 public:
-    using CastFunctionSignature
-        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
+    using CastFunctionSignature = std::function<void(
+        std::string inputString,
+        int8_t* fieldPointer,
+        Memory::AbstractBufferProvider& bufferProvider,
+        Memory::TupleBuffer& tupleBufferFormatted)>;
 
     CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
-    ~CSVInputFormatter() override;
+    ~CSVInputFormatter() override; //needs implementation in source file to allow for forward declaring 'InputFormatter'
 
     CSVInputFormatter(const CSVInputFormatter&) = delete;
     CSVInputFormatter& operator=(const CSVInputFormatter&) = delete;
@@ -49,23 +53,28 @@ public:
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,
-        Memory::AbstractBufferProvider& bufferProvider,
-        size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction) override;
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        size_t numBytesInRawTB,
+        SequenceShredder& sequenceShredder) override;
+
+    void
+    flushFinalTuple(NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::string fieldDelimiter;
-    std::unique_ptr<ProgressTracker> progressTracker;
+    const Schema schema;
+    const std::string fieldDelimiter;
+    const std::string tupleDelimiter;
     std::vector<size_t> fieldSizes;
     std::vector<CastFunctionSignature> fieldParseFunctions;
 
-    /// Splits the string-tuple into string-fields, parsing each string-field, converting it to the internal representation.
-    /// Assumptions: input is a string that contains either:
-    /// - one complete tuple
-    /// - a string containing a partial tuple (potentially with a partial field) and another string that contains the rest of the tuple.
-    void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const;
+    void processPartialTuple(
+        const size_t partialTupleStartIdx,
+        const size_t partialTupleEndIdx,
+        const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat,
+        ProgressTracker& progressTracker,
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext);
 };
 
 }
