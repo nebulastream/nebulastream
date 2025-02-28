@@ -68,6 +68,11 @@ struct ConfigParametersTCP
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
+            if (!config.contains(DOMAIN))
+            {
+                return std::nullopt;
+            }
+
             /// User specified value, set if input is valid, throw if not.
             const auto& socketDomainString = config.at(DOMAIN);
             if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
@@ -86,6 +91,11 @@ struct ConfigParametersTCP
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
+            if (!config.contains(TYPE))
+            {
+                return std::nullopt;
+            }
+
             auto socketTypeString = config.at(TYPE);
             for (auto& character : socketTypeString)
             {
