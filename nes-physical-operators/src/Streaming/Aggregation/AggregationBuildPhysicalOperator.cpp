@@ -34,7 +34,6 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val_ptr.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES
 {
@@ -100,13 +99,12 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
     std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
     std::unique_ptr<WindowAggregation> windowAggregationOperator)
     : WindowAggregation(std::move(windowAggregationOperator))
-    , WindowBuildPhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, std::move(timeFunction))
+    , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
 }

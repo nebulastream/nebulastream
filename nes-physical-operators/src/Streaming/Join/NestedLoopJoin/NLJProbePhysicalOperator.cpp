@@ -79,13 +79,15 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 }
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<Functions::PhysicalFunction> joinFunction,
     const std::string windowStartFieldName,
     const std::string windowEndFieldName,
-    const JoinSchema& joinSchema)
-    : StreamJoinProbePhysicalOperator(std::move(memoryProviders), operatorHandlerIndex, std::move(joinFunction), windowStartFieldName, windowEndFieldName, joinSchema)
+    const JoinSchema& joinSchema,
+    std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
+    std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider)
+    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, std::move(joinFunction), windowStartFieldName, windowEndFieldName, joinSchema),
+    leftMemoryProvider(std::move(leftMemoryProvider)), rightMemoryProvider(std::move(rightMemoryProvider))
 {
 }
 
@@ -132,14 +134,14 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
     const Interface::PagedVectorRef leftPagedVector(
-        leftPagedVectorRef, getLeftMemoryProvider().clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
+        leftPagedVectorRef, leftMemoryProvider->clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
     const Interface::PagedVectorRef rightPagedVector(
-        rightPagedVectorRef, getRightMemoryProvider().clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
+        rightPagedVectorRef, rightMemoryProvider->clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
 
-    const auto leftKeyFields = getLeftMemoryProvider().getMemoryLayout().getKeyFieldNames();
-    const auto rightKeyFields = getRightMemoryProvider().getMemoryLayout().getKeyFieldNames();
-    const auto leftFields = getLeftMemoryProvider().getMemoryLayout().getSchema().getFieldNames();
-    const auto rightFields = getRightMemoryProvider().getMemoryLayout().getSchema().getFieldNames();
+    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout().getKeyFieldNames();
+    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout().getKeyFieldNames();
+    const auto leftFields = leftMemoryProvider->getMemoryLayout().getSchema().getFieldNames();
+    const auto rightFields = rightMemoryProvider->getMemoryLayout().getSchema().getFieldNames();
 
     nautilus::val<uint64_t> leftItemPos = 0UL;
     for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)

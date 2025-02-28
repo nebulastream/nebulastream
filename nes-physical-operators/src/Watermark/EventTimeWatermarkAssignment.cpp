@@ -37,8 +37,8 @@ struct WatermarkState final : OperatorState
     nautilus::val<Timestamp> currentWatermark = Timestamp(Timestamp::INITIAL_VALUE);
 };
 
-EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::unique_ptr<TimeFunction> timeFunction)
-    : PhysicalOperator(std::move(memoryProvider)), timeFunction(std::move(timeFunction)) {};
+EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
+    : timeFunction(std::move(timeFunction)) {};
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

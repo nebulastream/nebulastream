@@ -143,8 +143,7 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(const JoinLo
     }
 }
 
-/// TODO we want to return here all three operators
-std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWithSchema> LowerToPhysicalNLJoin::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
@@ -154,59 +153,48 @@ std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhy
     auto outSchema = ops->getOutputSchema();
     auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(ops->getJoinFunction().clone());
 
-    const auto leftSchema = ops->getLeftInputSchema();
-    const auto rightSchema = ops->getRightInputSchema();
-    const auto outputSchema = ops->getOutputSchema();
-
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), leftSchema);
+        conf.pageSize.getValue(), ops->getLeftInputSchema());
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), rightSchema);
+        conf.pageSize.getValue(), ops->getRightInputSchema());
     auto probeMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), outputSchema);
+        conf.pageSize.getValue(), ops->getOutputSchema());
 
     auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&ops->getWindowType());
     auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(*ops, *windowType);
 
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> leftMemoryProviderVec;
-    leftMemoryProviderVec.emplace_back(std::move(leftMemoryProvider));
     auto leftBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
-        std::move(leftMemoryProviderVec),
+        std::move(leftMemoryProvider),
         operatorHandlerIndex,
         JoinBuildSideType::Left,
         timeStampFieldLeft.toTimeFunction());
 
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> rightMemoryProviderVec;
-    rightMemoryProviderVec.emplace_back(std::move(rightMemoryProvider));
     auto rightBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
-        std::move(rightMemoryProviderVec),
+        std::move(rightMemoryProvider),
         operatorHandlerIndex,
         JoinBuildSideType::Right,
         timeStampFieldRight.toTimeFunction());
 
     auto leftMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), leftSchema);
+        conf.pageSize.getValue(), ops->getLeftInputSchema());
     auto rightMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), rightSchema);
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> joinMemoryProviderVec;
-    joinMemoryProviderVec.emplace_back(std::move(leftMemoryProvider2));
-    joinMemoryProviderVec.emplace_back(std::move(rightMemoryProvider2));
-    auto joinSchema = JoinSchema(leftSchema, rightSchema, outputSchema);
+        conf.pageSize.getValue(), ops->getRightInputSchema());
+    auto joinSchema = JoinSchema(ops->getLeftInputSchema(), ops->getRightInputSchema(), ops->getOutputSchema());
     auto probeOp = std::make_unique<NLJProbePhysicalOperator>(
-        std::move(joinMemoryProviderVec),
         operatorHandlerIndex,
         std::move(joinFunction),
         ops->getWindowStartFieldName(),
         ops->getWindowEndFieldName(),
-        joinSchema);
+        joinSchema,
+        leftMemoryProvider2,
+        rightMemoryProvider2);
 
     constexpr uint64_t numberOfOriginIds = 2;
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
-
     auto leftMemoryProvider3 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), leftSchema);
+        conf.pageSize.getValue(), ops->getLeftSchema());
     auto rightMemoryProvider3 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), rightSchema);
+        conf.pageSize.getValue(), ops->getRightSchema());
     auto handler = std::make_unique<NLJOperatorHandler>(
         ops->getAllInputOriginIds(),
         ops->getOutputOriginIds()[0],
@@ -214,10 +202,14 @@ std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhy
         std::move(leftMemoryProvider3),
         std::move(rightMemoryProvider3));
 
-    std::vector<std::unique_ptr<PhysicalOperator>> physicalOperatorVec;
-    physicalOperatorVec.emplace_back(std::move(probeOp));
-    physicalOperatorVec.emplace_back(std::move(rightBuildOp));
-    physicalOperatorVec.emplace_back(std::move(rightBuildOp));
+    auto probeOpWrapper = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema()};
+    auto rightBuildOpWrapper = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
+    auto leftBuildOpWrapper = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
+
+    std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
+    physicalOperatorVec.emplace_back(std::move(probeOpWrapper));
+    physicalOperatorVec.emplace_back(std::move(rightBuildOpWrapper));
+    physicalOperatorVec.emplace_back(std::move(leftBuildOpWrapper));
 
     return physicalOperatorVec;
 };

@@ -30,21 +30,18 @@
 namespace NES::Optimizer
 {
 
-std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWithSchema> LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<SelectionLogicalOperator*>(op);
     auto& function = ops->getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
-    auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
+    auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::move(func));
 
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryPrividerVec;
-    memoryPrividerVec.emplace_back(std::move(memoryProvider));
-    auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::move(memoryPrividerVec), std::move(func));
+    auto physicalOperatorWrapper = PhysicalOperatorWithSchema{std::move(phyOp), ops->getInputSchema(), ops->getOutputSchema()};
 
-    std::vector<std::unique_ptr<PhysicalOperator>> physicalOperatorVec;
-    physicalOperatorVec.emplace_back(std::move(phyOp));
+    std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
+    physicalOperatorVec.emplace_back(std::move(physicalOperatorWrapper));
     return physicalOperatorVec;
 };
 

@@ -30,7 +30,7 @@ class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator
 {
 public:
     StreamJoinBuildPhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
+        std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
         uint64_t operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction);
@@ -39,6 +39,7 @@ public:
 
 protected:
     const JoinBuildSideType joinBuildSide;
+    std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;
 };
 
 }

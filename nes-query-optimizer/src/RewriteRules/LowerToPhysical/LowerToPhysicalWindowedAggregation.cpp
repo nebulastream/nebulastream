@@ -181,7 +181,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
     return aggregationFunctions;
 }
 
-std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregation::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWithSchema> LowerToPhysicalWindowedAggregation::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const size_t operatorHandlerIndex = 0; /// TODO this should be a singleton as for the queryid?
 
@@ -222,10 +222,6 @@ std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
         = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
 
-    auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), 50 /* TODO */);
-    auto memoryProvider1 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviderVec1;
-    memoryProviderVec1.emplace_back(std::move(memoryProvider1));
     auto windowAggregationPhysicalOperator = std::make_unique<WindowAggregation>(
         std::move(aggregationFunctions),
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
@@ -234,27 +230,22 @@ std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
         entriesPerPage,
         entrySize);
 
-
-    auto memoryProvider2 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviderVec2;
-    memoryProviderVec2.emplace_back(std::move(memoryProvider2));
     auto build = std::make_unique<AggregationBuildPhysicalOperator>(
-        std::move(memoryProviderVec2), operatorHandlerIndex, std::move(timeFunction), std::move(keyFunctions),
+        operatorHandlerIndex, std::move(timeFunction), std::move(keyFunctions),
         std::move(windowAggregationPhysicalOperator));
 
-    auto memoryProvider3 = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviderVec3;
-    memoryProviderVec2.emplace_back(std::move(memoryProvider3));
     auto probe = std::make_unique<AggregationProbePhysicalOperator>(
-                                                        std::move(memoryProviderVec3),
                                                         std::move(windowAggregationPhysicalOperator),
                                                         operatorHandlerIndex,
                                                         ops->getWindowStartFieldName(),
                                                         ops->getWindowEndFieldName());
 
-    std::vector<std::unique_ptr<PhysicalOperator>> physicalOperatorVec;
-    physicalOperatorVec.emplace_back(std::move(build));
-    physicalOperatorVec.emplace_back(std::move(probe));
+    auto buildPhysicalOp = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema()};
+    auto probePhysicalOp = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
+
+    std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
+    physicalOperatorVec.emplace_back(std::move(probePhysicalOp));
+    physicalOperatorVec.emplace_back(std::move(buildPhysicalOp));
     return physicalOperatorVec;
 }
 

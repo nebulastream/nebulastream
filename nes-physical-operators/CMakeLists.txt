@@ -18,7 +18,8 @@ add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
+add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES}
+        include/PhysicalOperatorWrapper.hpp)
 target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

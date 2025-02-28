@@ -23,8 +23,7 @@ namespace NES
 class SelectionPhysicalOperator final : public PhysicalOperator
 {
 public:
-    SelectionPhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, std::unique_ptr<Functions::PhysicalFunction> function)
-        : PhysicalOperator(std::move(memoryProvider)), function(std::move(function)) {};
+    SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::unique_ptr<Operator> clone() const override;

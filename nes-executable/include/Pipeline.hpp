@@ -47,7 +47,6 @@ struct Pipeline
     std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
     std::vector<OperatorHandler> operatorHandlers;
-    ///std::vector<OperatorId> operatorIds;
 
     using PipelineOperator = std::variant<std::shared_ptr<PhysicalOperator>,
                                           std::shared_ptr<SourceDescriptorLogicalOperator>,

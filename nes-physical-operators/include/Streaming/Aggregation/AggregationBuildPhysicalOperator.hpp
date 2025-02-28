@@ -30,7 +30,6 @@ class AggregationBuildPhysicalOperator final : public WindowAggregation,  public
 {
 public:
     AggregationBuildPhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
         uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,

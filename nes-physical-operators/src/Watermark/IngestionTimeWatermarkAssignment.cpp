@@ -23,8 +23,8 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::unique_ptr<TimeFunction> timeFunction)
-    : PhysicalOperator(std::move(memoryProvider)), timeFunction(std::move(timeFunction)) {};
+IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
+    : timeFunction(std::move(timeFunction)) {};
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
@@ -30,20 +31,7 @@ struct ExecutionContext;
 /// Each operator can implement setup, open, close, execute, and terminate.
 struct PhysicalOperator : public virtual Operator
 {
-    PhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders, bool isPipelineBreaker = false)
-        : memoryProviders(std::move(memoryProviders)), isPipelineBreaker(isPipelineBreaker)
-    {
-        PRECONDITION(not memoryProviders.empty(), "Memory providers vector should have at least one element");
-    }
-
-    PhysicalOperator(std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
-                     bool isPipelineBreaker = false)
-        : PhysicalOperator([&]{
-                               std::vector<std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>> vec;
-                               vec.push_back(std::move(memoryProvider));
-                               return vec;
-                           }(), isPipelineBreaker)
-    {}
+    PhysicalOperator(bool isPipelineBreaker = false) : isPipelineBreaker(isPipelineBreaker) {}
 
     /// @brief Setup initializes this operator for execution.
     /// Operators can implement this class to initialize some state that exists over the whole lifetime of this operator.
@@ -63,17 +51,11 @@ struct PhysicalOperator : public virtual Operator
     /// @param record the record that should be processed.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    [[nodiscard]] TupleBufferMemoryProvider& getMemoryProvider() const {
-        return *memoryProviders.front();
-    }
-
     void setChild(std::unique_ptr<PhysicalOperator> op) {
         children.clear();
         children.push_back(std::move(op));
     }
-
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders;
-    const bool isPipelineBreaker = false;
+    const bool isPipelineBreaker;
 
 private:
 
@@ -85,6 +67,16 @@ private:
     /// Hide the base class 'children' from subclasses of PhysicalOperator
     /// We expect PhysicalOperators to have exactly one child used with the member function child().
     using Operator::children;
+};
+
+/// Wrapper for the physical operator to store input and output schema after query optimization
+struct PhysicalOperatorWithSchema
+{
+    std::unique_ptr<PhysicalOperator> physicalOperator;
+    Schema inputSchema;
+    Schema outputSchema;
+    /// TOOD check if this makes sense
+    /// std::optional<std::unique_ptr<OperatorHandler>> handler;
 };
 
 }

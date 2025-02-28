@@ -33,7 +33,7 @@ public:
     /// @param memoryLayout memory layout that describes the tuple buffer.
     /// @param projections projection vector
     ScanPhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
+        std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
@@ -41,6 +41,7 @@ public:
     std::string toString() const override {return typeid(this).name(); }
 
 private:
+    std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;
     std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 

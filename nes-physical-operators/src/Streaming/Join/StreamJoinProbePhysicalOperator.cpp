@@ -29,13 +29,12 @@ namespace NES
 {
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<Functions::PhysicalFunction> joinFunction,
     std::string windowStartFieldName,
     std::string windowEndFieldName,
     JoinSchema joinSchema)
-    : WindowProbePhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, windowStartFieldName, windowEndFieldName), joinFunction(std::move(joinFunction)), joinSchema(std::move(joinSchema))
+    : WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName), joinFunction(std::move(joinFunction)), joinSchema(std::move(joinSchema))
 {
 }
 

@@ -63,8 +63,8 @@ void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* p
 }
 
 
-WindowProbePhysicalOperator::WindowProbePhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
-    : PhysicalOperator(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName)
+WindowProbePhysicalOperator::WindowProbePhysicalOperator(const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName)
 {
 }
 

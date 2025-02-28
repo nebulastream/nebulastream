@@ -27,7 +27,7 @@ class EventTimeWatermarkAssignment : public PhysicalOperator
 public:
     /// @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionFunction function.
     /// @param TimeFunction the time function
-    EventTimeWatermarkAssignment(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::unique_ptr<TimeFunction> timeFunction);
+    EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

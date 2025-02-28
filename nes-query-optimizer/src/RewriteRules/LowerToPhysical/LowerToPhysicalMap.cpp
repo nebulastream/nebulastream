@@ -25,19 +25,15 @@
 namespace NES::Optimizer
 {
 
-std::vector<std::unique_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWithSchema> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<MapLogicalOperator*>(op);
     auto& function = ops->getMapFunction();
     auto fieldName = function.getField().getFieldName();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
-    auto layout = std::make_unique<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(std::move(layout));
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> providerVec;
-    providerVec.push_back(std::move(memoryProvider));
-    auto phyOp = std::make_unique<MapPhysicalOperator>(std::move(providerVec), fieldName, std::move(func));
-    std::vector<std::unique_ptr<PhysicalOperator>> resultVec;
+    auto phyOp = std::make_unique<MapPhysicalOperator>(fieldName, std::move(func));
+    std::vector<PhysicalOperatorWithSchema> resultVec;
     resultVec.emplace_back(std::move(phyOp));
     return resultVec;
 }

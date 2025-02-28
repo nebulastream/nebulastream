@@ -36,7 +36,6 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     StreamJoinProbePhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
         uint64_t operatorHandlerIndex,
         std::unique_ptr<Functions::PhysicalFunction> joinFunction,
         std::string windowStartFieldName,

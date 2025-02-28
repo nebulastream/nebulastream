@@ -31,26 +31,20 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbePhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
         const uint64_t operatorHandlerIndex,
-        const std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+        std::unique_ptr<Functions::PhysicalFunction> joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
-        const JoinSchema& joinSchema);
+        const JoinSchema& joinSchema,
+        std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
+        std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::string toString() const override {return typeid(this).name(); }
     std::unique_ptr<Operator> clone() const override;
 
-protected:
-    TupleBufferMemoryProvider& getLeftMemoryProvider() const
-    {
-        return *memoryProviders[0].get();
-    };
-
-    TupleBufferMemoryProvider& getRightMemoryProvider() const
-    {
-        return *memoryProviders[1].get();
-    };
+private:
+    std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
+    std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
 };
 }

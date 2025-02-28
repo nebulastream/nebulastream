@@ -33,11 +33,11 @@ namespace NES
 {
 
 StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
-    std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProviders,
+    std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
     const uint64_t operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction)
-    : WindowBuildPhysicalOperator(std::move(memoryProviders), operatorHandlerIndex, std::move(timeFunction)), joinBuildSide(joinBuildSide)
+    : WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction)),  joinBuildSide(joinBuildSide), memoryProvider(std::move(memoryProvider))
 {
 }
 }

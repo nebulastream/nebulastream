@@ -27,7 +27,7 @@ namespace NES
 class MapPhysicalOperator final : public PhysicalOperator
 {
 public:
-    MapPhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction);
+    MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::string toString() const override { return typeid(this).name(); }
