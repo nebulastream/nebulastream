@@ -85,7 +85,7 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             const uint64_t sizeOfEntry,
             const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider); },
         globalOperatorHandler,
-        executionCtx.bufferProvider,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
         sizeOfEntry,
         numberOfEntries);
 }
@@ -189,7 +189,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
                 sliceCacheEntryToReplace,
                 globalOperatorHandler,
                 timestamp,
-                executionCtx.bufferProvider,
+                executionCtx.pipelineMemoryProvider.bufferProvider,
                 executionCtx.getWorkerThreadId());
         });
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
@@ -198,7 +198,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
     /// Calling the key functions to add/update the keys to the record
     for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
     {
-        const auto value = function->execute(record);
+        const auto value = function->execute(record, executionCtx.pipelineMemoryProvider.arena);
         record.write(field.fieldIdentifier, value);
     }
 
@@ -213,11 +213,11 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
             auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
             {
-                aggFunction->reset(state, executionCtx.bufferProvider);
+                aggFunction->reset(state, executionCtx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
-        executionCtx.bufferProvider);
+        executionCtx.pipelineMemoryProvider.bufferProvider);
 
 
     /// Updating the aggregation states
@@ -225,7 +225,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
-        aggFunction->lift(state, executionCtx.bufferProvider, record);
+        aggFunction->lift(state, executionCtx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

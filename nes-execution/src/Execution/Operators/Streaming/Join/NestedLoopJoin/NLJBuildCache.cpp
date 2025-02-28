@@ -72,7 +72,7 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
             const uint64_t numberOfEntriesVal)
         { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
         globalOperatorHandler,
-        executionCtx.pipelineMemoryProvider,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
         sizeOfEntry,
         numberOfEntries);
 }
