@@ -31,7 +31,8 @@ class WorkerConfiguration final : public BaseConfiguration
 {
 public:
     WorkerConfiguration() = default;
-    WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(std::move(name), std::move(description)) {};
+    WorkerConfiguration(const std::string& name, const std::string& description)
+        : BaseConfiguration(std::move(name), std::move(description)) {};
 
 
     StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/Overloaded.hpp>
 #include "TaskStatisticsProcessor.hpp"
+#include <Util/Overloaded.hpp>
 
 namespace NES::Runtime
 {
@@ -21,8 +21,8 @@ namespace
 {
 void threadRoutine(
     const std::stop_token& token,
-    folly::Synchronized<std::unordered_map<PipelineId, PipelineStatistics> >& pipelineStatistics,
-    folly::Synchronized<std::unordered_map<QueryId, std::set<PipelineId> > > queryPipelines,
+    folly::Synchronized<std::unordered_map<PipelineId, PipelineStatistics>>& pipelineStatistics,
+    folly::Synchronized<std::unordered_map<QueryId, std::set<PipelineId>>> queryPipelines,
     folly::MPMCQueue<TaskStatisticsProcessor::CombinedEventType>& events)
 {
     while (!token.stop_requested())
@@ -39,16 +39,14 @@ void threadRoutine(
                 {
                     const auto pipelineId = taskExecutionComplete.pipelineId;
                     const auto queryId = taskExecutionComplete.queryId;
-                    const PipelineStatistics::TaskStatistics taskStatistics{taskExecutionComplete.throughput, taskExecutionComplete.latency,
-                                                                            taskExecutionComplete.numberOfTuplesProcessed};
+                    const PipelineStatistics::TaskStatistics taskStatistics{
+                        taskExecutionComplete.throughput, taskExecutionComplete.latency, taskExecutionComplete.numberOfTuplesProcessed};
 
                     auto [pipelineStatisticsLocked, queryPipelinesLocked] = folly::acquireLocked(pipelineStatistics, queryPipelines);
                     (*queryPipelinesLocked)[queryId].insert(pipelineId);
                     (*pipelineStatisticsLocked)[pipelineId].updateTaskStatistics(taskStatistics);
                 },
-                [](auto)
-                {
-                }},
+                [](auto) {}},
             event);
     }
 }

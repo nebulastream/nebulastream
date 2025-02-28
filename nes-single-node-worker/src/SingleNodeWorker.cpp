@@ -14,7 +14,6 @@
 
 #include <memory>
 
-#include "../../nes-query-engine/TaskStatisticsProcessor.hpp"
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -25,6 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
+#include "../../nes-query-engine/TaskStatisticsProcessor.hpp"
 
 namespace NES
 {
@@ -35,13 +35,15 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-        configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , queryStatisticsListeners(std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
-        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads),std::make_shared<Runtime::TaskStatisticsProcessor>()})
-, systemEventListeners(std::vector<std::shared_ptr<Runtime::SystemEventListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
-        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads)})
+          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
+    , queryStatisticsListeners(std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>>{
+          std::make_shared<Runtime::PrintingStatisticListener>(
+              configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+              configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads),
+          std::make_shared<Runtime::TaskStatisticsProcessor>()})
+    , systemEventListeners(std::vector<std::shared_ptr<Runtime::SystemEventListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
+          configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+          configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads)})
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListeners, queryStatisticsListeners).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {

@@ -27,6 +27,7 @@
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
+#include <QueryCompiler/Configurations/Enums/WindowManagement.hpp>
 #include "Configurations/BaseOption.hpp"
 
 namespace NES::QueryCompilation::Configurations
@@ -59,12 +60,6 @@ public:
         = {"pageSize",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-
-    NES::Configurations::UIntOption maxHashTableSize
-        = {"maxHashTableSize",
-           std::to_string(DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE),
-           "Maximum size of hash table",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
 
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
@@ -113,7 +108,8 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&            &nautilusBackend,
+        return {
+            &nautilusBackend,
             &pageSize,
             &numberOfPartitions,
             &joinStrategy,

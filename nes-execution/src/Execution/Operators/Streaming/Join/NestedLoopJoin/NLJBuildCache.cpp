@@ -72,7 +72,7 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
             const uint64_t numberOfEntriesVal)
         { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
         globalOperatorHandler,
-        executionCtx.bufferProvider,
+        executionCtx.pipelineMemoryProvider,
         sizeOfEntry,
         numberOfEntries);
 }
@@ -178,13 +178,13 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
                 sliceCacheEntryToReplace,
                 globalOperatorHandler,
                 timestamp,
-                executionCtx.bufferProvider,
+                executionCtx.pipelineMemoryProvider,
                 executionCtx.getWorkerThreadId(),
                 nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
         });
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider);
     pagedVectorRef.writeRecord(record);
 }
 

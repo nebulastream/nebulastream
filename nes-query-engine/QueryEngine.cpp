@@ -370,7 +370,8 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
         const auto latencyInUs
             = std::chrono::duration<double, std::micro>(std::chrono::high_resolution_clock::now() - taskExecutionStart.timestamp).count();
         const double throughput = task.buf.getNumberOfTuples() / (latencyInUs / 1'000'000);
-        pool.notifyStatisticListeners(TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId, throughput, latencyInUs, task.buf.getNumberOfTuples()});
+        pool.notifyStatisticListeners(
+            TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId, throughput, latencyInUs, task.buf.getNumberOfTuples()});
         return true;
     }
 

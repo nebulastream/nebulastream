@@ -75,8 +75,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     /// Get the current join state that stores the slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto sliceReference
-        = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
+    auto sliceReference = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
     const auto nljPagedVectorRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,
@@ -85,8 +84,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(
-        nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 }
