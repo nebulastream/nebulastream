@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
@@ -22,7 +24,7 @@
 namespace NES::Sources
 {
 
-using SourceRegistryReturnType = Source;
+using SourceRegistryReturnType = std::unique_ptr<Source>;
 struct SourceRegistryArguments
 {
     SourceDescriptor sourceDescriptor;

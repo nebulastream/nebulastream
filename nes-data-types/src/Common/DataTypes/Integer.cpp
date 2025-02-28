@@ -63,42 +63,42 @@ std::string Integer::toString()
     return fmt::format("{}{}", lowerBound == 0 ? "UINT" : "INT", std::to_string(bits));
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(8, INT8_MIN, INT8_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(8, 0, UINT8_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(16, INT16_MIN, INT16_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(16, 0, UINT16_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(32, INT32_MIN, INT32_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(32, 0, UINT32_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(64, INT64_MIN, INT64_MAX);
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Integer>(64, 0, UINT64_MAX);
 }

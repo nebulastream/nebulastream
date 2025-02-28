@@ -262,8 +262,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
     return numReceivedBytes == 0 and readWasValid;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+NES::Configurations::DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
 }
@@ -278,13 +277,13 @@ void TCPSource::close()
     }
 }
 
-std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationRegistryReturnType
 SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-    return TCPSource::validateAndFormat(sourceConfig.config);
+    return TCPSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }

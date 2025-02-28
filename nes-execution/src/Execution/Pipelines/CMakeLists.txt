@@ -16,5 +16,5 @@ add_source_files(nes-execution
 )
 
 # Register plugins
-add_plugin(compiler ExecutablePipelineProvider nes-execution CompilationPipelineProvider.cpp)
-add_plugin(interpreter ExecutablePipelineProvider nes-execution InterpretationPipelineProvider.cpp)
+add_plugin(Compiler ExecutablePipelineProvider nes-execution CompilationPipelineProvider.cpp)
+add_plugin(Interpreter ExecutablePipelineProvider nes-execution InterpretationPipelineProvider.cpp)

@@ -48,8 +48,7 @@ public:
     void start(Runtime::Execution::PipelineExecutionContext&) override;
     void stop(Runtime::Execution::PipelineExecutionContext&) override;
     void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
-    static std::unique_ptr<Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }

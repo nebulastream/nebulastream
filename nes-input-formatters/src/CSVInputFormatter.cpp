@@ -423,7 +423,7 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatterRegistryReturnType>
+InputFormatterRegistryReturnType
 InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments inputFormatterRegistryArguments)
 {
     return std::make_unique<CSVInputFormatter>(

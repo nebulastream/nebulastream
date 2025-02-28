@@ -35,7 +35,7 @@ std::string Undefined::toString()
     return "Undefined";
 }
 
-std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
 {
     return std::make_unique<Undefined>();
 }

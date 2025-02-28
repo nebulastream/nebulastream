@@ -90,19 +90,18 @@ void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Exec
     checksum.add(formatted);
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config>
-ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+Configurations::DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }
 
-std::unique_ptr<SinkValidationRegistryReturnType>
+SinkValidationRegistryReturnType
 SinkValidationGeneratedRegistrar::RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType SinkGeneratedRegistrar::RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<ChecksumSink>(sinkRegistryArguments.sinkDescriptor);
 }

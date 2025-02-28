@@ -38,7 +38,7 @@ ExecutableFunctionDiv::ExecutableFunctionDiv(
 }
 
 
-std::unique_ptr<ExecutableFunctionRegistryReturnType>
+ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterDivExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two sub-functions");
