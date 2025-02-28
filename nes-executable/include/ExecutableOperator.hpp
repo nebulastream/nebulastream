@@ -37,6 +37,7 @@ public:
     std::vector<std::shared_ptr<OperatorHandler>> getOperatorHandlers();
 
     std::string toString() const override;
+    [[nodiscard]] std::unique_ptr<Operator> clone() const override;
 
 private:
     ExecutableOperator(
