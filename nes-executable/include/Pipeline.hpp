@@ -82,7 +82,7 @@ struct OperatorPipeline final : public Pipeline
     void prependOperator(PipelineOperator op) override
     {
         PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperator>>(op), "Should have hold a PhysicalOperator");
-        operators.insert(operators.begin(), std::move(std::get<std::unique_ptr<PhysicalOperator>>(op)));
+        rootOperators.insert(rootOperators.begin(), std::move(std::get<std::unique_ptr<PhysicalOperator>>(op)));
         //plan->promoteOperatorToRoot(std::get<std::shared_ptr<PhysicalOperator>>(*op)); ///.emplace_back(std::get<std::shared_ptr<PhysicalOperator>>(*op));
     }
 
@@ -91,12 +91,10 @@ struct OperatorPipeline final : public Pipeline
 
     bool hasOperators() override
     {
-        return operators.size() != 0;
+        return rootOperators.size() != 0;
     }
 
-    std::unique_ptr<PhysicalOperator> scanOperator;
-    std::vector<std::unique_ptr<PhysicalOperator>> operators;
-    std::unique_ptr<PhysicalOperator> emitOperator;
+    std::vector<std::unique_ptr<PhysicalOperator>> rootOperators;
 };
 
 struct SourcePipeline final : public Pipeline
