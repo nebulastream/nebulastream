@@ -209,7 +209,7 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalWindowedAggregation::appl
     {
         const DefaultPhysicalTypeFactory typeFactory;
         const auto& loweredFunctionType = nodeFunctionKey->getStamp();
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(std::move(nodeFunctionKey)));
+        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey->clone()));
         keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
     }
     const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
