@@ -175,8 +175,7 @@ TEST_F(BlockingSourceRunnerTest, DestructionOfStartedSourceRunner)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             INITIAL<OriginId>,
             std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            std::make_unique<Sources::NoOpInputFormatter>()};
+            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
 
         Sources::BlockingSourceHandle blockingSourceHandle{std::move(context)};
         verify_non_blocking_start(
@@ -198,8 +197,7 @@ TEST_F(BlockingSourceRunnerTest, NoOpDestruction)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             INITIAL<OriginId>,
             std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            std::make_unique<Sources::NoOpInputFormatter>()};
+            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
         Sources::BlockingSourceHandle blockingSourceHandle{std::move(context)};
     }
 
@@ -221,8 +219,7 @@ TEST_F(BlockingSourceRunnerTest, FailureDuringRunning)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             INITIAL<OriginId>,
             std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            std::make_unique<Sources::NoOpInputFormatter>()};
+            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
         Sources::BlockingSourceHandle source{std::move(context)};
         verify_non_blocking_start(
             source, [&](const OriginId originId, Sources::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -247,8 +244,7 @@ TEST_F(BlockingSourceRunnerTest, FailureDuringOpen)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             .originId = INITIAL<OriginId>,
             .sourceImpl = std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            .bufferProvider = *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            .inputFormatter = std::make_unique<Sources::NoOpInputFormatter>()};
+            .bufferProvider = *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
         Sources::BlockingSourceHandle source{std::move(context)};
         verify_non_blocking_start(
             source, [&](const OriginId originId, Sources::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -275,8 +271,7 @@ TEST_F(BlockingSourceRunnerTest, SimpleCaseWithInternalStop)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             INITIAL<OriginId>,
             std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            std::make_unique<Sources::NoOpInputFormatter>()};
+            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
         Sources::BlockingSourceHandle source{std::move(context)};
         verify_non_blocking_start(
             source, [&](const OriginId originId, Sources::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -304,8 +299,7 @@ TEST_F(BlockingSourceRunnerTest, EoSFromSourceWithStop)
         auto context = Sources::SourceExecutionContext<Sources::BlockingSource>{
             INITIAL<OriginId>,
             std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control),
-            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-            std::make_unique<Sources::NoOpInputFormatter>()};
+            *bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)};
         Sources::BlockingSourceHandle source{std::move(context)};
         verify_non_blocking_start(
             source, [&](const OriginId originId, Sources::SourceReturnType ret) { recorder(originId, std::move(ret)); });

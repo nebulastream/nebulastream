@@ -17,7 +17,6 @@
 #include <memory>
 
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/BlockingSource.hpp>
 
@@ -30,7 +29,6 @@ struct SourceExecutionContext
     const OriginId originId;
     std::unique_ptr<SourceType> sourceImpl;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
 };
 
 }

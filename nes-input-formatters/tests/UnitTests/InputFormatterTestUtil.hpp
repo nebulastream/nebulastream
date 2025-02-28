@@ -12,14 +12,27 @@
     limitations under the License.
 */
 
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <functional>
 #include <memory>
+#include <string>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Util/TestUtil.hpp>
 #include <TestTaskQueue.hpp>
+#include "Util/Logger/Logger.hpp"
+#include "Util/TestTupleBuffer.hpp"
 
-#pragma once
 
 namespace NES::InputFormatterTestUtil
 {
@@ -41,85 +54,68 @@ enum class TestDataTypes : uint8_t
     VARSIZED,
 };
 
-std::shared_ptr<Schema> createSchema(std::vector<TestDataTypes> TestDataTypes)
-{
-    std::shared_ptr<Schema> schema = std::make_shared<Schema>();
-    for (size_t fieldNumber = 1; const auto& dataType : TestDataTypes)
-    {
-        switch (dataType)
-        {
-            case TestDataTypes::UINT8:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt8());
-                break;
-            case TestDataTypes::UINT16:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt16());
-                break;
-            case TestDataTypes::UINT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt32());
-                break;
-            case TestDataTypes::UINT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt64());
-                break;
-            case TestDataTypes::INT8:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt8());
-                break;
-            case TestDataTypes::INT16:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt16());
-                break;
-            case TestDataTypes::INT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt32());
-                break;
-            case TestDataTypes::INT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt64());
-                break;
-            case TestDataTypes::FLOAT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createFloat());
-                break;
-            case TestDataTypes::FLOAT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createDouble());
-                break;
-            case TestDataTypes::BOOLEAN:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createBoolean());
-                break;
-            case TestDataTypes::CHAR:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createChar());
-                break;
-            case TestDataTypes::VARSIZED:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createVariableSizedData());
-                break;
-        }
-        ++fieldNumber;
-    }
-    return schema;
-}
-
 struct ThreadInputBuffers
 {
-    const SequenceNumber sequenceNumber;
-    const WorkerThreadId workerThreadId;
-    const std::string rawBytes;
+    SequenceNumber sequenceNumber;
+    WorkerThreadId workerThreadId;
+    std::string rawBytes;
 };
 
 struct TaskPackage
 {
-    const SequenceNumber sequenceNumber;
-    const WorkerThreadId workerThreadId;
-    const Memory::TupleBuffer rawByteBuffer;
+    SequenceNumber sequenceNumber;
+    WorkerThreadId workerThreadId;
+    Memory::TupleBuffer rawByteBuffer;
+};
+
+template <typename TupleSchemaTemplate>
+struct WorkerThreadResults
+{
+    WorkerThreadId::Underlying workerThreadId;
+    std::vector<std::vector<TupleSchemaTemplate>> expectedResultsForThread;
 };
 
 template <typename TupleSchemaTemplate>
 struct TestConfig
 {
-    const size_t numRequiredBuffers;
-    const size_t numThreads;
-    const uint64_t bufferSize;
-    const Sources::ParserConfig parserConfig;
-    const std::vector<TestDataTypes> testSchema;
+    size_t numRequiredBuffers{};
+    size_t numThreads{};
+    uint64_t bufferSize{};
+    Sources::ParserConfig parserConfig;
+    std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
-    const std::vector<std::vector<std::vector<TupleSchemaTemplate>>> expectedResults;
-    const std::vector<ThreadInputBuffers> rawBytesPerThread; //Todo: rename
+    std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
+    std::vector<ThreadInputBuffers> rawBytesPerThread;
     using TupleSchema = TupleSchemaTemplate;
 };
+
+std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes);
+
+/// Creates an emit function that places buffers into 'resultBuffers' when there is data.
+std::function<void(OriginId, Sources::SourceReturnType)>
+getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers);
+
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+
+std::unique_ptr<Sources::SourceHandle> createFileSource(
+    const std::string& filePath,
+    std::shared_ptr<Schema> schema,
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    int numberOfLocalBuffersInSource);
+
+std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema);
+
+/// Waits until source reached EoS
+void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
+
+/// Compares two files and returns true if they are equal on a byte level.
+bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
+
+TestablePipelineTask createInputFormatterTask(
+    SequenceNumber sequenceNumber,
+    WorkerThreadId workerThreadId,
+    Memory::TupleBuffer taskBuffer,
+    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -127,9 +123,8 @@ struct TestHandle
     TestConfig<TupleSchemaTemplate> testConfig;
     std::shared_ptr<Memory::BufferManager> testBufferManager;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Schema> schema;
-    TestTaskQueue testTaskQueue;
+    SequentialTestTaskQueue testTaskQueue;
     std::vector<TaskPackage> inputBuffers;
     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
 
@@ -138,30 +133,14 @@ struct TestHandle
         inputBuffers.clear();
         expectedResultVectors.clear();
         resultBuffers->clear();
-        operatorHandlers.clear();
         testBufferManager->destroy();
         schema->clear();
     }
 };
 
-template <typename TupleSchemaTemplate>
-TestablePipelineTask createInputFormatterTask(
-    const TestHandle<TupleSchemaTemplate>& testHandle,
-    const SequenceNumber sequenceNumber,
-    const WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
-{
-    taskBuffer.setSequenceNumber(sequenceNumber);
-    return TestablePipelineTask(
-        workerThreadId,
-        sequenceNumber,
-        taskBuffer,
-        std::move(inputFormatterTask),
-        testHandle.operatorHandlers);
-}
-
-template <typename TupleSchemaTemplate>
+/// Gets the actual result buffers and the expected result buffers from the test handle and compares them.
+/// Logs both the actual and the expected buffers if 'PrintDebug' is set to true.
+template <typename TupleSchemaTemplate, bool PrintDebug>
 bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     /// check that vectors of vectors contain the same number of vectors.
@@ -177,6 +156,20 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
         /// in the expected results.
         for (size_t bufferIndex = 0; const auto& actualResultBuffer : actualResultVector)
         {
+            if (PrintDebug)
+            {
+                /// If specified, print the contents of the buffers.
+                auto actualResultTestBuffer
+                    = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
+                actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
+                auto expectedTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(
+                    testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
+                expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
+                NES_DEBUG(
+                    "\n Actual result buffer:\n{} Expected result buffer:\n{}",
+                    actualResultTestBuffer.toString(testHandle.schema, false, true),
+                    expectedTestBuffer.toString(testHandle.schema, false, true));
+            }
             isValid &= TestUtil::checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
             ++bufferIndex;
@@ -186,22 +179,19 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
     return isValid;
 }
 
-template <typename TupleSchemaTemplate>
+template <typename TupleSchemaTemplate, bool PrintDebug>
 std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(testHandle.testConfig.numThreads);
-    /// expectedWorkerThreadVector: vector<vector<TupleSchemaTemplate>>
-    for (size_t workerThreadId = 0; const auto expectedTaskVector : testHandle.testConfig.expectedResults)
+    for (const auto workerThreadResultVector : testHandle.testConfig.expectedResults)
     {
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
-        for (const auto& expectedBuffersVector : expectedTaskVector)
+        for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
-            expectedTupleBuffers.at(workerThreadId)
-                .emplace_back(
-                    TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, true>(
-                        testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
+            expectedTupleBuffers.at(workerThreadResultVector.workerThreadId)
+                .emplace_back(TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
+                    testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
         }
-        ++workerThreadId;
     }
     return expectedTupleBuffers;
 }
@@ -213,15 +203,13 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         = Memory::BufferManager::create(testConfig.bufferSize, 2 * testConfig.numRequiredBuffers);
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numThreads);
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers = {std::make_shared<InputFormatters::InputFormatterProvider::InputFormatterOperatorHandler>()};
     std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
         testBufferManager,
         resultBuffers,
-        std::move(operatorHandlers),
         std::move(schema),
-        TestTaskQueue(testConfig.numThreads, testBufferManager, resultBuffers),
+        SequentialTestTaskQueue(testConfig.numThreads, testBufferManager, resultBuffers),
         {},
         {}};
 }
@@ -229,22 +217,17 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-
-    // Todo: can we move the testBufferManagerHere?
-    // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         testHandle.testConfig.parserConfig.parserType,
-        testHandle.schema,
+        *testHandle.schema,
         testHandle.testConfig.parserConfig.tupleDelimiter,
         testHandle.testConfig.parserConfig.fieldDelimiter);
-    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(std::move(inputFormatter));
+    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
     std::vector<TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
-        // Todo: allow to configure sequence numbers
-        tasks.emplace_back(
-            createInputFormatterTask<TupleSchemaTemplate>(
-                testHandle, inputBuffer.sequenceNumber, inputBuffer.workerThreadId, inputBuffer.rawByteBuffer, inputFormatterTask));
+        tasks.emplace_back(createInputFormatterTask(
+            inputBuffer.sequenceNumber, inputBuffer.workerThreadId, inputBuffer.rawByteBuffer, inputFormatterTask));
     }
     return tasks;
 }
@@ -257,16 +240,15 @@ std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
     {
         auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
         INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.");
-        rawTupleBuffers.emplace_back(
-            TaskPackage{
-                rawInputBuffer.sequenceNumber,
-                rawInputBuffer.workerThreadId,
-                TestUtil::createTestTupleBufferFromString(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+        rawTupleBuffers.emplace_back(TaskPackage{
+            rawInputBuffer.sequenceNumber,
+            rawInputBuffer.workerThreadId,
+            TestUtil::createTestTupleBufferFromString(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
     }
     return rawTupleBuffers;
 }
 
-template <typename TupleSchemaTemplate>
+template <typename TupleSchemaTemplate, bool PrintDebug = false>
 void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
     /// setup buffer manager, container for results, schema, operator handlers, and the task queue
@@ -276,13 +258,14 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create tasks for task queue
     auto tasks = createTasks(testHandle);
     /// process tasks in task queue
-    // Todo: we need to flush, to get the last buffers
-    testHandle.testTaskQueue.processTasks(std::move(tasks));
+    testHandle.testTaskQueue.startProcessing(std::move(tasks));
     /// create expected results from supplied in test config
-    testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
+    testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate, PrintDebug>(testHandle);
     /// validate: actual results vs expected results
-    ASSERT_TRUE(validateResult(testHandle));
+    const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
+    ASSERT_TRUE(validationResult);
     /// clean up
     testHandle.destroy();
 }
+
 }

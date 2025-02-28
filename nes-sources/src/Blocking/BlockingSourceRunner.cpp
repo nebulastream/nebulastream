@@ -55,7 +55,8 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
         if (numReadBytes != 0)
         {
-            executionContext->inputFormatter->parseTupleBufferRaw(buffer, *executionContext->bufferProvider, numReadBytes, dataEmit);
+            buffer.setNumberOfTuples(numReadBytes);
+            dataEmit(std::move(buffer));
         }
 
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.

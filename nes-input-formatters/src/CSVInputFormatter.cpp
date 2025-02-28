@@ -369,7 +369,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     physicalTypes.reserve(schema.getFieldCount());
-    for (const AttributeFieldPtr& field : schema)
+    for (const auto& field : schema)
     {
         physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
     }
@@ -586,11 +586,11 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<NES::InputFormatters::InputFormatter>
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+InputFormatterRegistryReturnType
+InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments arguments)
 {
-    std::unique_ptr<NES::InputFormatters::InputFormatter> inputFormatter
-        = std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
+    std::unique_ptr<InputFormatter> inputFormatter
+        = std::make_unique<CSVInputFormatter>(arguments.schema, std::move(arguments.tupleDelimiter), std::move(arguments.fieldDelimiter));
     return inputFormatter;
 }
 

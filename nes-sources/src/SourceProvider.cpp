@@ -19,7 +19,6 @@
 #include <Async/AsyncSourceHandle.hpp>
 #include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/BlockingSource.hpp>
@@ -45,12 +44,6 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     const size_t numBuffersPerSource)
 {
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceDescriptor.parserConfig.parserType,
-        *sourceDescriptor.schema,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
-
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
@@ -61,18 +54,12 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                     [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                     {
                         return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
-                            .originId = originId,
-                            .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value(),
-                            .inputFormatter = std::move(inputFormatter)});
+                            .originId = originId, .sourceImpl = std::move(sourceImpl), .bufferProvider = bufferProvider.value()});
                     },
                     [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                     {
                         return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
-                            .originId = originId,
-                            .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value(),
-                            .inputFormatter = std::move(inputFormatter)});
+                            .originId = originId, .sourceImpl = std::move(sourceImpl), .bufferProvider = bufferProvider.value()});
                     }},
                 std::move(source.value()));
         }

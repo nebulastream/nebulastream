@@ -16,8 +16,8 @@
 
 #include <cstdint>
 #include <functional>
-#include <utility>
 #include <memory>
+#include <utility>
 #include <variant>
 
 #include <boost/asio/awaitable.hpp>
@@ -90,30 +90,32 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
 }
 
 void AsyncSourceRunner::handleSourceResult(
-    const IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const
+    IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const
 {
     std::visit(
         Overloaded{
-            [&](const AsyncSource::Continue& resultContinue)
+            [&](const AsyncSource::Continue& continue_)
             {
                 /// Usual case, the source is ready to continue to ingest more data
-                context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultContinue.bytesRead, dataEmit);
+                buffer.setNumberOfTuples(continue_.bytesRead);
+                dataEmit(buffer);
             },
-            [&](const AsyncSource::EndOfStream& resultEos)
+            [&](const AsyncSource::EndOfStream& eos)
             {
                 /// The source signalled the end of the stream, i.e., because the external system closed the connection.
                 /// Check for a partially filled buffer before signalling EoS and exiting
-                if (resultEos.bytesRead)
+                if (eos.bytesRead)
                 {
-                    context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultEos.bytesRead, dataEmit);
+                    buffer.setNumberOfTuples(eos.bytesRead);
+                    dataEmit(buffer);
                 }
                 emitFn(context.originId, EoS{});
             },
-            [this](const AsyncSource::Error& resultError)
+            [this](const AsyncSource::Error& error)
             {
                 /// The source returned an error that it is not able to recover from.
                 /// Therefore, we propagate the error to the query engine via the emitFn.
-                emitFn(context.originId, Error{resultError.exception});
+                emitFn(context.originId, Error{error.exception});
             },
             [](const AsyncSource::Cancelled&)
             {

@@ -104,7 +104,7 @@ Runtime::Execution::Source processSource(
     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
     auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
-        sourceOperator->getSourceDescriptorRef().schema,
+        *sourceOperator->getSourceDescriptorRef().schema,
         sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
         sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
     for (const auto& successor : pipeline->getSuccessors())

@@ -102,7 +102,7 @@ std::string testTupleBufferToString(Memory::TupleBuffer& buffer, std::shared_ptr
     std::stringstream str;
     for (const auto tupleIterator : testTupleBuffer)
     {
-        str << dynamicTupleToString(testTupleBuffer, tupleIterator, schema) << '\n';
+        str << dynamicTupleToString(testTupleBuffer, tupleIterator, *schema) << '\n';
     }
     return str.str();
 }

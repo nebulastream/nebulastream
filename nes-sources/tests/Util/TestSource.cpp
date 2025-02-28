@@ -66,16 +66,6 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
     return false;
 }
 
-void NES::Sources::NoOpInputFormatter::parseTupleBufferRaw(
-    const Memory::TupleBuffer& tbRaw,
-    Memory::AbstractBufferProvider& bufferProvider,
-    size_t,
-    const std::function<void(Memory::TupleBuffer& buffer)>& emitFunction)
-{
-    auto newBuffer = Testing::copyBuffer(tbRaw, bufferProvider);
-    emitFunction(newBuffer);
-}
-
 bool NES::Sources::TestSourceControl::injectEoS()
 {
     PRECONDITION(!failed, "Should not be called on a failed source");
@@ -236,9 +226,6 @@ NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractP
     auto ctrl = std::make_shared<TestSourceControl>();
 
     auto sourceRunner = std::make_unique<BlockingSourceHandle>(SourceExecutionContext<BlockingSource>{
-        originId,
-        std::make_unique<TestSource>(originId, ctrl),
-        *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS),
-        std::make_unique<NoOpInputFormatter>()});
+        originId, std::make_unique<TestSource>(originId, ctrl), *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)});
     return {std::move(sourceRunner), ctrl};
 }

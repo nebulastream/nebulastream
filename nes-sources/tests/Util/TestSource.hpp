@@ -26,7 +26,6 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
@@ -36,18 +35,6 @@
 
 namespace NES::Sources
 {
-
-struct NoOpInputFormatter : NES::InputFormatters::InputFormatter
-{
-    void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
-        NES::Memory::AbstractBufferProvider& bufferProvider,
-        size_t,
-        const std::function<void(NES::Memory::TupleBuffer& buffer)>& emitFunction) override;
-
-protected:
-    [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << "NoOpInputFormatter"; }
-};
 
 class TestSourceControl
 {
