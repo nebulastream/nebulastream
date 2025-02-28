@@ -20,6 +20,10 @@ nodes:
     grpc: 127.0.0.1:8082
     capacity: 10
     sinks:
+      - name: print_sink
+        type: Print
+        config:
+          inputFormat: CSV
       - name: sinkStreamStream2
         type: Print
         config:
@@ -34,8 +38,12 @@ nodes:
         parserConfig:
           type: CSV
         sourceConfig:
-          type: File
-          filePath: /home/ls/dima/nebulastream-public/nes-systests/testdata/stream.csv
+          type: TCP
+          socketPort: 6666
+          socketHost: 127.0.0.1
+          flushIntervalMS: 100
+          connectTimeoutSeconds: 60
+
   - connection: 127.0.0.1:9090
     grpc: 127.0.0.1:8080
     capacity: 2
@@ -46,5 +54,8 @@ nodes:
         parserConfig:
           type: CSV
         sourceConfig:
-          type: File
-          filePath: /home/ls/dima/nebulastream-public/nes-systests/testdata/stream2.csv
+          type: TCP
+          socketPort: 6666
+          socketHost: 127.0.0.1
+          flushIntervalMS: 100
+          connectTimeoutSeconds: 60

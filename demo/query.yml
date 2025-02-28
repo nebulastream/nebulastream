@@ -1,2 +1,2 @@
 query: |
-  SELECT * FROM csv_source WHERE id != 16 INTO csv_sink
+  SELECT * FROM stream INTO print_sink

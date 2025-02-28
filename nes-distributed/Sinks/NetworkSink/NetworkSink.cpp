@@ -109,6 +109,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
         case SendResult::Error:
             throw CannotOpenSink("Sink Failed");
         case SendResult::Ok:
+            flush_channel(**channel);
             NES_INFO("Send {} was successful", inputBuffer.getSequenceNumber());
     }
 
