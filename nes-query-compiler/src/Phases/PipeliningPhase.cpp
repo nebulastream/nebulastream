@@ -30,7 +30,7 @@ namespace NES::QueryCompilation::PipeliningPhase
 
 Pipeline::PipelineOperator convertOperator(std::unique_ptr<Operator> op) {
     if (auto phys = dynamic_cast<PhysicalOperator*>(op.get())) {
-        // Release ownership and convert using dynamic_cast.
+        /// Release ownership and convert using dynamic_cast.
         PhysicalOperator* rawPtr = dynamic_cast<PhysicalOperator*>(op.release());
         INVARIANT(rawPtr, "Conversion to PhysicalOperator failed");
         return Pipeline::PipelineOperator(std::unique_ptr<PhysicalOperator>(rawPtr));
@@ -47,15 +47,15 @@ Pipeline::PipelineOperator convertOperator(std::unique_ptr<Operator> op) {
     }
 }
 
-// The visitor is responsible for recursively building pipelines.
+/// The visitor is responsible for recursively building pipelines.
 struct PipeliningVisitor {
     PipelinedQueryPlan& plan;
-    Pipeline* currentPipeline; // non-owning pointer
+    Pipeline* currentPipeline; /// non-owning pointer
 
-    // Process SourceDescriptorLogicalOperator.
+    /// Process SourceDescriptorLogicalOperator.
     void operator()(std::unique_ptr<SourceDescriptorLogicalOperator>& op) {
         if (currentPipeline->hasOperators()) {
-            // If current pipeline already has operators, create a new pipeline.
+            /// If current pipeline already has operators, create a new pipeline.
             auto newPipeline = std::make_unique<SourcePipeline>();
             newPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
             currentPipeline->successorPipelines.push_back(std::move(newPipeline));
@@ -64,18 +64,18 @@ struct PipeliningVisitor {
             currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
         }
         auto* srcOp = static_cast<SourcePipeline*>(currentPipeline)->sourceOperator.get();
-        // Transfer ownership of children.
+        /// Transfer ownership of children.
         for (auto& child : srcOp->releaseChildren()) {
             auto childVariant = convertOperator(std::move(child));
             std::visit(PipeliningVisitor{plan, currentPipeline}, childVariant);
         }
     }
 
-    // Process SinkLogicalOperator.
+    /// Process SinkLogicalOperator.
     void operator()(std::unique_ptr<SinkLogicalOperator>& op) {
         currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
         auto* sinkOp = static_cast<SinkPipeline*>(currentPipeline)->sinkOperator.get();
-        // For each child, create a new SinkPipeline.
+        /// For each child, create a new SinkPipeline.
         for (auto& child : sinkOp->releaseChildren()) {
             auto newPipeline = std::make_unique<SinkPipeline>();
             currentPipeline->successorPipelines.push_back(std::move(newPipeline));
@@ -86,10 +86,10 @@ struct PipeliningVisitor {
         }
     }
 
-    // Process PhysicalOperator.
+    /// Process PhysicalOperator.
     void operator()(std::unique_ptr<PhysicalOperator>& op) {
         if (op->isPipelineBreaker) {
-            // Pipeline breaker: add operator and create a new pipeline for each child.
+            /// Pipeline breaker: add operator and create a new pipeline for each child.
             currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
             auto* physOp = static_cast<OperatorPipeline*>(currentPipeline)->operators.front().get();
             for (auto& child : physOp->releaseChildren()) {
@@ -101,7 +101,7 @@ struct PipeliningVisitor {
                 std::visit(childVisitor, childVariant);
             }
         } else {
-            // Fusible operator: add operator and process children in the same pipeline.
+            /// Fusible operator: add operator and process children in the same pipeline.
             auto children = op->releaseChildren();
             currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
             for (auto& child : children) {
@@ -116,10 +116,9 @@ struct PipeliningVisitor {
 /// Entry point: splits the query plan of physical operators into pipelines
 PipelinedQueryPlan apply(QueryPlan queryPlan) {
     PipelinedQueryPlan plan(queryPlan.getQueryId());
-    // For each sink operator from the query plan...
     for (auto& sinkOp : queryPlan.releaseRootOperators()) {
         auto pipeline = std::make_unique<SinkPipeline>();
-        pipeline->prependOperator(Pipeline::PipelineOperator(std::move(sinkOp)));
+        pipeline->prependOperator(convertOperator(std::move(sinkOp)));
         plan.pipelines.push_back(std::move(pipeline));
         SinkPipeline* sinkPipeline = static_cast<SinkPipeline*>(plan.pipelines.back().get());
         PipeliningVisitor visitor{plan, sinkPipeline};
