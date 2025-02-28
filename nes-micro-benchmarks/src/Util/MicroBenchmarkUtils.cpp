@@ -76,7 +76,10 @@ std::shared_ptr<Runtime::RunningQueryPlanNode> MicroBenchmarkUtils::createTasks(
     {
         InfoForThread() : sequenceNumber(SequenceNumber::INVALID), originId(OriginId::INVALID), startTimestamp(0), numberOfTuples(0) { }
         InfoForThread(SequenceNumber sequenceNumber, OriginId originId, const uint64_t startTimestamp, const uint64_t numberOfTuples)
-            : sequenceNumber(std::move(sequenceNumber)), originId(std::move(originId)), startTimestamp(startTimestamp), numberOfTuples(numberOfTuples)
+            : sequenceNumber(std::move(sequenceNumber))
+            , originId(std::move(originId))
+            , startTimestamp(startTimestamp)
+            , numberOfTuples(numberOfTuples)
         {
         }
         SequenceNumber sequenceNumber;

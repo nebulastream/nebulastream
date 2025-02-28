@@ -32,8 +32,8 @@ namespace NES::Runtime
 
 NodeEngineBuilder::NodeEngineBuilder(
     const Configurations::WorkerConfiguration& workerConfiguration,
-    std::shared_ptr<SystemEventListener> systemEventListener,
-    std::shared_ptr<QueryEngineStatisticListener> statisticEventListener)
+    std::vector<std::shared_ptr<SystemEventListener>> systemEventListener,
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticEventListener)
     : workerConfiguration(workerConfiguration)
     , systemEventListener(std::move(std::move(systemEventListener)))
     , statisticEventListener(std::move(std::move(statisticEventListener)))
@@ -47,11 +47,10 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
-
     auto queryEngine
         = std::make_unique<QueryEngine>(workerConfiguration.queryEngineConfiguration, statisticEventListener, queryLog, bufferManager);
 
-    return std::make_unique<NodeEngine>(std::move(bufferManager), systemEventListener, std::move(queryLog), std::move(queryEngine));
+    return std::make_unique<NodeEngine>(std::move(bufferManager), statisticEventListener, systemEventListener, std::move(queryLog), std::move(queryEngine));
 }
 
 }

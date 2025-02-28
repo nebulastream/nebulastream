@@ -29,6 +29,8 @@ service WorkerRPCService {
 
 message RegisterQueryRequest {
   NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+  double minThroughput = 2;
+  double maxLatency = 3;
 }
 
 message RegisterQueryReply {

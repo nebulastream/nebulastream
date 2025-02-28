@@ -75,12 +75,14 @@ public:
 NodeEngine::~NodeEngine() = default;
 NodeEngine::NodeEngine(
     std::shared_ptr<Memory::BufferManager> bufferManager,
-    std::shared_ptr<SystemEventListener> systemEventListener,
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineStatisticListeners,
+    std::vector<std::shared_ptr<SystemEventListener>> systemEventListeners,
     std::shared_ptr<QueryLog> queryLog,
     std::unique_ptr<QueryEngine> queryEngine)
     : bufferManager(std::move(bufferManager))
     , queryLog(std::move(queryLog))
-    , systemEventListener(std::move(systemEventListener))
+    , queryEngineStatisticListeners(std::move(queryEngineStatisticListeners))
+    , systemEventListeners(std::move(systemEventListeners))
     , queryEngine(std::move(queryEngine))
     , queryTracker(std::make_unique<QueryTracker>())
 {
@@ -97,7 +99,10 @@ void NodeEngine::startQuery(QueryId queryId)
 {
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
-        systemEventListener->onEvent(StartQuerySystemEvent(queryId));
+        for (const auto& listener : systemEventListeners)
+        {
+            listener->onEvent(StartQuerySystemEvent(queryId));
+        }
         queryEngine->start(ExecutableQueryPlan::instantiate(*qep, bufferManager));
     }
     else
@@ -106,7 +111,7 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
-void NodeEngine::unregisterQuery(QueryId queryId)
+void NodeEngine::unregisterQuery(QueryId queryId) const
 {
     NES_INFO("Unregister {}", queryId);
     queryEngine->stop(queryId);
@@ -115,7 +120,11 @@ void NodeEngine::unregisterQuery(QueryId queryId)
 void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 {
     NES_INFO("Stop {}", queryId);
-    systemEventListener->onEvent(StopQuerySystemEvent(queryId));
+    for (const auto& listener : systemEventListeners)
+    {
+        listener->onEvent(StopQuerySystemEvent(queryId));
+    }
+
     queryEngine->stop(queryId);
 }
 

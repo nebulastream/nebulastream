@@ -63,8 +63,8 @@ struct TaskEmit : EventBase
 
 struct TaskExecutionComplete : EventBase
 {
-    TaskExecutionComplete(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId)
-        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
+    TaskExecutionComplete(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, double throughput, double latency, uint64_t numberOfTuplesProcessed)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), throughput(throughput), latency(latency), numberOfTuplesProcessed(numberOfTuplesProcessed)
     {
     }
     TaskExecutionComplete() = default;
@@ -72,6 +72,9 @@ struct TaskExecutionComplete : EventBase
 
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
+    double throughput;
+    double latency;
+    uint64_t numberOfTuplesProcessed;
 };
 
 struct TaskExpired : EventBase

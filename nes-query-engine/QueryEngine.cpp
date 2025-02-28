@@ -281,11 +281,11 @@ public:
 
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
-        std::shared_ptr<QueryEngineStatisticListener> stats,
+        std::vector<std::shared_ptr<QueryEngineStatisticListener>> stats,
         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         const size_t taskQueueSize)
         : listener(std::move(listener))
-        , statistic(std::move(std::move(stats)))
+        , statisticListener(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
         , taskQueue(taskQueueSize)
     {
@@ -318,9 +318,17 @@ private:
         bool terminating{};
     };
 
+    void notifyStatisticListeners(const Event& event)
+    {
+        for (const auto& listener : statisticListener)
+        {
+            listener->onEvent(event);
+        }
+    }
+
     /// Order of destruction matters: TaskQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
-    std::shared_ptr<QueryEngineStatisticListener> statistic;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
     detail::Queue taskQueue;
@@ -351,20 +359,24 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
-                    pool.statistic->onEvent(
+                    pool.notifyStatisticListeners(
                         TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
-        pool.statistic->onEvent(TaskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        TaskExecutionStart taskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()};
+        pool.notifyStatisticListeners(taskExecutionStart);
         pipeline->stage->execute(task.buf, pec);
-        pool.statistic->onEvent(TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId});
+        const auto latencyInUs
+            = std::chrono::duration<double, std::micro>(std::chrono::high_resolution_clock::now() - taskExecutionStart.timestamp).count();
+        const double throughput = task.buf.getNumberOfTuples() / (latencyInUs / 1'000'000);
+        pool.notifyStatisticListeners(TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId, throughput, latencyInUs, task.buf.getNumberOfTuples()});
         return true;
     }
 
     ENGINE_LOG_WARNING(
         "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
-    pool.statistic->onEvent(TaskExpired{threadId, task.queryId, task.pipelineId, taskId});
+    pool.notifyStatisticListeners(TaskExpired{threadId, task.queryId, task.pipelineId, taskId});
     return false;
 }
 
@@ -393,7 +405,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
             });
         pipeline->stage->start(pec);
-        pool.statistic->onEvent(PipelineStart{threadId, startPipeline.queryId, pipeline->id});
+        pool.notifyStatisticListeners(PipelineStart{threadId, startPipeline.queryId, pipeline->id});
         return true;
     }
 
@@ -444,7 +456,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     stopPipeline.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.queryId, stopPipeline.pipeline->id});
+    pool.notifyStatisticListeners(PipelineStop{threadId, stopPipeline.queryId, stopPipeline.pipeline->id});
     return true;
 }
 
@@ -454,7 +466,7 @@ bool ThreadPool::WorkerThread::operator()(const StopQueryTask& stopQuery) const
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
         queryCatalog->stopQuery(stopQuery.queryId);
-        pool.statistic->onEvent(QueryStop{threadId, stopQuery.queryId});
+        pool.notifyStatisticListeners(QueryStop{threadId, stopQuery.queryId});
         return true;
     }
     return false;
@@ -466,7 +478,7 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
     if (auto queryCatalog = startQuery.catalog.lock())
     {
         queryCatalog->start(startQuery.queryId, std::move(startQuery.queryPlan), pool.listener, pool, pool);
-        pool.statistic->onEvent(QueryStart{threadId, startQuery.queryId});
+        pool.notifyStatisticListeners(QueryStart{threadId, startQuery.queryId});
         return true;
     }
     return false;
@@ -552,7 +564,7 @@ void ThreadPool::addThread()
 
 QueryEngine::QueryEngine(
     const QueryEngineConfiguration& config,
-    std::shared_ptr<QueryEngineStatisticListener> statListener,
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statListener,
     std::shared_ptr<AbstractQueryStatusListener> listener,
     std::shared_ptr<Memory::BufferManager> bm)
     : bufferManager(std::move(bm))

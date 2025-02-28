@@ -12,13 +12,13 @@
     limitations under the License.
 */
 #include <chrono>
-#include <thread>
 #include <random>
+#include <thread>
 
-#include "../../nes-common/include/Util/Ranges.hpp"
 #include <benchmark/benchmark.h>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
+#include "../../nes-common/include/Util/Ranges.hpp"
 #include "../../nes-memory/include/Runtime/BufferManager.hpp"
 #include "../../nes-query-engine/Task.hpp"
 #include "../../nes-query-engine/include/QueryEngineStatisticListener.hpp"
@@ -55,9 +55,9 @@ static void DoTearDown(const benchmark::State&)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("ts", DataTypeFactory::createUInt64());
+                                 ->addField("id", DataTypeFactory::createUInt64())
+                                 ->addField("value", DataTypeFactory::createUInt64())
+                                 ->addField("ts", DataTypeFactory::createUInt64());
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task
@@ -89,16 +89,8 @@ static void DoTearDown(const benchmark::State&)
         });
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
-    const auto runningQueryPlanNode
-        = utils.createTasks(
-            taskQueue,
-            numberOfTasks,
-            numberOfTuplesPerTaskVector,
-            emitter,
-            *bufferProvider,
-            pec,
-            numberOfOrigins,
-            sleepDurationPerTuple);
+    const auto runningQueryPlanNode = utils.createTasks(
+        taskQueue, numberOfTasks, numberOfTuplesPerTaskVector, emitter, *bufferProvider, pec, numberOfOrigins, sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
@@ -123,7 +115,7 @@ static void DoTearDown(const benchmark::State&)
         uint64_t startTime;
         uint64_t endTime;
     };
-    std::vector<std::vector<TaskMeasurements> > tupleBufferEmitStorage(numberOfWorkerThreads);
+    std::vector<std::vector<TaskMeasurements>> tupleBufferEmitStorage(numberOfWorkerThreads);
     auto workerFunction = [&](const WorkerThreadId threadId)
     {
         Runtime::WorkTask task;
@@ -140,11 +132,15 @@ static void DoTearDown(const benchmark::State&)
                     {
                         /// We assume that the tuple buffer has a creation timestamp set.
                         const auto startTime = task.buf.getCreationTimestamp();
-                        const auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                            std::chrono::system_clock::now().time_since_epoch()).count();
-                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), task.buf.getOriginId(),
-                                                            task.buf.getNumberOfTuples(),
-                                                            startTime.getRawValue(), static_cast<uint64_t>(endTime)};
+                        const auto endTime
+                            = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                                  .count();
+                        const TaskMeasurements measurements{
+                            task.buf.getSequenceNumber(),
+                            task.buf.getOriginId(),
+                            task.buf.getNumberOfTuples(),
+                            startTime.getRawValue(),
+                            static_cast<uint64_t>(endTime)};
                         tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
                 pipeline->stage->execute(task.buf, pec);
@@ -185,23 +181,21 @@ static void DoTearDown(const benchmark::State&)
     /// Post processing the emitted measurements and then writing them to a csv file
     /// We want to calculate the time difference between two consecutive tasks of the same origin id
 
-    // Sort measurements by OriginId, numberOfInputTuples, and startTime
+    /// Sort measurements by OriginId, numberOfInputTuples, and startTime
     std::ranges::sort(
         emittedMeasurements,
         [](const TaskMeasurements& a, const TaskMeasurements& b)
-        {
-            return std::tie(a.originId, a.startTime) < std::tie(b.originId, b.startTime);
-        });
+        { return std::tie(a.originId, a.startTime) < std::tie(b.originId, b.startTime); });
 
 
-    std::map<OriginId, std::vector<uint64_t> > originIdToStartTimes;
+    std::map<OriginId, std::vector<uint64_t>> originIdToStartTimes;
     for (const auto& measurement : emittedMeasurements)
     {
         originIdToStartTimes[measurement.originId].emplace_back(measurement.startTime);
     }
 
     /// Calculating the time difference between two consecutive tasks of the same origin id
-    std::map<OriginId, std::vector<uint64_t> > originIdToTimeDifferences;
+    std::map<OriginId, std::vector<uint64_t>> originIdToTimeDifferences;
     for (const auto& [originId, startTimes] : originIdToStartTimes)
     {
         for (const auto& [i, startTime] : startTimes | NES::views::enumerate)
@@ -232,13 +226,8 @@ static void DoTearDown(const benchmark::State&)
                 {
                     break;
                 }
-                latencyFile << originId << ","
-                    << numberOfTuplesPerTask << ","
-                    << timeDiff << ","
-                    << selectivity << ","
-                    << providerName << ","
-                    << numberOfWorkerThreads << ","
-                    << 0.0 << "\n";
+                latencyFile << originId << "," << numberOfTuplesPerTask << "," << timeDiff << "," << selectivity << "," << providerName
+                            << "," << numberOfWorkerThreads << "," << 0.0 << "\n";
             }
         }
         latencyFile.close();
@@ -281,9 +270,9 @@ static void DoTearDown(const benchmark::State&)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("ts", DataTypeFactory::createUInt64());
+                                 ->addField("id", DataTypeFactory::createUInt64())
+                                 ->addField("value", DataTypeFactory::createUInt64())
+                                 ->addField("ts", DataTypeFactory::createUInt64());
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task.
@@ -334,16 +323,8 @@ static void DoTearDown(const benchmark::State&)
         });
 
     const MicroBenchmarkUtils utils(selectivity, bufferSize, fieldNameForSelectivity, schemaInput, schemaOutput, providerName);
-    const auto runningQueryPlanNode
-        = utils.createTasks(
-            taskQueue,
-            numberOfTasks,
-            numberOfTuplesPerTaskVector,
-            emitter,
-            *bufferProvider,
-            pec,
-            numberOfOrigins,
-            sleepDurationPerTuple);
+    const auto runningQueryPlanNode = utils.createTasks(
+        taskQueue, numberOfTasks, numberOfTuplesPerTaskVector, emitter, *bufferProvider, pec, numberOfOrigins, sleepDurationPerTuple);
 
     /// Function for the worker threads to execute
     std::vector<uint64_t> countProcessedTuples(numberOfWorkerThreads, 0);
@@ -351,16 +332,14 @@ static void DoTearDown(const benchmark::State&)
     struct TaskMeasurements
     {
         TaskMeasurements(SequenceNumber sequenceNumber, uint64_t numberOfInputTuples, uint64_t latencyInUs)
-            : sequenceNumber(sequenceNumber)
-            , numberOfInputTuples(numberOfInputTuples)
-            , latencyInUs(latencyInUs)
+            : sequenceNumber(sequenceNumber), numberOfInputTuples(numberOfInputTuples), latencyInUs(latencyInUs)
         {
         }
         SequenceNumber sequenceNumber;
         uint64_t numberOfInputTuples;
         uint64_t latencyInUs;
     };
-    std::vector<std::vector<TaskMeasurements> > tupleBufferEmitStorage(numberOfWorkerThreads);
+    std::vector<std::vector<TaskMeasurements>> tupleBufferEmitStorage(numberOfWorkerThreads);
     auto workerFunction = [&](const WorkerThreadId threadId)
     {
         Runtime::WorkTask task;
@@ -378,10 +357,10 @@ static void DoTearDown(const benchmark::State&)
                         /// Calculating the duration in milliseconds. We assume that the tuple buffer has a creation timestamp set.
                         /// We subtract the current time from the creation timestamp to get the duration and write this back to the tuple buffer.
                         const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                            std::chrono::system_clock::now().time_since_epoch() - std::chrono::microseconds(
-                                buffer.getCreationTimestamp().getRawValue()));
-                        const TaskMeasurements measurements{task.buf.getSequenceNumber(), buffer.getNumberOfTuples(),
-                                                            static_cast<uint64_t>(duration.count())};
+                            std::chrono::system_clock::now().time_since_epoch()
+                            - std::chrono::microseconds(buffer.getCreationTimestamp().getRawValue()));
+                        const TaskMeasurements measurements{
+                            task.buf.getSequenceNumber(), buffer.getNumberOfTuples(), static_cast<uint64_t>(duration.count())};
                         tupleBufferEmitStorage[threadId.getRawValue()].emplace_back(measurements);
                     });
                 pipeline->stage->execute(task.buf, pec);
@@ -426,11 +405,10 @@ static void DoTearDown(const benchmark::State&)
     for (auto& taskMeasurement : emittedMeasurements)
     {
         const auto latency = taskMeasurement.latencyInUs;
-        const auto numberOfTuplesInput = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() -
-            SequenceNumber::INITIAL];
-        latencyFile << taskMeasurement.sequenceNumber << "," << latency << "," << numberOfTuplesInput << "," << selectivity << "," <<
-            providerName << ","
-            << numberOfWorkerThreads << "," << skewness << "\n";
+        const auto numberOfTuplesInput
+            = numberOfTuplesPerTaskVector[taskMeasurement.sequenceNumber.getRawValue() - SequenceNumber::INITIAL];
+        latencyFile << taskMeasurement.sequenceNumber << "," << latency << "," << numberOfTuplesInput << "," << selectivity << ","
+                    << providerName << "," << numberOfWorkerThreads << "," << skewness << "\n";
     }
 
 
@@ -448,8 +426,7 @@ constexpr auto NUM_REPETITIONS = 3;
 
 /// Registering all benchmark functions
 BENCHMARK(NES::BM_UniformPipeline)
-     ->ArgsProduct(
-    {
+    ->ArgsProduct({
         {100 * 1000 * 1000}, /// Number of tuples that should be processed
         {1, 10, 100, 500, 1000, 2000, 3000}, /// Number of tuples per task/buffer.
         {100}, /// Sleep duration per tuple in nanoseconds
@@ -458,12 +435,12 @@ BENCHMARK(NES::BM_UniformPipeline)
         {8}, //benchmark::CreateRange(1, 16, 2) /// Number of worker threads
         {10} /// Number of origins
     })
-     ->Setup(NES::DoSetup)
-     ->Teardown(NES::DoTearDown)
-     ->UseRealTime()
-     ->Unit(benchmark::kMillisecond)
-     ->Iterations(1)
-     ->Repetitions(NUM_REPETITIONS);
+    ->Setup(NES::DoSetup)
+    ->Teardown(NES::DoTearDown)
+    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond)
+    ->Iterations(1)
+    ->Repetitions(NUM_REPETITIONS);
 
 // BENCHMARK(NES::BM_SkewedPipeline)
 //     ->ArgsProduct(

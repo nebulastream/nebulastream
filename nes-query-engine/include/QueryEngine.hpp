@@ -32,7 +32,7 @@ class QueryEngine
 public:
     explicit QueryEngine(
         const QueryEngineConfiguration& configuration,
-        std::shared_ptr<QueryEngineStatisticListener> statListener,
+        std::vector<std::shared_ptr<QueryEngineStatisticListener>> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<Memory::BufferManager> bm);
     void stop(QueryId queryId);
@@ -47,7 +47,7 @@ public:
     /// further work into the TaskQueue.
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::shared_ptr<AbstractQueryStatusListener> statusListener;
-    std::shared_ptr<QueryEngineStatisticListener> statisticListener;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener;
     std::shared_ptr<QueryCatalog> queryCatalog;
     std::unique_ptr<ThreadPool> threadPool;
 };

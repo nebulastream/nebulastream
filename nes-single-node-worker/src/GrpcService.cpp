@@ -29,7 +29,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 {
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    if (auto where = exception.where())
+    if (const auto where = exception.where())
     {
         context->AddTrailingMetadata("where", where->to_string());
     }
@@ -41,7 +41,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
     try
     {
-        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan);
+        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan, request->minthroughput(), request->maxlatency());
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }
@@ -52,7 +52,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 }
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    const auto queryId = QueryId(request->queryid());
     try
     {
         delegate.unregisterQuery(queryId);
@@ -65,7 +65,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
 }
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    const auto queryId = QueryId(request->queryid());
     try
     {
         delegate.startQuery(queryId);
@@ -78,8 +78,8 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 }
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
-    auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
+    const auto queryId = QueryId(request->queryid());
+    const auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
     try
     {
         delegate.stopQuery(queryId, terminationType);
@@ -95,7 +95,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
 {
     try
     {
-        auto queryId = QueryId(request->queryid());
+        const auto queryId = QueryId(request->queryid());
         auto summary = delegate.getQuerySummary(queryId);
         if (summary.has_value())
         {
@@ -124,7 +124,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
 {
     try
     {
-        auto queryId = QueryId(request->queryid());
+        const auto queryId = QueryId(request->queryid());
         auto log = delegate.getQueryLog(queryId);
         if (log.has_value())
         {

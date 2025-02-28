@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+
+#include "../../nes-query-engine/TaskStatisticsProcessor.hpp"
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -33,11 +35,14 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<Runtime::PrintingStatisticListener>(
-          configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-          configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+        configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
+    , queryStatisticsListeners(std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
+        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads),std::make_shared<Runtime::TaskStatisticsProcessor>()})
+, systemEventListeners(std::vector<std::shared_ptr<Runtime::SystemEventListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
+        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads)})
+    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListeners, queryStatisticsListeners).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
 }
@@ -46,14 +51,18 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan)
+QueryId
+SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const double maxLatency)
 {
     try
     {
-        auto logicalQueryPlan
+        const auto logicalQueryPlan
             = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
 
-        listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
+        for (const auto& listener : systemEventListeners)
+        {
+            listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString(), minThroughput, maxLatency});
+        }
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 

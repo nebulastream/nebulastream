@@ -80,8 +80,7 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    NES_TRACE(
-        "New global watermark: {} using buffer metadata: {}", newGlobalWatermark, bufferMetaData.toString());
+    NES_TRACE("New global watermark: {} using buffer metadata: {}", newGlobalWatermark, bufferMetaData.toString());
 
     /// Getting all slices that can be triggered and triggering them
     const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);

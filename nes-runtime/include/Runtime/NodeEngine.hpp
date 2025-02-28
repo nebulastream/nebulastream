@@ -43,12 +43,13 @@ public:
 
     NodeEngine(
         std::shared_ptr<Memory::BufferManager> bufferManager,
-        std::shared_ptr<SystemEventListener> systemEventListener,
+        std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineStatisticListeners,
+        std::vector<std::shared_ptr<SystemEventListener>> systemEventListeners,
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine);
 
     [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan);
-    void unregisterQuery(QueryId queryId);
+    void unregisterQuery(QueryId queryId) const;
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
@@ -61,7 +62,8 @@ private:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::shared_ptr<QueryLog> queryLog;
 
-    std::shared_ptr<SystemEventListener> systemEventListener;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineStatisticListeners;
+    std::vector<std::shared_ptr<SystemEventListener>> systemEventListeners;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<QueryTracker> queryTracker;
 };

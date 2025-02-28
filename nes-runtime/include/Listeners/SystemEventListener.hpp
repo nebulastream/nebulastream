@@ -34,29 +34,38 @@ struct BaseSystemEvent
 
 struct SubmitQuerySystemEvent : BaseSystemEvent
 {
-    SubmitQuerySystemEvent(QueryId queryId, std::string query) : queryId(queryId), query(std::move(query)) { }
+    /// If the query has not specified a throughput or latency, we use a min throughput of 0 and a max latency of infinity
+    SubmitQuerySystemEvent(const QueryId queryId, std::string query)
+        : SubmitQuerySystemEvent(queryId, std::move(query), 0, std::numeric_limits<double>::max())
+    {
+    }
+    SubmitQuerySystemEvent(const QueryId queryId, std::string query, const double minThroughput, const double maxLatency)
+        : queryId(queryId), query(std::move(query)), minThroughput(minThroughput), maxLatency(maxLatency)
+    {
+    }
     SubmitQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
     std::string query;
+    double minThroughput;
+    double maxLatency;
 };
 
 struct StartQuerySystemEvent : BaseSystemEvent
 {
-    explicit StartQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+    explicit StartQuerySystemEvent(const QueryId queryId) : queryId(queryId) { }
     StartQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
 };
 
 struct StopQuerySystemEvent : BaseSystemEvent
 {
-    explicit StopQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+    explicit StopQuerySystemEvent(const QueryId queryId) : queryId(queryId) { }
     StopQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
 };
 
 using SystemEvent = std::variant<SubmitQuerySystemEvent, StartQuerySystemEvent, StopQuerySystemEvent>;
 static_assert(std::is_default_constructible_v<SystemEvent>, "Events should be default constructible");
-
 
 struct SystemEventListener
 {

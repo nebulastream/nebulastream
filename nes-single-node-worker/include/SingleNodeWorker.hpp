@@ -38,7 +38,8 @@ struct PrintingStatisticListener;
 class SingleNodeWorker
 {
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
-    std::shared_ptr<Runtime::PrintingStatisticListener> listener;
+    std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>> queryStatisticsListeners;
+    std::vector<std::shared_ptr<Runtime::SystemEventListener>> systemEventListeners;
     std::shared_ptr<Runtime::NodeEngine> nodeEngine;
     size_t bufferSize;
 
@@ -59,7 +60,7 @@ public:
      * @param plan Fully Specified LogicalQueryPlan.
      * @return QueryId which identifies the registered Qconst uery
      */
-    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan);
+    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const double maxLatency);
 
     /**
      * Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
