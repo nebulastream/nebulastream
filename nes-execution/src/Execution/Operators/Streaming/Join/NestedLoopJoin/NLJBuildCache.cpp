@@ -178,13 +178,13 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
                 sliceCacheEntryToReplace,
                 globalOperatorHandler,
                 timestamp,
-                executionCtx.pipelineMemoryProvider,
+                executionCtx.pipelineMemoryProvider.bufferProvider,
                 executionCtx.getWorkerThreadId(),
                 nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
         });
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider);
+    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 
