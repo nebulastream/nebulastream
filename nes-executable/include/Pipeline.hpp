@@ -29,19 +29,23 @@ namespace NES
 /// Each pipeline can have N successor and predecessor pipelines.
 struct Pipeline
 {
-    explicit Pipeline();
+    enum class ProviderType : uint8_t {
+        Interpreter,
+        Compiler
+    };
+    explicit Pipeline(PipelineId pipelineId, QueryId queryId, ProviderType type)
+        : pipelineId(pipelineId), queryId(queryId), providerType(type) {};
+
     /// Virtual destructor to make Pipeline polymorphic
     virtual ~Pipeline() = default;
 
     virtual std::string toString() const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& t);
 
-    const PipelineId id;
+    const PipelineId pipelineId;
+    const QueryId queryId;
 
-    enum class ProviderType : uint8_t {
-        Interpreter,
-        Compiler
-    };
+
     const ProviderType providerType;
 
     std::vector<std::unique_ptr<Pipeline>> successorPipelines;
