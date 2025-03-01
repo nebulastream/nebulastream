@@ -38,6 +38,7 @@
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 #include <magic_enum.hpp>
+#include "NetworkSinkValidation.hpp"
 #include "rust/cxx.h"
 
 namespace NES::Sinks
@@ -138,18 +139,6 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
 std::ostream& NetworkSink::toString(std::ostream& str) const
 {
     return str << fmt::format("NETWORK_SINK({})", channelIdentifier);
-}
-
-std::unique_ptr<Configurations::DescriptorConfig::Config>
-NetworkSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
-{
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersNetworkSink>(std::move(config), NAME);
-}
-
-std::unique_ptr<SinkValidationRegistryReturnType>
-SinkValidationGeneratedRegistrar::RegisterNetworkSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return NetworkSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterNetworkSink(SinkRegistryArguments sinkRegistryArguments)

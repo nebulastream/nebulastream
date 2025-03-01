@@ -13,5 +13,31 @@
 add_source_files(nes-common
         NesLogger.cpp
         LogLevel.cpp
+        webulastream/spdlog-bridge/src/bridge.cpp
 )
+
+include(FetchContent)
+FetchContent_Declare(
+        Corrosion
+        GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+        GIT_TAG v0.5 # Optionally specify a commit hash, version tag or branch here
+)
+FetchContent_MakeAvailable(Corrosion)
+# Import targets defined in a package or workspace manifest `Cargo.toml` file
+corrosion_import_crate(
+        MANIFEST_PATH webulastream/Cargo.toml
+        CRATES bridge_of_bridges
+        IMPORTED_CRATES CRATES
+        CRATE_TYPES staticlib
+)
+corrosion_add_cxxbridge(
+        rustlogger_cxx_bridge
+        CRATE bridge_of_bridges
+        FILES ../../../webulastream/spdlog-bridge/src/lib.rs
+)
+target_include_directories(rustlogger_cxx_bridge PUBLIC webulastream/spdlog-bridge/include)
+target_link_libraries(rustlogger_cxx_bridge PUBLIC spdlog::spdlog magic_enum::magic_enum)
+
+find_package(magic_enum CONFIG REQUIRED)
+find_package(spdlog     CONFIG REQUIRED)
 

@@ -65,11 +65,6 @@ size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const st
     }
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersNetwork>(std::move(config), NAME);
-}
 
 void NetworkSource::close()
 {
@@ -77,11 +72,7 @@ void NetworkSource::close()
     close_receiver_channel(std::move(*channel));
 }
 
-std::unique_ptr<SourceValidationRegistryReturnType>
-SourceValidationGeneratedRegistrar::RegisterNetworkSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return NetworkSource::validateAndFormat(sourceConfig.config);
-}
+
 
 std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterNetworkSource(SourceRegistryArguments sourceRegistryArguments)
 {

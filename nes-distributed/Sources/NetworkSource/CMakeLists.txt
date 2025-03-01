@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_plugin_as_library(Network Source nes-sources-registry network_source_plugin_library NetworkSource.cpp)
-add_plugin_as_library(Network SourceValidation nes-sources-registry network_source_validation_plugin_library NetworkSource.cpp)
+add_plugin_as_library(Network SourceValidation nes-sources-registry network_source_validation_plugin_library NetworkSourceValidation.cpp)
 
 target_link_libraries(network_source_plugin_library PRIVATE nes-distributed)
-target_link_libraries(network_source_validation_plugin_library PRIVATE nes-distributed)

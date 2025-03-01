@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_plugin_as_library(Network Sink nes-sinks-registry network_sink_plugin_library NetworkSink.cpp)
-add_plugin_as_library(Network SinkValidation nes-sinks-registry network_sink_validation_plugin_library NetworkSink.cpp)
+add_plugin_as_library(Network SinkValidation nes-sinks-registry network_sink_validation_plugin_library NetworkSinkValidation.cpp)
 
 target_link_libraries(network_sink_plugin_library PRIVATE nes-distributed)
-target_link_libraries(network_sink_validation_plugin_library PRIVATE nes-distributed)

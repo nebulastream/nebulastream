@@ -14,16 +14,13 @@
 
 #pragma once
 
-#include <cstdint>
+#include "NetworkSink.hpp"
+
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -39,7 +36,6 @@ namespace NES::Sinks
 class NetworkSink final : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "Network";
 
     explicit NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
@@ -68,22 +64,5 @@ private:
     std::string connectionIdentifier;
 };
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
-struct ConfigParametersNetworkSink
-{
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CONNECTION{
-        "connection", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(CONNECTION, config);
-        }};
-
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(CHANNEL, config);
-        }};
-
-
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(CHANNEL, CONNECTION);
-};
 
 }

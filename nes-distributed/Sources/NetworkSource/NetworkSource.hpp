@@ -14,9 +14,10 @@
 
 #pragma once
 
+#include "NetworkSourceValidation.hpp"
+
 #include <chrono>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -24,16 +25,11 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
 
 #include <cxx_bridge/lib.h>
 #include <Bridge.hpp>
@@ -44,7 +40,6 @@ namespace NES::Sources
 class NetworkSource : public Source
 {
 public:
-    static constexpr std::string_view NAME = "Network";
 
     explicit NetworkSource(const SourceDescriptor& sourceDescriptor);
     ~NetworkSource() override = default;
@@ -70,20 +65,6 @@ private:
     std::optional<rust::Box<ReceiverChannel>> channel{};
     rust::Box<ReceiverServer> receiverServer;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{};
-};
-
-
-/// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
-struct ConfigParametersNetwork
-{
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(CHANNEL, config);
-        }};
-
-
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(CHANNEL);
 };
 
 }
