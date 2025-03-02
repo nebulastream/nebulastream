@@ -21,26 +21,25 @@ namespace NES
 class DumpHelper
 {
 public:
-    /**
-     * @param contextIdentifier the global identifier for all elements that are dumped by this context
-     * @param dumpToConsole indicator if content is dumped to console
-     * @param dumpToFile indicator if content is dumped to file
-     * @param outputPath output path if content is dumped to a file
-     * @return DumpHelper
-     */
-    explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
+    /// @param contextIdentifier the global identifier for all elements that are dumped by this context
+    /// @param dumpToConsole dump logs to stdout
+    explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole);
+
+    /// @param contextIdentifier the global identifier for all elements that are dumped by this context
+    /// @param dumpToConsole dump logs to stdout
+    /// @param outputPath if supplied, the DumpHelper dumps all logs to 'outputPath'
+    explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, std::string outputPath);
 
     /**
      * @brief Function to dump a specific entity using this context.
      * @param name identifier of this entry.
      * @param output the content that should be dumped.
      */
-    void dump(const std::string_view& name, const std::string_view& output) const;
+    void dump(std::string_view name, std::string_view output) const;
 
 private:
     std::string contextIdentifier;
     bool dumpToConsole;
-    bool dumpToFile;
     std::string outputPath;
 };
 }
