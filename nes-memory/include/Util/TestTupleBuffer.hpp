@@ -226,6 +226,13 @@ private:
 class TestTupleBuffer
 {
 public:
+    enum class PrintMode : uint8_t
+    {
+        SHOW_HEADER_END_IN_NEWLINE,
+        SHOW_HEADER_END_WITHOUT_NEWLINE,
+        NO_HEADER_END_IN_NEWLINE,
+        NO_HEADER_END_WITHOUT_NEWLINE,
+    };
     explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
 
     static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema);
@@ -289,7 +296,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
     std::string toString(const std::shared_ptr<Schema>& schema) const;
-    std::string toString(const std::shared_ptr<Schema>& schema, bool showHeader, bool endInNewline) const;
+    std::string toString(const std::shared_ptr<Schema>& schema, PrintMode printMode) const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
