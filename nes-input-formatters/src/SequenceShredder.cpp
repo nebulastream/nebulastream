@@ -32,12 +32,6 @@ namespace NES::InputFormatters
 
 SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter) : SequenceShredder(sizeOfTupleDelimiter, INITIAL_NUM_BITMAPS)
 {
-    this->tupleDelimiterBitmaps.shrink_to_fit();
-    this->seenAndUsedBitmaps.shrink_to_fit();
-
-    tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-    stagedBuffers[0] = StagedBuffer{NES::Memory::TupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
-    stagedBufferUses[0] = std::make_shared<std::atomic<int8_t>>(1);
 }
 
 SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size_t initialNumBitmaps)
