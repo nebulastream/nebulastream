@@ -51,7 +51,7 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
     const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
-    const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, queryCompilerConfig.dumpPath.getValue());
+    const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, queryCompilerConfig.dumpPath.getValue());
 
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
     auto logicalQueryPlan = request->getDecomposedQueryPlan();
