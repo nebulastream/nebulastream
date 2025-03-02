@@ -59,7 +59,7 @@ namespace NES::InputFormatters
      design goal of NebulaStream is to support as many sources as possible on a single node, we opt for a design that:
      I) has a small memory footprint, II) can handle arbitrary many sequence numbers, III) does not bottleneck the entire query due to synchronization
      I: Fundamentally, a buffer may either contain a tuple delimiter or not. A spanning tuple is a tuple that starts in a
-        buffer with a tuple delimiter, spans over an arbitrary amount of buffers without a tuple delimiter and ends in buffer
+        buffer with a tuple delimiter, spans over an arbitrary number of buffers without a tuple delimiter and ends in buffer
         with a tuple delimiter. Thus, it is sufficient to remember for each buffer, whether it has a tuple delimiter and
         whether we saw and used it already. We can achieve this using two bitmaps. One denotes whether a tuple buffer contains a
         delimiter with a '1', the other denotes whether we saw a buffer and made complete use of it with a '1'. If a
@@ -73,8 +73,8 @@ namespace NES::InputFormatters
         were seen and used already, but do not contain a tuple delimiter. That is, there is a sequence of 0s in the tuple
         delimiter bitmap, exactly contrasted by a sequence of 1s in the corresponding seen and used bitmap.
         This representation allows us to find all spanning tuples using just 2 bits per buffer. Two bitmaps of size 64 bit
-        represent 64 buffers. The default size of buffer in NebulaStream is the page size (4096 KB). A single pair of bitmaps
-        (128 bit) can therefore represent 64 * 4096KB = 262144 KB worth of buffer data, meaning the bitmaps are cache friendly.
+        represent 64 buffers. The default size of buffers in NebulaStream is the page size (4096 bytes). A single pair of bitmaps
+        (128 bit) can therefore represent 64 * 4096 bytes = 262144 bytes worth of buffer data, meaning the bitmaps are cache friendly.
         The SequenceShredder starts with 8 pairs of bitmaps. That is, 8 * 128 = 1024 bits. These 1024 bits represent 512 buffers,
         which means 512 * 4096KB = 2097152KB ~= 2GB. Representing 1 million sources (with 8 bitmaps each), takes 1.000.000 * 1024 bits ~= 500KB.
      II: To address the concern of arbitrarily increasing sequence numbers, the SequenceShredder implements a dynamically increasing ring buffer.
@@ -86,13 +86,13 @@ namespace NES::InputFormatters
           source that the SequenceShredder belongs to, must pass through the sequence shredder. The SequenceShredder
           may slow down an entire query, if synchronization takes too long. Additionally, the design should be robust, since
           it effects (almost) every single value processed by NebulaStream.
-          We use 3 locks for synchronization, aiming to minimalize the instructions in each protected section.
+          We use 3 locks for synchronization, aiming to minimize the number of instructions in each protected section.
           The first lock is to safely read (avoiding torn-reads) the current tail and determine whether the sequence number
           is in range.
           The second lock is the first lock in 'processSequenceNumber()'. In its protected section, the thread first
           denotes in the bitmaps, whether it found a tuple delimiter in its buffer or not. Second, it determines
-          if it is sufficient to just look at the bitmap that its sequence number maps too, or whether it may find a spanning tuple
-          that spans to another bitmap. It then either takes a snapshot(copy) of only its own bitmap, or of all bitmaps (copying
+          if it is sufficient to just look at the bitmap that its sequence number maps to, or whether it may find a spanning tuple
+          that spans to another bitmap (back or forward). It then either takes a snapshot(copy) of only its own bitmap, or of all bitmaps (copying
           all bitmaps is the uncommon case, but still fast). This snapshot has two major advantages. First, all bits set
           in the bitmap were set by threads that arrived in the lock-protected section earlier
           and that consequently did not see the bit just set by the thread.
@@ -111,7 +111,9 @@ namespace NES::InputFormatters
           If the bitmap happens to be the tail bitmap, it means that no prior bitmap can still start a spanning tuple, which
           means that no more spanning tuples can end in the bitmap. It is safe to reset it and move the tail.
           If a thread detects that it completed the tail bitmap, it keeps the lock and increases the tail, until it finds
-          a bitmap that is not yet complete (not all bits in the seen and used bitmap are '1's).
+          a bitmap that is not yet complete (not all bits in the seen and used bitmap are '1's). If enough threads requested an increase
+          of the ring buffer, and the thread can safely increase the ring buffer (see incrementTail function), the thread doubles the size
+          of the ring buffer.
 */
 
 class SequenceShredder
@@ -132,7 +134,7 @@ public:
 
     struct SpanningTupleBuffers
     {
-        size_t indexOfSequenceNumberInStagedBuffers;
+        size_t indexOfProcessedSequenceNumber;
         std::vector<StagedBuffer> stagedBuffers;
     };
 
@@ -148,8 +150,13 @@ private:
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
     static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
 
-    /// The sequence shredder returns 0, 1, or 2 SpanningTuples
-    /// The spanning tuple(s) tell the thread that called 'processSequenceNumber()', the range of buffers it needs to format.
+    /// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).
+    /// A spanning tuple is a tuple that spans over at least two raw input buffers.
+    /// Given an input buffer without a delimiter, the SequenceShredder may find one spanning tuple at most (the raw input buffer connects
+    /// two raw input buffers with tuple delimiters).
+    /// Given an input buffer with a tuple delimiter, the SequenceShredder may find up to two spanning tuples. A first, starting in a raw input
+    /// buffer with a lower sequence number, ending in the raw input buffer. A second, starting in the raw input buffer, ending in a raw
+    /// input buffer with a higher sequence number.
     struct SpanningTuple
     {
         SequenceNumberType spanStart = 0;
@@ -166,7 +173,7 @@ public:
 
     /// Check if the sequence number is in the allowed range of the ring buffer.
     /// Example: 4 bitmaps, tail is 4, then the allowed range for sequence numbers is 256-511: [256,319][320,383][384,447][448,511]
-    [[nodiscard]] bool isInRangeOfRingBuffer(SequenceNumberType sequenceNumber);
+    [[nodiscard]] bool isInRange(SequenceNumberType sequenceNumber);
 
     /// Since EoF/EoS is not a symbol that allows the parser to tell that the final tuple just ended, we require a function
     /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
@@ -175,8 +182,7 @@ public:
     [[nodiscard]] std::pair<SpanningTupleBuffers, SequenceNumberType> flushFinalPartialTuple();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
-    /// Returns a vector with either zero, one or two spanning tuples if the sequence number is in range.
-    /// Returns a vector with three empty spanning tuples if the sequence number is out of range.
+    /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     /// For details on the inner workings of this function, read the description of the class above.
     template <bool HasTupleDelimiter>
     SpanningTupleBuffers processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, SequenceNumberType sequenceNumber);
@@ -191,7 +197,10 @@ private:
     size_t numberOfBitmaps;
     size_t numberOfBitmapsModulo;
     size_t resizeRequestCount;
+    /// The SequenceShredder owns staged buffers that must still become part of spanning tuples.
     std::vector<StagedBuffer> stagedBuffers;
+    /// Keeps track of how often a specific buffer was used in spanning tuples
+    /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
     std::vector<std::shared_ptr<std::atomic<int8_t>>> stagedBufferUses;
 
     struct BitmapSnapshot
@@ -218,9 +227,10 @@ private:
         CHECK_WRAPPING_TO_LOWER_AND_HIGHER = 3, /// 11: ... could complete an ST starting in a lower bitmap and ending in a higher bitmap
     };
 
+    /// @Note Must be called why holding the readWriteMutex
     /// Called when a thread completed the tail bitmap. The tail bitmap is complete, if the seenAndUsedBitmap pointed to by the tail contains only '1's.
     /// Resets the tail bitmaps and increments the tail. If new tail bitmaps are complete, repeats the process, until the new tail bitmaps are not complete.
-    /// Increases the size of the ring buffer if enough threads issues 'resizeRequests'.
+    /// Increases the size of the ring buffer if enough threads issue 'resizeRequests'.
     void incrementTail();
 
     /// Determines whether the buffer of the sequence number connects to the buffer of a smaller sequence number with a tuple delimiter,
@@ -248,7 +258,7 @@ private:
 
     /// Called by a thread that needs to search for the end of a spanning tuple in a higher bitmap than the one that its sequence number maps to.
     /// Skips over buffers that were seen, but did not contain a tuple delimiter, represented by a '1' in the tuple delimiter bitmap and a '0'
-    /// seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
+    /// in the seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
     /// representing the end of a spanning tuple, otherwise it returns 0 (the INVALID_SEQUENCE_NUMBER).
     std::pair<SequenceNumberType, bool> tryToFindHigherWrappingSpanningTuple(
         size_t sequenceNumberBitmapOffset, size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot);

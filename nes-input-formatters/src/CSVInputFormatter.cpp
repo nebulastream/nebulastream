@@ -449,7 +449,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
 {
     PRECONDITION(rawTB.getBufferSize() != 0, "A raw tuple buffer must not be of empty.");
 
-    const auto isInRange = sequenceShredder.isInRangeOfRingBuffer(rawTB.getSequenceNumber().getRawValue());
+    const auto isInRange = sequenceShredder.isInRange(rawTB.getSequenceNumber().getRawValue());
     if (not(isInRange))
     {
         NES_WARNING("SequenceNumber {} out of range.", rawTB.getSequenceNumber().getRawValue());

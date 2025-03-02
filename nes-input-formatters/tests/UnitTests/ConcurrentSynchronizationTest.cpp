@@ -114,7 +114,7 @@ public:
                 }
 
                 /// If the sequence number is not in range yet, busy wait until it is.
-                while (not sequenceShredder.isInRangeOfRingBuffer(threadLocalSequenceNumber))
+                while (not sequenceShredder.isInRange(threadLocalSequenceNumber))
                 {
                 }
 
