@@ -24,6 +24,7 @@
 #include <ostream>
 #include <regex>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -39,7 +40,7 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include "Common/DataTypes/DataTypeFactory.hpp"
 
 namespace NES::Systest
 {

@@ -18,10 +18,10 @@
 #include <string>
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
 
 namespace NES::Configuration
 {
