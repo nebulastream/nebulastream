@@ -169,7 +169,7 @@ createTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManage
 
     if constexpr (PrintDebug)
     {
-        NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true, true));
+        NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema));
     }
     return testTupleBuffer->getBuffer();
 }
