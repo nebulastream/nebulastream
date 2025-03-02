@@ -280,12 +280,10 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
 
 std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema) const
 {
-    constexpr auto showHeader = true;
-    constexpr auto endInNewline = true;
-    return toString(schema, showHeader, endInNewline);
+    return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const bool showHeader, const bool endInNewline) const
+std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -304,7 +302,7 @@ std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, con
             std::to_string(physicalType->size()));
     }
 
-    if (showHeader)
+    if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
@@ -326,11 +324,11 @@ std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, con
         str << dynamicTuple.toString(schema);
         ++tupleIterator;
     }
-    if (endInNewline)
+    if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::NO_HEADER_END_IN_NEWLINE)
     {
         str << std::endl;
     }
-    if (showHeader)
+    if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)
     {
         str << "+----------------------------------------------------+";
     }

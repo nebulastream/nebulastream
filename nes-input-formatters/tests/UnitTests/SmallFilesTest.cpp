@@ -160,11 +160,20 @@ public:
             {
                 auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
                 actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-                const auto currentBufferAsString = actualResultTestBuffer.toString(schema, false, true);
+                const auto currentBufferAsString
+                    = actualResultTestBuffer.toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
                 out << currentBufferAsString;
             }
-            out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                       .toString(schema, false, currentTestFile.endsWithNewline);
+            if (currentTestFile.endsWithNewline)
+            {
+                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+            }
+            else
+            {
+                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_WITHOUT_NEWLINE);
+            }
 
             out.close();
             /// Destroy task queue first, to assure that it does not hold references to buffers anymore
