@@ -16,4 +16,5 @@ add_source_files(nes-systest-lib
         SystestGrpc.cpp
         SystestState.cpp
         SystestResultCheck.cpp
+        SystestConfiguration.cpp
 )
