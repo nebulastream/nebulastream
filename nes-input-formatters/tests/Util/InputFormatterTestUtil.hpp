@@ -168,8 +168,10 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
                 expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
                 NES_DEBUG(
                     "\n Actual result buffer:\n{} Expected result buffer:\n{}",
-                    actualResultTestBuffer.toString(testHandle.schema, false, true),
-                    expectedTestBuffer.toString(testHandle.schema, false, true));
+                    actualResultTestBuffer.toString(
+                        testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
+                    expectedTestBuffer.toString(
+                        testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
             isValid &= TestUtil::checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
