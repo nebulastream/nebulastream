@@ -14,11 +14,14 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
+#include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 
 namespace NES::Configuration
 {
@@ -61,19 +64,6 @@ connections.  Valid values include dns:///localhost:1234,
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:
-    std::vector<BaseOption*> getOptions() override
-    {
-        return {
-            &testsDiscoverDir,
-            &directlySpecifiedTestFiles,
-            &testFileExtension,
-            &workingDir,
-            &randomQueryOrder,
-            &numberConcurrentQueries,
-            &testGroups,
-            &testDataDir,
-            &excludeGroups,
-            &grpcAddressUri};
-    }
+    std::vector<BaseOption*> getOptions() override;
 };
 }
