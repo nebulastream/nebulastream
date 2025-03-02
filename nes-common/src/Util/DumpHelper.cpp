@@ -24,14 +24,14 @@
 namespace NES
 {
 
-void DumpHelper::dump(const std::string_view& name, const std::string_view& output) const
+void DumpHelper::dump(std::string_view name, std::string_view output) const
 {
     if (this->dumpToConsole)
     {
         NES_INFO("DUMP: {} {}", contextIdentifier, name);
         NES_INFO("{}", output);
     }
-    if (this->dumpToFile)
+    if (not output.empty())
     {
         auto fileName = std::string{name};
         std::replace(fileName.begin(), fileName.end(), ' ', '_');
@@ -46,23 +46,32 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
     }
 }
 
-DumpHelper::DumpHelper(std::string contextIdentifier, const bool dumpToConsole, const bool dumpToFile, std::string outputPath)
-    : contextIdentifier(std::move(contextIdentifier))
-    , dumpToConsole(dumpToConsole)
-    , dumpToFile(dumpToFile)
-    , outputPath(std::move(outputPath))
+DumpHelper::DumpHelper(std::string contextIdentifier, const bool dumpToConsole)
+    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), outputPath(std::string())
 {
-    std::string path = this->outputPath.empty() ? std::filesystem::current_path().string() : this->outputPath;
-    path = path + std::filesystem::path::preferred_separator + "dump";
-    if (!std::filesystem::is_directory(path))
+}
+
+DumpHelper::DumpHelper(std::string contextIdentifier, const bool dumpToConsole, std::string outputPath)
+    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), outputPath(std::move(outputPath))
+{
+    try /// std::filesystem::current_path() can fail
     {
-        std::filesystem::create_directory(path);
+        std::string path = this->outputPath.empty() ? std::filesystem::current_path().string() : this->outputPath;
+        path = path + std::filesystem::path::preferred_separator + "dump";
+        if (!std::filesystem::is_directory(path))
+        {
+            std::filesystem::create_directory(path);
+        }
+        path = path + std::filesystem::path::preferred_separator
+            + fmt::format("{}-{:%F %T}", this->contextIdentifier, std::chrono::system_clock::now());
+        if (!std::filesystem::is_directory(path))
+        {
+            std::filesystem::create_directory(path);
+        }
     }
-    path = path + std::filesystem::path::preferred_separator
-        + fmt::format("{}-{:%F %T}", this->contextIdentifier, std::chrono::system_clock::now());
-    if (!std::filesystem::is_directory(path))
+    catch (const std::filesystem::filesystem_error&)
     {
-        std::filesystem::create_directory(path);
+        NES_WARNING("DumpHelper was configured to log to the file '{}', but could not create a valid path.", outputPath);
     }
 }
 
