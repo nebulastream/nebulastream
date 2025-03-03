@@ -150,7 +150,7 @@ struct ConfigParametersTCP
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
+            HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
@@ -204,9 +204,6 @@ private:
     std::string socketPort;
     int socketType;
     int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
