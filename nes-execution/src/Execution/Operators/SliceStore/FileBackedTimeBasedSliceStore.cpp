@@ -31,14 +31,26 @@
 namespace NES::Runtime::Execution
 {
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
-    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
+    const uint64_t windowSize,
+    const uint64_t windowSlide,
+    const uint8_t numberOfInputOrigins,
+    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& leftMemoryLayout,
+    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& rightMemoryLayout)
+    : leftMemoryLayout(leftMemoryLayout)
+    , rightMemoryLayout(rightMemoryLayout)
+    , sliceAssigner(windowSize, windowSlide)
+    , sequenceNumber(SequenceNumber::INITIAL)
+    , numberOfInputOrigins(numberOfInputOrigins)
 {
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other)
     : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfInputOrigins(other.numberOfInputOrigins)
 {
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
+    *slicesWriteLocked = *otherSlicesReadLocked;
+    *windowsWriteLocked = *otherWindowsReadLocked;
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
@@ -46,10 +58,19 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfInputOrigins(std::move(other.numberOfInputOrigins))
 {
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
+    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(const FileBackedTimeBasedSliceStore& other)
 {
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
+    *slicesWriteLocked = *otherSlicesReadLocked;
+    *windowsWriteLocked = *otherWindowsReadLocked;
+
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfInputOrigins = other.numberOfInputOrigins;
@@ -58,6 +79,11 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(const Fi
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
 {
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
+    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
+
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfInputOrigins = std::move(other.numberOfInputOrigins);
@@ -73,7 +99,9 @@ std::vector<WindowInfo> FileBackedTimeBasedSliceStore::getAllWindowInfosForSlice
     const auto windowSize = sliceAssigner.getWindowSize();
     const auto windowSlide = sliceAssigner.getWindowSlide();
 
-    const auto firstWindowEnd = sliceEnd;
+    /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
+    /// In our window model, a window is always the size of the window size.
+    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
     const auto lastWindowEnd = sliceStart + windowSize;
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
@@ -104,7 +132,9 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     }
 
     /// We assume that only one slice is created per timestamp
-    auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
+    const auto newSlices = createNewSlice(sliceStart, sliceEnd);
+    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our default time-based slice store.");
+    auto newSlice = newSlices[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
@@ -227,7 +257,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    std::vector<SliceEnd> const slicesToDelete;
+    const std::vector<SliceEnd> slicesToDelete;
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
@@ -267,8 +297,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaDa
     {
         auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, threadId);
         auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, threadId);
-        slice->writeToFile(leftFileWriter, rightFileWriter, threadId);
-        slice->truncate(threadId);
+        slice->writeToFile(leftFileWriter, rightFileWriter, leftMemoryLayout, rightMemoryLayout, threadId);
+        slice->truncate(leftMemoryLayout, rightMemoryLayout, threadId);
     }
 
     // TODO predictiveRead()
@@ -280,7 +310,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(std::shared_ptr<Slice> sl
     {
         auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
         auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
-        slice->readFromFile(leftFileReader, rightFileReader, WorkerThreadId(threadId));
+        slice->readFromFile(leftFileReader, rightFileReader, leftMemoryLayout, rightMemoryLayout, WorkerThreadId(threadId));
     }
 }
 

@@ -41,16 +41,32 @@ public:
     void combinePagedVectors();
 
     /// Writes the projected fields of all tuples to fileStorage.
-    void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) override;
+    void writeToFile(
+        FileWriter& leftFileWriter,
+        FileWriter& rightFileWriter,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
+        WorkerThreadId threadId) override;
 
     /// Reads the projected fields of all tuples from fileStorage.
-    void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) override;
+    void readFromFile(
+        FileReader& leftFileReader,
+        FileReader& rightFileReader,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
+        WorkerThreadId threadId) override;
 
     /// Deletes the projected fields of all tuples.
-    void truncate(WorkerThreadId threadId) override;
+    void truncate(
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
+        WorkerThreadId threadId) override;
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes
-    size_t getStateSizeInBytesForThreadId(WorkerThreadId threadId) override;
+    size_t getStateSizeInBytesForThreadId(
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
+        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
+        WorkerThreadId threadId) override;
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;

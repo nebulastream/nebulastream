@@ -34,11 +34,11 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        appendPage();
+        appendPage(bufferProvider, memoryLayout);
     }
 }
 
-void PagedVector::appendPage()
+void PagedVector::appendPage(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
     if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
     {
@@ -118,11 +118,6 @@ const Memory::TupleBuffer& PagedVector::getFirstPage() const
 uint64_t PagedVector::getNumberOfPages() const
 {
     return pages.size();
-}
-
-Memory::MemoryLayouts::MemoryLayoutPtr PagedVector::getMemoryLayout() const
-{
-    return memoryLayout;
 }
 
 std::vector<Memory::TupleBuffer>& PagedVector::getPages()

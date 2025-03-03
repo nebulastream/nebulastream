@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
@@ -48,6 +49,15 @@ void checkWindowsTriggerProxy(
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
+void updateSlicesProxy(OperatorHandler* ptrOpHandler, const WorkerThreadId workerThreadId, const Timestamp watermarkTs)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore&>(opHandler->getSliceAndWindowStore());
+    sliceStore.updateSlices(SliceStoreMetaData(workerThreadId, watermarkTs));
+}
+
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -76,6 +86,8 @@ void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer&) c
         executionCtx.chunkNumber,
         executionCtx.lastChunk,
         executionCtx.originId);
+
+    invoke(updateSlicesProxy, operatorHandlerMemRef, executionCtx.getWorkerThreadId(), executionCtx.watermarkTs);
 }
 
 void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

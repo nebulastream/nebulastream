@@ -15,8 +15,6 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -34,9 +32,6 @@ public:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
-
-    /// Passes/Emits slices that are ready to the second join phase (NLJProbe) for further processing
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
     const QueryCompilation::JoinBuildSideType joinBuildSide;

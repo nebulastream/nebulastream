@@ -15,11 +15,9 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -53,7 +51,6 @@ public:
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayout() const;
     [[nodiscard]] std::vector<Memory::TupleBuffer>& getPages();
 
 private:
