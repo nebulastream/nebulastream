@@ -31,7 +31,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-#include <cxx_bridge/lib.h>
+#include <network/lib.h>
 #include <Bridge.hpp>
 
 namespace NES::Sources

@@ -25,7 +25,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <cxx_bridge/lib.h>
+#include <network/lib.h>
 #include <folly/Synchronized.h>
 #include <rust/cxx.h>
 #include <PipelineExecutionContext.hpp>

@@ -30,7 +30,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cxx_bridge/lib.h>
+#include <network/lib.h>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>

@@ -20,6 +20,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 
 extern void init_receiver_server_string(std::string connection);
+extern void init_sender_server();
 
 int main(const int argc, const char* argv[])
 {
@@ -31,7 +32,11 @@ int main(const int argc, const char* argv[])
         {
             return 0;
         }
-        init_receiver_server_string(configuration->dataUri.getValue());
+        if (!configuration->dataUri.getValue().empty())
+        {
+            init_receiver_server_string(configuration->dataUri.getValue());
+            init_sender_server();
+        }
 
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 

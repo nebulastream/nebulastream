@@ -1,2 +1,2 @@
 query: |
-  SELECT * FROM stream INTO print_sink
+  SELECT * FROM tcp_source INTO slow_csv_sink

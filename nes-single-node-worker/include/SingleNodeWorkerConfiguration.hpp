@@ -23,7 +23,11 @@ namespace NES::Configuration
 class SingleNodeWorkerConfiguration final : public Configurations::BaseConfiguration
 {
 public:
-    Configurations::StringOption dataUri = {"data", "localhost:9090", "DataPort"};
+    Configurations::StringOption dataUri
+        = {"data",
+           "",
+           "DataPort. If the DataPort is empty the receiver server will not be started and it is not possible to connect via the network "
+           "source."};
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
     Configurations::StringOption grpcAddressUri
         = {"grpc",
