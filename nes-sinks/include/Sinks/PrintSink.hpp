@@ -59,18 +59,25 @@ protected:
 private:
     folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<CSVFormat> outputParser;
+
+    uint32_t ingestion = 0;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
+    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+        "ingestion", 0, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(INGESTION, config);
+        }};
+
     static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
         INPUT_FORMAT{"inputFormat", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
                          return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config);
                      }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
 };
 
 }
