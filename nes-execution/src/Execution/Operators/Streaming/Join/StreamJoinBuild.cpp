@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
@@ -33,6 +34,15 @@
 namespace NES::Runtime::Execution::Operators
 {
 
+void updateSlicesProxy(OperatorHandler* ptrOpHandler, const WorkerThreadId workerThreadId, const Timestamp watermarkTs)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    const auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore&>(opHandler->getSliceAndWindowStore());
+    sliceStore.updateSlices(SliceStoreMetaData(workerThreadId, watermarkTs));
+}
+
 StreamJoinBuild::StreamJoinBuild(
     const uint64_t operatorHandlerIndex,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
@@ -40,5 +50,12 @@ StreamJoinBuild::StreamJoinBuild(
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
     : WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction)), joinBuildSide(joinBuildSide), memoryProvider(memoryProvider)
 {
+}
+
+void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
+{
+    /// Update the watermark for the nlj operator and trigger slices
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    invoke(updateSlicesProxy, operatorHandlerMemRef, executionCtx.getWorkerThreadId(), executionCtx.watermarkTs);
 }
 }

@@ -15,28 +15,33 @@
 #pragma once
 
 #include <fstream>
-#include <string>
-#include <vector>
 
-class FileWriter {
+enum FileLayout : uint8_t
+{
+    NO_SEPARATION,
+    SEPARATE_FILES_KEYS,
+    SEPARATE_FILES_PAYLOAD
+};
+
+class FileWriter
+{
 public:
-    explicit FileWriter(const std::string& file_path);
+    explicit FileWriter(const std::string& filePath);
     ~FileWriter();
 
-    template<typename T>
-    void write(const T& data);
+    void write(const void* data, std::size_t size);
 
 private:
     std::ofstream file_;
 };
 
-class FileReader {
+class FileReader
+{
 public:
-    explicit FileReader(const std::string& file_path);
+    explicit FileReader(const std::string& filePath);
     ~FileReader();
 
-    template<typename T>
-    std::vector<T> read();
+    std::size_t read(void* dest, std::size_t size);
 
 private:
     std::ifstream file_;

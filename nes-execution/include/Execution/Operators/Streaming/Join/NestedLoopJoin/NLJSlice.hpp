@@ -15,15 +15,11 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
-#include <mutex>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-
 namespace NES::Runtime::Execution
 {
 
@@ -45,13 +41,16 @@ public:
     void combinePagedVectors();
 
     /// Writes the projected fields of all tuples to fileStorage.
-    void writeTuplesToDisk(FileStorage fileStorage, std::vector<std::string> projections) override;
+    void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) override;
 
     /// Reads the projected fields of all tuples from fileStorage.
-    void readTuplesFromDisk(FileStorage fileStorage, std::vector<std::string> projections) override;
+    void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) override;
 
     /// Deletes the projected fields of all tuples.
-    void truncate(std::vector<std::string> projections) override;
+    void truncate(WorkerThreadId threadId) override;
+
+    /// Returns the size of the pages in the left and right PagedVectors in bytes
+    size_t getStateSizeInBytesForThreadId(WorkerThreadId threadId) override;
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;

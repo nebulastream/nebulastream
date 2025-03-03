@@ -100,25 +100,84 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::writeTuplesToDisk(FileStorage fileStorage, FileLayout fileLayout)
+void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, const WorkerThreadId threadId)
 {
-    auto leftMemoryLayout = leftPagedVectors[0]->getMemoryLayout();
-    for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
+    const auto leftTupleSize = leftPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getTupleSize();
+    const auto leftPages = leftPagedVectors[threadId.getRawValue()]->getPages();
+    for (auto pageIdx = 0UL; pageIdx < leftPages.size(); ++pageIdx)
     {
-        for (auto j = 0UL; j < leftPagedVectors[i]->getTotalNumberOfEntries(); ++j)
-        {
+        // TODO write variable sized data in place to file
+        auto page = leftPages[pageIdx];
+        leftFileWriter.write(page.getBuffer(), page.getNumberOfTuples() * leftTupleSize);
 
-        }
     }
 
-    for (uint64_t i = 1; i < rightPagedVectors.size(); ++i)
+    const auto rightTupleSize = rightPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getTupleSize();
+    const auto rightPages = rightPagedVectors[threadId.getRawValue()]->getPages();
+    for (auto pageIdx = 0UL; pageIdx < rightPages.size(); ++pageIdx)
     {
-        auto rightNumberOfEntries = rightPagedVectors[i]->getTotalNumberOfEntries();
+        // TODO write variable sized data in place to file
+        auto page = rightPages[pageIdx];
+        rightFileWriter.write(page.getBuffer(), page.getNumberOfTuples() * rightTupleSize);
     }
 }
 
-void NLJSlice::readTuplesFromDisk(FileStorage fileStorage, FileLayout fileLayout)
+void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, const WorkerThreadId threadId)
 {
+    leftPagedVectors[threadId.getRawValue()]->appendPage();
+    auto lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
+    const auto leftNumTuplesPerPage = leftPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getCapacity();
+    const auto leftTupleSize = leftPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getTupleSize();
+
+    while (const auto bytesRead = leftFileReader.read(lastPageLeft.getBuffer(), leftNumTuplesPerPage * leftTupleSize))
+    {
+        // TODO read variable sized data in place from file
+        lastPageLeft.setNumberOfTuples(bytesRead / leftTupleSize);
+        leftPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+        lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
+    }
+
+    rightPagedVectors[threadId.getRawValue()]->appendPage();
+    auto lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
+    const auto rightNumTuplesPerPage = rightPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getCapacity();
+    const auto rightTupleSize = rightPagedVectors[threadId.getRawValue()]->getMemoryLayout()->getTupleSize();
+
+    while (const auto bytesRead = rightFileReader.read(lastPageRight.getBuffer(), rightNumTuplesPerPage * rightTupleSize))
+    {
+        // TODO read variable sized data in place from file
+        lastPageRight.setNumberOfTuples(bytesRead / rightTupleSize);
+        rightPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+        lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
+    }
+}
+
+void NLJSlice::truncate(const WorkerThreadId threadId)
+{
+    leftPagedVectors[threadId.getRawValue()]->getPages().clear();
+    leftPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+
+    rightPagedVectors[threadId.getRawValue()]->getPages().clear();
+    rightPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+}
+
+uint64_t NLJSlice::getNumberOfWorkerThreads()
+{
+    return leftPagedVectors.size();
+}
+
+size_t NLJSlice::getStateSizeInBytesForThreadId(const WorkerThreadId threadId)
+{
+    const auto leftPos = threadId % leftPagedVectors.size();
+    const auto* const leftPagedVector = leftPagedVectors[leftPos].get();
+    const auto rightPos = threadId % rightPagedVectors.size();
+    const auto* const rightPagedVector = rightPagedVectors[rightPos].get();
+
+    const auto leftPageSize = leftPagedVector->getMemoryLayout()->getBufferSize();
+    const auto leftNumPages = leftPagedVector->getNumberOfPages();
+    const auto rightPageSize = rightPagedVector->getMemoryLayout()->getBufferSize();
+    const auto rightNumPages = rightPagedVector->getNumberOfPages();
+
+    return leftPageSize * leftNumPages + rightPageSize * rightNumPages;
 }
 
 }

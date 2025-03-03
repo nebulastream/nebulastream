@@ -17,4 +17,32 @@
 namespace NES::Runtime::Execution
 {
 
+FileWriter MemoryController::getLeftFileWriter(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+{
+    std::stringstream ss;
+    ss << "left_" << sliceEnd << "_" << threadId << ".dat";
+    return FileWriter(ss.str());
+}
+
+FileWriter MemoryController::getRightFileWriter(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+{
+    std::stringstream ss;
+    ss << "right_" << sliceEnd << "_" << threadId << ".dat";
+    return FileWriter(ss.str());
+}
+
+FileReader MemoryController::getLeftFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+{
+    std::stringstream ss;
+    ss << "left_" << sliceEnd << "_" << threadId << ".dat";
+    return FileReader(ss.str());
+}
+
+FileReader MemoryController::getRightFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+{
+    std::stringstream ss;
+    ss << "right_" << sliceEnd << "_" << threadId << ".dat";
+    return FileReader(ss.str());
+}
+
 }

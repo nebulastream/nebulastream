@@ -25,16 +25,14 @@ class MemoryController
 public:
     MemoryController() = default;
 
-    bool writeSliceToFile(SliceEnd sliceEnd);
+    static FileWriter getLeftFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
+    static FileWriter getRightFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
 
-    bool readSliceFromFile(SliceEnd sliceEnd);
-
-    FileLayout getFileLayout(SliceEnd sliceEnd);
-    FileStorage getFileStorage(SliceEnd sliceEnd);
-    std::vector<std::string> getProjections(SliceEnd sliceEnd);
+    static FileReader getLeftFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
+    static FileReader getRightFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
 
 private:
-    std::map<SliceEnd, std::string> filePathForSlice;
+    //std::map<SliceEnd, std::string> filePathForSlice;
 
     // IO-Auslastung
     // StatisticsEngine

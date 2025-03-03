@@ -15,8 +15,9 @@
 #pragma once
 
 #include <cstdint>
-#include <Time/Timestamp.hpp>
 #include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Runtime
 {
@@ -58,9 +59,12 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    virtual void writeToFile(FileStorage fileStorage, FileLayout fileLayout);
-    virtual void readFromFile(FileStorage fileStorage, FileLayout fileLayout);
-    virtual void truncate(std::vector<std::string> projections);
+    virtual void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) = 0;
+    virtual void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) = 0;
+    virtual void truncate(WorkerThreadId threadId) = 0;
+
+    virtual uint64_t getNumberOfWorkerThreads() = 0;
+    virtual size_t getStateSizeInBytesForThreadId(WorkerThreadId workerThreadId) = 0;
 
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;

@@ -34,7 +34,6 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
     : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
 {
-    // TODO init memCtrl
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other)
@@ -93,7 +92,6 @@ FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
 std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCreate(
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
-    // TODO wie bekomme ich alle slices wenn manche vllt auf der disk liegen
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
@@ -158,12 +156,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     {
         // TODO fetch slice if not done in getTriggerableWindowSlices() or getAllNonTriggeredSlices()
         auto slice = slicesReadLocked->find(sliceEnd)->second;
-        if (memCtrl.readSliceFromFile(sliceEnd))
-        {
-            const auto fileStorage = memCtrl.getFileStorage(sliceEnd);
-            const auto fileLayout = memCtrl.getFileLayout(sliceEnd);
-            slice->readFromFile(fileStorage, fileLayout);
-        }
+        readSliceFromFiles(slice);
         return slice;
     }
     return {};
@@ -219,6 +212,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
         if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
+            // TODO delete state from ssd if there is any
             windowsWriteLocked->erase(windowsLockedIt++);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
@@ -264,19 +258,30 @@ uint64_t FileBackedTimeBasedSliceStore::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void FileBackedTimeBasedSliceStore::writeSlicesToFile(const std::vector<std::shared_ptr<Slice>>& slices)
+void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaData)
 {
-    for (const auto& slice : slices)
+    const auto threadId = metaData.threadId;
+
+    auto slicesLocked = slices.rlock();
+    for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto sliceEnd = slice->getSliceEnd();
-        if (memCtrl.writeSliceToFile(sliceEnd))
-        {
-            const auto fileStorage = memCtrl.getFileStorage(sliceEnd);
-            const auto fileLayout = memCtrl.getFileLayout(sliceEnd);
-            slice->writeToFile(fileStorage, fileLayout);
-        }
+        auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, threadId);
+        auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, threadId);
+        slice->writeToFile(leftFileWriter, rightFileWriter, threadId);
+        slice->truncate(threadId);
     }
+
+    // TODO predictiveRead()
 }
 
+void FileBackedTimeBasedSliceStore::readSliceFromFiles(std::shared_ptr<Slice> slice) const
+{
+    for (auto threadId = 0UL; threadId < slice->getNumberOfWorkerThreads(); ++threadId)
+    {
+        auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
+        auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
+        slice->readFromFile(leftFileReader, rightFileReader, WorkerThreadId(threadId));
+    }
+}
 
 }

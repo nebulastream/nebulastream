@@ -96,6 +96,7 @@ if (NOT CODE_COVERAGE)
     endforeach ()
 
     ## We run all join and aggregation tests with different no. worker threads
+    # TODO(nikla44): port_window_aggregation-ns-benchmarking
     set(workerThreads 1 2 4 8)
     foreach (workerThreads IN LISTS workerThreads)
         ExternalData_Add_Test(TEST_DATA

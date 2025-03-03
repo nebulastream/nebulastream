@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include "DefaultTimeBasedSliceStore.hpp"
+
+
 #include <atomic>
 #include <cstdint>
 #include <functional>
@@ -34,11 +37,10 @@
 namespace NES::Runtime::Execution
 {
 
-/// This struct stores a slice ptr and the state. We require this information, as we have to know the state of a slice for a given window
-struct SlicesAndState
+struct SliceStoreMetaData
 {
-    std::vector<std::shared_ptr<Slice>> windowSlices;
-    WindowInfoState windowState;
+    WorkerThreadId threadId;
+    Timestamp timestamp;
 };
 
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
@@ -61,24 +63,10 @@ public:
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
-    void update(MetatData metaData)
-    {
-        /// building hashmap of sizes
-        const auto threadId = metaData.threadId;
-
-        std::map<SliceEnd, size_t> someCoolMap;
-        auto slicesLocked = slices.rlock();
-        for (const auto& [sliceEnd, slice] : *slicesLocked)
-        {
-            if (slice.)
-            someCoolMap.emplace({slice->getSliceEnd(), slice.getStateSizeWOrkethread(threadId)});
-        }
-
-
-    }
+    void updateSlices(SliceStoreMetaData metaData);
 
 private:
-    void writeSlicesToFile(const std::vector<std::shared_ptr<Slice>>& slices);
+    void readSliceFromFiles(std::shared_ptr<Slice> slice) const;
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;

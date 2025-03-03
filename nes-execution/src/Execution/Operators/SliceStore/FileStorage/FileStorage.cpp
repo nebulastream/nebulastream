@@ -13,54 +13,53 @@
 */
 
 #include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
-#include <sstream>
 
-// Writer Implementation
-FileWriter::FileWriter(const std::string& file_path) {
-    file_.open(file_path, std::ios::out | std::ios::app);
-    if (!file_.is_open()) {
-        throw std::ios_base::failure("Failed to open file for writing");
+FileWriter::FileWriter(const std::string& filePath) : file_(filePath, std::ios::out | std::ios::app | std::ios::binary)
+{
+    if (!file_.is_open())
+    {
+        throw std::ios_base::failure("Failed to open file");
     }
 }
 
-FileWriter::~FileWriter() {
-    if (file_.is_open()) {
+FileWriter::~FileWriter()
+{
+    if (file_.is_open())
+    {
         file_.close();
     }
 }
 
-template<typename T>
-void FileWriter::write(const T& data) {
-    if (file_.is_open()) {
-        file_ << data << "\n";
+void FileWriter::write(const void* data, const std::size_t size)
+{
+    if (!file_.write(static_cast<const char*>(data), size))
+    {
+        throw std::ios_base::failure("Failed to write to file");
     }
 }
 
-// Reader Implementation
-FileReader::FileReader(const std::string& file_path) {
-    file_.open(file_path, std::ios::in);
-    if (!file_.is_open()) {
-        throw std::ios_base::failure("Failed to open file for reading");
+FileReader::FileReader(const std::string& filePath) : file_(filePath, std::ios::in | std::ios::binary)
+{
+    if (!file_.is_open())
+    {
+        throw std::ios_base::failure("Failed to open file");
     }
 }
 
-FileReader::~FileReader() {
-    if (file_.is_open()) {
+FileReader::~FileReader()
+{
+    if (file_.is_open())
+    {
         file_.close();
     }
 }
 
-template<typename T>
-std::vector<T> FileReader::read() {
-    std::vector<T> data_list;
-    std::string line;
-
-    while (std::getline(file_, line)) {
-        std::istringstream iss(line);
-        T data;
-        iss >> data;
-        data_list.push_back(data);
+std::size_t FileReader::read(void* dest, const std::size_t size)
+{
+    file_.read(static_cast<char*>(dest), size);
+    if (file_.fail() && !file_.eof())
+    {
+        throw std::ios_base::failure("Failed to read from file");
     }
-
-    return data_list;
+    return file_.gcount();
 }
