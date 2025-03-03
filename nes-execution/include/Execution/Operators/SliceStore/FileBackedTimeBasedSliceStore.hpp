@@ -43,12 +43,7 @@ struct SliceStoreMetaData
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    FileBackedTimeBasedSliceStore(
-        uint64_t windowSize,
-        uint64_t windowSlide,
-        uint8_t numberOfInputOrigins,
-        const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& leftMemoryLayout,
-        const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& rightMemoryLayout);
+    FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
     FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);
@@ -74,8 +69,6 @@ private:
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
     MemoryController memCtrl;
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout;
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

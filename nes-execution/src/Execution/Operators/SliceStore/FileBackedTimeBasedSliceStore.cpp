@@ -22,6 +22,7 @@
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -31,16 +32,8 @@
 namespace NES::Runtime::Execution
 {
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
-    const uint64_t windowSize,
-    const uint64_t windowSlide,
-    const uint8_t numberOfInputOrigins,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& leftMemoryLayout,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& rightMemoryLayout)
-    : leftMemoryLayout(leftMemoryLayout)
-    , rightMemoryLayout(rightMemoryLayout)
-    , sliceAssigner(windowSize, windowSlide)
-    , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfInputOrigins(numberOfInputOrigins)
+    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
+    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
 {
 }
 
@@ -297,8 +290,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaDa
     {
         auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, threadId);
         auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, threadId);
-        slice->writeToFile(leftFileWriter, rightFileWriter, leftMemoryLayout, rightMemoryLayout, threadId);
-        slice->truncate(leftMemoryLayout, rightMemoryLayout, threadId);
+        slice->writeToFile(leftFileWriter, rightFileWriter, threadId);
+        slice->truncate(threadId);
     }
 
     // TODO predictiveRead()
@@ -306,11 +299,13 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaDa
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(std::shared_ptr<Slice> slice) const
 {
-    for (auto threadId = 0UL; threadId < slice->getNumberOfWorkerThreads(); ++threadId)
+    // TODO this SliceStore is only in use with NLJ operator
+    auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
+    for (auto threadId = 0UL; threadId < nljSlice->getNumberOfWorkerThreads(); ++threadId)
     {
         auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
         auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
-        slice->readFromFile(leftFileReader, rightFileReader, leftMemoryLayout, rightMemoryLayout, WorkerThreadId(threadId));
+        slice->readFromFile(leftFileReader, rightFileReader, WorkerThreadId(threadId));
     }
 }
 

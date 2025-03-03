@@ -60,33 +60,9 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    virtual void writeToFile(
-        FileWriter& leftFileWriter,
-        FileWriter& rightFileWriter,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-        WorkerThreadId threadId)
-        = 0;
-    virtual void readFromFile(
-        FileReader& leftFileReader,
-        FileReader& rightFileReader,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-        WorkerThreadId threadId)
-        = 0;
-    virtual void truncate(
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-        WorkerThreadId threadId)
-        = 0;
-
-    virtual size_t getStateSizeInBytesForThreadId(
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-        std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-        WorkerThreadId workerThreadId)
-        = 0;
-
-    virtual uint64_t getNumberOfWorkerThreads() = 0;
+    virtual void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) = 0;
+    virtual void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) = 0;
+    virtual void truncate(WorkerThreadId threadId) = 0;
 
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;

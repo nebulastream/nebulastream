@@ -26,7 +26,14 @@
 namespace NES::Runtime::Execution
 {
 
-NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads) : Slice(sliceStart, sliceEnd)
+NLJSlice::NLJSlice(
+    const SliceStart sliceStart,
+    const SliceEnd sliceEnd,
+    const uint64_t numberOfWorkerThreads,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& leftMemoryLayout,
+    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout>& rightMemoryLayout)
+    : Slice(sliceStart, sliceEnd), bufferProvider(bufferProvider), leftMemoryLayout(leftMemoryLayout), rightMemoryLayout(rightMemoryLayout)
 {
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
@@ -100,12 +107,7 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::writeToFile(
-    FileWriter& leftFileWriter,
-    FileWriter& rightFileWriter,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-    const WorkerThreadId threadId)
+void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, const WorkerThreadId threadId)
 {
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
     const auto leftPages = leftPagedVectors[threadId.getRawValue()]->getPages();
@@ -126,17 +128,9 @@ void NLJSlice::writeToFile(
     }
 }
 
-void NLJSlice::readFromFile(
-    FileReader& leftFileReader,
-    FileReader& rightFileReader,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-    const WorkerThreadId threadId)
+void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, const WorkerThreadId threadId)
 {
-    (void)leftMemoryLayout;
-    (void)rightMemoryLayout;
-
-    // TODO leftPagedVectors[threadId.getRawValue()]->appendPage();
+    leftPagedVectors[threadId.getRawValue()]->appendPage(bufferProvider, leftMemoryLayout.get());
     auto lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
     const auto leftNumTuplesPerPage = leftMemoryLayout->getCapacity();
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
@@ -145,11 +139,11 @@ void NLJSlice::readFromFile(
     {
         // TODO read variable sized data in place from file
         lastPageLeft.setNumberOfTuples(bytesRead / leftTupleSize);
-        // TODO leftPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+        leftPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
         lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
     }
 
-    // TODO rightPagedVectors[threadId.getRawValue()]->appendPage();
+    rightPagedVectors[threadId.getRawValue()]->appendPage(bufferProvider, rightMemoryLayout.get());
     auto lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
     const auto rightNumTuplesPerPage = rightMemoryLayout->getCapacity();
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
@@ -158,30 +152,21 @@ void NLJSlice::readFromFile(
     {
         // TODO read variable sized data in place from file
         lastPageRight.setNumberOfTuples(bytesRead / rightTupleSize);
-        // TODO rightPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+        rightPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
         lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
     }
 }
 
-void NLJSlice::truncate(
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-    const WorkerThreadId threadId)
+void NLJSlice::truncate(const WorkerThreadId threadId)
 {
-    (void)leftMemoryLayout;
-    (void)rightMemoryLayout;
-
     leftPagedVectors[threadId.getRawValue()]->getPages().clear();
-    // TODO leftPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+    leftPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
 
     rightPagedVectors[threadId.getRawValue()]->getPages().clear();
-    //TODO rightPagedVectors[threadId.getRawValue()]->appendPageIfFull();
+    rightPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
 }
 
-size_t NLJSlice::getStateSizeInBytesForThreadId(
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> leftMemoryLayout,
-    const std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> rightMemoryLayout,
-    const WorkerThreadId threadId)
+size_t NLJSlice::getStateSizeInBytesForThreadId(const WorkerThreadId threadId) const
 {
     const auto leftPos = threadId % leftPagedVectors.size();
     const auto* const leftPagedVector = leftPagedVectors[leftPos].get();
@@ -196,7 +181,7 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     return leftPageSize * leftNumPages + rightPageSize * rightNumPages;
 }
 
-uint64_t NLJSlice::getNumberOfWorkerThreads()
+uint64_t NLJSlice::getNumberOfWorkerThreads() const
 {
     return leftPagedVectors.size();
 }
