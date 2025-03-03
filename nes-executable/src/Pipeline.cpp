@@ -39,41 +39,10 @@ std::string providerTypeToString(Pipeline::ProviderType providerType) {
     }
 }
 }
-std::string OperatorPipeline::toString() const {
-    std::ostringstream oss;
-    oss << "OperatorPipeline(id: " << id
-        << ", providerType: " << providerTypeToString(providerType) << ", ";
-
-    oss << "scanOperator: ";
-    if (scanOperator)
-        oss << scanOperator->toString();
-    else
-        oss << "null";
-
-    oss << ", operators: [";
-    for (size_t i = 0; i < operators.size(); ++i) {
-        if (operators[i])
-            oss << operators[i]->toString();
-        else
-            oss << "null";
-        if (i < operators.size() - 1)
-            oss << ", ";
-    }
-    oss << "], ";
-
-    oss << "emitOperator: ";
-    if (emitOperator)
-        oss << emitOperator->toString();
-    else
-        oss << "null";
-
-    oss << ")";
-    return oss.str();
-}
 
 std::string SourcePipeline::toString() const {
     std::ostringstream oss;
-    oss << "SourcePipeline(id: " << id
+    oss << "SourcePipeline(id: " << pipelineId
         << ", providerType: " << providerTypeToString(providerType) << ", ";
 
     oss << "sourceOperator: ";
@@ -88,7 +57,7 @@ std::string SourcePipeline::toString() const {
 
 std::string SinkPipeline::toString() const {
     std::ostringstream oss;
-    oss << "SinkPipeline(id: " << id
+    oss << "SinkPipeline(id: " << pipelineId
         << ", providerType: " << providerTypeToString(providerType) << ", ";
 
     oss << "sinkOperator: ";
@@ -102,7 +71,7 @@ std::string SinkPipeline::toString() const {
 }
 
 
-Pipeline::Pipeline() : id(getNextPipelineId()), providerType(ProviderType::Compiler) {};
+Pipeline::Pipeline() : pipelineId(getNextPipelineId()), providerType(ProviderType::Compiler) {};
 
 
 std::ostream& operator<<(std::ostream& os, const Pipeline& t)

@@ -111,15 +111,14 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
     /// PRECONDITION(!pipeline->getQueryPlan()->getRootOperators().empty(), "A pipeline should have at least one root operator");
 
     /// check if the particular pipeline already exist in the pipeline map.
-    if (const auto executable = loweringContext.pipelineToExecutableMap.find(pipeline->id);
+    if (const auto executable = loweringContext.pipelineToExecutableMap.find(pipeline->pipelineId);
         executable != loweringContext.pipelineToExecutableMap.end())
     {
         return executable->second;
     }
     // const auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-    const auto rootOperator = Util::as<OperatorPipeline>(pipeline)->operators[0];
-    const auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
-    auto executablePipeline = ExecutablePipeline::create(PipelineId(pipeline->id), executableOperator->takeStage(), {});
+    auto executableOperator = NES::Util::as<ExecutableOperator>(Util::as<OperatorPipeline>(pipeline)->rootOperator);
+    auto executablePipeline = ExecutablePipeline::create(PipelineId(pipeline->pipelineId), executableOperator.takeStage(), {});
     for (const auto& successor : pipeline->successorPipelines)
     {
         if (auto executableSuccessor = processSuccessor(executablePipeline, successor, pipelineQueryPlan, loweringContext))
@@ -128,7 +127,7 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
         }
     }
 
-    loweringContext.pipelineToExecutableMap.emplace(pipeline->id, executablePipeline);
+    loweringContext.pipelineToExecutableMap.emplace(pipeline->pipelineId, executablePipeline);
     return executablePipeline;
 }
 

@@ -66,8 +66,8 @@ CompiledExecutablePipelineStage::compilePipeline() const
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
         RecordBuffer recordBuffer(recordBufferRef);
 
-        pipeline->operators[0]->open(ctx, recordBuffer);
-        pipeline->operators[0]->close(ctx, recordBuffer);
+        pipeline->rootOperator->open(ctx, recordBuffer);
+        pipeline->rootOperator->close(ctx, recordBuffer);
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
@@ -84,7 +84,7 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->operators[0]->terminate(ctx);
+    pipeline->rootOperator->terminate(ctx);
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -97,7 +97,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->operators[0]->setup(ctx);
+    pipeline->rootOperator->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
 }
 

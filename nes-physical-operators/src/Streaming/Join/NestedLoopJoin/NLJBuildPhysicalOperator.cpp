@@ -95,7 +95,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(
-        localJoinState->nljPagedVectorMemRef, std::move(memoryProvider), executionCtx.pipelineMemoryProvider.bufferProvider);
+        localJoinState->nljPagedVectorMemRef, memoryProvider->clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
 }
 

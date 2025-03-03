@@ -34,6 +34,10 @@ Pipeline::PipelineOperator convertOperator(std::unique_ptr<Operator> op) {
         PhysicalOperator* rawPtr = dynamic_cast<PhysicalOperator*>(op.release());
         INVARIANT(rawPtr, "Conversion to PhysicalOperator failed");
         return Pipeline::PipelineOperator(std::unique_ptr<PhysicalOperator>(rawPtr));
+    } else if (auto src = dynamic_cast<PhysicalOperatorWithSchema*>(op.get())) {
+        PhysicalOperatorWithSchema* rawPtr = dynamic_cast<PhysicalOperatorWithSchema*>(op.release());
+        INVARIANT(rawPtr, "Conversion to PhysicalOperatorWithSchema failed");
+        return Pipeline::PipelineOperator(std::unique_ptr<PhysicalOperatorWithSchema>(rawPtr));
     } else if (auto src = dynamic_cast<SourceDescriptorLogicalOperator*>(op.get())) {
         SourceDescriptorLogicalOperator* rawPtr = dynamic_cast<SourceDescriptorLogicalOperator*>(op.release());
         INVARIANT(rawPtr, "Conversion to SourceDescriptorLogicalOperator failed");
@@ -57,7 +61,7 @@ struct PipeliningVisitor {
         if (currentPipeline->hasOperators()) {
             /// If current pipeline already has operators, create a new pipeline.
             auto newPipeline = std::make_unique<SourcePipeline>();
-            newPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
+            newPipeline->sourceOperator = std::move(std::make_unique<Pipeline::PipelineOperator>(std::move(op)));
             currentPipeline->successorPipelines.push_back(std::move(newPipeline));
             currentPipeline = currentPipeline->successorPipelines.back().get();
         } else {
@@ -86,12 +90,16 @@ struct PipeliningVisitor {
         }
     }
 
+    void operator()(std::unique_ptr<PhysicalOperatorWithSchema>& op)
+    {
+        // noop
+    }
     /// Process PhysicalOperator.
-    void operator()(std::unique_ptr<PhysicalOperator>& op) {
-        if (op->isPipelineBreaker) {
+    void operator()(std::unique_ptr<PhysicalOperatorWithSchema>& op) {
+        if (op->physicalOperator->isPipelineBreaker) {
             /// Pipeline breaker: add operator and create a new pipeline for each child.
             currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
-            auto* physOp = static_cast<OperatorPipeline*>(currentPipeline)->operators.front().get();
+            auto* physOp = static_cast<OperatorPipeline*>(currentPipeline)->rootOperator.get();
             for (auto& child : physOp->releaseChildren()) {
                 auto newPipeline = std::make_unique<OperatorPipeline>();
                 currentPipeline->successorPipelines.push_back(std::move(newPipeline));
@@ -102,7 +110,7 @@ struct PipeliningVisitor {
             }
         } else {
             /// Fusible operator: add operator and process children in the same pipeline.
-            auto children = op->releaseChildren();
+            auto children = op->physicalOperator->releaseChildren();
             currentPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
             for (auto& child : children) {
                 auto childVariant = convertOperator(std::move(child));

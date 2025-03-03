@@ -18,5 +18,5 @@
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 /// Generates code for all pipelines in a pipelined query plan.
-std::shared_ptr<PipelinedQueryPlan> apply(std::shared_ptr<PipelinedQueryPlan> queryPlan);
+PipelinedQueryPlan apply(const PipelinedQueryPlan& queryPlan);
 }

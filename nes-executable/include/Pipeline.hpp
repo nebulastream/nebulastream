@@ -33,8 +33,7 @@ struct Pipeline
         Interpreter,
         Compiler
     };
-    explicit Pipeline(PipelineId pipelineId, QueryId queryId, ProviderType type)
-        : pipelineId(pipelineId), queryId(queryId), providerType(type) {};
+    explicit Pipeline();
 
     /// Virtual destructor to make Pipeline polymorphic
     virtual ~Pipeline() = default;
@@ -43,9 +42,6 @@ struct Pipeline
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& t);
 
     const PipelineId pipelineId;
-    const QueryId queryId;
-
-
     const ProviderType providerType;
 
     std::vector<std::unique_ptr<Pipeline>> successorPipelines;
@@ -53,17 +49,22 @@ struct Pipeline
     std::vector<OperatorHandler> operatorHandlers;
 
     using PipelineOperator = std::variant<std::unique_ptr<PhysicalOperator>,
+                                          std::unique_ptr<PhysicalOperatorWithSchema>,
                                           std::unique_ptr<SourceDescriptorLogicalOperator>,
                                           std::unique_ptr<SinkLogicalOperator>>;
     /// non-owning view on pipeline operator
     using PipelineOperatorView = std::variant<
         const PhysicalOperator*,
+        const PhysicalOperatorWithSchema*,
         const SourceDescriptorLogicalOperator*,
         const SinkLogicalOperator*
         >;
+
     PipelineOperatorView toOperatorView(const Operator* op) {
         if (auto phys = dynamic_cast<const PhysicalOperator*>(op))
             return phys;
+        if (auto physWithSchema = dynamic_cast<const PhysicalOperatorWithSchema*>(op))
+            return physWithSchema;
         if (auto src = dynamic_cast<const SourceDescriptorLogicalOperator*>(op))
             return src;
         if (auto sink = dynamic_cast<const SinkLogicalOperator*>(op))
@@ -76,25 +77,24 @@ struct Pipeline
     virtual void prependOperator(PipelineOperator op) = 0;
 };
 
-
+/// An OperatorPipeline own the root of a chain of PhysicalOperators
 struct OperatorPipeline final : public Pipeline
 {
     void prependOperator(PipelineOperator op) override
     {
         PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperator>>(op), "Should have hold a PhysicalOperator");
-        rootOperators.insert(rootOperators.begin(), std::move(std::get<std::unique_ptr<PhysicalOperator>>(op)));
-        //plan->promoteOperatorToRoot(std::get<std::shared_ptr<PhysicalOperator>>(*op)); ///.emplace_back(std::get<std::shared_ptr<PhysicalOperator>>(*op));
+        std::get<std::unique_ptr<PhysicalOperator>>(op)->setChild(std::move(rootOperator));
+        rootOperator = std::move(std::get<std::unique_ptr<PhysicalOperator>>(op));
     }
-
 
     [[nodiscard]] std::string toString() const override;
 
     bool hasOperators() override
     {
-        return rootOperators.size() != 0;
+        return rootOperator != nullptr;
     }
 
-    std::vector<std::unique_ptr<PhysicalOperator>> rootOperators;
+    std::unique_ptr<PhysicalOperator> rootOperator;
 };
 
 struct SourcePipeline final : public Pipeline

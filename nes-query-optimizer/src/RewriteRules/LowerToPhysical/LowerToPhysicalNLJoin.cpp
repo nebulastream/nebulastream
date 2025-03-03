@@ -202,9 +202,9 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalNLJoin::applyToPhysical(D
         std::move(leftMemoryProvider3),
         std::move(rightMemoryProvider3));
 
-    auto probeOpWrapper = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema()};
-    auto rightBuildOpWrapper = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
-    auto leftBuildOpWrapper = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
+    auto probeOpWrapper = PhysicalOperatorWithSchema{std::move(probeOp), ops->getOutputSchema(), ops->getOutputSchema()};
+    auto rightBuildOpWrapper = PhysicalOperatorWithSchema{std::move(rightBuildOp), ops->getRightSchema(), ops->getOutputSchema()};
+    auto leftBuildOpWrapper = PhysicalOperatorWithSchema{std::move(leftBuildOp), ops->getLeftSchema(), ops->getOutputSchema()};
 
     std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
     physicalOperatorVec.emplace_back(std::move(probeOpWrapper));

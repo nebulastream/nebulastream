@@ -19,63 +19,51 @@
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableOperator.hpp>
-//#include <ExecutablePipelineProviderRegistry.hpp>
+#include <ExecutablePipelineProviderRegistry.hpp>
 #include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 
-// We expected that the operator pipeline root include a NautilusOperator...
-std::shared_ptr<Pipeline> apply(std::shared_ptr<Pipeline>)
+void apply(const OperatorPipeline& pipeline)
 {
-    //const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
-    //PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");
+    const auto& rootOperator = pipeline.rootOperator;
 
-    //const auto& rootOperator = pipelineRoots[0];
-    //nautilus::engine::Options options;
-    //auto identifier = fmt::format(
-    //    "NautilusCompilation-{}-{}-{}",
-    //    pipeline->getDecomposedQueryPlan()->getWorkerId(),
-    //    pipeline->getDecomposedQueryPlan()->getQueryId(),
-    //    pipeline->getPipelineId());
+    nautilus::engine::Options options;
+    auto identifier = fmt::format(
+        "NautilusCompilation-{}-{}",
+        pipeline.queryId,
+        pipeline.pipelineId);
+    options.setOption("toConsole", true);
+    options.setOption("toFile", true);
 
-    /// enable dump to console or file if the compiler options are set
-    //options.setOption(
-    //    "toConsole",
-    //    compilerOptions.dumpMode == NES::Configurations::DumpMode::CONSOLE
-    //        || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
-    //options.setOption(
-    //    "toFile",
-    //    compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE
-    //        || compilerOptions.dumpMode == NES::Configurations::DumpMode::FILE_AND_CONSOLE);
-/*
     auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
-    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getPipelineProviderType(), providerArguments))
+    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(magic_enum::enum_type_name<Pipeline::ProviderType>(pipeline.providerType), providerArguments))
     {
         auto pipelineStage
             = provider.value()->create(pipeline, options);
         /// we replace the current pipeline operators with an executable operator.
         /// this allows us to keep the pipeline structure.
-        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), pipeline->operatorHandlers);
-        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
+        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), pipeline.operatorHandlers);
+        ///pipeline.rootOperator.replaceRootOperator(rootOperator, executableOperator);
+        pipeline.rootOperator = executableOperator;
 
         /// TODO do the actual compilation
-        return pipeline;
-    }*/
+        return;
+    }
     throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", "providerName");
 }
 
-std::shared_ptr<PipelinedQueryPlan> apply(std::shared_ptr<PipelinedQueryPlan> plan)
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> plan)
 {
     for (const auto& pipeline : plan->pipelines)
     {
-        if (Util::instanceOf<OperatorPipeline>(pipeline))
+        if (dynamic_cast<OperatorPipeline*>(pipeline.get()))
         {
             apply(pipeline);
         }
     }
     return plan;
 }
-
 
 }

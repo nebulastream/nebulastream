@@ -13,44 +13,64 @@
 */
 
 #include <memory>
+#include <utility>
+#include <vector>
 #include <Phases/AddScanAndEmitPhase.hpp>
-#include <Plans/OperatorUtil.hpp>
-#include <DefaultEmitPhysicalOperator.hpp>
 #include <DefaultScanPhysicalOperator.hpp>
+#include <DefaultEmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Pipeline.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES::QueryCompilation
 {
 
+namespace helper
+{
+[[nodiscard]] std::vector<Operator*> getAllLeafNodes(Operator& op)
+{
+    std::vector<Operator*> leaves;
+    auto children = op.getChildren();
+    if (children.empty())
+    {
+        leaves.push_back(&op);
+    }
+    else
+    {
+        for (const auto& child : children)
+        {
+            auto childLeaves = getAllLeafNodes(*child);
+            leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
+        }
+    }
+    return leaves;
+}
+}
+
 PipelinedQueryPlan AddScanAndEmitPhase::apply(const PipelinedQueryPlan& pipelineQueryPlan)
 {
-    // Iterate over every pipeline in the query plan.
-    for (auto& pipeline : pipelineQueryPlan.pipelines)
+    for (const auto& pipeline : pipelineQueryPlan.pipelines)
     {
-        // Process only OperatorPipelines.
+        // OperatorPipelines only
         if (auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get()))
         {
+            /// Scan
             PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
+            auto newScan = std::make_unique<DefaultScanPhysicalOperator>(opPipeline->rootOperator,
+                                                                         std::vector<Nautilus::Record::RecordFieldIdentifier>{});
+            opPipeline->prependOperator(std::move(newScan));
 
-            auto& rootOperator = opPipeline->operators.front();
-            if (needsScan(*rootOperator))
+            /// Emit
+            for (auto* leaf : helper::getAllLeafNodes(*opPipeline->rootOperator))
             {
-                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(rootOperator->memoryProviders,
-                    std::vector<Nautilus::Record::RecordFieldIdentifier>{});
-                opPipeline->operators.insert(opPipeline->operators.begin(), std::move(newScan));
-            }
-
-            auto leafOperators = getAllLeafNodes(*rootOperator);
-            for (auto* leaf : leafOperators)
-            {
-                if (auto* leafPhys = dynamic_cast<PhysicalOperator*>(leaf))
+                if (auto* leafPhys = dynamic_cast<Operator*>(leaf); leafPhys)
                 {
-                    if (needsEmit(*leafPhys))
-                    {
-                        auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(std::move(leafPhys->memoryProviders[0]));
-                        leafPhys->children.push_back(std::move(emitOperator));
-                    }
+                    constexpr uint64_t bufferSize = 100; /// TODO change
+                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, );
+                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(memoryProvider);
+                    leafPhys->children.push_back(std::move(emitOperator));
                 }
             }
         }
