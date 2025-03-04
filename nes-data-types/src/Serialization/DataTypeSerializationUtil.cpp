@@ -45,8 +45,7 @@ DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& da
         auto intDataType = DataType::as<Integer>(dataType);
         auto serializedInteger = SerializableDataType_IntegerDetails();
         serializedInteger.set_bits(intDataType->getBits());
-        serializedInteger.set_lowerbound(intDataType->lowerBound);
-        serializedInteger.set_upperbound(intDataType->upperBound);
+        serializedInteger.set_issigned(intDataType->getIsSigned());
         serializedDataType->mutable_details()->PackFrom(serializedInteger);
         serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     }
@@ -55,8 +54,6 @@ DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& da
         auto floatDataType = DataType::as<Float>(dataType);
         auto serializableFloat = SerializableDataType_FloatDetails();
         serializableFloat.set_bits(floatDataType->getBits());
-        serializableFloat.set_lowerbound(floatDataType->lowerBound);
-        serializableFloat.set_upperbound(floatDataType->upperBound);
         serializedDataType->mutable_details()->PackFrom(serializableFloat);
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     }
@@ -95,7 +92,7 @@ std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const S
     {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType.details().UnpackTo(&integerDetails);
-        if (integerDetails.lowerbound() < 0)
+        if (integerDetails.issigned())
         {
             return DataTypeProvider::provideDataType("INT" + std::to_string(integerDetails.bits()));
         }
