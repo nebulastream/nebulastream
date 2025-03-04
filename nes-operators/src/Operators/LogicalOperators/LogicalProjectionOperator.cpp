@@ -38,7 +38,7 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
 {
     const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool {
         return not(
-            NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function));
+            NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function) or NES::Util::instanceOf<NodeFunctionFieldRename>(function));
     };
     bool allFunctionsAreSupported = true;
     for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
@@ -48,7 +48,7 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
     }
     INVARIANT(
         allFunctionsAreSupported,
-        "The Projection operator only supports NodeFunctionFieldAccess and NodeFunctionFieldAssignment functions.");
+        "The Projection operator only supports NodeFunctionFieldAccess, NodeFunctionFieldAssignment and NodeFunctionFieldRename functions.");
 }
 
 const std::vector<std::shared_ptr<NodeFunction>>& LogicalProjectionOperator::getFunctions() const
@@ -73,10 +73,15 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 
 std::string getFieldName(const NodeFunction& function)
 {
-    /// We assert that the projection operator only contains field access and assignment functions in the constructor.
+    /// We assert that the projection operator only contains field access, rename and assignment functions in the constructor.
     if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
     {
         return nodeFunctionFieldAccess->getFieldName();
+    }
+    if (const auto* nodeFunctionFieldRename = dynamic_cast<const NodeFunctionFieldRename*>(&function))
+    {
+        /// TODO(nmlt) Should we instead return the original field name?
+        return nodeFunctionFieldRename->getNewFieldName();
     }
     return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
 }
@@ -116,6 +121,11 @@ bool LogicalProjectionOperator::inferSchema()
         {
             const auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
             outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
+        }
+        else if (NES::Util::instanceOf<NodeFunctionFieldRename>(function))
+        {
+            const auto fieldRename = NES::Util::as<NodeFunctionFieldRename>(function);
+            outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getOriginalField()->getStamp());
         }
         else
         {

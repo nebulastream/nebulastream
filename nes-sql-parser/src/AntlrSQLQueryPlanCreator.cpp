@@ -369,8 +369,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             {
                 /// rename of a single attribute
                 auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(context->getText());
-                helper.functionBuilder.push_back(functionItem);
+                auto renameFunctionItem = functionItem.as(context->getText());
+                helper.functionBuilder.push_back(renameFunctionItem);
             }
             else
             {
@@ -467,18 +467,17 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
     }
-    /// We handle projections AFTER map functions, because:
-    /// SELECT (id * 3) as new_id FROM ...
-    ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
-    if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
-    {
-        queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
-    }
     if (not helper.windowAggs.empty())
     {
         queryPlan = QueryPlanBuilder::addWindowAggregation(queryPlan, helper.windowType, helper.windowAggs, helper.groupByFields);
     }
-
+    /// We handle projections AFTER map functions, because:
+    /// SELECT (id * 3) as new_id FROM ...
+    ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
+    if (!helper.getProjectionFields().empty())
+    {
+        queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
+    }
     if (helper.windowType != nullptr)
     {
         for (auto havingExpr = helper.getHavingClauses().rbegin(); havingExpr != helper.getHavingClauses().rend(); ++havingExpr)
@@ -651,6 +650,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
         helper.implicitMapCountHelper++;
     }
+    ///if (helper.isSelect)
     helper.isFunctionCall = false;
     poppush(helper);
 
