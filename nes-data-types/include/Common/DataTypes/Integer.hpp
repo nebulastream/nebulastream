@@ -36,9 +36,7 @@ public:
      * @param lowerBound the lower bound, which is contained in that integer.
      * @param upperBound the upper bound, which is contained in that integer.
      */
-    Integer(int8_t bits, int64_t lowerBound, uint64_t upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
-    {
-    }
+    Integer(int8_t bits, bool isSigned) noexcept : Numeric(bits), isSigned(isSigned) { }
 
     ~Integer() override = default;
 
@@ -55,8 +53,10 @@ public:
 
     std::string toString() override;
 
-    int64_t lowerBound;
-    uint64_t upperBound;
+    [[nodiscard]] bool getIsSigned() const;
+
+private:
+    bool isSigned;
 };
 
 }

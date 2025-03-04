@@ -73,8 +73,8 @@ std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& l
         /// We need to still cast here to an integer, as the lowerBound is a member of Integer and not of Numeric
         const auto leftInt = Util::as<const Integer>(left);
         const auto rightInt = Util::as<const Integer>(right);
-        const auto leftSign = leftInt.lowerBound < 0;
-        const auto rightSign = rightInt.lowerBound < 0;
+        const auto leftSign = leftInt.getIsSigned();
+        const auto rightSign = rightInt.getIsSigned();
         const auto leftBits = leftInt.getBits();
         const auto rightBits = rightInt.getBits();
         if (leftBits < sizeOfIntInBits && rightBits < sizeOfIntInBits)

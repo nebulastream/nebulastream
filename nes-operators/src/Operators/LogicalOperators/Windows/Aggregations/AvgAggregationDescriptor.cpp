@@ -69,7 +69,7 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
     if (const auto integerDataType = NES::Util::as_if<Integer>(onField->getStamp()); integerDataType)
     {
-        if (integerDataType->lowerBound < 0)
+        if (integerDataType->getIsSigned())
         {
             onField->setStamp(DataTypeProvider::provideDataType(LogicalType::INT64));
         }

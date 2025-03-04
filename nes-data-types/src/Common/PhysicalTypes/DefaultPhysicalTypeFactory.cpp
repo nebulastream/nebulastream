@@ -61,7 +61,7 @@ std::shared_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
 std::shared_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const std::shared_ptr<Integer>& integer)
 {
     using enum NES::BasicPhysicalType::NativeType;
-    if (integer->lowerBound >= 0)
+    if (!integer->getIsSigned())
     {
         if (integer->getBits() <= 8)
         {

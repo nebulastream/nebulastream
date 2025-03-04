@@ -34,9 +34,7 @@ public:
      * @param lowerBound the lower bound, which is contained in that float.
      * @param upperBound the upper bound, which is contained in that float.
      */
-    inline Float(int8_t bits, double lowerBound, double upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
-    {
-    }
+    explicit Float(int8_t bits) noexcept : Numeric(bits) { }
 
     ~Float() override = default;
 
@@ -52,9 +50,5 @@ public:
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
 
     std::string toString() override;
-
-    double lowerBound;
-    double upperBound;
 };
-
 }
