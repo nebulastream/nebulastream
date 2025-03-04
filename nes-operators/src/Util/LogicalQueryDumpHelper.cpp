@@ -16,70 +16,65 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <exception>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/LogicalQueryDumpHelper.hpp>
 #include <fmt/format.h>
-#include "Identifiers/Identifiers.hpp"
-#include "Operators/Operator.hpp"
 
 namespace NES
 {
 
-QueryConsoleDumpHandler::QueryConsoleDumpHandler(std::ostream& out) : out(out), treeProperties({}), layerCalcQueue({})
+LogicalQueryDumpHelper::LogicalQueryDumpHelper(std::ostream& out) : out(out), processedDag({}), layerCalcQueue({})
 {
 }
 
-std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::ostream& out)
-{
-    return std::make_shared<QueryConsoleDumpHandler>(out);
-}
-
-void QueryConsoleDumpHandler::dump(const QueryPlanPtr& plan)
-{
-    dump(*plan);
-}
-
-void QueryConsoleDumpHandler::dump(const QueryPlan& plan)
+void LogicalQueryDumpHelper::dump(const QueryPlan& plan)
 {
     const std::vector<std::shared_ptr<Operator>> rootOperators = plan.getRootOperators();
     dump(rootOperators);
 }
-/// Prints a tree like graph of the queryplan to the stream this class was instatiated with.
-///
-/// Caveats:
-/// - See the [issue](https://github.com/nebulastream/nebulastream-public/issues/685).
-/// - The replacing of ASCII branches with Unicode box drawing symbols relies on every even line being branches.
-void QueryConsoleDumpHandler::dump(const std::vector<std::shared_ptr<Operator>>& rootOperators)
+
+void LogicalQueryDumpHelper::dump(const std::vector<std::shared_ptr<Operator>>& rootOperators)
 {
-    const size_t maxWidth = calculateLayers(rootOperators);
-    const std::string asciiOutput = drawTree(maxWidth);
-    dumpAndUseUnicodeBoxDrawing(asciiOutput);
+    /// Don't crash NES just because we failed to print the queryplan.
+    try
+    {
+        const size_t maxWidth = calculateLayers(rootOperators);
+        const std::stringstream asciiOutput = drawTree(maxWidth);
+        dumpAndUseUnicodeBoxDrawing(asciiOutput.str());
+    }
+    catch (const std::exception& exc)
+    {
+        out << "Failed to print queryplan with exception `" << exc.what() << "`\n";
+    }
 }
 
-/// Converts the `Node`s to `PrintNode`s in the `treeProperties` structure which knows about they layer the node should appear on and how
-/// wide the node and the layer is (in terms of ASCII characters).
-size_t QueryConsoleDumpHandler::calculateLayers(const std::vector<std::shared_ptr<Operator>>& rootOperators)
+size_t LogicalQueryDumpHelper::calculateLayers(const std::vector<std::shared_ptr<Operator>>& rootOperators)
 {
     size_t maxWidth = 0;
     for (auto rootOp : rootOperators)
     {
         layerCalcQueue.emplace_back(std::move(rootOp), std::vector<std::shared_ptr<PrintNode>>());
     }
-    std::vector<OperatorId> alreadySeen = {};
-    size_t depth = 0;
+    std::set<OperatorId> alreadySeen = {};
+    size_t currentDepth = 0;
     size_t numberOfNodesOnThisLayer = rootOperators.size();
     size_t numberOfNodesOnNextLayer = 0;
-    while (!layerCalcQueue.empty())
+    while (not layerCalcQueue.empty())
     {
-        const NodePtr currentNode = layerCalcQueue.front().first;
-        const auto parentPtrs = layerCalcQueue.front().second;
+        const NodePtr currentNode = layerCalcQueue.front().node;
+        const auto parentPtrs = layerCalcQueue.front().parents;
         layerCalcQueue.pop_front();
         numberOfNodesOnThisLayer--;
 
@@ -89,16 +84,19 @@ size_t QueryConsoleDumpHandler::calculateLayers(const std::vector<std::shared_pt
         const std::shared_ptr<Operator> currentOp = std::static_pointer_cast<Operator>(currentNode);
         const auto id = currentOp->getId();
         auto layerNode = std::make_shared<PrintNode>(PrintNode{text, {}, parentPtrs, {}, false, id});
-        alreadySeen.push_back(id);
-        /// Create next layer only if depth has increased
-        if (treeProperties.size() > depth)
+        if (not alreadySeen.emplace(id).second)
         {
-            treeProperties[depth].nodes.emplace_back(layerNode);
-            treeProperties[depth].width += width;
+            NES_WARNING("Bug: added the same node multiple times")
+        }
+        /// Create next layer only if depth has increased
+        if (processedDag.size() > currentDepth)
+        {
+            processedDag.at(currentDepth).nodes.emplace_back(layerNode);
+            processedDag.at(currentDepth).width += width;
         }
         else
         {
-            treeProperties.emplace_back(Layer{{layerNode}, width});
+            processedDag.emplace_back(Layer{{layerNode}, width});
         }
         /// Now that the current Node has been created, we can save its pointer in the parents.
         for (const auto& parent : parentPtrs)
@@ -108,63 +106,48 @@ size_t QueryConsoleDumpHandler::calculateLayers(const std::vector<std::shared_pt
         /// Only add children to the queue if they haven't been added yet (this is the case if one node has multiple parents)
         for (const auto& child : children)
         {
-            queueChild(alreadySeen, numberOfNodesOnThisLayer, numberOfNodesOnNextLayer, depth, child, layerNode);
+            queueChild(alreadySeen, numberOfNodesOnThisLayer, numberOfNodesOnNextLayer, currentDepth, child, layerNode);
         }
-
-        if (!layerCalcQueue.empty())
+        if (numberOfNodesOnThisLayer == 0)
         {
-            if (numberOfNodesOnThisLayer == 0)
-            {
-                /// One character between each node on this layer:
-                treeProperties[depth].width += treeProperties[depth].nodes.size() - 1;
-                maxWidth = std::max(treeProperties[depth].width, maxWidth);
-                numberOfNodesOnThisLayer = numberOfNodesOnNextLayer;
-                numberOfNodesOnNextLayer = 0;
-                depth++;
-            }
+            /// One character between each node on this layer:
+            processedDag.at(currentDepth).width += processedDag.at(currentDepth).nodes.size() - 1;
+            maxWidth = std::max(processedDag.at(currentDepth).width, maxWidth);
+            numberOfNodesOnThisLayer = numberOfNodesOnNextLayer;
+            numberOfNodesOnNextLayer = 0;
+            ++currentDepth;
         }
     }
     return maxWidth;
 }
 
-/// Decides how to queue the children of the current node depending on whether we already queued it or already put in `treeProperties`.
-///
-/// There are four cases:
-/// - The new node (child to be processed) is not yet in `treeProperties` nor in the queue: just queue it.
-/// - The new node is in the queue: Then we note in the queue that it has another parent.
-/// - The new node is in the `alreadySeen` list and therefore in `treeProperties`. Then we need to change its layer and insert dummies
-/// between its former position and its new one. Finally queue it.
-/// - The new node is in the `alreadySeen` list and in the queue. Same as above, but note that it has another parent instead of queueing it.
-void QueryConsoleDumpHandler::queueChild(
-    std::vector<OperatorId> alreadySeen,
+void LogicalQueryDumpHelper::queueChild(
+    const std::set<OperatorId>& alreadySeen,
     size_t& numberOfNodesOnThisLayer,
     size_t& numberOfNodesOnNextLayer,
-    const size_t& depth,
+    const size_t currentDepth,
     const NodePtr& child,
     const std::shared_ptr<PrintNode>& layerNode)
 {
     std::shared_ptr<Operator> childOp = std::static_pointer_cast<Operator>(child);
     const OperatorId childId = childOp->getId();
-    auto queueIt = std::ranges::find_if(
-        layerCalcQueue,
-        [&](const std::pair<std::shared_ptr<Operator>, std::vector<std::shared_ptr<PrintNode>>>& queueItem)
-        { return childId == queueItem.first->getId(); });
-    const auto seenIt = std::ranges::find(alreadySeen, childId);
+    auto queueIt = std::ranges::find_if(layerCalcQueue, [&](const QueueItem& queueItem) { return childId == queueItem.node->getId(); });
+    const auto seenIt = alreadySeen.find(childId);
     if (queueIt == layerCalcQueue.end() && seenIt == alreadySeen.end())
     {
-        /// The child is neither in the queue yet nor already in `treeProperties`.
+        /// The child is neither in the queue yet nor already in `processedDag`.
         layerCalcQueue.emplace_back(std::move(childOp), std::vector<std::shared_ptr<PrintNode>>{layerNode});
         ++numberOfNodesOnNextLayer;
     }
     else if (seenIt != alreadySeen.end())
     {
-        /// Child is in `treeProperties` already. Replace it with a dummies up to the current layer.
+        /// Child is in `processedDag` already. Replace it with dummies up to the current layer.
         bool found = false;
-        for (size_t depthLayer = 0; depthLayer <= depth; ++depthLayer)
+        for (size_t depthLayer = 0; depthLayer <= currentDepth; ++depthLayer)
         {
-            for (size_t i = 0; i < treeProperties[depthLayer].nodes.size(); ++i)
+            for (size_t i = 0; i < processedDag.at(depthLayer).nodes.size(); ++i)
             {
-                if (insertDummies(depthLayer, depth, i, childId, childOp, queueIt, numberOfNodesOnNextLayer))
+                if (insertDummies(depthLayer, currentDepth, i, childId, childOp, queueIt, numberOfNodesOnNextLayer))
                 {
                     found = true;
                     break;
@@ -180,7 +163,7 @@ void QueryConsoleDumpHandler::queueChild(
     {
         /// If the child is in the queue, save that it has another parent:
         const size_t childIndex = queueIt - layerCalcQueue.begin();
-        queueIt->second.push_back(layerNode);
+        queueIt->parents.push_back(layerNode);
         /// If the child is scheduled to be printed on this layer, that's wrong. Let's move it.
         if (childIndex < numberOfNodesOnThisLayer)
         {
@@ -209,8 +192,7 @@ void QueryConsoleDumpHandler::queueChild(
     }
 }
 
-/// Removes the Node at `nodesIndex` on `startDepth`, replacing it with dummies on each layer until `endDepth` is reached (all in `treeProperties`).
-bool QueryConsoleDumpHandler::insertDummies(
+bool LogicalQueryDumpHelper::insertDummies(
     const size_t startDepth,
     const size_t endDepth,
     const size_t nodesIndex,
@@ -219,10 +201,10 @@ bool QueryConsoleDumpHandler::insertDummies(
     const auto& queueIt,
     size_t& numberOfNodesOnNextLayer)
 {
-    const auto node = treeProperties[startDepth].nodes[nodesIndex];
+    const auto node = processedDag.at(startDepth).nodes.at(nodesIndex);
     if (node->id == toBeReplacedId)
     {
-        /// TODO #685 Remove the node's children (if they exist) recursively from treeProperties and reinsert them.
+        /// TODO #685 Remove the node's children (if they exist) recursively from processedDag and reinsert them.
         /// TODO #685 What if one of its children has multiple parents?
         auto parents = node->parents;
         for (auto depthDiff = startDepth; depthDiff < endDepth; ++depthDiff)
@@ -230,19 +212,19 @@ bool QueryConsoleDumpHandler::insertDummies(
             auto dummy = std::make_shared<PrintNode>(PrintNode{"|", {}, parents, {}, true, INVALID_OPERATOR_ID});
             if (depthDiff == startDepth)
             {
-                treeProperties[depthDiff].nodes[nodesIndex] = dummy;
+                processedDag.at(depthDiff).nodes.at(nodesIndex) = dummy;
             }
             else
             {
                 /// Here we use `nodesIndex` as a "heuristic" of where to put the dummy
-                auto nodes = treeProperties[depthDiff].nodes;
+                auto nodes = processedDag.at(depthDiff).nodes;
                 if (nodes.size() > nodesIndex)
                 {
                     nodes.insert(nodes.begin() + static_cast<int64_t>(nodesIndex), dummy);
                 }
                 else
                 {
-                    treeProperties[depthDiff].nodes.emplace_back(dummy);
+                    processedDag.at(depthDiff).nodes.emplace_back(dummy);
                 }
             }
             for (const auto& parent : parents)
@@ -268,29 +250,27 @@ bool QueryConsoleDumpHandler::insertDummies(
         }
         else
         {
-            queueIt->second.push_back(parents.at(0));
+            queueIt->parents.push_back(parents.at(0));
         }
         return true;
     }
     return false;
 }
 
-std::string QueryConsoleDumpHandler::drawTree(const size_t maxWidth) const
+std::stringstream LogicalQueryDumpHelper::drawTree(const size_t maxWidth) const
 {
-    std::string asciiOutput;
-    size_t depth = 0;
+    std::stringstream asciiOutput;
     /// TODO #685 Adjust perNodeWidth if it * numberOfNodesOnThisLayer is more than width of this layer. Maybe do that in `calculateLayers`.
-    while (depth < treeProperties.size())
+    for (const auto& currentLayer : processedDag)
     {
-        const size_t nodesAmount = treeProperties[depth].nodes.size();
+        const size_t numberOfNodesInCurrentDepth = currentLayer.nodes.size();
         auto branchLineAbove = std::string(maxWidth, ' ');
-        std::string nodeLine;
-        size_t perNodeWidth = maxWidth / nodesAmount;
-        for (size_t i = 0; i < nodesAmount; ++i)
+        std::stringstream nodeLine;
+        const size_t perNodeWidth = maxWidth / numberOfNodesInCurrentDepth;
+        for (size_t nodeIdx = 0; const auto& currentNode : currentLayer.nodes)
         {
-            auto [text, parentPositions, parents, children, isDummy, id] = *treeProperties[depth].nodes[i];
-            const size_t currentMiddleIndex = nodeLine.size() + (perNodeWidth / 2);
-            for (const auto parentPos : parentPositions)
+            const size_t currentMiddleIndex = nodeLine.view().size() + (perNodeWidth / 2);
+            for (const auto parentPos : currentNode->parentPositions)
             {
                 if (currentMiddleIndex < parentPos)
                 {
@@ -315,19 +295,20 @@ std::string QueryConsoleDumpHandler::drawTree(const size_t maxWidth) const
                     printAsciiBranch(BranchCase::Direct, currentMiddleIndex, branchLineAbove);
                 }
             }
-            nodeLine += fmt::format("{:^{}}", text, perNodeWidth);
-            for (const auto& child : children)
+            nodeLine << fmt::format("{:^{}}", currentNode->text, perNodeWidth);
+            for (const auto& child : currentNode->children)
             {
                 child->parentPositions.emplace_back(currentMiddleIndex);
             }
-            if (i + 1 < nodesAmount)
+            /// Add padding between nodes on the same layer if there's still another one.
+            if (nodeIdx + 1 < numberOfNodesInCurrentDepth)
             {
-                nodeLine += ' ';
+                nodeLine << " ";
             }
+            ++nodeIdx;
         }
-        asciiOutput += fmt::format("{}\n", branchLineAbove);
-        asciiOutput += fmt::format("{}\n", nodeLine);
-        ++depth;
+        asciiOutput << fmt::format("{}\n", branchLineAbove);
+        asciiOutput << nodeLine.rdbuf() << "\n";
     };
     return asciiOutput;
 }
@@ -364,7 +345,7 @@ std::map<char, std::string> getAsciiToUnicode()
 }
 
 
-void QueryConsoleDumpHandler::printAsciiBranch(const BranchCase toPrint, const size_t position, std::string& output)
+void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const size_t position, std::string& output)
 {
     switch (toPrint)
     {
@@ -522,7 +503,7 @@ void QueryConsoleDumpHandler::printAsciiBranch(const BranchCase toPrint, const s
     }
 }
 
-void QueryConsoleDumpHandler::dumpAndUseUnicodeBoxDrawing(const std::string& asciiOutput) const
+void LogicalQueryDumpHelper::dumpAndUseUnicodeBoxDrawing(const std::string& asciiOutput) const
 {
     size_t line = 0;
     const auto asciiToUnicode = getAsciiToUnicode();

@@ -29,7 +29,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/LogicalQueryDumpHelper.hpp>
 
 
 namespace NES
@@ -90,8 +90,8 @@ void QueryPlan::clearRootOperators()
 std::string QueryPlan::toString() const
 {
     std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler::create(ss);
-    dumpHandler->dump(*this);
+    auto dumpHandler = LogicalQueryDumpHelper(ss);
+    dumpHandler.dump(*this);
     return ss.str();
 }
 

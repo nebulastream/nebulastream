@@ -19,33 +19,39 @@
 #include <deque>
 #include <memory>
 #include <ostream>
+#include <set>
+#include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/Operator.hpp"
+#include <Operators/Operator.hpp>
+#include <gtest/gtest_prod.h>
 
 namespace NES
 {
 
 class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 /// Dumps query plans to an output stream
-class QueryConsoleDumpHandler
+class LogicalQueryDumpHelper
 {
 public:
-    virtual ~QueryConsoleDumpHandler() = default;
-    static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
-    explicit QueryConsoleDumpHandler(std::ostream& out);
+    virtual ~LogicalQueryDumpHelper() = default;
+    explicit LogicalQueryDumpHelper(std::ostream& out);
 
-    void dump(const QueryPlanPtr& plan);
     void dump(const QueryPlan& plan);
+    /// Prints a tree like graph of the queryplan to the stream this class was instatiated with.
+    ///
+    /// Caveats:
+    /// - See the [issue](https://github.com/nebulastream/nebulastream-public/issues/685) (/// TODO #685).
+    /// - The replacing of ASCII branches with Unicode box drawing symbols relies on every even line being branches.
     void dump(const std::vector<std::shared_ptr<Operator>>& rootOperators);
 
 private:
+    FRIEND_TEST(LogicalQueryDumpHelperTest, printQuerySourceFilterMapSink);
+    FRIEND_TEST(LogicalQueryDumpHelperTest, printQueryMapFilterTwoSinks);
     std::ostream& out;
 
     struct PrintNode;
@@ -84,17 +90,34 @@ private:
         NoConnector
     };
 
-    std::vector<Layer> treeProperties;
-    std::deque<std::pair<std::shared_ptr<Operator>, std::vector<std::shared_ptr<PrintNode>>>> layerCalcQueue;
+    std::vector<Layer> processedDag;
+    struct QueueItem
+    {
+        std::shared_ptr<Operator> node;
+        /// Saves the (already processed) node that queued this node. And if we find more parents, the vector has room for them too.
+        std::vector<std::shared_ptr<PrintNode>> parents;
+    };
+    std::deque<QueueItem> layerCalcQueue;
 
+    /// Converts the `Node`s to `PrintNode`s in the `processedDag` structure which knows about they layer the node should appear on and how
+    /// wide the node and the layer is (in terms of ASCII characters).
     size_t calculateLayers(const std::vector<std::shared_ptr<Operator>>& rootOperators);
+    /// Decides how to queue the children of the current node depending on whether we already queued it or already put in `processedDag`.
+    ///
+    /// There are four cases:
+    /// - The new node (child to be processed) is not yet in `processedDag` nor in the queue: just queue it.
+    /// - The new node is in the queue: Then we note in the queue that it has another parent.
+    /// - The new node is in the `alreadySeen` list and therefore in `processedDag`. Then we need to change its layer and insert dummies
+    /// between its former position and its new one. Finally queue it.
+    /// - The new node is in the `alreadySeen` list and in the queue. Same as above, but note that it has another parent instead of queueing it.
     void queueChild(
-        std::vector<OperatorId> alreadySeen,
+        const std::set<OperatorId>& alreadySeen,
         size_t& numberOfNodesOnThisLayer,
         size_t& numberOfNodesOnNextLayer,
-        const size_t& depth,
+        size_t depth,
         const NodePtr& child,
         const std::shared_ptr<PrintNode>& layerNode);
+    /// Removes the Node at `nodesIndex` on `startDepth`, replacing it with dummies on each layer until `endDepth` is reached (all in `processedDag`).
     bool insertDummies(
         size_t startDepth,
         size_t endDepth,
@@ -103,7 +126,7 @@ private:
         std::shared_ptr<Operator> toBeReplaced,
         const auto& queueIt,
         size_t& numberOfNodesOnNextLayer);
-    [[nodiscard]] std::string drawTree(size_t maxWidth) const;
+    [[nodiscard]] std::stringstream drawTree(size_t maxWidth) const;
     /// Prints `toPrint` at position, but depending on what is already there, eg if the parent has a connector to a child on the right and
     /// we want to print another child underneath, replace the PARENT_LAST_BRANCH (┘) connector with a PARENT_CHILD_LAST_BRANCH (┤).
     static void printAsciiBranch(BranchCase toPrint, size_t position, std::string& output);
