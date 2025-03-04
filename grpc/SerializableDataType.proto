@@ -44,8 +44,7 @@ message SerializableDataType{
    */
   message IntegerDetails{
     uint64 bits = 1;
-    uint64 upperBound = 2;
-    int64 lowerBound = 3;
+    bool isSigned = 2;
   }
 
   /**
@@ -53,8 +52,6 @@ message SerializableDataType{
   */
   message FloatDetails{
     uint64 bits = 1;
-    double upperBound = 2;
-    double lowerBound = 3;
   }
 
   /**
