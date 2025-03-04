@@ -16,6 +16,7 @@
 
 #include "NetworkSink.hpp"
 
+#include <deque>
 #include <memory>
 #include <optional>
 #include <string>
@@ -25,13 +26,29 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <network/lib.h>
 #include <folly/Synchronized.h>
+#include <network/lib.h>
 #include <rust/cxx.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Sinks
 {
+class BackpressureHandler
+{
+    struct State
+    {
+        bool hasBackpressure = false;
+        std::deque<Memory::TupleBuffer> buffered{};
+        SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
+        ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
+    };
+    folly::Synchronized<State> stateLock{};
+
+public:
+    std::optional<Memory::TupleBuffer> onFull(Memory::TupleBuffer buffer, Valve& valve);
+
+    std::optional<Memory::TupleBuffer> onSuccess(Valve& valve);
+};
 
 class NetworkSink final : public Sink
 {
@@ -58,6 +75,7 @@ protected:
 private:
     size_t tupleSize;
     folly::Synchronized<std::vector<Memory::TupleBuffer>> buffers;
+    BackpressureHandler backpressureHandler{};
     std::optional<rust::Box<SenderServer>> server{};
     std::optional<rust::Box<SenderChannel>> channel{};
     std::string channelIdentifier{};

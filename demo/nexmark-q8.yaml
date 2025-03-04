@@ -1,0 +1,2 @@
+query: |
+  SELECT start, end, timestamp, auction, bidder, datetime, price, initialbid, reserve, expires, seller, category FROM (SELECT * FROM nexmark_bid) INNER JOIN (SELECT * FROM nexmark_auction) ON auction = id WINDOW TUMBLING (timestamp, size 100 sec) INTO print;

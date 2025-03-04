@@ -29,6 +29,75 @@
 using namespace std::literals;
 
 
+struct DistributedQueryId
+{
+    struct ConnectionQueryIdPair
+    {
+        std::string connection;
+        size_t id;
+    };
+    std::vector<ConnectionQueryIdPair> queries;
+    static DistributedQueryId load(std::string identifier)
+    {
+        return YAML::LoadFile(std::filesystem::path("/tmp") / identifier).as<DistributedQueryId>();
+    }
+    static std::string save(const DistributedQueryId& queryId);
+};
+
+namespace YAML
+{
+template <>
+struct convert<DistributedQueryId::ConnectionQueryIdPair>
+{
+    static bool decode(const Node& node, DistributedQueryId::ConnectionQueryIdPair& rhs)
+    {
+        rhs.connection = node["connection"].as<std::string>();
+        rhs.id = node["id"].as<size_t>();
+        return true;
+    }
+    static Node encode(const DistributedQueryId::ConnectionQueryIdPair& rhs)
+    {
+        Node node;
+        node["id"] = rhs.id;
+        node["connection"] = rhs.connection;
+        return node;
+    }
+};
+
+template <>
+struct convert<DistributedQueryId>
+{
+    static bool decode(const Node& node, DistributedQueryId& rhs)
+    {
+        rhs.queries = node["queries"].as<std::vector<DistributedQueryId::ConnectionQueryIdPair>>();
+        return true;
+    }
+    static Node encode(const DistributedQueryId& rhs)
+    {
+        Node node;
+        node["queries"] = rhs.queries;
+        return node;
+    }
+};
+}
+
+
+std::string DistributedQueryId::save(const DistributedQueryId& queryId)
+{
+    std::string name1 = std::tmpnam(nullptr);
+    std::ofstream out(name1);
+    if (out.is_open())
+    {
+        YAML::Emitter emitter{out};
+        YAML::Node node{queryId};
+        out << node;
+    }
+
+    auto withoutPrefix = std::string_view(name1);
+    withoutPrefix.remove_prefix(5);
+    return std::string(withoutPrefix);
+}
+
 class GRPCClient
 {
 public:
@@ -210,28 +279,24 @@ void doRegister(argparse::ArgumentParser& parser, std::vector<std::shared_ptr<NE
 {
     auto& registerArgs = parser.at<argparse::ArgumentParser>("register");
 
-    std::vector<std::pair<std::string, size_t>> registeredQueries;
+    DistributedQueryId distributedQueryId;
     for (const auto& plan : plans)
     {
         GRPCClient client(grpc::CreateChannel(plan->getGRPC(), grpc::InsecureChannelCredentials()));
         auto queryId = client.registerQuery(*plan);
-        registeredQueries.emplace_back(plan->getGRPC(), queryId);
+        distributedQueryId.queries.emplace_back(plan->getGRPC(), queryId);
     }
-
 
     if (registerArgs.is_used("-x"))
     {
-        for (auto& [grpc, queryId] : registeredQueries)
+        for (auto& [grpc, queryId] : distributedQueryId.queries)
         {
             GRPCClient client(grpc::CreateChannel(grpc, grpc::InsecureChannelCredentials()));
             client.start(queryId);
         }
     }
 
-    for (auto& [grpc, queryId] : registeredQueries)
-    {
-        fmt::println(std::cout, "Started Query {} at {}", queryId, grpc);
-    }
+    std::cout << DistributedQueryId::save(distributedQueryId) << '\n';
 }
 void doDump(argparse::ArgumentParser& parser, std::vector<std::shared_ptr<NES::DecomposedQueryPlan>> plans)
 {
@@ -299,16 +364,13 @@ int main(int argc, char** argv)
     registerQuery.add_argument("-x").flag();
 
     ArgumentParser startQuery("start");
-    startQuery.add_argument("queryId").scan<'i', size_t>();
-    startQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+    startQuery.add_argument("queryId");
 
     ArgumentParser stopQuery("stop");
-    stopQuery.add_argument("queryId").scan<'i', size_t>();
-    stopQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+    stopQuery.add_argument("queryId");
 
     ArgumentParser unregisterQuery("unregister");
-    unregisterQuery.add_argument("queryId").scan<'i', size_t>();
-    unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+    unregisterQuery.add_argument("queryId");
 
     ArgumentParser dump("dump");
     dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
@@ -340,7 +402,6 @@ int main(int argc, char** argv)
         NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
     }
 
-    auto [config, topology] = loadConfigurations(program);
 
     bool handled = false;
     for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t) const>>{
@@ -348,17 +409,13 @@ int main(int argc, char** argv)
     {
         if (program.is_subcommand_used(name))
         {
-            if (topology.nodes.size() != 1)
-            {
-                NES_ERROR("{} is not supported for multi node topologies", name);
-                exit(1);
-            }
-
             auto& parser = program.at<ArgumentParser>(name);
-            auto serverUri = parser.get<std::string>("-s");
-            GRPCClient client(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-            auto queryId = parser.get<size_t>("queryId");
-            (client.*fn)(queryId);
+            auto distributedQueryId = DistributedQueryId::load(parser.get<std::string>("queryId"));
+            for (auto& [connection, queryId] : distributedQueryId.queries)
+            {
+                GRPCClient client(CreateChannel(connection, grpc::InsecureChannelCredentials()));
+                (client.*fn)(queryId);
+            }
             handled = true;
             break;
         }
@@ -368,6 +425,8 @@ int main(int argc, char** argv)
     {
         return 0;
     }
+
+    auto [config, topology] = loadConfigurations(program);
 
     std::vector<std::shared_ptr<DecomposedQueryPlan>> plans;
     try

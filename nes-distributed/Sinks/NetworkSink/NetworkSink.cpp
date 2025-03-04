@@ -30,9 +30,9 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <network/lib.h>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
+#include <network/lib.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -43,6 +43,57 @@
 
 namespace NES::Sinks
 {
+
+
+std::optional<Memory::TupleBuffer> BackpressureHandler::onFull(Memory::TupleBuffer buffer, Valve& valve)
+{
+    auto rstate = stateLock.ulock();
+    if (rstate->hasBackpressure)
+    {
+        /// back pressure is already signaled. We want to ensure that at least one TupleBuffer is floating around the TaskQueue,
+        /// so we can peridically test if we can send data again.
+        if (buffer.getSequenceNumber() == rstate->pendingSequenceNumber && buffer.getChunkNumber() == rstate->pendingChunkNumber)
+        {
+            /// We dedicate one seq/chunk number pair as the pending tuple buffer. If this is the pending tuple buffer we emit it again
+            return buffer;
+        }
+
+        auto wstate = rstate.moveFromUpgradeToWrite();
+        wstate->buffered.emplace_back(buffer);
+        return {};
+    }
+    else
+    {
+        auto wstate = rstate.moveFromUpgradeToWrite();
+        NES_WARNING("Applying backpressure");
+        valve.apply_pressure();
+        wstate->hasBackpressure = true;
+        wstate->pendingSequenceNumber = buffer.getSequenceNumber();
+        wstate->pendingChunkNumber = buffer.getChunkNumber();
+        return buffer;
+    }
+}
+
+std::optional<Memory::TupleBuffer> BackpressureHandler::onSuccess(Valve& valve)
+{
+    auto state = stateLock.wlock();
+    if (state->hasBackpressure)
+    {
+        valve.release_pressure();
+        state->hasBackpressure = false;
+        state->pendingChunkNumber = INVALID<ChunkNumber>;
+        state->pendingSequenceNumber = INVALID<SequenceNumber>;
+    }
+
+    if (!state->buffered.empty())
+    {
+        auto nextBuffer = std::move(state->buffered.front());
+        state->buffered.pop_front();
+        return nextBuffer;
+    }
+
+    return {};
+}
 
 NetworkSink::NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(valve))
@@ -97,43 +148,25 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
 
     switch (result)
     {
-        case SendResult::Full:
-            if (valve.apply_pressure())
-            {
-                pec.emitBuffer(inputBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::RETRY);
-            }
-            else
-            {
-                buffers.wlock()->push_back(inputBuffer);
-            }
-            return;
         case SendResult::Error:
             throw CannotOpenSink("Sink Failed");
         case SendResult::Ok:
-            flush_channel(**channel);
-            NES_INFO("Send {} was successful", inputBuffer.getSequenceNumber());
+            if (auto nextBuffer = backpressureHandler.onSuccess(valve))
+            {
+                execute(*nextBuffer, pec);
+            }
+            else
+            {
+                flush_channel(**channel);
+            }
+            return;
+        case SendResult::Full:
+            if (auto emit = backpressureHandler.onFull(inputBuffer, valve))
+            {
+                pec.emitBuffer(*emit, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::RETRY);
+            }
+            return;
     }
-
-    /// check pending buffers
-    auto readBuffers = buffers.ulock();
-    if (readBuffers->empty())
-    {
-        valve.release_pressure();
-        return;
-    }
-
-    auto writeBuffers = readBuffers.moveFromUpgradeToWrite();
-    if (writeBuffers->empty())
-    {
-        valve.release_pressure();
-        return;
-    }
-
-    auto newBuffer = std::move(writeBuffers->back());
-    writeBuffers->pop_back();
-    writeBuffers.unlock();
-
-    return NetworkSink::execute(newBuffer, pec);
 }
 
 std::ostream& NetworkSink::toString(std::ostream& str) const
