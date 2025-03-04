@@ -11,7 +11,7 @@ def generate_single_node_xml(topology_name, node_data, output_dir):
     # XML template for a single node
     xml_template = f"""
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}" type="CMakeRunConfiguration" factoryName="Application" focusToolWindowBeforeRun="true" PROGRAM_PARAMS="--grpc=127.0.0.1:{node_data['grpc']} --data=127.0.0.1:{node_data['connection']} --worker.queryCompiler.nautilusBackend=INTERPRETER" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-single-node-worker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-single-node-worker">
+  <configuration default="false" name="nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}" type="CMakeRunConfiguration" factoryName="Application" focusToolWindowBeforeRun="true" PROGRAM_PARAMS="--grpc=127.0.0.1:{node_data['grpc']} --data=127.0.0.1:{node_data['connection']} --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=1" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-single-node-worker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-single-node-worker">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

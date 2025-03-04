@@ -163,6 +163,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
         case SendResult::Full:
             if (auto emit = backpressureHandler.onFull(inputBuffer, valve))
             {
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 pec.emitBuffer(*emit, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::RETRY);
             }
             return;

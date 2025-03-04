@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <csignal>
+
+
 #include <Configurations/Util.hpp>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
@@ -26,6 +29,7 @@ int main(const int argc, const char* argv[])
 {
     try
     {
+        signal(SIGPIPE, SIG_IGN);
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         auto configuration = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)

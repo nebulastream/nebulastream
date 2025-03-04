@@ -1,0 +1,2 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkStreamStream2;
