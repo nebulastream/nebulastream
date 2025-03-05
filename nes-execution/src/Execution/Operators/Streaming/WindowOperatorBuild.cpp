@@ -54,8 +54,11 @@ void updateSlicesProxy(OperatorHandler* ptrOpHandler, const WorkerThreadId worke
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore&>(opHandler->getSliceAndWindowStore());
-    sliceStore.updateSlices(SliceStoreMetaData(workerThreadId, watermarkTs));
+    auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
+    if (sliceStore)
+    {
+        sliceStore->updateSlices(SliceStoreMetaData(workerThreadId, watermarkTs));
+    }
 }
 
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
