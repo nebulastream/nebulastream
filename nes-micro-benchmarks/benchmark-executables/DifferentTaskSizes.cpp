@@ -19,6 +19,7 @@
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include "../../nes-common/include/Util/Ranges.hpp"
+#include "../../nes-data-types/include/Common/DataTypes/DataTypeProvider.hpp"
 #include "../../nes-memory/include/Runtime/BufferManager.hpp"
 #include "../../nes-query-engine/Task.hpp"
 #include "../../nes-query-engine/include/QueryEngineStatisticListener.hpp"
@@ -55,9 +56,9 @@ static void DoTearDown(const benchmark::State&)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id", DataTypeFactory::createUInt64())
-                                 ->addField("value", DataTypeFactory::createUInt64())
-                                 ->addField("ts", DataTypeFactory::createUInt64());
+                                 ->addField("id", DataTypeProvider::provideBasicType(BasicType::UINT64))
+                                 ->addField("value", DataTypeProvider::provideBasicType(BasicType::UINT64))
+                                 ->addField("ts", DataTypeProvider::provideBasicType(BasicType::UINT64));
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task
@@ -270,9 +271,9 @@ static void DoTearDown(const benchmark::State&)
 
     /// Calculating the buffer size so that all tuples can be stored in it
     const auto schemaInput = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id", DataTypeFactory::createUInt64())
-                                 ->addField("value", DataTypeFactory::createUInt64())
-                                 ->addField("ts", DataTypeFactory::createUInt64());
+                                 ->addField("id", DataTypeProvider::provideBasicType(BasicType::UINT64))
+                                 ->addField("value", DataTypeProvider::provideBasicType(BasicType::UINT64))
+                                 ->addField("ts", DataTypeProvider::provideBasicType(BasicType::UINT64));
     const auto bufferSize = numberOfTuplesPerTask * schemaInput->getSchemaSizeInBytes();
 
     /// Creating a vector that contains the number of tuples per task for each task.

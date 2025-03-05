@@ -196,10 +196,12 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
 
 
     /// Calling the key functions to add/update the keys to the record
-    for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
+    for (nautilus::static_val<uint64_t> i = 0; i < fieldKeys.size(); ++i)
     {
+        const auto& [fieldIdentifier, type, fieldOffset] = fieldKeys[i];
+        const auto& function = keyFunctions[i];
         const auto value = function->execute(record, executionCtx.pipelineMemoryProvider.arena);
-        record.write(field.fieldIdentifier, value);
+        record.write(fieldIdentifier, value);
     }
 
     /// Finding or creating the entry for the provided record

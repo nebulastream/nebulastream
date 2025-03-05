@@ -19,6 +19,7 @@
 #include <ExecutablePipelineProviderRegistry.hpp>
 #include "../../../nes-client/include/API/Functions/Functions.hpp"
 #include "../../../nes-common/include/Sequencing/SequenceData.hpp"
+#include "../../../nes-data-types/include/Common/DataTypes/DataTypeProvider.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Emit.hpp"
 #include "../../../nes-execution/include/Execution/Operators/EmitOperatorHandler.hpp"
 #include "../../../nes-execution/include/Execution/Operators/Scan.hpp"
@@ -173,7 +174,7 @@ std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> MicroBenchmarkUtils
     /// Creating the filter operator fieldNameForSelectivity < selectivity
     const auto filterPredicate = NodeFunctionLess::create(
         NodeFunctionFieldAccess::create(fieldNameForSelectivity),
-        NodeFunctionConstantValue::create(DataTypeFactory::createUInt64(), std::to_string(selectivity * 10)));
+        NodeFunctionConstantValue::create(DataTypeProvider::provideBasicType(BasicType::UINT64), std::to_string(selectivity * 10)));
     auto filterFunction = QueryCompilation::FunctionProvider::lowerFunction(filterPredicate);
     const auto filterOperator = std::make_shared<Runtime::Execution::Operators::Selection>(std::move(filterFunction));
 
