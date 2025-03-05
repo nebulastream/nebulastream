@@ -20,7 +20,7 @@ namespace NES::Sinks
 
 static constexpr std::string_view NETWORK_SINK_NAME = "Network";
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
+/// TODO #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersNetworkSink
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CONNECTION{

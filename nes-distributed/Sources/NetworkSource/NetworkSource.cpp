@@ -54,7 +54,7 @@ void NetworkSource::open(std::shared_ptr<Memory::AbstractBufferProvider> bufferP
 size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     TupleBufferBuilder builder(tupleBuffer, *bufferProvider);
-    /// TODO: We can use the stop token to interrupt the receive!
+    /// TODO #695 We can use the stop token to interrupt the receive!
     if (receive_buffer(**channel, builder))
     {
         return 1; /// Received one buffer
