@@ -25,6 +25,7 @@
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
 #include "../../nes-query-engine/TaskStatisticsProcessor.hpp"
+#include "../../nes-query-engine/TuplePerTaskComputer/TuplePerTaskComputerFactory.hpp"
 
 namespace NES
 {
@@ -36,17 +37,20 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , queryStatisticsListeners(std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>>{
-          std::make_shared<Runtime::PrintingStatisticListener>(
-              configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-              configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads),
-          std::make_shared<Runtime::TaskStatisticsProcessor>()})
-    , systemEventListeners(std::vector<std::shared_ptr<Runtime::SystemEventListener>>{std::make_shared<Runtime::PrintingStatisticListener>(
-          configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
-          configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads)})
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListeners, queryStatisticsListeners).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
+    auto printingStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
+        configuration.workerConfiguration.queryEngineConfiguration.statisticsDir,
+        configuration.workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads);
+    auto taskStatisticsProcessor = std::make_shared<Runtime::TaskStatisticsProcessor>(
+        Runtime::Util::createTuplePerTaskComputer(configuration.workerConfiguration.queryEngineConfiguration.tuplePerTaskComputer.getValue()));
+
+    /// Adding the listeners to the query engine
+    queryStatisticsListeners.emplace_back(printingStatisticListener);
+    queryStatisticsListeners.emplace_back(taskStatisticsProcessor);
+    systemEventListeners.emplace_back(printingStatisticListener);
+
+    nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListeners, queryStatisticsListeners).build();
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
@@ -54,7 +58,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
 QueryId
-SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const double maxLatency)
+SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const std::chrono::microseconds maxLatency)
 {
     try
     {

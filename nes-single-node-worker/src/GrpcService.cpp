@@ -41,7 +41,8 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
     try
     {
-        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan, request->minthroughput(), request->maxlatency());
+        const auto maxLatencyInUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(request->maxlatency()));
+        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan, request->minthroughput(), maxLatencyInUs);
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }
@@ -156,5 +157,4 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
         return handleError(wrapExternalException(), context);
     }
 }
-
 }

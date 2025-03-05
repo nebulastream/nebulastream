@@ -112,7 +112,7 @@ class DataSourceMatcher
 public:
     using is_gtest_matcher = void;
 
-    explicit DataSourceMatcher(OriginId id) : source(id) { }
+    explicit DataSourceMatcher(const OriginId id) : source(id) { }
 
     bool matchAndExplain(const std::weak_ptr<RunningSource>& foo, std::ostream* /* listener */) const
     {
@@ -145,6 +145,7 @@ struct TestPipelineExecutionContext : Execution::PipelineExecutionContext
     MOCK_METHOD(std::vector<std::shared_ptr<Execution::OperatorHandler>>&, getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<Execution::OperatorHandler>>&), (override));
     MOCK_METHOD(void, emitBuffer, (const Memory::TupleBuffer&, ContinuationPolicy), (override));
+    MOCK_METHOD(uint64_t, getNumberOfOutputTuplesPerBuffer, (), (const, override));
 };
 
 struct TerminatePipelineArgs

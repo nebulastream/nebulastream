@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-query-engine QueryEngine.cpp RunningQueryPlan.cpp RunningSource.cpp QueryEngineConfiguration.cpp TaskStatisticsProcessor.cpp)
+add_library(nes-query-engine QueryEngine.cpp RunningQueryPlan.cpp RunningSource.cpp QueryEngineConfiguration.cpp TaskStatisticsProcessor.cpp PipelineStatistics.cpp TuplePerTaskComputer/ThroughputTuplePerTaskComputer.cpp TuplePerTaskComputer/InfinityTuplePerTaskComputer.cpp TuplePerTaskComputer/LatencyTuplePerTaskComputer.cpp)
 target_include_directories(nes-query-engine
         PUBLIC include
         PRIVATE .

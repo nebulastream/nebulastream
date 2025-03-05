@@ -85,26 +85,38 @@ void removeSequenceState(ExecutionContext& context, size_t operatorHandlerIndex)
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
+    explicit EmitState(const RecordBuffer& resultBuffer, const nautilus::val<uint64_t>& maxRecordsPerBuffer)
+        : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()), maxRecordsPerBuffer(maxRecordsPerBuffer)
+    {
+    }
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
+    nautilus::val<uint64_t> maxRecordsPerBuffer;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
+    auto maxRecordsPerBuffer = nautilus::invoke(
+        +[](const PipelineExecutionContext* pec) { return pec->getNumberOfOutputTuplesPerBuffer(); }, ctx.pipelineContext);
+
+    /// We need to set an upper limit for the number of records per buffer
+    if (maxRecordsPerBuffer > maxPossibleTuplesPerBuffer)
+    {
+        maxRecordsPerBuffer = maxPossibleTuplesPerBuffer;
+    }
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
-    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    auto emitState = std::make_unique<EmitState>(resultBuffer, maxRecordsPerBuffer);
     ctx.setLocalOperatorState(this, std::move(emitState));
 }
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
-    /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer)
+    /// emit buffer if it reached the maximal allowed
+    if (emitState->outputIndex >= emitState->maxRecordsPerBuffer)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
@@ -124,7 +136,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
-    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
+    auto* emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 
@@ -151,9 +163,8 @@ void Emit::emitRecordBuffer(
 
 Emit::Emit(size_t operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
+    , maxPossibleTuplesPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
     , memoryProvider(std::move(memoryProvider))
 {
 }
-
 }

@@ -22,6 +22,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <random>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -31,7 +32,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
-
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
@@ -260,7 +260,16 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                         finishedProducing = true;
                         return;
                     }
-                    const auto queryId = worker.registerQuery(query.queryPlan, 0, std::numeric_limits<double>::max());
+                    /// To stress test, we choose a random throughput in the range of 100k tup/s to 1 million tup/s and 10-50 us latency
+                    /// To replay it, we use a seed and print the seed, throughput and latency to the log
+                    const auto RND_SEED = std::random_device()();
+                    std::mt19937 mt(RND_SEED);
+                    std::uniform_int_distribution<uint64_t> distrThroughput(100 * 1000, 1 * 1000 * 1000);
+                    std::uniform_int_distribution<uint64_t> distrLatency(10, 50);
+                    const auto throughput = distrThroughput(mt);
+                    const auto latency = std::chrono::microseconds(distrLatency(mt));
+                    NES_INFO("Seed: {}, Throughput: {} tup/s, Latency: {} us", RND_SEED, throughput, latency);
+                    const auto queryId = worker.registerQuery(query.queryPlan, throughput, latency);
                     if (queryId == INVALID_QUERY_ID)
                     {
                         throw QueryInvalid("Received an invalid query id from the worker");

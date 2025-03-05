@@ -36,8 +36,18 @@ struct EventBase
 
 struct TaskExecutionStart : EventBase
 {
-    TaskExecutionStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, size_t numberOfTuples)
-        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples)
+    TaskExecutionStart(
+        WorkerThreadId threadId,
+        QueryId queryId,
+        PipelineId pipelineId,
+        TaskId taskId,
+        size_t numberOfTuples,
+        size_t numberOfOutputTuplesPerBuffer)
+        : EventBase(threadId, queryId)
+        , pipelineId(pipelineId)
+        , taskId(taskId)
+        , numberOfTuples(numberOfTuples)
+        , numberOfOutputTuplesPerBuffer(numberOfOutputTuplesPerBuffer)
     {
     }
     TaskExecutionStart() = default;
@@ -45,6 +55,7 @@ struct TaskExecutionStart : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples;
+    size_t numberOfOutputTuplesPerBuffer;
 };
 
 struct TaskEmit : EventBase
@@ -69,7 +80,7 @@ struct TaskExecutionComplete : EventBase
         PipelineId pipelineId,
         TaskId taskId,
         double throughput,
-        double latency,
+        std::chrono::microseconds latency,
         uint64_t numberOfTuplesProcessed)
         : EventBase(threadId, queryId)
         , pipelineId(pipelineId)
@@ -85,7 +96,7 @@ struct TaskExecutionComplete : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     double throughput;
-    double latency;
+    std::chrono::microseconds latency;
     uint64_t numberOfTuplesProcessed;
 };
 

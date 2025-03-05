@@ -29,6 +29,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -47,11 +48,13 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
+#include "../../TaskStatisticsProcessor.hpp"
+#include "../../TuplePerTaskComputer/TuplePerTaskComputerFactory.hpp"
 
 namespace NES::Testing
 {
 
-std::vector<std::byte> identifiableData(size_t identifier)
+std::vector<std::byte> identifiableData(const size_t identifier)
 {
     std::vector<std::byte> data(DEFAULT_BUFFER_SIZE);
     const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
@@ -63,7 +66,7 @@ std::vector<std::byte> identifiableData(size_t identifier)
     return data;
 }
 
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
+bool verifyIdentifier(const Memory::TupleBuffer& buffer, const size_t identifier)
 {
     if (buffer.getBufferSize() == 0)
     {
@@ -85,7 +88,7 @@ std::ostream& TestPipeline::toString(std::ostream& os) const
     return os << "TestPipeline";
 }
 
-testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers)
+testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(const size_t numberOfExpectedBuffers)
 {
     auto buffers = receivedBuffers.lock();
     if (buffers->size() >= numberOfExpectedBuffers)
@@ -122,7 +125,7 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm)
+createSinkPipeline(const PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm)
 {
     auto sinkController = std::make_shared<TestSinkController>();
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
@@ -130,7 +133,7 @@ createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider
     return {pipeline, sinkController};
 }
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
-createPipeline(PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors)
+createPipeline(const PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors)
 {
     auto pipelineCtrl = std::make_shared<TestPipelineController>();
     auto stage = std::make_unique<TestPipeline>(pipelineCtrl);
@@ -246,11 +249,11 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         stages};
 }
 QueryPlanBuilder::QueryPlanBuilder(
-    identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter)
+    const identifier_t nextIdentifier, const PipelineId::Underlying pipelineIdCounter, const OriginId::Underlying originIdCounter)
     : nextIdentifier(nextIdentifier), pipelineIdCounter(pipelineIdCounter), originIdCounter(originIdCounter)
 {
 }
-TestingHarness::TestingHarness(size_t numberOfThreads, size_t numberOfBuffers)
+TestingHarness::TestingHarness(const size_t numberOfThreads, const size_t numberOfBuffers)
     : bm(Memory::BufferManager::create(DEFAULT_BUFFER_SIZE, numberOfBuffers)), numberOfThreads(numberOfThreads)
 {
 }
@@ -280,7 +283,7 @@ std::unique_ptr<Runtime::ExecutableQueryPlan> TestingHarness::addNewQuery(QueryP
     return std::move(plan);
 }
 
-void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Runtime::Execution::QueryStatus> states)
+void TestingHarness::expectQueryStatusEvents(QueryId id, const std::initializer_list<Runtime::Execution::QueryStatus> states)
 {
     queryRunning.emplace(id, std::make_unique<std::promise<void>>());
     queryTermination.emplace(id, std::make_unique<std::promise<void>>());
@@ -326,7 +329,8 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
     }
 }
 
-void TestingHarness::expectSourceTermination(QueryId queryId, QueryPlanBuilder::identifier_t source, Runtime::QueryTerminationType type)
+void TestingHarness::expectSourceTermination(
+    const QueryId queryId, const QueryPlanBuilder::identifier_t source, const Runtime::QueryTerminationType type)
 {
     EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type, ::testing::_)).WillOnce(::testing::Return(true));
 }
@@ -343,14 +347,15 @@ void TestingHarness::start()
     }
     Runtime::QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
-    std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>> queryEngineListeners{this->statListener};
+    std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>> queryEngineListeners{
+        this->statListener, std::make_shared<Runtime::TaskStatisticsProcessor>(Runtime::Util::createTuplePerTaskComputer(configuration.tuplePerTaskComputer.getValue()))};
     qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, queryEngineListeners, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<Runtime::ExecutableQueryPlan> query) const
 {
     qm->start(std::move(query));
 }
-void TestingHarness::stopQuery(QueryId id) const
+void TestingHarness::stopQuery(const QueryId id) const
 {
     qm->stop(id);
 }
@@ -358,11 +363,11 @@ void TestingHarness::stop()
 {
     qm.reset();
 }
-testing::AssertionResult TestingHarness::waitForQepTermination(QueryId id, std::chrono::milliseconds timeout) const
+testing::AssertionResult TestingHarness::waitForQepTermination(const QueryId id, const std::chrono::milliseconds timeout) const
 {
     return waitForFuture(queryTerminationFutures.at(id), timeout);
 }
-testing::AssertionResult TestingHarness::waitForQepRunning(QueryId id, std::chrono::milliseconds timeout)
+testing::AssertionResult TestingHarness::waitForQepRunning(const QueryId id, const std::chrono::milliseconds timeout)
 {
     return waitForFuture(queryRunningFutures.at(id), timeout);
 }

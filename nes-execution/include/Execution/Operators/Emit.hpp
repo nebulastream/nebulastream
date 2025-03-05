@@ -45,7 +45,7 @@ public:
 
 private:
     size_t operatorHandlerIndex;
-    nautilus::val<uint64_t> maxRecordsPerBuffer;
+    uint64_t maxPossibleTuplesPerBuffer;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 

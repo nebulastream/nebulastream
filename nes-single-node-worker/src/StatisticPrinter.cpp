@@ -51,12 +51,14 @@ void handleEvent(PrintingStatisticListener::CombinedEventType event, std::vector
                 const auto workerId = taskStartEvent.threadId;
                 const auto filesPos = workerId % files.size();
                 files[filesPos] << fmt::format(
-                    "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
+                    "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {} Number of Output Tuples per "
+                    "Buffer: {}\n",
                     taskStartEvent.timestamp,
                     taskStartEvent.taskId,
                     taskStartEvent.pipelineId,
                     taskStartEvent.queryId,
-                    taskStartEvent.numberOfTuples);
+                    taskStartEvent.numberOfTuples,
+                    taskStartEvent.numberOfOutputTuplesPerBuffer);
                 files[filesPos].flush();
             },
             [&](TaskEmit emitEvent)
