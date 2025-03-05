@@ -279,29 +279,33 @@ TEST_F(VarValTest, readFromMemoryTest)
         return 0;
     };
 
+    // TODO add here later that we want to run some test cases with nullable set to true
+    constexpr auto nullable = false;
     const DefaultPhysicalTypeFactory factory;
     testVarValReadFromMemory.operator()<int8_t>(
-        -someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT8)));
+        -someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT8, nullable)));
     testVarValReadFromMemory.operator()<int16_t>(
-        minI8Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT16)));
+        minI8Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT16, nullable)));
     testVarValReadFromMemory.operator()<int32_t>(
-        minI16Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT32)));
+        minI16Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT32, nullable)));
     testVarValReadFromMemory.operator()<int64_t>(
-        minI32Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT64)));
+        minI32Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT64, nullable)));
     testVarValReadFromMemory.operator()<uint8_t>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT8)));
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT8, nullable)));
     testVarValReadFromMemory.operator()<uint16_t>(
-        maxUI8Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT16)));
+        maxUI8Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT16, nullable)));
     testVarValReadFromMemory.operator()<uint32_t>(
-        maxUI16Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT32)));
+        maxUI16Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT32, nullable)));
     testVarValReadFromMemory.operator()<uint64_t>(
-        maxUI32Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64)));
+        maxUI32Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64, nullable)));
     testVarValReadFromMemory.operator()<float>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT32)));
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT32, nullable)));
     testVarValReadFromMemory.operator()<double>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT64)));
-    testVarValReadFromMemory.operator()<bool>(true, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
-    testVarValReadFromMemory.operator()<bool>(false, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
+        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT64, nullable)));
+    testVarValReadFromMemory.operator()<bool>(
+        true, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN, nullable)));
+    testVarValReadFromMemory.operator()<bool>(
+        false, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN, nullable)));
 }
 
 TEST_F(VarValTest, operatorBoolTest)

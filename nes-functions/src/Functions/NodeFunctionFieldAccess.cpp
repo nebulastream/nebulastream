@@ -38,7 +38,7 @@ std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::shared_ptr<Da
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::string fieldName)
 {
-    return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED), std::move(fieldName));
+    return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED, DataTypeProvider::isNullable(fieldName)), std::move(fieldName));
 }
 
 bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const

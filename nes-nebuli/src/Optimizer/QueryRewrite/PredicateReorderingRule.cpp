@@ -48,7 +48,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                 const std::vector<std::shared_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
                 const std::vector<std::shared_ptr<Node>> filterChainChildren = consecutiveFilters.back()->getChildren();
                 NES_TRACE("PredicateReorderingRule: If the filters are already sorted, no change is needed");
-                auto already_sorted = std::is_sorted(
+                const auto already_sorted = std::is_sorted(
                     consecutiveFilters.begin(),
                     consecutiveFilters.end(),
                     [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
@@ -63,7 +63,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                         { return lhs->getSelectivity() < rhs->getSelectivity(); });
                     NES_TRACE("PredicateReorderingRule: Start re-writing the new query plan");
                     NES_TRACE("PredicateReorderingRule: Remove parent/children references");
-                    for (auto& filterToReassign : consecutiveFilters)
+                    for (const auto& filterToReassign : consecutiveFilters)
                     {
                         filterToReassign->removeAllParent();
                         filterToReassign->removeChildren();
@@ -71,12 +71,12 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                     NES_TRACE("PredicateReorderingRule: For each filter, reassign children according to new order");
                     for (unsigned int i = 0; i < consecutiveFilters.size() - 1; i++)
                     {
-                        auto filterToReassign = consecutiveFilters.at(i);
+                        const auto filterToReassign = consecutiveFilters.at(i);
                         filterToReassign->addChild(consecutiveFilters.at(i + 1));
                     }
                     NES_TRACE("PredicateReorderingRule: Retrieve most and least selective filters");
-                    auto leastSelectiveFilter = consecutiveFilters.front();
-                    auto mostSelectiveFilter = consecutiveFilters.back();
+                    const auto leastSelectiveFilter = consecutiveFilters.front();
+                    const auto mostSelectiveFilter = consecutiveFilters.back();
                     NES_TRACE("PredicateReorderingRule: Least selective filter goes to the top (closer to sink), his new "
                               "parents will be the chain parents'");
                     for (auto& filterChainParent : filterChainParents)
@@ -91,7 +91,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                     }
                 }
                 NES_TRACE("PredicateReorderingRule: Mark the involved nodes as visited");
-                for (auto& orderedFilter : consecutiveFilters)
+                for (const auto& orderedFilter : consecutiveFilters)
                 {
                     visitedOperators.insert(orderedFilter->getId());
                 }
@@ -110,7 +110,7 @@ std::vector<std::shared_ptr<LogicalSelectionOperator>>
 PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
 {
     std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
-    DepthFirstNodeIterator queryPlanNodeIterator(filter);
+    const DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
     while (NES::Util::instanceOf<LogicalSelectionOperator>(node))

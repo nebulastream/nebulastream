@@ -99,12 +99,12 @@ void FilterPushDownRule::pushDownFilter(
     }
     else if (NES::Util::instanceOf<LogicalMapOperator>(curOperator))
     {
-        auto mapOperator = NES::Util::as<LogicalMapOperator>(curOperator);
+        const auto mapOperator = NES::Util::as<LogicalMapOperator>(curOperator);
         pushFilterBelowMap(filterOperator, mapOperator);
     }
     else if (NES::Util::instanceOf<LogicalJoinOperator>(curOperator))
     {
-        auto joinOperator = NES::Util::as<LogicalJoinOperator>(curOperator);
+        const auto joinOperator = NES::Util::as<LogicalJoinOperator>(curOperator);
         pushFilterBelowJoin(filterOperator, joinOperator, parOperator);
     }
     else if (NES::Util::instanceOf<LogicalUnionOperator>(curOperator))
@@ -185,17 +185,17 @@ void FilterPushDownRule::pushFilterBelowJoin(
 bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<LogicalJoinOperator>& joinOperator)
 {
-    std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
+    const std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     const std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition = joinOperator->getJoinDefinition();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
     /// returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
-    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinFunction());
+    const auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinFunction());
 
     if (equiJoinKeyNames.first == predicateFields[0])
     {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
-        auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        const auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
@@ -215,7 +215,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
     else if (equiJoinKeyNames.second == predicateFields[0])
     {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
-        auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        const auto copyOfFilter = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
@@ -236,7 +236,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
 void FilterPushDownRule::pushFilterBelowMap(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<LogicalMapOperator>& mapOperator)
 {
-    std::string assignmentFieldName = getAssignmentFieldFromMapOperator(mapOperator);
+    const std::string assignmentFieldName = getAssignmentFieldFromMapOperator(mapOperator);
     substituteFilterAttributeWithMapTransformation(filterOperator, mapOperator, assignmentFieldName);
     pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
 }
@@ -244,9 +244,9 @@ void FilterPushDownRule::pushFilterBelowMap(
 void FilterPushDownRule::pushFilterBelowUnion(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<Node>& unionOperator)
 {
-    std::vector<std::shared_ptr<Node>> grandChildren = unionOperator->getChildren();
+    const std::vector<std::shared_ptr<Node>> grandChildren = unionOperator->getChildren();
 
-    auto copyOfFilterOperator = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
+    const auto copyOfFilterOperator = NES::Util::as<LogicalSelectionOperator>(filterOperator->copy());
     copyOfFilterOperator->setId(getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->deepCopy());
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
@@ -266,7 +266,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
     auto groupByKeyNames = NES::Util::as<LogicalWindowOperator>(windowOperator)->getGroupByKeyNames();
     const std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByKeys
         = NES::Util::as<LogicalWindowOperator>(windowOperator)->getWindowDefinition()->getKeys();
-    std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
+    const std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
     bool areAllFilterAttributesInGroupByKeys = true;
@@ -328,9 +328,9 @@ void FilterPushDownRule::insertFilterIntoNewPosition(
         }
 
         /// inserts the operator between the operator that it wasn't able to push below and the parent of this operator.
-        bool success1 = childOperator->removeParent(parOperator); /// also removes childOperator as a child from parOperator
-        bool success2 = childOperator->addParent(filterOperator); /// also adds childOperator as a child to filterOperator
-        bool success3 = filterOperator->addParent(parOperator); /// also adds filterOperator as a child to parOperator
+        const bool success1 = childOperator->removeParent(parOperator); /// also removes childOperator as a child from parOperator
+        const bool success2 = childOperator->addParent(filterOperator); /// also adds childOperator as a child to filterOperator
+        const bool success3 = filterOperator->addParent(parOperator); /// also adds filterOperator as a child to parOperator
         if (!success1 || !success2 || !success3)
         {
             /// if we did manage to remove the filter from the queryPlan but now the insertion is not successful, that means that the queryPlan is invalid now.
@@ -356,7 +356,7 @@ FilterPushDownRule::getFilterAccessFunctions(const std::shared_ptr<NodeFunction>
 {
     std::vector<std::shared_ptr<NodeFunctionFieldAccess>> filterAccessFunctions;
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
-    DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
+    const DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
         NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessFunction Node");
@@ -373,7 +373,7 @@ FilterPushDownRule::getFilterAccessFunctions(const std::shared_ptr<NodeFunction>
 void FilterPushDownRule::renameNodeFunctionFieldAccesss(
     const std::shared_ptr<NodeFunction>& nodeFunction, const std::string& toReplace, const std::string& replacement)
 {
-    DepthFirstNodeIterator depthFirstNodeIterator(nodeFunction);
+    const DepthFirstNodeIterator depthFirstNodeIterator(nodeFunction);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))

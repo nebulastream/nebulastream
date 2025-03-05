@@ -33,7 +33,7 @@ std::shared_ptr<PhysicalType> BasicPhysicalType::create(const std::shared_ptr<Da
     return std::make_shared<BasicPhysicalType>(type, nativeType);
 }
 
-uint64_t BasicPhysicalType::size() const
+uint64_t BasicPhysicalType::getRawSizeInBytes() const noexcept
 {
     switch (nativeType)
     {
@@ -100,7 +100,7 @@ std::string BasicPhysicalType::convertRawToString(const void* data) const noexce
         case BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case CHAR:
-            if (size() != 1)
+            if (getRawSizeInBytes() != 1)
             {
                 return "invalid char type";
             }
@@ -142,7 +142,7 @@ std::string BasicPhysicalType::convertRawToStringWithoutFill(const void* data) c
         case BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case CHAR:
-            if (size() != 1)
+            if (getRawSizeInBytes() != 1)
             {
                 return "invalid char type";
             }

@@ -55,7 +55,7 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
     auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
     for (const auto& selectionOperator : selectionOperators)
     {
-        auto predicate = selectionOperator->getPredicate();
+        const auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
         auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
         updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
@@ -90,10 +90,10 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInFunction(std::s
     }
     else if (Util::instanceOf<NES::NodeFunctionFieldAssignment>(function))
     {
-        auto fieldAssignmentNodeFunction = Util::as<NES::NodeFunctionFieldAssignment>(function);
-        auto assignment = fieldAssignmentNodeFunction->getAssignment();
-        auto updatedAssignment = sortAttributesInFunction(assignment);
-        auto field = fieldAssignmentNodeFunction->getField();
+        const auto fieldAssignmentNodeFunction = Util::as<NES::NodeFunctionFieldAssignment>(function);
+        const auto assignment = fieldAssignmentNodeFunction->getAssignment();
+        const auto updatedAssignment = sortAttributesInFunction(assignment);
+        const auto field = fieldAssignmentNodeFunction->getField();
         return NES::NodeFunctionFieldAssignment::create(field, updatedAssignment);
     }
     else if (Util::instanceOf<NES::NodeFunctionConstantValue>(function) || Util::instanceOf<NES::NodeFunctionFieldAccess>(function))
@@ -610,7 +610,7 @@ bool AttributeSortRule::replaceCommutativeFunctions(
     const std::shared_ptr<NodeFunction>& originalFunction,
     const std::shared_ptr<NodeFunction>& updatedFunction)
 {
-    auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
+    const auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
 
     const std::shared_ptr<NodeFunction>& leftChild = binaryFunction->getLeft();
     const std::shared_ptr<NodeFunction>& rightChild = binaryFunction->getRight();
@@ -633,7 +633,7 @@ bool AttributeSortRule::replaceCommutativeFunctions(
         {
             if (!(Util::instanceOf<NodeFunctionFieldAccess>(child) || Util::instanceOf<NodeFunctionConstantValue>(child)))
             {
-                bool replaced = replaceCommutativeFunctions(Util::as<NodeFunction>(child), originalFunction, updatedFunction);
+                const bool replaced = replaceCommutativeFunctions(Util::as<NodeFunction>(child), originalFunction, updatedFunction);
                 if (replaced)
                 {
                     return true;
