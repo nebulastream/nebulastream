@@ -53,8 +53,7 @@ void AggregationOperatorHandler::setHashMapParams(
     this->numberOfBuckets = numberOfBuckets;
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-AggregationOperatorHandler::getCreateNewSlicesFunction(const Memory::AbstractBufferProvider*) const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> AggregationOperatorHandler::getCreateNewSlicesFunction() const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");

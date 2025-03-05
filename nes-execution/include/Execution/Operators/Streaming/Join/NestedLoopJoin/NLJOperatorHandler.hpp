@@ -17,17 +17,14 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <utility>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
@@ -53,8 +50,7 @@ public:
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
         const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
 private:
     void emitSliceIdsToProbe(
