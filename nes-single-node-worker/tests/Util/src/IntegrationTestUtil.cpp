@@ -470,6 +470,7 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                     sourceDescriptor.schema,
                     sourceDescriptor.logicalSourceName,
+                    sourceDescriptor.physicalSourceName,
                     sourceDescriptor.sourceType,
                     sourceDescriptor.parserConfig,
                     std::move(configUpdated));
@@ -509,6 +510,7 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                         sourceDescriptor.schema,
                         sourceDescriptor.logicalSourceName,
+                        sourceDescriptor.physicalSourceName,
                         sourceDescriptor.sourceType,
                         sourceDescriptor.parserConfig,
                         std::move(configUpdated));
