@@ -50,7 +50,7 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema) : schema(std::move(pSchema
             "Formatter can only handle basic and variable size physical types");
 
         formattingContext.offsets.push_back(offset);
-        offset += physicalType->size();
+        offset += physicalType->getSizeInBytes();
         if (auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
             formattingContext.physicalTypes.emplace_back(std::move(basicType));

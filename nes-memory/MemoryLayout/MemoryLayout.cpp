@@ -72,9 +72,9 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Sche
         const DefaultPhysicalTypeFactory physicalDataTypeFactory;
         const auto field = this->schema->getFieldByIndex(fieldIndex);
         auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalFieldSizes.emplace_back(physicalFieldSize->size());
+        physicalFieldSizes.emplace_back(physicalFieldSize->getSizeInBytes());
         physicalTypes.emplace_back(physicalFieldSize);
-        recordSize += physicalFieldSize->size();
+        recordSize += physicalFieldSize->getSizeInBytes();
         nameFieldIndexMap[field->getName()] = fieldIndex;
     }
     /// calculate the buffer capacity only if the record size is larger then zero

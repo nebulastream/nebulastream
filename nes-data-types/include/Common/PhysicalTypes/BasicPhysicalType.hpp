@@ -56,9 +56,6 @@ public:
     /// @return std::shared_ptr<PhysicalType>
     static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type, NativeType nativeType);
 
-    /// Returns the number of bytes occupied by this data type.
-    [[nodiscard]] uint64_t size() const override;
-
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
     std::string convertRawToString(const void* rawData) const noexcept override;
@@ -71,6 +68,10 @@ public:
     [[nodiscard]] std::string toString() const noexcept override;
 
     NativeType nativeType;
+
+protected:
+    /// Returns the number of bytes occupied by this data type.
+    [[nodiscard]] uint64_t getRawSizeInBytes() const noexcept override;
 };
 
 

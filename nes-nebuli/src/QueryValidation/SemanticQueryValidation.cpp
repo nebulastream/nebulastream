@@ -62,7 +62,7 @@ void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPl
     }
     catch (std::exception& e)
     {
-        std::string errorMessage = e.what();
+        const std::string errorMessage = e.what();
         throw QueryInvalid(errorMessage);
     }
 
@@ -110,7 +110,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
     const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
 {
     /// Getting the source operators from the query plan
-    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
+    const auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
 
     for (const auto& source : sourceOperators)
     {
@@ -126,9 +126,9 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
+    const auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
     std::vector<std::string> invalidLogicalSourceNames;
-    for (auto sourceOperator : sourceOperators)
+    for (const auto& sourceOperator : sourceOperators)
     {
         if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
         {
@@ -172,7 +172,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<Qu
 
 void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
 {
-    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
+    const auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
     if (!inferModelOperators.empty())
     {
         std::shared_ptr<DataType> commonStamp;
@@ -180,7 +180,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
         {
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
-                auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
+                const auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
                 if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
                     && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
                 {

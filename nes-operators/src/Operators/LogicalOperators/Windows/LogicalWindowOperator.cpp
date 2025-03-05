@@ -156,7 +156,9 @@ bool LogicalWindowOperator::inferSchema()
         for (const auto& key : keyList)
         {
             key->inferStamp(*inputSchema);
-            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
+            auto field = inputSchema->getFieldByName(key->getFieldName());
+            INVARIANT(field.has_value(), "Key field {} not found in input schema", key->getFieldName());
+            outputSchema->addField(field.value()->deepCopy());
         }
     }
     for (const auto& agg : windowAggregation)

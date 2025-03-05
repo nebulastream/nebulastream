@@ -52,7 +52,7 @@ void OriginIdInferencePhase::performInference(
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
     /// set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
-    for (auto originIdAssignmentOperators : originIdAssignmentOperator)
+    for (const auto& originIdAssignmentOperators : originIdAssignmentOperator)
     {
         originIdAssignmentOperators->setOriginId(OriginId(originIdCounter++));
     }
@@ -60,7 +60,7 @@ void OriginIdInferencePhase::performInference(
     /// propagate origin ids through the complete query plan
     for (auto rootOperator : rootOperators)
     {
-        if (auto logicalOperator = NES::Util::as_if<LogicalOperator>(rootOperator))
+        if (const auto logicalOperator = NES::Util::as_if<LogicalOperator>(rootOperator))
         {
             logicalOperator->inferInputOrigins();
         }

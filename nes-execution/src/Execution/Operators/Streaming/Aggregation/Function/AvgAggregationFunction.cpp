@@ -50,7 +50,7 @@ void AvgAggregationFunction::lift(
 {
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType->size());
+    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType->getSizeInBytes());
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType);
 
@@ -71,13 +71,13 @@ void AvgAggregationFunction::combine(
 {
     /// Reading the sum and count from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1) + nautilus::val<uint64_t>(inputType->size());
+    const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1) + nautilus::val<uint64_t>(inputType->getSizeInBytes());
     const auto sum1 = Nautilus::VarVal::readVarValFromMemory(memAreaSum1, inputType);
     const auto count1 = Nautilus::VarVal::readVarValFromMemory(memAreaCount1, countType);
 
     /// Reading the sum and count from the second aggregation state
     const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2) + nautilus::val<uint64_t>(inputType->size());
+    const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2) + nautilus::val<uint64_t>(inputType->getSizeInBytes());
     const auto sum2 = Nautilus::VarVal::readVarValFromMemory(memAreaSum2, inputType);
     const auto count2 = Nautilus::VarVal::readVarValFromMemory(memAreaCount2, countType);
 
@@ -94,7 +94,7 @@ Nautilus::Record AvgAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the sum and count from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType->size());
+    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType->getSizeInBytes());
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType);
 
@@ -117,8 +117,8 @@ void AvgAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 size_t AvgAggregationFunction::getSizeOfStateInBytes() const
 {
     /// Size of the sum value + size of the count value
-    const auto inputSize = inputType->size();
-    const auto countTypeSize = countType->size();
+    const auto inputSize = inputType->getSizeInBytes();
+    const auto countTypeSize = countType->getSizeInBytes();
     return inputSize + countTypeSize;
 }
 

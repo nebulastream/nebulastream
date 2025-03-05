@@ -45,7 +45,7 @@ std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::sh
 
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
-    for (auto& sink : sinkOperators)
+    for (const auto& sink : sinkOperators)
     {
         if (!sink->inferSchema())
         {

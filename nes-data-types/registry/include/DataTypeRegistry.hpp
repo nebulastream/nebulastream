@@ -24,6 +24,7 @@ namespace NES
 using DataTypeRegistryReturnType = std::unique_ptr<DataType>;
 struct DataTypeRegistryArguments
 {
+    bool nullable;
 };
 
 class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>

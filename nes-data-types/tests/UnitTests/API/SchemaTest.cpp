@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
@@ -39,7 +40,7 @@ public:
     }
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
 
-    auto getRandomFields(const auto numberOfFields)
+    std::pair<std::vector<std::shared_ptr<AttributeField>>, uint64_t> getRandomFields(const auto numberOfFields)
     {
         auto getRandomBasicType = [](const unsigned long rndPos)
         {
@@ -52,14 +53,22 @@ public:
         std::mt19937 mt(RND_SEED);
 
         std::vector<std::shared_ptr<AttributeField>> rndFields;
+        uint64_t numberOfNullableFields = 0;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
-            rndFields.emplace_back(AttributeField::create(fieldName, DataTypeProvider::provideBasicType(basicType)));
+            const auto isNullable = mt() % 2 == 0;
+            numberOfNullableFields += isNullable;
+            rndFields.emplace_back(AttributeField::create(fieldName, DataTypeProvider::provideBasicType(basicType, isNullable)));
         }
-
-        return rndFields;
+        std::stringstream ss;
+        for (const auto& field : rndFields)
+        {
+            ss << field->toString() << ", ";
+        }
+        NES_DEBUG("Random fields: {}", ss.str());
+        return {rndFields, numberOfNullableFields};
     }
 };
 
@@ -102,30 +111,34 @@ TEST_F(SchemaTest, addFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            ASSERT_EQ(
+                *testSchema->getFieldByIndex(0)->getDataType(),
+                *DataTypeProvider::provideBasicType(basicTypeVal, DataTypeProvider::isNullable(testSchema->getFieldByIndex(0)->getName())));
         }
     }
 
     {
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
-        auto rndFields = getRandomFields(NUM_FIELDS);
+        auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
         auto testSchema = Schema::create();
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
+        uint64_t testSchemaFieldCnt = 0;
+        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
             EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
             if (testSchema->getFieldByName(curField->getName()).has_value())
             {
                 EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
             }
+            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
     }
 }
@@ -169,29 +182,31 @@ TEST_F(SchemaTest, removeFieldsTest)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     constexpr auto NUM_FIELDS = 10_u64;
-    auto rndFields = getRandomFields(NUM_FIELDS);
+    auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
     auto testSchema = Schema::create();
     for (const auto& field : rndFields)
     {
         ASSERT_TRUE(testSchema->addField(field));
     }
 
-    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
-    for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
+    uint64_t testSchemaFieldCnt = 0;
+    for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
     {
         const auto& curField = rndFields[fieldCnt];
-        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
         EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
         if (testSchema->getFieldByName(curField->getName()).has_value())
         {
             EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
         }
+        testSchemaFieldCnt += curField->getDataType()->nullable;
     }
 
     /// Removing fields while we still have one field
     while (testSchema->getFieldCount() > 0)
     {
-        const auto rndPos = rand() % testSchema->getFieldCount();
+        const auto rndPos = rand() % rndFields.size();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
         if (testSchema->getFieldCount() < 1)
@@ -219,10 +234,13 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            ASSERT_EQ(
+                *testSchema->getFieldByIndex(0)->getDataType(),
+                *DataTypeProvider::provideBasicType(basicTypeVal, testSchema->getFieldByIndex(0)->getDataType()->nullable));
 
             /// Replacing field
-            const auto newDataType = getRandomFields(1_u64)[0]->getDataType();
+            const auto [randomFields, numberOfNullableFields] = getRandomFields(1_u64);
+            const auto newDataType = randomFields[0]->getDataType();
             ASSERT_NO_THROW(testSchema->replaceField("field", newDataType));
             ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *newDataType);
         }
@@ -231,41 +249,45 @@ TEST_F(SchemaTest, replaceFieldTest)
     {
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
-        auto rndFields = getRandomFields(NUM_FIELDS);
+        auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
         auto testSchema = Schema::create();
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
+        uint64_t testSchemaFieldCnt = 0;
+        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
             EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
             if (testSchema->getFieldByName(curField->getName()).has_value())
             {
                 EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
             }
+            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
 
         /// Replacing multiple fields with new data types
-        auto replacingFields = getRandomFields(NUM_FIELDS);
+        auto [replacingFields, numberOfNullableFieldsReplaced] = getRandomFields(NUM_FIELDS);
         for (const auto& replaceField : replacingFields)
         {
             testSchema->replaceField(replaceField->getName(), replaceField->getDataType());
         }
 
-        for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)
+        testSchemaFieldCnt = 0;
+        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
         {
-            const auto& curField = replacingFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            const auto& curField = rndFields[fieldCnt];
+            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
             EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
             if (testSchema->getFieldByName(curField->getName()).has_value())
             {
                 EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
             }
+            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
     }
 }
@@ -274,19 +296,24 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
 {
     {
         /// Calculating the schema size for each data type
-        DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
+            DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
             std::shared_ptr<Schema> testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
             ASSERT_EQ(testSchema->getFieldCount(), 1);
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            ASSERT_EQ(
+                *testSchema->getFieldByIndex(0)->getDataType(),
+                *DataTypeProvider::provideBasicType(basicTypeVal, testSchema->getFieldByIndex(0)->getDataType()->nullable));
             ASSERT_EQ(
                 testSchema->getSchemaSizeInBytes(),
-                defaultPhysicalTypeFactory.getPhysicalType(DataTypeProvider::provideBasicType(basicTypeVal))->size());
+                defaultPhysicalTypeFactory
+                    .getPhysicalType(
+                        DataTypeProvider::provideBasicType(basicTypeVal, testSchema->getFieldByIndex(0)->getDataType()->nullable))
+                    ->size());
         }
     }
 

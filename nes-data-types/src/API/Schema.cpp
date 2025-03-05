@@ -68,7 +68,7 @@ uint64_t Schema::getSchemaSizeInBytes() const
     for (const auto& field : fields)
     {
         const auto type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        size += type->size();
+        size += type->getSizeInBytes();
     }
     return size;
 }
@@ -87,6 +87,12 @@ std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& 
     if (attribute)
     {
         fields.push_back(attribute->deepCopy());
+        /// If it is nullable, we have to add a boolean field
+        if (attribute->getDataType()->nullable)
+        {
+            fields.push_back(AttributeField::create(
+                attribute->getName() + DataTypeProvider::NULLABLE_POSTFIX, DataTypeProvider::provideBasicType(BasicType::BOOLEAN, false)));
+        }
     }
     return copy();
 }
@@ -94,7 +100,8 @@ std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& 
 ///TODO #473: investigate if we can remove this method
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicType& type)
 {
-    return addField(name, DataTypeProvider::provideBasicType(type));
+    const auto nullable = DataTypeProvider::isNullable(name);
+    return addField(name, DataTypeProvider::provideBasicType(type, nullable));
 }
 
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
@@ -104,16 +111,44 @@ std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::sha
 
 void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 {
-    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
+    for (auto fieldIt = fields.begin(); fieldIt != fields.end(); ++fieldIt)
+    {
+        if ((*fieldIt)->getName() == field->getName())
+        {
+            fieldIt = fields.erase(fieldIt);
+            /// We have to remove the next field, if the field to remove is nullable.
+            if (field->getDataType()->nullable or DataTypeProvider::isNullable(field->getName()))
+            {
+                fields.erase(fieldIt);
+            }
+            return;
+        }
+    }
 }
 
 void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
 {
-    for (auto& field : fields)
+    for (auto fieldIt = fields.begin(); fieldIt != fields.end(); ++fieldIt)
     {
-        if (field->getName() == name)
+        if ((*fieldIt)->getName() == name)
         {
-            field = AttributeField::create(name, type);
+            /// We have to remove the next field, if the field to replace is nullable
+            if ((*fieldIt)->getDataType()->nullable or DataTypeProvider::isNullable((*fieldIt)->getName()))
+            {
+                fieldIt = fields.erase(fieldIt);
+            }
+
+            const auto fieldToAddIsNullable = type->nullable;
+            (*fieldIt) = AttributeField::create(name, type);
+
+            /// If the field to add is nullable, we have to add a boolean field
+            if (fieldToAddIsNullable)
+            {
+                fields.insert(
+                    fieldIt + 1,
+                    AttributeField::create(
+                        name + DataTypeProvider::NULLABLE_POSTFIX, DataTypeProvider::provideBasicType(BasicType::BOOLEAN, false)));
+            }
             return;
         }
     }

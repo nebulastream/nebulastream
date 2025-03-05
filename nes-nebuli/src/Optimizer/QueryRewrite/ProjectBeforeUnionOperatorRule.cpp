@@ -36,8 +36,8 @@ std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRule::
 std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    for (auto& unionOperator : unionOperators)
+    const auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+    for (const auto& unionOperator : unionOperators)
     {
         auto rightInputSchema = unionOperator->getRightInputSchema();
         auto leftInputSchema = unionOperator->getLeftInputSchema();
@@ -77,8 +77,8 @@ std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjec
     /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
     {
-        auto field = sourceFields->getFieldByIndex(i);
-        auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
+        const auto field = sourceFields->getFieldByIndex(i);
+        const auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
         /// Compute field access and field rename function
         auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);

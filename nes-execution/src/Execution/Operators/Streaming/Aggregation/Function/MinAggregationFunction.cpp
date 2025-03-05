@@ -104,7 +104,7 @@ void MinAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t MinAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

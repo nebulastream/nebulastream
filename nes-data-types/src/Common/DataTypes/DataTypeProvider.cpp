@@ -26,22 +26,15 @@
 namespace NES::DataTypeProvider
 {
 
-std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type)
+bool isNullable(const std::string_view fieldName)
 {
-    auto args = DataTypeRegistryArguments{};
-    if (auto dataType = DataTypeRegistry::instance().create(type, args))
-    {
-        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
-        return {sharedType};
-    }
-    return std::nullopt;
+    return fieldName.size() > NULLABLE_POSTFIX.length()
+        && fieldName.substr(fieldName.size() - NULLABLE_POSTFIX.length()) == NULLABLE_POSTFIX;
 }
 
-std::shared_ptr<DataType> provideDataType(const std::string& type)
+std::shared_ptr<DataType> provideDataType(const std::string& type, const bool nullable)
 {
-    /// Empty argument struct, since we do not have data types that take arguments at the moment.
-    /// However, we provide the empty struct to be consistent with the design of our registries.
-    auto args = DataTypeRegistryArguments{};
+    auto args = DataTypeRegistryArguments{.nullable = nullable};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
         std::shared_ptr<DataType> sharedType = std::move(dataType.value());
@@ -50,13 +43,13 @@ std::shared_ptr<DataType> provideDataType(const std::string& type)
     throw std::runtime_error("Failed to create data type of type: " + type);
 }
 
-std::shared_ptr<DataType> provideDataType(LogicalType type)
+std::shared_ptr<DataType> provideDataType(const LogicalType type, const bool nullable)
 {
-    return provideDataType(std::string(magic_enum::enum_name(type)));
+    return provideDataType(std::string(magic_enum::enum_name(type)), nullable);
 }
 
-std::shared_ptr<DataType> provideBasicType(const BasicType type)
+std::shared_ptr<DataType> provideBasicType(const BasicType type, const bool nullable)
 {
-    return provideDataType(std::string(magic_enum::enum_name(type)));
+    return provideDataType(std::string(magic_enum::enum_name(type)), nullable);
 }
 }

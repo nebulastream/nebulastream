@@ -25,7 +25,7 @@ namespace NES
 class Numeric : public DataType
 {
 public:
-    explicit Numeric(int8_t bits);
+    explicit Numeric(const bool nullable, int8_t bits);
     ~Numeric() override = default;
 
     /**

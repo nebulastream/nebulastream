@@ -22,7 +22,7 @@ namespace NES
 class VariableSizedDataType : public DataType
 {
 public:
-    inline VariableSizedDataType() noexcept { }
+    inline VariableSizedDataType(const bool nullable) noexcept : DataType(nullable) { }
 
     ~VariableSizedDataType() override = default;
 

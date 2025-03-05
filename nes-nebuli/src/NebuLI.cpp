@@ -55,11 +55,11 @@ namespace YAML
 {
 using namespace NES::CLI;
 
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType, bool nullable)
 {
     try
     {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
+        return NES::DataTypeProvider::provideDataType(fieldNodeType, nullable);
     }
     catch (std::runtime_error& e)
     {
@@ -73,7 +73,7 @@ struct convert<SchemaField>
     static bool decode(const Node& node, SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        rhs.type = stringToFieldType(node["type"].as<std::string>(), NES::DataTypeProvider::isNullable(rhs.name));
         return true;
     }
 };
@@ -284,7 +284,8 @@ std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::pat
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
+SchemaField::SchemaField(std::string name, const std::string& typeName)
+    : SchemaField(std::move(name), YAML::stringToFieldType(typeName, DataTypeProvider::isNullable(name)))
 {
 }
 
@@ -296,7 +297,7 @@ std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
 {
     try
     {
-        auto config = YAML::Load(inputStream).as<QueryConfig>();
+        const auto config = YAML::Load(inputStream).as<QueryConfig>();
         return createFullySpecifiedQueryPlan(config);
     }
     catch (const YAML::ParserException& pex)
