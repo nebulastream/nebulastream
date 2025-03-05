@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        InputFormatterTask.cpp
+        AsyncInputFormatterTask.cpp
         CSVInputFormatter.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp

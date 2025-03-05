@@ -16,15 +16,15 @@
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <AsyncInputFormatterRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
+std::unique_ptr<AsyncInputFormatterTask> provideAsyncInputFormatterTask(
     const OriginId originId,
     const std::string& parserType,
     std::shared_ptr<Schema> schema,
@@ -33,7 +33,7 @@ std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
 {
     if (auto inputFormatter = AsyncInputFormatterRegistry::instance().create(parserType, AsyncInputFormatterRegistryArguments{}))
     {
-        return std::make_unique<InputFormatterTask>(
+        return std::make_unique<AsyncInputFormatterTask>(
             originId, std::move(tupleDelimiter), std::move(fieldDelimiter), std::move(schema), std::move(inputFormatter.value()));
     }
     throw UnknownParserType("unknown type of parser: {}", parserType);

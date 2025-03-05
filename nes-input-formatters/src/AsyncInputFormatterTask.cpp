@@ -24,8 +24,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetsIterator.hpp>
@@ -62,7 +62,7 @@ void processTuple(
     const size_t sizeOfFieldDelimiter,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     NES::Memory::TupleBuffer& formattedBuffer,
-    const std::vector<NES::InputFormatters::InputFormatterTask::CastFunctionSignature>& fieldParseFunctions,
+    const std::vector<NES::InputFormatters::AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions,
     const NES::InputFormatters::FieldOffsetsType offsetToFormattedBuffer,
     const std::vector<size_t>& fieldSizes)
 {
@@ -122,7 +122,7 @@ void processSpanningTuple(
     const size_t numberOfFieldsInSchema,
     const std::string_view fieldDelimiter,
     NES::InputFormatters::InputFormatter& inputFormatter,
-    const std::vector<NES::InputFormatters::InputFormatterTask::CastFunctionSignature>& fieldParseFunctions,
+    const std::vector<NES::InputFormatters::AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions,
     const std::vector<size_t>& fieldSizes)
 {
     /// If the buffers are not empty, there are at least three buffers
@@ -173,7 +173,7 @@ void processSpanningTuple(
 namespace NES::InputFormatters
 {
 
-InputFormatterTask::InputFormatterTask(
+AsyncInputFormatterTask::AsyncInputFormatterTask(
     const OriginId originId,
     std::string tupleDelimiter,
     std::string fieldDelimiter,
@@ -216,9 +216,9 @@ InputFormatterTask::InputFormatterTask(
         }
     }
 }
-InputFormatterTask::~InputFormatterTask() = default;
+AsyncInputFormatterTask::~AsyncInputFormatterTask() = default;
 
-void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+void AsyncInputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder->flushFinalPartialTuple();
     const auto flushedBuffers = resultBuffers.stagedBuffers;
@@ -253,7 +253,7 @@ void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipe
     }
 }
 
-void InputFormatterTask::processRawBuffer(
+void AsyncInputFormatterTask::processRawBuffer(
     const NES::Memory::TupleBuffer& rawBuffer,
     NES::ChunkNumber::Underlying& runningChunkNumber,
     FieldOffsetIterator& fieldOffsets,
@@ -311,7 +311,7 @@ void InputFormatterTask::processRawBuffer(
     }
 }
 
-void InputFormatterTask::processRawBufferWithTupleDelimiter(
+void AsyncInputFormatterTask::processRawBufferWithTupleDelimiter(
     const NES::Memory::TupleBuffer& rawBuffer,
     const FieldOffsetsType offsetOfFirstTupleDelimiter,
     const FieldOffsetsType offsetOfLastTupleDelimiter,
@@ -399,7 +399,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     }
 }
 
-void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
+void AsyncInputFormatterTask::processRawBufferWithoutTupleDelimiter(
     const NES::Memory::TupleBuffer& rawBuffer,
     const FieldOffsetsType offsetOfFirstTupleDelimiter,
     const FieldOffsetsType offsetOfLastTupleDelimiter,
@@ -437,7 +437,7 @@ void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
     pec.emitBuffer(formattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
 }
 
-void InputFormatterTask::execute(
+void AsyncInputFormatterTask::execute(
     const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     if (inputTupleBuffer.getBufferSize() == 0)
@@ -510,7 +510,7 @@ void InputFormatterTask::execute(
             pipelineExecutionContext);
     }
 }
-std::ostream& InputFormatterTask::toString(std::ostream& os) const
+std::ostream& AsyncInputFormatterTask::toString(std::ostream& os) const
 {
     os << "InputFormatterTask: {\n";
     os << "  originId: " << originId << ",\n";

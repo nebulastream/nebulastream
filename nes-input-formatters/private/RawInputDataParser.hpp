@@ -16,7 +16,7 @@
 
 #include <string_view>
 #include <vector>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
@@ -39,9 +39,9 @@ auto parseIntegerString()
 }
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-void addBasicStringParseFunction(std::vector<InputFormatterTask::CastFunctionSignature>& fieldParseFunctions);
+void addBasicStringParseFunction(std::vector<AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions);
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses a basic NebulaStream type to the vector.
 void addBasicTypeParseFunction(
-    const BasicPhysicalType& basicPhysicalType, std::vector<InputFormatterTask::CastFunctionSignature>& fieldParseFunctions);
+    const BasicPhysicalType& basicPhysicalType, std::vector<AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions);
 }

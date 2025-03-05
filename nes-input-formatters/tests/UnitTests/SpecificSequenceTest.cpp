@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>

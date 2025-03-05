@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 
 namespace NES::InputFormatters
 {

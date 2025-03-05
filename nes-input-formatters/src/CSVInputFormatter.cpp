@@ -18,8 +18,8 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <AsyncInputFormatterRegistry.hpp>
 #include <CSVInputFormatter.hpp>

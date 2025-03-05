@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <memory>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 

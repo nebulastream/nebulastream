@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <string_view>
 #include <vector>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -25,7 +25,7 @@
 namespace NES::InputFormatters::RawInputDataParser
 {
 
-void addBasicStringParseFunction(std::vector<InputFormatterTask::CastFunctionSignature>& fieldParseFunctions)
+void addBasicStringParseFunction(std::vector<AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions)
 {
     fieldParseFunctions.emplace_back(
         [](std::string_view inputString,
@@ -51,7 +51,7 @@ void addBasicStringParseFunction(std::vector<InputFormatterTask::CastFunctionSig
 }
 
 void addBasicTypeParseFunction(
-    const BasicPhysicalType& basicPhysicalType, std::vector<InputFormatterTask::CastFunctionSignature>& fieldParseFunctions)
+    const BasicPhysicalType& basicPhysicalType, std::vector<AsyncInputFormatterTask::CastFunctionSignature>& fieldParseFunctions)
 {
     switch (basicPhysicalType.nativeType)
     {

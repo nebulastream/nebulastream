@@ -150,13 +150,13 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
 }
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
+std::shared_ptr<InputFormatters::AsyncInputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    return InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
         OriginId(0),
         validatedParserConfiguration.parserType,
         std::move(schema),
@@ -193,7 +193,7 @@ Runtime::Execution::TestablePipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
+    std::shared_ptr<InputFormatters::AsyncInputFormatterTask> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     return Runtime::Execution::TestablePipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));

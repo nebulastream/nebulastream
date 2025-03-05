@@ -23,8 +23,8 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -104,7 +104,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema);
+std::shared_ptr<InputFormatters::AsyncInputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
@@ -116,7 +116,7 @@ Runtime::Execution::TestablePipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask);
+    std::shared_ptr<InputFormatters::AsyncInputFormatterTask> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -226,8 +226,8 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<Runtime::Execution::TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    const std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask
-        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    const std::shared_ptr<InputFormatters::AsyncInputFormatterTask> inputFormatterTask
+        = InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
             OriginId(0),
             testHandle.testConfig.parserConfig.parserType,
             testHandle.schema,

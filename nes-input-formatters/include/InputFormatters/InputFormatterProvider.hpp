@@ -17,11 +17,11 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
+std::unique_ptr<AsyncInputFormatterTask> provideAsyncInputFormatterTask(
     OriginId originId,
     const std::string& parserType,
     std::shared_ptr<Schema> schema,

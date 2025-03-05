@@ -23,8 +23,8 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -101,7 +101,8 @@ Runtime::Execution::Source processSource(
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
+    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
         sourceOperator->getOriginId(),
         sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
         sourceOperator->getSourceDescriptorRef().schema,
