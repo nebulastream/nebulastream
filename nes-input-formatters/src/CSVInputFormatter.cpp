@@ -21,10 +21,10 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <AsyncInputFormatterRegistry.hpp>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetsIterator.hpp>
-#include <InputFormatterRegistry.hpp>
 
 namespace NES::InputFormatters
 {
@@ -104,8 +104,8 @@ std::ostream& CSVInputFormatter::toString(std::ostream& os) const
     return os;
 }
 
-std::unique_ptr<InputFormatterRegistryReturnType>
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments)
+std::unique_ptr<AsyncInputFormatterRegistryReturnType>
+AsyncInputFormatterGeneratedRegistrar::RegisterCSVAsyncInputFormatter(AsyncInputFormatterRegistryArguments)
 {
     return std::make_unique<CSVInputFormatter>();
 }

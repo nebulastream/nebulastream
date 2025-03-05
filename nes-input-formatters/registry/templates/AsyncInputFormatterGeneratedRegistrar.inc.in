@@ -16,7 +16,7 @@
 
 /// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#    error "This file should not be included directly! Include instead include InputFormatterRegistry.hpp"
+#    error "This file should not be included directly! Include instead include AsyncInputFormatterRegistry.hpp"
 #endif
 
 #include <memory>
@@ -25,7 +25,7 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
+namespace NES::InputFormatters::AsyncInputFormatterGeneratedRegistrar
 {
 
 /// declarations of register functions for 'InputFormatters'
@@ -35,10 +35,10 @@ namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<InputFormatters::InputFormatterRegistry, std::string, InputFormatters::InputFormatterRegistryReturnType, InputFormatters::InputFormatterRegistryArguments>::registerAll(
+inline void Registrar<InputFormatters::AsyncInputFormatterRegistry, std::string, InputFormatters::AsyncInputFormatterRegistryReturnType, InputFormatters::AsyncInputFormatterRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::InputFormatters::InputFormatterGeneratedRegistrar;
+    using namespace NES::InputFormatters::AsyncInputFormatterGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

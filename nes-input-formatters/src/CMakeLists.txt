@@ -20,4 +20,4 @@ add_source_files(nes-input-formatters
 )
 
 # Register plugins
-add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)
+add_plugin(CSV AsyncInputFormatter nes-input-formatters CSVInputFormatter.cpp)

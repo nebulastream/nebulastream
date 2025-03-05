@@ -37,6 +37,6 @@ endif ()
 create_plugin_registry_library(nes-input-formatters-registry nes-input-formatters)
 target_link_libraries(nes-input-formatters PRIVATE nes-input-formatters-registry)
 # Generate a registrar for every registry in nes-input-formatters
-generate_plugin_registrars(nes-input-formatters InputFormatter)
+generate_plugin_registrars(nes-input-formatters AsyncInputFormatter)
 
 add_tests_if_enabled(tests)
