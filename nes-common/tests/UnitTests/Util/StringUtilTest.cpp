@@ -485,20 +485,20 @@ TEST(EscapeSpecialCharactersTest, NoSpecialCharacters)
 
 TEST(EscapeSpecialCharactersTest, SingleSpecialCharacters)
 {
-    EXPECT_EQ("\\a", escapeSpecialCharacters("\a")); // Bell
-    EXPECT_EQ("\\b", escapeSpecialCharacters("\b")); // Backspace
-    EXPECT_EQ("\\f", escapeSpecialCharacters("\f")); // Form feed
-    EXPECT_EQ("\\n", escapeSpecialCharacters("\n")); // Newline
-    EXPECT_EQ("\\r", escapeSpecialCharacters("\r")); // Carriage return
-    EXPECT_EQ("\\t", escapeSpecialCharacters("\t")); // Tab
-    EXPECT_EQ("\\v", escapeSpecialCharacters("\v")); // Vertical tab
+    EXPECT_EQ("\\a", escapeSpecialCharacters("\a")); /// Bell
+    EXPECT_EQ("\\b", escapeSpecialCharacters("\b")); /// Backspace
+    EXPECT_EQ("\\f", escapeSpecialCharacters("\f")); /// Form feed
+    EXPECT_EQ("\\n", escapeSpecialCharacters("\n")); /// Newline
+    EXPECT_EQ("\\r", escapeSpecialCharacters("\r")); /// Carriage return
+    EXPECT_EQ("\\t", escapeSpecialCharacters("\t")); /// Tab
+    EXPECT_EQ("\\v", escapeSpecialCharacters("\v")); /// Vertical tab
 }
 
 TEST(EscapeSpecialCharactersTest, MultipleSpecialCharacters)
 {
     EXPECT_EQ("Line1\\nLine2", escapeSpecialCharacters("Line1\nLine2"));
     EXPECT_EQ("Text\\tTabbed", escapeSpecialCharacters("Text\tTabbed"));
-    EXPECT_EQ("\\r\\n", escapeSpecialCharacters("\r\n")); // Windows line ending
+    EXPECT_EQ("\\r\\n", escapeSpecialCharacters("\r\n")); /// Windows line ending
 }
 
 TEST(EscapeSpecialCharactersTest, MixedContent)
@@ -509,7 +509,7 @@ TEST(EscapeSpecialCharactersTest, MixedContent)
 
 TEST(EscapeSpecialCharactersTest, AlreadyEscapedCharacters)
 {
-    // Backslashes that are already part of the string should be preserved
+    /// Backslashes that are already part of the string should be preserved
     EXPECT_EQ("\\n", escapeSpecialCharacters("\\n"));
 }
 
