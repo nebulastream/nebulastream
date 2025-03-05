@@ -23,7 +23,6 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 
@@ -54,8 +53,7 @@ public:
     /// TODO #409 This might change after the [DD] Operator Representations  has been implemented
     void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
 
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
 protected:
     void triggerSlices(

@@ -38,16 +38,12 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-Interface::HashMap* getHashMapProxy(
-    const AggregationOperatorHandler* operatorHandler,
-    const Timestamp timestamp,
-    const WorkerThreadId workerThreadId,
-    const Memory::AbstractBufferProvider* bufferProvider)
+Interface::HashMap*
+getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timestamp timestamp, const WorkerThreadId workerThreadId)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
-    PRECONDITION(bufferProvider != nullptr, "The buffer provider should not be null");
 
-    const auto createFunction = operatorHandler->getCreateNewSlicesFunction(bufferProvider);
+    const auto createFunction = operatorHandler->getCreateNewSlicesFunction();
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(
         hashMap.size() == 1,
@@ -64,12 +60,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
-        timestamp,
-        ctx.getWorkerThreadId(),
-        ctx.pipelineMemoryProvider.bufferProvider);
+    const auto hashMapPtr = invoke(getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId());
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record

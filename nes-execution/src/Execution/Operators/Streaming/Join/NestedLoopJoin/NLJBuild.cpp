@@ -51,13 +51,11 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
     return nljSlice->getSliceEnd();
 }
 
-NLJSlice*
-getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp timestamp, const Memory::AbstractBufferProvider* bufferProvider)
+NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp timestamp)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-    const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
+    const auto createFunction = opHandler->getCreateNewSlicesFunction();
     return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
 }
 
@@ -75,8 +73,7 @@ void NLJBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     WindowOperatorBuild::open(executionCtx, recordBuffer);
 
     auto opHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto sliceReference
-        = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs(), executionCtx.pipelineMemoryProvider.bufferProvider);
+    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs());
     auto sliceStart = invoke(getNLJSliceStartProxy, sliceReference);
     auto sliceEnd = invoke(getNLJSliceEndProxy, sliceReference);
     const auto pagedVectorReference = invoke(
@@ -125,8 +122,7 @@ void NLJBuild::updateLocalJoinState(
     const ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& timestamp) const
 {
-    localJoinState->sliceReference
-        = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
+    localJoinState->sliceReference = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp);
     localJoinState->sliceStart = invoke(getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = invoke(getNLJSliceEndProxy, localJoinState->sliceReference);
     localJoinState->nljPagedVectorMemRef = invoke(
