@@ -48,7 +48,7 @@ then
     #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
     git ls-files \
       | grep --invert-match -e "\.bin$" -e "\.png$" -e "\.zip$" \
-      | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
+      | xargs --max-procs="$(nproc)" -I {} sh -c '[ -L {} ] || [ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
 else
     # clang-format
@@ -63,6 +63,7 @@ else
     #   take last char of the files, count lines and chars,
     #   fail if not equal (i.e. not every char is a newline)
     git ls-files \
+      | while read file; do [ -L "$file" ] || echo "$file"; done  \
       | grep --invert-match -e "\.bin$" -e "\.png$" -e "\.zip$" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
       | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }' \
