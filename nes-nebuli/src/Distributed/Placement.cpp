@@ -137,7 +137,7 @@ void NES::Distributed::BottomUpPlacement::doPlacement(const Topology& topology, 
             auto candidates = topology.findCommonNode(
                 *childrenPlacement.begin(), *(++childrenPlacement.begin()), getNode(nextPlacedOperator), Topology::Downstream);
             const auto candidate = candidates | std::views::transform([&](const auto& candidate) { return std::get<0>(candidate); })
-                | std::views::filter([&](const Topology::Node& node) { return capacity.at(node) > 0; }) | std::ranges::to<std::vector>();
+                | std::views::filter([&](const Topology::Node& node) { return capacity.at(node) > 0; }) | ranges::to<std::vector>();
             INVARIANT(!candidate.empty(), "Could not find a path from child operators to parent operator");
 
             --capacity.at(candidate[0]);
