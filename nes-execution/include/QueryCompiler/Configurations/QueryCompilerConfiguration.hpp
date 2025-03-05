@@ -84,7 +84,7 @@ public:
     NES::Configurations::EnumOption<ProbeType> probeType
         = {"probeType",
            ProbeType::PROBING,
-           "Type of probe"
+           "Type of probe. NO_PROBING means that the probe operator will do nothing and will NOT pass any tuples through."
            "[PROBING|NO_PROBING]. "};
     NES::Configurations::UIntOption numberOfEntriesSliceCache
         = {"numberOfEntriesSliceCache", "1", "Size of the slice cache", {std::make_shared<NES::Configurations::NumberValidation>()}};
@@ -96,7 +96,7 @@ public:
     NES::Configurations::EnumOption<ShuffleStrategy> shuffleStrategy
         = {"shuffleStrategy",
            ShuffleStrategy::NONE,
-           "Strategy for introducing delays by shuffling tuples or buffers in the stream"
+           "Strategy for introducing delays by shuffling tuples or buffers in the stream. This will be done before any aggregation or join operator"
            "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
     NES::Configurations::FloatOption degreeOfDisorder = {
         "degreeOfDisorder", "0.0", "Percentage of degreeOfDisorder", {std::make_shared<NES::Configurations::FloatRangeValidation>(0, 1)}};
