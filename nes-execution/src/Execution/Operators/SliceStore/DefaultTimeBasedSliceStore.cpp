@@ -194,7 +194,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
                 continue;
             case WindowInfoState::WINDOW_FILLING: {
                 /// If we are waiting on more than one origin to terminate, we can not trigger the window yet
-                if (numberOfInputOriginsTerminated > 1)
+                if (numberOfInputOriginsTerminated > 0)
                 {
                     windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
                     NES_TRACE(
