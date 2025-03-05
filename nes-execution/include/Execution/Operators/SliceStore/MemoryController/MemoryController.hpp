@@ -24,15 +24,23 @@ class MemoryController
 {
 public:
     MemoryController() = default;
+    MemoryController(const MemoryController& other);
+    MemoryController(MemoryController&& other) noexcept;
+    MemoryController& operator=(const MemoryController& other);
+    MemoryController& operator=(MemoryController&& other) noexcept;
 
-    static FileWriter getLeftFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
-    static FileWriter getRightFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
+    FileWriter& getLeftFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
+    FileWriter& getRightFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
 
-    static FileReader getLeftFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
-    static FileReader getRightFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
+    FileReader& getLeftFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
+    FileReader& getRightFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
 
 private:
-    //std::map<SliceEnd, std::string> filePathForSlice;
+    FileWriter& getFileWriterFromMap(const std::string& filePath);
+    FileReader& getFileReaderFromMap(const std::string& filePath);
+
+    std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
+    std::map<std::string, std::shared_ptr<FileReader>> fileReaders;
 
     // IO-Auslastung
     // StatisticsEngine

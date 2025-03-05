@@ -63,7 +63,7 @@ public:
     void updateSlices(SliceStoreMetaData metaData);
 
 private:
-    void readSliceFromFiles(std::shared_ptr<Slice> slice) const;
+    void readSliceFromFiles(const std::shared_ptr<Slice>& slice);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;

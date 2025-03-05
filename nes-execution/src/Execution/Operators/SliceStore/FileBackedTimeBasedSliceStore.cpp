@@ -38,7 +38,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other)
-    : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfInputOrigins(other.numberOfInputOrigins)
+    : memCtrl(other.memCtrl)
+    , sliceAssigner(other.sliceAssigner)
+    , sequenceNumber(other.sequenceNumber.load())
+    , numberOfInputOrigins(other.numberOfInputOrigins)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
@@ -47,7 +50,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTim
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
-    : sliceAssigner(std::move(other.sliceAssigner))
+    : memCtrl(std::move(other.memCtrl))
+    , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfInputOrigins(std::move(other.numberOfInputOrigins))
 {
@@ -64,6 +68,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(const Fi
     *slicesWriteLocked = *otherSlicesReadLocked;
     *windowsWriteLocked = *otherWindowsReadLocked;
 
+    memCtrl = other.memCtrl;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfInputOrigins = other.numberOfInputOrigins;
@@ -77,6 +82,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
     *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
 
+    memCtrl = std::move(other.memCtrl);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfInputOrigins = std::move(other.numberOfInputOrigins);
@@ -288,8 +294,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaDa
     auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, threadId);
-        auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, threadId);
+        auto& leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, threadId);
+        auto& rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, threadId);
         slice->writeToFile(leftFileWriter, rightFileWriter, threadId);
         slice->truncate(threadId);
     }
@@ -297,14 +303,14 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData metaDa
     // TODO predictiveRead()
 }
 
-void FileBackedTimeBasedSliceStore::readSliceFromFiles(std::shared_ptr<Slice> slice) const
+void FileBackedTimeBasedSliceStore::readSliceFromFiles(const std::shared_ptr<Slice>& slice)
 {
     // TODO this SliceStore is only in use with NLJ operator
-    auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
+    const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
     for (auto threadId = 0UL; threadId < nljSlice->getNumberOfWorkerThreads(); ++threadId)
     {
-        auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
-        auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
+        auto& leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
+        auto& rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), WorkerThreadId(threadId));
         slice->readFromFile(leftFileReader, rightFileReader, WorkerThreadId(threadId));
     }
 }

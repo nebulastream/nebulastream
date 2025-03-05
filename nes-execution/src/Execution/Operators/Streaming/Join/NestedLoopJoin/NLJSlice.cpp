@@ -107,10 +107,10 @@ void NLJSlice::combinePagedVectors()
 
 void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, const WorkerThreadId threadId)
 {
-    PRECONDITION(threadId.getRawValue() <= leftPagedVectors.size(), "ThreadId is out of range.");
+    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
-    const auto leftPages = leftPagedVectors[threadId.getRawValue()]->getPages();
+    const auto leftPages = leftPagedVectors[workerThreadId]->getPages();
     for (auto pageIdx = 0UL; pageIdx < leftPages.size(); ++pageIdx)
     {
         // TODO write variable sized data in place to file
@@ -119,7 +119,7 @@ void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWrit
     }
 
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
-    const auto rightPages = rightPagedVectors[threadId.getRawValue()]->getPages();
+    const auto rightPages = rightPagedVectors[workerThreadId]->getPages();
     for (auto pageIdx = 0UL; pageIdx < rightPages.size(); ++pageIdx)
     {
         // TODO write variable sized data in place to file
@@ -130,10 +130,10 @@ void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWrit
 
 void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, const WorkerThreadId threadId)
 {
-    PRECONDITION(threadId.getRawValue() <= leftPagedVectors.size(), "ThreadId is out of range.");
+    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
-    leftPagedVectors[threadId.getRawValue()]->appendPage(bufferProvider, leftMemoryLayout.get());
-    auto lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
+    leftPagedVectors[workerThreadId]->appendPage(bufferProvider, leftMemoryLayout.get());
+    auto lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
     const auto leftNumTuplesPerPage = leftMemoryLayout->getCapacity();
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
 
@@ -141,12 +141,12 @@ void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileRea
     {
         // TODO read variable sized data in place from file
         lastPageLeft.setNumberOfTuples(bytesRead / leftTupleSize);
-        leftPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
-        lastPageLeft = leftPagedVectors[threadId.getRawValue()]->getLastPage();
+        leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
+        lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
     }
 
-    rightPagedVectors[threadId.getRawValue()]->appendPage(bufferProvider, rightMemoryLayout.get());
-    auto lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
+    rightPagedVectors[workerThreadId]->appendPage(bufferProvider, rightMemoryLayout.get());
+    auto lastPageRight = rightPagedVectors[workerThreadId]->getLastPage();
     const auto rightNumTuplesPerPage = rightMemoryLayout->getCapacity();
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
 
@@ -154,29 +154,29 @@ void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileRea
     {
         // TODO read variable sized data in place from file
         lastPageRight.setNumberOfTuples(bytesRead / rightTupleSize);
-        rightPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
-        lastPageRight = rightPagedVectors[threadId.getRawValue()]->getLastPage();
+        rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
+        lastPageRight = rightPagedVectors[workerThreadId]->getLastPage();
     }
 }
 
 void NLJSlice::truncate(const WorkerThreadId threadId)
 {
-    PRECONDITION(threadId.getRawValue() <= leftPagedVectors.size(), "ThreadId is out of range.");
+    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
-    leftPagedVectors[threadId.getRawValue()]->getPages().clear();
-    leftPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
+    leftPagedVectors[workerThreadId]->getPages().clear();
+    leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
 
-    rightPagedVectors[threadId.getRawValue()]->getPages().clear();
-    rightPagedVectors[threadId.getRawValue()]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
+    rightPagedVectors[workerThreadId]->getPages().clear();
+    rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
 }
 
 size_t NLJSlice::getStateSizeInBytesForThreadId(const WorkerThreadId threadId) const
 {
-    PRECONDITION(threadId.getRawValue() <= leftPagedVectors.size(), "ThreadId is out of range.");
+    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
-    const auto leftPos = threadId % leftPagedVectors.size();
+    const auto leftPos = workerThreadId % leftPagedVectors.size();
     const auto* const leftPagedVector = leftPagedVectors[leftPos].get();
-    const auto rightPos = threadId % rightPagedVectors.size();
+    const auto rightPos = workerThreadId % rightPagedVectors.size();
     const auto* const rightPagedVector = rightPagedVectors[rightPos].get();
 
     const auto leftPageSize = leftMemoryLayout->getBufferSize();
