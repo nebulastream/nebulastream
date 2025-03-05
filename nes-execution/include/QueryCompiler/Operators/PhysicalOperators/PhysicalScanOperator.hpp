@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>

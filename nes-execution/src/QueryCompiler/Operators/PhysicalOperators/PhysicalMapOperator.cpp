@@ -12,13 +12,14 @@
     limitations under the License.
 */
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

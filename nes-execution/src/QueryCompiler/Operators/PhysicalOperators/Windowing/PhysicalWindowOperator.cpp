@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>

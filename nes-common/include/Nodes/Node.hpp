@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <ostream>
-#include <string>
+#include <sstream>
 #include <vector>
 #include <Util/Common.hpp>
 #include <fmt/base.h>

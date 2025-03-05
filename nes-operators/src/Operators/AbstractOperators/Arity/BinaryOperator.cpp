@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
