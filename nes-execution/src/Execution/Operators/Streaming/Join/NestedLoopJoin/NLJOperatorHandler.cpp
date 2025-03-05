@@ -49,28 +49,13 @@ NLJOperatorHandler::NLJOperatorHandler(
     averageNumberOfTuplesRight.wlock()->second = 0;
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-NLJOperatorHandler::getCreateNewSlicesFunction(const Memory::AbstractBufferProvider* bufferProvider) const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOperatorHandler::getCreateNewSlicesFunction() const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     return std::function(
-        [this, bufferProvider](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [this](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
-            const auto [averageNumberOfTuplesLeft, _] = *this->averageNumberOfTuplesLeft.rlock();
-            const auto [averageNumberOfTuplesRight, __] = *this->averageNumberOfTuplesLeft.rlock();
-            const auto memoryLayoutCopyLeft = leftMemoryProvider->getMemoryLayout()->deepCopy();
-            const auto memoryLayoutCopyRight = rightMemoryProvider->getMemoryLayout()->deepCopy();
-
-            auto newBufferSizeLeft = averageNumberOfTuplesLeft * memoryLayoutCopyLeft->getTupleSize();
-            auto newBufferSizeRight = averageNumberOfTuplesRight * memoryLayoutCopyRight->getTupleSize();
-            newBufferSizeLeft = std::max(bufferProvider->getBufferSize(), newBufferSizeLeft);
-            newBufferSizeRight = std::max(bufferProvider->getBufferSize(), newBufferSizeRight);
-
-            memoryLayoutCopyLeft->setBufferSize(newBufferSizeLeft);
-            memoryLayoutCopyRight->setBufferSize(newBufferSizeRight);
-
-
             NES_INFO("Creating new NLJ slice for sliceStart {} and sliceEnd {}", sliceStart, sliceEnd);
             return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
