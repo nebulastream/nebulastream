@@ -58,19 +58,29 @@ PipelinedQueryPlan AddScanAndEmitPhase::apply(const PipelinedQueryPlan& pipeline
         {
             /// Scan
             PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
-            auto newScan = std::make_unique<DefaultScanPhysicalOperator>(opPipeline->rootOperator,
-                                                                         std::vector<Nautilus::Record::RecordFieldIdentifier>{});
-            opPipeline->prependOperator(std::move(newScan));
+            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections {};
+            constexpr uint64_t bufferSize = 100; /// TODO change
+            constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+            if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(opPipeline->rootOperator); leafPhys)
+            {
+                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, opPipeline->rootOperator);
+                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(std::move(opPipeline->rootOperator), emptyProjections);
+                opPipeline->prependOperator(std::move(newScan));
+            }
 
             /// Emit
             for (auto* leaf : helper::getAllLeafNodes(*opPipeline->rootOperator))
             {
-                if (auto* leafPhys = dynamic_cast<Operator*>(leaf); leafPhys)
+                if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(leaf); leafPhys)
                 {
                     constexpr uint64_t bufferSize = 100; /// TODO change
-                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, );
-                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(memoryProvider);
-                    leafPhys->children.push_back(std::move(emitOperator));
+                    constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys->outputSchema);
+                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, std::move(memoryProvider));
+                    auto physicalOp = Util::unique_ptr_dynamic_cast<PhysicalOperator>(std::move(emitOperator));
+                    leafPhys->physicalOperator->setChild(std::move(emitOperator));
+
+                    /// TODO append.
                 }
             }
         }

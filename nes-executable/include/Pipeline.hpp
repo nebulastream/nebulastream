@@ -41,7 +41,7 @@ struct Pipeline
     virtual std::string toString() const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& t);
 
-    const PipelineId pipelineId;
+    const PipelineId pipelineId = INVALID_PIPELINE_ID;
     const ProviderType providerType;
 
     std::vector<std::unique_ptr<Pipeline>> successorPipelines;
@@ -73,7 +73,6 @@ struct Pipeline
     }
 
     virtual bool hasOperators() = 0;
-    ///virtual void appendOperator(std::shared_ptr<PipelineOperator> op) = 0;
     virtual void prependOperator(PipelineOperator op) = 0;
 };
 
@@ -95,6 +94,26 @@ struct OperatorPipeline final : public Pipeline
     }
 
     std::unique_ptr<PhysicalOperator> rootOperator;
+};
+
+
+struct OperatorWithSchemaPipeline final : public Pipeline
+{
+    void prependOperator(PipelineOperator op) override
+    {
+        PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperatorWithSchema>>(op), "Should have hold a PhysicalOperator");
+        std::get<std::unique_ptr<PhysicalOperatorWithSchema>>(op)->child = (std::move(rootOperator));
+        rootOperator = std::move(std::get<std::unique_ptr<PhysicalOperatorWithSchema>>(op));
+    }
+
+    [[nodiscard]] std::string toString() const override;
+
+    bool hasOperators() override
+    {
+        return rootOperator != nullptr;
+    }
+
+    std::unique_ptr<PhysicalOperatorWithSchema> rootOperator;
 };
 
 struct SourcePipeline final : public Pipeline

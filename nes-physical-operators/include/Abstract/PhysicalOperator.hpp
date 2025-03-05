@@ -16,6 +16,7 @@
 #include <memory>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Plans/Operator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
@@ -28,12 +29,9 @@ using namespace Nautilus::Interface::MemoryProvider;
 struct ExecutionContext;
 
 /// Each operator can implement setup, open, close, execute, and terminate.
-struct PhysicalOperatorConcept
+struct PhysicalOperator : public virtual Operator
 {
-    virtual ~PhysicalOperatorConcept() = default;
-
-    virtual std::optional<struct PhysicalOperator> getChild() const = 0;
-    virtual void setChild(struct PhysicalOperator child) = 0;
+    PhysicalOperator(bool isPipelineBreaker = false) : isPipelineBreaker(isPipelineBreaker) {}
 
     /// @brief Setup initializes this operator for execution.
     /// Operators can implement this class to initialize some state that exists over the whole lifetime of this operator.
@@ -53,174 +51,30 @@ struct PhysicalOperatorConcept
     /// @param record the record that should be processed.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    virtual std::string toString() const { return "PhysicalOperatorConcept"; }
-};
-
-struct PhysicalOperator {
-    template<typename T>
-    PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
-
-    PhysicalOperator(const PhysicalOperator& other)
-        : self(other.self->clone()) {}
-
-    template<typename T>
-    const T* tryGet() const {
-        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
-            return &(p->data);
-        }
-        return nullptr;
+    void setChild(std::unique_ptr<PhysicalOperator> op) {
+        children.clear();
+        children.push_back(std::move(op));
     }
-
-    template<typename T>
-    const T* get() const {
-        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
-            return &(p->data);
-        }
-        return nullptr;
-    }
-
-    PhysicalOperator(PhysicalOperator&&) noexcept = default;
-
-    PhysicalOperator& operator=(const PhysicalOperator& other) {
-        if (this != &other)
-        {
-            self = other.self->clone();
-        }
-        return *this;
-    }
-
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const {
-        return self->getChild();
-    }
-
-    void setChild(PhysicalOperator child) {
-        self->setChild(child);
-    }
-
-    void setup(ExecutionContext& executionCtx) const
-    {
-        self->setup(executionCtx);
-    }
-
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-    {
-        self->open(executionCtx, recordBuffer);
-    }
-
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-    {
-        self->close(executionCtx, recordBuffer);
-    }
-
-    void terminate(ExecutionContext& executionCtx) const
-    {
-        self->terminate(executionCtx);
-    }
-
-    void execute(ExecutionContext& executionCtx, Record& record) const
-    {
-        self->execute(executionCtx, record);
-    }
-private:
-    std::string toString() const {
-        return self->toString();
-    }
+    const bool isPipelineBreaker;
 
 private:
-    struct Concept : PhysicalOperatorConcept {
-        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
-    };
 
-    template<typename T>
-    struct Model : Concept {
-        T data;
-        explicit Model(T d) : data(std::move(d)) {}
-
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model<T>(data));
-        }
-
-        [[nodiscard]] std::optional<PhysicalOperator> getChild() const override
-        {
-            return data.getChild();
-        }
-
-        void setChild(PhysicalOperator child) override
-        {
-            data.setChild(child);
-        }
-
-        void setup(ExecutionContext& executionCtx) const override
-        {
-            data.setup(executionCtx);
-        }
-
-        void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override
-        {
-            data.open(executionCtx, recordBuffer);
-        }
-
-        void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override
-        {
-            data.close(executionCtx, recordBuffer);
-        }
-
-        void terminate(ExecutionContext& executionCtx) const override
-        {
-            data.terminate(executionCtx);
-        }
-
-        void execute(ExecutionContext& executionCtx, Record& record) const override
-        {
-            data.execute(executionCtx, record);
-        }
-
-        std::string toString() const override
-        {
-            return "PhysicalOperator(" + std::string(typeid(T).name()) + ")";
-        }
-    };
-    std::unique_ptr<Concept> self;
+    /// raw pointer is only exposed in PhysicalOperator
+    [[nodiscard]] const PhysicalOperator* child() const {
+        INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
+        return dynamic_cast<PhysicalOperator*>(children.front().get());
+    }
+    /// Hide the base class 'children' from subclasses of PhysicalOperator
+    /// We expect PhysicalOperators to have exactly one child used with the member function child().
+    using Operator::children;
 };
 
 /// Wrapper for the physical operator to store input and output schema after query optimization
-struct PhysicalOperatorWrapper
+struct PhysicalOperatorWithSchema
 {
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
-        : physicalOperator(physicalOperator), inputSchema(inputSchema), outputSchema(outputSchema) {};
-
-    PhysicalOperator physicalOperator;
-    std::optional<Schema> inputSchema, outputSchema;
-    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children {};
-
-    bool isPipelineBreaker = false;
-    std::optional<std::shared_ptr<OperatorHandler>> handler;
-    std::optional<OperatorHandlerId> handlerId;
-
-    bool isScan = false;
-    bool isEmit = false;
-
-    /// @brief Returns a string representation of the wrapper.
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "PhysicalOperatorWrapper(";
-        oss << "Operator: " << physicalOperator.toString() << ", ";
-        oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
-        oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
-        oss << "isScan: " << std::boolalpha << isScan << ", ";
-        oss << "isEmit: " << std::boolalpha << isEmit;
-        if (!children.empty()) {
-            oss << ", Children: [";
-            for (size_t i = 0; i < children.size(); ++i)
-            {
-                oss << children[i]->toString();
-                if (i + 1 < children.size())
-                    oss << ", ";
-            }
-            oss << "]";
-        }
-        oss << ")";
-        return oss.str();
-    }
+    Schema inputSchema;
+    Schema outputSchema;
+    std::unique_ptr<PhysicalOperatorWithSchema> child;
 };
+
 }
