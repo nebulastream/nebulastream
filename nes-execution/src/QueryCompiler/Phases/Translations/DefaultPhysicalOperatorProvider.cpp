@@ -46,12 +46,14 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalGatherSlicesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortTuplesInBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
@@ -390,6 +392,34 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         streamJoinOperators.rightInputOperator = shuffleTuplesOperatorRight;
     }
 
+    if (queryCompilerConfig.sortBufferByField.getValue())
+    {
+        const auto sortTuplesInBufferLeft = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(),
+            joinOperator->getLeftInputSchema(),
+            joinOperator->getOutputSchema(), timeStampFieldLeft.getName());
+
+        const auto sortTuplesInBufferRight = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(),
+            joinOperator->getRightInputSchema(),
+            joinOperator->getOutputSchema(), timeStampFieldRight.getName());
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(sortTuplesInBufferLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(sortTuplesInBufferRight);
+        streamJoinOperators.leftInputOperator = sortTuplesInBufferLeft;
+        streamJoinOperators.rightInputOperator = sortTuplesInBufferRight;
+    }
+    if (queryCompilerConfig.gatherSlices)
+    {
+        const auto gatherSlicesOperatorLeft = std::make_shared<PhysicalOperators::PhysicalGatherSlicesOperator>(
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), timeStampFieldLeft, windowSize, windowSlide, joinOperatorHandler);
+        const auto gatherSlicesOperatorRight = std::make_shared<PhysicalOperators::PhysicalGatherSlicesOperator>(
+            getNextOperatorId(), joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), timeStampFieldRight, windowSize, windowSlide, joinOperatorHandler);
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(gatherSlicesOperatorLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(gatherSlicesOperatorRight);
+        streamJoinOperators.leftInputOperator = gatherSlicesOperatorLeft;
+        streamJoinOperators.rightInputOperator = gatherSlicesOperatorRight;
+    }
+
     /// Creating two trigger operators, one for each side of the join
     const auto triggerLeft = PhysicalOperators::PhysicalWindowTrigger::create(
         getNextOperatorId(),
@@ -563,6 +593,24 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
             getNextOperatorId(), windowInputSchema, queryCompilerConfig.degreeOfDisorder.getValue());
         aggregationBuild->insertBetweenThisAndChildNodes(shuffleBufferOperator);
         aggregationBuild->insertBetweenThisAndChildNodes(shuffleTuplesOperator);
+    }
+
+    if (queryCompilerConfig.sortBufferByField.getValue())
+    {
+        const auto sortTuplesInBuffer = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(),
+            windowInputSchema,
+            windowOutputSchema, timeBasedWindowType->getTimeCharacteristic()->getField()->getName());
+        aggregationBuild->insertBetweenThisAndChildNodes(sortTuplesInBuffer);
+    }
+    if (queryCompilerConfig.gatherSlices.getValue())
+    {
+        INVARIANT(
+            timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime,
+            "Gather slices is only supported for EventTime based windows");
+        auto timestampField = TimestampField::EventTime(timeBasedWindowType->getTimeCharacteristic()->getField()->getName(), timeBasedWindowType->getTimeCharacteristic()->getTimeUnit());
+        const auto gatherSlicesOperator = std::make_shared<PhysicalOperators::PhysicalGatherSlicesOperator>(
+        getNextOperatorId(), windowInputSchema, windowOutputSchema, timestampField, timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), windowHandler);
     }
 }
 

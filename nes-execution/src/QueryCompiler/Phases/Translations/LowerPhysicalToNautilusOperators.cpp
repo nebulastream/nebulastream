@@ -28,6 +28,8 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/SliceCache/GatherSlicesOperator.hpp>
+#include <Execution/Operators/SortTuples/SortTuplesInBuffer.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -60,6 +62,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalGatherSlicesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -67,6 +70,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortTuplesInBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWindowTrigger.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
@@ -278,6 +282,29 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             = std::make_shared<Runtime::Execution::Operators::ShuffleTuples>(std::move(memoryProvider), operatorHandlers.size() - 1);
         pipeline.setRootOperator(shuffleTuplesExec);
         return shuffleTuplesExec;
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalSortTuplesInBuffer>(operatorNode))
+    {
+        const auto sortTuplesInBuffer = NES::Util::as<PhysicalOperators::PhysicalSortTuplesInBuffer>(operatorNode);
+        const auto projections = sortTuplesInBuffer->getOutputSchema()->getFieldNames();
+        const auto sortField = sortTuplesInBuffer->getSortField();
+        const auto memoryProviderInput = sortTuplesInBuffer->getMemoryProviderInput(bufferSize);
+        const auto sortTuples
+            = std::make_shared<Runtime::Execution::Operators::SortTuplesInBuffer>(memoryProviderInput, projections, sortField);
+        pipeline.setRootOperator(sortTuples);
+        return sortTuples;
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalGatherSlicesOperator>(operatorNode))
+    {
+        const auto gatherSlicesOperator = NES::Util::as<PhysicalOperators::PhysicalGatherSlicesOperator>(operatorNode);
+        auto timeFunction = gatherSlicesOperator->getTimeFunction().toTimeFunction();
+        const auto windowSize = gatherSlicesOperator->getWindowSize();
+        const auto windowSlide = gatherSlicesOperator->getWindowSlide();
+        operatorHandlers.emplace_back(gatherSlicesOperator->getOperatorHandler());
+        const auto gatherSlices = std::make_shared<Runtime::Execution::Operators::GatherSlicesOperator>(
+            operatorHandlers.size() - 1, std::move(timeFunction), windowSize, windowSlide);
+        parentOperator->setChild(gatherSlices);
+        return gatherSlices;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationProbe>(operatorNode))
     {

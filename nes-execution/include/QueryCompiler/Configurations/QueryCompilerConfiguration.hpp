@@ -90,13 +90,15 @@ public:
         = {"numberOfEntriesSliceCache", "1", "Size of the slice cache", {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::BoolOption lockSliceCache
         = {"lockSliceCache", "false", "Enable lock in slice cache", {std::make_shared<NES::Configurations::BooleanValidation>()}};
-    NES::Configurations::StringOption sortBufferByField = {"sortBufferByField", "", "Sort field identifier for the sort buffer operator."};
+    NES::Configurations::BoolOption sortBufferByField = {"sortBufferByField", "false", "Should the sort buffer operator sort by field.", {std::make_shared<NES::Configurations::BooleanValidation>()}};
+    NES::Configurations::BoolOption gatherSlices = {"gatherSlices", "false", "Gather slices after the sort buffer operator and then create them at bulk.", {std::make_shared<NES::Configurations::BooleanValidation>()}};
     NES::Configurations::StringOption sortBufferOrder = {"sortBufferOrder", "Ascending", "Sort order for the sort buffer operator."};
 
     NES::Configurations::EnumOption<ShuffleStrategy> shuffleStrategy
         = {"shuffleStrategy",
            ShuffleStrategy::NONE,
-           "Strategy for introducing delays by shuffling tuples or buffers in the stream. This will be done before any aggregation or join operator"
+           "Strategy for introducing delays by shuffling tuples or buffers in the stream. This will be done before any aggregation or join "
+           "operator"
            "[NONE|BUFFER|TUPLES|BUFFER_TUPLES]. "};
     NES::Configurations::FloatOption degreeOfDisorder = {
         "degreeOfDisorder", "0.0", "Percentage of degreeOfDisorder", {std::make_shared<NES::Configurations::FloatRangeValidation>(0, 1)}};
@@ -125,7 +127,8 @@ private:
             &maxDelay,
             &pipelinesTxtFilePath,
             &cacheHitsAndMissesFilePath,
-            &probeType};
+            &probeType,
+        &gatherSlices};
     }
 };
 }

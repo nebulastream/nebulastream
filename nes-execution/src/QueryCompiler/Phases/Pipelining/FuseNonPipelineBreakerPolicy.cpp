@@ -17,6 +17,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalGatherSlicesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
@@ -38,6 +39,7 @@ bool FuseNonPipelineBreakerPolicy::isFusible(std::shared_ptr<PhysicalOperators::
         || NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalGatherSlicesOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationBuild>(physicalOperator));
 }
 }

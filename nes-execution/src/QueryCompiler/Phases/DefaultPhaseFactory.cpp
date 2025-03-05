@@ -38,8 +38,8 @@ std::shared_ptr<PhaseFactory> DefaultPhaseFactory::create()
 std::shared_ptr<PipeliningPhase> DefaultPhaseFactory::createPipeliningPhase() const
 {
     NES_DEBUG("Create pipelining phase with fuse policy");
-    // const auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
-    const auto operatorFusionPolicy = OperatorAtATimePolicy::create();
+    const auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
+    // const auto operatorFusionPolicy = OperatorAtATimePolicy::create();
     return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
