@@ -37,7 +37,7 @@ void RawInputFormatter::parseTupleBufferRaw(
     size_t,
     const std::function<void(const Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
-    emitFunction(tbRaw, true);
+    emitFunction(tbRaw, false);
 }
 std::ostream& RawInputFormatter::toString(std::ostream& str) const
 {
