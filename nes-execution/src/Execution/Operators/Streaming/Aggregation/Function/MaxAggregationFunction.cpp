@@ -98,7 +98,7 @@ void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
 
 size_t MaxAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

@@ -21,23 +21,27 @@
 namespace NES
 {
 
-bool Undefined::operator==(const DataType& other) const
+Undefined::Undefined(const bool nullable) : DataType(nullable)
 {
-    return dynamic_cast<const Undefined*>(&other) != nullptr;
 }
 
-std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>)
+bool Undefined::operator==(const DataType& other) const
 {
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return dynamic_cast<const Undefined*>(&other) != nullptr && nullable == other.nullable;
+}
+
+std::shared_ptr<DataType> Undefined::join(const std::shared_ptr<DataType> otherDataType)
+{
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable || otherDataType->nullable);
 }
 std::string Undefined::toString()
 {
     return "Undefined";
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Undefined>();
+    return std::make_unique<Undefined>(args.nullable);
 }
 
 

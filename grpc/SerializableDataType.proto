@@ -67,5 +67,5 @@ message SerializableDataType{
   Type type = 1;
   // field for custom type properties
   google.protobuf.Any details = 2;
-
+  bool nullable = 3;
 }

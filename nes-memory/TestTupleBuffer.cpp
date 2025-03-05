@@ -205,7 +205,7 @@ bool DynamicField::operator==(const DynamicField& rhs) const
         physicalType->toString(),
         rhs.physicalType->toString());
 
-    return std::memcmp(address, rhs.address, physicalType->size()) == 0;
+    return std::memcmp(address, rhs.address, physicalType->getSizeInBytes()) == 0;
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -292,14 +292,14 @@ std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, con
     for (const auto& field : *schema)
     {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalSizes.push_back(physicalType->size());
+        physicalSizes.push_back(physicalType->getSizeInBytes());
         types.push_back(physicalType);
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
             field->toString(),
             std::string(": "),
-            std::to_string(physicalType->size()));
+            std::to_string(physicalType->getSizeInBytes()));
     }
 
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)

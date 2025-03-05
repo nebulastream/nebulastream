@@ -100,7 +100,7 @@ void MinAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
 
 size_t MinAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

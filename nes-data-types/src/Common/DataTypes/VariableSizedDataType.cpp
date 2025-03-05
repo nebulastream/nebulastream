@@ -23,13 +23,13 @@ namespace NES
 
 bool VariableSizedDataType::operator==(const NES::DataType& other) const
 {
-    return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr;
+    return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr && nullable == other.nullable;
 }
 
 /// A VariableSizedData type cannot be joined with another type.
-std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType>)
+std::shared_ptr<DataType> VariableSizedDataType::join(const std::shared_ptr<DataType> otherDataType)
 {
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable || otherDataType->nullable);
 }
 
 std::string VariableSizedDataType::toString()
@@ -37,9 +37,9 @@ std::string VariableSizedDataType::toString()
     return "VARSIZED";
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<VariableSizedDataType>();
+    return std::make_unique<VariableSizedDataType>(args.nullable);
 }
 
 }

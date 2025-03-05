@@ -34,7 +34,8 @@ bool Integer::operator==(const NES::DataType& other) const
 {
     if (const auto otherInteger = dynamic_cast<const Integer*>(&other))
     {
-        return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
+        return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound
+            && nullable == other.nullable;
     }
     return false;
 }
@@ -43,7 +44,7 @@ std::shared_ptr<DataType> Integer::join(const std::shared_ptr<DataType> otherDat
 {
     if (NES::Util::instanceOf<Undefined>(otherDataType))
     {
-        return std::make_shared<Integer>(bits, lowerBound, upperBound);
+        return std::make_shared<Integer>(nullable || otherDataType->nullable, bits, lowerBound, upperBound);
     }
 
     if (not NES::Util::instanceOf<Numeric>(otherDataType))
@@ -63,44 +64,44 @@ std::string Integer::toString()
     return fmt::format("{}{}", lowerBound == 0 ? "UINT" : "INT", std::to_string(bits));
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(8, INT8_MIN, INT8_MAX);
+    return std::make_unique<Integer>(args.nullable, 8, INT8_MIN, INT8_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(8, 0, UINT8_MAX);
+    return std::make_unique<Integer>(args.nullable, 8, 0, UINT8_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(16, INT16_MIN, INT16_MAX);
+    return std::make_unique<Integer>(args.nullable, 16, INT16_MIN, INT16_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(16, 0, UINT16_MAX);
+    return std::make_unique<Integer>(args.nullable, 16, 0, UINT16_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(32, INT32_MIN, INT32_MAX);
+    return std::make_unique<Integer>(args.nullable, 32, INT32_MIN, INT32_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(32, 0, UINT32_MAX);
+    return std::make_unique<Integer>(args.nullable, 32, 0, UINT32_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(64, INT64_MIN, INT64_MAX);
+    return std::make_unique<Integer>(args.nullable, 64, INT64_MIN, INT64_MAX);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
+std::unique_ptr<DataTypeRegistryReturnType> DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Integer>(64, 0, UINT64_MAX);
+    return std::make_unique<Integer>(args.nullable, 64, 0, UINT64_MAX);
 }
 
 }

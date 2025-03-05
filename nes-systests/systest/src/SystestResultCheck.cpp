@@ -70,11 +70,11 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         std::shared_ptr<DataType> dataType;
         if (auto type = magic_enum::enum_cast<BasicType>(typeTrimmed); type.has_value())
         {
-            dataType = DataTypeProvider::provideBasicType(type.value());
+            dataType = DataTypeProvider::provideBasicType(type.value(), DataTypeProvider::isNullable(nameTrimmed));
         }
         else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED, DataTypeProvider::isNullable(nameTrimmed));
         }
         else
         {

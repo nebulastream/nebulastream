@@ -28,7 +28,8 @@ namespace NES
 {
 
 NodeFunctionLogicalUnary::NodeFunctionLogicalUnary(std::string name)
-    : NodeFunctionUnary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(name)), LogicalNodeFunction()
+    : NodeFunctionUnary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN, DataTypeProvider::isNullable(name)), std::move(name))
+    , LogicalNodeFunction()
 {
 }
 

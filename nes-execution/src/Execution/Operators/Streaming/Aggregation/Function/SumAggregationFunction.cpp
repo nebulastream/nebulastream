@@ -99,7 +99,7 @@ void SumAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
 
 size_t SumAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

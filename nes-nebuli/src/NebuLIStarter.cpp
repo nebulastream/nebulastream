@@ -38,7 +38,7 @@ public:
         RegisterQueryReply reply;
         RegisterQueryRequest request;
         NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, request.mutable_decomposedqueryplan());
-        auto status = stub->RegisterQuery(&context, request, &reply);
+        const auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
             NES_DEBUG("Registration was successful.");
@@ -61,7 +61,7 @@ public:
         request.set_queryid(queryId);
         request.set_terminationtype(StopQueryRequest::HardStop);
         google::protobuf::Empty response;
-        auto status = stub->StopQuery(&context, request, &response);
+        const auto status = stub->StopQuery(&context, request, &response);
         if (status.ok())
         {
             NES_DEBUG("Stopping was successful.");
@@ -82,7 +82,7 @@ public:
         QuerySummaryRequest request;
         request.set_queryid(queryId);
         QuerySummaryReply response;
-        auto status = stub->RequestQuerySummary(&context, request, &response);
+        const auto status = stub->RequestQuerySummary(&context, request, &response);
         if (status.ok())
         {
             NES_DEBUG("Status was successful.");
@@ -103,7 +103,7 @@ public:
         StartQueryRequest request;
         google::protobuf::Empty response;
         request.set_queryid(queryId);
-        auto status = stub->StartQuery(&context, request, &response);
+        const auto status = stub->StartQuery(&context, request, &response);
         if (status.ok())
         {
             NES_DEBUG("Starting was successful.");
@@ -124,7 +124,7 @@ public:
         UnregisterQueryRequest request;
         google::protobuf::Empty response;
         request.set_queryid(queryId);
-        auto status = stub->UnregisterQuery(&context, request, &response);
+        const auto status = stub->UnregisterQuery(&context, request, &response);
         if (status.ok())
         {
             NES_DEBUG("Unregister was successful.");

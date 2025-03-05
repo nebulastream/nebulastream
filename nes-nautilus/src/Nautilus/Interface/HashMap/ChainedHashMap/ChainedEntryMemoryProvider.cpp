@@ -50,7 +50,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
         fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        offset += physicalType->getSizeInBytes();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -60,7 +60,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
         fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        offset += physicalType->getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
 }

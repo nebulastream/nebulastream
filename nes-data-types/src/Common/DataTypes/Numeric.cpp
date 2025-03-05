@@ -26,7 +26,7 @@
 namespace NES
 {
 
-Numeric::Numeric(const int8_t bits) : bits(bits)
+Numeric::Numeric(const bool nullable, const int8_t bits) : DataType(nullable), bits(bits)
 {
 }
 
@@ -44,28 +44,30 @@ std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& l
     constexpr int8_t sizeOfIntInBits = sizeof(int32_t) * 8;
     constexpr int8_t sizeOfLongInBits = sizeof(int64_t) * 8;
 
+    const auto resultIsNullable = left.nullable || right.nullable;
 
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (Util::instanceOf<const Float>(left) && Util::instanceOf<const Integer>(right))
     {
         return (
-            left.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32)
-                                         : DataTypeProvider::provideDataType(LogicalType::FLOAT64));
+            left.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32, resultIsNullable)
+                                         : DataTypeProvider::provideDataType(LogicalType::FLOAT64, resultIsNullable));
     }
 
     if (Util::instanceOf<const Integer>(left) && Util::instanceOf<const Float>(right))
     {
         return (
-            right.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32)
-                                          : DataTypeProvider::provideDataType(LogicalType::FLOAT64));
+            right.bits == sizeOfIntInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT32, resultIsNullable)
+                                          : DataTypeProvider::provideDataType(LogicalType::FLOAT64, resultIsNullable));
     }
 
 
     if (Util::instanceOf<const Float>(right) && Util::instanceOf<const Float>(left))
     {
         return (
-            left.bits == sizeOfLongInBits || right.bits == sizeOfLongInBits ? DataTypeProvider::provideDataType(LogicalType::FLOAT64)
-                                                                            : DataTypeProvider::provideDataType(LogicalType::FLOAT32));
+            left.bits == sizeOfLongInBits || right.bits == sizeOfLongInBits
+                ? DataTypeProvider::provideDataType(LogicalType::FLOAT64, resultIsNullable)
+                : DataTypeProvider::provideDataType(LogicalType::FLOAT32, resultIsNullable));
     }
 
     if (Util::instanceOf<const Integer>(right) && Util::instanceOf<const Integer>(left))
@@ -79,45 +81,49 @@ std::optional<std::shared_ptr<DataType>> Numeric::inferDataType(const Numeric& l
         const auto rightBits = rightInt.getBits();
         if (leftBits < sizeOfIntInBits && rightBits < sizeOfIntInBits)
         {
-            return DataTypeProvider::provideDataType(LogicalType::INT32);
+            return DataTypeProvider::provideDataType(LogicalType::INT32, resultIsNullable);
         }
 
         if (leftBits == sizeOfIntInBits && rightBits < sizeOfIntInBits)
         {
             return (
-                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT32) : DataTypeProvider::provideDataType(LogicalType::UINT32));
+                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT32, resultIsNullable)
+                         : DataTypeProvider::provideDataType(LogicalType::UINT32, resultIsNullable));
         }
 
         if (leftBits < sizeOfIntInBits && rightBits == sizeOfIntInBits)
         {
             return (
-                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT32) : DataTypeProvider::provideDataType(LogicalType::UINT32));
+                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT32, resultIsNullable)
+                          : DataTypeProvider::provideDataType(LogicalType::UINT32, resultIsNullable));
         }
 
         if (leftBits == sizeOfIntInBits && rightBits == sizeOfIntInBits)
         {
             return (
-                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT32)
-                                        : DataTypeProvider::provideDataType(LogicalType::UINT32));
+                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT32, resultIsNullable)
+                                        : DataTypeProvider::provideDataType(LogicalType::UINT32, resultIsNullable));
         }
 
         if (leftBits == sizeOfLongInBits && rightBits < sizeOfLongInBits)
         {
             return (
-                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT64) : DataTypeProvider::provideDataType(LogicalType::UINT64));
+                leftSign ? DataTypeProvider::provideDataType(LogicalType::INT64, resultIsNullable)
+                         : DataTypeProvider::provideDataType(LogicalType::UINT64, resultIsNullable));
         }
 
         if (leftBits < sizeOfLongInBits && rightBits == sizeOfLongInBits)
         {
             return (
-                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT64) : DataTypeProvider::provideDataType(LogicalType::UINT64));
+                rightSign ? DataTypeProvider::provideDataType(LogicalType::INT64, resultIsNullable)
+                          : DataTypeProvider::provideDataType(LogicalType::UINT64, resultIsNullable));
         }
 
         if (leftBits == sizeOfLongInBits && rightBits == sizeOfLongInBits)
         {
             return (
-                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT64)
-                                        : DataTypeProvider::provideDataType(LogicalType::UINT64));
+                (leftSign && rightSign) ? DataTypeProvider::provideDataType(LogicalType::INT64, resultIsNullable)
+                                        : DataTypeProvider::provideDataType(LogicalType::UINT64, resultIsNullable));
         }
     }
 

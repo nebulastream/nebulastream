@@ -83,13 +83,14 @@ DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& da
 std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
     NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
+    const auto nullable = serializedDataType.nullable();
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)
     {
-        return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+        return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_CHAR)
     {
-        return DataTypeProvider::provideDataType(LogicalType::CHAR);
+        return DataTypeProvider::provideDataType(LogicalType::CHAR, nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_INTEGER)
     {
@@ -97,10 +98,10 @@ std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const S
         serializedDataType.details().UnpackTo(&integerDetails);
         if (integerDetails.lowerbound() < 0)
         {
-            return DataTypeProvider::provideDataType("INT" + std::to_string(integerDetails.bits()));
+            return DataTypeProvider::provideDataType("INT" + std::to_string(integerDetails.bits()), nullable);
         }
         /// TODO #391: Parsing of string into value should be handled centrally
-        return DataTypeProvider::provideDataType("UINT" + std::to_string(integerDetails.bits()));
+        return DataTypeProvider::provideDataType("UINT" + std::to_string(integerDetails.bits()), nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_FLOAT)
     {
@@ -108,21 +109,21 @@ std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const S
         serializedDataType.details().UnpackTo(&floatDetails);
         if (floatDetails.bits() == 32)
         {
-            return DataTypeProvider::provideDataType(LogicalType::FLOAT32);
+            return DataTypeProvider::provideDataType(LogicalType::FLOAT32, nullable);
         }
-        return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+        return DataTypeProvider::provideDataType(LogicalType::FLOAT64, nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_BOOLEAN)
     {
-        return DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
+        return DataTypeProvider::provideDataType(LogicalType::BOOLEAN, nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_CHAR)
     {
-        return DataTypeProvider::provideDataType(LogicalType::CHAR);
+        return DataTypeProvider::provideDataType(LogicalType::CHAR, nullable);
     }
     if (serializedDataType.type() == SerializableDataType_Type_VARIABLE_SIZED_DATA)
     {
-        return DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+        return DataTypeProvider::provideDataType(LogicalType::VARSIZED, nullable);
     }
     throw CannotDeserialize("deserialization is not possible for {}", magic_enum::enum_name(serializedDataType.type()));
 }

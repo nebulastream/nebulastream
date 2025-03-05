@@ -210,7 +210,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
         else
         {
             /// If downStreamOperator is blocking then remove current operator as its upstream operator.
-            auto success = downStreamOperator->removeChild(operatorNode);
+            const auto success = downStreamOperator->removeChild(operatorNode);
             INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
 
             /// Add to the current operator information about operator id of the removed downStreamOperator.
@@ -223,7 +223,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
 void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared_ptr<Node>& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
-    std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
+    const std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
     if (value.has_value())
     { /// update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);

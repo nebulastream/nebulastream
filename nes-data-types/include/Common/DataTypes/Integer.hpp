@@ -36,7 +36,8 @@ public:
      * @param lowerBound the lower bound, which is contained in that integer.
      * @param upperBound the upper bound, which is contained in that integer.
      */
-    Integer(int8_t bits, int64_t lowerBound, uint64_t upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
+    Integer(const bool nullable, int8_t bits, int64_t lowerBound, uint64_t upperBound) noexcept
+        : Numeric(nullable, bits), lowerBound(lowerBound), upperBound(upperBound)
     {
     }
 

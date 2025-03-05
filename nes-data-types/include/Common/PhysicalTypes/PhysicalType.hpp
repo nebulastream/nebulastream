@@ -31,8 +31,21 @@ public:
 
     virtual ~PhysicalType() = default;
 
-    /// Returns physical size of type in bytes.
-    [[nodiscard]] virtual uint64_t size() const = 0;
+    /// Returns physical size of type in bytes. This might include a boolean for the null indicator.
+    [[nodiscard]] uint64_t getSizeInBytes() const
+    {
+        const auto size = getRawSizeInBytes();
+
+        /// If the type is nullable, we need to add one byte for the null indicator.
+        if (type->nullable)
+        {
+            return size + 1;
+        }
+        return size;
+    };
+
+    /// Returns the raw size of the type in bytes. This does NOT include a potential null indicator.
+    [[nodiscard]] virtual uint64_t getRawSizeInBytes() const noexcept = 0;
 
     virtual std::string convertRawToString(const void* rawData) const noexcept = 0;
 

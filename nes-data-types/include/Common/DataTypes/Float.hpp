@@ -34,7 +34,8 @@ public:
      * @param lowerBound the lower bound, which is contained in that float.
      * @param upperBound the upper bound, which is contained in that float.
      */
-    inline Float(int8_t bits, double lowerBound, double upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
+    inline Float(const bool nullable, int8_t bits, double lowerBound, double upperBound) noexcept
+        : Numeric(nullable, bits), lowerBound(lowerBound), upperBound(upperBound)
     {
     }
 
