@@ -57,7 +57,13 @@ VarVal TupleBufferMemoryProvider::loadValue(
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
+        if (type->type->nullable)
+        {
+            const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
+            const auto null = Nautilus::Util::readValueFromMemRef<bool>(memRefNull);
+            return {VariableSizedData(textPtr), null};
+        }
+        return {VariableSizedData(textPtr)};
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
@@ -89,6 +95,11 @@ VarVal TupleBufferMemoryProvider::storeValue(
         const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
+        if (type->type->nullable)
+        {
+            const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
+            *static_cast<nautilus::val<bool*>>(memRefNull) = value.isNull();
+        }
         return value;
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
