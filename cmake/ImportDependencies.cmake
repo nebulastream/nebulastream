@@ -17,6 +17,9 @@ SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
+if (USE_LIBCXX_IF_AVAILABLE)
+  message(FATAL_ERROR "use libstdcxx so that rust bindings work")
+endif ()
 
 if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
