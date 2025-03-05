@@ -37,16 +37,19 @@ ExecutableFunctionConcat::ExecutableFunctionConcat(
 
 VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightExecutableFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto leftVarValue = leftExecutableFunction->execute(record, arena);
+    const auto rightVarValue = rightExecutableFunction->execute(record, arena);
+    const auto rightValue = rightVarValue.cast<VariableSizedData>();
+    const auto leftValue = leftVarValue.cast<VariableSizedData>();
 
-    const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
+    const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
     VariableSizedData newVarSizeData(newVarSizeDataArea, newSize);
 
     /// Writing the left value and then the right value to the new variable sized data
-    nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
-    nautilus::memcpy(newVarSizeData.getContent() + leftValue.getContentSize(), rightValue.getContent(), rightValue.getContentSize());
+    nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getSize());
+    nautilus::memcpy(newVarSizeData.getContent() + leftValue.getSize(), rightValue.getContent(), rightValue.getSize());
+
     VarVal(nautilus::val<uint32_t>(newSize)).writeToMemory(newVarSizeData.getReference());
     return newVarSizeData;
 }

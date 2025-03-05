@@ -32,18 +32,22 @@ namespace NES::Nautilus
     VarVal operatorName(const VarVal& rhs) const \
     { \
         return std::visit( \
-            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
+            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) -> VarVal \
             { \
                 if constexpr (requires(LHS l, RHS r) { l op r; }) \
                 { \
-                    return detail::var_val_t(lhsVal op rhsVal); \
+                    if (nullable or rhs.nullable) \
+                    { \
+                        return {detail::var_val_t(lhsVal op rhsVal), (null || rhs.null)}; \
+                    } \
+                    return {detail::var_val_t(lhsVal op rhsVal)}; \
                 } \
                 else \
                 { \
                     throw UnsupportedOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(LHS).name() + " " \
                         + typeid(RHS).name()); \
-                    return detail::var_val_t(lhsVal); \
+                    return {detail::var_val_t(lhsVal), true}; \
                 } \
             }, \
             this->value, \
@@ -54,18 +58,21 @@ namespace NES::Nautilus
     VarVal operatorName() const \
     { \
         return std::visit( \
-            [&]<typename RHS>(const RHS& rhsVal) \
+            [&]<typename RHS>(const RHS& rhsVal) -> VarVal \
             { \
                 if constexpr (!requires(RHS r) { op r; }) \
                 { \
                     throw UnsupportedOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(decltype(rhsVal)).name()); \
-                    return detail::var_val_t(rhsVal); \
+                    return {detail::var_val_t(rhsVal), true}; \
                 } \
                 else \
                 { \
-                    detail::var_val_t result = op rhsVal; \
-                    return result; \
+                    if (nullable) \
+                    { \
+                        return {detail::var_val_t(op rhsVal), null}; \
+                    } \
+                    return {detail::var_val_t(op rhsVal)}; \
                 } \
             }, \
             this->value); \
@@ -107,6 +114,7 @@ struct is_one_of<T, std::variant<Ts...>> : std::bool_constant<(std::is_same_v<T,
 /// It sits on top of the nautilus library and its val<> data type.
 /// We derive all specific data types, e.g., variable and fixed data types, from this base class.
 /// This class provides all functionality so that a developer does not have to know of any nautilus::val<> and how to work with them.
+/// This class supports null handling, i.e., if a value is null, all operations with this value will result in null.
 class VarVal
 {
 public:
@@ -117,7 +125,13 @@ public:
     template <typename T>
     explicit VarVal(const T t)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(nautilus::val<T>(t))
+        : value(nautilus::val<T>(t)), null(false), nullable(false)
+    {
+    }
+    template <typename T>
+    explicit VarVal(const T t, const nautilus::val<bool> null)
+    requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
+        : value(nautilus::val<T>(t)), null(null), nullable(true)
     {
     }
 
@@ -125,7 +139,13 @@ public:
     template <typename T>
     VarVal(const nautilus::val<T> t)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(t)
+        : value(t), null(false), nullable(false)
+    {
+    }
+    template <typename T>
+    VarVal(const nautilus::val<T> t, const nautilus::val<bool> null)
+    requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
+        : value(t), null(null), nullable(true)
     {
     }
 
@@ -134,7 +154,13 @@ public:
     template <typename T>
     VarVal(const T t)
     requires(detail::is_one_of<T, detail::var_val_t>::value)
-        : value(t)
+        : value(t), null(false), nullable(false)
+    {
+    }
+    template <typename T>
+    VarVal(const T t, const nautilus::val<bool> null)
+    requires(detail::is_one_of<T, detail::var_val_t>::value)
+        : value(t), null(null), nullable(true)
     {
     }
 
@@ -146,6 +172,7 @@ public:
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 
     /// Casts the underlying value to the given type T1. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
+    // todo rename this to getValue()
     template <typename T1>
     T1 cast() const
     {
@@ -173,6 +200,31 @@ public:
     }
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
+    template <typename T1>
+    VarVal castToType() const
+    {
+        /// If the underlying value is the same type as T1, we can return it directly.
+        if (std::holds_alternative<T1>(value))
+        {
+            return {std::get<T1>(value), null, nullable};
+        }
+
+        return std::visit(
+            [this]<typename T0>(T0&& underlyingValue) -> VarVal
+            {
+                using removedCVRefT0 = std::remove_cvref_t<T0>;
+                using removedCVRefT1 = std::remove_cvref_t<T1>;
+                if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
+                {
+                    throw UnsupportedOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else
+                {
+                    return {static_cast<T1>(underlyingValue), null};
+                }
+            },
+            value);
+    }
     [[nodiscard]] VarVal castToType(const std::shared_ptr<PhysicalType>& type) const;
 
     template <typename T>
@@ -184,6 +236,7 @@ public:
     /// Defining operations on VarVal. In the macro, we use std::variant and std::visit to automatically call the already
     /// existing operations on the underlying nautilus::val<> data types.
     /// For the VarSizedDataType, we define custom operations in the class itself.
+    /// If either left, right or both values are null, the result will be null.
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator+, +);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
@@ -207,12 +260,20 @@ public:
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.
     void writeToMemory(const nautilus::val<int8_t*>& memRef) const;
+    nautilus::val<bool> isNull() const;
 
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    VarVal(const detail::var_val_t t) : value(std::move(t)) { }
+    VarVal(const detail::var_val_t t, nautilus::val<bool> null, const bool nullable = true) : value(std::move(t)), null(std::move(null)), nullable(nullable) { }
+    /// ReSharper disable once CppNonExplicitConvertingConstructor
+    VarVal(const detail::var_val_t t) : value(std::move(t)), null(false), nullable(false) { }
 
     detail::var_val_t value;
+    nautilus::val<bool> null;
+    /// If this is set, the null value will be taking into account. For example, it will be written and read from memory.
+    /// This is a trace-time-constants, i.e., it is not part of the actual value. This is fine, as we need to know if a value is nullable during the tracing.
+    /// For example, if it is nullable, we need to write and read the null value from/to memory.
+    bool nullable;
 };
 
 static_assert(!std::is_default_constructible_v<VarVal>, "Should not be default constructible");

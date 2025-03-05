@@ -107,7 +107,6 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         nautilus::engine::Options options;
         const auto compilation = backend == Configurations::NautilusBackend::COMPILER;
         options.setOption("engine.Compilation", compilation);
-        const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
     }
 
@@ -186,7 +185,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                                   nautilus::val<uint64_t*> outputIndex)
     {
         RecordBuffer recordBuffer(buffer);
-        nautilus::val<uint64_t> value = std::move(startForValues);
+        nautilus::val<uint64_t> value = startForValues;
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
             Record record;
