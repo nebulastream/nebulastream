@@ -60,6 +60,7 @@ std::optional<Memory::TupleBuffer> BackpressureHandler::onFull(Memory::TupleBuff
 
         auto wstate = rstate.moveFromUpgradeToWrite();
         wstate->buffered.emplace_back(buffer);
+        NES_WARNING("Backpressure Level: {}", wstate->buffered.size());
         return {};
     }
     else
@@ -89,6 +90,7 @@ std::optional<Memory::TupleBuffer> BackpressureHandler::onSuccess(Valve& valve)
     {
         auto nextBuffer = std::move(state->buffered.front());
         state->buffered.pop_front();
+        NES_WARNING("Backpressure Level: {}", state->buffered.size());
         return nextBuffer;
     }
 
@@ -117,7 +119,7 @@ void NetworkSink::stop(Runtime::Execution::PipelineExecutionContext& pec)
         return;
     }
 
-    NES_INFO("Closing Network Sink")
+    NES_INFO("Closing Network Sink. Number of Buffers transmitted: {}", buffersSend.load());
     close_sender_channel(*std::move(this->channel));
     NES_INFO("Close was successful?");
 }
@@ -151,6 +153,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execu
         case SendResult::Error:
             throw CannotOpenSink("Sink Failed");
         case SendResult::Ok:
+            ++buffersSend;
             if (auto nextBuffer = backpressureHandler.onSuccess(valve))
             {
                 execute(*nextBuffer, pec);

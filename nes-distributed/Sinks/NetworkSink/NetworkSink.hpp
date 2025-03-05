@@ -53,7 +53,6 @@ public:
 class NetworkSink final : public Sink
 {
 public:
-
     explicit NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
 
@@ -80,6 +79,7 @@ private:
     std::optional<rust::Box<SenderChannel>> channel{};
     std::string channelIdentifier{};
     std::string connectionIdentifier;
+    std::atomic<size_t> buffersSend = 0;
 };
 
 

@@ -61,6 +61,8 @@ nodes:
   - connection: 127.0.0.1:8080
     grpc: 127.0.0.1:9090
     capacity: 100
+    cpus: 12
+    buffers: 200000
     sinks:
       - name: file
         type: File
@@ -74,6 +76,7 @@ nodes:
   - connection: 127.0.0.1:8082
     capacity: 100
     grpc: 127.0.0.1:9092
+    cpus: 1
     links:
       downstreams:
         - 127.0.0.1:8080
@@ -82,6 +85,7 @@ nodes:
   - connection: 127.0.0.1:8081
     grpc: 127.0.0.1:9091
     capacity: 100
+    cpus: 1
     links:
       downstreams:
         - 127.0.0.1:8080
@@ -91,6 +95,7 @@ nodes:
   - connection: 127.0.0.1:8084
     grpc: 127.0.0.1:9094
     capacity: 0
+    cpus: 1
     physical:
       - logical: nexmark_bid
         parserConfig:
@@ -102,6 +107,7 @@ nodes:
   - connection: 127.0.0.1:8083
     grpc: 127.0.0.1:9093
     capacity: 0
+    cpus: 1
     physical:
       - logical: nexmark_auction
         parserConfig:

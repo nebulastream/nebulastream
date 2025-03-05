@@ -11,7 +11,7 @@ def generate_single_node_xml(topology_name, node_data, output_dir):
     # XML template for a single node
     xml_template = f"""
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}" type="CMakeRunConfiguration" factoryName="Application" focusToolWindowBeforeRun="true" PROGRAM_PARAMS="--grpc=127.0.0.1:{node_data['grpc']} --data=127.0.0.1:{node_data['connection']} --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=1" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-single-node-worker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-single-node-worker">
+  <configuration default="false" name="nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}" type="CMakeRunConfiguration" factoryName="Application" focusToolWindowBeforeRun="true" PROGRAM_PARAMS="--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']} --grpc=127.0.0.1:{node_data['grpc']} --data=127.0.0.1:{node_data['connection']} --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-single-node-worker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-single-node-worker">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>
@@ -31,7 +31,7 @@ def generate_single_node_xml(topology_name, node_data, output_dir):
 def generate_nebuli_dump(topology_name, topology_file, output_dir):
     nebuli_start = f"""
     <component name="ProjectRunConfigurationManager">
-      <configuration default="false" name="nebuli dump {topology_name}" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-t {topology_file} dump -i $FilePath$" REDIRECT_INPUT="false" REDIRECT_INPUT_PATH="$FilePath$" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-nebuli" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-nebuli">
+      <configuration default="false" name="nebuli dump {topology_name}" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-t {topology_file} dump -i $FilePath$ -o /tmp" REDIRECT_INPUT="false" REDIRECT_INPUT_PATH="$FilePath$" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-nebuli" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-nebuli">
         <method v="2">
           <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         </method>
@@ -124,7 +124,9 @@ def main():
 
             node_data = {
                 'connection': connection_port,
-                'grpc': grpc_port
+                'grpc': grpc_port,
+                'cpus': node.get('cpus', 4),
+                'buffers': node.get('buffers', 1024)
             }
             ports.append(node_data)
 
