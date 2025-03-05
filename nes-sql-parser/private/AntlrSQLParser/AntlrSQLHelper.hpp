@@ -16,13 +16,14 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <API/Query.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES::Parsers
