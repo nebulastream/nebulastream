@@ -73,7 +73,6 @@ void NetworkSource::close()
 }
 
 
-
 std::unique_ptr<SourceRegistryReturnType> SourceGeneratedRegistrar::RegisterNetworkSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<NetworkSource>(sourceRegistryArguments.sourceDescriptor);

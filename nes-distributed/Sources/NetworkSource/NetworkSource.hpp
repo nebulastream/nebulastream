@@ -40,7 +40,6 @@ namespace NES::Sources
 class NetworkSource : public Source
 {
 public:
-
     explicit NetworkSource(const SourceDescriptor& sourceDescriptor);
     ~NetworkSource() override = default;
 

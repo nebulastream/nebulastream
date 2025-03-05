@@ -149,8 +149,7 @@ struct ConfigParametersTCP
         }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source

@@ -24,16 +24,14 @@ static constexpr std::string_view NETWORK_SINK_NAME = "Network";
 struct ConfigParametersNetworkSink
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CONNECTION{
-        "connection",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(CONNECTION, config); }};
+        "connection", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(CONNECTION, config);
+        }};
 
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(CHANNEL, config); }};
+        "channel", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(CHANNEL, config);
+        }};
 
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap

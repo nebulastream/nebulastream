@@ -26,10 +26,9 @@ static constexpr std::string_view NETWORK_SOURCE_NAME = "Network";
 struct ConfigParametersNetwork
 {
     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(CHANNEL, config); }};
+        "channel", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(CHANNEL, config);
+        }};
 
 
     static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
