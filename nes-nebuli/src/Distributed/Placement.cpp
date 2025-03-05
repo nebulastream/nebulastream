@@ -192,9 +192,9 @@ NES::Distributed::DecomposedPlanDAG NES::Distributed::decompose(const Topology& 
         }
 
         auto path = topology.findPaths(parentNode, childNode, Topology::Upstream).at(0);
-        for (auto node : path.path | std::views::chunk(2))
+        for (size_t i = 0; i < path.path.size() - 1; i += 2)
         {
-            dag.try_emplace(node[1], queryPlan.getQueryId(), node[1], node[0]);
+            dag.try_emplace(path.path[i + 1], queryPlan.getQueryId(), path.path[i + 1], path.path[i]);
         }
         dag.at(path.path.back()).plan->addRootOperator(copiedChild);
         copiedChild->addProperty(std::string("SUCCESSOR_OPERATOR"), parent->getId());
