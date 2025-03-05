@@ -25,7 +25,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -50,9 +49,6 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
-#include "../nes-common/include/Util/Common.hpp"
-
-#include "TaskStatisticsProcessor.hpp"
 
 namespace NES::Runtime
 {
@@ -134,38 +130,28 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
-    uint64_t numberOfOutputTuplesPerBuffer;
 
     DefaultPEC(
-        const size_t numberOfThreads,
-        const WorkerThreadId threadId,
-        const PipelineId pipelineId,
+        size_t numberOfThreads,
+        WorkerThreadId threadId,
+        PipelineId pipelineId,
         std::shared_ptr<Memory::AbstractBufferProvider> bm,
-        std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler,
-        const uint64_t numberOfOutputTuplesPerBuffer)
-        : handler(std::move(handler))
-        , bm(std::move(bm))
-        , numberOfThreads(numberOfThreads)
-        , threadId(threadId)
-        , pipelineId(pipelineId)
-        , numberOfOutputTuplesPerBuffer(numberOfOutputTuplesPerBuffer)
+        std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler)
+        : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId), pipelineId(pipelineId)
     {
     }
 
     [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
     Memory::TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
-    void emitBuffer(const Memory::TupleBuffer& buffer, const ContinuationPolicy policy) override { handler(buffer, policy); }
+    void emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { handler(buffer, policy); }
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineId() const override { return pipelineId; }
-    uint64_t getNumberOfOutputTuplesPerBuffer() const override { return numberOfOutputTuplesPerBuffer; }
-
     std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "Operator Handlers were not set");
         return *operatorHandlers;
     }
-
     void setOperatorHandlers(std::vector<std::shared_ptr<Execution::OperatorHandler>>& handlers) override
     {
         operatorHandlers = std::addressof(handlers);
@@ -235,9 +221,9 @@ public:
     }
 
     void emitWork(
-        const QueryId qid,
+        QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
-        const Memory::TupleBuffer buffer,
+        Memory::TupleBuffer buffer,
         onComplete complete,
         onFailure failure) override
     {
@@ -252,14 +238,12 @@ public:
             injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure)))));
     }
 
-    void emitPipelineStart(
-        const QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, const onComplete complete, const onFailure failure) override
+    void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, onComplete complete, onFailure failure) override
     {
         taskQueue.blockingWrite(StartPipelineTask(qid, node->id, complete, injectQueryFailure(node, failure), node));
     }
 
-    void emitPipelineStop(
-        const QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, const onComplete complete, const onFailure failure) override
+    void emitPipelineStop(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
     {
         auto nodePtr = node.get();
         /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
@@ -288,8 +272,8 @@ public:
             {}});
     }
 
-    void emitPendingPipelineStop(
-        const QueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
+    void
+    emitPendingPipelineStop(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
     {
         ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
         taskQueue.blockingWrite(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(complete), std::move(failure)});
@@ -305,16 +289,6 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , taskQueue(taskQueueSize)
     {
-        for (const auto& statListener : statisticListener)
-        {
-            if (const auto curListener = NES::Util::as_if<TaskStatisticsProcessor>(statListener))
-            {
-                taskStatisticsProcessor = curListener;
-                break;
-            }
-        }
-
-        INVARIANT(taskStatisticsProcessor != nullptr, "We require a task statistics processor");
     }
 
     [[nodiscard]] size_t numberOfThreads() const { return pool.size(); }
@@ -333,7 +307,7 @@ private:
         bool operator()(const StopSourceTask& stopSource) const;
         bool operator()(const FailSourceTask& failSource) const;
 
-        [[nodiscard]] WorkerThread(WorkerThreadId threadId, ThreadPool& pool, const bool terminating)
+        [[nodiscard]] WorkerThread(WorkerThreadId threadId, ThreadPool& pool, bool terminating)
             : threadId(std::move(threadId)), pool(pool), terminating(terminating)
         {
         }
@@ -356,7 +330,6 @@ private:
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::shared_ptr<Runtime::TaskStatisticsProcessor> taskStatisticsProcessor;
     std::atomic<TaskId::Underlying> taskIdCounter;
     detail::Queue taskQueue;
     std::vector<std::jthread> pool;
@@ -374,21 +347,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
-        /// Calculating the number of tuples per buffer over all successor pipelines and taking the average
-        uint64_t sumNumberOfTuplesPerBuffer = 0;
-        for (const auto& successor : pipeline->successors)
-        {
-            sumNumberOfTuplesPerBuffer += pool.taskStatisticsProcessor->getNumberOfTuplesPerBuffer(successor->id);
-        }
-        const auto div = pipeline->successors.empty() ? 1 : pipeline->successors.size();
-        const uint64_t numberOfOutputTuplesPerBuffer = sumNumberOfTuplesPerBuffer / div;
-        ENGINE_LOG_DEBUG(
-            "Handle Task for {}-{}. Tuples: {} with {} no. output tuples per buffer",
-            task.queryId,
-            pipeline->id,
-            task.buf.getNumberOfTuples(),
-            numberOfOutputTuplesPerBuffer);
-
+        ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
         DefaultPEC pec(
             pool.pool.size(),
             this->threadId,
@@ -404,16 +363,13 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                         TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
-            },
-            numberOfOutputTuplesPerBuffer);
-        TaskExecutionStart taskExecutionStart{
-            threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples(), numberOfOutputTuplesPerBuffer};
+            });
+        TaskExecutionStart taskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()};
         pool.notifyStatisticListeners(taskExecutionStart);
         pipeline->stage->execute(task.buf, pec);
-        const std::chrono::microseconds latencyInUs
-            = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - taskExecutionStart.timestamp);
-        const std::chrono::duration<double> latencyInSec = latencyInUs;
-        const double throughput = task.buf.getNumberOfTuples() / latencyInSec.count();
+        const auto latencyInUs
+            = std::chrono::duration<double, std::micro>(std::chrono::high_resolution_clock::now() - taskExecutionStart.timestamp).count();
+        const double throughput = task.buf.getNumberOfTuples() / (latencyInUs / 1'000'000);
         pool.notifyStatisticListeners(
             TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId, throughput, latencyInUs, task.buf.getNumberOfTuples()});
         return true;
@@ -448,8 +404,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
                     false,
                     "Currently we assume that a pipeline cannot emit data during setup. All pipeline initializations happen "
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
-            },
-            42);
+            });
         pipeline->stage->start(pec);
         pool.notifyStatisticListeners(PipelineStart{threadId, startPipeline.queryId, pipeline->id});
         return true;
@@ -477,20 +432,7 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelin
 
 bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) const
 {
-    /// Calculating the number of tuples per buffer over all successor pipelines and taking the average
-    uint64_t sumNumberOfTuplesPerBuffer = 0;
-    for (const auto& successor : stopPipeline.pipeline->successors)
-    {
-        sumNumberOfTuplesPerBuffer += pool.taskStatisticsProcessor->getNumberOfTuplesPerBuffer(successor->id);
-    }
-    const auto div = stopPipeline.pipeline->successors.empty() ? 1 : stopPipeline.pipeline->successors.size();
-    const uint64_t numberOfOutputTuplesPerBuffer = sumNumberOfTuplesPerBuffer / div;
-    ENGINE_LOG_DEBUG(
-        "Stop Pipeline Task for {}-{} with {} no. output tuples per buffer",
-        stopPipeline.queryId,
-        stopPipeline.pipeline->id,
-        numberOfOutputTuplesPerBuffer);
-
+    ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     DefaultPEC pec(
         pool.pool.size(),
         this->threadId,
@@ -511,8 +453,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
                 /// pipeline termination.
                 pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
             }
-        },
-        numberOfOutputTuplesPerBuffer);
+        });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     stopPipeline.pipeline->stage->stop(pec);
@@ -668,7 +609,7 @@ void QueryCatalog::start(
     const std::scoped_lock lock(mutex);
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
-        RealQueryLifeTimeListener(const QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
+        RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
             : listener(std::move(listener)), queryId(queryId)
         {
         }
@@ -753,7 +694,7 @@ void QueryCatalog::start(
     this->queryStates.emplace(queryId, state);
 }
 
-void QueryCatalog::stopQuery(const QueryId id)
+void QueryCatalog::stopQuery(QueryId id)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {

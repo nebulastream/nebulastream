@@ -95,12 +95,6 @@ public:
     {
         operatorHandlers = std::addressof(handlers);
     }
-
-    uint64_t getNumberOfOutputTuplesPerBuffer() const override
-    {
-        INVARIANT(false, "This method should not be called");
-        return 42;
-    }
 };
 
 

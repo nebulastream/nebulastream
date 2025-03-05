@@ -13,43 +13,49 @@
 */
 
 #pragma once
-#include <memory>
+#include <queue>
 #include <set>
 #include <thread>
 #include <type_traits>
-#include <utility>
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/Synchronized.h>
 #include <QueryEngineStatisticListener.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include "TuplePerTaskComputer/TuplePerTaskComputer.hpp"
-#include "PipelineStatistics.hpp"
 
 namespace NES::Runtime
 {
+struct PipelineStatistics
+{
+    explicit PipelineStatistics(const size_t windowSizeRollingAverage)
+        : sumThroughput(0), sumLatency(0), sumNumberOfTuples(0), windowSizeRollingAverage(windowSizeRollingAverage)
+    {
+    }
+    explicit PipelineStatistics() : PipelineStatistics(10) { }
+
+    struct TaskStatistics
+    {
+        double throughput;
+        double latency;
+        uint64_t numberOfTuples;
+    };
+
+    /// Adding the statistics of a task to the pipeline statistics and calculating the rolling average
+    void updateTaskStatistics(const TaskStatistics taskStatistic);
+    double getAverageThroughput() const;
+    double getAverageLatency() const;
+
+private:
+    double sumThroughput;
+    double sumLatency;
+    uint64_t sumNumberOfTuples;
+    std::queue<TaskStatistics> storedTaskStatistics;
+    size_t windowSizeRollingAverage;
+};
 
 struct QuerySLA
 {
-    QuerySLA() : minThroughput(0), maxLatency(std::numeric_limits<uint64_t>::max()) { }
     double minThroughput;
-    std::chrono::microseconds maxLatency;
-};
-
-class QueryInfo
-{
-public:
-    explicit QueryInfo() : currentThroughput(0), currentLatency(0) { }
-
-    void addQuerySLA(double minThroughput, std::chrono::microseconds maxLatency);
-    void insert(PipelineId pipelineId);
-    std::set<PipelineId>::iterator begin() const { return pipelineIds.begin(); }
-    std::set<PipelineId>::iterator end() const { return pipelineIds.end(); }
-
-    QuerySLA sla;
-    std::set<PipelineId> pipelineIds;
-    double currentThroughput;
-    std::chrono::microseconds currentLatency;
+    double maxLatency;
 };
 
 template <typename Var1, typename Var2>
@@ -64,22 +70,21 @@ struct TaskStatisticsProcessor final : QueryEngineStatisticListener
 {
     using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
 
-    void onEvent(Event event) override;
-    explicit TaskStatisticsProcessor(std::unique_ptr<TuplePerTaskComputer> tuplePerTaskComputer);
-    static_assert(std::is_default_constructible_v<CombinedEventType>);
-
-    /// This method is used to get the estimated number of tuples for a pipeline, such that the SLA for the query can be sustained
+    /// This method is used to get an estimated number of tuples for a pipeline, such that the SLA for the query can be sustained
     uint64_t getNumberOfTuplesPerBuffer(const PipelineId pipelineId) const;
 
-protected:
-    /// Storage containers for the statistics per pipeline
-    folly::Synchronized<std::unordered_map<PipelineId, PipelineStatistics>> pipelineStatistics;
-    folly::Synchronized<std::unordered_map<QueryId, QueryInfo>> queryInfo;
+
+    void onEvent(Event event) override;
+    explicit TaskStatisticsProcessor();
+    static_assert(std::is_default_constructible_v<CombinedEventType>);
 
 private:
-    std::unique_ptr<TuplePerTaskComputer> tuplePerTaskComputer;
     folly::MPMCQueue<CombinedEventType> events{1000};
     std::jthread printThread;
-};
 
+    /// Storage containers for the statistics per pipeline
+    folly::Synchronized<std::unordered_map<PipelineId, PipelineStatistics>> pipelineStatistics;
+    folly::Synchronized<std::unordered_map<QueryId, std::set<PipelineId>>> queryPipelines;
+    folly::Synchronized<std::unordered_map<QueryId, QuerySLA>> querySLAs;
+};
 }

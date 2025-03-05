@@ -160,8 +160,8 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
 }
 
 std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
-    const QueryId queryId,
-    const PipelineId pipelineId,
+    QueryId queryId,
+    PipelineId pipelineId,
     WorkEmitter& emitter,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<Execution::ExecutablePipelineStage> stage,
@@ -199,7 +199,7 @@ void RunningQueryPlanNode::fail(Exception exception) const
 
 std::
     pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
-        const QueryId queryId,
+        QueryId queryId,
         ExecutableQueryPlan& queryPlan,
         std::function<void(Exception)> unregisterWithError,
         const CallbackRef& terminationCallbackRef,

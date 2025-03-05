@@ -36,10 +36,10 @@ struct SubmitQuerySystemEvent : BaseSystemEvent
 {
     /// If the query has not specified a throughput or latency, we use a min throughput of 0 and a max latency of infinity
     SubmitQuerySystemEvent(const QueryId queryId, std::string query)
-        : SubmitQuerySystemEvent(queryId, std::move(query), 0, std::chrono::microseconds(std::numeric_limits<uint64_t>::max()))
+        : SubmitQuerySystemEvent(queryId, std::move(query), 0, std::numeric_limits<double>::max())
     {
     }
-    SubmitQuerySystemEvent(const QueryId queryId, std::string query, const double minThroughput, const std::chrono::microseconds maxLatency)
+    SubmitQuerySystemEvent(const QueryId queryId, std::string query, const double minThroughput, const double maxLatency)
         : queryId(queryId), query(std::move(query)), minThroughput(minThroughput), maxLatency(maxLatency)
     {
     }
@@ -47,7 +47,7 @@ struct SubmitQuerySystemEvent : BaseSystemEvent
     QueryId queryId = INVALID<QueryId>;
     std::string query;
     double minThroughput;
-    std::chrono::microseconds maxLatency;
+    double maxLatency;
 };
 
 struct StartQuerySystemEvent : BaseSystemEvent

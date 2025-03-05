@@ -43,23 +43,8 @@ endif (CODE_COVERAGE)
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-set(taskSizeComputer Throughput Latency Infinity)
-foreach(taskSizeComputer IN LISTS taskSizeComputer)
-    if (CODE_COVERAGE)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_${taskSizeComputer}_interpreter PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskSizeComputer}_interpreter_cc -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=8)
-    endif (CODE_COVERAGE)
-
-    add_test(
-            NAME systest_${taskSizeComputer}_interpreter
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskSizeComputer}_interpreter
-                            --
-                            --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer})
-    add_test(
-            NAME systest_${taskSizeComputer}_compiler
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskSizeComputer}_compiler
-                            --
-                            --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer})
-endforeach()
+add_test(NAME systest_interpreter COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+add_test(NAME systest_compiler COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 
 
 ## We wish to run all join tests with 1, 2, 4 worker threads
@@ -89,43 +74,41 @@ set(workerThreads 1 4 8)
 set(sliceCaches LRU FIFO SECOND_CHANCE)
 set(numberOfEntriesSliceCaches 1 10 100 1000)
 set(shuffleStrategies NONE BUFFER TUPLES BUFFER_TUPLES)
-foreach(taskSizeComputer IN LISTS taskSizeComputer)
-    foreach (workerThreads IN LISTS workerThreads)
-        foreach (sliceCache IN LISTS sliceCaches)
-            foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
-                foreach (shuffleStrategy IN LISTS shuffleStrategies)
-                    if (CODE_COVERAGE)
-                        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
-                        target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
-                    endif (CODE_COVERAGE)
+foreach (workerThreads IN LISTS workerThreads)
+    foreach (sliceCache IN LISTS sliceCaches)
+        foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
+            foreach (shuffleStrategy IN LISTS shuffleStrategies)
+                if (CODE_COVERAGE)
+                    target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_join -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
+                    target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter_aggregation -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
+                endif (CODE_COVERAGE)
 
-                    add_test(
-                            NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_interpreter
-                            COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_interpreter_join
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads}  --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
-                    add_test(
-                            NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_compiler
-                            COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_compiler_join
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads}  --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
+                add_test(
+                        NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter
+                        COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter_join
+                        --
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
+                add_test(
+                        NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler
+                        COMMAND systest -n 6 --group Join --workingDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler_join
+                        --
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
 
-                    add_test(
-                            NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_interpreter
-                            COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_interpreter_aggregation
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads}  --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
-                    add_test(
-                            NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_compiler
-                            COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_${taskSizeComputer}_compiler_aggregation
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads}  --worker.queryEngine.tuplePerTaskComputer=${taskSizeComputer} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
+                add_test(
+                        NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter
+                        COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_interpreter_aggregation
+                        --
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
+                add_test(
+                        NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler
+                        COMMAND systest -n 6 --groups Aggregation --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${shuffleStrategy}_compiler_aggregation
+                        --
+                        --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.shuffleStrategy=${shuffleStrategy} --worker.queryCompiler.degreeOfDisorder=1.0)
 
-                endforeach()
-            endforeach()
-        endforeach()
-    endforeach()
-endforeach()
+            endforeach ()
+        endforeach ()
+    endforeach ()
+endforeach ()
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})

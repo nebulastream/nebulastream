@@ -39,7 +39,7 @@ Sources::SourceReturnType::EmitFunction emitFunction(
     WorkEmitter& emitter)
 {
     return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               const OriginId sourceId, Sources::SourceReturnType::SourceReturnType event)
+               OriginId sourceId, Sources::SourceReturnType::SourceReturnType event)
     {
         std::visit(
             Overloaded{
@@ -80,7 +80,7 @@ RunningSource::RunningSource(
 }
 
 std::shared_ptr<RunningSource> RunningSource::create(
-    const QueryId queryId,
+    QueryId queryId,
     std::unique_ptr<Sources::SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,

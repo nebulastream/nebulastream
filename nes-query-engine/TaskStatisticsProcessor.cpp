@@ -13,10 +13,7 @@
 */
 
 #include "TaskStatisticsProcessor.hpp"
-#include <cstdint>
 #include <Util/Overloaded.hpp>
-#include "PipelineStatistics.hpp"
-#include "QueryEngineStatisticListener.hpp"
 
 namespace NES::Runtime
 {
@@ -25,8 +22,7 @@ namespace
 void threadRoutine(
     const std::stop_token& token,
     folly::Synchronized<std::unordered_map<PipelineId, PipelineStatistics>>& pipelineStatistics,
-    folly::Synchronized<std::unordered_map<QueryId, QueryInfo>> queryInfo,
-    const TuplePerTaskComputer& tuplePerTaskComputer,
+    folly::Synchronized<std::unordered_map<QueryId, std::set<PipelineId>>> queryPipelines,
     folly::MPMCQueue<TaskStatisticsProcessor::CombinedEventType>& events)
 {
     while (!token.stop_requested())
@@ -39,35 +35,16 @@ void threadRoutine(
         }
         std::visit(
             Overloaded{
-                [&](const SubmitQuerySystemEvent& submitQuerySystemEvent)
-                {
-                    const auto queryInfoLocked = queryInfo.wlock();
-                    (*queryInfoLocked)[submitQuerySystemEvent.queryId].addQuerySLA(submitQuerySystemEvent.minThroughput, submitQuerySystemEvent.maxLatency);
-                },
-                [&](const TaskExecutionComplete& taskExecutionComplete)
+                [&](TaskExecutionComplete taskExecutionComplete)
                 {
                     const auto pipelineId = taskExecutionComplete.pipelineId;
                     const auto queryId = taskExecutionComplete.queryId;
-                    const PipelineStatistics::TaskStatistics taskStatistics{.throughput=taskExecutionComplete.throughput, .latency=taskExecutionComplete.latency, .numberOfTuples=taskExecutionComplete.numberOfTuplesProcessed};
+                    const PipelineStatistics::TaskStatistics taskStatistics{
+                        taskExecutionComplete.throughput, taskExecutionComplete.latency, taskExecutionComplete.numberOfTuplesProcessed};
 
-                    /// Acquiring locks for the pipelineStatistics and queryInfo
-                    auto [pipelineStatisticsLocked, queryInfoLocked] = folly::acquireLocked(pipelineStatistics, queryInfo);
-
-                    /// Updating the current pipeline statistics and current throughput and latency for the query
-                    /// For now, we assume that the current throughput and latency are the minimum throughput and maximum latency over all pipelines of a query
+                    auto [pipelineStatisticsLocked, queryPipelinesLocked] = folly::acquireLocked(pipelineStatistics, queryPipelines);
+                    (*queryPipelinesLocked)[queryId].insert(pipelineId);
                     (*pipelineStatisticsLocked)[pipelineId].updateTaskStatistics(taskStatistics);
-                    (*queryInfoLocked)[queryId].insert(pipelineId);
-                    for (const auto& pipeline : (*queryInfoLocked)[queryId])
-                    {
-                        const auto averageThroughput = (*pipelineStatisticsLocked)[pipeline].getAverageThroughput();
-                        const auto averageLatency = (*pipelineStatisticsLocked)[pipeline].getAverageLatency();
-                        (*queryInfoLocked)[queryId].currentThroughput = (std::min((*queryInfoLocked)[queryId].currentThroughput, averageThroughput));
-                        (*queryInfoLocked)[queryId].currentLatency = (std::max((*queryInfoLocked)[queryId].currentLatency, averageLatency));
-                    }
-
-                    /// Computing the new task sizes across all pipelines of all queries.
-                    /// To ensure that the task sizes are computed in isolation, we pass the pipelineStatistics and queryInfo as arguments to the TuplePerTaskComputer
-                    tuplePerTaskComputer.calculateOptimalTaskSize(*pipelineStatisticsLocked, *queryInfoLocked);
                 },
                 [](auto) {}},
             event);
@@ -75,34 +52,47 @@ void threadRoutine(
 }
 }
 
+uint64_t TaskStatisticsProcessor::getNumberOfTuplesPerBuffer(const PipelineId pipelineId) const
+{
+    /// For now we just return a constant value
+    ((void)pipelineId);
+    return 42;
+}
+
+void PipelineStatistics::updateTaskStatistics(const TaskStatistics taskStatistic)
+{
+    if (storedTaskStatistics.size() == windowSizeRollingAverage)
+    {
+        const auto& [throughput, latency, numberOfTuples] = storedTaskStatistics.front();
+        sumThroughput -= throughput;
+        sumLatency -= latency;
+        sumNumberOfTuples -= numberOfTuples;
+        storedTaskStatistics.pop();
+    }
+    storedTaskStatistics.push(taskStatistic);
+    sumLatency += taskStatistic.latency;
+    sumThroughput += taskStatistic.throughput;
+    sumNumberOfTuples += taskStatistic.numberOfTuples;
+}
+
+double PipelineStatistics::getAverageThroughput() const
+{
+    return sumThroughput / storedTaskStatistics.size();
+}
+
+double PipelineStatistics::getAverageLatency() const
+{
+    return sumLatency / storedTaskStatistics.size();
+}
+
 void TaskStatisticsProcessor::onEvent(Event event)
 {
     events.blockingWrite(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
 }
 
-TaskStatisticsProcessor::TaskStatisticsProcessor(std::unique_ptr<TuplePerTaskComputer> tuplePerTaskComputer)
-    : tuplePerTaskComputer(std::move(tuplePerTaskComputer)), printThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, pipelineStatistics, queryInfo, *this->tuplePerTaskComputer, events); })
-{
-}
+TaskStatisticsProcessor::TaskStatisticsProcessor()
+    : printThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, pipelineStatistics, queryPipelines, events); })
 
-uint64_t TaskStatisticsProcessor::getNumberOfTuplesPerBuffer(const PipelineId pipelineId) const
 {
-    const auto pipelineStatisticsLocked = pipelineStatistics.rlock();
-    if (pipelineStatisticsLocked->contains(pipelineId))
-    {
-        return pipelineStatisticsLocked->at(pipelineId).getNextNumberOfTuplesPerTask();
-    }
-    return 42;
-}
-
-void QueryInfo::insert(const PipelineId pipelineId)
-{
-    pipelineIds.insert(pipelineId);
-}
-
-void QueryInfo::addQuerySLA(const double minThroughput, const std::chrono::microseconds maxLatency)
-{
-    sla.maxLatency = maxLatency;
-    sla.minThroughput = minThroughput;
 }
 }

@@ -20,7 +20,6 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
 namespace NES::Runtime
@@ -32,13 +31,6 @@ class QueryEngineConfiguration final : public Configurations::BaseConfiguration
     static std::shared_ptr<Configurations::ConfigurationValidation> taskQueueSizeValidator();
 
 public:
-    enum class TuplePerTaskComputerType
-    {
-        Throughput,
-        Latency,
-        Infinity
-    };
-
     QueryEngineConfiguration() = default;
     QueryEngineConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
 
@@ -47,8 +39,6 @@ public:
     Configurations::UIntOption taskQueueSize
         = {"taskQueueSize", "1000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
     Configurations::StringOption statisticsDir = {"statisticsDir", "/tmp", "Directory to dump query engine statistics."};
-    Configurations::EnumOption<TuplePerTaskComputerType> tuplePerTaskComputer
-        = {"tuplePerTaskComputer", TuplePerTaskComputerType::Infinity, "The type of tuple per task computer to use"};
 
 protected:
     std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &taskQueueSize, &statisticsDir}; }

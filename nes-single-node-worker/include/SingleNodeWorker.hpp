@@ -60,7 +60,7 @@ public:
      * @param plan Fully Specified LogicalQueryPlan.
      * @return QueryId which identifies the registered Qconst uery
      */
-    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const std::chrono::microseconds maxLatency);
+    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan, const double minThroughput, const double maxLatency);
 
     /**
      * Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
