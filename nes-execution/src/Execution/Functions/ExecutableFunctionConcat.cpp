@@ -39,8 +39,8 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
 {
     const auto leftVarValue = leftExecutableFunction->execute(record, arena);
     const auto rightVarValue = rightExecutableFunction->execute(record, arena);
-    const auto rightValue = rightVarValue.cast<VariableSizedData>();
-    const auto leftValue = leftVarValue.cast<VariableSizedData>();
+    const auto rightValue = rightVarValue.getRawValueAs<VariableSizedData>();
+    const auto leftValue = leftVarValue.getRawValueAs<VariableSizedData>();
 
     const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
