@@ -42,8 +42,8 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    const auto leftVariableSizedData = leftValue.cast<VariableSizedData>();
-    const auto rightVariableSizedData = rightValue.cast<VariableSizedData>();
+    const auto leftVariableSizedData = leftValue.getRawValueAs<VariableSizedData>();
+    const auto rightVariableSizedData = rightValue.getRawValueAs<VariableSizedData>();
 
     const auto newNull = (leftValue.isNullable() or rightValue.isNullable()) and (leftValue.isNull() or rightValue.isNull());
     const auto newSize

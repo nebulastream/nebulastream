@@ -37,7 +37,7 @@
 namespace NES
 {
 
-VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value)), null(std::move(other.null)), nullable(std::move(other.nullable))
+VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value)), null(std::move(other.null)), nullable(other.nullable)
 {
 }
 
@@ -60,7 +60,7 @@ VarVal& VarVal::operator=(VarVal&& other) /// NOLINT, as we need to have the opt
         throw UnknownOperation("Not allowed to change the data type via the assignment operator, please use castToType()!");
     }
     value = std::move(other.value);
-    null = std::move(other.null);
+    null = other.null;
     nullable = std::move(other.nullable);
     return *this;
 }
@@ -120,43 +120,43 @@ VarVal VarVal::castToType(const DataType::Type type) const
     switch (type)
     {
         case DataType::Type::CHAR: {
-            return {cast<nautilus::val<char>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<char>>(), nullable, null};
         }
         case DataType::Type::BOOLEAN: {
-            return {cast<nautilus::val<bool>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<bool>>(), nullable, null};
         }
         case DataType::Type::INT8: {
-            return {cast<nautilus::val<int8_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<int8_t>>(), nullable, null};
         }
         case DataType::Type::INT16: {
-            return {cast<nautilus::val<int16_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<int16_t>>(), nullable, null};
         }
         case DataType::Type::INT32: {
-            return {cast<nautilus::val<int32_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<int32_t>>(), nullable, null};
         }
         case DataType::Type::INT64: {
-            return {cast<nautilus::val<int64_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<int64_t>>(), nullable, null};
         }
         case DataType::Type::UINT8: {
-            return {cast<nautilus::val<uint8_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<uint8_t>>(), nullable, null};
         }
         case DataType::Type::UINT16: {
-            return {cast<nautilus::val<uint16_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<uint16_t>>(), nullable, null};
         }
         case DataType::Type::UINT32: {
-            return {cast<nautilus::val<uint32_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<uint32_t>>(), nullable, null};
         }
         case DataType::Type::UINT64: {
-            return {cast<nautilus::val<uint64_t>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<uint64_t>>(), nullable, null};
         }
         case DataType::Type::FLOAT32: {
-            return {cast<nautilus::val<float>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<float>>(), nullable, null};
         }
         case DataType::Type::FLOAT64: {
-            return {cast<nautilus::val<double>>(), nullable, null};
+            return {getRawValueAs<nautilus::val<double>>(), nullable, null};
         }
         case DataType::Type::VARSIZED: {
-            return {cast<VariableSizedData>(), nullable, null};
+            return {getRawValueAs<VariableSizedData>(), nullable, null};
         }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));

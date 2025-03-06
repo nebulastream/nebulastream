@@ -64,7 +64,7 @@ TEST_F(VarValTest, SimpleConstruction)
     auto testVarValConstruction = []<typename T>(const T value)
     {
         const VarVal varVal = nautilus::val<T>(value);
-        EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
     testVarValConstruction.operator()<int8_t>(-someRandomNumber);
@@ -88,8 +88,8 @@ TEST_F(VarValTest, SimpleMove)
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal varValCopy = varVal; /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
         const VarVal varValMove = std::move(varVal);
-        EXPECT_EQ(varValMove.cast<nautilus::val<T>>(), value);
-        EXPECT_EQ(varValCopy.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varValMove.getRawValueAs<nautilus::val<T>>(), value);
+        EXPECT_EQ(varValCopy.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
 
@@ -117,7 +117,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<ResultType>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<ResultType>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -146,7 +146,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<T>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -169,7 +169,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<T>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -225,7 +225,7 @@ TEST_F(VarValTest, unaryOperatorOverloads)
     {
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal result = !varVal;
-        EXPECT_EQ(result.cast<nautilus::val<bool>>(), !value);
+        EXPECT_EQ(result.getRawValueAs<nautilus::val<bool>>(), !value);
         return 0;
     };
 
@@ -278,7 +278,7 @@ TEST_F(VarValTest, readFromMemoryTest)
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
         const VarVal varVal = VarVal::readNonNullableVarValFromMemory(memory.data(), type);
-        EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
 

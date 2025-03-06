@@ -35,10 +35,10 @@ VarVal OrPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 
     /// Any expression involving null results in NULL, except for NULL or True.
     /// As NULL or True can be determined without evaluation the NULL value.
-    const auto specialCondition = (leftValue.cast<nautilus::val<bool>>() == true and not leftValue.isNull())
-        or (rightValue.cast<nautilus::val<bool>>() == true and not rightValue.isNull());
+    const auto specialCondition = (leftValue.getRawValueAs<nautilus::val<bool>>() == true and not leftValue.isNull())
+        or (rightValue.getRawValueAs<nautilus::val<bool>>() == true and not rightValue.isNull());
     const auto newValue
-        = nautilus::select(specialCondition, nautilus::val<bool>{true}, (leftValue || rightValue).cast<nautilus::val<bool>>());
+        = nautilus::select(specialCondition, nautilus::val<bool>{true}, (leftValue || rightValue).getRawValueAs<nautilus::val<bool>>());
     const auto newNull = nautilus::select(specialCondition, nautilus::val<bool>{false}, leftValue.isNull() or rightValue.isNull());
     return VarVal{newValue, leftValue.isNullable() or rightValue.isNullable(), newNull};
 }

@@ -38,8 +38,8 @@ VarVal PowPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    return VarVal{nautilus::pow(leftValue.cast<nautilus::val<double>>(), rightValue.cast<nautilus::val<double>>())}.castToType(
-        outputType.type);
+    return VarVal{nautilus::pow(leftValue.getRawValueAs<nautilus::val<double>>(), rightValue.getRawValueAs<nautilus::val<double>>())}
+        .castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType

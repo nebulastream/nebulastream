@@ -39,7 +39,7 @@ VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     /// If the input type is an integer, we only need to cast to the output type.
     if (inputType.isFloat())
     {
-        const auto roundedValue = nautilus::round(value.cast<nautilus::val<double>>());
+        const auto roundedValue = nautilus::round(value.getRawValueAs<nautilus::val<double>>());
         return VarVal{roundedValue}.castToType(outputType.type);
     }
     return value.castToType(outputType.type);

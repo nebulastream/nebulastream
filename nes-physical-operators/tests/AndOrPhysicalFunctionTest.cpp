@@ -72,14 +72,14 @@ TEST_F(AndOrLogicalFunctionTest, NullTestAnd)
     Arena arena{bufferManager};
     ArenaRef arenaRef{&arena};
     const auto trueAndFalse = AndPhysicalFunction{readTrue, readFalse}.execute(record, arenaRef);
-    EXPECT_EQ(trueAndFalse.cast<nautilus::val<bool>>(), false);
+    EXPECT_EQ(trueAndFalse.getRawValueAs<nautilus::val<bool>>(), false);
     EXPECT_EQ(trueAndFalse.isNull(), false);
 
     const auto trueAndNull = AndPhysicalFunction{readTrue, readNull}.execute(record, arenaRef);
     EXPECT_EQ(trueAndNull.isNull(), true);
 
     const auto falseAndNull = AndPhysicalFunction{readFalse, readNull}.execute(record, arenaRef);
-    EXPECT_EQ(falseAndNull.cast<nautilus::val<bool>>(), false);
+    EXPECT_EQ(falseAndNull.getRawValueAs<nautilus::val<bool>>(), false);
     EXPECT_EQ(falseAndNull.isNull(), false);
 }
 
@@ -90,14 +90,14 @@ TEST_F(AndOrLogicalFunctionTest, NullTestOr)
     Arena arena{bufferManager};
     ArenaRef arenaRef{&arena};
     const auto trueOrFalse = OrPhysicalFunction{readTrue, readFalse}.execute(record, arenaRef);
-    EXPECT_EQ(trueOrFalse.cast<nautilus::val<bool>>(), true);
+    EXPECT_EQ(trueOrFalse.getRawValueAs<nautilus::val<bool>>(), true);
     EXPECT_EQ(trueOrFalse.isNull(), false);
 
     const auto trueOrNull = OrPhysicalFunction{readTrue, readNull}.execute(record, arenaRef);
     EXPECT_EQ(trueOrNull.isNull(), false);
 
     const auto falseOrNull = OrPhysicalFunction{readFalse, readNull}.execute(record, arenaRef);
-    EXPECT_EQ(falseOrNull.cast<nautilus::val<bool>>(), false);
+    EXPECT_EQ(falseOrNull.getRawValueAs<nautilus::val<bool>>(), false);
     EXPECT_EQ(falseOrNull.isNull(), true);
 }
 }

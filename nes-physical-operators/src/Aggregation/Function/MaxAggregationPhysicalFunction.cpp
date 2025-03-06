@@ -51,7 +51,7 @@ void MaxAggregationPhysicalFunction::lift(
         const auto max = VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType);
 
         /// Updating the max value with the new value, if the new value is smaller
-        const auto newMax = VarVal::select((value > max).cast<nautilus::val<bool>>(), value, max);
+        const auto newMax = VarVal::select((value > max).getRawValueAs<nautilus::val<bool>>(), value, max);
         newMax.writeToMemory(memAreaMax);
     }
     else
@@ -63,7 +63,7 @@ void MaxAggregationPhysicalFunction::lift(
 
         /// If value is null or max is smaller than value --> keep the current max
         const auto valueOrMax = VarVal::select(value.isNull(), max, value);
-        const auto newMax = VarVal::select((valueOrMax > max).cast<nautilus::val<bool>>(), valueOrMax, max);
+        const auto newMax = VarVal::select((valueOrMax > max).getRawValueAs<nautilus::val<bool>>(), valueOrMax, max);
         newMax.writeToMemory(memAreaMax);
 
         /// Updating the null value
@@ -86,7 +86,7 @@ void MaxAggregationPhysicalFunction::combine(
         const auto max2 = VarVal::readNonNullableVarValFromMemory(memAreaMax2, inputType);
 
         /// Updating the max value with the new value, if the new value is smaller
-        const auto newMax = VarVal::select((max1 > max2).cast<nautilus::val<bool>>(), max1, max2);
+        const auto newMax = VarVal::select((max1 > max2).getRawValueAs<nautilus::val<bool>>(), max1, max2);
         newMax.writeToMemory(memAreaMax1);
     }
     else
@@ -104,7 +104,7 @@ void MaxAggregationPhysicalFunction::combine(
         storeNull(aggregationState1, newIsNull);
 
         /// If max1 or max2 is null, the result is null. Otherwise, it is the maximum of max1 and max2
-        const auto max1OrMax2 = VarVal::select((max1 > max2).cast<nautilus::val<bool>>(), max1, max2);
+        const auto max1OrMax2 = VarVal::select((max1 > max2).getRawValueAs<nautilus::val<bool>>(), max1, max2);
         const auto newMax = VarVal::select(newIsNull, max1, max1OrMax2);
         newMax.writeToMemory(memAreaMax1);
     }
