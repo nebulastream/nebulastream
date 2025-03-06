@@ -22,7 +22,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
-extern void init_receiver_server_string(std::string connection);
+extern void init_receiver_server_string(const std::string& connection);
 extern void init_sender_server();
 
 int main(const int argc, const char* argv[])
