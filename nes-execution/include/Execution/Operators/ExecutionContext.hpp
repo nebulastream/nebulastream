@@ -129,7 +129,8 @@ private:
     nautilus::val<int8_t*> spacePointer;
 };
 
-/// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider, allowing the operator to allocate two different types of memory, in regard to their lifetime and ease-of-use.
+/// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
+/// allowing the operator to allocate two different types of memory, in regard to their lifetime.
 /// 1. Memory for a pipeline invocation: Arena
 /// 2. Memory for a query: bufferProvider
 struct PipelineMemoryProvider
