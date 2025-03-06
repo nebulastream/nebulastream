@@ -37,7 +37,7 @@ EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::Function> timest
 
 nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
 {
-    const auto ts = this->timestampFunction->execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
+    const auto ts = this->timestampFunction->execute(record, ctx.pipelineMemoryProvider.arena).getRawValueAs<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
     ctx.currentTs = tsInMs;

@@ -91,7 +91,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.cast<VariableSizedData>();
+        const auto textValue = value.getRawValueAs<VariableSizedData>();
         const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;

@@ -171,10 +171,9 @@ public:
     explicit operator bool() const;
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 
-    /// Casts the underlying value to the given type T1. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
-    // todo rename this to getValue()
+    /// Casts the underlying value to the given type T1. castToType() or getRawValueAs<T>() should be the only way how the underlying value can be accessed.
     template <typename T1>
-    T1 cast() const
+    T1 getRawValueAs() const
     {
         /// If the underlying value is the same type as T1, we can return it directly.
         if (std::holds_alternative<T1>(value))
@@ -199,7 +198,7 @@ public:
             value);
     }
 
-    /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
+    /// Casts the underlying value to the provided type. castToType() or getRawValueAs<T>() should be the only way how the underlying value can be accessed.
     template <typename T1>
     VarVal castToType() const
     {
