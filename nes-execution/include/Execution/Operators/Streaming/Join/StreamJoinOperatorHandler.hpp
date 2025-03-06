@@ -23,6 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution::Operators
