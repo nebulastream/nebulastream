@@ -52,7 +52,7 @@ TEST_F(SpecificSequenceTest, dumbFirstTestForNewInputFormatterTask)
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"}}});
@@ -68,7 +68,7 @@ TEST_F(SpecificSequenceTest, moreFieldsInNewInputFormatterTask)
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 24,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1234, 1234, 12345)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1234,1234,12345\n"}}});
@@ -85,7 +85,7 @@ TEST_F(SpecificSequenceTest, moreFormattedBuffersThanIndexBuffersRequired)
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 32, /// 24 bytes allows FormatOffsets to represent 2 tuples (2 * 4 bytes for meta data, then 2 * 12  bytes for tuples
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT64, INT64},
         /// expecting three buffers (first two tuples in first buffer -> full, then a single buffer in second (no tuple delimiter), then the flushed buffer
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1, 2), TestTuple(3, 4)}, {TestTuple(5, 6)}, {TestTuple(7, 89)}}}},
@@ -103,7 +103,7 @@ TEST_F(SpecificSequenceTest, moreIndexBuffersThanFormattedBuffersRequired)
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 32, /// 32 bytes allows FormatOffsets to represent 2 tuples (2 * 4 bytes for metadata, then 2 * 12  bytes for tuples
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         /// expecting two buffers (first contains
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(1, 2), TestTuple(3, 4), TestTuple(5, 6)}, {TestTuple(7, 8)}}}},
@@ -120,7 +120,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata and 12 bytes per tuple (3 * sizeof(uint32_t))
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
@@ -139,7 +139,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreads)
         .numThreads = 2,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
@@ -158,7 +158,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOf
         .numThreads = 2,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
@@ -177,7 +177,7 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
         .rawBytesPerThread
@@ -195,7 +195,7 @@ TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
         .rawBytesPerThread
@@ -215,7 +215,7 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{
             0,
@@ -240,7 +240,7 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
         .numThreads = 3,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 16,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
         /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
@@ -261,7 +261,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .numThreads = 3,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 16,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .inputFormatterConfig = {.type = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults
         = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123, 123, 123, 123)}}},

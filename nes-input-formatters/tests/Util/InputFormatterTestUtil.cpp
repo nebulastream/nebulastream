@@ -102,38 +102,39 @@ getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers)
     };
 }
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+Sources::InputFormatterConfig
+validateAndFormatInputFormatterConfig(const std::unordered_map<std::string, std::string>& inputFormatterConfig)
 {
-    auto validParserConfig = Sources::ParserConfig{};
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    auto validInputFormatterConfig = Sources::InputFormatterConfig{};
+    if (const auto inputFormatterType = inputFormatterConfig.find("type"); inputFormatterType != inputFormatterConfig.end())
     {
-        validParserConfig.parserType = parserType->second;
+        validInputFormatterConfig.type = inputFormatterType->second;
     }
     else
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    if (const auto tupleDelimiter = inputFormatterConfig.find("tupleDelimiter"); tupleDelimiter != inputFormatterConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        validParserConfig.tupleDelimiter = tupleDelimiter->second;
+        validInputFormatterConfig.tupleDelimiter = tupleDelimiter->second;
     }
     else
     {
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = '\n';
+        validInputFormatterConfig.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    if (const auto fieldDelimiter = inputFormatterConfig.find("fieldDelimiter"); fieldDelimiter != inputFormatterConfig.end())
     {
-        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+        validInputFormatterConfig.fieldDelimiter = fieldDelimiter->second;
     }
     else
     {
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
-        validParserConfig.fieldDelimiter = ",";
+        validInputFormatterConfig.fieldDelimiter = ",";
     }
-    return validParserConfig;
+    return validInputFormatterConfig;
 }
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
@@ -146,23 +147,23 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
 
     const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema), "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
+        std::move(schema), "TestSource", "File", Sources::InputFormatterConfig{}, std::move(validatedSourceConfiguration));
 
     return Sources::SourceProvider::lower(
         NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), std::nullopt, numberOfLocalBuffersInSource);
 }
 std::shared_ptr<InputFormatters::AsyncInputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
 {
-    const std::unordered_map<std::string, std::string> parserConfiguration{
+    const std::unordered_map<std::string, std::string> inputFormatterConfiguration{
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
-    auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+    auto validatedInputFormatterConfiguration = validateAndFormatInputFormatterConfig(inputFormatterConfiguration);
 
     return InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
         OriginId(0),
-        validatedParserConfiguration.parserType,
+        validatedInputFormatterConfiguration.type,
         std::move(schema),
-        validatedParserConfiguration.tupleDelimiter,
-        validatedParserConfiguration.fieldDelimiter);
+        validatedInputFormatterConfiguration.tupleDelimiter,
+        validatedInputFormatterConfiguration.fieldDelimiter);
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

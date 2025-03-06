@@ -29,28 +29,28 @@ namespace NES::InputFormatters::InputFormatterProvider
 
 std::unique_ptr<AsyncInputFormatterTask> provideAsyncInputFormatterTask(
     const OriginId originId,
-    const std::string& parserType,
+    const std::string& inputFormatterType,
     std::shared_ptr<Schema> schema,
     std::string tupleDelimiter,
     std::string fieldDelimiter)
 {
-    if (auto inputFormatter = AsyncInputFormatterRegistry::instance().create(parserType, AsyncInputFormatterRegistryArguments{}))
+    if (auto inputFormatter = AsyncInputFormatterRegistry::instance().create(inputFormatterType, AsyncInputFormatterRegistryArguments{}))
     {
         return std::make_unique<AsyncInputFormatterTask>(
             originId, std::move(tupleDelimiter), std::move(fieldDelimiter), std::move(schema), std::move(inputFormatter.value()));
     }
-    throw UnknownParserType("unknown type of parser: {}", parserType);
+    throw UnknownInputFormatterType("unknown type of parser: {}", inputFormatterType);
 }
 std::unique_ptr<SyncInputFormatterTask> provideSyncInputFormatterTask(
     OriginId originId,
-    const std::string& parserType,
+    const std::string& inputFormatterType,
     std::shared_ptr<Schema> schema,
     std::string tupleDelimiter,
     std::string fieldDelimiter,
     std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier)
 {
     PRECONDITION(syncInputFormatterTaskNotifier.has_value(), "A SyncInputFormatterTask must have an Notifier.");
-    if (auto inputFormatter = SyncInputFormatterRegistry::instance().create(parserType, SyncInputFormatterRegistryArguments{}))
+    if (auto inputFormatter = SyncInputFormatterRegistry::instance().create(inputFormatterType, SyncInputFormatterRegistryArguments{}))
     {
         return std::make_unique<SyncInputFormatterTask>(
             originId,
@@ -60,6 +60,6 @@ std::unique_ptr<SyncInputFormatterTask> provideSyncInputFormatterTask(
             std::move(inputFormatter.value()),
             std::move(syncInputFormatterTaskNotifier.value()));
     }
-    throw UnknownParserType("unknown type of parser: {}", parserType);
+    throw UnknownInputFormatterType("unknown type of parser: {}", inputFormatterType);
 }
 }

@@ -25,14 +25,14 @@ namespace NES::InputFormatters::InputFormatterProvider
 {
 std::unique_ptr<AsyncInputFormatterTask> provideAsyncInputFormatterTask(
     OriginId originId,
-    const std::string& parserType,
+    const std::string& inputFormatterType,
     std::shared_ptr<Schema> schema,
     std::string tupleDelimiter,
     std::string fieldDelimiter);
 
 std::unique_ptr<SyncInputFormatterTask> provideSyncInputFormatterTask(
     OriginId originId,
-    const std::string& parserType,
+    const std::string& inputFormatterType,
     std::shared_ptr<Schema> schema,
     std::string tupleDelimiter,
     std::string fieldDelimiter,

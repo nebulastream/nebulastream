@@ -51,7 +51,7 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
         std::move(schema),
         sourceDescriptor.logicalSourceName,
         sourceDescriptor.sourceType,
-        sourceDescriptor.parserConfig,
+        sourceDescriptor.inputFormatterConfig,
         std::move(copyOfConfig));
 }
 }

@@ -106,20 +106,20 @@ Runtime::Execution::Source createInputFormatterTaskAndSource(
         /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
         inputFormatterTask = InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
             sourceOperator.getOriginId(),
-            sourceOperator.getSourceDescriptorRef().parserConfig.parserType,
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.type,
             sourceOperator.getSourceDescriptorRef().schema,
-            sourceOperator.getSourceDescriptorRef().parserConfig.tupleDelimiter,
-            sourceOperator.getSourceDescriptorRef().parserConfig.fieldDelimiter);
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.tupleDelimiter,
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.fieldDelimiter);
     }
     else
     {
         /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
         inputFormatterTask = InputFormatters::InputFormatterProvider::provideSyncInputFormatterTask(
             sourceOperator.getOriginId(),
-            sourceOperator.getSourceDescriptorRef().parserConfig.parserType,
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.type,
             sourceOperator.getSourceDescriptorRef().schema,
-            sourceOperator.getSourceDescriptorRef().parserConfig.tupleDelimiter,
-            sourceOperator.getSourceDescriptorRef().parserConfig.fieldDelimiter,
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.tupleDelimiter,
+            sourceOperator.getSourceDescriptorRef().inputFormatterConfig.fieldDelimiter,
             syncInputFormatterTaskNotifier);
     }
 
@@ -159,7 +159,7 @@ Runtime::Execution::Source processSource(
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators().front();
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
-    if (sourceOperator->getSourceDescriptorRef().parserConfig.isAsync)
+    if (sourceOperator->getSourceDescriptorRef().inputFormatterConfig.isAsync)
     {
         return createInputFormatterTaskAndSource<InputFormatters::AsyncInputFormatterTask>(
             pipeline, pipelineQueryPlan, loweringContext, *sourceOperator);

@@ -82,7 +82,7 @@ struct TestConfig
     size_t numThreads{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    Sources::ParserConfig parserConfig;
+    Sources::InputFormatterConfig inputFormatterConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
@@ -96,7 +96,8 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
 getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers);
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+Sources::InputFormatterConfig
+validateAndFormatInputFormatterConfig(const std::unordered_map<std::string, std::string>& inputFormatterConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
@@ -229,10 +230,10 @@ std::vector<Runtime::Execution::TestablePipelineTask> createTasks(const TestHand
     const std::shared_ptr<InputFormatters::AsyncInputFormatterTask> inputFormatterTask
         = InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
             OriginId(0),
-            testHandle.testConfig.parserConfig.parserType,
+            testHandle.testConfig.inputFormatterConfig.type,
             testHandle.schema,
-            testHandle.testConfig.parserConfig.tupleDelimiter,
-            testHandle.testConfig.parserConfig.fieldDelimiter);
+            testHandle.testConfig.inputFormatterConfig.tupleDelimiter,
+            testHandle.testConfig.inputFormatterConfig.fieldDelimiter);
     std::vector<Runtime::Execution::TestablePipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {

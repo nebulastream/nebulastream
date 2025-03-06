@@ -24,30 +24,30 @@ SourceDescriptor::SourceDescriptor(
     std::shared_ptr<Schema> schema,
     std::string logicalSourceName,
     std::string sourceType,
-    ParserConfig parserConfig,
+    InputFormatterConfig inputFormatterConfig,
     Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config))
     , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
     , sourceType(std::move(sourceType))
-    , parserConfig(std::move(parserConfig))
+    , inputFormatterConfig(std::move(inputFormatterConfig))
 {
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
-    const auto parserConfigString = fmt::format(
+    const auto inputFormatterConfigString = fmt::format(
         "type: {}, tupleDelimiter: {}, stringDelimiter: {}",
-        sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
+        sourceDescriptor.inputFormatterConfig.type,
+        sourceDescriptor.inputFormatterConfig.tupleDelimiter,
+        sourceDescriptor.inputFormatterConfig.fieldDelimiter);
     return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, inputFormatterConfig: {}, config: {})",
                sourceDescriptor.logicalSourceName,
                sourceDescriptor.sourceType,
                schemaString,
-               parserConfigString,
+               inputFormatterConfigString,
                sourceDescriptor.toStringConfig());
 }
 
