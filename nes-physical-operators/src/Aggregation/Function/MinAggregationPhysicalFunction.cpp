@@ -51,7 +51,7 @@ void MinAggregationPhysicalFunction::lift(
         const auto min = VarVal::readNonNullableVarValFromMemory(memAreaMin, inputType);
 
         /// Updating the min value with the new value, if the new value is smaller
-        const auto newMin = VarVal::select((value < min).cast<nautilus::val<bool>>(), value, min);
+        const auto newMin = VarVal::select((value < min).getRawValueAs<nautilus::val<bool>>(), value, min);
         newMin.writeToMemory(memAreaMin);
     }
     else
@@ -63,7 +63,7 @@ void MinAggregationPhysicalFunction::lift(
 
         /// If value is null or min is smaller than value --> keep the current min
         const auto valueOrMin = VarVal::select(value.isNull(), min, value);
-        const auto newMin = VarVal::select((valueOrMin < min).cast<nautilus::val<bool>>(), valueOrMin, min);
+        const auto newMin = VarVal::select((valueOrMin < min).getRawValueAs<nautilus::val<bool>>(), valueOrMin, min);
         newMin.writeToMemory(memAreaMin);
 
         /// Updating the null value
@@ -86,7 +86,7 @@ void MinAggregationPhysicalFunction::combine(
         const auto min2 = VarVal::readNonNullableVarValFromMemory(memAreaMin2, inputType);
 
         /// Updating the min value with the new value, if the new value is smaller
-        const auto newMin = VarVal::select((min1 < min2).cast<nautilus::val<bool>>(), min1, min2);
+        const auto newMin = VarVal::select((min1 < min2).getRawValueAs<nautilus::val<bool>>(), min1, min2);
         newMin.writeToMemory(memAreaMin1);
     }
     else
@@ -104,7 +104,7 @@ void MinAggregationPhysicalFunction::combine(
         storeNull(aggregationState1, newIsNull);
 
         /// If min1 or min2 is null, the result is null. Otherwise, it is the minimum of min1 and min2
-        const auto min1OrMin2 = VarVal::select((min1 < min2).cast<nautilus::val<bool>>(), min1, min2);
+        const auto min1OrMin2 = VarVal::select((min1 < min2).getRawValueAs<nautilus::val<bool>>(), min1, min2);
         const auto newMin = VarVal::select(newIsNull, min1, min1OrMin2);
         newMin.writeToMemory(memAreaMin1);
     }

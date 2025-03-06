@@ -39,7 +39,7 @@ VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     /// If the input type is an integer, we only need to cast to the output type.
     if (inputType.isFloat())
     {
-        const auto flooredValue = nautilus::floor(value.cast<nautilus::val<double>>());
+        const auto flooredValue = nautilus::floor(value.getRawValueAs<nautilus::val<double>>());
         return VarVal{flooredValue}.castToType(outputType.type);
     }
     return value.castToType(outputType.type);

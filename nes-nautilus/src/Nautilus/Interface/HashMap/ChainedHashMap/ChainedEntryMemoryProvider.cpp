@@ -165,7 +165,7 @@ void writeVarVal(
 
     if (type.isType(DataType::Type::VARSIZED))
     {
-        const auto varSizedValue = value.cast<VariableSizedData>();
+        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
     }
     else

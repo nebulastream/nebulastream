@@ -192,7 +192,7 @@ VarVal TupleBufferRef::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    const auto varSizedValue = value.cast<VariableSizedData>();
+    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
 
     invoke(

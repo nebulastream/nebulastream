@@ -340,12 +340,14 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
         if (type.isType(DataType::Type::VARSIZED))
         {
             result = nautilus::select(
-                keyValue.cast<VariableSizedData>() != entryValue.cast<VariableSizedData>(), nautilus::val<bool>{false}, result);
+                keyValue.getRawValueAs<VariableSizedData>() != entryValue.getRawValueAs<VariableSizedData>(),
+                nautilus::val<bool>{false},
+                result);
         }
         else
         {
             result = nautilus::select(
-                (keyValue.castToType(type.type) != entryValue.castToType(type.type)).cast<nautilus::val<bool>>(),
+                (keyValue.castToType(type.type) != entryValue.castToType(type.type)).getRawValueAs<nautilus::val<bool>>(),
                 nautilus::val<bool>{false},
                 result);
         }

@@ -67,8 +67,9 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-        EXPECT_EQ(varSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(nautilus::memcmp(varSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_TRUE(
+            nautilus::memcmp(varSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
     }
 
     {
@@ -77,8 +78,9 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-        EXPECT_EQ(varSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(nautilus::memcmp(varSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_TRUE(
+            nautilus::memcmp(varSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
     }
 }
 
@@ -91,13 +93,15 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
 
     /// Test, if we can copy the variable sized data object by copy operator=
     const VarVal copiedVarSizedData = varSizedData; /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
-    EXPECT_EQ(copiedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-    EXPECT_TRUE(nautilus::memcmp(copiedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+    EXPECT_EQ(copiedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+    EXPECT_TRUE(
+        nautilus::memcmp(copiedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
 
     /// Test, if we can copy the variable sized data object by copy constructor
     const VarVal copiedVarSizedData2(varSizedData); /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
-    EXPECT_EQ(copiedVarSizedData2.cast<VariableSizedData>().getSize(), sizeInBytes);
-    EXPECT_TRUE(nautilus::memcmp(copiedVarSizedData2.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+    EXPECT_EQ(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+    EXPECT_TRUE(
+        nautilus::memcmp(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
 }
 
 TEST_F(VariableSizedDataTest, MoveConstruction)
@@ -110,8 +114,10 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(nautilus::memcmp(movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_TRUE(
+            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
+            == 0);
     }
 
     {
@@ -122,8 +128,10 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(nautilus::memcmp(movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_TRUE(
+            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
+            == 0);
     }
 }
 
@@ -137,8 +145,10 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(nautilus::memcmp(movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_TRUE(
+            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
+            == 0);
     }
 
     {
@@ -149,9 +159,10 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
         EXPECT_TRUE(
-            nautilus::memcmp(movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), variableSizedData.size())
+            nautilus::memcmp(
+                movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), variableSizedData.size())
             == 0);
     }
 }
@@ -167,8 +178,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
 
         /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional copy for testing
         const VarVal copiedVarSizedData = varSizedData;
-        EXPECT_TRUE(copiedVarSizedData.cast<VariableSizedData>() == varSizedData.cast<VariableSizedData>());
-        EXPECT_FALSE(copiedVarSizedData.cast<VariableSizedData>() != varSizedData.cast<VariableSizedData>());
+        EXPECT_TRUE(copiedVarSizedData.getRawValueAs<VariableSizedData>() == varSizedData.getRawValueAs<VariableSizedData>());
+        EXPECT_FALSE(copiedVarSizedData.getRawValueAs<VariableSizedData>() != varSizedData.getRawValueAs<VariableSizedData>());
     }
 
     {
@@ -180,8 +191,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const nautilus::val<int8_t*> ptrToVariableSizedDouble(variableSizedDataDouble.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
         const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble, variableSizedDataDouble.size())};
-        EXPECT_FALSE(varSizedData.cast<VariableSizedData>() == varSizedDataDouble.cast<VariableSizedData>());
-        EXPECT_TRUE(varSizedData.cast<VariableSizedData>() != varSizedDataDouble.cast<VariableSizedData>());
+        EXPECT_FALSE(varSizedData.getRawValueAs<VariableSizedData>() == varSizedDataDouble.getRawValueAs<VariableSizedData>());
+        EXPECT_TRUE(varSizedData.getRawValueAs<VariableSizedData>() != varSizedDataDouble.getRawValueAs<VariableSizedData>());
     }
 
     {
@@ -201,7 +212,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized, otherVariableSizedData.size())};
 
         const bool isEqual = variableSizedData == otherVariableSizedData;
-        EXPECT_EQ(isEqual, varSizedData.cast<VariableSizedData>() == otherVarSizedData.cast<VariableSizedData>());
+        EXPECT_EQ(isEqual, varSizedData.getRawValueAs<VariableSizedData>() == otherVarSizedData.getRawValueAs<VariableSizedData>());
     }
 }
 

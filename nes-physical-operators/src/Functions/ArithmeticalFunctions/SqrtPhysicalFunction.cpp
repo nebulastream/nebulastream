@@ -35,7 +35,7 @@ SqrtPhysicalFunction::SqrtPhysicalFunction(PhysicalFunction childFunction, DataT
 VarVal SqrtPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    return VarVal{nautilus::sqrt(value.cast<nautilus::val<double>>())}.castToType(outputType.type);
+    return VarVal{nautilus::sqrt(value.getRawValueAs<nautilus::val<double>>())}.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
