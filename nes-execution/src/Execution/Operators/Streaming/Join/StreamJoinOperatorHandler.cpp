@@ -25,6 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -55,7 +56,7 @@ void StreamJoinOperatorHandler::triggerSlices(
             for (const auto& sliceRight : allSlices)
             {
                 const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
-                SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+                const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
                 emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
                 ++chunkNumber;
             }
