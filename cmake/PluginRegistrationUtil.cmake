@@ -8,7 +8,7 @@ function(create_plugin_registry_library plugin_registry_library plugin_registry_
     target_include_directories(${plugin_registry_library}
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/registry/templates> # link against generated registrar headers
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/registry/generated> # link against generated registrar headers
             $<INSTALL_INTERFACE:include/nebulastream/>
     )
 endfunction()
@@ -47,8 +47,8 @@ endfunction()
 
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
 function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
-    set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
-    set(registrar_header_generated_path ${current_binary_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
+    set(registrar_header_template_path ${current_dir}/registry/generated/${plugin_registry}GeneratedRegistrar.inc.in)
+    set(registrar_header_generated_path ${current_binary_dir}/registry/generated/${plugin_registry}GeneratedRegistrar.inc)
 
     # get the names of plugins and all plugin libraries for the plugin registry
     get_property(plugin_registry_plugin_names_final GLOBAL PROPERTY ${plugin_registry}_plugin_names)

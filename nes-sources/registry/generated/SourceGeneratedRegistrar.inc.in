@@ -19,12 +19,17 @@
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
 
-#include <memory>
 #include <string>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
 
+/// @Note: DO NOT MODIFY THIS FILE unless you are very sure that you need to.
+/// We usually generate this file using the script in 'nes-plugins/Util/boostrapRegistry.py'
+/// During our CMake build process, we use CMake codegen to generate an '.inc' file from this 'inc.in' file.
+/// In that process, we generate and insert the function declarations for the register functions of the plugins
+/// of this registry into the REGISTER_FUNCTION_DECLARATIONS placeholder.
+/// Similarly, we insert the function calls of the register functions of the plugins of this registry into the
+/// REGISTER_ALL_FUNCTION_CALLS placeholder. Inserting the function calls into the 'registerAll()' function means that
+/// when we request an instance of this registry for the first time, we call 'registerAll()',
+/// which then calls all register functions of all plugins of this registry, populating the registry.
 namespace NES::Sources::SourceGeneratedRegistrar
 {
 
@@ -36,7 +41,7 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+Registrar<NES::Sources::SourceRegistry, std::string, NES::Sources::SourceRegistryReturnType, NES::Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
     using namespace NES::Sources::SourceGeneratedRegistrar;
