@@ -49,3 +49,30 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}.xml
           path: /junit.xml
+
+  build-without-tests:
+    name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64, arm64 ]
+        stdlib: [ 'libcxx' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build -DNES_ENABLES_TESTS=0
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
