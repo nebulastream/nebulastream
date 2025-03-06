@@ -17,25 +17,25 @@ add_subdirectory(src)
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-grpc/)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/grpc_generated_src/)
 file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
 foreach (PROTO_FILE ${PROTO_FILES})
     get_filename_component(FILENAME ${PROTO_FILE} "NAME")
-    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/grpc_generated_src/${FILENAME})
     list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/grpc_generated_src/${FILENAME})
     list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/grpc_generated_src/${FILENAME})
     list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/grpc_generated_src/${FILENAME})
     list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
 endforeach ()
 
 add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "generate_mock_code=true:${CMAKE_BINARY_DIR}/nes-grpc/"
-        --cpp_out "${CMAKE_BINARY_DIR}/nes-grpc/"
+        ARGS --grpc_out "generate_mock_code=true:${CMAKE_BINARY_DIR}/grpc_generated_src/"
+        --cpp_out "${CMAKE_BINARY_DIR}/grpc_generated_src/"
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${PROTO_FILE_PATH}"
@@ -50,7 +50,7 @@ add_library(nes-grpc ${OUTPUT_SOURCES})
 target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
 
 target_include_directories(nes-grpc PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/grpc_generated_src>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 get_source(nes-common NES_COMMON_SOURCE_FILES)
