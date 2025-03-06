@@ -115,37 +115,37 @@ VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::BOOLEAN: {
-                return {cast<nautilus::val<bool>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<bool>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::INT_8: {
-                return {cast<nautilus::val<int8_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<int8_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::INT_16: {
-                return {cast<nautilus::val<int16_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<int16_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::INT_32: {
-                return {cast<nautilus::val<int32_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<int32_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                return {cast<nautilus::val<int64_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<int64_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::UINT_8: {
-                return {cast<nautilus::val<uint8_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<uint8_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::UINT_16: {
-                return {cast<nautilus::val<uint16_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<uint16_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::UINT_32: {
-                return {cast<nautilus::val<uint32_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<uint32_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::UINT_64: {
-                return {cast<nautilus::val<uint64_t>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<uint64_t>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::FLOAT: {
-                return {cast<nautilus::val<float>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<float>>(), null, nullable};
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
-                return {cast<nautilus::val<double>>(), null, nullable};
+                return {getRawValueAs<nautilus::val<double>>(), null, nullable};
             };
             default: {
                 throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
@@ -154,7 +154,7 @@ VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
     }
     else if (const auto variableSizedData = std::dynamic_pointer_cast<VariableSizedDataType>(type))
     {
-        return {cast<VariableSizedData>(), null, nullable};
+        return {getRawValueAs<VariableSizedData>(), null, nullable};
     }
     else
     {
