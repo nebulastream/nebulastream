@@ -36,8 +36,8 @@ ConcatPhysicalFunction::ConcatPhysicalFunction(PhysicalFunction leftPhysicalFunc
 
 VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
+    const auto leftValue = leftPhysicalFunction.execute(record, arena).getRawValueAs<VariableSizedData>();
+    const auto rightValue = rightPhysicalFunction.execute(record, arena).getRawValueAs<VariableSizedData>();
 
     const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
     auto newVarSizeData = arena.allocateVariableSizedData(newSize);

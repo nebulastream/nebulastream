@@ -63,7 +63,7 @@ TEST_F(VarValTest, SimpleConstruction)
     auto testVarValConstruction = []<typename T>(const T value)
     {
         const VarVal varVal = nautilus::val<T>(value);
-        EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
     testVarValConstruction.operator()<int8_t>(-someRandomNumber);
@@ -87,8 +87,8 @@ TEST_F(VarValTest, SimpleMove)
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal varValCopy = varVal;
         const VarVal varValMove = std::move(varVal);
-        EXPECT_EQ(varValMove.cast<nautilus::val<T>>(), value);
-        EXPECT_EQ(varValCopy.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varValMove.getRawValueAs<nautilus::val<T>>(), value);
+        EXPECT_EQ(varValCopy.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
 
@@ -116,7 +116,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<T>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -145,7 +145,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<T>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -168,7 +168,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.getRawValueAs<ResultType>(), static_cast<T>(value1 op value2)); \
                 return 0; \
             } \
             else \
@@ -224,7 +224,7 @@ TEST_F(VarValTest, unaryOperatorOverloads)
     {
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal result = !varVal;
-        EXPECT_EQ(result.cast<nautilus::val<bool>>(), !value);
+        EXPECT_EQ(result.getRawValueAs<nautilus::val<bool>>(), !value);
         return 0;
     };
 
@@ -277,22 +277,22 @@ TEST_F(VarValTest, readFromMemoryTest)
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
         const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
-        EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
+        EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
 
-    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, DataType{ DataType::Type::INT8,  false});
-    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, DataType{ DataType::Type::INT16,  false});
-    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, DataType{ DataType::Type::INT32,  false});
-    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, DataType{ DataType::Type::INT64,  false});
-    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, DataType{ DataType::Type::UINT8,  false});
-    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, DataType{ DataType::Type::UINT16,  false});
-    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, DataType{ DataType::Type::UINT32,  false});
-    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, DataType{ DataType::Type::UINT64,  false});
-    testVarValReadFromMemory.operator()<float>(someRandomNumber, DataType{ DataType::Type::FLOAT32,  false});
-    testVarValReadFromMemory.operator()<double>(someRandomNumber, DataType{ DataType::Type::FLOAT64,  false});
-    testVarValReadFromMemory.operator()<bool>(true, DataType{ DataType::Type::BOOLEAN,  false});
-    testVarValReadFromMemory.operator()<bool>(false, DataType{ DataType::Type::BOOLEAN,  false});
+    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, DataType{.type = DataType::Type::INT8, .isNullable = false});
+    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, DataType{.type = DataType::Type::INT16, .isNullable = false});
+    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, DataType{.type = DataType::Type::INT32, .isNullable = false});
+    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, DataType{.type = DataType::Type::INT64, .isNullable = false});
+    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, DataType{.type = DataType::Type::UINT8, .isNullable = false});
+    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, DataType{.type = DataType::Type::UINT16, .isNullable = false});
+    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, DataType{.type = DataType::Type::UINT32, .isNullable = false});
+    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, DataType{.type = DataType::Type::UINT64, .isNullable = false});
+    testVarValReadFromMemory.operator()<float>(someRandomNumber, DataType{.type = DataType::Type::FLOAT32, .isNullable = false});
+    testVarValReadFromMemory.operator()<double>(someRandomNumber, DataType{.type = DataType::Type::FLOAT64, .isNullable = false});
+    testVarValReadFromMemory.operator()<bool>(true, DataType{.type = DataType::Type::BOOLEAN, .isNullable = false});
+    testVarValReadFromMemory.operator()<bool>(false, DataType{.type = DataType::Type::BOOLEAN, .isNullable = false});
 }
 
 TEST_F(VarValTest, operatorBoolTest)
