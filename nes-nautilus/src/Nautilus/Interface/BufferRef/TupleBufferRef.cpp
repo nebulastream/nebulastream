@@ -213,7 +213,7 @@ VarVal TupleBufferRef::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    const auto varSizedValue = value.cast<VariableSizedData>();
+    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
     const auto variableSizedAccess = invoke(
         +[](TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* varSizedPtr, const uint32_t varSizedValueLength)
         {

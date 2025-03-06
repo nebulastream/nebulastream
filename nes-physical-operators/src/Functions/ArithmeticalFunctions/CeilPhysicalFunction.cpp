@@ -39,7 +39,7 @@ VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     /// If the input type is an integer, we do not need to do anything.
     if (inputType.isFloat())
     {
-        const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
+        const auto ceiledValue = nautilus::ceil(value.getRawValueAs<nautilus::val<double>>());
         return VarVal{ceiledValue}.castToType(outputType.type);
     }
     return value.castToType(outputType.type);
