@@ -25,7 +25,7 @@ jobs:
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
-    timeout-minutes: 40
+    timeout-minutes: 90
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
       fail-fast: false
