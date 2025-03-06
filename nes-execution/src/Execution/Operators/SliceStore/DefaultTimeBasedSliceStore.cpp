@@ -27,6 +27,7 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 

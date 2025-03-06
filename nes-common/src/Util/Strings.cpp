@@ -120,10 +120,6 @@ std::string replaceAll(std::string_view origin, const std::string_view search, c
     return stringBuilder.str();
 }
 
-void replaceAllInplace(std::string& origin, std::string_view search, std::string_view replace)
-{
-}
-
 std::string replaceFirst(std::string_view origin, const std::string_view search, const std::string_view replace)
 {
     if (search.empty())

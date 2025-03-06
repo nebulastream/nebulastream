@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -110,7 +111,8 @@ struct TestFile
     explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
 
     /// Returns the correct logging path, depending on if the HOST_NEBULASTREAM_ROOT environment variable is set
-    [[nodiscard]] std::string getLogFilePath() const {
+    [[nodiscard]] std::string getLogFilePath() const
+    {
         if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
         {
             /// Set the correct logging path when using docker
@@ -120,7 +122,8 @@ struct TestFile
 
             /// Find the position of the common folder in the file path
             auto filePathIter = file.begin();
-            if (const auto it = std::ranges::find(file, commonFolder); it != file.end()) {
+            if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
+            {
                 filePathIter = std::next(it);
             }
 
@@ -133,11 +136,9 @@ struct TestFile
 
             return resultPath.string();
         }
-        else
-        {
-            /// Set the correct logging path without docker
-            return std::filesystem::path(file);
-        }
+
+        /// Set the correct logging path without docker
+        return std::filesystem::path(file);
     }
 
     [[nodiscard]] TestName name() const { return file.stem().string(); }

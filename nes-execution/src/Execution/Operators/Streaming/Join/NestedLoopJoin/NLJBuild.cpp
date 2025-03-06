@@ -51,14 +51,6 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
     return nljSlice->getSliceEnd();
 }
 
-NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp timestamp)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-    const auto createFunction = opHandler->getCreateNewSlicesFunction();
-    return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
-}
-
 NLJBuild::NLJBuild(
     const uint64_t operatorHandlerIndex,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
@@ -70,11 +62,21 @@ NLJBuild::NLJBuild(
 
 void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    /// Get the current join state that stores the slice / pagedVector that we have to insert the tuple into
+    /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto sliceReference
-        = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const auto sliceReference = invoke(
+        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp, const Memory::AbstractBufferProvider* bufferProvider)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
+            const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
+            const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
+            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
+        },
+        operatorHandlerRef,
+        timestamp,
+        executionCtx.pipelineMemoryProvider.bufferProvider);
     const auto nljPagedVectorMemRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,
