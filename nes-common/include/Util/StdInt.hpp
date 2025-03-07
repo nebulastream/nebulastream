@@ -15,8 +15,6 @@
 #pragma once
 #include <cstdint>
 
-#include <cstdint>
-
 /**
  * @brief Implements unsigned user-defined literals that return the corresponding uintX_t type
  */

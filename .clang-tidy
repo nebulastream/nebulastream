@@ -135,7 +135,6 @@ WarningsAsErrors: '
   -cert-err33-c,
   -cppcoreguidelines-pro-type-vararg,
   -misc-unconventional-assign-operator,
-  -readability-duplicate-include,
   -fuchsia-trailing-return,
   -bugprone-implicit-widening-of-multiplication-result,
   -bugprone-branch-clone,
