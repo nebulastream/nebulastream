@@ -74,6 +74,6 @@ protected:
 
 private:
     std::shared_ptr<NodeFunction> predicate;
-    float selectivity = 1.0f;
+    float selectivity = 1.0F;
 };
 }
