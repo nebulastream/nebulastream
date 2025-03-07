@@ -40,7 +40,7 @@ public:
 TEST_F(SystestParserTest, testEmptyFile)
 {
     SystestParser parser{};
-    const std::string str = "";
+    const std::string str;
 
     ASSERT_EQ(true, parser.loadString(str));
     parser.parse();
