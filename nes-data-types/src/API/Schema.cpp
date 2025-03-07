@@ -125,7 +125,7 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
     /// If the fieldName is fully qualified, we can directly search for the field
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
-        if(const auto it = std::ranges::find(fields, fieldName, &AttributeField::getName); it != fields.end())
+        if (const auto it = std::ranges::find(fields, fieldName, &AttributeField::getName); it != fields.end())
         {
             return *it;
         }
