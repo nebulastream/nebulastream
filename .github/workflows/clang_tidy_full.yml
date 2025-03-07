@@ -48,16 +48,7 @@ jobs:
       - name: summarize
         if: ${{ !cancelled() }}
         run: |
-          cat clang-tidy.log \
-            | grep "^\/.*\[[^ ]*\]$"   \
-            | sed "s|\([^ ]*\):.*\[\([^ ]*\)\]$|\1 \2|" \
-            | awk '{ split($2, arr, ","); for (a in arr) { print $1, arr[a] } }' > clang-tidy-violations.txt
-
-          echo "# clang-tidy warning occurences" >> $GITHUB_STEP_SUMMARY
-          echo       >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat clang-tidy-violations.txt | cut -d " " -f 2 | sort | uniq -c | sort -n >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 scripts/clang-tidy-summary.py .clang-tidy clang-tidy.log --summary-json clang-tidy-summary.json >> $GITHUB_STEP_SUMMARY
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
