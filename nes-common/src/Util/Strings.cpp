@@ -28,6 +28,7 @@
 
 namespace NES::Util
 {
+
 template <>
 std::optional<float> from_chars<float>(const std::string_view input)
 {
@@ -57,6 +58,52 @@ std::optional<bool> from_chars<bool>(const std::string_view input)
     return {};
 }
 
+template <>
+std::optional<char> from_chars<char>(const std::string_view input)
+{
+    return (input.size() == 1) ? std::optional(input.front()) : std::nullopt;
+}
+
+template <>
+bool from_chars_with_exception(std::string_view input)
+{
+    if (const auto boolValue = from_chars<bool>(input); boolValue.has_value())
+    {
+        return boolValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported boolean value.", input);
+}
+
+template <>
+float from_chars_with_exception<float>(std::string_view input)
+{
+    if (const auto floatValue = from_chars<float>(input); floatValue.has_value())
+    {
+        return floatValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported float value.", input);
+}
+
+template <>
+double from_chars_with_exception<double>(std::string_view input)
+{
+    if (const auto doubleValue = from_chars<double>(input); doubleValue.has_value())
+    {
+        return doubleValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported double value.", input);
+}
+
+template <>
+char from_chars_with_exception<char>(std::string_view input)
+{
+    if (const auto charValue = from_chars<char>(input); charValue.has_value())
+    {
+        return charValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported char value.", input);
+}
+
 std::string formatFloat(std::floating_point auto value)
 {
     std::string formatted = fmt::format("{:.6f}", value);
@@ -74,9 +121,6 @@ std::string formatFloat(std::floating_point auto value)
 
     return formatted.substr(0, lastNonZero + 1);
 }
-/// explicit instantiations
-template std::string formatFloat(float);
-template std::string formatFloat(double);
 
 template <>
 std::optional<double> from_chars<double>(const std::string_view input)
@@ -91,6 +135,10 @@ std::optional<double> from_chars<double>(const std::string_view input)
         return {};
     }
 }
+
+/// explicit instantiations
+template std::string formatFloat(float);
+template std::string formatFloat(double);
 
 template <>
 std::optional<std::string> from_chars<std::string>(const std::string_view input)
