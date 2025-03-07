@@ -27,12 +27,6 @@
 #include <Time/Timestamp.hpp>
 #include "BufferRecycler.hpp"
 
-/// Check: not zero and `v` has got no 1 in common with `v - 1`.
-/// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
-/// TODO: switch to std::ispow2 when we use C++2a.
-template <std::size_t v>
-static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
-
 namespace NES::Memory
 {
 namespace detail
@@ -138,7 +132,7 @@ public:
     T* getBuffer() noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(ispow2<alignof(T)>);
+        static_assert(std::has_single_bit(alignof(T)));
         return reinterpret_cast<T*>(ptr);
     }
 
@@ -147,7 +141,7 @@ public:
     const T* getBuffer() const noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(ispow2<alignof(T)>);
+        static_assert(std::has_single_bit(alignof(T)));
         return reinterpret_cast<const T*>(ptr);
     }
 
