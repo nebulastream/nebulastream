@@ -117,7 +117,6 @@ WarningsAsErrors: '
   -bugprone-multi-level-implicit-pointer-conversion,
   -clang-analyzer-core.CallAndMessage,
   -performance-unnecessary-copy-initialization,
-  -readability-redundant-string-init,
   -bugprone-exception-escape,
   -bugprone-unused-return-value,
   -google-global-names-in-headers,

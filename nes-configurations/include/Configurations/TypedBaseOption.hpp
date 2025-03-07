@@ -161,7 +161,7 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     }
     if (!failureMessages.empty())
     {
-        std::string exceptionMessage = "";
+        std::string exceptionMessage;
         for (auto pair : failureMessages)
         {
             exceptionMessage += pair.second + "\n";
