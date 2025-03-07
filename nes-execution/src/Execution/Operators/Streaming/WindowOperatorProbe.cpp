@@ -46,14 +46,6 @@ void garbageCollectSlicesProxy(
     opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
 }
 
-void deleteAllSlicesAndWindowsProxy(OperatorHandler* ptrOpHandler)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->getSliceAndWindowStore().deleteState();
-}
-
 void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");

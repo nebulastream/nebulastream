@@ -13,8 +13,6 @@
 */
 
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <antlr4-runtime/Exceptions.h>
 
 namespace NES::Runtime::Execution
 {
@@ -48,34 +46,34 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
 }
 
 std::shared_ptr<FileWriter>
-MemoryController::getLeftFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+MemoryController::getLeftFileWriter(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "memory_controller_left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
 std::shared_ptr<FileWriter>
-MemoryController::getRightFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+MemoryController::getRightFileWriter(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "memory_controller_right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
 std::shared_ptr<FileReader>
-MemoryController::getLeftFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+MemoryController::getLeftFileReader(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "memory_controller_left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileReader(ss.str());
 }
 
 std::shared_ptr<FileReader>
-MemoryController::getRightFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+MemoryController::getRightFileReader(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "memory_controller_right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileReader(ss.str());
 }
 
@@ -98,8 +96,8 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(const std::string& f
         fileWriters.erase(writerIt);
         return std::make_shared<FileReader>(filePath);
     }
-    std::stringstream ss;
-    ss << "File " << filePath << " was not opened for writing or has already been read. Cannot open for reading.";
+    //std::stringstream ss;
+    //ss << "File " << filePath << " was not opened for writing or has already been read. Cannot open for reading.";
     //throw antlr4::IllegalArgumentException(ss.str());
     return nullptr;
 }
