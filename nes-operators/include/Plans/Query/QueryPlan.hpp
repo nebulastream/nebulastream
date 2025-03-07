@@ -148,7 +148,7 @@ private:
     static std::set<std::shared_ptr<Operator>> findOperatorsBetweenSourceAndTargetOperators(
         const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators);
 
-    std::vector<std::shared_ptr<Operator>> rootOperators{};
+    std::vector<std::shared_ptr<Operator>> rootOperators;
     QueryId queryId = INVALID_QUERY_ID;
     std::string sourceConsumed;
     QueryState currentState;

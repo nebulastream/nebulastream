@@ -156,7 +156,6 @@ WarningsAsErrors: '
   -cert-msc50-cpp,
   -modernize-use-override,
   -modernize-use-default-member-init,
-  -readability-redundant-member-init,
   -concurrency-mt-unsafe,
   -readability-convert-member-functions-to-static,
   -misc-use-anonymous-namespace,
