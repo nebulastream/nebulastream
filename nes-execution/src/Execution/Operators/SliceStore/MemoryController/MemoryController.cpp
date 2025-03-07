@@ -14,16 +14,16 @@
 
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <antlr4-runtime/Exceptions.h>
 
 namespace NES::Runtime::Execution
 {
 
-MemoryController::MemoryController(const MemoryController& other) : fileWriters(other.fileWriters), fileReaders(other.fileReaders)
+MemoryController::MemoryController(const MemoryController& other) : fileWriters(other.fileWriters)
 {
 }
 
-MemoryController::MemoryController(MemoryController&& other) noexcept
-    : fileWriters(std::move(other.fileWriters)), fileReaders(std::move(other.fileReaders))
+MemoryController::MemoryController(MemoryController&& other) noexcept : fileWriters(std::move(other.fileWriters))
 {
 }
 
@@ -34,7 +34,6 @@ MemoryController& MemoryController::operator=(const MemoryController& other)
         return *this;
     }
     fileWriters = other.fileWriters;
-    fileReaders = other.fileReaders;
     return *this;
 }
 
@@ -45,77 +44,64 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
         return *this;
     }
     fileWriters = std::move(other.fileWriters);
-    fileReaders = std::move(other.fileReaders);
     return *this;
 }
 
-std::optional<std::shared_ptr<FileWriter>>
+std::shared_ptr<FileWriter>
 MemoryController::getLeftFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-std::optional<std::shared_ptr<FileWriter>>
+std::shared_ptr<FileWriter>
 MemoryController::getRightFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-std::optional<std::shared_ptr<FileReader>>
+std::shared_ptr<FileReader>
 MemoryController::getLeftFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
-    return getFileReaderFromMap(ss.str());
+    ss << "memory_controller_left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    return getFileReader(ss.str());
 }
 
-std::optional<std::shared_ptr<FileReader>>
+std::shared_ptr<FileReader>
 MemoryController::getRightFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
-    return getFileReaderFromMap(ss.str());
+    ss << "memory_controller_right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    return getFileReader(ss.str());
 }
 
-std::optional<std::shared_ptr<FileWriter>> MemoryController::getFileWriterFromMap(const std::string& filePath)
+std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
-    const auto readerIt = fileReaders.find(filePath);
-    if (readerIt != fileReaders.end())
-    {
-        NES_ERROR("File {} is already opened for reading. Cannot open for writing.", filePath);
-        return std::nullopt;
-    }
-
     const auto it = fileWriters.find(filePath);
     if (it != fileWriters.end())
     {
-        return std::make_optional(it->second);
+        return it->second;
     }
     fileWriters[filePath] = std::make_shared<FileWriter>(filePath);
-    return std::make_optional(fileWriters[filePath]);
+    return fileWriters[filePath];
 }
 
-std::optional<std::shared_ptr<FileReader>> MemoryController::getFileReaderFromMap(const std::string& filePath)
+std::shared_ptr<FileReader> MemoryController::getFileReader(const std::string& filePath)
 {
-    const auto it = fileReaders.find(filePath);
-    if (it != fileReaders.end())
-    {
-        return std::make_optional(it->second);
-    }
-
     const auto writerIt = fileWriters.find(filePath);
     if (writerIt != fileWriters.end())
     {
         fileWriters.erase(writerIt);
-        fileReaders[filePath] = std::make_shared<FileReader>(filePath);
-        return std::make_optional(fileReaders[filePath]);
+        return std::make_shared<FileReader>(filePath);
     }
-
-    return std::nullopt;
+    std::stringstream ss;
+    ss << "File " << filePath << " was not opened for writing or has already been read. Cannot open for reading.";
+    //throw antlr4::IllegalArgumentException(ss.str());
+    return nullptr;
 }
 
 }

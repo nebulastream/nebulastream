@@ -110,20 +110,16 @@ void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWrit
     const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
-    const auto leftPages = leftPagedVectors[workerThreadId]->getPages();
-    for (auto pageIdx = 0UL; pageIdx < leftPages.size(); ++pageIdx)
+    for (auto page : leftPagedVectors[workerThreadId]->getPages())
     {
         // TODO write variable sized data in place to file
-        auto page = leftPages[pageIdx];
         leftFileWriter.write(page.getBuffer(), page.getNumberOfTuples() * leftTupleSize);
     }
 
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
-    const auto rightPages = rightPagedVectors[workerThreadId]->getPages();
-    for (auto pageIdx = 0UL; pageIdx < rightPages.size(); ++pageIdx)
+    for (auto page : rightPagedVectors[workerThreadId]->getPages())
     {
         // TODO write variable sized data in place to file
-        auto page = rightPages[pageIdx];
         rightFileWriter.write(page.getBuffer(), page.getNumberOfTuples() * rightTupleSize);
     }
 }
@@ -132,52 +128,35 @@ void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileRea
 {
     const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
-    // TODO fix read
-    //leftPagedVectors[workerThreadId]->appendPage(bufferProvider, leftMemoryLayout.get());
+    leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
     auto lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
-    const auto leftNumTuplesPerPage = leftMemoryLayout->getCapacity();
+
+    auto tuplesToReadLeft = leftMemoryLayout->getCapacity() - lastPageLeft.getNumberOfTuples();
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
 
-    while (const auto bytesRead = leftFileReader.read(lastPageLeft.getBuffer(), leftNumTuplesPerPage * leftTupleSize))
+    while (const auto bytesRead = leftFileReader.read(lastPageLeft.getBuffer(), tuplesToReadLeft * leftTupleSize))
     {
         // TODO read variable sized data in place from file
-        lastPageLeft.setNumberOfTuples(bytesRead / leftTupleSize);
+        lastPageLeft.setNumberOfTuples(lastPageLeft.getNumberOfTuples() + bytesRead / leftTupleSize);
         leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
         lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
+        tuplesToReadLeft = leftMemoryLayout->getCapacity();
     }
 
-    auto rightPagedVector = Nautilus::Interface::PagedVector();
-    rightPagedVector.appendPageIfFull(bufferProvider, leftMemoryLayout.get());
-    auto lastPageRight = rightPagedVector.getLastPage();
-    const auto rightNumTuplesPerPage = rightMemoryLayout->getCapacity();
+    rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
+    auto lastPageRight = rightPagedVectors[workerThreadId]->getLastPage();
+
+    auto tuplesToReadRight = rightMemoryLayout->getCapacity() - lastPageRight.getNumberOfTuples();
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
 
-    while (const auto bytesRead = rightFileReader.read(lastPageRight.getBuffer(), rightNumTuplesPerPage * rightTupleSize))
+    while (const auto bytesRead = rightFileReader.read(lastPageRight.getBuffer(), tuplesToReadRight * rightTupleSize))
     {
         // TODO read variable sized data in place from file
-        lastPageRight.setNumberOfTuples(bytesRead / rightTupleSize);
-        rightPagedVector.appendPageIfFull(bufferProvider, rightMemoryLayout.get());
-        lastPageRight = rightPagedVector.getLastPage();
+        lastPageRight.setNumberOfTuples(lastPageRight.getNumberOfTuples() + bytesRead / rightTupleSize);
+        rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
+        lastPageRight = rightPagedVectors[workerThreadId]->getLastPage();
+        tuplesToReadRight = rightMemoryLayout->getCapacity();
     }
-
-    for (auto oldPage : rightPagedVectors[workerThreadId]->getPages())
-    {
-        auto freeSpaceOnPage = rightMemoryLayout->getCapacity() - lastPageRight.getNumberOfTuples();
-        const auto tuplesToRead = std::min(freeSpaceOnPage, oldPage.getNumberOfTuples());
-
-        lastPageRight.setNumberOfTuples(lastPageRight.getNumberOfTuples() + tuplesToRead);
-        std::memcpy(lastPageRight.getBuffer(), oldPage.getBuffer(), tuplesToRead * leftTupleSize);
-        rightPagedVector.appendPageIfFull(bufferProvider, rightMemoryLayout.get());
-        lastPageRight = rightPagedVector.getLastPage();
-
-        if (tuplesToRead < oldPage.getNumberOfTuples())
-        {
-            const auto tuplesLeftOnOldPage = oldPage.getNumberOfTuples() - tuplesToRead;
-            lastPageRight.setNumberOfTuples(tuplesLeftOnOldPage);
-            std::memcpy(lastPageRight.getBuffer(), oldPage.getBuffer(), tuplesLeftOnOldPage * leftTupleSize);
-        }
-    }
-    rightPagedVectors[workerThreadId] = std::make_unique<Nautilus::Interface::PagedVector>(rightPagedVector);
 }
 
 void NLJSlice::truncate(const WorkerThreadId threadId)

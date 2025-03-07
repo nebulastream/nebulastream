@@ -29,18 +29,17 @@ public:
     MemoryController& operator=(const MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
 
-    std::optional<std::shared_ptr<FileWriter>> getLeftFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
-    std::optional<std::shared_ptr<FileWriter>> getRightFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileWriter> getLeftFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileWriter> getRightFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
 
-    std::optional<std::shared_ptr<FileReader>> getLeftFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
-    std::optional<std::shared_ptr<FileReader>> getRightFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileReader> getLeftFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileReader> getRightFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
 
 private:
-    std::optional<std::shared_ptr<FileWriter>> getFileWriterFromMap(const std::string& filePath);
-    std::optional<std::shared_ptr<FileReader>> getFileReaderFromMap(const std::string& filePath);
+    std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
+    std::shared_ptr<FileReader> getFileReader(const std::string& filePath);
 
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
-    std::map<std::string, std::shared_ptr<FileReader>> fileReaders;
 
     // IO-Auslastung
     // StatisticsEngine

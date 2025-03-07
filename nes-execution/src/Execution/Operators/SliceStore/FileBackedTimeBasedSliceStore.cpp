@@ -148,7 +148,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
+FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark, PipelineId pipelineId)
 {
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
@@ -173,26 +173,26 @@ FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp global
             /// As the windows are sorted, we can simply increment the sequence number here.
             const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
             // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
+            readSliceFromFiles(slice, pipelineId);
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
     }
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>>
-FileBackedTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd, const PipelineId pipelineId)
+std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
         // TODO fetch slice if not done in getTriggerableWindowSlices() or getAllNonTriggeredSlices()
         auto slice = slicesReadLocked->find(sliceEnd)->second;
-        readSliceFromFiles(slice, pipelineId);
         return slice;
     }
     return {};
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
+FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices(PipelineId pipelineId)
 {
     const auto windowsWriteLocked = windows.wlock();
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
@@ -216,6 +216,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
                     /// As the windows are sorted, we can simply increment the sequence number here.
                     const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
                     // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
+                    readSliceFromFiles(slice, pipelineId);
                     windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
                 }
             }
@@ -298,11 +299,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData& metaD
     {
         auto leftFileWriter = memCtrl.getLeftFileWriter(pipelineId, sliceEnd, threadId);
         auto rightFileWriter = memCtrl.getRightFileWriter(pipelineId, sliceEnd, threadId);
-        if (leftFileWriter.has_value() && rightFileWriter.has_value())
-        {
-            slice->writeToFile(*leftFileWriter.value(), *rightFileWriter.value(), threadId);
-            slice->truncate(threadId);
-        }
+        slice->writeToFile(*leftFileWriter, *rightFileWriter, threadId);
+        slice->truncate(threadId);
     }
 
     // TODO predictiveRead()
@@ -316,9 +314,9 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(const std::shared_ptr<Sli
     {
         auto leftFileReader = memCtrl.getLeftFileReader(pipelineId, slice->getSliceEnd(), WorkerThreadId(threadId));
         auto rightFileReader = memCtrl.getRightFileReader(pipelineId, slice->getSliceEnd(), WorkerThreadId(threadId));
-        if (leftFileReader.has_value() && rightFileReader.has_value())
+        if (leftFileReader && rightFileReader)
         {
-            slice->readFromFile(*leftFileReader.value(), *rightFileReader.value(), WorkerThreadId(threadId));
+            slice->readFromFile(*leftFileReader, *rightFileReader, WorkerThreadId(threadId));
         }
     }
 }
