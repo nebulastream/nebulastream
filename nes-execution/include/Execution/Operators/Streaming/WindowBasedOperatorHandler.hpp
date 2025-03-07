@@ -63,7 +63,7 @@ public:
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
-    virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(Memory::AbstractBufferProvider* bufferProvider) const = 0;
 
 protected:

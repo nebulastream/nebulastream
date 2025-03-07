@@ -34,19 +34,14 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        appendPage(bufferProvider, memoryLayout);
-    }
-}
-
-void PagedVector::appendPage(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
-{
-    if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
-    {
-        pages.emplace_back(page.value());
-    }
-    else
-    {
-        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        {
+            pages.emplace_back(page.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        }
     }
 }
 

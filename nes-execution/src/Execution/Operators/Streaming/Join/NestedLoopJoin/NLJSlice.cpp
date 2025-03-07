@@ -133,7 +133,7 @@ void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileRea
     const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
 
     // TODO fix read
-    leftPagedVectors[workerThreadId]->appendPage(bufferProvider, leftMemoryLayout.get());
+    //leftPagedVectors[workerThreadId]->appendPage(bufferProvider, leftMemoryLayout.get());
     auto lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
     const auto leftNumTuplesPerPage = leftMemoryLayout->getCapacity();
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
