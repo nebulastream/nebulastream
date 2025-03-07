@@ -150,7 +150,6 @@ WarningsAsErrors: '
   -modernize-use-equals-default,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -performance-for-range-copy,
-  -cppcoreguidelines-init-variables,
   -modernize-concat-nested-namespaces,
   -cppcoreguidelines-missing-std-forward,
   -readability-const-return-type,

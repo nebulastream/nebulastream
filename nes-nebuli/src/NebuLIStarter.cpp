@@ -244,7 +244,7 @@ int main(int argc, char** argv)
     {
         auto& dumpArgs = program.at<ArgumentParser>("dump");
         auto outputPath = dumpArgs.get<std::string>("-o");
-        std::ostream* output;
+        std::ostream* output = nullptr;
         std::ofstream file;
         if (outputPath == "-")
         {

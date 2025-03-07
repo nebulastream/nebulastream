@@ -193,7 +193,6 @@ void BufferManager::initialize(uint32_t withAlignment)
 
 TupleBuffer BufferManager::getBufferBlocking()
 {
-    detail::MemorySegment* memSegment;
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
     if (buffer.has_value())
     {
@@ -220,7 +219,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
-    detail::MemorySegment* memSegment;
+    detail::MemorySegment* memSegment = nullptr;
     const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
     if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
@@ -401,7 +400,7 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixe
 
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {
-        detail::MemorySegment* memorySegment;
+        detail::MemorySegment* memorySegment = nullptr;
         availableBuffers.blockingRead(memorySegment);
         numOfAvailableBuffers.fetch_sub(1);
         buffers.emplace_back(memorySegment);
