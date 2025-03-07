@@ -199,7 +199,6 @@ WarningsAsErrors: '
   -misc-const-correctness,
   -readability-identifier-length,
   -readability-magic-numbers,
-  -readability-uppercase-literal-suffix,
   -readability-identifier-naming,
   -misc-include-cleaner,
 '

@@ -76,7 +76,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
     const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
-    ASSERT_EQ(testBuffer->getNumberOfTuples(), 0u);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), 0U);
     ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
     ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
 }
