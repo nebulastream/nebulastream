@@ -131,7 +131,6 @@ WarningsAsErrors: '
   -misc-throw-by-value-catch-by-reference,
   -readability-suspicious-call-argument,
   -bugprone-throw-keyword-missing,
-  -modernize-use-bool-literals,
   -bugprone-unused-local-non-trivial-variable,
   -cert-err33-c,
   -cppcoreguidelines-pro-type-vararg,
