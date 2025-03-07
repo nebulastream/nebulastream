@@ -44,12 +44,19 @@ void MaxAggregationFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// Reading the value from the record
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    if (inputType->type->nullable && value.isNull())
+    {
+        /// If the value is null and we are taking null values into account, we do not update the max.
+        return;
+    }
+
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
 
     /// Updating the max value with the new value, if the new value is larger
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
     if (value > max)
     {
         value.writeToMemory(memAreaMax);

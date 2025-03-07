@@ -49,6 +49,14 @@ void MedianAggregationFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// Reading the value from the record
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    if (inputType->type->nullable && value.isNull())
+    {
+        /// If the value is null and we are taking null values into account, we do not include it to the state.
+        return;
+    }
+
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
@@ -83,10 +91,16 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {
             const auto numberOfEntriesVal = pagedVector->getTotalNumberOfEntries();
-            INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
             return numberOfEntriesVal;
         },
         pagedVectorPtr);
+    if (numberOfEntries == 0)
+    {
+        const Nautilus::VarVal zero = nautilus::val<uint64_t>(0);
+        Nautilus::Record resultRecord;
+        resultRecord.write(resultFieldIdentifier, zero.castToType(resultType));
+        return resultRecord;
+    }
 
     /// Unless there are no entries, we return the result record with the median value
     Nautilus::Record resultRecord;

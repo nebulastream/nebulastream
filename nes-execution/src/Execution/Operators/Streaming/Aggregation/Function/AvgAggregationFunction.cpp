@@ -37,9 +37,11 @@ AvgAggregationFunction::AvgAggregationFunction(
     std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<PhysicalType> countType)
+    std::shared_ptr<PhysicalType> countType,
+    const bool includeNullValues)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , countType(std::move(countType))
+    , includeNullValues(includeNullValues)
 {
 }
 
@@ -48,6 +50,14 @@ void AvgAggregationFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// Reading the value from the record
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    if ((inputType->type->nullable && not includeNullValues) && value.isNull())
+    {
+        /// If the value is null and we are taking null values into account, we do not update the average.
+        return;
+    }
+
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType->getSizeInBytes());
@@ -55,7 +65,6 @@ void AvgAggregationFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
     const auto newCount = count + nautilus::val<uint64_t>(1);
 

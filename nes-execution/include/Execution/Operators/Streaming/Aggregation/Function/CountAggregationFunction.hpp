@@ -34,7 +34,8 @@ public:
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
-        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
+        bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -48,6 +49,9 @@ public:
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~CountAggregationFunction() override = default;
+
+private:
+    bool includeNullValues;
 };
 
 }
