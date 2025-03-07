@@ -113,7 +113,6 @@ WarningsAsErrors: '
   *,
   -bugprone-switch-missing-default-case,
   -google-runtime-operator,
-  -misc-header-include-cycle,
   -modernize-use-transparent-functors,
   -bugprone-multi-level-implicit-pointer-conversion,
   -clang-analyzer-core.CallAndMessage,
