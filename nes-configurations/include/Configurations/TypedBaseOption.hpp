@@ -59,7 +59,7 @@ public:
 protected:
     T value;
     T defaultValue;
-    std::vector<std::shared_ptr<ConfigurationValidation>> validators = {};
+    std::vector<std::shared_ptr<ConfigurationValidation>> validators;
 
     /// Iterates over all validators of this option before setting a new value. pValue is the value to be tested for validity.
     void isValid(std::string);

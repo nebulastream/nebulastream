@@ -58,7 +58,7 @@ public:
 
 private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors = {};
+    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors;
 };
 
 }
