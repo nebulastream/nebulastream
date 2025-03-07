@@ -22,6 +22,7 @@
 #include <system_error>
 #include <vector>
 #include <Util/Ranges.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Util
 {
@@ -68,6 +69,42 @@ template <>
 std::optional<std::string_view> from_chars(std::string_view input);
 template <>
 std::optional<bool> from_chars(std::string_view input);
+template <>
+std::optional<char> from_chars(std::string_view input);
+
+
+template <typename T>
+T from_chars_with_exception(std::string_view input) = delete;
+
+template <typename T>
+T from_chars_with_exception(std::string_view input)
+requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })
+{
+    T value;
+    auto [_, ec] = std::from_chars<T>(input.data(), input.data() + input.size(), value);
+    if (ec == std::errc())
+    {
+        return value;
+    }
+    if (ec == std::errc::invalid_argument)
+    {
+        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, typeid(T).name());
+    }
+    if (ec == std::errc::result_out_of_range)
+    {
+        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, typeid(T).name());
+    }
+    throw CannotFormatMalformedStringValue("Unknown from_chars error.");
+}
+
+template <>
+float from_chars_with_exception(std::string_view input);
+template <>
+double from_chars_with_exception(std::string_view input);
+template <>
+bool from_chars_with_exception(std::string_view input);
+template <>
+char from_chars_with_exception(std::string_view input);
 
 /// Formats floating points similiar to flink:
 /// We preserve at least 1 digit and at most 6 digits after the decimal point
