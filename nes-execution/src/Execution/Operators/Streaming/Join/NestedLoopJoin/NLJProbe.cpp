@@ -42,12 +42,14 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
+NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* piplineContext, const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
+    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
+
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
+    auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, piplineContext->getPipelineId());
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
     return dynamic_cast<NLJSlice*>(slice.value().get());
@@ -119,8 +121,8 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
 
     /// Getting the left and right paged vector
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, executionCtx.pipelineContext, sliceIdLeft);
+    const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, executionCtx.pipelineContext, sliceIdRight);
 
     const auto leftPagedVectorRef = invoke(
         getNLJPagedVectorProxy,

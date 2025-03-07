@@ -29,15 +29,15 @@ public:
     MemoryController& operator=(const MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
 
-    FileWriter& getLeftFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
-    FileWriter& getRightFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::optional<std::shared_ptr<FileWriter>> getLeftFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::optional<std::shared_ptr<FileWriter>> getRightFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
 
-    FileReader& getLeftFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
-    FileReader& getRightFileReader(SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::optional<std::shared_ptr<FileReader>> getLeftFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::optional<std::shared_ptr<FileReader>> getRightFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
 
 private:
-    FileWriter& getFileWriterFromMap(const std::string& filePath);
-    FileReader& getFileReaderFromMap(const std::string& filePath);
+    std::optional<std::shared_ptr<FileWriter>> getFileWriterFromMap(const std::string& filePath);
+    std::optional<std::shared_ptr<FileReader>> getFileReaderFromMap(const std::string& filePath);
 
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::map<std::string, std::shared_ptr<FileReader>> fileReaders;

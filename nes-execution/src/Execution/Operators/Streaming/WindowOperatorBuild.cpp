@@ -49,15 +49,20 @@ void checkWindowsTriggerProxy(
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
-void updateSlicesProxy(OperatorHandler* ptrOpHandler, const WorkerThreadId workerThreadId, const Timestamp watermarkTs)
+void updateSlicesProxy(
+    OperatorHandler* ptrOpHandler,
+    const PipelineExecutionContext* piplineContext,
+    const WorkerThreadId workerThreadId,
+    const Timestamp watermarkTs)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
     if (sliceStore)
     {
-        sliceStore->updateSlices(SliceStoreMetaData(workerThreadId, watermarkTs));
+        sliceStore->updateSlices(SliceStoreMetaData(piplineContext->getPipelineId(), workerThreadId, watermarkTs));
     }
 }
 
@@ -90,7 +95,8 @@ void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer&) c
         executionCtx.lastChunk,
         executionCtx.originId);
 
-    invoke(updateSlicesProxy, operatorHandlerMemRef, executionCtx.getWorkerThreadId(), executionCtx.watermarkTs);
+    invoke(
+        updateSlicesProxy, operatorHandlerMemRef, executionCtx.pipelineContext, executionCtx.getWorkerThreadId(), executionCtx.watermarkTs);
 }
 
 void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

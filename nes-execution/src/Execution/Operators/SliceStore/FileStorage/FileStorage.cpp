@@ -14,7 +14,7 @@
 
 #include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
 
-FileWriter::FileWriter(const std::string& filePath) : file_(filePath, std::ios::out | std::ios::app | std::ios::binary)
+FileWriter::FileWriter(const std::string& filePath) : file_(filePath, std::ios::out | std::ios::trunc | std::ios::binary)
 {
     if (!file_.is_open())
     {

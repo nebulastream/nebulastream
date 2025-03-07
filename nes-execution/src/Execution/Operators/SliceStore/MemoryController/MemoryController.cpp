@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -48,54 +49,73 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     return *this;
 }
 
-FileWriter& MemoryController::getLeftFileWriter(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::optional<std::shared_ptr<FileWriter>>
+MemoryController::getLeftFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-FileWriter& MemoryController::getRightFileWriter(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::optional<std::shared_ptr<FileWriter>>
+MemoryController::getRightFileWriter(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-FileReader& MemoryController::getLeftFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::optional<std::shared_ptr<FileReader>>
+MemoryController::getLeftFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "left_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileReaderFromMap(ss.str());
 }
 
-FileReader& MemoryController::getRightFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::optional<std::shared_ptr<FileReader>>
+MemoryController::getRightFileReader(const PipelineId pipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
 {
     std::stringstream ss;
-    ss << "right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "right_" << pipelineId.getRawValue() << "_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileReaderFromMap(ss.str());
 }
 
-FileWriter& MemoryController::getFileWriterFromMap(const std::string& filePath)
+std::optional<std::shared_ptr<FileWriter>> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
+    const auto readerIt = fileReaders.find(filePath);
+    if (readerIt != fileReaders.end())
+    {
+        NES_ERROR("File {} is already opened for reading. Cannot open for writing.", filePath);
+        return std::nullopt;
+    }
+
     const auto it = fileWriters.find(filePath);
     if (it != fileWriters.end())
     {
-        return *it->second;
+        return std::make_optional(it->second);
     }
     fileWriters[filePath] = std::make_shared<FileWriter>(filePath);
-    return *fileWriters[filePath];
+    return std::make_optional(fileWriters[filePath]);
 }
 
-FileReader& MemoryController::getFileReaderFromMap(const std::string& filePath)
+std::optional<std::shared_ptr<FileReader>> MemoryController::getFileReaderFromMap(const std::string& filePath)
 {
     const auto it = fileReaders.find(filePath);
     if (it != fileReaders.end())
     {
-        return *it->second;
+        return std::make_optional(it->second);
     }
-    fileReaders[filePath] = std::make_shared<FileReader>(filePath);
-    return *fileReaders[filePath];
+
+    const auto writerIt = fileWriters.find(filePath);
+    if (writerIt != fileWriters.end())
+    {
+        fileWriters.erase(writerIt);
+        fileReaders[filePath] = std::make_shared<FileReader>(filePath);
+        return std::make_optional(fileReaders[filePath]);
+    }
+
+    return std::nullopt;
 }
 
 }

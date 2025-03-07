@@ -36,6 +36,7 @@ namespace NES::Runtime::Execution
 
 struct SliceStoreMetaData
 {
+    PipelineId pipelineId;
     WorkerThreadId threadId;
     Timestamp timestamp;
 };
@@ -55,15 +56,15 @@ public:
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
-    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
+    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd, PipelineId pipelineId) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
-    void updateSlices(SliceStoreMetaData metaData);
+    void updateSlices(const SliceStoreMetaData& metaData);
 
 private:
-    void readSliceFromFiles(const std::shared_ptr<Slice>& slice);
+    void readSliceFromFiles(const std::shared_ptr<Slice>& slice, PipelineId pipelineId);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
