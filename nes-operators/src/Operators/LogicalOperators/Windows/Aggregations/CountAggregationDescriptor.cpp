@@ -73,8 +73,8 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     /// a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
-    asField->setStamp(onField->getStamp());
+    onField->inferStamp(schema);
+    asField->setStamp(getFinalAggregateStamp());
 }
 
 std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
@@ -83,7 +83,7 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 }
 std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::UINT64);
+    return onField->getStamp();
 }
 std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
 {
