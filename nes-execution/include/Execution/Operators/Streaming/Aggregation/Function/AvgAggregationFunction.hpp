@@ -35,7 +35,8 @@ public:
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<PhysicalType> countType);
+        std::shared_ptr<PhysicalType> countType,
+        bool includeNullValues);
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
@@ -52,6 +53,7 @@ public:
 
 private:
     std::shared_ptr<PhysicalType> countType;
+    bool includeNullValues;
 };
 
 }

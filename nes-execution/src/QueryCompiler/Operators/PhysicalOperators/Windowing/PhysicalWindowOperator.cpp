@@ -141,6 +141,9 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
         if (const auto fieldAccessExpression = NES::Util::as_if<NodeFunctionFieldAccess>(descriptor->as()))
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
+
+            /// TODO #699 As long as we do not support count(*) and avg(*), we always do not include null values
+            constexpr bool includeNullValues = false;
             switch (descriptor->getType())
             {
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
@@ -151,7 +154,8 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         physicalFinalType,
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
-                        countType));
+                        countType,
+                        includeNullValues));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Sum: {
@@ -160,10 +164,12 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Count: {
-                    /// We assume that a count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
-                        countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        includeNullValues));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Max: {
