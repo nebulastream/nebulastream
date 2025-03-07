@@ -30,6 +30,7 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    bool isAsync{false};
 };
 
 struct SourceDescriptor : public Configurations::Descriptor

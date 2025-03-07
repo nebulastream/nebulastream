@@ -28,6 +28,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Notifier.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources
@@ -58,7 +59,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -86,6 +88,8 @@ protected:
     std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
     uint64_t numSourceLocalBuffers;
     std::unique_ptr<Source> sourceImplementation;
+    /// Used by SyncInputFormatterTask to tell blocking source that is safe to emit the next buffer.
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier;
     std::atomic_bool started;
 
     std::jthread thread;

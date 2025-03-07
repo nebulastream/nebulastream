@@ -21,21 +21,21 @@
 namespace NES::InputFormatters
 {
 
-using AsyncInputFormatterRegistryReturnType = InputFormatter;
-struct AsyncInputFormatterRegistryArguments
+using SyncInputFormatterRegistryReturnType = InputFormatter;
+struct SyncInputFormatterRegistryArguments
 {
 };
 
-class AsyncInputFormatterRegistry : public BaseRegistry<
-                                        AsyncInputFormatterRegistry,
-                                        std::string,
-                                        AsyncInputFormatterRegistryReturnType,
-                                        AsyncInputFormatterRegistryArguments>
+class SyncInputFormatterRegistry : public BaseRegistry<
+                                       SyncInputFormatterRegistry,
+                                       std::string,
+                                       SyncInputFormatterRegistryReturnType,
+                                       SyncInputFormatterRegistryArguments>
 {
 };
 
 }
 
 #define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#include <AsyncInputFormatterGeneratedRegistrar.inc>
+#include <SyncInputFormatterGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY

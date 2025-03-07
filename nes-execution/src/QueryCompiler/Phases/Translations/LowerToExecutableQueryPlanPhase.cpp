@@ -25,6 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/AsyncInputFormatterTask.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/SyncInputFormatterTask.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -35,6 +36,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
+#include <Util/Notifier.hpp>
 #include <Util/Ranges.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -89,26 +91,39 @@ Successor processSuccessor(
     return processOperatorPipeline(pipeline, pipelineQueryPlan, loweringContext);
 }
 
-Runtime::Execution::Source processSource(
+template <typename InputFormatterType>
+Runtime::Execution::Source createInputFormatterTaskAndSource(
     const std::shared_ptr<OperatorPipeline>& pipeline,
     const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
-    LoweringContext& loweringContext)
+    LoweringContext& loweringContext,
+    const SourceDescriptorLogicalOperator& sourceOperator)
 {
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
+    std::unique_ptr<InputFormatterType> inputFormatterTask;
+    constexpr auto isAsyncInputFormatter = std::same_as<InputFormatterType, InputFormatters::AsyncInputFormatterTask>;
+    const auto syncInputFormatterTaskNotifier = (isAsyncInputFormatter) ? std::nullopt : std::optional(std::make_shared<Notifier>());
+    if constexpr (isAsyncInputFormatter)
+    {
+        /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
+        inputFormatterTask = InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
+            sourceOperator.getOriginId(),
+            sourceOperator.getSourceDescriptorRef().parserConfig.parserType,
+            sourceOperator.getSourceDescriptorRef().schema,
+            sourceOperator.getSourceDescriptorRef().parserConfig.tupleDelimiter,
+            sourceOperator.getSourceDescriptorRef().parserConfig.fieldDelimiter);
+    }
+    else
+    {
+        /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
+        inputFormatterTask = InputFormatters::InputFormatterProvider::provideSyncInputFormatterTask(
+            sourceOperator.getOriginId(),
+            sourceOperator.getSourceDescriptorRef().parserConfig.parserType,
+            sourceOperator.getSourceDescriptorRef().schema,
+            sourceOperator.getSourceDescriptorRef().parserConfig.tupleDelimiter,
+            sourceOperator.getSourceDescriptorRef().parserConfig.fieldDelimiter,
+            syncInputFormatterTaskNotifier);
+    }
 
-    /// Convert logical source descriptor to actual source descriptor
-    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators().front();
-    const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
-
-    std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
-    /// Passing strings from inputFormatterConfig to avoid dependency on SourceDescriptor in InputFormatterProvider
-    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideAsyncInputFormatterTask(
-        sourceOperator->getOriginId(),
-        sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
-        sourceOperator->getSourceDescriptorRef().schema,
-        sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
-        sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
-
+    constexpr std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
     auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
         pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
 
@@ -129,8 +144,28 @@ Runtime::Execution::Source processSource(
     inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
 
     loweringContext.sources.emplace_back(
-        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), std::move(inputFormatterTasks));
+        sourceOperator.getOriginId(), sourceOperator.getSourceDescriptor(), std::move(inputFormatterTasks), syncInputFormatterTaskNotifier);
     return loweringContext.sources.back();
+}
+
+Runtime::Execution::Source processSource(
+    const std::shared_ptr<OperatorPipeline>& pipeline,
+    const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
+{
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
+
+    /// Convert logical source descriptor to actual source descriptor
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators().front();
+    const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
+
+    if (sourceOperator->getSourceDescriptorRef().parserConfig.isAsync)
+    {
+        return createInputFormatterTaskAndSource<InputFormatters::AsyncInputFormatterTask>(
+            pipeline, pipelineQueryPlan, loweringContext, *sourceOperator);
+    }
+    return createInputFormatterTaskAndSource<InputFormatters::SyncInputFormatterTask>(
+        pipeline, pipelineQueryPlan, loweringContext, *sourceOperator);
 }
 
 void processSink(const Predecessor& predecessor, const std::shared_ptr<OperatorPipeline>& pipeline, LoweringContext& loweringContext)

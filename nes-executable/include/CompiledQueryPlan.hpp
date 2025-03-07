@@ -15,11 +15,13 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Notifier.hpp>
 #include <ExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution
@@ -44,6 +46,9 @@ struct Source
 
     /// Sources do not have any predecessors
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
+
+    /// Allows a synced InputFormatter to notify the corresponding synchronous/blocking source when it can submit the next task to the pipeline.
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier;
 };
 
 struct Sink

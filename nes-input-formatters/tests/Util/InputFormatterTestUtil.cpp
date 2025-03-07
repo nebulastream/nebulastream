@@ -148,7 +148,8 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto sourceDescriptor = Sources::SourceDescriptor(
         std::move(schema), "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
 
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
+    return Sources::SourceProvider::lower(
+        NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), std::nullopt, numberOfLocalBuffersInSource);
 }
 std::shared_ptr<InputFormatters::AsyncInputFormatterTask> createInputFormatterTask(std::shared_ptr<Schema> schema)
 {

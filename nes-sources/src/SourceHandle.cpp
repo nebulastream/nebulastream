@@ -20,6 +20,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Notifier.hpp>
 #include <SourceThread.hpp>
 
 namespace NES::Sources
@@ -28,10 +29,15 @@ SourceHandle::SourceHandle(
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));
+        std::move(originId),
+        std::move(bufferPool),
+        numSourceLocalBuffers,
+        std::move(sourceImplementation),
+        std::move(syncInputFormatterTaskNotifier));
 }
 SourceHandle::~SourceHandle() = default;
 

@@ -19,6 +19,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Util/Notifier.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -34,6 +35,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier,
     const int numberOfLocalBuffersInSource)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
@@ -41,7 +43,11 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
         return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), numberOfLocalBuffersInSource, std::move(source.value()));
+            std::move(originId),
+            std::move(bufferPool),
+            numberOfLocalBuffersInSource,
+            std::move(source.value()),
+            std::move(syncInputFormatterTaskNotifier));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

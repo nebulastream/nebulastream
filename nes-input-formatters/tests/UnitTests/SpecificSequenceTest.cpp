@@ -209,7 +209,7 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple, true>(TestConfig<TestTuple>{
+    runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 18, /// 2 buffers for raw data, 4 buffers for results, 12 index buffers
         .numThreads = 1,
         .sizeOfRawBuffers = 16,
