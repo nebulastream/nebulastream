@@ -33,7 +33,7 @@ class BaseConfiguration : public BaseOption
 {
 public:
     BaseConfiguration(const std::string& name, const std::string& description);
-    BaseConfiguration();
+    BaseConfiguration() = default;
     ~BaseConfiguration() override = default;
 
     void overwriteConfigWithYAMLFileInput(const std::string& filePath);
