@@ -11,19 +11,21 @@ def replace_placeholders(template, namespace, name_of_registry):
     result = result.replace('@THE_NAME_OF_THE_REGISTRY_CAPS@', name_of_registry.upper())
     return result
 
-def print_registries(nes_root_dir: str, path_to_parent_dir: str, registries: list):
+def print_registries_or_plugins(nes_root_dir: str, path_to_parent_dir: str, registries_or_plugins: list, target_directory = "", marker = ""):
     print(f"📁 {nes_root_dir}/")
     single_indent = "    "
     print(f"{single_indent}└── 📁 nes-plugins/")
-    for idx, subdir in enumerate(registries):
-        prefix = "└── " if idx == len(registries) - 1 else "├── "
+    for idx, subdir in enumerate(registries_or_plugins):
+        prefix = "└── " if idx == len(registries_or_plugins) - 1 else "├── "
 
-        if os.path.isdir(os.path.join(path_to_parent_dir,subdir)):
-            print(f"{single_indent}{single_indent}{prefix}📁 {subdir}/ ← REGISTRY")
+        if os.path.isdir(os.path.join(path_to_parent_dir, subdir)) and (target_directory == "" or subdir == target_directory):
+            print(f"{single_indent}{single_indent}{prefix}📁 {subdir}/ ← {marker}")
 
-def print_directory_tree(path, nes_root_dir, highlight_dir=None, new_dir=None) -> str:
+def print_directory_tree(path, nes_root_dir, highlight_document=None, new_dir=None) -> str:
     """Print a directory tree structure for a path, optionally highlighting specific directories."""
     # Split the path into components
+    if highlight_document is None:
+        highlight_document = {"name": None, "message": None}
     single_indent = "    "
     path_components = os.path.normpath(path).split(os.sep)
 
@@ -42,10 +44,15 @@ def print_directory_tree(path, nes_root_dir, highlight_dir=None, new_dir=None) -
         # Increase indent for each level
         indent += single_indent
 
-        print(f"{indent}└── 📁 {component}/")
+        if os.path.basename(os.path.normpath(total_path)) == new_dir:
+            print(f"{indent}└── 📁 {new_dir}/ ← NEW")
+        else:
+            print(f"{indent}└── 📁 {component}/")
 
         # If we're at the final component, print its contents
         if i == len(path_components) - 1:
+            if not os.path.exists(total_path):
+                break
             try:
                 subdirs = [d for d in os.listdir(total_path)]
                 # subdirs = [d for d in os.listdir(current_path) if os.path.isdir(os.path.join(current_path, d))]
@@ -55,18 +62,18 @@ def print_directory_tree(path, nes_root_dir, highlight_dir=None, new_dir=None) -
                 for idx, subdir in enumerate(subdirs):
                     prefix = "└── " if idx == len(subdirs) - 1 else "├── "
 
-                    if highlight_dir and subdir.lower() == highlight_dir.lower():
-                        print(f"{sub_indent}{prefix}📁 {subdir}/ ← EXISTS")
-                    elif new_dir and subdir.lower() == new_dir.lower():
-                        if os.path.isdir(subdir):
-                            print(f"{sub_indent}{prefix}📁 {subdir}/ ← NEW")
-                        else:
-                            print(f"{sub_indent}{prefix}📁 {subdir} ← NEW")
+                    if not highlight_document is None and highlight_document["name"] and subdir.lower() == highlight_document["name"].lower():
+                        print(f"{sub_indent}{prefix}📄 {subdir} ← {highlight_document["message"]}")
+                    # elif new_dir and subdir.lower() == new_dir.lower():
+                    #     if os.path.isdir(subdir):
+                    #         print(f"{sub_indent}{prefix}📁 {subdir}/ ← NEW")
+                    #     else:
+                    #         print(f"{sub_indent}{prefix}📄 {subdir} ← NEW")
                     else:
                         if os.path.isdir(os.path.join(total_path, subdir)):
                             print(f"{sub_indent}{prefix}📁 {subdir}/")
                         else:
-                            print(f"{sub_indent}{prefix}📁 {subdir}")
+                            print(f"{sub_indent}{prefix}📄 {subdir}")
 
             except PermissionError:
                 print(f"{indent + single_indent}├── (Permission denied)")
@@ -74,6 +81,13 @@ def print_directory_tree(path, nes_root_dir, highlight_dir=None, new_dir=None) -
                 print(f"{indent + single_indent}├── (Error: {e})")
     return indent + single_indent
 
+def get_all_plugins(registry_dir):
+    try:
+        return [d for d in os.listdir(registry_dir)
+                if os.path.isdir(os.path.join(registry_dir, d))]
+    except Exception as e:
+        print(f"Error listing directories: {e}")
+        return []
 def get_all_registries(parent_dir, script_dir):
     """Get all directories in the parent directory except the script directory."""
     script_dir_name = os.path.basename(script_dir)
@@ -90,6 +104,54 @@ def capitalize_first_letter(string):
         return string
     return string[0].upper() + string[1:]
 
+def add_plugin_to_cmake(path: str, registry_name: str, plugin_name: str):
+    try:
+        # Read the current content of the file
+        with open(path, 'r') as file:
+            content = file.read()
+
+        # Create the new line to add
+        new_line = f'activate_plugin("{registry_name}/{plugin_name}" ON)'
+
+        # Check if the content already ends with a newline
+        if not content.endswith('\n'):
+            new_line = '\n' + new_line
+
+        # Add the new line with a newline character at the end
+        with open(path, 'w') as file:
+            file.write(content + new_line + '\n')
+
+        return True
+
+    except Exception as e:
+        print(f"Error modifying CMakeLists.txt: {e}")
+        return False
+
+def generate_plugin_file(add_plugin_command, plugin_name, registry_name, component_name, library_name):
+    template = """# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+@ADD_PLUGIN_COMMAND@(@PLUGIN_NAME@ @REGISTRY_NAME@ @COMPONENT_NAME@ @LIBRARY_NAME@ @PLUGIN_NAME@@REGISTRY_NAME@.cpp)"""
+
+    # Replace the placeholders with the provided arguments
+    content = template.replace("@ADD_PLUGIN_COMMAND@", add_plugin_command)
+    content = content.replace("@PLUGIN_NAME@", plugin_name)
+    content = content.replace("@REGISTRY_NAME@", registry_name)
+    content = content.replace("@COMPONENT_NAME@", component_name)
+    content = content.replace("@LIBRARY_NAME@", library_name)
+
+    return content
+
 def interactive_mode(nes_root_dir: str, nes_root_path: str):
     """Run the script in interactive mode, asking the user what they want to do."""
     # Get the script directory and its parent
@@ -103,7 +165,8 @@ def interactive_mode(nes_root_dir: str, nes_root_path: str):
     print("2. Create a new plugin for an existing plugin registry (not implemented yet)")
     print("3. List all existing registries")
 
-    choice = input("\nEnter your choice (1-3): ")
+    choice = "2"
+    # choice = input("\nEnter your choice (1-3): ")
     if choice == "1":
         # Create a new plugin registry
         print("\n=== Create a new plugin registry ===")
@@ -174,7 +237,53 @@ def interactive_mode(nes_root_dir: str, nes_root_path: str):
 
     elif choice == "2":
         # Create a new plugin for an existing plugin registry
+        cmake_lists_path = os.path.join(parent_dir, "CMakeLists.txt")
+        # Todo: implement logic to create plugin
         print("\nTodo: Create a new plugin for an existing plugin registry")
+        registry_name = "Source"
+        # registry_name = input("Enter the name of the registry that the new plugin belongs to: ")
+        # Check if registry already exists
+        registries = get_all_registries(parent_dir, script_dir)
+        registry_exists = any(r.lower() == registry_name.lower() for r in registries)
+        if not registry_exists:
+            print(f"The registry {registry_name} does not exist")
+            print("The existing registries are:")
+            print_registries_or_plugins(nes_root_dir, parent_dir, registries, "REGISTRY")
+            sys.exit(1)
+        # plugin_name = input("\nEnter the name of the new plugin: ")
+        plugin_name = "KekSource"
+        # Todo:
+        # create_plugin_as_library = input("\nCreate registry files? (y/n): ") == "y"
+        path_to_registry = os.path.join(parent_dir, registry_name)
+        plugins_in_registry = get_all_plugins(path_to_registry)
+        plugin_exists = any(r.lower() == plugin_name.lower() for r in plugins_in_registry)
+        if plugin_exists:
+            print(f"The plugin {plugin_name} already exists: ")
+            # Todo: below marks all directories as existing!
+            print_registries_or_plugins(nes_root_dir, path_to_registry, plugins_in_registry, plugin_name, "EXISTING PLUGIN")
+            sys.exit(1)
+        path_to_plugin = os.path.join(path_to_registry, plugin_name)
+
+        print("\nThe following files/directories will be created:")
+        print_directory_tree(parent_dir, nes_root_dir, {"name": "CMakeLists.txt", "message": "APPENDING: 'activate_plugin(\"Source/KekSource\" ON)'"})
+        second_indent = print_directory_tree(path_to_plugin, nes_root_dir, None, plugin_name)
+        print(f"{second_indent}└── 📄 CMakeLists.txt ← NEW (registers activated plugin in registry)")
+        print(f"{second_indent}└── 📄 {plugin_name}{registry_name}.hpp ← NEW")
+        print(f"{second_indent}└── 📄 {plugin_name}{registry_name}.cpp ← NEW (contains implementation of register function)")
+
+        confirm = input("\nCreate plugin files? (y/n): ")
+        if confirm.lower() != 'y':
+            print("Operation cancelled.")
+            return
+        os.makedirs(path_to_plugin)
+        # plugin_implementation_file = f"{plugin_name}{registry_name}.cpp"
+        content = generate_plugin_file("add_plugin_as_library", plugin_name, registry_name, "nes-sources-registry", f"{plugin_name.lower()}_{registry_name.lower()}_plugin")
+        with open(os.path.join(path_to_plugin, "CMakeLists.txt"), 'w') as file:
+            file.write(content + '\n')
+
+        # Todo:
+        #  1. generate header file
+        #  2. create .cpp file
 
     elif choice == "3":
         # List all existing registries
@@ -182,7 +291,7 @@ def interactive_mode(nes_root_dir: str, nes_root_path: str):
         registries = get_all_registries(parent_dir, script_dir)
 
         if registries:
-            print_registries(nes_root_dir, parent_dir, registries)
+            print_registries_or_plugins(nes_root_dir, parent_dir, registries, "REGISTRY")
         else:
             print("No registries found.")
     else:
