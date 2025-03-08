@@ -13,14 +13,13 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -35,7 +34,7 @@ class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithPa
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema, varSizedDataSchema;
+    Schema schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
     static void SetUpTestCase()
@@ -48,16 +47,16 @@ public:
         Testing::BaseUnitTest::SetUp();
         const auto memoryLayout = GetParam();
         bufferManager = Memory::BufferManager::create(4096, 10);
-        schema = Schema::create(memoryLayout)
-                     ->addField("test$t1", BasicType::UINT16)
-                     ->addField("test$t2", BasicType::BOOLEAN)
-                     ->addField("test$t3", BasicType::FLOAT64);
+        schema = Schema{memoryLayout}
+                     .addField("test$t1", PhysicalType::Type::UINT16)
+                     .addField("test$t2", PhysicalType::Type::BOOLEAN)
+                     .addField("test$t3", PhysicalType::Type::FLOAT64);
 
-        varSizedDataSchema = Schema::create(memoryLayout)
-                                 ->addField("test$t1", BasicType::UINT16)
-                                 ->addField("test$t2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                 ->addField("test$t3", BasicType::FLOAT64)
-                                 ->addField("test$t4", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+        varSizedDataSchema = Schema{memoryLayout}
+                                 .addField("test$t1", PhysicalType::Type::UINT16)
+                                 .addField("test$t2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                 .addField("test$t3", PhysicalType::Type::FLOAT64)
+                                 .addField("test$t4", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();

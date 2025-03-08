@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,9 +48,7 @@ bool LogicalBinaryOperator::inferSchema()
     {
         auto childOutputSchema = NES::Util::as<Operator>(child)->getOutputSchema();
         auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const std::shared_ptr<Schema>& distinctSchema) { return (*childOutputSchema == *distinctSchema); });
+            distinctSchemas.begin(), distinctSchemas.end(), [&](Schema distinctSchema) { return (childOutputSchema == distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);
@@ -63,13 +61,13 @@ bool LogicalBinaryOperator::inferSchema()
     return true;
 }
 
-std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const
+std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const Schema& schema) const
 {
     std::vector<std::shared_ptr<Operator>> operators;
     for (const auto& child : getChildren())
     {
         auto childOperator = NES::Util::as<Operator>(child);
-        if (*childOperator->getOutputSchema() == *schema)
+        if (childOperator->getOutputSchema() == schema)
         {
             operators.emplace_back(childOperator);
         }

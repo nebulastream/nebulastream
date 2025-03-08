@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES::Join::Experimental
@@ -54,12 +54,12 @@ public:
     /**
    * @brief getter build schema
    */
-    [[nodiscard]] std::shared_ptr<Schema> getBuildSchema() const;
+    [[nodiscard]] Schema getBuildSchema() const;
 
     /**
    * @brief getter probe schema
    */
-    [[nodiscard]] std::shared_ptr<Schema> getProbeSchema() const;
+    [[nodiscard]] Schema getProbeSchema() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
@@ -79,19 +79,19 @@ public:
      * @param buildSchema
      * @param probeSchema
      */
-    void updateInputSchemas(std::shared_ptr<Schema> buildSchema, std::shared_ptr<Schema> probeSchema);
+    void updateInputSchemas(Schema buildSchema, Schema probeSchema);
 
     /**
      * @brief Update the output stream type upon type inference
      * @param outputSchema the type of the output stream
      */
-    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
+    void updateOutputDefinition(Schema outputSchema);
 
     /**
      * @brief Getter of the output stream schema
      * @return the output stream schema
      */
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
     void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
@@ -99,9 +99,9 @@ public:
 private:
     std::shared_ptr<NodeFunctionFieldAccess> keyTypeBuild;
     std::shared_ptr<NodeFunctionFieldAccess> keyTypeProbe;
-    std::shared_ptr<Schema> buildSchema{nullptr};
-    std::shared_ptr<Schema> probeSchema{nullptr};
-    std::shared_ptr<Schema> outputSchema{nullptr};
+    Schema buildSchema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema probeSchema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema outputSchema{Schema::MemoryLayoutType::ROW_LAYOUT};
     uint64_t numberOfInputEdgesBuild;
     uint64_t numberOfInputEdgesProbe;
 };

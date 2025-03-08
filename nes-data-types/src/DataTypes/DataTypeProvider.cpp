@@ -17,35 +17,30 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::DataTypeProvider
 {
 
-std::shared_ptr<DataType> provideDataType(const std::string& type)
+DataType provideDataType(const std::string& type)
 {
     /// Empty argument struct, since we do not have data types that take arguments at the moment.
     /// However, we provide the empty struct to be consistent with the design of our registries.
     auto args = DataTypeRegistryArguments{};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
-        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
-        return sharedType;
+        return dataType.value();
     }
     throw std::runtime_error("Failed to create data type of type: " + type);
 }
 
-std::shared_ptr<DataType> provideDataType(LogicalType type)
+DataType provideDataType(const PhysicalType::Type type)
 {
-    return provideDataType(std::string(magic_enum::enum_name(type)));
+    auto typeAsString = std::string(magic_enum::enum_name(type));
+    return provideDataType(std::move(typeAsString));
 }
 
-std::shared_ptr<DataType> provideBasicType(const BasicType type)
-{
-    return provideDataType(std::string(magic_enum::enum_name(type)));
-}
 }

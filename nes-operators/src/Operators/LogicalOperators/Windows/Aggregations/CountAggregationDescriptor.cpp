@@ -14,15 +14,15 @@
 
 #include <memory>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 
 namespace NES::Windowing
@@ -73,7 +73,7 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     /// a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
+    onField->setStamp(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
     asField->setStamp(onField->getStamp());
 }
 
@@ -81,17 +81,17 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
+DataType CountAggregationDescriptor::getInputStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::UINT64);
+    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
+DataType CountAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::UINT64);
+    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
+DataType CountAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::UINT64);
+    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
 }
 
 }

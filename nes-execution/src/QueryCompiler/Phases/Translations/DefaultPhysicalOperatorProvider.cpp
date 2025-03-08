@@ -16,7 +16,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -188,7 +188,7 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const std::shared_ptr<L
     const auto unionOperator = NES::Util::as<LogicalUnionOperator>(operatorNode);
     /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
     PRECONDITION(
-        *unionOperator->getLeftInputSchema() == *unionOperator->getRightInputSchema(),
+        unionOperator->getLeftInputSchema() == unionOperator->getRightInputSchema(),
         "The input schemas of a union operators children should be equal");
 
     const auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
@@ -215,9 +215,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 }
 
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-    const std::shared_ptr<Schema>& outputSchema,
-    std::vector<std::shared_ptr<Operator>> children)
+    const std::shared_ptr<LogicalJoinOperator>& joinOperator, Schema outputSchema, std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
@@ -243,7 +241,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNames = [](Schema inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;
@@ -257,11 +255,11 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
                 }
             });
 
-        for (const auto& field : *inputSchema)
+        for (const auto& field : inputSchema.getFields())
         {
-            if (std::ranges::find(fieldNamesInJoinFunction, field->getName()) != fieldNamesInJoinFunction.end())
+            if (std::ranges::find(fieldNamesInJoinFunction, field.name) != fieldNamesInJoinFunction.end())
             {
-                joinFieldNames.push_back(field->getName());
+                joinFieldNames.push_back(field.name);
             }
         }
 
@@ -299,8 +297,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             break;
     }
 
-    auto createBuildOperator
-        = [&](const std::shared_ptr<Schema>& inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
+    auto createBuildOperator = [&](Schema inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
     {
         return std::make_shared<PhysicalOperators::PhysicalStreamJoinBuildOperator>(
             inputSchema,
@@ -369,17 +366,17 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     else
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->field->getName();
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->field.name;
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const std::shared_ptr<Schema>& schema)
+        auto findTimeStampFieldName = [&](const Schema& schema)
         {
-            for (const auto& field : *schema)
+            for (const auto& field : schema.getFields())
             {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
+                if (field.name.find(timeStampFieldNameWithoutSourceName) != std::string::npos)
                 {
-                    return field->getName();
+                    return field.name;
                 }
             }
             return std::string();

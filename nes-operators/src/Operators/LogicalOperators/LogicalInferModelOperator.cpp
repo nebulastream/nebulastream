@@ -17,8 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
@@ -86,10 +85,10 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(const std::share
 {
     const auto schema = getInputSchema();
     const auto fieldName = field->getFieldName();
-    const auto existingField = schema->getFieldByName(fieldName);
+    const auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        field->updateFieldName(existingField.value()->getName());
+        field->updateFieldName(existingField.value().name);
     }
     else
     {
@@ -101,7 +100,7 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(const std::share
         }
         else
         {
-            field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            field->updateFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 }
@@ -113,15 +112,15 @@ bool LogicalInferModelOperator::inferSchema()
         return false;
     }
 
-    const auto inputSchema = getInputSchema();
+    auto inputSchema = getInputSchema();
 
     for (auto inputField : inputFields)
     {
         auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(inputField);
         updateToFullyQualifiedFieldName(inputFunction);
-        inputFunction->inferStamp(*inputSchema);
+        inputFunction->inferStamp(inputSchema);
         auto fieldName = inputFunction->getFieldName();
-        inputSchema->replaceField(fieldName, inputFunction->getStamp());
+        inputSchema.replaceTypeOfField(fieldName, inputFunction->getStamp());
     }
 
     for (auto outputField : outputFields)
@@ -129,19 +128,19 @@ bool LogicalInferModelOperator::inferSchema()
         auto outputFunction = NES::Util::as<NodeFunctionFieldAccess>(outputField);
         updateToFullyQualifiedFieldName(outputFunction);
         auto fieldName = outputFunction->getFieldName();
-        if (outputSchema->getFieldByName(fieldName))
+        if (outputSchema.getFieldByName(fieldName))
         {
             /// The assigned field is part of the current schema.
             /// Thus we check if it has the correct type.
             NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-            outputSchema->replaceField(fieldName, outputFunction->getStamp());
+            outputSchema.replaceTypeOfField(fieldName, outputFunction->getStamp());
         }
         else
         {
             /// The assigned field is not part of the current schema.
             /// Thus we extend the schema by the new attribute.
             NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-            outputSchema->addField(fieldName, outputFunction->getStamp());
+            outputSchema.addField(fieldName, outputFunction->getStamp());
         }
     }
 

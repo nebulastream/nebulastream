@@ -20,7 +20,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::Nautilus::Util
 {
@@ -42,86 +41,85 @@ nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 }
 
 
-inline std::unordered_map<BasicPhysicalType::NativeType, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>>
-    storeValueFunctionMap = {
-        {BasicPhysicalType::NativeType::BOOLEAN,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal booleanValue = value.cast<nautilus::val<bool>>();
-             booleanValue.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::INT_8,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal int8Value = value.cast<nautilus::val<int8_t>>();
-             int8Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::INT_16,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal int16Value = value.cast<nautilus::val<int16_t>>();
-             int16Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::INT_32,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal int32Value = value.cast<nautilus::val<int32_t>>();
-             int32Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::INT_64,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal int64Value = value.cast<nautilus::val<int64_t>>();
-             int64Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::UINT_8,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal uint8Value = value.cast<nautilus::val<uint8_t>>();
-             uint8Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::UINT_16,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal uint16Value = value.cast<nautilus::val<uint16_t>>();
-             uint16Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::UINT_32,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal uint32Value = value.cast<nautilus::val<uint32_t>>();
-             uint32Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::UINT_64,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal uint64Value = value.cast<nautilus::val<uint64_t>>();
-             uint64Value.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::FLOAT,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal floatValue = value.cast<nautilus::val<float>>();
-             floatValue.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::DOUBLE,
-         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
-         {
-             const VarVal doubleValue = value.cast<nautilus::val<double>>();
-             doubleValue.writeToMemory(memoryReference);
-             return value;
-         }},
-        {BasicPhysicalType::NativeType::UNDEFINED, nullptr},
+inline std::unordered_map<PhysicalType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap = {
+    {PhysicalType::Type::BOOLEAN,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal booleanValue = value.cast<nautilus::val<bool>>();
+         booleanValue.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::INT8,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal int8Value = value.cast<nautilus::val<int8_t>>();
+         int8Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::INT16,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal int16Value = value.cast<nautilus::val<int16_t>>();
+         int16Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::INT32,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal int32Value = value.cast<nautilus::val<int32_t>>();
+         int32Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::INT64,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal int64Value = value.cast<nautilus::val<int64_t>>();
+         int64Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::UINT8,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal uint8Value = value.cast<nautilus::val<uint8_t>>();
+         uint8Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::UINT16,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal uint16Value = value.cast<nautilus::val<uint16_t>>();
+         uint16Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::UINT32,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal uint32Value = value.cast<nautilus::val<uint32_t>>();
+         uint32Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::UINT64,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal uint64Value = value.cast<nautilus::val<uint64_t>>();
+         uint64Value.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::FLOAT32,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal floatValue = value.cast<nautilus::val<float>>();
+         floatValue.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::FLOAT64,
+     [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+     {
+         const VarVal doubleValue = value.cast<nautilus::val<double>>();
+         doubleValue.writeToMemory(memoryReference);
+         return value;
+     }},
+    {PhysicalType::Type::UNDEFINED, nullptr},
 };
 
 }

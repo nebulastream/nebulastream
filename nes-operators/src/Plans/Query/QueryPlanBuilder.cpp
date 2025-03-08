@@ -18,7 +18,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
@@ -143,7 +142,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
             case Windowing::TimeCharacteristic::Type::EventTime:
                 queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
+                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field.name),
                         timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
                     getNextOperatorId()));
                 break;
@@ -298,7 +297,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::checkAndAddWatermarkAssignment(
             return assignWatermark(
                 queryPlan,
                 Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
+                    NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field.name),
                     timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
         }
     }

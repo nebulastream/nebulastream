@@ -13,14 +13,13 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -63,8 +62,8 @@ void NodeFunctionOr::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);
     /// check if children stamp is correct
-    INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
-    INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
+    INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: {}", getLeft()->getStamp());
+    INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: {}", getRight()->getStamp());
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionOr::deepCopy()
@@ -78,8 +77,8 @@ bool NodeFunctionOr::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
-        && NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().physicalType.type == PhysicalType::Type::BOOLEAN
+        and Util::as<NodeFunction>(this->getChildren()[1])->getStamp().physicalType.type == PhysicalType::Type::BOOLEAN;
 }
 
 

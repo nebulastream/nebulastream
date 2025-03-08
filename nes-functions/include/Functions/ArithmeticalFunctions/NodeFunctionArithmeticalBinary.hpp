@@ -15,11 +15,11 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -40,7 +40,7 @@ public:
     bool validateBeforeLowering() const override;
 
 protected:
-    explicit NodeFunctionArithmeticalBinary(std::shared_ptr<DataType> stamp, std::string name);
+    explicit NodeFunctionArithmeticalBinary(DataType stamp, std::string name);
     explicit NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other);
     ~NodeFunctionArithmeticalBinary() noexcept override = default;
 

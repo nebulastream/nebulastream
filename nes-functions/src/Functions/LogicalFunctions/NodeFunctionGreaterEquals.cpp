@@ -14,12 +14,12 @@
 
 #include <memory>
 #include <sstream>
+#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

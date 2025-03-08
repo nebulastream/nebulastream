@@ -32,6 +32,7 @@
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
 
+#include <DataTypes/DataTypeProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
@@ -40,7 +41,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -56,8 +56,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
         {"CHECKSUM",
-         {{DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Count"},
-          {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
+         {{DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "S$Count"},
+          {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))

@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -29,20 +29,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalMapOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalMapOperator(
-        OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
-        std::shared_ptr<NodeFunctionFieldAssignment> mapFunction);
-    static std::shared_ptr<PhysicalOperator> create(
-        OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
-    static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
+    PhysicalMapOperator(OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<NodeFunctionFieldAssignment> mapFunction);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
+    static std::shared_ptr<PhysicalOperator>
+    create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
 
     std::shared_ptr<Operator> copy() override;
 

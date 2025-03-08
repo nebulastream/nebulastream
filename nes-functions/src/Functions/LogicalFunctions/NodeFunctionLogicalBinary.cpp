@@ -14,22 +14,20 @@
 
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Char.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
-#include "Functions/LogicalFunctions/NodeFunctionLogical.hpp"
-#include "Functions/NodeFunctionBinary.hpp"
 
 
 namespace NES
 {
 NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(std::string name)
-    : NodeFunctionBinary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(name)), LogicalNodeFunction()
+    : NodeFunctionBinary(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN), std::move(name)), LogicalNodeFunction()
 {
 }
 
@@ -58,8 +56,8 @@ bool NodeFunctionLogicalBinary::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
-        || NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
+    if (childLeft->getStamp().physicalType.type == PhysicalType::Type::VARSIZED
+        or childRight->getStamp().physicalType.type == PhysicalType::Type::VARSIZED)
     {
         return false;
     }

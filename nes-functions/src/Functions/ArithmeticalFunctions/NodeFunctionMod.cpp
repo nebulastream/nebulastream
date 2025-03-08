@@ -15,20 +15,18 @@
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 namespace NES
 {
 
-NodeFunctionMod::NodeFunctionMod(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
+NodeFunctionMod::NodeFunctionMod(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
 
 NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeticalBinary(other)
 {
@@ -36,7 +34,7 @@ NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionMod::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto addNode = std::make_shared<NodeFunctionMod>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
+    auto addNode = std::make_shared<NodeFunctionMod>(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32));
     addNode->setChildren(left, right);
     return addNode;
 }

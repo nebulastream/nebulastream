@@ -16,13 +16,12 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -35,7 +34,7 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const std::shared_ptr<Schema>& schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, Schema schema);
 
     virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() = 0;
 
@@ -59,17 +58,13 @@ protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal
-    loadValue(const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
+    static VarVal loadValue(const PhysicalType& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
 
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal storeValue(
-        const std::shared_ptr<PhysicalType>& type,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<int8_t*>& fieldReference,
-        VarVal value);
+    static VarVal
+    storeValue(const PhysicalType& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value);
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);

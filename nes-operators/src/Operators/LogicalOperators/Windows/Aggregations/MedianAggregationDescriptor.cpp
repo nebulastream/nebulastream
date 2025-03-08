@@ -13,16 +13,15 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -60,7 +59,7 @@ void MedianAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (not onField->getStamp().isNumeric())
     {
         NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -86,17 +85,17 @@ std::shared_ptr<WindowAggregationDescriptor> MedianAggregationDescriptor::copy()
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 
-std::shared_ptr<DataType> MedianAggregationDescriptor::getInputStamp()
+DataType MedianAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MedianAggregationDescriptor::getPartialAggregateStamp()
+DataType MedianAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED);
 }
-std::shared_ptr<DataType> MedianAggregationDescriptor::getFinalAggregateStamp()
+DataType MedianAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+    return DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
 }
 
 }

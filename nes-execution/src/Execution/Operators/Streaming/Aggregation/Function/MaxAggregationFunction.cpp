@@ -25,14 +25,13 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
 
 MaxAggregationFunction::MaxAggregationFunction(
-    std::shared_ptr<PhysicalType> inputType,
-    std::shared_ptr<PhysicalType> resultType,
+    PhysicalType inputType,
+    PhysicalType resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
@@ -46,7 +45,7 @@ void MaxAggregationFunction::lift(
 {
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType.type);
 
     /// Updating the max value with the new value, if the new value is larger
     const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
@@ -63,11 +62,11 @@ void MaxAggregationFunction::combine(
 {
     /// Reading the max value from the first aggregation state
     const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto max1 = Nautilus::VarVal::readVarValFromMemory(memAreaMax1, inputType);
+    const auto max1 = Nautilus::VarVal::readVarValFromMemory(memAreaMax1, inputType.type);
 
     /// Reading the max value from the second aggregation state
     const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto max2 = Nautilus::VarVal::readVarValFromMemory(memAreaMax2, inputType);
+    const auto max2 = Nautilus::VarVal::readVarValFromMemory(memAreaMax2, inputType.type);
 
     /// Updating the max value with the new value, if the new value is larger
     if (max2 > max1)
@@ -80,7 +79,7 @@ Nautilus::Record MaxAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType.type);
 
     /// Creating a record with the max value
     Nautilus::Record record;
@@ -92,13 +91,13 @@ void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
 {
     /// Resetting the max value to the minimum value
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::Util::createNautilusMinValue(inputType);
+    const auto max = Nautilus::Util::createNautilusMinValue(inputType.type);
     max.writeToMemory(memAreaMax);
 }
 
 size_t MaxAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType.getSizeInBytes();
 }
 
 }

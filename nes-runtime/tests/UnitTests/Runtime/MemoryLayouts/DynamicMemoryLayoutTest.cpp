@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -27,7 +27,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, publi
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
@@ -41,8 +41,10 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
 
-        schema
-            = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
+        schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                     .addField("t1", PhysicalType::Type::UINT16)
+                     .addField("t2", PhysicalType::Type::BOOLEAN)
+                     .addField("t3", PhysicalType::Type::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;
