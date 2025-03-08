@@ -177,7 +177,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * This property has to be the same over a whole deployment.
      */
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG,
-                                    "4096",
+                                    "1024",
                                     "BufferSizeInBytes.",
                                     {std::make_shared<NumberValidation>()}};
 

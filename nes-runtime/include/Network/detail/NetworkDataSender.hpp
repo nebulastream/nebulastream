@@ -51,9 +51,9 @@ class NetworkDataSender : public BaseChannelType {
         auto watermark = buffer.getWatermark();
         SequenceData sequenceData{buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
         auto creationTimestamp = buffer.getCreationTimestampInMS();
-        auto payloadSize = 1024;
+        auto payloadSize = buffer.getBufferSize();
         if (payloadSize > 1024) {
-            NES_DEBUG("here");
+            NES_ERROR("payload is strange");
         }
         auto* ptr = buffer.getBuffer<uint8_t>();
         auto numOfChildren = buffer.getNumberOfChildrenBuffer();
