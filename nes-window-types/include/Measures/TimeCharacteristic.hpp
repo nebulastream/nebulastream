@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <API/AttributeField.hpp>
-#include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Measures/TimeUnit.hpp>
 
 namespace NES
 {
