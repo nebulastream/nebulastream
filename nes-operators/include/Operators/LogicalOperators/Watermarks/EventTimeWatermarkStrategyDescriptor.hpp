@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing
 {

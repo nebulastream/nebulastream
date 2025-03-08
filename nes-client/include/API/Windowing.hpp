@@ -16,10 +16,10 @@
 
 #include <memory>
 #include <API/Functions/Functions.hpp>
-#include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 /**

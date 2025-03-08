@@ -13,8 +13,8 @@
 */
 #pragma once
 
-#include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>
