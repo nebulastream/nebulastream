@@ -13,7 +13,7 @@
 */
 
 #include <cstdint>
-#include <API/TimeUnit.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
