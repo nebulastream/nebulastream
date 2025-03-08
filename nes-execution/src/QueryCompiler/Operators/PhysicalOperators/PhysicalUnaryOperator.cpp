@@ -14,14 +14,14 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema)
+PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, Schema inputSchema, Schema outputSchema)
     : Operator(id), PhysicalOperator(id), UnaryOperator(id)
 {
     UnaryOperator::setInputSchema(std::move(inputSchema));

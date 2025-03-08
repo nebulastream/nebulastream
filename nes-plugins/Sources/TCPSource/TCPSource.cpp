@@ -41,7 +41,6 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
 {
@@ -59,8 +58,6 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
 {
     /// init physical types
     const std::vector<std::string> schemaKeys;
-    const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
-
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
 }
 

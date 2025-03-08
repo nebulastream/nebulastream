@@ -13,7 +13,7 @@
 */
 #pragma once
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -28,8 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
 {
 protected:
-    PhysicalBinaryOperator(
-        OperatorId id, std::shared_ptr<Schema> leftSchema, std::shared_ptr<Schema> rightSchema, std::shared_ptr<Schema> outputSchema);
+    PhysicalBinaryOperator(OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema);
 
     std::string toString() const override;
 };

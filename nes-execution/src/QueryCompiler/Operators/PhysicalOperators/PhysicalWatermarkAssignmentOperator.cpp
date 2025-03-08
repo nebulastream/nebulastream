@@ -14,7 +14,7 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -25,8 +25,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
@@ -36,8 +36,8 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
 
 std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
     OperatorId id,
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
@@ -49,9 +49,7 @@ std::shared_ptr<Windowing::WatermarkStrategyDescriptor> PhysicalWatermarkAssignm
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
+    Schema inputSchema, Schema outputSchema, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }

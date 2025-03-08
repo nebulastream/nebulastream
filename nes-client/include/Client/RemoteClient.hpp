@@ -17,8 +17,8 @@
 #include <chrono>
 #include <memory>
 #include <API/Query.hpp>
-#include <API/Schema.hpp>
 #include <Client/QueryConfig.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
 
@@ -116,11 +116,11 @@ public:
 
     /**
      * @brief add a logical source
-     * @param std::shared_ptr<Schema> schema of the new logical source
+     * @param Schema schema of the new logical source
      * @param string name of the new logical source
      * @return successfully added
      */
-    bool addLogicalSource(std::shared_ptr<Schema> schema, const std::string& sourceName);
+    bool addLogicalSource(Schema schema, const std::string& sourceName);
 
     /**
      * @brief get logical sources

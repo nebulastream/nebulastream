@@ -26,15 +26,14 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -76,14 +75,14 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        std::shared_ptr<DataType> dataType;
-        if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]); type.has_value())
+        DataType dataType;
+        if (auto type = magic_enum::enum_cast<PhysicalType::Type>(arguments[i]); type.has_value())
         {
-            dataType = DataTypeProvider::provideBasicType(type.value());
+            dataType = DataTypeProvider::provideDataType(type.value());
         }
         else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
         }
         else
         {

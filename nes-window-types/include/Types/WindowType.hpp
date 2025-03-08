@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 
 #include <memory>
 #include <vector>

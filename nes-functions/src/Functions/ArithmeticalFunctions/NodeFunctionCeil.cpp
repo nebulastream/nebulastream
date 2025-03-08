@@ -14,18 +14,18 @@
 
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-NodeFunctionCeil::NodeFunctionCeil(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
+NodeFunctionCeil::NodeFunctionCeil(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
 
 NodeFunctionCeil::NodeFunctionCeil(NodeFunctionCeil* other) : NodeFunctionArithmeticalUnary(other)
 {

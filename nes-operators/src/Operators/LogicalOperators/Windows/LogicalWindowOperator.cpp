@@ -14,8 +14,7 @@
 
 #include <memory>
 #include <sstream>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
@@ -28,7 +27,6 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 
 namespace NES
@@ -86,40 +84,40 @@ std::shared_ptr<Operator> LogicalWindowOperator::copy()
 
 bool LogicalWindowOperator::inferSchema()
 {
-    if (!WindowOperator::inferSchema())
+    if (not WindowOperator::inferSchema())
     {
         return false;
     }
     /// infer the default input and output schema
-    NES_DEBUG("LogicalWindowOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema->toString());
+    NES_DEBUG("LogicalWindowOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema);
 
     /// infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (const auto& agg : windowAggregation)
     {
-        agg->inferStamp(*inputSchema);
+        agg->inferStamp(inputSchema);
     }
 
     ///Construct output schema
     ///First clear()
-    outputSchema->clear();
+    outputSchema = Schema{outputSchema.memoryLayoutType};
 
     /// Distinguish process between different window types (currently time-based and content-based)
     const auto windowType = windowDefinition->getWindowType();
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
     {
         /// typeInference
-        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(*inputSchema))
+        if (!Util::as<Windowing::TimeBasedWindowType>(windowType)->inferStamp(inputSchema))
         {
             return false;
         }
-        const auto& sourceName = inputSchema->getQualifierNameForSystemGeneratedFields();
+        const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
-
-        windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
-        windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-        outputSchema->addField(windowMetaData.windowStartFieldName, BasicType::UINT64);
-        outputSchema->addField(windowMetaData.windowEndFieldName, BasicType::UINT64);
+        // Todo: can we simply access the value here?
+        windowMetaData.windowStartFieldName = newQualifierForSystemField.value() + "$start";
+        windowMetaData.windowEndFieldName = newQualifierForSystemField.value() + "$end";
+        outputSchema.addField(windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
+        outputSchema.addField(windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
@@ -129,7 +127,7 @@ bool LogicalWindowOperator::inferSchema()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
             const auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(*inputSchema))
+            if (!thresholdWindow->inferStamp(inputSchema))
             {
                 return false;
             }
@@ -146,17 +144,16 @@ bool LogicalWindowOperator::inferSchema()
         auto keyList = windowDefinition->getKeys();
         for (const auto& key : keyList)
         {
-            key->inferStamp(*inputSchema);
-            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
+            key->inferStamp(inputSchema);
+            outputSchema.addField(Schema::Field{key->getFieldName(), key->getStamp()});
         }
     }
     for (const auto& agg : windowAggregation)
     {
-        outputSchema->addField(
-            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp()));
+        outputSchema.addField(Schema::Field{NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp()});
     }
 
-    NES_DEBUG("Outputschema for window={}", outputSchema->toString());
+    NES_DEBUG("Outputschema for window={}", outputSchema);
 
     return true;
 }

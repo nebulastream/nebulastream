@@ -24,7 +24,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -47,7 +47,6 @@
 #include <static.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -67,8 +66,8 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<BasicType>& keyTypes,
-    const std::vector<BasicType>& valueTypes,
+    const std::vector<PhysicalType::Type>& keyTypes,
+    const std::vector<PhysicalType::Type>& valueTypes,
     const Nautilus::Configurations::NautilusBackend backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend
@@ -79,15 +78,18 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
     /// Creating a combined schema with the keys and value types.
-    const auto inputSchemaKey = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(keyTypes);
-    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey->getFieldCount());
-    const auto fieldNamesKey = inputSchemaKey->getFieldNames();
-    const auto fieldNamesValue = inputSchemaValue->getFieldNames();
-    inputSchema = Schema::create()->copyFields(inputSchemaKey)->copyFields(inputSchemaValue);
+    auto inputSchemaKey = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(keyTypes);
+    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getNumberOfFields());
+    const auto fieldNamesKey = inputSchemaKey.getFieldNames();
+    const auto fieldNamesValue = inputSchemaValue.getFieldNames();
+    // inputSchema = Schema::create()->copyFields(inputSchemaKey)->copyFields(inputSchemaValue);
+    inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    inputSchema.assignToFields(inputSchemaKey);
+    inputSchema.addFieldsFromOtherSchema(inputSchemaValue);
 
     /// Setting the hash map configurations
-    keySize = inputSchemaKey->getSchemaSizeInBytes();
-    valueSize = inputSchemaValue->getSchemaSizeInBytes();
+    keySize = inputSchemaKey.sizeOfSchemaInBytes;
+    valueSize = inputSchemaValue.sizeOfSchemaInBytes;
     entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
@@ -98,8 +100,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto bufferSize = 4096;
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
-    const auto bufferNeeded
-        = callsToCreateMonotonicValues * ((inputSchema->getSchemaSizeInBytes() * params.numberOfItems) / bufferSize + 1);
+    const auto bufferNeeded = callsToCreateMonotonicValues * ((inputSchema.sizeOfSchemaInBytes * params.numberOfItems) / bufferSize + 1);
     bufferManager = Memory::BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
@@ -107,11 +108,11 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues)
-        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(*inputSchema, fieldNamesKey, fieldNamesValue);
+        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
-    projectionKeys = inputSchemaKey->getFieldNames();
-    projectionValues = inputSchemaValue->getFieldNames();
+    projectionKeys = inputSchemaKey.getFieldNames();
+    projectionValues = inputSchemaValue.getFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
@@ -357,10 +358,10 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema->getSchemaSizeInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.sizeOfSchemaInBytes);
     if (not bufferOutputOpt)
     {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema->getSchemaSizeInBytes());
+        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.sizeOfSchemaInBytes);
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();

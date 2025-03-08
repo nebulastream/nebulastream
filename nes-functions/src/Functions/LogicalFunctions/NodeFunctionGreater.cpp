@@ -13,12 +13,12 @@
 */
 
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

@@ -14,7 +14,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
@@ -41,16 +42,14 @@
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalWindowOperator::PhysicalWindowOperator(
     const OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     : Operator(id)
@@ -76,7 +75,7 @@ std::unique_ptr<Runtime::Execution::Operators::TimeFunction> PhysicalWindowOpera
     switch (timeWindow->getTimeCharacteristic()->getType())
     {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic()->getField()->getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+            if (timeWindow->getTimeCharacteristic()->field.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
             {
                 return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
             }
@@ -85,7 +84,7 @@ std::unique_ptr<Runtime::Execution::Operators::TimeFunction> PhysicalWindowOpera
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
+            auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->field.name;
             auto timeStampField = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionReadField>(timeCharacteristicField);
             return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
                 std::move(timeStampField), timeWindow->getTimeCharacteristic()->getTimeUnit());
@@ -131,10 +130,8 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
     const auto aggregationDescriptors = getWindowDefinition()->getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        const DefaultPhysicalTypeFactory physicalTypeFactory;
-
-        auto physicalInputType = physicalTypeFactory.getPhysicalType(descriptor->getInputStamp());
-        auto physicalFinalType = physicalTypeFactory.getPhysicalType(descriptor->getFinalAggregateStamp());
+        auto physicalInputType = descriptor->getInputStamp().physicalType;
+        auto physicalFinalType = descriptor->getFinalAggregateStamp().physicalType;
 
         auto aggregationInputExpression = FunctionProvider::lowerFunction(descriptor->on());
         if (const auto fieldAccessExpression = NES::Util::as_if<NodeFunctionFieldAccess>(descriptor->as()))
@@ -144,7 +141,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
             {
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
                     /// We assume that the count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
+                    const auto countType = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64).physicalType;
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::AvgAggregationFunction>(
                         physicalInputType,
                         physicalFinalType,
@@ -160,7 +157,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Count: {
                     /// We assume that a count is a u64
-                    const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
+                    const auto countType = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64).physicalType;
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
                         countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;

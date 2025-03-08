@@ -16,14 +16,13 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/LogicalSource.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Catalogs::Source
 {
@@ -39,12 +38,14 @@ void SourceCatalog::addDefaultSources()
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("Sourcecatalog addDefaultSources");
-    const std::shared_ptr<Schema> schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                              .addField("id", PhysicalType::Type::UINT32)
+                              .addField("value", PhysicalType::Type::UINT64);
     bool success = addLogicalSource("default_logical", schema);
     INVARIANT(success, "error while add default_logical");
 }
 
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
+bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
@@ -183,7 +184,7 @@ size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId)
     return removedElements;
 }
 
-std::shared_ptr<Schema> SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName)
+Schema SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end())
@@ -284,7 +285,7 @@ std::vector<std::shared_ptr<SourceCatalogEntry>> SourceCatalog::getPhysicalSourc
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
 
-std::map<std::string, std::shared_ptr<Schema>> SourceCatalog::getAllLogicalSource()
+std::map<std::string, Schema> SourceCatalog::getAllLogicalSource()
 {
     return logicalSourceNameToSchemaMapping;
 }
@@ -293,16 +294,16 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
 {
     std::unique_lock lock(catalogMutex);
     std::map<std::string, std::string> allLogicalSourceAsString;
-    const std::map<std::string, std::shared_ptr<Schema>> allLogicalSource = getAllLogicalSource();
+    const std::map<std::string, Schema> allLogicalSource = getAllLogicalSource();
 
     for (const auto& [name, schema] : allLogicalSource)
     {
-        allLogicalSourceAsString[name] = schema->toString();
+        allLogicalSourceAsString[name] = fmt::format("{}", schema);
     }
     return allLogicalSourceAsString;
 }
 
-bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
+bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist

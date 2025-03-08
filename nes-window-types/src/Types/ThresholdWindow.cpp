@@ -17,7 +17,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/ThresholdWindow.hpp>

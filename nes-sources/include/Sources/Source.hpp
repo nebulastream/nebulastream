@@ -32,11 +32,6 @@ public:
     Source() = default;
     virtual ~Source() = default;
 
-    Source(const Source&) = delete;
-    Source& operator=(const Source&) = delete;
-    Source(Source&&) = delete;
-    Source& operator=(Source&&) = delete;
-
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
     virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;

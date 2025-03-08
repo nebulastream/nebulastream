@@ -21,8 +21,6 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Util
 {
@@ -54,74 +52,66 @@ void logProxy(const char* message, const LogLevel logLevel)
     }
 }
 
-VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType)
+VarVal createNautilusMinValue(const PhysicalType::Type physicalType)
 {
-    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+    switch (physicalType)
     {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::INT_8:
-                return Util::createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::INT_16:
-                return Util::createNautilusConstValue(std::numeric_limits<int16_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::INT_32:
-                return Util::createNautilusConstValue(std::numeric_limits<int32_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::INT_64:
-                return Util::createNautilusConstValue(std::numeric_limits<int64_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_8:
-                return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_16:
-                return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_32:
-                return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_64:
-                return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::min(), physicalType);
-            case BasicPhysicalType::NativeType::FLOAT:
-                return Util::createNautilusConstValue(std::numeric_limits<float>::min(), physicalType);
-            case BasicPhysicalType::NativeType::DOUBLE:
-                return Util::createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
-            default: {
-                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
-            }
+        // Todo: make 'getLimits' a function of DataType, then a a single function here
+        case PhysicalType::Type::INT8:
+            return Util::createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
+        case PhysicalType::Type::INT16:
+            return Util::createNautilusConstValue(std::numeric_limits<int16_t>::min(), physicalType);
+        case PhysicalType::Type::INT32:
+            return Util::createNautilusConstValue(std::numeric_limits<int32_t>::min(), physicalType);
+        case PhysicalType::Type::INT64:
+            return Util::createNautilusConstValue(std::numeric_limits<int64_t>::min(), physicalType);
+        case PhysicalType::Type::UINT8:
+            return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::min(), physicalType);
+        case PhysicalType::Type::UINT16:
+            return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::min(), physicalType);
+        case PhysicalType::Type::UINT32:
+            return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::min(), physicalType);
+        case PhysicalType::Type::UINT64:
+            return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::min(), physicalType);
+        case PhysicalType::Type::FLOAT32:
+            return Util::createNautilusConstValue(std::numeric_limits<float>::min(), physicalType);
+        case PhysicalType::Type::FLOAT64:
+            return Util::createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
+        default: {
+            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
         }
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
+    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
 }
 
-VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType)
+VarVal createNautilusMaxValue(const PhysicalType::Type physicalType)
 {
-    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+    switch (physicalType)
     {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::INT_8:
-                return Util::createNautilusConstValue(std::numeric_limits<int8_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::INT_16:
-                return Util::createNautilusConstValue(std::numeric_limits<int16_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::INT_32:
-                return Util::createNautilusConstValue(std::numeric_limits<int32_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::INT_64:
-                return Util::createNautilusConstValue(std::numeric_limits<int64_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_8:
-                return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_16:
-                return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_32:
-                return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::UINT_64:
-                return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::max(), physicalType);
-            case BasicPhysicalType::NativeType::FLOAT:
-                return Util::createNautilusConstValue(std::numeric_limits<float>::max(), physicalType);
-            case BasicPhysicalType::NativeType::DOUBLE:
-                return Util::createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
-            default: {
-                throw NotImplemented("Physical Type: type {} is currently not implemented", physicalType->toString());
-            }
+        case PhysicalType::Type::INT8:
+            return Util::createNautilusConstValue(std::numeric_limits<int8_t>::max(), physicalType);
+        case PhysicalType::Type::INT16:
+            return Util::createNautilusConstValue(std::numeric_limits<int16_t>::max(), physicalType);
+        case PhysicalType::Type::INT32:
+            return Util::createNautilusConstValue(std::numeric_limits<int32_t>::max(), physicalType);
+        case PhysicalType::Type::INT64:
+            return Util::createNautilusConstValue(std::numeric_limits<int64_t>::max(), physicalType);
+        case PhysicalType::Type::UINT8:
+            return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::max(), physicalType);
+        case PhysicalType::Type::UINT16:
+            return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::max(), physicalType);
+        case PhysicalType::Type::UINT32:
+            return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::max(), physicalType);
+        case PhysicalType::Type::UINT64:
+            return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::max(), physicalType);
+        case PhysicalType::Type::FLOAT32:
+            return Util::createNautilusConstValue(std::numeric_limits<float>::max(), physicalType);
+        case PhysicalType::Type::FLOAT64:
+            return Util::createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
+        default: {
+            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
         }
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", physicalType->toString());
 }
 
 }

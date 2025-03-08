@@ -13,9 +13,8 @@
 */
 #include <fstream>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
@@ -784,7 +783,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
         {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-            timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
+            timeCharacteristicDetails.set_field(timeCharacteristic->field.name);
         }
         else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
         {
@@ -892,7 +891,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
     {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
+        timeCharacteristicDetails.set_field(timeCharacteristic->field.name);
     }
     else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -1081,7 +1080,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
 }
 
 void OperatorSerializationUtil::serializeSinkDescriptor(
-    std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
+    Schema schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto serializedSinkDescriptor
         = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf

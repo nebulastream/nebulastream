@@ -20,8 +20,8 @@
 #include <random>
 #include <sstream>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -43,10 +43,6 @@
 #include <options.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 #include <PagedVectorTestUtils.hpp>
 
@@ -97,12 +93,12 @@ public:
 TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", BasicType::UINT64)
-                                ->addField("value3", BasicType::UINT64);
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", PhysicalType::Type::UINT64)
+                                .addField("value3", PhysicalType::Type::UINT64);
     constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
 
     const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
@@ -114,12 +110,12 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value3", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value3", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
     constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
 
     const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
@@ -131,13 +127,13 @@ TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+    const auto testSchema
+        = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("value1", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
     constexpr auto pageSize = 8UL;
     constexpr auto sizeVarSizedData = 2 * pageSize;
 
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager, sizeVarSizedData);
 
     const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
@@ -149,12 +145,12 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value3", BasicType::FLOAT64);
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value3", PhysicalType::Type::FLOAT64);
     constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
 
     const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
@@ -166,11 +162,11 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", BasicType::UINT64);
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", PhysicalType::Type::UINT64);
     constexpr auto pageSize = 73UL;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
 
     const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
@@ -182,16 +178,16 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
-    const auto entrySize = testSchema->getSchemaSizeInBytes();
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
+    const auto entrySize = testSchema.sizeOfSchemaInBytes;
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 2UL;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
 
     std::vector<std::vector<Memory::TupleBuffer>> allRecords;
-    auto allFields = testSchema->getFieldNames();
+    auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
         auto records = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
@@ -211,17 +207,17 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value3", BasicType::FLOAT64);
-    const auto entrySize = testSchema->getSchemaSizeInBytes();
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value3", PhysicalType::Type::FLOAT64);
+    const auto entrySize = testSchema.sizeOfSchemaInBytes;
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
 
     std::vector<std::vector<Memory::TupleBuffer>> allRecords;
-    auto allFields = testSchema->getFieldNames();
+    auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
         auto records = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
@@ -241,17 +237,17 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value3", BasicType::FLOAT64);
-    const auto entrySize = testSchema->getSchemaSizeInBytes();
+    const auto testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value3", PhysicalType::Type::FLOAT64);
+    const auto entrySize = testSchema.sizeOfSchemaInBytes;
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
 
     std::vector<std::vector<Memory::TupleBuffer>> allRecords;
-    auto allFields = testSchema->getFieldNames();
+    auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
         auto records = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);
@@ -271,17 +267,17 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("value2", DataTypeProvider::provideDataType(LogicalType::VARSIZED))
-                                ->addField("value3", BasicType::FLOAT64);
-    const auto entrySize = testSchema->getSchemaSizeInBytes();
+    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+                                .addField("value1", PhysicalType::Type::UINT64)
+                                .addField("value2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
+                                .addField("value3", PhysicalType::Type::FLOAT64);
+    const auto entrySize = testSchema.sizeOfSchemaInBytes;
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
-    const auto projections = testSchema->getFieldNames();
+    const auto projections = testSchema.getFieldNames();
 
     std::vector<std::vector<Memory::TupleBuffer>> allRecords;
-    auto allFields = testSchema->getFieldNames();
+    auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
         auto records = createMonotonicallyIncreasingValues(testSchema, numberOfItems, *bufferManager);

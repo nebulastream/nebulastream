@@ -57,6 +57,31 @@ std::optional<bool> from_chars<bool>(const std::string_view input)
     return {};
 }
 
+template <>
+std::optional<double> from_chars<double>(const std::string_view input)
+{
+    const std::string str(trimWhiteSpaces(input));
+    try
+    {
+        return std::stod(str);
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+template <>
+std::optional<std::string> from_chars<std::string>(const std::string_view input)
+{
+    return std::string(input);
+}
+
+template <>
+std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
+{
+    return input;
+}
+
 std::string formatFloat(std::floating_point auto value)
 {
     std::string formatted = fmt::format("{:.6f}", value);
@@ -77,30 +102,6 @@ std::string formatFloat(std::floating_point auto value)
 /// explicit instantiations
 template std::string formatFloat(float);
 template std::string formatFloat(double);
-
-template <>
-std::optional<double> from_chars<double>(const std::string_view input)
-{
-    const std::string str(trimWhiteSpaces(input));
-    try
-    {
-        return std::stod(str);
-    }
-    catch (...)
-    {
-        return {};
-    }
-}
-template <>
-std::optional<std::string> from_chars<std::string>(const std::string_view input)
-{
-    return std::string(input);
-}
-template <>
-std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
-{
-    return input;
-}
 
 std::string replaceAll(std::string_view origin, const std::string_view search, const std::string_view replace)
 {

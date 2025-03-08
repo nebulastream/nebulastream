@@ -15,10 +15,10 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -28,7 +28,7 @@ namespace NES
 class NodeFunctionCase : public NodeFunction
 {
 public:
-    explicit NodeFunctionCase(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionCase(DataType stamp);
     ~NodeFunctionCase() noexcept override = default;
 
     /**

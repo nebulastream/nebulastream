@@ -14,8 +14,8 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -23,13 +23,10 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp)
-    : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataType stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
 
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
 
@@ -84,8 +81,8 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
-        field->updateFieldName(existingField.value()->getName());
+        const auto stamp = getAssignment()->getStamp().join(field->getStamp());
+        field->updateFieldName(existingField.value().name);
         field->setStamp(stamp);
     }
     else
@@ -102,7 +99,7 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
         }
     }
 
-    if (NES::Util::instanceOf<Undefined>(field->getStamp()))
+    if (field->getStamp().physicalType.type == PhysicalType::Type::UNDEFINED)
     {
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
@@ -110,7 +107,7 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
     else
     {
         /// the field already has a type, check if it is compatible with the assignment
-        if (*field->getStamp() != *getAssignment()->getStamp())
+        if (field->getStamp() != getAssignment()->getStamp())
         {
             NES_WARNING(
                 "Field {} stamp is incompatible with assignment stamp. Overwriting field stamp with assignment stamp.",

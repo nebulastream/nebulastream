@@ -14,22 +14,21 @@
 
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionConcat.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
 
 bool NodeFunctionConcat::validateBeforeLowering() const
 {
-    return NES::Util::instanceOf<VariableSizedDataType>(getLeft()->getStamp())
-        and NES::Util::instanceOf<VariableSizedDataType>(getRight()->getStamp());
+    return getLeft()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED
+        and getRight()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED;
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()
@@ -48,7 +47,7 @@ bool NodeFunctionConcat::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-NodeFunctionConcat::NodeFunctionConcat(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
+NodeFunctionConcat::NodeFunctionConcat(DataType stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
 {
 }
 

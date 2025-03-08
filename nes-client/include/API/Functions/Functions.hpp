@@ -19,7 +19,6 @@
 #include <vector>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -79,7 +78,7 @@ FunctionItem Attribute(std::string name);
 /// todo remove this case if we added type inference at Runtime from the operator tree.
 /// todo rename to field if conflict with legacy code is resolved.
 /// @param fieldName, type
-FunctionItem Attribute(std::string name, BasicType type);
+FunctionItem Attribute(std::string name, PhysicalType::Type type);
 
 /// WHEN(condition,value) can only be used as part of the left vector in a CASE() function.
 /// Allows to only return the value function if condition is met.

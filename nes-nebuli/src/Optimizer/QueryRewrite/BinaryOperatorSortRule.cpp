@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
@@ -63,12 +63,12 @@ void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<BinaryOperator>&
 
     /// Extract schema and qualifier name for left and right children
     auto leftInputSchema = binaryOperator->getLeftInputSchema();
-    auto leftQualifierName = leftInputSchema->getQualifierNameForSystemGeneratedFields();
+    auto leftQualifierName = leftInputSchema.getQualifierNameForSystemGeneratedFields();
     auto rightInputSchema = binaryOperator->getRightInputSchema();
-    auto rightQualifierName = rightInputSchema->getQualifierNameForSystemGeneratedFields();
+    auto rightQualifierName = rightInputSchema.getQualifierNameForSystemGeneratedFields();
 
     /// Compare left and right children qualifier name
-    if (leftQualifierName.compare(rightQualifierName) > 0)
+    if (leftQualifierName.has_value() and rightQualifierName.has_value() and leftQualifierName == rightQualifierName)
     {
         /// Remove the left children and insert it back to the binary operator
         /// if right qualifier is smaller than left qualifier alphabetically

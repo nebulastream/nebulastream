@@ -16,7 +16,6 @@
 #include <memory>
 #include <tuple>
 
-#include <API/AttributeField.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -41,7 +40,7 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
-            const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
+            const auto& timeStampFieldName = windowType.getTimeCharacteristic()->field.name;
             auto timeStampFieldRecord = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionReadField>(timeStampFieldName);
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
                 std::move(timeStampFieldRecord), windowType.getTimeCharacteristic()->getTimeUnit());

@@ -14,15 +14,13 @@
 
 #include <memory>
 #include <vector>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
@@ -269,7 +267,7 @@ TEST_F(VarValTest, writeToMemoryTest)
 
 TEST_F(VarValTest, readFromMemoryTest)
 {
-    auto testVarValReadFromMemory = []<typename T>(const T value, const std::shared_ptr<PhysicalType>& type)
+    auto testVarValReadFromMemory = []<typename T>(const T value, const PhysicalType::Type& type)
     {
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));
@@ -279,29 +277,18 @@ TEST_F(VarValTest, readFromMemoryTest)
         return 0;
     };
 
-    const DefaultPhysicalTypeFactory factory;
-    testVarValReadFromMemory.operator()<int8_t>(
-        -someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT8)));
-    testVarValReadFromMemory.operator()<int16_t>(
-        minI8Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT16)));
-    testVarValReadFromMemory.operator()<int32_t>(
-        minI16Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT32)));
-    testVarValReadFromMemory.operator()<int64_t>(
-        minI32Minus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::INT64)));
-    testVarValReadFromMemory.operator()<uint8_t>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT8)));
-    testVarValReadFromMemory.operator()<uint16_t>(
-        maxUI8Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT16)));
-    testVarValReadFromMemory.operator()<uint32_t>(
-        maxUI16Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT32)));
-    testVarValReadFromMemory.operator()<uint64_t>(
-        maxUI32Plus1, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64)));
-    testVarValReadFromMemory.operator()<float>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT32)));
-    testVarValReadFromMemory.operator()<double>(
-        someRandomNumber, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::FLOAT64)));
-    testVarValReadFromMemory.operator()<bool>(true, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
-    testVarValReadFromMemory.operator()<bool>(false, factory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)));
+    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, PhysicalType::Type::INT8);
+    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, PhysicalType::Type::INT16);
+    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, PhysicalType::Type::INT32);
+    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, PhysicalType::Type::INT64);
+    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, PhysicalType::Type::UINT8);
+    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, PhysicalType::Type::UINT16);
+    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, PhysicalType::Type::UINT32);
+    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, PhysicalType::Type::UINT64);
+    testVarValReadFromMemory.operator()<float>(someRandomNumber, PhysicalType::Type::FLOAT32);
+    testVarValReadFromMemory.operator()<double>(someRandomNumber, PhysicalType::Type::FLOAT64);
+    testVarValReadFromMemory.operator()<bool>(true, PhysicalType::Type::BOOLEAN);
+    testVarValReadFromMemory.operator()<bool>(false, PhysicalType::Type::BOOLEAN);
 }
 
 TEST_F(VarValTest, operatorBoolTest)

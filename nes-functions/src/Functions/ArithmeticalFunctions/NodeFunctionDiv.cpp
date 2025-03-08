@@ -15,16 +15,16 @@
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-NodeFunctionDiv::NodeFunctionDiv(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") {};
+NodeFunctionDiv::NodeFunctionDiv(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") {};
 
 NodeFunctionDiv::NodeFunctionDiv(NodeFunctionDiv* other) : NodeFunctionArithmeticalBinary(other)
 {

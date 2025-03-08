@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -34,14 +36,6 @@
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/Char.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES::Systest
 {
@@ -67,14 +61,14 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         }
         const auto nameTrimmed = Util::trimWhiteSpaces(fieldAndType[0]);
         const auto typeTrimmed = Util::trimWhiteSpaces(fieldAndType[1]);
-        std::shared_ptr<DataType> dataType;
-        if (auto type = magic_enum::enum_cast<BasicType>(typeTrimmed); type.has_value())
+        DataType dataType;
+        if (auto type = magic_enum::enum_cast<PhysicalType::Type>(typeTrimmed); type.has_value())
         {
-            dataType = DataTypeProvider::provideBasicType(type.value());
+            dataType = DataTypeProvider::provideDataType(type.value());
         }
         else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
         }
         else
         {
@@ -345,30 +339,30 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 bool operator!=(const FieldResult& left, const FieldResult& right)
 {
     /// Check if the type is equal
-    if (*left.type != *right.type)
+    if (left.type != right.type)
     {
         return true;
     }
 
     /// Check if the value is equal by casting it to the correct type and comparing it (we allow a small delta)
-    if (NES::Util::instanceOf<VariableSizedDataType>(left.type) || NES::Util::instanceOf<Char>(left.type))
+    if (left.type.isVarSized() or left.type.isChar())
     {
         return left.valueAsString != right.valueAsString;
     }
-    if (NES::Util::as_if<Boolean>(left.type))
+    if (left.type.isBoolean())
     {
         return not compareStringAsTypeWithError<bool>(left.valueAsString, right.valueAsString);
     }
-    if (NES::Util::as_if<Integer>(left.type))
+    if (left.type.isInteger())
     {
         return not compareStringAsTypeWithError<int64_t>(left.valueAsString, right.valueAsString);
     }
-    if (NES::Util::as_if<Float>(left.type))
+    if (left.type.isFloat())
     {
         return not compareStringAsTypeWithError<double>(left.valueAsString, right.valueAsString);
     }
 
-    throw UnknownPhysicalType("Unknown type {}", left.type->toString());
+    throw UnknownPhysicalType("Unknown type {}", left.type);
 }
 bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
 {
@@ -397,9 +391,9 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
                     "Field {} does not match {} ({}) != {} ({})",
                     name,
                     field.valueAsString,
-                    field.type->toString(),
+                    field.type,
                     right.at(name).valueAsString,
-                    right.at(name).type->toString());
+                    right.at(name).type);
                 return false;
             }
             return true;

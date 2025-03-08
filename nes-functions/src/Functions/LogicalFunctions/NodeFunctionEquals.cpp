@@ -14,14 +14,13 @@
 
 #include <memory>
 #include <sstream>
+#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
@@ -77,8 +76,8 @@ bool NodeFunctionEquals::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
-    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
-        != NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
+    if (childLeft->getStamp().physicalType.type == PhysicalType::Type::VARSIZED
+        ^ childRight->getStamp().physicalType.type == PhysicalType::Type::VARSIZED)
     {
         return false;
     }

@@ -28,8 +28,7 @@
 #include <utility>
 #include <vector>
 #include <strings.h>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -42,9 +41,6 @@
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::InputFormatters
 {
@@ -175,43 +171,43 @@ auto parseIntegerString()
 }
 
 void addBasicTypeParseFunction(
-    const BasicPhysicalType& basicPhysicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
+    const PhysicalType::Type physicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
 {
-    switch (basicPhysicalType.nativeType)
+    switch (physicalType)
     {
-        case NES::BasicPhysicalType::NativeType::INT_8: {
+        case NES::PhysicalType::Type::INT8: {
             fieldParseFunctions.emplace_back(parseIntegerString<int8_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::INT_16: {
+        case NES::PhysicalType::Type::INT16: {
             fieldParseFunctions.emplace_back(parseIntegerString<int16_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::INT_32: {
+        case NES::PhysicalType::Type::INT32: {
             fieldParseFunctions.emplace_back(parseIntegerString<int32_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::INT_64: {
+        case NES::PhysicalType::Type::INT64: {
             fieldParseFunctions.emplace_back(parseIntegerString<int64_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::UINT_8: {
+        case NES::PhysicalType::Type::UINT8: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint8_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::UINT_16: {
+        case NES::PhysicalType::Type::UINT16: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint16_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::UINT_32: {
+        case NES::PhysicalType::Type::UINT32: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint32_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::UINT_64: {
+        case NES::PhysicalType::Type::UINT64: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint64_t>());
             break;
         }
-        case NES::BasicPhysicalType::NativeType::FLOAT: {
+        case NES::PhysicalType::Type::FLOAT32: {
             const auto validateAndParseFloat
                 = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
             {
@@ -225,7 +221,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(std::move(validateAndParseFloat));
             break;
         }
-        case NES::BasicPhysicalType::NativeType::DOUBLE: {
+        case NES::PhysicalType::Type::FLOAT64: {
             const auto validateAndParseDouble
                 = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
             {
@@ -239,7 +235,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(std::move(validateAndParseDouble));
             break;
         }
-        case NES::BasicPhysicalType::NativeType::CHAR: {
+        case NES::PhysicalType::Type::CHAR: {
             ///verify that only a single char was transmitted
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
@@ -251,7 +247,7 @@ void addBasicTypeParseFunction(
                 });
             break;
         }
-        case NES::BasicPhysicalType::NativeType::BOOLEAN: {
+        case NES::PhysicalType::Type::BOOLEAN: {
             ///verify that a valid bool was transmitted (valid{true,false,0,1})
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
@@ -273,23 +269,26 @@ void addBasicTypeParseFunction(
                 });
             break;
         }
-        case NES::BasicPhysicalType::NativeType::UNDEFINED:
+        case NES::PhysicalType::Type::UNDEFINED: {
             NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
+            break;
+        }
+        default:
+            NES_FATAL_ERROR("Unknown physical type: {}", magic_enum::enum_name(physicalType));
     }
 }
 
 CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
     : fieldDelimiter(std::move(fieldDelimiter))
-    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getFieldCount()))
+    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.sizeOfSchemaInBytes, schema.getNumberOfFields()))
 {
-    this->fieldSizes.reserve(schema.getFieldCount());
-    this->fieldParseFunctions.reserve(schema.getFieldCount());
-    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
-    const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    physicalTypes.reserve(schema.getFieldCount());
-    for (const std::shared_ptr<AttributeField>& field : schema)
+    this->fieldSizes.reserve(schema.getNumberOfFields());
+    this->fieldParseFunctions.reserve(schema.getNumberOfFields());
+    std::vector<PhysicalType> physicalTypes;
+    physicalTypes.reserve(schema.getNumberOfFields());
+    for (const auto& field : schema.getFields())
     {
-        physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
+        physicalTypes.emplace_back(field.dataType.physicalType);
     }
 
     /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
@@ -298,11 +297,11 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
     for (const auto& physicalType : physicalTypes)
     {
         /// Store the size of the field in bytes (for offset calculations).
-        this->fieldSizes.emplace_back(physicalType->size());
+        this->fieldSizes.emplace_back(physicalType.getSizeInBytes());
         /// Store the parsing function in a vector.
-        if (const auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+        if (physicalType.type != PhysicalType::Type::VARSIZED)
         {
-            addBasicTypeParseFunction(*basicPhysicalType, this->fieldParseFunctions);
+            addBasicTypeParseFunction(physicalType.type, this->fieldParseFunctions);
         }
         else
         {

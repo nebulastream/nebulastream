@@ -13,8 +13,7 @@
 */
 #include <memory>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
@@ -55,14 +54,14 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
 
     std::vector<std::shared_ptr<NodeFunction>> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
-    for (const auto& field : *inputSchema)
+    for (const auto& field : inputSchema.getFields())
     {
         /// compute the new name for the field by added new source name as field qualifier
-        std::string fieldName = field->getName();
+        std::string fieldName = field.name;
         /// Compute new name without field qualifier
         std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         /// Compute field access and field rename function
-        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), fieldName);
+        auto originalField = NodeFunctionFieldAccess::create(field.dataType, fieldName);
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
         projectionAttributes.push_back(fieldRenameFunction);
     }

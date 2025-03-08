@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
@@ -22,9 +23,6 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 
 namespace NES::Nautilus
@@ -90,107 +88,92 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
+VarVal VarVal::castToType(PhysicalType::Type type) const
 {
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(type))
+    switch (type)
     {
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                return {cast<nautilus::val<bool>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                return {cast<nautilus::val<int8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                return {cast<nautilus::val<int16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                return {cast<nautilus::val<int32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                return {cast<nautilus::val<int64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                return {cast<nautilus::val<uint8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                return {cast<nautilus::val<uint16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                return {cast<nautilus::val<uint32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                return {cast<nautilus::val<uint64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                return {cast<nautilus::val<float>>()};
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                return {cast<nautilus::val<double>>()};
-            };
-            default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
-            };
+        case PhysicalType::Type::BOOLEAN: {
+            return {cast<nautilus::val<bool>>()};
+        };
+        case PhysicalType::Type::INT8: {
+            return {cast<nautilus::val<int8_t>>()};
+        };
+        case PhysicalType::Type::INT16: {
+            return {cast<nautilus::val<int16_t>>()};
+        };
+        case PhysicalType::Type::INT32: {
+            return {cast<nautilus::val<int32_t>>()};
+        };
+        case PhysicalType::Type::INT64: {
+            return {cast<nautilus::val<int64_t>>()};
+        };
+        case PhysicalType::Type::UINT8: {
+            return {cast<nautilus::val<uint8_t>>()};
+        };
+        case PhysicalType::Type::UINT16: {
+            return {cast<nautilus::val<uint16_t>>()};
+        };
+        case PhysicalType::Type::UINT32: {
+            return {cast<nautilus::val<uint32_t>>()};
+        };
+        case PhysicalType::Type::UINT64: {
+            return {cast<nautilus::val<uint64_t>>()};
+        };
+        case PhysicalType::Type::FLOAT32: {
+            return {cast<nautilus::val<float>>()};
+        };
+        case PhysicalType::Type::FLOAT64: {
+            return {cast<nautilus::val<double>>()};
+        };
+        case PhysicalType::Type::VARSIZED: {
+            return cast<VariableSizedData>();
         }
-    }
-    else if (const auto variableSizedData = std::dynamic_pointer_cast<VariableSizedDataType>(type))
-    {
-        return cast<VariableSizedData>();
-    }
-    else
-    {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
+        default: {
+            throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", magic_enum::enum_name(type)));
+        }
     }
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, PhysicalType::Type type)
 {
-    if (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type))
+    switch (type)
     {
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                return {Util::readValueFromMemRef<bool>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                return {Util::readValueFromMemRef<int8_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                return {Util::readValueFromMemRef<int16_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                return {Util::readValueFromMemRef<int32_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                return {Util::readValueFromMemRef<int64_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                return {Util::readValueFromMemRef<uint8_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                return {Util::readValueFromMemRef<uint16_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                return {Util::readValueFromMemRef<uint32_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                return {Util::readValueFromMemRef<uint64_t>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                return {Util::readValueFromMemRef<float>(memRef)};
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                return {Util::readValueFromMemRef<double>(memRef)};
-            };
-            default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
-            };
-        }
-    }
-    else
-    {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
+        case PhysicalType::Type::BOOLEAN: {
+            return {Util::readValueFromMemRef<bool>(memRef)};
+        };
+        case PhysicalType::Type::INT8: {
+            return {Util::readValueFromMemRef<int8_t>(memRef)};
+        };
+        case PhysicalType::Type::INT16: {
+            return {Util::readValueFromMemRef<int16_t>(memRef)};
+        };
+        case PhysicalType::Type::INT32: {
+            return {Util::readValueFromMemRef<int32_t>(memRef)};
+        };
+        case PhysicalType::Type::INT64: {
+            return {Util::readValueFromMemRef<int64_t>(memRef)};
+        };
+        case PhysicalType::Type::UINT8: {
+            return {Util::readValueFromMemRef<uint8_t>(memRef)};
+        };
+        case PhysicalType::Type::UINT16: {
+            return {Util::readValueFromMemRef<uint16_t>(memRef)};
+        };
+        case PhysicalType::Type::UINT32: {
+            return {Util::readValueFromMemRef<uint32_t>(memRef)};
+        };
+        case PhysicalType::Type::UINT64: {
+            return {Util::readValueFromMemRef<uint64_t>(memRef)};
+        };
+        case PhysicalType::Type::FLOAT32: {
+            return {Util::readValueFromMemRef<float>(memRef)};
+        };
+        case PhysicalType::Type::FLOAT64: {
+            return {Util::readValueFromMemRef<double>(memRef)};
+        };
+        default: {
+            throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", magic_enum::enum_name(type)));
+        };
     }
 }
 

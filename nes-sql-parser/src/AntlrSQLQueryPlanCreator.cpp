@@ -26,6 +26,8 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
@@ -48,8 +50,6 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Parsers
 {
@@ -825,51 +825,51 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
-        std::shared_ptr<DataType> dataType = nullptr;
+        DataType dataType{};
         /// Signed Integers
         if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT64);
         }
 
         /// Unsigned Integers
         else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT64);
         }
 
         /// Floating Point
         else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
         }
         else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT32);
+            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32);
         }
         else
         {
@@ -885,7 +885,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
 
-        const auto dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+        const auto dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
         auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
 
         helper.functionBuilder.push_back(constFunctionItem);
