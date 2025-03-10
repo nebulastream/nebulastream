@@ -66,7 +66,7 @@ PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryI
         // 3. Pin all unpinned operators
         pinOperators(pinnedUpStreamOperators, pinnedDownStreamOperators);
         copy =
-    CopiedPinnedOperators::create(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
+    CopiedPinnedOperators::createMinimalCopy(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
 
         // 4. Compute query sub plans
         auto computedQuerySubPlans =
@@ -120,9 +120,9 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         return;
     }
 
-    else if (logicalOperator->hasProperty("offload")) {
+    if (logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        logicalOperator->addProperty(PINNED_WORKER_ID, std::any_cast<WorkerId>(logicalOperator->getProperty("offload")));
+        logicalOperator->addProperty(PINNED_WORKER_ID, std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
         for (const auto& parent : logicalOperator->getParents()) {
             identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
         }

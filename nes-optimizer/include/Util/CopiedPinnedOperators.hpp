@@ -44,10 +44,17 @@ class CopiedPinnedOperators {
                                         const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                         std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap);
 
+  static CopiedPinnedOperators
+createMinimalCopy(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                              std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap);
     std::set<LogicalOperatorPtr> copiedPinnedUpStreamOperators;
     std::set<LogicalOperatorPtr> copiedPinnedDownStreamOperators;
 
   private:
+  static bool shouldCopyParent(const LogicalOperatorPtr& op,
+                      const std::set<LogicalOperatorPtr>& pinnedUps,
+                      const std::set<LogicalOperatorPtr>& pinnedDowns);
     CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                           const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 };

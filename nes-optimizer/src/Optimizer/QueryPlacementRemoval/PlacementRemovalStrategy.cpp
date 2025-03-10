@@ -124,9 +124,12 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             auto operatorToProcess = operatorsToProcessInBFSOrder.front();
             operatorsToProcessInBFSOrder.pop();
             auto operatorId = operatorToProcess->getId();
+
             idsOfOperatorsToBeProcessed.emplace_back(operatorId);
             for (const auto& parent : operatorToProcess->getParents()) {
-                operatorsToProcessInBFSOrder.emplace(parent->as<LogicalOperator>());
+                if (shouldVisit(parent->as<LogicalOperator>(), upStreamPinnedOperators, downStreamPinnedOperators)) {
+                    operatorsToProcessInBFSOrder.push(parent->as<LogicalOperator>());
+                }
             }
         }
 
@@ -205,7 +208,9 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                 if (downStreamInToBePlacedState && downStreamOperator->getOperatorState() != OperatorState::TO_BE_PLACED) {
                     downStreamInToBePlacedState = false;
                 }
-                operatorsToProcessInBFSOrder.emplace(downStreamOperator);
+                if (shouldVisit(downStreamOperator, upStreamPinnedOperators, downStreamPinnedOperators)) {
+                    operatorsToProcessInBFSOrder.emplace(downStreamOperator);
+                }
             }
 
             // 12. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
@@ -301,6 +306,28 @@ bool PlacementRemovalStrategy::unlockTopologyNodesInSelectedPath() {
         }
     });
     return true;
+}
+
+bool PlacementRemovalStrategy::shouldVisit(const LogicalOperatorPtr& op,
+                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators)
+{
+    auto state = op->getOperatorState();
+
+    bool isPinnedUp = (pinnedUpStreamOperators.find(op) != pinnedUpStreamOperators.end());
+    bool isPinnedDown = (pinnedDownStreamOperators.find(op) != pinnedDownStreamOperators.end());
+    bool isPinned = isPinnedUp || isPinnedDown;
+
+    if (isPinned) return true;
+
+    if (state == OperatorState::TO_BE_REMOVED  ||
+        state == OperatorState::TO_BE_REPLACED ||
+        state == OperatorState::TO_BE_PLACED)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQueryId) {

@@ -104,7 +104,7 @@ bool OffloadPlanner::tryCreatingNewLinkToEnableAlternativePath() {
     // TODO: Implement logic that:
     // 1. Identifies two nodes that if connected form a new path.
     // 2. Calls topology->addTopologyNodeAsChild() to create a new link.
-    // This is complex and very query-specific. For now, let's just log and return false.
+    // This is complex and very query-specific. For now, just log and return false.
 
     NES_WARNING("tryCreatingNewLinkToEnableAlternativePath: Not implemented, returning false.");
     return false;
@@ -277,7 +277,7 @@ OffloadPlanner::findDifferentWorkerOperatorsDown(const OperatorPtr& startOp,
         if (current->hasProperty(Optimizer::PINNED_WORKER_ID)) {
             auto pinned = std::any_cast<WorkerId>(current->getProperty(Optimizer::PINNED_WORKER_ID));
             if (pinned == originWorkerId) {
-                current->addProperty("offload", targetWorkerId);
+                current->addProperty("WORKER_ID_TO_OFFLOAD", targetWorkerId);
                 auto logOp = current->as<LogicalOperator>();
                 if (logOp) {
                     for (auto& parent : logOp->getParents()) {
@@ -321,7 +321,7 @@ OffloadPlanner::findDifferentWorkerOperatorsUp(const OperatorPtr& startOp,
         if (current->hasProperty(Optimizer::PINNED_WORKER_ID)) {
             auto pinned = std::any_cast<WorkerId>(current->getProperty(Optimizer::PINNED_WORKER_ID));
             if (pinned == originWorkerId) {
-                current->addProperty("offload", targetWorkerId);
+                current->addProperty("WORKER_ID_TO_OFFLOAD", targetWorkerId);
                 auto logOp = current->as<LogicalOperator>();
                 if (logOp) {
                     for (auto& child : logOp->getChildren()) {

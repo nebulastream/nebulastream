@@ -129,6 +129,9 @@ class PlacementRemovalStrategy {
      */
     void updateDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
+ bool shouldVisit(const LogicalOperatorPtr& op,
+                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
     /**
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id

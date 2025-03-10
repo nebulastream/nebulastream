@@ -179,36 +179,31 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
         topology->assignAlternativeNodes(topologyNodesWithUpStreamPinnedOperators, pinnedDownStreamTopologyNodeIds);
     }
 
-    // Retry until we successfully lock the nodes.
     while (!success) {
-        // 1. For each source node, find paths to one of the downstream nodes.
+        // 1. Perform path selection
         std::vector<std::vector<TopologyNodePtr>> allSourcesAllPaths;
-        for (auto sourceId : topologyNodesWithUpStreamPinnedOperators) {
-            auto perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
 
-            /*
-            if ((faultTolerance == FaultToleranceType::M || faultTolerance == FaultToleranceType::AS)
-                && perSourcePaths.size() == 1)
-            {
-                bool linkCreated = false;
-                if (!perSourcePaths[0].empty()) {
-                    linkCreated = topology->tryForceAlternativeLinkOnSinglePath(perSourcePaths[0]);
-                }
-                if (linkCreated) {
-                    topology->assignAlternativeNodes(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
-                    perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
-                }
+        if (workerToOffload != INVALID_WORKER_NODE_ID) {
+            auto pathIncludingOffload = topology->findPathThatIncludesNode(
+                topologyNodesWithUpStreamPinnedOperators,
+                topologyNodesWithDownStreamPinnedOperators,
+                workerToOffload
+            );
+            if (!pathIncludingOffload.empty()) {
+                allSourcesAllPaths.push_back(std::move(pathIncludingOffload));
             }
-            */
-
-            for (auto& p : perSourcePaths) {
-                allSourcesAllPaths.push_back(std::move(p));
+        } else {
+            for (auto sourceId : topologyNodesWithUpStreamPinnedOperators) {
+                auto perSourcePaths = findPath({sourceId}, topologyNodesWithDownStreamPinnedOperators);
+                for (auto& p : perSourcePaths) {
+                    allSourcesAllPaths.push_back(std::move(p));
+                }
             }
         }
 
-        // 2. Process all found paths: build the set of nodes to lock and update pathsFound.
+        // 2. Process all found paths
         std::set<WorkerId> nodesToLock;
-        pathsFound.clear();  // Clear previous pathsFound if retrying.
+        pathsFound.clear();
         for (auto& singlePath : allSourcesAllPaths) {
             if (!singlePath.empty()) {
                 PathInfo pathInfo;
@@ -224,10 +219,10 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
 
         // 3. Attempt to lock the topology nodes.
         success = lockTopologyNodes(nodesToLock);
-        // Optionally, if locking fails, implement an exponential back-off or a retry limit here.
     }
     return success;
 }
+
 
 
 
@@ -567,7 +562,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             copyOfPinnedOperator->addProperty(CO_LOCATED_UPSTREAM_OPERATORS, true);
         }
 
-        //2.3. If the operator is in the state placed then check if it is one of the pinned downstream operator
+        //2.3. If the operator is in the state placed then check if it is one of the pinned downstream operators
         if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
             //2.3.1. Check if this operator in the pinned downstream operator list.
             const auto& isPinnedDownStreamOperator = std::find_if(pinnedDownStreamOperators.begin(),

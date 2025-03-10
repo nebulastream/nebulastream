@@ -244,7 +244,9 @@ public:
             auto wcfg = std::make_shared<WorkerConfiguration>();
             wcfg->numberOfBuffersPerEpoch = 2;
             wcfg->numWorkerThreads = 1;
-            wcfg->loadBalancing = 1000;
+            wcfg->loadBalancing = 0;
+            wcfg->connectSinksAsync = true;
+            wcfg->connectSourceEventChannelsAsync = true;
             cfgs.push_back(wcfg);
         }
         return cfgs;
@@ -305,12 +307,15 @@ TEST_F(MeerkatTest, testResourceInfoExchange) {
 TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
 
     coordinatorConfig->optimizer.enableIncrementalPlacement = true;
+    coordinatorConfig->worker.loadBalancing = 0;
+    coordinatorConfig->worker.connectSinksAsync = true;
+    coordinatorConfig->worker.connectSourceEventChannelsAsync = true;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
 
-    size_t numIntermediates = 4;
+    size_t numIntermediates = 8;
 
     auto intermediateConfigs = generateWorkerConfigs(numIntermediates);
 
@@ -322,13 +327,22 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
         intermediates.push_back(w);
     }
 
-    NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfig1));
-    wrkLeaf->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
-    EXPECT_TRUE(wrkLeaf->start(false, true));
+    workerConfig1->loadBalancing = 0;
+    workerConfig1->connectSinksAsync = true;
+    workerConfig1->connectSourceEventChannelsAsync = true;
+    NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+    EXPECT_TRUE(wrkLeaf1->start(false, true));
 
+    workerConfig2->loadBalancing = 0;
+    workerConfig2->connectSinksAsync = true;
+    workerConfig2->connectSourceEventChannelsAsync = true;
+    NesWorkerPtr wrkLeaf2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    wrkLeaf2->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
+    EXPECT_TRUE(wrkLeaf2->start(false, true));
 
-    wrkLeaf->removeParent(crd->getNesWorker()->getWorkerId());
-
+    wrkLeaf1->removeParent(crd->getNesWorker()->getWorkerId());
+    wrkLeaf2->removeParent(crd->getNesWorker()->getWorkerId());
 
     size_t half = numIntermediates / 2;
 
@@ -354,10 +368,10 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     }
 
     if (half > 0) {
-        wrkLeaf->addParent(intermediates[half - 1]->getWorkerId());
+        wrkLeaf1->addParent(intermediates[half - 1]->getWorkerId());
     }
     if (numIntermediates > half) {
-        wrkLeaf->addParent(intermediates[numIntermediates - 1]->getWorkerId());
+        wrkLeaf2->addParent(intermediates[numIntermediates - 1]->getWorkerId());
     }
 
     auto query = Query::from("window").filter(Attribute("id") < 10).sink(NullOutputSinkDescriptor::create());
@@ -366,7 +380,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
         query.getQueryPlan(),
         Optimizer::PlacementStrategy::BottomUp,
-        FaultToleranceType::M
+        FaultToleranceType::NONE
     );
 
     auto queryCatalog = crd->getQueryCatalog();
@@ -390,7 +404,8 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     for (auto & w : intermediates) {
         EXPECT_TRUE(w->stop(true));
     }
-    EXPECT_TRUE(wrkLeaf->stop(true));
+    EXPECT_TRUE(wrkLeaf1->stop(true));
+    EXPECT_TRUE(wrkLeaf2->stop(true));
     EXPECT_TRUE(crd->stopCoordinator(true));
 }
 

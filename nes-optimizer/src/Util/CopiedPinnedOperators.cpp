@@ -94,6 +94,112 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
     return CopiedPinnedOperators(copyOfPinnedUpStreamOperators, copyOfPinnedDownStreamOperators);
 }
 
+CopiedPinnedOperators
+CopiedPinnedOperators::createMinimalCopy(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                              std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap)
+{
+    std::set<LogicalOperatorPtr> copyOfPinnedUpStreamOperators;
+    std::set<LogicalOperatorPtr> copyOfPinnedDownStreamOperators;
+
+    std::queue<LogicalOperatorPtr> operatorsToProcess;
+    std::unordered_map<OperatorId, LogicalOperatorPtr> mapOfCopiedOperators;
+
+    std::set<OperatorId> pinnedUpStreamOperatorIds;
+    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        pinnedUpStreamOperatorIds.emplace(pinnedUpStreamOperator->getId());
+    }
+    std::set<OperatorId> pinnedDownStreamOperatorIds;
+    for (auto pinnedDownStreamOperator : pinnedDownStreamOperators) {
+        pinnedDownStreamOperatorIds.emplace(pinnedDownStreamOperator->getId());
+    }
+
+    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        auto opId = pinnedUpStreamOperator->getId();
+        operatorsToProcess.emplace(pinnedUpStreamOperator);
+        mapOfCopiedOperators[opId] = pinnedUpStreamOperator->copy()->as<LogicalOperator>();
+    }
+
+    while (!operatorsToProcess.empty()) {
+        auto operatorToProcess = operatorsToProcess.front();
+        operatorsToProcess.pop();
+
+        OperatorId operatorId = operatorToProcess->getId();
+        operatorIdToOriginalOperatorMap[operatorId] = operatorToProcess;
+
+        LogicalOperatorPtr operatorCopy = mapOfCopiedOperators[operatorId];
+
+        if (pinnedUpStreamOperatorIds.count(operatorId) > 0) {
+            copyOfPinnedUpStreamOperators.emplace(operatorCopy);
+        }
+        if (pinnedDownStreamOperatorIds.count(operatorId) > 0) {
+            copyOfPinnedDownStreamOperators.emplace(operatorCopy);
+        }
+
+        const auto& parents = operatorToProcess->getParents();
+        for (auto& parentNode : parents) {
+            auto parentOp = parentNode->as<LogicalOperator>();
+            auto parentOpId = parentOp->getId();
+
+            // 1) Check if connected to pinnedDownStreamOperator
+            bool connectedToPinnedDownstreamOperator = std::any_of(
+                pinnedDownStreamOperators.begin(),
+                pinnedDownStreamOperators.end(),
+                [&](const auto& pinnedDownStreamOperator) {
+                    OperatorId pDownId = parentOpId;
+                    return (pinnedDownStreamOperator->getId() == pDownId) ||
+                           pinnedDownStreamOperator->getChildWithOperatorId(pDownId);
+                });
+
+            if (!connectedToPinnedDownstreamOperator) {
+                continue;
+            }
+
+            // 2) Check if parent's state is pinned or not purely PLACED
+            //    i.e. skip if (state == PLACED && !pinned).
+            if (!shouldCopyParent(parentOp, pinnedUpStreamOperators, pinnedDownStreamOperators)) {
+                continue;
+            }
+
+            // 3) If we get here, we DO want to copy/traverse the parent
+            LogicalOperatorPtr parentOpCopy;
+            if (mapOfCopiedOperators.contains(parentOpId)) {
+                parentOpCopy = mapOfCopiedOperators[parentOpId];
+            } else {
+                parentOpCopy = parentOp->copy()->as<LogicalOperator>();
+                mapOfCopiedOperators[parentOpId] = parentOpCopy;
+            }
+
+            operatorCopy->addParent(parentOpCopy);
+
+            operatorsToProcess.push(parentOp);
+        }
+    }
+
+    return CopiedPinnedOperators(copyOfPinnedUpStreamOperators, copyOfPinnedDownStreamOperators);
+}
+
+bool CopiedPinnedOperators::shouldCopyParent(const LogicalOperatorPtr& op,
+                      const std::set<LogicalOperatorPtr>& pinnedUps,
+                      const std::set<LogicalOperatorPtr>& pinnedDowns)
+{
+    if (!op) return false;
+
+    if (pinnedUps.find(op) != pinnedUps.end())   return true;
+    if (pinnedDowns.find(op) != pinnedDowns.end()) return true;
+
+    auto state = op->getOperatorState();
+    switch(state) {
+        case OperatorState::TO_BE_PLACED:
+        case OperatorState::TO_BE_REMOVED:
+        case OperatorState::TO_BE_REPLACED:
+            return true;
+        default:
+            // e.g. PLACED or REMOVED
+                return false;
+    }
+}
+
 CopiedPinnedOperators::CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators)
     : copiedPinnedUpStreamOperators(pinnedUpStreamOperators), copiedPinnedDownStreamOperators(pinnedDownStreamOperators) {}
