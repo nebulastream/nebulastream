@@ -1,0 +1,50 @@
+# name: milestone/ClusterMonitoring.test
+# description: Queries from ClusterMonitoring
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+## We define two sources, as the lightsaber paper provides its own data file and the schema does not 100% match the original data under https://github.com/lsds/LightSaber/blob/master/resources/datasets/google-cluster-data/google-cluster-data.txt
+## For example, the data from the lightsaber paper is a subset of the original data, as it only contains 16k tuples.
+## Furthermore, as we are having heavily out-of-order data, we need to use float64 for the cpu, ram and disk fields to ensure that the results are deterministic for the original data. The lightsaber data uses float32 for these fields.
+##
+SourceCSV monitoringLightsaber UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT32 cpu FLOAT32 ram FLOAT32 disk INT16 constraints TESTDATA/large/cluster_monitoring/google-cluster-data-lightsaber.csv
+SourceCSV monitoringClusterData UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT64 cpu FLOAT64 ram FLOAT64 disk BOOLEAN constraints TESTDATA/large/cluster_monitoring/google-cluster-data-original.csv
+
+SINK q2Sink UINT64 monitoringLightsaber$start UINT64 monitoringLightsaber$end FLOAT32 monitoringLightsaber$totalCpu UINT64 monitoringLightsaber$jobId
+
+# These test is currently disabled, as we cannot ensure deterministic results for the queries
+# The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.
+# This is fine for the query 2 but not for the query 1.
+# Query 1 with "original" data
+# SELECT start, end, SUM(cpu) AS totalCpu
+# FROM monitoringClusterData
+# WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+# INTO q1Sink;
+#
+# Query 1 with Lightsaber data
+# SELECT start, end, SUM(cpu) AS totalCpu
+# FROM monitoringLightsaber
+# WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+# INTO q1Sink;
+#
+#
+
+# Query 2 with "original" data
+SELECT start, end, SUM(cpu) AS totalCpu, jobId
+FROM monitoringClusterData
+WHERE eventType == 3
+GROUP BY jobId
+WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
+----
+3094778,7192484640
+
+# Query 2 with Lightsaber data
+SELECT start, end, SUM(cpu) AS totalCpu, jobId
+FROM monitoringLightsaber
+WHERE eventType == 3
+GROUP BY jobId
+WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
+----
+3403, 7612888
