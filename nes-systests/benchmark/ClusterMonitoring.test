@@ -1,0 +1,29 @@
+# name: milestone/ClusterMonitoring.test
+# description: Queries from ClusterMonitoring
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+SourceCSV monitoring UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT32 cpu FLOAT32 ram FLOAT32 disk INT16 constraints TESTDATA/large/cluster_monitoring/google-cluster-data.csv
+
+SINK q1Sink UINT64 monitoring$start UINT64 monitoring$end FLOAT32 monitoring$totalCpu
+SINK q2Sink UINT64 monitoring$start UINT64 monitoring$end FLOAT32 monitoring$totalCpu UINT64 monitoring$jobId
+
+# Query 1
+# This test is currently disabled, as we cannot ensure deterministic results for the queries
+# The problem is that the queries perform a floating point average aggregation. Due to our out-of-order processing, the results may differ slightly.
+# SELECT start, end, SUM(cpu) AS totalCpu
+# FROM monitoring
+# WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+# INTO q1Sink;
+# ----
+# 702, 1315542
+
+# Query 2
+SELECT start, end, SUM(cpu) AS totalCpu, jobId
+FROM monitoring
+WHERE eventType == 3
+GROUP BY jobId
+WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
+----
+3403, 7673808
