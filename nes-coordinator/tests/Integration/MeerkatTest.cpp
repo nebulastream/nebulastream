@@ -315,7 +315,7 @@ TEST_F(MeerkatTest, testMeerkatDiamondTopology) {
     EXPECT_NE(crd->startCoordinator(false), 0UL);
 
 
-    size_t numIntermediates = 8;
+    size_t numIntermediates = 16;
 
     auto intermediateConfigs = generateWorkerConfigs(numIntermediates);
 
