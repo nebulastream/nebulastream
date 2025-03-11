@@ -29,9 +29,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>

@@ -16,7 +16,7 @@
 
 #include <string>
 #include <fmt/std.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Configurations
 {

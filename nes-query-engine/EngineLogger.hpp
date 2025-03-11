@@ -14,7 +14,6 @@
 
 #pragma once
 #include <Util/Logger/Logger.hpp>
-#include <magic_enum.hpp>
 
 /// This allows the log level of the query engine to be controlled independently of other components. By default, the level is set to info.
 

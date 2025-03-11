@@ -23,7 +23,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Runtime
 {

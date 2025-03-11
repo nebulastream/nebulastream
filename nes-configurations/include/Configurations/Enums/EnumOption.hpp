@@ -17,9 +17,9 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Configurations
 {

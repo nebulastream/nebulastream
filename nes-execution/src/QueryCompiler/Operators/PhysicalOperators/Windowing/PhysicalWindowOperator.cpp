@@ -39,8 +39,8 @@
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 

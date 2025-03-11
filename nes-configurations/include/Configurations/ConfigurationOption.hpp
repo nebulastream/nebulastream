@@ -22,8 +22,8 @@
 #include <utility>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
-#include <magic_enum.hpp>
 
 namespace NES::Configurations
 {

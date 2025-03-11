@@ -22,7 +22,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <QueryEngineConfiguration.hpp>
-#include <magic_enum.hpp>
 
 std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::QueryEngineConfiguration::numberOfThreadsValidator()
 {

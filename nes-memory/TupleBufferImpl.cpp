@@ -19,9 +19,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
-#include <magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <mutex>

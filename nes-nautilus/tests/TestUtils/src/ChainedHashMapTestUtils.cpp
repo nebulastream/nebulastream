@@ -38,11 +38,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
-#include <magic_enum.hpp>
 #include <options.hpp>
 #include <static.hpp>
 #include <val.hpp>

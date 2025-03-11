@@ -23,7 +23,6 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
 #include <nautilus/std/string.h>
-#include <magic_enum.hpp>
 
 
 namespace NES::QueryCompilation::Util

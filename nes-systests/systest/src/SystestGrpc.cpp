@@ -15,9 +15,9 @@
 
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestGrpc.hpp>
-#include <magic_enum.hpp>
 
 GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel))
 {
