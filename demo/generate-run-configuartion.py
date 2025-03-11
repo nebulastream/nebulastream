@@ -112,6 +112,9 @@ def parse_args():
         "-i", "--input", required=True, help="Path to the input YAML file"
     )
     parser.add_argument(
+        "-b", "--build-dir", help="CMake build dir with NES executables"
+    )
+    parser.add_argument(
         "-o", "--output", help="Output directory for XML files"
     )
     return parser.parse_args()
@@ -121,6 +124,7 @@ def main():
     args = parse_args()
     input_file = args.input
     output_dir = args.output
+    build_dir = args.build_dir
 
     # Read YAML file
     with open(input_file, "r") as f:
@@ -143,6 +147,25 @@ def main():
             "buffers": node.get("buffers", 1024),
         }
         ports.append(node_data)
+
+    if build_dir:
+        build_dir = Path(build_dir)
+
+        sesh = "foo"
+        subprocess.run(["tmux", "new-session", "-d", "-s", sesh, "sleep", "1"], check=True)
+
+        for node_data in ports:
+            args = [
+                f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
+                f"--grpc=127.0.0.1:{node_data['grpc']}",
+                f"--data=127.0.0.1:{node_data['connection']}",
+                "--worker.queryCompiler.nautilusBackend=COMPILER",
+                f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
+            ]
+            snw = build_dir / "nes-single-node-worker" / "nes-single-node-worker"
+            subprocess.run(["tmux", "new-window", "-d", "-t", sesh, snw, *args], check=True)
+
+        print(f"Nodes are running in tmux session {sesh}")
 
     if output_dir:
         gen_run_conf(input_file, output_dir, ports)
