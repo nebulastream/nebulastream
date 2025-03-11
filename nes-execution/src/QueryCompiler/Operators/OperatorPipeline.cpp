@@ -23,8 +23,8 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::QueryCompilation
 {

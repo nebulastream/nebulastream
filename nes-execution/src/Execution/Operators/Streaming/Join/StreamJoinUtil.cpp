@@ -17,8 +17,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution::Util

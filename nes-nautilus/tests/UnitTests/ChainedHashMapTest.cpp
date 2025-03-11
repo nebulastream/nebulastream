@@ -24,11 +24,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <nautilus/Engine.hpp>
 #include <BaseUnitTest.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <NautilusTestUtils.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::Interface

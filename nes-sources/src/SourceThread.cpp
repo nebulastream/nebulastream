@@ -34,7 +34,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SourceThread.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Sources
 {

@@ -29,11 +29,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>

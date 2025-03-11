@@ -24,8 +24,8 @@
 #include <variant>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Configurations
 {

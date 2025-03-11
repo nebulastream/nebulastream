@@ -29,7 +29,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Sources
 {
