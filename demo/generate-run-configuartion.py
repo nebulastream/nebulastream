@@ -4,20 +4,46 @@ import argparse
 import traceback
 
 
-def generate_single_node_xml(topology_name, node_data, output_dir):
+def gen_clion_xml(name: str, program: str, args: list[str], redirect_input_paths: bool, focus_tool_window_before_run: bool):
     """
-    Generates an XML configuration file for a single node.
     """
-    # XML template for a single node
-    xml_template = f"""
+    return f"""
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}" type="CMakeRunConfiguration" factoryName="Application" focusToolWindowBeforeRun="true" PROGRAM_PARAMS="--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']} --grpc=127.0.0.1:{node_data['grpc']} --data=127.0.0.1:{node_data['connection']} --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-single-node-worker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-single-node-worker">
+  <configuration
+    name="{name}"
+    TARGET_NAME="{program}"
+    PROGRAM_PARAMS="{" ".join(args)}"
+    RUN_TARGET_PROJECT_NAME="NES"
+    RUN_TARGET_NAME="{program}"
+    CONFIG_NAME="Debug"
+    default="false"
+    ELEVATE="false"
+    EMULATE_TERMINAL="false"
+    factoryName="Application"
+    {'focusToolWindowBeforeRun="true"' if focus_tool_window_before_run else ""}
+    PASS_PARENT_ENVS_2="true"
+    PROJECT_NAME="NES"
+    REDIRECT_INPUT="false"
+    {'REDIRECT_INPUT_PATH="$FilePath$"' if redirect_input_paths else ""}
+    type="CMakeRunConfiguration"
+    USE_EXTERNAL_CONSOLE="false"
+  >
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>
   </configuration>
 </component>
     """
+
+
+def generate_single_node_xml(topology_name, node_data, output_dir):
+    """
+    Generates an XML configuration file for a single node.
+    """
+    # XML template for a single node
+    name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
+    args = [f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}", f"--grpc=127.0.0.1:{node_data['grpc']}", f"--data=127.0.0.1:{node_data['connection']}", "--worker.queryCompiler.nautilusBackend=COMPILER", f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}"]
+    xml_template = gen_clion_xml(name, "nes-single-node-worker", args, False, True)
     # Generate output filename
     filename = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}.xml"
     output_path = os.path.join(output_dir, filename)
@@ -29,15 +55,8 @@ def generate_single_node_xml(topology_name, node_data, output_dir):
 
 
 def generate_nebuli_dump(topology_name, topology_file, output_dir):
-    nebuli_start = f"""
-    <component name="ProjectRunConfigurationManager">
-      <configuration default="false" name="nebuli dump {topology_name}" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-t {topology_file} dump -i $FilePath$ -o /tmp" REDIRECT_INPUT="false" REDIRECT_INPUT_PATH="$FilePath$" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-nebuli" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-nebuli">
-        <method v="2">
-          <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-        </method>
-      </configuration>
-    </component>
-    """
+    args = ["-t", topology_file, "dump", "-i", "$FilePath$", "-o", "/tmp"]
+    nebuli_start = gen_clion_xml(f"nebuli dump {topology_name}", "nes-nebuli", args, True, False)
 
     filename = f"Run_nebuli_dump_{topology_name}.xml"
     output_path = os.path.join(output_dir, filename)
@@ -49,15 +68,8 @@ def generate_nebuli_dump(topology_name, topology_file, output_dir):
 
 
 def generate_nebuli_start(topology_name, topology_file, output_dir):
-    nebuli_start = f"""
-    <component name="ProjectRunConfigurationManager">
-      <configuration default="false" name="nebuli start {topology_name}" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-t {topology_file} register -x -i $FilePath$" REDIRECT_INPUT="false" REDIRECT_INPUT_PATH="$FilePath$" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="NES" TARGET_NAME="nes-nebuli" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="NES" RUN_TARGET_NAME="nes-nebuli">
-        <method v="2">
-          <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-        </method>
-      </configuration>
-    </component>
-    """
+    args = ["-t", topology_file, "register", "-x", "-i", "$FilePath$"]
+    nebuli_start = gen_clion_xml(f"nebuli start {topology_name}", "nes-nebuli", args, True, False)
 
     filename = f"Run_nebuli_{topology_name}.xml"
     output_path = os.path.join(output_dir, filename)
