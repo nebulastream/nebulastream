@@ -5,15 +5,7 @@ import traceback
 from pathlib import Path
 
 
-def gen_clion_xml(
-    name: str,
-    program: str,
-    args: list[str],
-    redirect_input_paths: bool,
-    focus_tool_window_before_run: bool,
-    output_dir: Path,
-):
-    """ """
+def gen_clion_xml(name: str, program: str, args: list[str], output_dir: Path):
     xml = f"""
 <component name="ProjectRunConfigurationManager">
   <configuration
@@ -27,11 +19,10 @@ def gen_clion_xml(
     ELEVATE="false"
     EMULATE_TERMINAL="false"
     factoryName="Application"
-    {'focusToolWindowBeforeRun="true"' if focus_tool_window_before_run else ""}
     PASS_PARENT_ENVS_2="true"
     PROJECT_NAME="NES"
     REDIRECT_INPUT="false"
-    {'REDIRECT_INPUT_PATH="$FilePath$"' if redirect_input_paths else ""}
+    {'REDIRECT_INPUT_PATH="$FilePath$"' if "$FilePath$" in args else ""}
     type="CMakeRunConfiguration"
     USE_EXTERNAL_CONSOLE="false"
   >
@@ -132,7 +123,7 @@ def main():
                 "--worker.queryCompiler.nautilusBackend=COMPILER",
                 f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
             ]
-            gen_clion_xml(name, "nes-single-node-worker", args, False, True, output_dir)
+            gen_clion_xml(name, "nes-single-node-worker", args, output_dir)
 
         # Generate XML file for all nodes
         generate_all_nodes_xml(topology_name, ports, output_dir)
@@ -141,16 +132,12 @@ def main():
             "Nebuli Start Query",
             "nes-nebuli",
             ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
-            True,
-            False,
             output_dir,
         )
         gen_clion_xml(
             "Nebuli Dump Query",
             "nes-nebuli",
             ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
-            True,
-            False,
             output_dir,
         )
 
