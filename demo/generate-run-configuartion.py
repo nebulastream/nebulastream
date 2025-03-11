@@ -2,12 +2,19 @@ import yaml
 import os
 import argparse
 import traceback
+from pathlib import Path
 
 
-def gen_clion_xml(name: str, program: str, args: list[str], redirect_input_paths: bool, focus_tool_window_before_run: bool):
-    """
-    """
-    return f"""
+def gen_clion_xml(
+    name: str,
+    program: str,
+    args: list[str],
+    redirect_input_paths: bool,
+    focus_tool_window_before_run: bool,
+    output_dir: Path,
+):
+    """ """
+    xml = f"""
 <component name="ProjectRunConfigurationManager">
   <configuration
     name="{name}"
@@ -35,49 +42,10 @@ def gen_clion_xml(name: str, program: str, args: list[str], redirect_input_paths
 </component>
     """
 
-
-def generate_single_node_xml(topology_name, node_data, output_dir):
-    """
-    Generates an XML configuration file for a single node.
-    """
-    # XML template for a single node
-    name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
-    args = [f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}", f"--grpc=127.0.0.1:{node_data['grpc']}", f"--data=127.0.0.1:{node_data['connection']}", "--worker.queryCompiler.nautilusBackend=COMPILER", f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}"]
-    xml_template = gen_clion_xml(name, "nes-single-node-worker", args, False, True)
-    # Generate output filename
-    filename = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}.xml"
-    output_path = os.path.join(output_dir, filename)
-
-    # Write XML to file
-    with open(output_path, "w") as f:
-        f.write(xml_template)
-    print(f"Generated: {output_path}")
-
-
-def generate_nebuli_dump(topology_name, topology_file, output_dir):
-    args = ["-t", topology_file, "dump", "-i", "$FilePath$", "-o", "/tmp"]
-    nebuli_start = gen_clion_xml(f"nebuli dump {topology_name}", "nes-nebuli", args, True, False)
-
-    filename = f"Run_nebuli_dump_{topology_name}.xml"
-    output_path = os.path.join(output_dir, filename)
-
-    # Write XML to file
-    with open(output_path, "w") as f:
-        f.write(nebuli_start)
-    print(f"Generated: {output_path}")
-
-
-def generate_nebuli_start(topology_name, topology_file, output_dir):
-    args = ["-t", topology_file, "register", "-x", "-i", "$FilePath$"]
-    nebuli_start = gen_clion_xml(f"nebuli start {topology_name}", "nes-nebuli", args, True, False)
-
-    filename = f"Run_nebuli_{topology_name}.xml"
-    output_path = os.path.join(output_dir, filename)
-
-    # Write XML to file
-    with open(output_path, "w") as f:
-        f.write(nebuli_start)
-    print(f"Generated: {output_path}")
+    filename = f"{name}.xml"
+    with open(output_dir / filename, "w", encoding="utf-8") as f:
+        f.write(xml)
+    print(f"Generated: {output_dir / filename}")
 
 
 def generate_all_nodes_xml(topology_name, all_nodes, output_dir):
@@ -126,7 +94,7 @@ def parse_args():
 def main():
     args = parse_args()
     input_file = args.input
-    output_dir = args.output
+    output_dir = Path(args.output)
 
     try:
         # Read YAML file
@@ -156,13 +124,35 @@ def main():
         # Generate XML files for each node
         for node_data in ports:
             # Extract connection and grpc ports
-
-            generate_single_node_xml(topology_name, node_data, output_dir)
+            name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
+            args = [
+                f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
+                f"--grpc=127.0.0.1:{node_data['grpc']}",
+                f"--data=127.0.0.1:{node_data['connection']}",
+                "--worker.queryCompiler.nautilusBackend=COMPILER",
+                f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
+            ]
+            gen_clion_xml(name, "nes-single-node-worker", args, False, True, output_dir)
 
         # Generate XML file for all nodes
         generate_all_nodes_xml(topology_name, ports, output_dir)
-        generate_nebuli_start(topology_name, os.path.abspath(input_file), output_dir)
-        generate_nebuli_dump(topology_name, os.path.abspath(input_file), output_dir)
+        topo_file = os.path.abspath(input_file)
+        gen_clion_xml(
+            "Nebuli Start Query",
+            "nes-nebuli",
+            ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
+            True,
+            False,
+            output_dir,
+        )
+        gen_clion_xml(
+            "Nebuli Dump Query",
+            "nes-nebuli",
+            ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
+            True,
+            False,
+            output_dir,
+        )
 
     except FileNotFoundError:
         traceback.print_exc()
