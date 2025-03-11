@@ -45,60 +45,61 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     return *this;
 }
 
-std::shared_ptr<FileWriter>
-MemoryController::getLeftFileWriter(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::shared_ptr<FileWriter> MemoryController::getLeftFileWriter(const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId)
 {
     std::stringstream ss;
     ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-std::shared_ptr<FileWriter>
-MemoryController::getRightFileWriter(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::shared_ptr<FileWriter> MemoryController::getRightFileWriter(const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId)
 {
     std::stringstream ss;
     ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-std::shared_ptr<FileReader>
-MemoryController::getLeftFileReader(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::shared_ptr<FileReader> MemoryController::getLeftFileReader(const SliceEnd sliceEnd, const PipelineId)
 {
     std::stringstream ss;
-    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_";
     return getFileReader(ss.str());
 }
 
-std::shared_ptr<FileReader>
-MemoryController::getRightFileReader(const PipelineId, const SliceEnd sliceEnd, const WorkerThreadId threadId)
+std::shared_ptr<FileReader> MemoryController::getRightFileReader(const SliceEnd sliceEnd, const PipelineId)
 {
     std::stringstream ss;
-    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_";
     return getFileReader(ss.str());
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
+    std::lock_guard lock(mutex_);
+
     const auto it = fileWriters.find(filePath);
     if (it != fileWriters.end())
     {
         return it->second;
     }
-    fileWriters[filePath] = std::make_shared<FileWriter>(filePath);
-    return fileWriters[filePath];
+    auto fileWriter = std::make_shared<FileWriter>(filePath);
+    fileWriters[filePath] = fileWriter;
+    return fileWriter;
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(const std::string& filePath)
 {
-    const auto writerIt = fileWriters.find(filePath);
-    if (writerIt != fileWriters.end())
+    std::lock_guard lock(mutex_);
+
+    for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
-        fileWriters.erase(writerIt);
-        return std::make_shared<FileReader>(filePath);
+        const std::string writerFilePath = it->first;
+        if (writerFilePath.find(filePath) != std::string::npos)
+        {
+            fileWriters.erase(it);
+            return std::make_shared<FileReader>(writerFilePath);
+        }
     }
-    //std::stringstream ss;
-    //ss << "File " << filePath << " was not opened for writing or has already been read. Cannot open for reading.";
-    //throw antlr4::IllegalArgumentException(ss.str());
     return nullptr;
 }
 

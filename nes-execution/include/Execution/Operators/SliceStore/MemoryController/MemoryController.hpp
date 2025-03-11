@@ -29,17 +29,18 @@ public:
     MemoryController& operator=(const MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
 
-    std::shared_ptr<FileWriter> getLeftFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
-    std::shared_ptr<FileWriter> getRightFileWriter(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileWriter> getLeftFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId);
+    std::shared_ptr<FileWriter> getRightFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId);
 
-    std::shared_ptr<FileReader> getLeftFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
-    std::shared_ptr<FileReader> getRightFileReader(PipelineId pipelineId, SliceEnd sliceEnd, WorkerThreadId threadId);
+    std::shared_ptr<FileReader> getLeftFileReader(SliceEnd sliceEnd, PipelineId pipelineId);
+    std::shared_ptr<FileReader> getRightFileReader(SliceEnd sliceEnd, PipelineId pipelineId);
 
 private:
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
     std::shared_ptr<FileReader> getFileReader(const std::string& filePath);
 
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
+    std::mutex mutex_;
 
     // IO-Auslastung
     // StatisticsEngine

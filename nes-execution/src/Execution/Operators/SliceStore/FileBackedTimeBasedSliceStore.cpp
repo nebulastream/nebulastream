@@ -148,7 +148,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark, const PipelineId pipelineId)
+FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
@@ -173,26 +173,26 @@ FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp global
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
             // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
-            readSliceFromFiles(slice, pipelineId);
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
     }
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>>
+FileBackedTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd, const PipelineId pipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
         // TODO fetch slice if not done in getTriggerableWindowSlices() or getAllNonTriggeredSlices()
         auto slice = slicesReadLocked->find(sliceEnd)->second;
+        readSliceFromFiles(slice, pipelineId);
         return slice;
     }
     return {};
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices(PipelineId pipelineId)
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     /// If this method gets called, we know that an origin has terminated.
     INVARIANT(numberOfInputOriginsTerminated > 0, "Method should not be called if all origin have terminated.");
@@ -203,13 +203,12 @@ FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices(PipelineId pipelineId)
 
     /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
-    auto addAllSlicesToReturnMap = [&windowsToSlices, pipelineId, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
+    auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
     {
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
             // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
-            readSliceFromFiles(slice, pipelineId);
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
@@ -322,11 +321,11 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData& metaD
     const auto pipelineId = metaData.pipelineId;
     const auto threadId = metaData.threadId;
 
-    auto slicesLocked = slices.rlock();
+    const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto leftFileWriter = memCtrl.getLeftFileWriter(pipelineId, sliceEnd, threadId);
-        auto rightFileWriter = memCtrl.getRightFileWriter(pipelineId, sliceEnd, threadId);
+        auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, pipelineId, threadId);
+        auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, pipelineId, threadId);
         slice->writeToFile(*leftFileWriter, *rightFileWriter, threadId);
         slice->truncate(threadId);
     }
@@ -336,16 +335,16 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData& metaD
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(const std::shared_ptr<Slice>& slice, const PipelineId pipelineId)
 {
-    // TODO this SliceStore is only in use with NLJ operator
-    const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-    for (auto threadId = 0UL; threadId < nljSlice->getNumberOfWorkerThreads(); ++threadId)
+    while (true)
     {
-        auto leftFileReader = memCtrl.getLeftFileReader(pipelineId, slice->getSliceEnd(), WorkerThreadId(threadId));
-        auto rightFileReader = memCtrl.getRightFileReader(pipelineId, slice->getSliceEnd(), WorkerThreadId(threadId));
-        if (leftFileReader && rightFileReader)
+        auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), pipelineId);
+        auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), pipelineId);
+
+        if (!leftFileReader || !rightFileReader)
         {
-            slice->readFromFile(*leftFileReader, *rightFileReader, WorkerThreadId(threadId));
+            break;
         }
+        slice->readFromFile(*leftFileReader, *rightFileReader, WorkerThreadId(0));
     }
 }
 

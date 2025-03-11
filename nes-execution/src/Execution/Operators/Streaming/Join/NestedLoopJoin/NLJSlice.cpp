@@ -107,7 +107,7 @@ void NLJSlice::combinePagedVectors()
 
 void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, const WorkerThreadId threadId)
 {
-    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
+    const auto workerThreadId = threadId % leftPagedVectors.size();
 
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
     for (auto page : leftPagedVectors[workerThreadId]->getPages())
@@ -126,21 +126,23 @@ void NLJSlice::writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWrit
 
 void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, const WorkerThreadId threadId)
 {
-    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
+    const auto workerThreadId = threadId % leftPagedVectors.size();
 
     leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
     auto lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
 
     auto tuplesToReadLeft = leftMemoryLayout->getCapacity() - lastPageLeft.getNumberOfTuples();
     const auto leftTupleSize = leftMemoryLayout->getTupleSize();
+    auto leftPagePtr = lastPageLeft.getBuffer() + lastPageLeft.getNumberOfTuples() * leftTupleSize;
 
-    while (const auto bytesRead = leftFileReader.read(lastPageLeft.getBuffer(), tuplesToReadLeft * leftTupleSize))
+    while (const auto bytesRead = leftFileReader.read(leftPagePtr, tuplesToReadLeft * leftTupleSize))
     {
         // TODO read variable sized data in place from file
         lastPageLeft.setNumberOfTuples(lastPageLeft.getNumberOfTuples() + bytesRead / leftTupleSize);
         leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
         lastPageLeft = leftPagedVectors[workerThreadId]->getLastPage();
         tuplesToReadLeft = leftMemoryLayout->getCapacity();
+        leftPagePtr = lastPageLeft.getBuffer();
     }
 
     rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
@@ -148,31 +150,30 @@ void NLJSlice::readFromFile(FileReader& leftFileReader, FileReader& rightFileRea
 
     auto tuplesToReadRight = rightMemoryLayout->getCapacity() - lastPageRight.getNumberOfTuples();
     const auto rightTupleSize = rightMemoryLayout->getTupleSize();
+    auto rightPagePtr = lastPageRight.getBuffer() + lastPageRight.getNumberOfTuples() * rightTupleSize;
 
-    while (const auto bytesRead = rightFileReader.read(lastPageRight.getBuffer(), tuplesToReadRight * rightTupleSize))
+    while (const auto bytesRead = rightFileReader.read(rightPagePtr, tuplesToReadRight * rightTupleSize))
     {
         // TODO read variable sized data in place from file
         lastPageRight.setNumberOfTuples(lastPageRight.getNumberOfTuples() + bytesRead / rightTupleSize);
         rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
         lastPageRight = rightPagedVectors[workerThreadId]->getLastPage();
         tuplesToReadRight = rightMemoryLayout->getCapacity();
+        rightPagePtr = lastPageRight.getBuffer();
     }
 }
 
 void NLJSlice::truncate(const WorkerThreadId threadId)
 {
-    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
+    const auto workerThreadId = threadId % leftPagedVectors.size();
 
     leftPagedVectors[workerThreadId]->getPages().clear();
-    leftPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, leftMemoryLayout.get());
-
     rightPagedVectors[workerThreadId]->getPages().clear();
-    rightPagedVectors[workerThreadId]->appendPageIfFull(bufferProvider, rightMemoryLayout.get());
 }
 
 size_t NLJSlice::getStateSizeInBytesForThreadId(const WorkerThreadId threadId) const
 {
-    const auto workerThreadId = threadId.getRawValue() % leftPagedVectors.size();
+    const auto workerThreadId = threadId % leftPagedVectors.size();
 
     const auto leftPos = workerThreadId % leftPagedVectors.size();
     const auto* const leftPagedVector = leftPagedVectors[leftPos].get();
@@ -185,11 +186,6 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(const WorkerThreadId threadId) c
     const auto rightNumPages = rightPagedVector->getNumberOfPages();
 
     return leftPageSize * leftNumPages + rightPageSize * rightNumPages;
-}
-
-uint64_t NLJSlice::getNumberOfWorkerThreads() const
-{
-    return leftPagedVectors.size();
 }
 
 }

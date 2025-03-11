@@ -53,9 +53,9 @@ public:
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-    getTriggerableWindowSlices(Timestamp globalWatermark, PipelineId) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices(PipelineId) override;
-    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
+    getTriggerableWindowSlices(Timestamp globalWatermark) override;
+    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
+    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd, PipelineId pipelineId) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;

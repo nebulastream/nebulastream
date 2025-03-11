@@ -59,10 +59,10 @@ void updateSlicesProxy(
     PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
+    const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
     if (sliceStore)
     {
-        sliceStore->updateSlices(SliceStoreMetaData(piplineContext->getPipelineId(), workerThreadId, watermarkTs));
+        sliceStore->updateSlices(SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));
     }
 }
 
@@ -74,7 +74,6 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->triggerAllWindows(piplineContext);
 }
-
 
 WindowOperatorBuild::WindowOperatorBuild(const uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction))
