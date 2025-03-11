@@ -254,25 +254,23 @@ public:
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
-        taskQueue.enqueue(
-            FailSourceTask{
-                id,
-                std::move(source),
-                std::move(exception),
-                [id, sourceId, listener = listener]
-                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
-                {}});
+        taskQueue.enqueue(FailSourceTask{
+            id,
+            std::move(source),
+            std::move(exception),
+            [id, sourceId, listener = listener]
+            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
+            {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
-        taskQueue.enqueue(
-            StopSourceTask{
-                id,
-                std::move(source),
-                [id, sourceId, listener = listener]
-                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
-                {}});
+        taskQueue.enqueue(StopSourceTask{
+            id,
+            std::move(source),
+            [id, sourceId, listener = listener]
+            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
+            {}});
     }
 
     void
@@ -448,14 +446,13 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipeline) const
             {
                 ENGINE_LOG_DEBUG(
                     "Pipeline Stop emitted a retry {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
-                pool.statistic->onEvent(
-                    TaskEmit{
-                        threadId,
-                        stopPipeline.queryId,
-                        stopPipeline.pipeline->id,
-                        stopPipeline.pipeline->id,
-                        INVALID<TaskId>,
-                        tupleBuffer.getNumberOfTuples()});
+                pool.statistic->onEvent(TaskEmit{
+                    threadId,
+                    stopPipeline.queryId,
+                    stopPipeline.pipeline->id,
+                    stopPipeline.pipeline->id,
+                    INVALID<TaskId>,
+                    tupleBuffer.getNumberOfTuples()});
                 pool.taskQueue.enqueue(std::move(stopPipeline));
             }
             else
@@ -465,7 +462,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipeline) const
                     /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                     /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                     /// pipeline termination.
-                    pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] { }, {});
+                    pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
                 }
             }
         });
