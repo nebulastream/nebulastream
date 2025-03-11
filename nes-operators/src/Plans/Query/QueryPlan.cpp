@@ -30,7 +30,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <magic_enum.hpp>
 
 
 namespace NES

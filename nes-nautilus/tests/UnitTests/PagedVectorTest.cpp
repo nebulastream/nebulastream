@@ -36,10 +36,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
-#include <magic_enum.hpp>
 #include <options.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>

@@ -18,8 +18,8 @@
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <magic_enum.hpp>
 namespace NES::Memory::MemoryLayouts
 {
 

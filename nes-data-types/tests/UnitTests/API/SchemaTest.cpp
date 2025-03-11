@@ -20,8 +20,8 @@
 #include <Util/StdInt.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

@@ -26,8 +26,8 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Join
 {

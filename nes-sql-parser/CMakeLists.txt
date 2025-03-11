@@ -26,10 +26,12 @@ if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
   set(ANTLR4_JAR_LOCATION "/opt/${ANTLR_JAR_FILE}")
 else ()
   include(FetchContent)
+  # The value of ANTLR_JAR_FILE (containing the ANTLR version) is set by antlr4-generator.
+  # On mismatch: update antlr version in dockerfile, then update hashes here and in docker.
   FetchContent_Declare(
     antlr4_jar
     URL      https://www.antlr.org/download/${ANTLR_JAR_FILE}
-    URL_HASH SHA256=bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487
+    URL_HASH SHA256=eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76
     DOWNLOAD_NO_EXTRACT TRUE
   )
   FetchContent_MakeAvailable(antlr4_jar)

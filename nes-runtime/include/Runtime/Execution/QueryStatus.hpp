@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <ostream>
 #include <Util/Logger/Formatter.hpp>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution
 {

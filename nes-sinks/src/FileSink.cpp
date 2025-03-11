@@ -30,11 +30,11 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Sinks
 {

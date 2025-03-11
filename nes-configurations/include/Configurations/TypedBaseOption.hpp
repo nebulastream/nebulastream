@@ -18,8 +18,8 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Configurations
 {

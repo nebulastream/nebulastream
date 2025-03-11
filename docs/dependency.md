@@ -134,8 +134,3 @@ nautilus.
 ### Nautilus
 
 Nautilus is not currently on vcpkg.
-
-### gRPC
-
-Based on the current vcpkg version. The version of gRPC on vcpkg does not compile with C++23, therefor we introduced
-additional patches to fix compilation error.

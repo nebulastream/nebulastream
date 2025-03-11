@@ -18,9 +18,9 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableDataType.pb.h>
-#include <magic_enum.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
