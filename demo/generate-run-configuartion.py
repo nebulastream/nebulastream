@@ -23,7 +23,7 @@ def generate_single_node_xml(topology_name, node_data, output_dir):
     output_path = os.path.join(output_dir, filename)
 
     # Write XML to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(xml_template)
     print(f"Generated: {output_path}")
 
@@ -43,9 +43,10 @@ def generate_nebuli_dump(topology_name, topology_file, output_dir):
     output_path = os.path.join(output_dir, filename)
 
     # Write XML to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(nebuli_start)
     print(f"Generated: {output_path}")
+
 
 def generate_nebuli_start(topology_name, topology_file, output_dir):
     nebuli_start = f"""
@@ -62,7 +63,7 @@ def generate_nebuli_start(topology_name, topology_file, output_dir):
     output_path = os.path.join(output_dir, filename)
 
     # Write XML to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(nebuli_start)
     print(f"Generated: {output_path}")
 
@@ -74,8 +75,10 @@ def generate_all_nodes_xml(topology_name, all_nodes, output_dir):
     # Create PROGRAM_PARAMS string
     program_params = "\n".join(
         [
-            f' <toRun name="nes-single-node-worker-{topology_name}-{node['grpc']}-{node['connection']}" type="CMakeRunConfiguration" />'
-            for node in all_nodes])
+            f' <toRun name="nes-single-node-worker-{topology_name}-{node["grpc"]}-{node["connection"]}" type="CMakeRunConfiguration" />'
+            for node in all_nodes
+        ]
+    )
 
     # XML template for all nodes
     xml_template = f"""
@@ -90,15 +93,21 @@ def generate_all_nodes_xml(topology_name, all_nodes, output_dir):
     output_path = os.path.join(output_dir, filename)
 
     # Write XML to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(xml_template)
     print(f"Generated: {output_path}")
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Generate XML configuration files from YAML input')
-    parser.add_argument('-i', '--input', required=True, help='Path to the input YAML file')
-    parser.add_argument('-o', '--output', default='.', help='Output directory for XML files')
+    parser = argparse.ArgumentParser(
+        description="Generate XML configuration files from YAML input"
+    )
+    parser.add_argument(
+        "-i", "--input", required=True, help="Path to the input YAML file"
+    )
+    parser.add_argument(
+        "-o", "--output", default=".", help="Output directory for XML files"
+    )
     return parser.parse_args()
 
 
@@ -109,24 +118,26 @@ def main():
 
     try:
         # Read YAML file
-        with open(input_file, 'r') as f:
+        with open(input_file, "r") as f:
             yaml_data = yaml.safe_load(f)
 
-        topology_name = input_file.split('/')[-1].split(".")[0]
+        topology_name = input_file.split("/")[-1].split(".")[0]
         print(f"Generating {topology_name}.xml")
         # Extract nodes
-        nodes = yaml_data.get('nodes', [])
+        nodes = yaml_data.get("nodes", [])
         ports = []
 
         for node in nodes:
-            connection_port = node.get('connection', '').split(':')[1]  # Assuming format like '127.0.0.1:9091'
-            grpc_port = node.get('grpc', '').split(':')[1]
+            connection_port = node.get("connection", "").split(":")[
+                1
+            ]  # Assuming format like '127.0.0.1:9091'
+            grpc_port = node.get("grpc", "").split(":")[1]
 
             node_data = {
-                'connection': connection_port,
-                'grpc': grpc_port,
-                'cpus': node.get('cpus', 4),
-                'buffers': node.get('buffers', 1024)
+                "connection": connection_port,
+                "grpc": grpc_port,
+                "cpus": node.get("cpus", 4),
+                "buffers": node.get("buffers", 1024),
             }
             ports.append(node_data)
 
