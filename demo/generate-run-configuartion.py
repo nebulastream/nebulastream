@@ -1,3 +1,4 @@
+import subprocess
 import yaml
 import os
 import argparse
@@ -69,6 +70,40 @@ def generate_all_nodes_xml(topology_name, all_nodes, output_dir):
     print(f"Generated: {output_path}")
 
 
+def gen_run_conf(input_file, output_dir, ports):
+    topology_name = input_file.split("/")[-1].split(".")[0]
+    output_dir = Path(output_dir)
+
+        # Generate XML files for each node
+    for node_data in ports:
+            # Extract connection and grpc ports
+        name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
+        args = [
+                f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
+                f"--grpc=127.0.0.1:{node_data['grpc']}",
+                f"--data=127.0.0.1:{node_data['connection']}",
+                "--worker.queryCompiler.nautilusBackend=COMPILER",
+                f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
+            ]
+        gen_clion_xml(name, "nes-single-node-worker", args, output_dir)
+
+        # Generate XML file for all nodes
+    generate_all_nodes_xml(topology_name, ports, output_dir)
+    topo_file = os.path.abspath(input_file)
+    gen_clion_xml(
+            "Nebuli Start Query",
+            "nes-nebuli",
+            ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
+            output_dir,
+        )
+    gen_clion_xml(
+            "Nebuli Dump Query",
+            "nes-nebuli",
+            ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
+            output_dir,
+        )
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate XML configuration files from YAML input"
@@ -77,7 +112,7 @@ def parse_args():
         "-i", "--input", required=True, help="Path to the input YAML file"
     )
     parser.add_argument(
-        "-o", "--output", default=".", help="Output directory for XML files"
+        "-o", "--output", help="Output directory for XML files"
     )
     return parser.parse_args()
 
@@ -85,14 +120,12 @@ def parse_args():
 def main():
     args = parse_args()
     input_file = args.input
-    output_dir = Path(args.output)
+    output_dir = args.output
 
     # Read YAML file
     with open(input_file, "r") as f:
         yaml_data = yaml.safe_load(f)
 
-    topology_name = input_file.split("/")[-1].split(".")[0]
-    print(f"Generating {topology_name}.xml")
     # Extract nodes
     nodes = yaml_data.get("nodes", [])
     ports = []
@@ -111,35 +144,8 @@ def main():
         }
         ports.append(node_data)
 
-    # Generate XML files for each node
-    for node_data in ports:
-        # Extract connection and grpc ports
-        name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
-        args = [
-            f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
-            f"--grpc=127.0.0.1:{node_data['grpc']}",
-            f"--data=127.0.0.1:{node_data['connection']}",
-            "--worker.queryCompiler.nautilusBackend=COMPILER",
-            f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
-        ]
-        gen_clion_xml(name, "nes-single-node-worker", args, output_dir)
-
-    # Generate XML file for all nodes
-    generate_all_nodes_xml(topology_name, ports, output_dir)
-    topo_file = os.path.abspath(input_file)
-    gen_clion_xml(
-        "Nebuli Start Query",
-        "nes-nebuli",
-        ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
-        output_dir,
-    )
-    gen_clion_xml(
-        "Nebuli Dump Query",
-        "nes-nebuli",
-        ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
-        output_dir,
-    )
-
+    if output_dir:
+        gen_run_conf(input_file, output_dir, ports)
 
 if __name__ == "__main__":
     main()
