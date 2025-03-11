@@ -87,65 +87,58 @@ def main():
     input_file = args.input
     output_dir = Path(args.output)
 
-    try:
-        # Read YAML file
-        with open(input_file, "r") as f:
-            yaml_data = yaml.safe_load(f)
+    # Read YAML file
+    with open(input_file, "r") as f:
+        yaml_data = yaml.safe_load(f)
 
-        topology_name = input_file.split("/")[-1].split(".")[0]
-        print(f"Generating {topology_name}.xml")
-        # Extract nodes
-        nodes = yaml_data.get("nodes", [])
-        ports = []
+    topology_name = input_file.split("/")[-1].split(".")[0]
+    print(f"Generating {topology_name}.xml")
+    # Extract nodes
+    nodes = yaml_data.get("nodes", [])
+    ports = []
 
-        for node in nodes:
-            connection_port = node.get("connection", "").split(":")[
-                1
-            ]  # Assuming format like '127.0.0.1:9091'
-            grpc_port = node.get("grpc", "").split(":")[1]
+    for node in nodes:
+        connection_port = node.get("connection", "").split(":")[
+            1
+        ]  # Assuming format like '127.0.0.1:9091'
+        grpc_port = node.get("grpc", "").split(":")[1]
 
-            node_data = {
-                "connection": connection_port,
-                "grpc": grpc_port,
-                "cpus": node.get("cpus", 4),
-                "buffers": node.get("buffers", 1024),
-            }
-            ports.append(node_data)
+        node_data = {
+            "connection": connection_port,
+            "grpc": grpc_port,
+            "cpus": node.get("cpus", 4),
+            "buffers": node.get("buffers", 1024),
+        }
+        ports.append(node_data)
 
-        # Generate XML files for each node
-        for node_data in ports:
-            # Extract connection and grpc ports
-            name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
-            args = [
-                f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
-                f"--grpc=127.0.0.1:{node_data['grpc']}",
-                f"--data=127.0.0.1:{node_data['connection']}",
-                "--worker.queryCompiler.nautilusBackend=COMPILER",
-                f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
-            ]
-            gen_clion_xml(name, "nes-single-node-worker", args, output_dir)
+    # Generate XML files for each node
+    for node_data in ports:
+        # Extract connection and grpc ports
+        name = f"nes-single-node-worker-{topology_name}-{node_data['grpc']}-{node_data['connection']}"
+        args = [
+            f"--worker.numberOfBuffersInGlobalBufferManager={node_data['buffers']}",
+            f"--grpc=127.0.0.1:{node_data['grpc']}",
+            f"--data=127.0.0.1:{node_data['connection']}",
+            "--worker.queryCompiler.nautilusBackend=COMPILER",
+            f"--worker.queryEngine.numberOfWorkerThreads={node_data['cpus']}",
+        ]
+        gen_clion_xml(name, "nes-single-node-worker", args, output_dir)
 
-        # Generate XML file for all nodes
-        generate_all_nodes_xml(topology_name, ports, output_dir)
-        topo_file = os.path.abspath(input_file)
-        gen_clion_xml(
-            "Nebuli Start Query",
-            "nes-nebuli",
-            ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
-            output_dir,
-        )
-        gen_clion_xml(
-            "Nebuli Dump Query",
-            "nes-nebuli",
-            ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
-            output_dir,
-        )
-
-    except FileNotFoundError:
-        traceback.print_exc()
-        print(f"Error: Input file '{input_file}' not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    # Generate XML file for all nodes
+    generate_all_nodes_xml(topology_name, ports, output_dir)
+    topo_file = os.path.abspath(input_file)
+    gen_clion_xml(
+        "Nebuli Start Query",
+        "nes-nebuli",
+        ["-t", topo_file, "register", "-x", "-i", "$FilePath$"],
+        output_dir,
+    )
+    gen_clion_xml(
+        "Nebuli Dump Query",
+        "nes-nebuli",
+        ["-t", topo_file, "dump", "-i", "$FilePath$", "-o", "/tmp"],
+        output_dir,
+    )
 
 
 if __name__ == "__main__":
