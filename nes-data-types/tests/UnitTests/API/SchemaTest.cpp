@@ -133,11 +133,11 @@ TEST_F(SchemaTest, addFieldTest)
 /// Test for the method getFieldByName that calling getFieldByName(bid$start) and getFieldByName(bidbid$start) return two different fields
 TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
 {
-    const auto field1 = AttributeField::create("bidbid$start", DataTypeFactory::createUInt64());
-    const auto field2 = AttributeField::create("bidbid$end", DataTypeFactory::createUInt64());
-    const auto field3 = AttributeField::create("bid$start", DataTypeFactory::createUInt64());
-    const auto field4 = AttributeField::create("auction$id", DataTypeFactory::createUInt64());
-    const auto field5 = AttributeField::create("auction$initialbid", DataTypeFactory::createUInt64());
+    const auto field1 = AttributeField::create("bidbid$start", DataTypeProvider::provideBasicType(BasicType::UINT64));
+    const auto field2 = AttributeField::create("bidbid$end", DataTypeProvider::provideBasicType(BasicType::UINT64));
+    const auto field3 = AttributeField::create("bid$start", DataTypeProvider::provideBasicType(BasicType::UINT64));
+    const auto field4 = AttributeField::create("auction$id", DataTypeProvider::provideBasicType(BasicType::UINT64));
+    const auto field5 = AttributeField::create("auction$initialbid", DataTypeProvider::provideBasicType(BasicType::UINT64));
 
     const auto schemaUnderTest = Schema::create()->addField(field1)->addField(field2)->addField(field3)->addField(field4)->addField(field5);
 
