@@ -46,7 +46,10 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd,
+    const PipelineId pipelineId,
+    const WorkerThreadId threadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     std::stringstream ss;
     ss << "memory_controller_";
@@ -59,12 +62,19 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
             ss << "right_";
     }
 
-    ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    if constexpr (USE_PIPELINE_ID)
+    {
+        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    }
+    else
+    {
+        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    }
     return getFileWriterFromMap(ss.str());
 }
 
-std::shared_ptr<FileReader>
-MemoryController::getFileReader(const SliceEnd sliceEnd, const PipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+std::shared_ptr<FileReader> MemoryController::getFileReader(
+    const SliceEnd sliceEnd, const PipelineId pipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     std::stringstream ss;
     ss << "memory_controller_";
@@ -77,7 +87,14 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const PipelineId, const
             ss << "right_";
     }
 
-    ss << sliceEnd.getRawValue() << "_";
+    if constexpr (USE_PIPELINE_ID)
+    {
+        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_";
+    }
+    else
+    {
+        ss << sliceEnd.getRawValue() << "_";
+    }
     return getFileReaderAndEraseWriter(ss.str());
 }
 

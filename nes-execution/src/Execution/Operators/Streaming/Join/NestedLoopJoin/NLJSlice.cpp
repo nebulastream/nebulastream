@@ -21,7 +21,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/Core.hpp>
 
 namespace NES::Runtime::Execution
 {

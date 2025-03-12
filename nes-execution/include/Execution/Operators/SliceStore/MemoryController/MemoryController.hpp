@@ -24,6 +24,8 @@ namespace NES::Runtime::Execution
 class MemoryController
 {
 public:
+    static constexpr auto USE_PIPELINE_ID = false;
+
     MemoryController() = default;
     MemoryController(const MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
