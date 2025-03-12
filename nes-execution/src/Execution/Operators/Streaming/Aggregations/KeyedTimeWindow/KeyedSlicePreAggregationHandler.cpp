@@ -102,11 +102,10 @@ std::vector<TupleBuffer> KeyedSlicePreAggregationHandler::getStateToMigrate(uint
     writeToMetadata(lastTriggerWatermark.load(std::memory_order_relaxed));
     writeToMetadata(resultSequenceNumber.load(std::memory_order_relaxed));
 
+    auto watermarkBuffers = getWatermarksToMigrate();
+    writeToMetadata(watermarkBuffers.size());
 
-    auto serializedWatermarks = watermarkProcessor->serializeWatermarks(bufferManager);
-    writeToMetadata(uint64_t(serializedWatermarks.size()));
-
-    for (auto& wb : serializedWatermarks) {
+    for (auto& wb : watermarkBuffers) {
         buffersToTransfer.push_back(std::move(wb));
     }
 
@@ -189,12 +188,15 @@ void KeyedSlicePreAggregationHandler::restoreState(std::vector<Runtime::TupleBuf
     }
 
     auto numberOfWatermarkBuffers = readFromMetadata();
-    std::vector<TupleBuffer> wmark;
-    wmark.reserve(numberOfWatermarkBuffers);
-    for (auto i=0ULL; i< numberOfWatermarkBuffers; i++) {
-        wmark.push_back(std::move(buffers[numberOfMetadataBuffers + i]));
+    std::vector<TupleBuffer> watermarkBuffers;
+    watermarkBuffers.reserve(numberOfWatermarkBuffers);
+
+    uint64_t bufferIndex = numberOfMetadataBuffers;
+
+    for (auto i = 0ULL; i < numberOfWatermarkBuffers; i++) {
+        watermarkBuffers.push_back(std::move(buffers[bufferIndex++]));
     }
-    watermarkProcessor->restoreWatermarks(wmark);
+    restoreWatermarks(watermarkBuffers);
 
     // 3. read how many slices total
     auto numberOfSlices = readFromMetadata();
@@ -226,21 +228,17 @@ void KeyedSlicePreAggregationHandler::restoreState(std::vector<Runtime::TupleBuf
 std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getWatermarksToMigrate() {
     auto watermarksBuffers = std::vector<Runtime::TupleBuffer>();
 
-    // metadata buffer
     auto buffer = bufferManager->getBufferBlocking();
     watermarksBuffers.emplace_back(buffer);
     uint64_t buffersCount = 1;
 
-    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!buffer.hasSpaceLeft(0, sizeof(uint64_t))) {
         NES_THROW_RUNTIME_ERROR("Buffer is too small");
     }
 
-    // metadata pointer
     auto bufferPtr = buffer.getBuffer<uint64_t>();
     uint64_t bufferIdx = 0;
 
-    /** @brief Lambda to write to watermark buffers */
     auto writeToBuffer = [&buffer, &bufferPtr, &bufferIdx, this, &buffersCount, &watermarksBuffers](uint64_t dataToWrite) {
         StateSerializationUtil::writeToBuffer(bufferManager,
                                               buffer.getBufferSize(),
@@ -254,14 +252,10 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getWatermarks
     auto serializedWatermarks = watermarkProcessor->serializeWatermarks(bufferManager);
     NES_DEBUG("build buffers size {}", serializedWatermarks.size());
 
-    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
-    // 1. Insert number of build origins to metadata buffer
     writeToBuffer(serializedWatermarks.size());
 
-    // 2. insert build and probe buffers
     watermarksBuffers.insert(watermarksBuffers.end(), serializedWatermarks.begin(), serializedWatermarks.end());
 
-    // set order of tuple buffers
     for (auto& buffer : watermarksBuffers) {
         buffer.setSequenceNumber(++resultSequenceNumber);
     }
@@ -270,18 +264,10 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getWatermarks
 }
 
 void KeyedSlicePreAggregationHandler::restoreWatermarks(std::vector<Runtime::TupleBuffer>& buffers) {
-    // get data buffer
     uint64_t dataBuffersIdx = 0;
     auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
     uint64_t dataIdx = 0;
 
-    /** @brief Lambda to read from data buffers
-     * captured variables:
-     * dataPtr - pointer to the start of current metadata buffer
-     * dataIdx - index of size64_t data inside metadata buffer
-     * dataBuffersIdx - index of current buffer to read
-     * buffers - vector of buffers
-    */
     auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
         return StateSerializationUtil::readFromBuffer(dataPtr, dataIdx, dataBuffersIdx, buffers);
     };
@@ -295,6 +281,9 @@ void KeyedSlicePreAggregationHandler::setBufferManager(const NES::Runtime::Buffe
     this->bufferManager = bufManager;
 }
 
+uint64_t KeyedSlicePreAggregationHandler::getCurrentWatermark() const {
+    return watermarkProcessor->getCurrentWatermark();
+}
 KeyedSlicePreAggregationHandler::~KeyedSlicePreAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
 
 }// namespace NES::Runtime::Execution::Operators

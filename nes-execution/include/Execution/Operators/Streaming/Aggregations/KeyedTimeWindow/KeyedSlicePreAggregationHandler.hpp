@@ -116,6 +116,7 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
 
     ~KeyedSlicePreAggregationHandler() override;
 
+ uint64_t getCurrentWatermark() const;
     private:
     /**
      * Deserialize slice from span of buffers

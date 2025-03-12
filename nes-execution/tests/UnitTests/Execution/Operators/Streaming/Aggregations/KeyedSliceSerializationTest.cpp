@@ -105,7 +105,6 @@ class KeyedSliceSerializationTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(KeyedSliceSerializationTest, SerializeAndDeserialize) {
-    NES_INFO("Start SerializeAndDeserialize.");
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
     auto originalSlice = std::make_unique<Operators::KeyedSlice>(std::move(hashMap), startTS, endTS);
     auto* entry = originalSlice->getState()->insertEntry(123);
@@ -124,7 +123,6 @@ TEST_F(KeyedSliceSerializationTest, SerializeAndDeserialize) {
 }
 
 TEST_F(KeyedSliceSerializationTest, StateMigration) {
-    NES_INFO("Start StateMigration test with aggregator pattern.");
     auto readTs  = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto readVal = std::make_shared<Expressions::ReadFieldExpression>("v1");
@@ -227,27 +225,14 @@ TEST_F(KeyedSliceSerializationTest, StateMigration) {
     ASSERT_TRUE(found11r);
     ASSERT_TRUE(found12r);
 
-    NES_INFO("StateMigration test with aggregator style complete.");
+    auto restoredWatermark = restoredHandler->getCurrentWatermark();
+    auto originalWatermark = handler->getCurrentWatermark();
+    ASSERT_EQ(restoredWatermark, originalWatermark);
 }
 
 
 
 
-TEST_F(KeyedSliceSerializationTest, WatermarkMigration) {  // TODO: improve test by adding into watermarkProcessor
-    NES_INFO("Start WatermarkMigration.");
-    auto originalHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSize, origins);
-    auto originalPipelineContext = MockedPipelineExecutionContext({originalHandler}, false, bufferManager);
-    originalHandler->setup(originalPipelineContext, keySize, valueSize);
-
-    auto restorHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSize, origins);
-    auto restorePipelineContext = MockedPipelineExecutionContext({restorHandler}, false, bufferManager);
-    restorHandler->setup(restorePipelineContext, keySize, valueSize);
-
-    auto migratedWatermark = originalHandler->getWatermarksToMigrate();
-    restorHandler->restoreWatermarks(migratedWatermark);
-
-    // validate restored watermark
-}
 
 TEST_F(KeyedSliceSerializationTest, OperatorHandlerMigration) {  // TODO: improve test by adding into state and watermarkProcessor
     NES_INFO("Start OperatorHandlerMigration.");

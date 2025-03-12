@@ -159,6 +159,8 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
         valuePtr = valuePtr + aggregationFunction->getSize();
     }
 }
+
+
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
