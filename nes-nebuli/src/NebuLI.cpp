@@ -14,13 +14,8 @@
 
 #include <NebuLI.hpp>
 
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <istream>
 #include <memory>
 #include <ranges>
-#include <regex>
 #include <string>
 #include <utility>
 
@@ -50,7 +45,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include "Distributed/Placement.hpp"
 #include "Distributed/Topology.hpp"
-#include "YAMLConfigLoader.hpp"
 
 namespace NES::Catalogs
 {
