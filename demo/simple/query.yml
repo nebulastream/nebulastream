@@ -1,0 +1,2 @@
+query: |
+  SELECT * FROM csv_source INTO slow_csv_sink
