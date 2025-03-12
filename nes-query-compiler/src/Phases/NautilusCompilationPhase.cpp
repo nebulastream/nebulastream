@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <string>
 #include <utility>
 #include <Pipelines/CompilationPipelineProvider.hpp>
@@ -21,32 +22,32 @@
 #include <ExecutableOperator.hpp>
 #include <ExecutablePipelineProviderRegistry.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <Pipeline.hpp>
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 
-void apply(const OperatorPipeline& pipeline)
+void apply(std::unique_ptr<OperatorPipeline> pipeline)
 {
-    const auto& rootOperator = pipeline.rootOperator;
+    const auto& rootOperator = pipeline->rootOperator;
 
     nautilus::engine::Options options;
     auto identifier = fmt::format(
-        "NautilusCompilation-{}-{}",
-        pipeline.queryId,
-        pipeline.pipelineId);
+        "NautilusCompilation-{}",
+        pipeline->pipelineId);
     options.setOption("toConsole", true);
     options.setOption("toFile", true);
 
     auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
-    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(magic_enum::enum_type_name<Pipeline::ProviderType>(pipeline.providerType), providerArguments))
+    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(magic_enum::enum_type_name<Pipeline::ProviderType>(pipeline->providerType), providerArguments))
     {
         auto pipelineStage
             = provider.value()->create(pipeline, options);
         /// we replace the current pipeline operators with an executable operator.
         /// this allows us to keep the pipeline structure.
-        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), pipeline.operatorHandlers);
+        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), pipeline->operatorHandlers);
         ///pipeline.rootOperator.replaceRootOperator(rootOperator, executableOperator);
-        pipeline.rootOperator = executableOperator;
+        pipeline->rootOperator = executableOperator;
 
         /// TODO do the actual compilation
         return;
@@ -54,16 +55,16 @@ void apply(const OperatorPipeline& pipeline)
     throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", "providerName");
 }
 
-std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> plan)
+PipelinedQueryPlan apply(std::unique_ptr<PipelinedQueryPlan> plan)
 {
-    for (const auto& pipeline : plan->pipelines)
+    for (auto& pipeline : plan->pipelines)
     {
-        if (dynamic_cast<OperatorPipeline*>(pipeline.get()))
+        if (Util::uniquePtrInstanceOf<Pipeline, OperatorPipeline>(pipeline))
         {
-            apply(pipeline);
+            apply(Util::unique_ptr_dynamic_cast<OperatorPipeline>(std::move(pipeline)));
         }
     }
-    return plan;
+    return std::move(*plan);
 }
 
 }

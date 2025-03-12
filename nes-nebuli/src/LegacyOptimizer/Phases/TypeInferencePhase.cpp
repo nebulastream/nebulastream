@@ -36,11 +36,11 @@ std::shared_ptr<TypeInferencePhase> TypeInferencePhase::create(std::shared_ptr<C
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
 }
 
-std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlan TypeInferencePhase::performTypeInferenceQuery(QueryPlan queryPlan)
 {
     /// Infer schema recursively, starting with sinks for sinks.
-    auto sinkOperators = queryPlan->getSinkOperators();
-    INVARIANT(not sinkOperators.empty(), "Found no sink operators for query plan: {}", queryPlan->getQueryId());
+    auto sinkOperators = queryPlan.getSinkOperators();
+    INVARIANT(not sinkOperators.empty(), "Found no sink operators for query plan: {}", queryPlan.getQueryId());
 
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
@@ -48,14 +48,14 @@ std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::sh
     {
         if (!sink->inferSchema())
         {
-            throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan->getQueryId());
+            throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan.getQueryId());
         }
     }
     return queryPlan;
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators) const
+void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators)
 {
     PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
@@ -66,26 +66,26 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getName();
-        std::shared_ptr<Schema> schema = Schema::create();
+        Schema schema = Schema();
         if (!sourceCatalog->containsLogicalSource(std::string(logicalSourceName)))
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);
             throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
         }
         auto originalSchema = sourceCatalog->getSchemaForLogicalSource(std::string(logicalSourceName));
-        schema = schema->copyFields(originalSchema);
-        schema->setLayoutType(originalSchema->getLayoutType());
+        schema = schema.copyFields(originalSchema);
+        schema.setLayoutType(originalSchema.getLayoutType());
         auto qualifierName = std::string(logicalSourceName) + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
-        for (const auto& field : *schema)
+        for (auto& field : schema)
         {
-            if (!field->getName().starts_with(qualifierName))
+            if (!field.getName().starts_with(qualifierName))
             {
-                field->setName(qualifierName + field->getName());
+                field.setName(qualifierName + field.getName());
             }
         }
         source->setSchema(schema);
-        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
+        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema.toString());
     }
 }
 

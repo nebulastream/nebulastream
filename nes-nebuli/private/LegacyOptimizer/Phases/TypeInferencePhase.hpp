@@ -32,7 +32,7 @@ public:
 
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators) const;
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators);
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.
@@ -40,7 +40,7 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result stamp of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    static std::shared_ptr<QueryPlan> performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan);
+    static QueryPlan performTypeInferenceQuery(QueryPlan queryPlan);
 
 private:
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;

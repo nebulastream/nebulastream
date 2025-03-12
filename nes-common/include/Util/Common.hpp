@@ -97,16 +97,6 @@ bool instanceOf(const std::shared_ptr<In>& obj)
 {
     return std::dynamic_pointer_cast<Out>(obj).get() != nullptr;
 }
-
-template <typename Derived, typename Base>
-std::unique_ptr<Derived> unique_ptr_dynamic_cast(std::unique_ptr<Base>&& basePtr) {
-    if (auto* derivedRaw = dynamic_cast<Derived*>(basePtr.get())) {
-        basePtr.release();
-        return std::unique_ptr<Derived>(derivedRaw);
-    }
-    return nullptr;
-}
-
 /// check if the given object is an instance of the specified type.
 template <typename Out, typename In>
 bool instanceOf(const In& obj)

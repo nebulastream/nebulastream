@@ -240,8 +240,8 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalWindowedAggregation::appl
                                                         ops->getWindowStartFieldName(),
                                                         ops->getWindowEndFieldName());
 
-    auto buildPhysicalOp = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema()};
-    auto probePhysicalOp = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema()};
+    auto buildPhysicalOp = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
+    auto probePhysicalOp = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
 
     std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
     physicalOperatorVec.emplace_back(std::move(probePhysicalOp));

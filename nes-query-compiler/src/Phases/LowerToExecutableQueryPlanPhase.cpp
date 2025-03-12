@@ -25,6 +25,8 @@
 #include <ExecutableOperator.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <Pipeline.hpp>
+#include <ErrorHandling.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
@@ -50,62 +52,64 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
 
 /// forward declarations
 Source
-processSource(std::shared_ptr<Pipeline> pipeline, std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan, LoweringContext loweringContext);
-void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext);
+processSource(std::unique_ptr<Pipeline> pipeline, PipelinedQueryPlan pipelineQueryPlan, LoweringContext loweringContext);
+void processSink(const Predecessor& predecessor, std::unique_ptr<Pipeline> pipeline, LoweringContext& loweringContext);
 std::shared_ptr<ExecutablePipeline> processPipeline(
-    const std::shared_ptr<Pipeline>& pipeline,
-    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    std::unique_ptr<Pipeline> pipeline,
+    PipelinedQueryPlan pipelineQueryPlan,
     LoweringContext& loweringContext);
 
 Successor processSuccessor(
     const Predecessor& predecessor,
-    std::shared_ptr<Pipeline> pipeline,
-    std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan,
+    std::unique_ptr<Pipeline> pipeline,
+    PipelinedQueryPlan pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
-    ///PRECONDITION(pipeline->isSinkPipeline() || pipeline->isPipeline(), "expected a Sink or Pipeline");
+    PRECONDITION((Util::uniquePtrInstanceOf<Pipeline, SinkPipeline>(pipeline)
+                  || Util::uniquePtrInstanceOf<Pipeline, OperatorPipeline>(pipeline)),
+                 "expected a Sink or Pipeline {}", pipeline->toString());
 
-    if (Util::instanceOf<SinkPipeline>(pipeline))
+    if (Util::uniquePtrInstanceOf<Pipeline, SinkPipeline>(pipeline))
     {
-        processSink(predecessor, pipeline, loweringContext);
+        processSink(predecessor, std::move(pipeline), loweringContext);
         return {};
     }
-    return processPipeline(pipeline, pipelineQueryPlan, loweringContext);
+    return processPipeline(std::move(pipeline), std::move(pipelineQueryPlan), loweringContext);
 }
 
 Source
-processSource(std::shared_ptr<Pipeline> pipeline, std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan, LoweringContext loweringContext)
+processSource(std::unique_ptr<Pipeline> pipeline, PipelinedQueryPlan pipelineQueryPlan, LoweringContext loweringContext)
 {
-    /// PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getQueryPlan()->toString());
-
-    /// Convert logical source descriptor to actual source descriptor
-    ///const auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-    const auto sourcePipeline = NES::Util::as<SourcePipeline>(pipeline);
-    const auto sourceOperator = sourcePipeline->sourceOperator;
+    PRECONDITION((Util::uniquePtrInstanceOf<Pipeline, SourcePipeline>(pipeline)), "expected a SourcePipeline {}", pipeline->toString());
+    const auto sourcePipeline = NES::Util::unique_ptr_dynamic_cast<SourcePipeline>(std::move(pipeline));
 
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    for (const auto& successor : pipeline->successorPipelines)
+    for (auto& successor : pipeline->successorPipelines)
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, loweringContext))
+        if (auto executableSuccessor = processSuccessor(sourcePipeline->sourceOperator->getOriginId(), std::move(successor), std::move(pipelineQueryPlan), loweringContext))
         {
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
 
-    loweringContext.sources.emplace_back(sourceOperator->getOriginId(), sourceOperator->getSourceDescriptor(), executableSuccessorPipelines);
+    loweringContext.sources.emplace_back(sourcePipeline->sourceOperator->getOriginId(),
+                                         std::make_shared<NES::Sources::SourceDescriptor>(sourcePipeline->sourceOperator->getSourceDescriptor()),
+                                             executableSuccessorPipelines);
     return loweringContext.sources.back();
 }
 
-void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
+void processSink(const Predecessor& predecessor, std::unique_ptr<Pipeline> pipeline, LoweringContext& loweringContext)
 {
-    const auto sinkPipeline = NES::Util::as<SinkPipeline>(pipeline);
+    PRECONDITION((Util::uniquePtrInstanceOf<Pipeline, SinkPipeline>(pipeline)), "expected a SinkPipeline {}", pipeline->toString());
+
+    const auto sinkPipeline = NES::Util::unique_ptr_dynamic_cast<SinkPipeline>(std::move(pipeline));
     const auto sinkOperatorDescriptor = sinkPipeline->sinkOperator->getSinkDescriptorRef();
     loweringContext.sinks[sinkOperatorDescriptor].emplace_back(predecessor);
 }
 
 std::shared_ptr<ExecutablePipeline> processPipeline(
-    const std::shared_ptr<Pipeline>& pipeline,
-    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    std::unique_ptr<Pipeline> pipeline,
+    PipelinedQueryPlan,
     LoweringContext& loweringContext)
 {
     /// PRECONDITION(!pipeline->getQueryPlan()->getRootOperators().empty(), "A pipeline should have at least one root operator");
@@ -117,18 +121,18 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
         return executable->second;
     }
     // const auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-    auto executableOperator = NES::Util::as<ExecutableOperator>(Util::as<OperatorPipeline>(pipeline)->rootOperator);
+    /*auto executableOperator = NES::Util::as<ExecutableOperator>(Util::as<OperatorPipeline>(pipeline).rootOperator);
     auto executablePipeline = ExecutablePipeline::create(PipelineId(pipeline->pipelineId), executableOperator.takeStage(), {});
-    for (const auto& successor : pipeline->successorPipelines)
+    for (auto& successor : pipeline->successorPipelines)
     {
-        if (auto executableSuccessor = processSuccessor(executablePipeline, successor, pipelineQueryPlan, loweringContext))
+        if (auto executableSuccessor = processSuccessor(executablePipeline, std::move(successor), pipelineQueryPlan, loweringContext))
         {
             executablePipeline->successors.emplace_back(*executableSuccessor);
         }
     }
 
-    loweringContext.pipelineToExecutableMap.emplace(pipeline->pipelineId, executablePipeline);
-    return executablePipeline;
+    loweringContext.pipelineToExecutableMap.emplace(pipeline->pipelineId, executablePipeline);*/
+    return nullptr;
 }
 
 
@@ -137,10 +141,10 @@ std::unique_ptr<CompiledQueryPlan> LowerToExecutableQueryPlanPhase::apply(const 
     LoweringContext loweringContext;
 
     /// Process all pipelines recursively.
-    auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
-    for (const auto& pipeline : sourcePipelines)
+    auto sourcePipelines = pipelineQueryPlan.getSourcePipelines();
+    for (auto& pipeline : sourcePipelines)
     {
-        processSource(pipeline, pipelineQueryPlan, loweringContext);
+        processSource(std::move(pipeline), std::move(pipelineQueryPlan), loweringContext);
     }
 
     auto pipelines = std::move(loweringContext.pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();

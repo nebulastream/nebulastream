@@ -28,7 +28,7 @@
 namespace NES::AntlrSQLQueryParser
 {
 
-std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view queryString)
+QueryPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {
@@ -43,7 +43,7 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
-        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan->toString());
+        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan.toString());
         return queryPlan;
     }
     catch (const antlr4::RuntimeException& antlrException)

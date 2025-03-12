@@ -38,7 +38,7 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalSelection::applyToPhysica
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
     auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::move(func));
 
-    auto physicalOperatorWrapper = PhysicalOperatorWithSchema{std::move(phyOp), ops->getInputSchema(), ops->getOutputSchema()};
+    auto physicalOperatorWrapper = PhysicalOperatorWithSchema{std::move(phyOp), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
 
     std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
     physicalOperatorVec.emplace_back(std::move(physicalOperatorWrapper));

@@ -23,20 +23,29 @@
 namespace NES::LegacyOptimizer
 {
 
-OriginIdInferencePhase::OriginIdInferencePhase()
-{
-}
+OriginIdInferencePhase::OriginIdInferencePhase() = default;
 
 std::shared_ptr<OriginIdInferencePhase> OriginIdInferencePhase::create()
 {
     return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
 }
 
-std::shared_ptr<QueryPlan> OriginIdInferencePhase::execute(std::shared_ptr<QueryPlan> queryPlan)
+QueryPlan OriginIdInferencePhase::execute(QueryPlan queryPlan)
 {
-    auto originOperators = queryPlan->getOperatorByType<OriginIdAssignmentOperator>();
-    auto rootOperators = queryPlan->getRootOperators();
-    performInference(originOperators, rootOperators);
+    auto originOperators = queryPlan.getOperatorByType<OriginIdAssignmentOperator>();
+    auto rootOperators = queryPlan.getRootOperators();
+    // TODO
+    std::vector<std::shared_ptr<OriginIdAssignmentOperator>> originOperators_shared;
+    originOperators_shared.reserve(originOperators.size());
+    for (auto op : originOperators) {
+        originOperators_shared.push_back(std::shared_ptr<OriginIdAssignmentOperator>(op));
+    }
+    std::vector<std::shared_ptr<Operator>> rootOperators_shared;
+    rootOperators_shared.reserve(rootOperators.size());
+    for (auto op : rootOperators) {
+        rootOperators_shared.push_back(std::shared_ptr<Operator>(op));
+    }
+    performInference(originOperators_shared, rootOperators_shared);
     return queryPlan;
 }
 

@@ -23,6 +23,7 @@
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <Plans/Operator.hpp>
 #include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
@@ -56,12 +57,16 @@ struct PipeliningVisitor {
     PipelinedQueryPlan& plan;
     Pipeline* currentPipeline; /// non-owning pointer
 
+    void operator()(std::unique_ptr<PhysicalOperator>&) {
+        /// Noop
+    }
+
     /// Process SourceDescriptorLogicalOperator.
     void operator()(std::unique_ptr<SourceDescriptorLogicalOperator>& op) {
         if (currentPipeline->hasOperators()) {
             /// If current pipeline already has operators, create a new pipeline.
             auto newPipeline = std::make_unique<SourcePipeline>();
-            newPipeline->sourceOperator = std::move(std::make_unique<Pipeline::PipelineOperator>(std::move(op)));
+            newPipeline->prependOperator(Pipeline::PipelineOperator(std::move(op)));
             currentPipeline->successorPipelines.push_back(std::move(newPipeline));
             currentPipeline = currentPipeline->successorPipelines.back().get();
         } else {

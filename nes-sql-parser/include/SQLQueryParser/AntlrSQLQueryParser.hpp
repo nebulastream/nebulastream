@@ -19,5 +19,5 @@
 
 namespace NES::AntlrSQLQueryParser
 {
-std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view queryString);
+QueryPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
 }

@@ -115,6 +115,7 @@ public:
         const std::set<Operator*>& upstreamOperators) const;
 
     [[nodiscard]] bool operator==(const std::shared_ptr<QueryPlan>& otherPlan) const;
+    [[nodiscard]] bool operator==(const QueryPlan& otherPlan) const;
 
 private:
     /// Owning pointers to the operators

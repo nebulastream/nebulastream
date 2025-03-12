@@ -51,38 +51,39 @@ std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators(const std::sh
 }
 
 
-bool removeChild(const std::shared_ptr<Operator> toRemoveFrom, const std::shared_ptr<Operator>& toRemove)
+bool removeChild(Operator* parent, Operator* childToRemove)
 {
-    if (!toRemove)
+    if (!childToRemove)
     {
         return false;
     }
-    for (auto nodeItr = toRemoveFrom->children.begin(); nodeItr != toRemoveFrom->children.end(); ++nodeItr)
+    for (auto it = parent->children.begin(); it != parent->children.end(); ++it)
     {
-        if ((*nodeItr).get() == toRemove.get())
+        if (it->get() == childToRemove)
         {
-            for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++)
+            // Remove the parent's pointer from the child's parent list.
+            for (auto pit = childToRemove->parents.begin(); pit != childToRemove->parents.end(); ++pit)
             {
-                if (it->get() == toRemoveFrom.get())
+                if (*pit == parent)
                 {
-                    (*nodeItr)->parents.erase(it);
+                    childToRemove->parents.erase(pit);
                     break;
                 }
             }
-            toRemoveFrom->children.erase(nodeItr);
+            parent->children.erase(it);
             return true;
         }
     }
     return false;
 }
 
-std::vector<std::shared_ptr<Operator>> getAndFlattenAllAncestors(std::shared_ptr<Operator> op)
+std::vector<Operator*> getAndFlattenAllAncestors(Operator* op)
 {
-    std::vector<std::shared_ptr<Operator>> result{op};
-    for (auto& parent : op->parents)
+    std::vector<Operator*> result{op};
+    for (Operator* parent : op->parents)
     {
-        std::vector<std::shared_ptr<Operator>> parentAndAncestors = getAndFlattenAllAncestors(parent);
-        result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+        auto ancestors = getAndFlattenAllAncestors(parent);
+        result.insert(result.end(), ancestors.begin(), ancestors.end());
     }
     return result;
 }
@@ -96,11 +97,11 @@ bool removeParent(const std::shared_ptr<Operator> op, const std::shared_ptr<Oper
     }
     for (auto nodeItr = op->parents.begin(); nodeItr != op->parents.end(); ++nodeItr)
     {
-        if ((*nodeItr).get() == node.get())
+        if ((*nodeItr) == node.get())
         {
             for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++)
             {
-                if ((*it) == op)
+                if ((*it).get() == op.get())
                 {
                     (*nodeItr)->children.erase(it);
                     break;
@@ -125,133 +126,48 @@ std::shared_ptr<Operator> find(const std::vector<std::shared_ptr<Operator>>& nod
     return nullptr;
 }
 
-bool insertBetweenThisAndParentNodes(const std::shared_ptr<Operator> op, const std::shared_ptr<Operator>& newNode)
+bool insertBetweenThisAndParentNodes(Operator* op, std::unique_ptr<Operator> newNode)
 {
-    ///Perform sanity checks
-    if (newNode == op)
+    // Sanity check: do not insert if the new node is the same as op.
+    if (newNode.get() == op)
     {
         return false;
     }
 
-    if (find(op->parents, newNode) != nullptr)
+    // For each parent, replace op with newNode in the parent's children.
+    // (If op is referenced in multiple parents, you might need to clone newNode for each insertion.)
+    std::vector<Operator*> oldParents = op->parents;
+    for (Operator* parent : oldParents)
     {
-        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
-        return false;
-    }
-
-    ///replace this with the new node in all its parent
-    const std::vector<std::shared_ptr<Operator>> copyOfParents = op->parents;
-
-    for (auto& parent : copyOfParents)
-    {
-        for (uint64_t i = 0; i < parent->children.size(); i++)
+        for (size_t i = 0; i < parent->children.size(); ++i)
         {
-            if (parent->children[i] == op)
+            if (parent->children[i].get() == op)
             {
-                parent->children[i] = newNode;
-                newNode->parents.emplace_back(parent);
+                // Transfer ownership: replace the unique_ptr for op with newNode.
+                parent->children[i] = std::move(newNode);
+                // Set parent's pointer as a parent of the new node.
+                parent->children[i]->parents.push_back(parent);
+                break;
             }
         }
     }
-
-    for (auto it = op->parents.begin(); it != op->parents.end();)
-    {
-        if (removeParent(op, *it))
-        {
-            it = op->parents.begin();
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    op->parents.emplace_back(newNode);
+    // Remove all parents from op.
+    op->parents.clear();
+    // Set new node as the parent of op.
+    op->parents.push_back(newNode.get());
     return true;
 }
 
-bool removeAndJoinParentAndChildren(const std::shared_ptr<Operator> op)
+QueryPlan LogicalSourceExpansionRule::apply(QueryPlan queryPlan)
 {
-    const std::vector<std::shared_ptr<Operator>> childCopy = op->children;
-    const std::vector<std::shared_ptr<Operator>> parentCopy = op->parents;
-    for (auto& parent : parentCopy)
+    // Suppose getOperatorByType now returns a vector of raw pointers.
+    std::vector<SourceNameLogicalOperator*> sourceOperators =
+        queryPlan.getOperatorByType<SourceNameLogicalOperator>();
+
+    for (Operator* sourceOp : sourceOperators)
     {
-        for (auto& child : childCopy)
-        {
-            parent->children.emplace_back(child);
-            removeParent(child, op);
-        }
-        removeChild(parent, op);
-    }
-    return true;
-}
-
-bool replace(const std::shared_ptr<Operator>& op, const std::shared_ptr<Operator>& newNode, const std::shared_ptr<Operator>& oldNode)
-{
-    if (!newNode || !oldNode)
-    {
-        NES_ERROR("Node: Can't replace null node");
-        return false;
-    }
-
-    if (op == oldNode)
-    {
-        insertBetweenThisAndParentNodes(op, newNode);
-        removeAndJoinParentAndChildren(op);
-        return true;
-    }
-
-    if (oldNode != newNode)
-    {
-        /// newNode is already inside children or parents and it's not oldNode
-        if (find(op->children, newNode) || find(op->parents, newNode))
-        {
-            return false;
-        }
-    }
-
-    bool success = removeChild(op, oldNode);
-    if (success)
-    {
-        op->children.push_back(newNode);
-        for (auto&& currentNode : oldNode->children)
-        {
-            newNode->children.emplace_back(currentNode);
-        }
-        return true;
-    }
-
-    op->parents.emplace_back(oldNode);
-    for (auto&& currentNode : oldNode->parents)
-    {
-        newNode->parents.emplace_back(currentNode);
-    }
-    return true;
-}
-
-std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<QueryPlan> queryPlan)
-{
-    std::vector<std::shared_ptr<SourceNameLogicalOperator>> sourceOperators =
-        queryPlan->getOperatorByType<NES::SourceNameLogicalOperator>();
-
-    /// Compute a map of all blocking operators in the query plan
-    std::unordered_map<OperatorId, std::shared_ptr<Operator>> blockingOperators;
-    /// Add downstream operators of the source operators as blocking operators.
-    for (const auto& sourceOperator : sourceOperators)
-    {
-        for (auto& downStreamOp : sourceOperator->parents)
-        {
-            blockingOperators[NES::Util::as<Operator>(downStreamOp)->id] = NES::Util::as<Operator>(downStreamOp);
-        }
-    }
-
-    /// Iterate over all source operators
-    for (const auto& sourceOperator : sourceOperators)
-    {
-        std::string logicalSourceName = std::string(sourceOperator->getName());
-
-        const std::vector<std::shared_ptr<Catalogs::Source::SourceCatalogEntry>> sourceCatalogEntries =
-            sourceCatalog->getPhysicalSources(logicalSourceName);
+        std::string logicalSourceName = std::string(sourceOp->getName());
+        auto sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         if (sourceCatalogEntries.empty())
         {
             auto ex = PhysicalSourceNotFoundInQueryDescription();
@@ -259,43 +175,34 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             throw ex;
         }
 
-        /// Disconnect all parent operators of the source operator.
-        for (const auto& downStreamOperator : sourceOperator->parents)
+        // Disconnect all parent operators from this source operator.
+        for (Operator* parent : sourceOp->parents)
         {
-            /// If downStreamOperator is blocking then remove the source operator as its upstream operator.
-            auto success = removeChild(downStreamOperator, sourceOperator);
+            bool success = removeChild(parent, sourceOp);
             INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
-            // Previously, we added blocking operator info as a property.
-            // That call is removed because properties no longer exist.
         }
 
-        /// Create one duplicate operator for each physical source.
+        // Duplicate the operator for each physical source.
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
-            auto duplicateSourceOperator = NES::Util::as<SourceNameLogicalOperator>(sourceOperator->clone());
+            std::unique_ptr<Operator> duplicateSourceOp = sourceOp->clone();
+            duplicateSourceOp->setSchema(sourceOp->getSchema());
 
-            // Set the pinned worker id via a dedicated setter instead of using a property.
-            duplicateSourceOperator->setSchema(sourceOperator->getSchema());
-
-            /// Flatten the graph to duplicate and update operator IDs.
-            const std::vector<std::shared_ptr<Operator>>& allOperators = getAndFlattenAllAncestors(duplicateSourceOperator);
-
-            std::unordered_set<OperatorId> visitedOperators;
-            for (const auto& node : allOperators)
+            auto allNodes = getAndFlattenAllAncestors(duplicateSourceOp.get());
+            std::unordered_set<OperatorId> visited;
+            for (Operator* node : allNodes)
             {
-                auto operatorNode = NES::Util::as<Operator>(node);
-                // Simply assign a new operator id and mark it as visited.
-                ///operatorNode->setId(getNextOperatorId());
-                visitedOperators.insert(operatorNode->id);
+                visited.insert(node->id);
             }
 
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(duplicateSourceOperator->getSchema());
-            auto operatorSourceLogicalDescriptor = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor));
-            replace(duplicateSourceOperator, operatorSourceLogicalDescriptor, duplicateSourceOperator);
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(duplicateSourceOp->getSchema());
+            auto logicalDescOp = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor));
+            // Replace duplicateSourceOp with logicalDescOp in the tree.
+            replace(duplicateSourceOp.get(), std::move(logicalDescOp), duplicateSourceOp.get());
         }
     }
 
-    NES_DEBUG("LogicalSourceExpansionRule: Plan after\n{}", queryPlan->toString());
+    NES_DEBUG("LogicalSourceExpansionRule: Plan after\n{}", queryPlan.toString());
     return queryPlan;
 }
 

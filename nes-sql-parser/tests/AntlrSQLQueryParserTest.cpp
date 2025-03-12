@@ -15,9 +15,6 @@
 #include <memory>
 #include <regex>
 #include <string>
-#include <API/Query.hpp>
-#include <API/QueryAPI.hpp>
-#include <API/WindowedQuery.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,11 +39,11 @@ public:
     }
 };
 
-bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query& internalLogicalQuery)
+bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const QueryPlan& internalLogicalQuery)
 {
-    const std::shared_ptr<QueryPlan> antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
-    NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
-    return (*antlrQueryParsed) == internalLogicalQuery.getQueryPlan();
+    const auto antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed.toString(), internalLogicalQuery);
+    return (antlrQueryParsed) == internalLogicalQuery;
 }
 
 TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)

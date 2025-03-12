@@ -142,6 +142,11 @@ public:
     /// @return std::vector<std::string> fieldNames
     std::vector<std::string> getFieldNames() const;
 
+    /// Non-const iterator
+    auto begin() { return fields.begin(); }
+    auto end() { return fields.end(); }
+
+    /// Const iterator for const objects
     auto begin() const { return std::begin(fields); }
     auto end() const { return std::end(fields); }
 

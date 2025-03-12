@@ -224,11 +224,10 @@ std::set<Operator*> QueryPlan::findAllOperatorsBetween(
 
 
 /// Removinng this implemenztation might have fix a building error
-/*
-bool QueryPlan::operator==(const std::shared_ptr<QueryPlan>& otherPlan) const
+bool QueryPlan::operator==(const QueryPlan& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
-    auto rightRootOperators = otherPlan->getRootOperators();
+    auto rightRootOperators = otherPlan.getRootOperators();
 
     if (leftRootOperators.size() != rightRootOperators.size())
     {
@@ -272,7 +271,7 @@ bool QueryPlan::operator==(const std::shared_ptr<QueryPlan>& otherPlan) const
         }
     }
     return true;
-}*/
+}
 
 /*
 std::set<std::shared_ptr<Operator>> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(
