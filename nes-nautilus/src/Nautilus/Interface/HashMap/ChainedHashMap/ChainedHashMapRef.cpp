@@ -367,7 +367,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
             {
                 return 0;
             }
-            const auto chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
+            const auto* const chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
             return chainedHashMap->getNumberOfTuples();
         },
         hashMapRef);
