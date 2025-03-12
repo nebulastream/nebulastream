@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <optional>
