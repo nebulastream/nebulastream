@@ -1,0 +1,31 @@
+# name: milestone/SmartGrid.test
+# description: Queries from the Paper: "LightSaber: Efficient Window Aggregation on Multi-core Processors (Theodorakis et al.)"
+# The paper uses the dataset from DEBS 2014 Grand Challenge https://debs.org/grand-challenges/2014/ but creates custom queries
+# groups: [milestone, benchmark, large]
+
+# This test is currently disabled, as we can not ensure deterministic results for the queries
+# The problem is that the queries perform a floating point average aggregation. Due to our out-of-order processing, the results may differ slightly.
+
+# Source definitions
+SourceCSV smartGrid UINT64 creationTS FLOAT32 value FLOAT32 property INT16 plugId INT16 householdId INT16 houseId TESTDATA/large/smartgrid/smartgrid-data.csv
+
+
+# Query 1
+SELECT start, end, plugId, householdId, houseId, AVG(value) AS avg_value
+FROM smartGrid
+GROUP BY (plugId, householdId, houseId)
+WINDOW SLIDING(creationTS, SIZE 1 HOUR, ADVANCE BY 1 SEC)
+INTO sinkQ2;
+----
+1730016,3598524228
+
+# Query 2
+SELECT start, end, plugId, householdId, houseId, AVG(value) AS avg_value
+FROM smartGrid
+GROUP BY (plugId, householdId, houseId)
+WINDOW SLIDING(creationTS, SIZE 128 SEC, ADVANCE BY 1 SEC)
+INTO CHECKSUM;
+----
+#98176,201359101
+#98176,201359115
+98176,201359117
