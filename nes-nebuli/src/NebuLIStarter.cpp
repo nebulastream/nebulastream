@@ -24,7 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include "YAMLConfigLoader.hpp"
+#include "YAMLConfigLoader.hpp" /// NOLINT(misc-include-cleaner) used indirectly by yaml-cpp
 
 using namespace std::literals;
 
