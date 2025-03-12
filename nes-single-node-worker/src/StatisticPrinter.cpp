@@ -25,6 +25,7 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
@@ -37,6 +38,7 @@ namespace
 void threadRoutine(
     const std::stop_token& token, std::ofstream& file, folly::MPMCQueue<PrintingStatisticListener::CombinedEventType>& events)
 {
+    setThreadName("StatPrinter");
     while (!token.stop_requested())
     {
         PrintingStatisticListener::CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
