@@ -327,7 +327,7 @@ void doDump(argparse::ArgumentParser& parser, std::vector<std::shared_ptr<NES::D
                 exit(1);
             }
 
-            outputPath = std::filesystem::path(outputPath) / fmt::format("{}.bin", decomposedQueryPlan->getGRPC());
+            outputPath = std::filesystem::path(outputPath) / fmt::format("{}.txtpb", decomposedQueryPlan->getGRPC());
             file = std::ofstream(outputPath);
             if (!file)
             {
@@ -337,11 +337,7 @@ void doDump(argparse::ArgumentParser& parser, std::vector<std::shared_ptr<NES::D
             outputStream = &file;
         }
 
-        if (!serialized.SerializeToOstream(outputStream))
-        {
-            NES_FATAL_ERROR("Failed to write message to file.");
-            exit(1);
-        }
+        *outputStream << serialized.DebugString() << std::endl;
 
         if (outputPath != "-")
         {
