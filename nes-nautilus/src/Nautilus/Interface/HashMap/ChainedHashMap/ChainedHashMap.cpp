@@ -122,46 +122,6 @@ std::vector<uint8_t> ChainedHashMap::serialize() const {
     return buffer;
 }
 
-// std::vector<uint8_t> ChainedHashMap::serialize() const {
-//     // This vector will accumulate our serialized data.
-//     std::vector<uint8_t> serialized;
-//     // Helper lambda to append raw bytes to our vector.
-//     auto append = [&serialized](const void* data, size_t size) {
-//         size_t oldSize = serialized.size();
-//         serialized.resize(oldSize + size);
-//         std::memcpy(serialized.data() + oldSize, data, size);
-//     };
-//     // --- Write header metadata in a fixed order ---
-//     // Append the key size, value size, page size, current size, and capacity.
-//     append(&keySize, sizeof(keySize));
-//     append(&valueSize, sizeof(valueSize));
-//     // We assume that pageSize is 4096 bytes.
-//     append(&pageSize, sizeof(pageSize)); // pageSize should be 4096
-//     append(&currentSize, sizeof(currentSize));
-//     append(&capacity, sizeof(capacity));
-//     // Write the number of pages.
-//     uint64_t numPages = pages.size();
-//     append(&numPages, sizeof(numPages));
-//     // Write how many entries fit in a page.
-//     append(&entriesPerPage, sizeof(entriesPerPage));
-//     // --- Write each page’s state ---
-//     // For each page, first write the number of valid entries stored on that page.
-//     // (For all pages except possibly the last one, the number of valid entries equals entriesPerPage.)
-//     for (size_t i = 0; i < pages.size(); ++i) {
-//         uint64_t validEntries = 0;
-//         if (i < pages.size() - 1) {
-//             validEntries = entriesPerPage;
-//         } else {
-//             // For the last page, it may be partially filled.
-//             validEntries = (currentSize % entriesPerPage == 0) ? entriesPerPage : (currentSize % entriesPerPage);
-//         }
-//         append(&validEntries, sizeof(validEntries));
-//         // Now, append the entire page’s content.
-//         // Here we assume that each page is exactly 4096 bytes.
-//         append(pages[i], pageSize);
-//     }
-//     return serialized;
-// }
 
 
 std::unique_ptr<ChainedHashMap> ChainedHashMap::deserialize(const uint8_t* data, size_t length, std::unique_ptr<std::pmr::memory_resource> allocator) {
@@ -184,8 +144,10 @@ std::unique_ptr<ChainedHashMap> ChainedHashMap::deserialize(const uint8_t* data,
         NES_ERROR("An error occurred while deserializing the ChainedHashMap");
     }
 
-    const uint8_t* ptr = data + 4 * sizeof(uint64_t);
-    while (ptr < data + 4 * sizeof(uint64_t) + length) {
+    const uint8_t* end = data + length;            // pointer to the very end of the entire buffer
+    const uint8_t* ptr = data + 4*sizeof(uint64_t); // skip the first 32 bytes
+
+    while (ptr < end) {
         hash_t hash;
         std::memcpy(&hash, ptr, sizeof(hash_t));
         ptr += sizeof(hash_t);
@@ -201,65 +163,6 @@ std::unique_ptr<ChainedHashMap> ChainedHashMap::deserialize(const uint8_t* data,
 
     return map;
 }
-
-// std::unique_ptr<ChainedHashMap> ChainedHashMap::deserialize(const std::vector<uint8_t>& serialized, std::unique_ptr<std::pmr::memory_resource> allocator) {
-//     size_t offset = 0;
-//     auto readField = [&serialized, &offset](void* dest, size_t size) {
-//         if (offset + size > serialized.size()) {
-//             NES_THROW_RUNTIME_ERROR("Serialized state is truncated.");
-//         }
-//         std::memcpy(dest, serialized.data() + offset, size);
-//         offset += size;
-//     };
-//     // --- Read header metadata in the same order as written ---
-//     uint64_t keySize = 0;
-//     uint64_t valueSize = 0;
-//     uint64_t pageSize = 0;
-//     uint64_t currentSize = 0;
-//     uint64_t capacity = 0;
-//     uint64_t numPages = 0;
-//     uint64_t entriesPerPage = 0;
-//     readField(&keySize, sizeof(keySize));
-//     readField(&valueSize, sizeof(valueSize));
-//     readField(&pageSize, sizeof(pageSize));
-//     readField(&currentSize, sizeof(currentSize));
-//     readField(&capacity, sizeof(capacity));
-//     readField(&numPages, sizeof(numPages));
-//     readField(&entriesPerPage, sizeof(entriesPerPage));
-//     // Create a new ChainedHashMap.
-//     // We pass currentSize as the number of entries (nrEntries). In practice, you might need to adjust this.
-//     uint64_t estimatedNrEntries = static_cast<uint64_t>(capacity * 0.7);
-//     while (estimatedNrEntries > 0 && getCapacity(estimatedNrEntries) != capacity) {
-//         estimatedNrEntries--;
-//     }
-//     auto newMap = std::make_unique<ChainedHashMap>(
-//         keySize, valueSize, estimatedNrEntries, std::move(allocator));
-//
-//     if (newMap->capacity != capacity) {
-//         NES_ERROR("An error occurred while deserializing the ChainedHashMap");
-//     }
-//
-//     // Clear any default pages that the constructor might have allocated.
-//     newMap->pages.clear();
-//     // --- Read each page’s data ---
-//     for (uint64_t i = 0; i < numPages; ++i) {
-//         uint64_t validEntries = 0;
-//         readField(&validEntries, sizeof(validEntries));
-//         // Allocate a new page of size ‘pageSize’ using the map’s allocator.
-//         int8_t* page = reinterpret_cast<int8_t*>(newMap->allocator->allocate(pageSize));
-//         // Copy the page’s content.
-//         readField(page, pageSize);
-//         // Append the page pointer to the pages vector.
-//         newMap->pages.push_back(page);
-//     }
-//     // Optionally, verify that we consumed exactly all serialized data.
-//     if (offset != serialized.size()) {
-//         NES_THROW_RUNTIME_ERROR("Extra data in serialized state.");
-//     }
-//     // Set the fields that might be used later.
-//     newMap->currentSize = currentSize;
-//     return newMap;
-// }
 
 
 }// namespace NES::Nautilus::Interface

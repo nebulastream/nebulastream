@@ -48,27 +48,23 @@ std::vector<Runtime::TupleBuffer> KeyedSlice::serialize(BufferManagerPtr& buffer
                                               dataToWrite);
     };
 
-    // Store slice metadata
     writeToMetadata(start);
     writeToMetadata(end);
-    writeToMetadata(state->getCurrentSize());
 
-    // Extract and store ChainedHashMap contents
-    if (state) {
-        auto stateSerialized = state->serialize();
+    auto stateSerialized = state->serialize();
 
+    writeToMetadata(stateSerialized.size());
+
+    if (stateSerialized.size() > 0) {
         auto stateBuffer = bufferManager->getBufferBlocking();
         if (stateBuffer.getBufferSize() < stateSerialized.size()) {
             NES_THROW_RUNTIME_ERROR("Allocated buffer is too small for serialized state.");
         }
-
         std::memcpy(stateBuffer.getBuffer<uint8_t>(), stateSerialized.data(), stateSerialized.size());
         buffersToTransfer.emplace_back(stateBuffer);
     }
 
-    // set number of metadata buffers to the first metadata buffer
     mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
-
     return buffersToTransfer;
 }
 

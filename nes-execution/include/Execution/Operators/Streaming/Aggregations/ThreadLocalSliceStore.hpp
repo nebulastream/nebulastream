@@ -168,6 +168,11 @@ class ThreadLocalSliceStore {
         return lock.asNonConstUnsafe();
     }
 
+    void replaceSlices(std::list<SliceTypePtr> newSlices) {
+        auto lock = synchronizedSlices.wlock();
+        *lock = std::move(newSlices);
+    }
+
   private:
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
