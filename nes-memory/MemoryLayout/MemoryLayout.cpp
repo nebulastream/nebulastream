@@ -129,6 +129,43 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
     }
 }
 
+std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGroupedFieldTypeSizes()
+{
+    std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
+    for (auto fieldIdx = 0UL; fieldIdx < schema->getFieldCount(); ++fieldIdx)
+    {
+        auto fieldType = FieldType::PAYLOAD;
+        if (std::ranges::find(keyFieldNames, schema->getFieldNames()[fieldIdx]) != keyFieldNames.end())
+        {
+            fieldType = FieldType::KEY;
+        }
+
+        uint64_t fieldSize = getFieldSize(fieldIdx);
+        if (!fieldTypeSizes.empty())
+        {
+            if (const auto [lastFieldType, lastFieldSize] = fieldTypeSizes.back(); lastFieldType == fieldType)
+            {
+                fieldSize += lastFieldSize;
+                fieldTypeSizes.pop_back();
+            }
+        }
+
+        fieldTypeSizes.emplace_back(std::make_tuple(fieldType, fieldSize));
+    }
+
+    return fieldTypeSizes;
+}
+
+std::shared_ptr<Schema> MemoryLayout::createKeyFieldsOnlySchema() const
+{
+    const auto keysOnlySchema = Schema::create(schema->getLayoutType());
+    for (const auto& keyFieldName : keyFieldNames)
+    {
+        keysOnlySchema->addField(keyFieldName, schema->getFieldByName(keyFieldName)->get()->getDataType());
+    }
+    return keysOnlySchema;
+}
+
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
     return bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity

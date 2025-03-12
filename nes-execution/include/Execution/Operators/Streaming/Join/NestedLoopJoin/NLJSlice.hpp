@@ -46,7 +46,8 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId) override;
+        WorkerThreadId threadId,
+        FileLayout fileLayout) override;
 
     /// Reads the projected fields of all tuples from fileStorage.
     void readFromFile(
@@ -54,10 +55,11 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId) override;
+        WorkerThreadId threadId,
+        FileLayout fileLayout) override;
 
     /// Deletes the projected fields of all tuples.
-    void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) override;
+    void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, FileLayout fileLayout) override;
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes
     size_t getStateSizeInBytesForThreadId(
@@ -66,6 +68,9 @@ public:
         WorkerThreadId threadId) const;
 
 private:
+    std::tuple<Interface::PagedVector*, Interface::PagedVector*>
+    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;

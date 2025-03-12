@@ -66,16 +66,18 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId)
+        WorkerThreadId threadId,
+        FileLayout fileLayout)
         = 0;
     virtual void readFromFile(
         FileReader& fileReader,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId)
+        WorkerThreadId threadId,
+        FileLayout fileLayout)
         = 0;
-    virtual void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) = 0;
+    virtual void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, FileLayout fileLayout) = 0;
 
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;

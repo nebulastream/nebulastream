@@ -19,7 +19,7 @@
 enum FileLayout : uint8_t
 {
     NO_SEPARATION,
-    SEPARATE_FILES_KEYS,
+    //SEPARATE_FILES_KEYS,
     SEPARATE_FILES_PAYLOAD
 };
 
