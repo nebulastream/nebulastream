@@ -24,5 +24,5 @@ namespace NES::CLI
 
 
 std::vector<std::shared_ptr<DecomposedQueryPlan>>
-createFullySpecifiedQueryPlan(std::string_view queryString, const Distributed::Config::Topology& topologyConfiguration);
+createFullySpecifiedQueryPlan(std::string_view queryText, const Distributed::Config::Topology& topologyConfiguration);
 }
