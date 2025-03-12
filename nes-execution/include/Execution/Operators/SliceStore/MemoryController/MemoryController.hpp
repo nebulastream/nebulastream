@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Util/Execution.hpp>
 

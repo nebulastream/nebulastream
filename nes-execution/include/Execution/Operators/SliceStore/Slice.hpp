@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Time/Timestamp.hpp>

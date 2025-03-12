@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 
 FileWriter::FileWriter(const std::string& filePath) : file_(filePath, std::ios::out | std::ios::trunc | std::ios::binary)
 {

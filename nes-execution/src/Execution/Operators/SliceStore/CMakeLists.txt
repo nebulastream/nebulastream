@@ -16,5 +16,5 @@ add_source_files(nes-execution
         FileBackedTimeBasedSliceStore.cpp
 )
 
-add_subdirectory(FileStorage)
+add_subdirectory(FileDescriptors)
 add_subdirectory(MemoryController)
