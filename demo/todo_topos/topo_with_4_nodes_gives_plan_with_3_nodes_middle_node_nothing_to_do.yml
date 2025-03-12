@@ -1,0 +1,58 @@
+# Nebuli reports only three nodes in dump
+logical:
+  - name: tcp_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: UINT64
+  - name: csv_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: UINT64
+nodes:
+  - connection: 127.0.0.1:9094
+    grpc: 127.0.0.1:8084
+    capacity: 10
+    sinks:
+      - name: fast_csv_sink
+        type: Print
+        config:
+          ingestion: 100
+          inputFormat: CSV
+      - name: slow_csv_sink
+        type: Print
+        config:
+          ingestion: 1000
+          inputFormat: CSV
+  - connection: 127.0.0.1:9093
+    grpc: 127.0.0.1:8083
+    capacity: 0
+    links:
+      downstreams: [ 127.0.0.1:9094 ]
+  - connection: 127.0.0.1:9092
+    grpc: 127.0.0.1:8082
+    capacity: 0
+    links:
+      downstreams: [ 127.0.0.1:9093 ]
+  - connection: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 0
+    links:
+      downstreams: [ 127.0.0.1:9092 ]
+    physical:
+      - logical: tcp_source
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          socketHost: 127.0.0.1
+          socketPort: 12345
+          type: TCP
+      - logical: csv_source
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: /home/mgoerdel/nes/av-nes/nes-single-node-worker/tests/testdata/inputCSVFiles/oneToThirtyOneDoubleColumn.csv
