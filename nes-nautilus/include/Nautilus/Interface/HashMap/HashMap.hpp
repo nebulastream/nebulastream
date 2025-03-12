@@ -32,6 +32,6 @@ class HashMap
 public:
     virtual ~HashMap() = default;
     virtual AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider) = 0;
-    virtual uint64_t getNumberOfTuples() = 0;
+    virtual uint64_t getNumberOfTuples() const = 0;
 };
 }

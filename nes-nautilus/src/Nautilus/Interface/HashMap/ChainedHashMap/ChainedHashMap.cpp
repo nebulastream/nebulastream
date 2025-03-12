@@ -94,7 +94,7 @@ ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::ra
     return entries[entryStartPos];
 }
 
-uint64_t ChainedHashMap::getNumberOfTuples()
+uint64_t ChainedHashMap::getNumberOfTuples() const
 {
     return numberOfTuples;
 }
