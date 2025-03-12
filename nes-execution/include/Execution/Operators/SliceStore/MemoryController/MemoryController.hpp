@@ -16,6 +16,7 @@
 
 #include <Execution/Operators/SliceStore/FileStorage/FileStorage.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -29,15 +30,13 @@ public:
     MemoryController& operator=(const MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
 
-    std::shared_ptr<FileWriter> getLeftFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId);
-    std::shared_ptr<FileWriter> getRightFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId);
-
-    std::shared_ptr<FileReader> getLeftFileReader(SliceEnd sliceEnd, PipelineId pipelineId);
-    std::shared_ptr<FileReader> getRightFileReader(SliceEnd sliceEnd, PipelineId pipelineId);
+    std::shared_ptr<FileWriter>
+    getFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, PipelineId pipelineId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
 private:
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
-    std::shared_ptr<FileReader> getFileReader(const std::string& filePath);
+    std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
 
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex mutex_;

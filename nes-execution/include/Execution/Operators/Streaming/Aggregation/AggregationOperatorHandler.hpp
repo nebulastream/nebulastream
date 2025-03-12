@@ -53,8 +53,7 @@ public:
     /// TODO #409 This might change after the [DD] Operator Representations  has been implemented
     void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
 
-    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(Memory::AbstractBufferProvider* bufferProvider) const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
 protected:
     void triggerSlices(

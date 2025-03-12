@@ -63,7 +63,13 @@ public:
         = 0;
 
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
-    virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd, PipelineId pipelineId) = 0;
+    virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
+        SliceEnd sliceEnd,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        PipelineId pipelineId)
+        = 0;
 
     /// Retrieves all current non-deleted slices that have not been triggered yet
     /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp

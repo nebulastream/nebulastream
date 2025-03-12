@@ -175,7 +175,12 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(
+    const SliceEnd sliceEnd,
+    Memory::AbstractBufferProvider*,
+    const Memory::MemoryLayouts::MemoryLayout*,
+    const QueryCompilation::JoinBuildSideType,
+    PipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {

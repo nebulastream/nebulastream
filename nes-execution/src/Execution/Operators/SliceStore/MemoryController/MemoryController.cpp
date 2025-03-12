@@ -45,32 +45,40 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     return *this;
 }
 
-std::shared_ptr<FileWriter> MemoryController::getLeftFileWriter(const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId)
+std::shared_ptr<FileWriter> MemoryController::getFileWriter(
+    const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     std::stringstream ss;
-    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+    ss << "memory_controller_";
+
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Left:
+            ss << "left_";
+        case QueryCompilation::JoinBuildSideType::Right:
+            ss << "right_";
+    }
+
+    ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
     return getFileWriterFromMap(ss.str());
 }
 
-std::shared_ptr<FileWriter> MemoryController::getRightFileWriter(const SliceEnd sliceEnd, const PipelineId, const WorkerThreadId threadId)
+std::shared_ptr<FileReader>
+MemoryController::getFileReader(const SliceEnd sliceEnd, const PipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     std::stringstream ss;
-    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
-    return getFileWriterFromMap(ss.str());
-}
+    ss << "memory_controller_";
 
-std::shared_ptr<FileReader> MemoryController::getLeftFileReader(const SliceEnd sliceEnd, const PipelineId)
-{
-    std::stringstream ss;
-    ss << "memory_controller_left_" << sliceEnd.getRawValue() << "_";
-    return getFileReader(ss.str());
-}
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Left:
+            ss << "left_";
+        case QueryCompilation::JoinBuildSideType::Right:
+            ss << "right_";
+    }
 
-std::shared_ptr<FileReader> MemoryController::getRightFileReader(const SliceEnd sliceEnd, const PipelineId)
-{
-    std::stringstream ss;
-    ss << "memory_controller_right_" << sliceEnd.getRawValue() << "_";
-    return getFileReader(ss.str());
+    ss << sliceEnd.getRawValue() << "_";
+    return getFileReaderAndEraseWriter(ss.str());
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
@@ -87,7 +95,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::st
     return fileWriter;
 }
 
-std::shared_ptr<FileReader> MemoryController::getFileReader(const std::string& filePath)
+std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::string& filePath)
 {
     std::lock_guard lock(mutex_);
 

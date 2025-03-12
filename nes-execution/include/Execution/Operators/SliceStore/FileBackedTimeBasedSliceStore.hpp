@@ -56,15 +56,29 @@ public:
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
-    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd, PipelineId pipelineId) override;
+    std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
+        SliceEnd sliceEnd,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        PipelineId pipelineId) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
-    void updateSlices(const SliceStoreMetaData& metaData);
+    void updateSlices(
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        const SliceStoreMetaData& metaData);
 
 private:
-    void readSliceFromFiles(const std::shared_ptr<Slice>& slice, PipelineId pipelineId);
+    void readSliceFromFiles(
+        const std::shared_ptr<Slice>& slice,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        PipelineId pipelineId);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;

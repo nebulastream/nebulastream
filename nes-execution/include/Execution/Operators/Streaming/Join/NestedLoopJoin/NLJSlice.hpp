@@ -41,16 +41,29 @@ public:
     void combinePagedVectors();
 
     /// Writes the projected fields of all tuples to fileStorage.
-    void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) override;
+    void writeToFile(
+        FileWriter& fileWriter,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId) override;
 
     /// Reads the projected fields of all tuples from fileStorage.
-    void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) override;
+    void readFromFile(
+        FileReader& fileReader,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId) override;
 
     /// Deletes the projected fields of all tuples.
-    void truncate(WorkerThreadId threadId) override;
+    void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) override;
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes
-    size_t getStateSizeInBytesForThreadId(WorkerThreadId threadId) const;
+    size_t getStateSizeInBytesForThreadId(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId) const;
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;

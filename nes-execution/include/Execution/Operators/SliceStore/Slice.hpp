@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime
 {
@@ -60,9 +61,21 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    virtual void writeToFile(FileWriter& leftFileWriter, FileWriter& rightFileWriter, WorkerThreadId threadId) = 0;
-    virtual void readFromFile(FileReader& leftFileReader, FileReader& rightFileReader, WorkerThreadId threadId) = 0;
-    virtual void truncate(WorkerThreadId threadId) = 0;
+    virtual void writeToFile(
+        FileWriter& fileWriter,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId)
+        = 0;
+    virtual void readFromFile(
+        FileReader& fileReader,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId)
+        = 0;
+    virtual void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) = 0;
 
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;

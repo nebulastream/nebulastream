@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
@@ -41,7 +40,7 @@ void checkWindowsTriggerProxy(
     const bool lastChunk,
     const OriginId originId)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
@@ -49,26 +48,9 @@ void checkWindowsTriggerProxy(
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
-void updateSlicesProxy(
-    OperatorHandler* ptrOpHandler,
-    const PipelineExecutionContext* piplineContext,
-    const WorkerThreadId workerThreadId,
-    const Timestamp watermarkTs)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
-
-    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
-    if (sliceStore)
-    {
-        sliceStore->updateSlices(SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));
-    }
-}
-
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(piplineContext != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
@@ -93,9 +75,6 @@ void WindowOperatorBuild::close(ExecutionContext& executionCtx, RecordBuffer&) c
         executionCtx.chunkNumber,
         executionCtx.lastChunk,
         executionCtx.originId);
-
-    invoke(
-        updateSlicesProxy, operatorHandlerMemRef, executionCtx.pipelineContext, executionCtx.getWorkerThreadId(), executionCtx.watermarkTs);
 }
 
 void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

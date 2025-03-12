@@ -179,14 +179,18 @@ FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp global
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>>
-FileBackedTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd, const PipelineId pipelineId)
+std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(
+    const SliceEnd sliceEnd,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const PipelineId pipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
         // TODO fetch slice if not done in getTriggerableWindowSlices() or getAllNonTriggeredSlices()
         auto slice = slicesReadLocked->find(sliceEnd)->second;
-        readSliceFromFiles(slice, pipelineId);
+        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, pipelineId);
         return slice;
     }
     return {};
@@ -316,7 +320,11 @@ uint64_t FileBackedTimeBasedSliceStore::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData& metaData)
+void FileBackedTimeBasedSliceStore::updateSlices(
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const SliceStoreMetaData& metaData)
 {
     const auto pipelineId = metaData.pipelineId;
     const auto threadId = metaData.threadId;
@@ -324,27 +332,29 @@ void FileBackedTimeBasedSliceStore::updateSlices(const SliceStoreMetaData& metaD
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto leftFileWriter = memCtrl.getLeftFileWriter(sliceEnd, pipelineId, threadId);
-        auto rightFileWriter = memCtrl.getRightFileWriter(sliceEnd, pipelineId, threadId);
-        slice->writeToFile(*leftFileWriter, *rightFileWriter, threadId);
-        slice->truncate(threadId);
+        auto fileWriter = memCtrl.getFileWriter(sliceEnd, pipelineId, threadId, joinBuildSide);
+        slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId);
+        slice->truncate(joinBuildSide, threadId);
     }
 
     // TODO predictiveRead()
 }
 
-void FileBackedTimeBasedSliceStore::readSliceFromFiles(const std::shared_ptr<Slice>& slice, const PipelineId pipelineId)
+void FileBackedTimeBasedSliceStore::readSliceFromFiles(
+    const std::shared_ptr<Slice>& slice,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const PipelineId pipelineId)
 {
     while (true)
     {
-        auto leftFileReader = memCtrl.getLeftFileReader(slice->getSliceEnd(), pipelineId);
-        auto rightFileReader = memCtrl.getRightFileReader(slice->getSliceEnd(), pipelineId);
-
-        if (!leftFileReader || !rightFileReader)
+        auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, joinBuildSide);
+        if (!fileReader)
         {
             break;
         }
-        slice->readFromFile(*leftFileReader, *rightFileReader, WorkerThreadId(0));
+        slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(0));
     }
 }
 

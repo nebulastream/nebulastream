@@ -33,6 +33,9 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
+    /// Updates the slices in the slice store and passes/emits slices that are ready to the second join phase (probe) for further processing
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
 protected:
     const QueryCompilation::JoinBuildSideType joinBuildSide;
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
