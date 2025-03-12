@@ -52,7 +52,7 @@ public:
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
-    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
+    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData, PipelineId pipelineId) const;
 
     /// Checks and triggers windows that are ready to be triggered, e.g., the watermark has passed the window end for time-based windows.
     /// This method updates the watermarkProcessor and is thread-safe

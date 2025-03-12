@@ -180,7 +180,7 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
     Memory::AbstractBufferProvider*,
     const Memory::MemoryLayouts::MemoryLayout*,
     const QueryCompilation::JoinBuildSideType,
-    PipelineId)
+    const PipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
@@ -251,7 +251,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
     return windowsToSlices;
 }
 
-void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
+void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark, const PipelineId)
 {
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)

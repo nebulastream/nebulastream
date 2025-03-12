@@ -38,7 +38,7 @@ void FileWriter::write(const void* data, const std::size_t size)
     }
 }
 
-FileReader::FileReader(const std::string& filePath) : file_(filePath, std::ios::in | std::ios::binary)
+FileReader::FileReader(const std::string& filePath) : file_(filePath, std::ios::in | std::ios::binary), filePath(filePath)
 {
     if (!file_.is_open())
     {
@@ -52,6 +52,8 @@ FileReader::~FileReader()
     {
         file_.close();
     }
+    // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
+    //std::filesystem::remove(filePath);
 }
 
 std::size_t FileReader::read(void* dest, const std::size_t size)

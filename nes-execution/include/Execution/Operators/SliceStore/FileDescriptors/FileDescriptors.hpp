@@ -45,4 +45,5 @@ public:
 
 private:
     std::ifstream file_;
+    std::string filePath;
 };

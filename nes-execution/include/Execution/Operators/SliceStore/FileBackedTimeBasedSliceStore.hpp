@@ -49,8 +49,8 @@ public:
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore&& other) noexcept;
-
     ~FileBackedTimeBasedSliceStore() override;
+
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
@@ -62,7 +62,7 @@ public:
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         PipelineId pipelineId) override;
-    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
+    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark, PipelineId pipelineId) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
 

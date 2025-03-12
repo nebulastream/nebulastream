@@ -79,7 +79,7 @@ public:
     /// Garbage collect all slices and windows that are not valid anymore
     /// It is open for the implementation to delete the slices in this call or to mark them for deletion
     /// There is no guarantee that the slices are deleted after this call
-    virtual void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) = 0;
+    virtual void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark, PipelineId pipelineId) = 0;
 
     /// Deletes all slices, directly in this call
     virtual void deleteState() = 0;

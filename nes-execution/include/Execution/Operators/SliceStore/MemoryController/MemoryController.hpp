@@ -31,10 +31,13 @@ public:
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(const MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
+    ~MemoryController();
 
     std::shared_ptr<FileWriter>
     getFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, PipelineId pipelineId, QueryCompilation::JoinBuildSideType joinBuildSide);
+
+    void deleteSliceFiles(SliceEnd sliceEnd, PipelineId pipelineId);
 
 private:
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);

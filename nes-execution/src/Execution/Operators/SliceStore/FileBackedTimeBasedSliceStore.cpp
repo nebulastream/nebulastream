@@ -22,7 +22,6 @@
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -126,7 +125,6 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 
     if (slicesWriteLocked->contains(sliceEnd))
     {
-        // TODO we don't need to actually fetch slice as we only want to write to it in build
         return {slicesWriteLocked->find(sliceEnd)->second};
     }
 
@@ -172,7 +170,6 @@ FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp global
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
     }
@@ -188,7 +185,6 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
-        // TODO fetch slice if not done in getTriggerableWindowSlices() or getAllNonTriggeredSlices()
         auto slice = slicesReadLocked->find(sliceEnd)->second;
         readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, pipelineId);
         return slice;
@@ -212,7 +208,6 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            // TODO fetch slice from main mem or do it in getSliceBySliceEnd() which is called from probe
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
@@ -258,7 +253,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
     return windowsToSlices;
 }
 
-void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
+void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark, const PipelineId pipelineId)
 {
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)
@@ -275,7 +270,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
         if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            // TODO delete state from ssd if there is any
+            // TODO delete state from ssd if there is any and if not done below
             windowsWriteLocked->erase(windowsLockedIt++);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
@@ -295,7 +290,8 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
-            // TODO delete state from ssd if there is any
+            // TODO delete state from ssd if there is any and if not done above
+            memCtrl.deleteSliceFiles(sliceEnd, pipelineId);
             slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
@@ -311,8 +307,7 @@ void FileBackedTimeBasedSliceStore::deleteState()
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
-    // TODO delete state from ssd if there is any
-    // TODO clear memCtrl
+    // TODO delete memCtrl and state from ssd if there is any
 }
 
 uint64_t FileBackedTimeBasedSliceStore::getWindowSize() const

@@ -45,6 +45,15 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     return *this;
 }
 
+MemoryController::~MemoryController()
+{
+    // TODO investigate why destructor is never called
+    /// Files are deleted in FileReader destructor
+    while (getFileReaderAndEraseWriter("memory_controller_"))
+    {
+    }
+}
+
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd,
     const PipelineId pipelineId,
@@ -56,10 +65,14 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 
     switch (joinBuildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Left:
+        case QueryCompilation::JoinBuildSideType::Left: {
             ss << "left_";
-        case QueryCompilation::JoinBuildSideType::Right:
+            break;
+        }
+        case QueryCompilation::JoinBuildSideType::Right: {
             ss << "right_";
+            break;
+        }
     }
 
     if constexpr (USE_PIPELINE_ID)
@@ -81,10 +94,14 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
 
     switch (joinBuildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Left:
+        case QueryCompilation::JoinBuildSideType::Left: {
             ss << "left_";
-        case QueryCompilation::JoinBuildSideType::Right:
+            break;
+        }
+        case QueryCompilation::JoinBuildSideType::Right: {
             ss << "right_";
+            break;
+        }
     }
 
     if constexpr (USE_PIPELINE_ID)
@@ -98,10 +115,22 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
     return getFileReaderAndEraseWriter(ss.str());
 }
 
+void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineId pipelineId)
+{
+    /// Files are deleted in FileReader destructor
+    while (getFileReader(sliceEnd, pipelineId, QueryCompilation::JoinBuildSideType::Left))
+    {
+    }
+    while (getFileReader(sliceEnd, pipelineId, QueryCompilation::JoinBuildSideType::Right))
+    {
+    }
+}
+
 std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
     std::lock_guard lock(mutex_);
 
+    /// Search for matching fileWriter to avoid attempting to open a file twice
     const auto it = fileWriters.find(filePath);
     if (it != fileWriters.end())
     {
@@ -116,6 +145,7 @@ std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const 
 {
     std::lock_guard lock(mutex_);
 
+    /// Erase matching fileWriter as the file content must not be amended after being read. This also enforces reading file content only once
     for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
         const std::string writerFilePath = it->first;
