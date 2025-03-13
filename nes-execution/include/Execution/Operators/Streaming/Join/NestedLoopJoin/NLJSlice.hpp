@@ -73,22 +73,25 @@ private:
     std::tuple<Interface::PagedVector*, Interface::PagedVector*>
     getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
-    static void writePayloadSeparatelyToFile(
-        const int8_t* pagePtr,
-        uint64_t numTuplesOnPage,
-        Interface::PagedVector* pagedVectorKeys,
+    static void writePayloadOnlyToFile(
+        const std::vector<Memory::TupleBuffer>& pages,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* keyFieldsOnlyMemoryLayout,
-        const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+        Interface::PagedVector* pagedVectorKeys,
         FileWriter& fileWriter);
 
-    static void writePayloadAndKeysSeparatelyToFile(
-        const int8_t* pagePtr,
-        uint64_t numTuplesOnPage,
+    static void writePayloadAndKeysToSeparateFiles(
+        const std::vector<Memory::TupleBuffer>& pages,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Interface::PagedVector* pagedVectorKeys,
-        const Memory::MemoryLayouts::MemoryLayout* keyFieldsOnlyMemoryLayout,
-        const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         FileWriter& fileWriter);
+
+    static void readSeparatelyFromFiles(
+        Interface::PagedVector* pagedVector,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        Memory::AbstractBufferProvider* bufferProvider,
+        Interface::PagedVector* pagedVectorKeys,
+        FileReader& fileReader);
 
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;

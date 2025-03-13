@@ -15,8 +15,8 @@
 #include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 
 FileWriter::FileWriter(const std::string& filePath)
-    : file(filePath, std::ios::out | std::ios::trunc | std::ios::binary)
-    , keyFile(filePath + "_key", std::ios::out | std::ios::trunc | std::ios::binary)
+    : file(filePath + ".dat", std::ios::out | std::ios::trunc | std::ios::binary)
+    , keyFile(filePath + "_key.dat", std::ios::out | std::ios::trunc | std::ios::binary)
 {
     if (!file.is_open())
     {
@@ -45,7 +45,9 @@ void FileWriter::writeKey(const void* data, const std::size_t size)
 }
 
 FileReader::FileReader(const std::string& filePath)
-    : file(filePath, std::ios::in | std::ios::binary), keyFile(filePath + "_key", std::ios::in | std::ios::binary), filePath(filePath)
+    : file(filePath + ".dat", std::ios::in | std::ios::binary)
+    , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
+    , filePath(filePath)
 {
     if (!file.is_open())
     {
@@ -68,8 +70,8 @@ FileReader::~FileReader()
         keyFile.close();
     }
     // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
-    //std::filesystem::remove(filePath);
-    //std::filesystem::remove(filePath + "_key");
+    //std::filesystem::remove(filePath + ".dat");
+    //std::filesystem::remove(filePath + "_key.dat");
 }
 
 std::size_t FileReader::read(void* dest, const std::size_t size)

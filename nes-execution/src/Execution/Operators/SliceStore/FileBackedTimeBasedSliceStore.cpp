@@ -330,6 +330,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         auto fileWriter = memCtrl.getFileWriter(sliceEnd, pipelineId, threadId, joinBuildSide);
         slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId, USE_FILE_LAYOUT);
         slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
+        // TODO force flush file stream? use internal FileStorage buffer?
     }
 
     // TODO predictiveRead()
