@@ -20,6 +20,7 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/ostream.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -61,10 +62,4 @@ private:
 
 }
 
-namespace fmt
-{
-template <>
-struct formatter<NES::Sinks::CSVFormat> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Sinks::CSVFormat);
