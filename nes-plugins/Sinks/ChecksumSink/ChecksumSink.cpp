@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -83,7 +83,7 @@ void ChecksumSink::stop(Runtime::Execution::PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+void ChecksumSink::execute(const Memory::PinnedBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);

@@ -23,7 +23,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
@@ -47,7 +47,7 @@ public:
     /// Opens file and writes schema to file, if the file is empty.
     void start(Runtime::Execution::PipelineExecutionContext&) override;
     void stop(Runtime::Execution::PipelineExecutionContext&) override;
-    void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
+    void execute(const Memory::PinnedBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 

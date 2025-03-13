@@ -20,7 +20,6 @@ add_library(nes-memory
         PinnedBuffer.cpp
         NesDefaultMemoryAllocator.cpp
         FixedSizeBufferPool.cpp
-        LocalBufferPool.cpp
         TestTupleBuffer.cpp
         ${MEMORY_LAYOUT_SOURCES}
         FloatingBuffer.cpp
