@@ -156,11 +156,10 @@ public:
 class SpillBCBLock
 {
     std::unique_lock<std::shared_mutex> lock;
-    BufferControlBlock* controlBlock;
 
 public:
-    explicit SpillBCBLock(std::unique_lock<std::shared_mutex>&& lock, BufferControlBlock* control_block)
-        : lock(std::move(lock)), controlBlock(control_block)
+    explicit SpillBCBLock(std::unique_lock<std::shared_mutex>&& lock, BufferControlBlock*)
+        : lock(std::move(lock))
     {
     }
     SpillBCBLock(const SpillBCBLock& other) = delete;

@@ -32,7 +32,7 @@ FixedSizeBufferPool::FixedSizeBufferPool(
     const std::shared_ptr<BufferManager>& bufferManager,
     std::deque<detail::DataSegment<detail::InMemoryLocation>>&& buffers,
     const size_t numberOfReservedBuffers,
-    const std::function<void(detail::DataSegment<detail::InMemoryLocation>&&)>& deallocator)
+    const std::function<void(detail::DataSegment<detail::InMemoryLocation>&&)>&)
     : bufferManager(bufferManager)
     , exclusiveBuffers(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)

@@ -382,10 +382,10 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
     clockAt = difference;
 }
 
-RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
+RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcept
 {
     using Promise = RepinBufferPromise<RepinBufferFuture>;
-    PRECONDITION(floating.controlBlock != nullptr, "Cannot repin empty floating buffer");
+    PRECONDITION(floating_.controlBlock != nullptr, "Cannot repin empty floating buffer");
     /* Repinning Buffers in a thread safe manner:
      * 1. Acquire lock on BCB with startRepinning. StartRepinning also indicates to second chance that this buffer should be skipped.
      * 2. Do the actual repinning:
@@ -398,7 +398,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating) noexcept
      * 6. Create pinned buffer.
      * 7. Release the additional pin and that of the floating buffer.
     */
-
+    FloatingBuffer floating = floating_;
     detail::RefCountedBCB<true> pin{};
     {
         //Locking and unlocking the BCB must be done from the same thread.
