@@ -17,5 +17,4 @@ add_subdirectory(Listeners)
 
 add_source_files(nes-runtime
         ExecutionContext.cpp
-        InstantiatedQueryPlan.cpp
 )

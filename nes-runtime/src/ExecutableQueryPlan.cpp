@@ -35,7 +35,7 @@
 namespace NES
 {
 
-std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan)
+std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan)
 {
     std::function<void(const std::weak_ptr<ExecutablePipeline>&, size_t)> printNode
         = [&os, &printNode](const std::weak_ptr<ExecutablePipeline>& weakPipeline, size_t indent)
@@ -48,7 +48,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
         }
     };
 
-    for (const auto& [source, successors] : instantiatedQueryPlan.sources)
+    for (const auto& [source, successors] : executableQueryPlan.sources)
     {
         os << *source << '\n';
         for (const auto& successor : successors)
