@@ -21,6 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -101,18 +102,50 @@ void NLJSlice::combinePagedVectors()
 
 void NLJSlice::writeToFile(
     FileWriter& fileWriter,
-    Memory::AbstractBufferProvider*,
+    Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId,
     const FileLayout fileLayout)
 {
-    const auto [pagedVector, _] = getPagedVectors(joinBuildSide, threadId);
-    const auto tupleSize = memoryLayout->getTupleSize();
-    for (auto page : pagedVector->getPages())
+    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
+
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
+    const auto keyFieldsOnlyMemoryLayout
+        = NES::Util::createMemoryLayout(memoryLayout->createKeyFieldsOnlySchema(), memoryLayout->getBufferSize());
+    const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+
+    for (const auto& page : pagedVector->getPages())
     {
-        // TODO write variable sized data in place to file
-        fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * tupleSize);
+        // TODO write variable sized data to separate file
+        switch (fileLayout)
+        {
+            case NO_SEPARATION: {
+                fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
+                break;
+            }
+            case SEPARATE_PAYLOAD: {
+                writePayloadSeparatelyToFile(
+                    page.getBuffer(),
+                    page.getNumberOfTuples(),
+                    pagedVectorKeys,
+                    bufferProvider,
+                    keyFieldsOnlyMemoryLayout.get(),
+                    groupedFieldTypeSizes,
+                    fileWriter);
+                break;
+            }
+            case SEPARATE_KEYS: {
+                writePayloadAndKeysSeparatelyToFile(
+                    page.getBuffer(),
+                    page.getNumberOfTuples(),
+                    pagedVectorKeys,
+                    keyFieldsOnlyMemoryLayout.get(),
+                    groupedFieldTypeSizes,
+                    fileWriter);
+                break;
+            }
+        }
     }
 }
 
@@ -122,9 +155,11 @@ void NLJSlice::readFromFile(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId,
-    const FileLayout fileLayout)
+    const FileLayout)
 {
-    const auto [pagedVector, _] = getPagedVectors(joinBuildSide, threadId);
+    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
+
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
     auto lastPage = pagedVector->getLastPage();
     auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
@@ -134,7 +169,7 @@ void NLJSlice::readFromFile(
     auto pagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
     while (const auto bytesRead = fileReader.read(pagePtr, tuplesToRead * tupleSize))
     {
-        // TODO read variable sized data in place from file
+        // TODO read variable sized data from separate file
         lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + bytesRead / tupleSize);
         pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
         lastPage = pagedVector->getLastPage();
@@ -146,7 +181,11 @@ void NLJSlice::readFromFile(
 void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const FileLayout fileLayout)
 {
     /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef
-    const auto [pagedVector, _] = getPagedVectors(joinBuildSide, threadId);
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
+    if (fileLayout == SEPARATE_KEYS)
+    {
+        pagedVectorKeys->getPages().clear();
+    }
     pagedVector->getPages().clear();
 }
 
@@ -155,11 +194,12 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId) const
 {
-    const auto [pagedVector, _] = getPagedVectors(joinBuildSide, threadId);
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
+    const auto numPagesKeys = pagedVectorKeys->getNumberOfPages();
 
-    return pageSize * numPages;
+    return pageSize * numPages + pageSize * numPagesKeys;
 }
 
 std::tuple<Interface::PagedVector*, Interface::PagedVector*>
@@ -177,6 +217,69 @@ NLJSlice::getPagedVectors(const QueryCompilation::JoinBuildSideType joinBuildSid
         }
         default:
             throw UnknownJoinBuildSide();
+    }
+}
+
+void NLJSlice::writePayloadSeparatelyToFile(
+    const int8_t* pagePtr,
+    const uint64_t numTuplesOnPage,
+    Interface::PagedVector* pagedVectorKeys,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* keyFieldsOnlyMemoryLayout,
+    const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+    FileWriter& fileWriter)
+{
+    for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
+    {
+        pagedVectorKeys->appendPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout);
+        auto lastKeyPage = pagedVectorKeys->getLastPage();
+        const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
+        auto lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
+
+        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+        {
+            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
+            {
+                std::memcpy(lastKeyPagePtr, pagePtr, fieldSize);
+                lastKeyPagePtr += fieldSize;
+            }
+            else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
+            {
+                fileWriter.write(pagePtr, fieldSize);
+            }
+            pagePtr += fieldSize;
+        }
+        lastKeyPage.setNumberOfTuples(numTuplesLastKeyPage + 1);
+    }
+}
+
+void NLJSlice::writePayloadAndKeysSeparatelyToFile(
+    const int8_t* pagePtr,
+    const uint64_t numTuplesOnPage,
+    Interface::PagedVector* pagedVectorKeys,
+    const Memory::MemoryLayouts::MemoryLayout* keyFieldsOnlyMemoryLayout,
+    const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+    FileWriter& fileWriter)
+{
+    for (const auto& keyPage : pagedVectorKeys->getPages())
+    {
+        fileWriter.writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
+    }
+
+    for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
+    {
+        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+        {
+            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
+            {
+                fileWriter.writeKey(pagePtr, fieldSize);
+            }
+            else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
+            {
+                fileWriter.write(pagePtr, fieldSize);
+            }
+            pagePtr += fieldSize;
+        }
     }
 }
 

@@ -21,6 +21,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
@@ -28,6 +29,7 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES
@@ -292,6 +294,18 @@ std::vector<std::string> Schema::getFieldNames() const
         fieldNames.emplace_back(attribute->getName());
     }
     return fieldNames;
+}
+
+bool Schema::containsVarSizedDataField() const
+{
+    for (const auto& attribute : fields)
+    {
+        if (Util::instanceOf<VariableSizedDataType>(attribute->getDataType()))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Schema::empty() const

@@ -129,7 +129,7 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
     }
 }
 
-std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGroupedFieldTypeSizes()
+std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGroupedFieldTypeSizes() const
 {
     std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
     for (auto fieldIdx = 0UL; fieldIdx < schema->getFieldCount(); ++fieldIdx)
@@ -158,12 +158,12 @@ std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGrou
 
 std::shared_ptr<Schema> MemoryLayout::createKeyFieldsOnlySchema() const
 {
-    const auto keysOnlySchema = Schema::create(schema->getLayoutType());
+    const auto keyFieldsOnlySchema = Schema::create(schema->getLayoutType());
     for (const auto& keyFieldName : keyFieldNames)
     {
-        keysOnlySchema->addField(keyFieldName, schema->getFieldByName(keyFieldName)->get()->getDataType());
+        keyFieldsOnlySchema->addField(keyFieldName, schema->getFieldByName(keyFieldName)->get()->getDataType());
     }
-    return keysOnlySchema;
+    return keyFieldsOnlySchema;
 }
 
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const

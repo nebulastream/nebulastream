@@ -19,8 +19,8 @@
 enum FileLayout : uint8_t
 {
     NO_SEPARATION,
-    //SEPARATE_FILES_KEYS,
-    SEPARATE_FILES_PAYLOAD
+    SEPARATE_PAYLOAD,
+    SEPARATE_KEYS
 };
 
 class FileWriter
@@ -30,9 +30,11 @@ public:
     ~FileWriter();
 
     void write(const void* data, std::size_t size);
+    void writeKey(const void* data, std::size_t size);
 
 private:
-    std::ofstream file_;
+    std::ofstream file;
+    std::ofstream keyFile;
 };
 
 class FileReader
@@ -42,8 +44,10 @@ public:
     ~FileReader();
 
     std::size_t read(void* dest, std::size_t size);
+    std::size_t readKey(void* dest, std::size_t size);
 
 private:
-    std::ifstream file_;
+    std::ifstream file;
+    std::ifstream keyFile;
     std::string filePath;
 };

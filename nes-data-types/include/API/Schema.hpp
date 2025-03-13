@@ -164,6 +164,11 @@ public:
     /// @return std::vector<std::string> fieldNames
     std::vector<std::string> getFieldNames() const;
 
+    /**
+     * @return returns true if this schema conatins at least one variable sized data field
+     */
+    bool containsVarSizedDataField() const;
+
     auto begin() const { return std::begin(fields); }
     auto end() const { return std::end(fields); }
 

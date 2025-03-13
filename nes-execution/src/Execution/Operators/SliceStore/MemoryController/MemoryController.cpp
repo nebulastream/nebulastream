@@ -77,11 +77,11 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 
     if constexpr (USE_PIPELINE_ID)
     {
-        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue();
     }
     else
     {
-        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue() << ".dat";
+        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue();
     }
     return getFileWriterFromMap(ss.str());
 }

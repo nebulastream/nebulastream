@@ -328,8 +328,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
         auto fileWriter = memCtrl.getFileWriter(sliceEnd, pipelineId, threadId, joinBuildSide);
-        slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId, NO_SEPARATION);
-        slice->truncate(joinBuildSide, threadId, NO_SEPARATION);
+        slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId, USE_FILE_LAYOUT);
+        slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
     }
 
     // TODO predictiveRead()
@@ -345,7 +345,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     while (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, joinBuildSide))
     {
         /// Store all tuples from file in pagedVector that belongs to threadId zero as all pagedVectors have already been combined
-        slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(0), NO_SEPARATION);
+        slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(0), USE_FILE_LAYOUT);
     }
 }
 

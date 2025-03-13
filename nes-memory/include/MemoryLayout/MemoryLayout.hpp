@@ -83,7 +83,7 @@ public:
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
-    std::vector<std::tuple<FieldType, uint64_t>> getGroupedFieldTypeSizes();
+    std::vector<std::tuple<FieldType, uint64_t>> getGroupedFieldTypeSizes() const;
     [[nodiscard]] virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
     bool operator==(const MemoryLayout& rhs) const;
     bool operator!=(const MemoryLayout& rhs) const;
