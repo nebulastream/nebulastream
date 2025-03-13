@@ -25,13 +25,12 @@
 namespace NES
 {
 std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(
-    std::shared_ptr<Pipeline> pipeline,
-    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+    std::unique_ptr<Pipeline> pipeline,
     nautilus::engine::Options & options)
 {
     /// As we are creating here a pipeline that is interpreted, we need to set the compilation option to false
     options.setOption("engine.Compilation", false);
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, std::move(operatorHandlers), options);
+    return std::make_unique<CompiledExecutablePipelineStage>(std::move(pipeline), options);
 }
 
 ExecutablePipelineProviderRegistryReturnType

@@ -32,8 +32,7 @@ class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
     CompiledExecutablePipelineStage(
-        const std::shared_ptr<Pipeline>& pipeline,
-        std::vector<std::shared_ptr<OperatorHandler>> operatorHandler,
+        std::unique_ptr<Pipeline> pipeline,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -46,8 +45,7 @@ private:
     [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline() const;
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compiledPipelineFunction;
-    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::shared_ptr<Pipeline> pipeline;
+    std::unique_ptr<Pipeline> pipeline;
 };
 
 }

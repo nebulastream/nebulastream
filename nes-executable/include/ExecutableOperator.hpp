@@ -26,8 +26,7 @@ namespace NES
 class ExecutableOperator : public Operator
 {
 public:
-    static std::shared_ptr<Operator> create(
-        std::unique_ptr<ExecutablePipelineStage> executablePipelineStage, std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers);
+    static std::shared_ptr<Operator> create(std::unique_ptr<ExecutablePipelineStage> executablePipelineStage);
 
     const ExecutablePipelineStage& getStage() const;
     std::unique_ptr<ExecutablePipelineStage> takeStage();
@@ -42,10 +41,8 @@ public:
 private:
     ExecutableOperator(
         OperatorId id,
-        std::unique_ptr<ExecutablePipelineStage> executablePipelineStage,
-        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers);
+        std::unique_ptr<ExecutablePipelineStage> executablePipelineStage);
     std::unique_ptr<ExecutablePipelineStage> executablePipelineStage;
-    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
 };
 
 }

@@ -189,7 +189,7 @@ std::unique_ptr<CompiledQueryPlan> LowerToExecutableQueryPlanPhase::apply(const 
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (auto& pipeline : sourcePipelines)
     {
-        processSource(std::move(pipeline), pipelineQueryPlan, loweringContext);
+        processSource(std::move(pipeline), *pipelineQueryPlan, loweringContext);
     }
 
     auto pipelines = loweringContext.getPipelines();

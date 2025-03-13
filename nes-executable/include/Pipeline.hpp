@@ -16,142 +16,128 @@
 #include <iterator>
 #include <memory>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Abstract/PhysicalOperator.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <ErrorHandling.hpp>
+#include <SinkPhysicalOperator.hpp>
+#include <SourcePhysicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
+
+namespace
+{
+inline NES::PipelineId getNextPipelineId() {
+    static std::atomic_uint64_t id = NES::INITIAL_PIPELINE_ID.getRawValue();
+    return NES::PipelineId(id++);
+}
+std::string operatorChainToString(const NES::PhysicalOperator& op, int indent = 0) {
+    std::ostringstream oss;
+    std::string indentation(indent, ' ');
+    oss << indentation << op.toString() << "\n";
+    if (auto childOpt = op.getChild()) {
+        oss << operatorChainToString(childOpt.value(), indent + 2);
+    }
+    return oss.str();
+}
+}
 
 namespace NES
 {
 /// @brief Defines a single pipeline, which contains of a query plan of operators.
 /// Each pipeline can have N successor and predecessor pipelines.
-struct Pipeline
-{
+struct Pipeline {
     enum class ProviderType : uint8_t {
         Interpreter,
         Compiler
     };
-    explicit Pipeline();
 
-    /// Virtual destructor to make Pipeline polymorphic
-    virtual ~Pipeline() = default;
+    const PipelineId pipelineId = getNextPipelineId();
+    ProviderType providerType;
 
-    virtual std::string toString() const = 0;
-    friend std::ostream& operator<<(std::ostream& os, const Pipeline& t);
-
-    const PipelineId pipelineId = INVALID_PIPELINE_ID;
-    const ProviderType providerType;
-
-    std::vector<std::unique_ptr<Pipeline>> successorPipelines;
+    std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
-    std::vector<OperatorHandler> operatorHandlers;
+    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers;
 
-    using PipelineOperator = std::variant<std::unique_ptr<PhysicalOperator>,
-                                          std::unique_ptr<PhysicalOperatorWithSchema>,
-                                          std::unique_ptr<SourceDescriptorLogicalOperator>,
-                                          std::unique_ptr<SinkLogicalOperator>>;
-    /// non-owning view on pipeline operator
-    using PipelineOperatorView = std::variant<
-        const PhysicalOperator*,
-        const PhysicalOperatorWithSchema*,
-        const SourceDescriptorLogicalOperator*,
-        const SinkLogicalOperator*
-        >;
-
-    PipelineOperatorView toOperatorView(const Operator* op) {
-        if (auto phys = dynamic_cast<const PhysicalOperator*>(op))
-            return phys;
-        if (auto physWithSchema = dynamic_cast<const PhysicalOperatorWithSchema*>(op))
-            return physWithSchema;
-        if (auto src = dynamic_cast<const SourceDescriptorLogicalOperator*>(op))
-            return src;
-        if (auto sink = dynamic_cast<const SinkLogicalOperator*>(op))
-            return sink;
-        throw std::runtime_error("Unsupported operator type");
-    }
-
-    virtual bool hasOperators() = 0;
-    virtual void prependOperator(PipelineOperator op) = 0;
-};
-
-/// An OperatorPipeline own the root of a chain of PhysicalOperators
-struct OperatorPipeline final : public Pipeline
-{
-    void prependOperator(PipelineOperator op) override
+    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> releaseOperatorHandlers()
     {
-        PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperator>>(op), "Should have hold a PhysicalOperator");
-        std::get<std::unique_ptr<PhysicalOperator>>(op)->setChild(std::move(rootOperator));
-        rootOperator = std::move(std::get<std::unique_ptr<PhysicalOperator>>(op));
+        return std::move(operatorHandlers);
     }
 
-    [[nodiscard]] std::string toString() const override;
+    PhysicalOperator rootOperator;
 
-    bool hasOperators() override
+    Pipeline(PhysicalOperator op) : rootOperator(std::move(op))
     {
-        return rootOperator != nullptr;
     }
 
-    std::unique_ptr<PhysicalOperator> rootOperator;
-};
-
-
-struct OperatorWithSchemaPipeline final : public Pipeline
-{
-    void prependOperator(PipelineOperator op) override
+    Pipeline(SourcePhysicalOperator op) : rootOperator(std::move(op))
     {
-        PRECONDITION(std::holds_alternative<std::unique_ptr<PhysicalOperatorWithSchema>>(op), "Should have hold a PhysicalOperator");
-        std::get<std::unique_ptr<PhysicalOperatorWithSchema>>(op)->child = (std::move(rootOperator));
-        rootOperator = std::move(std::get<std::unique_ptr<PhysicalOperatorWithSchema>>(op));
     }
 
-    [[nodiscard]] std::string toString() const override;
-
-    bool hasOperators() override
+    Pipeline(SinkPhysicalOperator op) : rootOperator(std::move(op))
     {
-        return rootOperator != nullptr;
     }
 
-    std::unique_ptr<PhysicalOperatorWithSchema> rootOperator;
-};
-
-struct SourcePipeline final : public Pipeline
-{
-    void prependOperator(PipelineOperator op) override
+    bool isSourcePipeline()
     {
-        PRECONDITION(std::holds_alternative<std::unique_ptr<SourceDescriptorLogicalOperator>>(op), "Should have hold a SourceDescriptorLogicalOperator");
-        sourceOperator = std::move((std::get<std::unique_ptr<SourceDescriptorLogicalOperator>>(op)));
+        return rootOperator.tryGet<SourcePhysicalOperator>();
     }
 
-    [[nodiscard]] std::string toString() const override;
-
-    bool hasOperators() override
+    bool isOperatorPipeline()
     {
-        return sourceOperator != nullptr;
+        return not (isSinkPipeline() or isSourcePipeline());
     }
 
-    // TODO check if this should be as well use value semantics
-    std::unique_ptr<SourceDescriptorLogicalOperator> sourceOperator;
-};
-
-struct SinkPipeline final : public Pipeline
-{
-    void prependOperator(PipelineOperator op) override
+    bool isSinkPipeline()
     {
-        PRECONDITION(std::holds_alternative<std::unique_ptr<SinkLogicalOperator>>(op), "Should have hold a SinkLogicalOperator");
-        sinkOperator = std::move((std::get<std::unique_ptr<SinkLogicalOperator>>(op)));
+        return rootOperator.tryGet<SinkPhysicalOperator>();
     }
 
-    [[nodiscard]] std::string toString() const override;
-
-    bool hasOperators() override
-    {
-        return sinkOperator != nullptr;
+    std::string getProviderType() const {
+        switch (providerType) {
+            case ProviderType::Interpreter: return "Interpreter";
+            case ProviderType::Compiler: return "Compiler";
+            default: return "Unknown";
+        }
     }
 
-    // TODO check if this should be as well use value semantics
-    std::unique_ptr<SinkLogicalOperator> sinkOperator;
+    void prependOperator(PhysicalOperator newOp) {
+        PRECONDITION(isSourcePipeline() or isSinkPipeline(), "Cannot add new operator to source or sink pipeline");
+        newOp.setChild(rootOperator);
+        rootOperator = newOp;
+    }
+
+    static PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperator& newOp) {
+        if (not op.getChild()) {
+            op.setChild(newOp);
+            return op;
+        } else {
+            PhysicalOperator child = op.getChild().value();
+            child = appendOperatorHelper(child, newOp);
+            op.setChild(child);
+            return op;
+        }
+    }
+
+    void appendOperator(PhysicalOperator newOp) {
+        PRECONDITION(not (isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
+        rootOperator = appendOperatorHelper(rootOperator, newOp);
+    }
+
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << "PipelineId: " << pipelineId.getRawValue() << "\n";
+        oss << "Provider: " << getProviderType() << "\n";
+        oss << "Successors: " << successorPipelines.size() << "\n";
+        oss << "Predecessors: " << predecessorPipelines.size() << "\n";
+        oss << "Operator Chain:\n";
+        oss << operatorChainToString(rootOperator);
+        return oss.str();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Pipeline& p) {
+        os << p.toString();
+        return os;
+    }
 };
 
 }

@@ -31,30 +31,22 @@ namespace NES::QueryCompilation::NautilusCompilationPhase
 
 void apply(std::unique_ptr<OperatorPipeline> pipeline)
 {
-    const auto& rootOperator = pipeline->rootOperator;
-
     nautilus::engine::Options options;
-    auto identifier = fmt::format(
-        "NautilusCompilation-{}",
-        pipeline->pipelineId);
     options.setOption("toConsole", true);
     options.setOption("toFile", true);
 
     auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
-    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(magic_enum::enum_type_name<Pipeline::ProviderType>(pipeline->providerType), providerArguments))
+    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getProviderType(), providerArguments))
     {
-        auto pipelineStage
-            = provider.value()->create(pipeline, options);
+        auto pipelineStage = provider.value()->create(std::move(pipeline), options);
         /// we replace the current pipeline operators with an executable operator.
         /// this allows us to keep the pipeline structure.
-        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), pipeline->operatorHandlers);
+        const auto executableOperator = ExecutableOperator::create(std::move(pipelineStage));
         ///pipeline.rootOperator.replaceRootOperator(rootOperator, executableOperator);
         pipeline->rootOperator = executableOperator;
-
-        /// TODO do the actual compilation
         return;
     }
-    throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", "providerName");
+    throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", pipeline->getProviderType());
 }
 
 std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> plan)

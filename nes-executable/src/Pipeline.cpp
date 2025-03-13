@@ -40,6 +40,11 @@ std::string providerTypeToString(Pipeline::ProviderType providerType) {
 }
 }
 
+std::string Pipeline::getProviderType() const
+{
+    return providerTypeToString(this->providerType);
+}
+
 std::string SourcePipeline::toString() const {
     std::ostringstream oss;
     oss << "SourcePipeline(id: " << pipelineId
