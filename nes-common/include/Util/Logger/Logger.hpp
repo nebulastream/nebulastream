@@ -16,7 +16,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <Exceptions/SignalHandling.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>

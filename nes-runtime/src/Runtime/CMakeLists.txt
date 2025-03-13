@@ -14,5 +14,3 @@
 add_source_files(nes-runtime
         NodeEngine.cpp
 )
-
-add_subdirectory(detail)
