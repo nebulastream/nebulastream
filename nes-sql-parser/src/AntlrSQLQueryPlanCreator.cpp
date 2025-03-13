@@ -366,20 +366,10 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            if (helper.identCountHelper == 1)
-            {
-                /// rename of a single attribute
-                auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(context->getText());
-                helper.functionBuilder.push_back(functionItem);
-            }
-            else
-            {
-                /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
-                const auto renamedAttribute = Attribute(context->getText()) = attr;
-                helper.functionBuilder.push_back(renamedAttribute);
-                helper.mapBuilder.push_back(renamedAttribute);
-            }
+            const auto renamedAttribute = Attribute(context->getText()) = attr;
+            helper.functionBuilder.push_back(renamedAttribute);
+            helper.mapBuilder.push_back(renamedAttribute);
+
         }
     }
     else if (helper.isFunctionCall and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
@@ -468,6 +458,10 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
     }
+    if (not helper.windowAggs.empty())
+    {
+        queryPlan = QueryPlanBuilder::addWindowAggregation(queryPlan, helper.windowType, helper.windowAggs, helper.groupByFields);
+    }
     /// We handle projections AFTER map functions, because:
     /// SELECT (id * 3) as new_id FROM ...
     ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
@@ -475,11 +469,6 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
     }
-    if (not helper.windowAggs.empty())
-    {
-        queryPlan = QueryPlanBuilder::addWindowAggregation(queryPlan, helper.windowType, helper.windowAggs, helper.groupByFields);
-    }
-
     if (helper.windowType != nullptr)
     {
         for (auto havingExpr = helper.getHavingClauses().rbegin(); havingExpr != helper.getHavingClauses().rend(); ++havingExpr)

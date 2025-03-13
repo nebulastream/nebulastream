@@ -18,7 +18,6 @@ add_source_files(nes-functions
         NodeFunctionConstantValue.cpp
         NodeFunctionFieldAccess.cpp
         NodeFunctionFieldAssignment.cpp
-        NodeFunctionFieldRename.cpp
         NodeFunctionUnary.cpp
         NodeFunctionWhen.cpp
         NodeFunctionConcat.cpp

@@ -21,7 +21,6 @@
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -396,12 +395,18 @@ void FilterPushDownRule::renameFilterAttributesByNodeFunctions(
     for (auto& nodeFunction : nodeFunctions)
     {
         NES_TRACE("FilterPushDownRule: Check if the function node is of type NodeFunctionFieldRename")
-        if (Util::instanceOf<NodeFunctionFieldRename>(nodeFunction))
+        if (Util::instanceOf<NodeFunctionFieldAssignment>(nodeFunction))
         {
-            const std::shared_ptr<NodeFunctionFieldRename> fieldRenameNodeFunction = Util::as<NodeFunctionFieldRename>(nodeFunction);
-            std::string newFieldName = fieldRenameNodeFunction->getNewFieldName();
-            std::string originalFieldName = fieldRenameNodeFunction->getOriginalField()->getFieldName();
-            renameNodeFunctionFieldAccesss(predicateCopy, newFieldName, originalFieldName);
+            const std::shared_ptr<NodeFunctionFieldAssignment> fieldRenameNodeFunction = Util::as<NodeFunctionFieldAssignment>(nodeFunction);
+            /// If the assignment is an access, it's a rename
+            if (Util::instanceOf<NodeFunctionFieldAccess>(fieldRenameNodeFunction->getAssignment()))
+            {
+                std::string newFieldName = fieldRenameNodeFunction->getField()->getFieldName();
+                const std::shared_ptr<NodeFunctionFieldAccess> originalField = Util::as<NodeFunctionFieldAccess>(nodeFunction);
+                std::string originalFieldName = originalField->getFieldName();
+                renameNodeFunctionFieldAccesss(predicateCopy, newFieldName, originalFieldName);
+            }
+
         }
     }
 

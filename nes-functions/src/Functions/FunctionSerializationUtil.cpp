@@ -41,7 +41,6 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -95,16 +94,6 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         auto serializedFieldAccessFunction = SerializableFunction_FunctionFieldAccess();
         serializedFieldAccessFunction.set_fieldname(fieldAccessFunction->getFieldName());
         serializedFunction->mutable_details()->PackFrom(serializedFieldAccessFunction);
-    }
-    else if (Util::instanceOf<NodeFunctionFieldRename>(function))
-    {
-        /// serialize field rename function node
-        NES_TRACE("FunctionSerializationUtil:: serialize field rename function node.");
-        auto fieldRenameFunction = Util::as<NodeFunctionFieldRename>(function);
-        auto serializedFieldRenameFunction = SerializableFunction_FunctionFieldRename();
-        serializeFunction(fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_functionoriginalfieldaccess());
-        serializedFieldRenameFunction.set_newfieldname(fieldRenameFunction->getNewFieldName());
-        serializedFunction->mutable_details()->PackFrom(serializedFieldRenameFunction);
     }
     else if (Util::instanceOf<NodeFunctionFieldAssignment>(function))
     {
@@ -196,23 +185,6 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto& name = serializedFieldAccessFunction.fieldname();
             nodeFunction = NodeFunctionFieldAccess::create(name);
-        }
-        else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldRename>())
-        {
-            /// de-serialize field rename function node.
-            NES_TRACE("FunctionSerializationUtil:: de-serialize function as Field Rename function node.");
-            SerializableFunction_FunctionFieldRename serializedFieldRenameFunction;
-            serializedFunction.details().UnpackTo(&serializedFieldRenameFunction);
-            auto originalFieldAccessFunction = deserializeFunction(serializedFieldRenameFunction.functionoriginalfieldaccess());
-            if (!Util::instanceOf<NodeFunctionFieldAccess>(originalFieldAccessFunction))
-            {
-                throw CannotDeserialize(fmt::format(
-                    "FunctionSerializationUtil: the original field access function should be of type NodeFunctionFieldAccess,"
-                    "but was a {}",
-                    *originalFieldAccessFunction));
-            }
-            const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-            nodeFunction = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
         {

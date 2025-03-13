@@ -24,7 +24,6 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
@@ -90,10 +89,6 @@ std::shared_ptr<QueryPlan>
 QueryPlanBuilder::addSelection(const std::shared_ptr<NodeFunction>& selectionFunction, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
-    if (!selectionFunction->getNodesByType<NodeFunctionFieldRename>().empty())
-    {
-        throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
-    }
     const std::shared_ptr<Operator> op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
@@ -111,10 +106,6 @@ std::shared_ptr<QueryPlan>
 QueryPlanBuilder::addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map operator to query plan");
-    if (!mapFunction->getNodesByType<NodeFunctionFieldRename>().empty())
-    {
-        throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
-    }
     const std::shared_ptr<Operator> op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;

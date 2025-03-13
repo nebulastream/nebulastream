@@ -59,11 +59,6 @@ public:
     /// ReSharper disable once CppNonExplicitConversionOperator
     operator std::shared_ptr<NodeFunction>(); /// NOLINT(google-explicit-constructor)
 
-    /// Rename the function item
-    /// @param name : the new name
-    /// @return the updated function item
-    FunctionItem as(std::string name);
-
 private:
     std::shared_ptr<NodeFunction> function;
 };

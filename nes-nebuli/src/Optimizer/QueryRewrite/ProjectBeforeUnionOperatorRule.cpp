@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -81,8 +81,9 @@ std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjec
         auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
         /// Compute field access and field rename function
         auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
-        auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
-        projectFunctions.push_back(fieldRenameFunction);
+        auto newField = NodeFunctionFieldAccess::create(field->getDataType(), updatedFieldName);
+        auto fieldRename = NodeFunctionFieldAssignment::create(NES::Util::as<NodeFunctionFieldAccess>(newField), NES::Util::as<NodeFunctionFieldAccess>(originalField));
+        projectFunctions.push_back(fieldRename);
     }
     /// Create Projection operator
     return std::make_shared<LogicalProjectionOperator>(projectFunctions, getNextOperatorId());

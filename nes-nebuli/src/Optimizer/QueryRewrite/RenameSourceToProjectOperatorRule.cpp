@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -63,7 +63,8 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
         std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         /// Compute field access and field rename function
         auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), fieldName);
-        auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
+        auto newField = NodeFunctionFieldAccess::create(field->getDataType(), updatedFieldName);
+        auto fieldRenameFunction = NodeFunctionFieldAssignment::create(NES::Util::as<NodeFunctionFieldAccess>(newField), NES::Util::as<NodeFunctionFieldAccess>(originalField));
         projectionAttributes.push_back(fieldRenameFunction);
     }
     /// Construct a new project operator

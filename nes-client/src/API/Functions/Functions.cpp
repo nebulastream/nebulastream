@@ -23,7 +23,6 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -91,17 +90,6 @@ FunctionItem::FunctionItem(bool value)
 
 FunctionItem::FunctionItem(std::shared_ptr<NodeFunction> exp) : function(std::move(exp))
 {
-}
-
-FunctionItem FunctionItem::as(std::string newName)
-{
-    ///rename function node
-    PRECONDITION(
-        Util::instanceOf<NodeFunctionFieldAccess>(function),
-        "Renaming is only allowed on field access attributes, got: {}",
-        function->getType());
-    auto fieldAccessFunction = Util::as<NodeFunctionFieldAccess>(function);
-    return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(newName));
 }
 
 std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const FunctionItem& assignItem) const
