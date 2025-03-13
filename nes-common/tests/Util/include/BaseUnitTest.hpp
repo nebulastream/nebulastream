@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <future>
 #include <thread>
-#include <Exceptions/ErrorListener.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 namespace NES::Testing
@@ -101,7 +100,7 @@ private:
 };
 }
 
-class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper
+class BaseUnitTest : public testing::Test, public detail::TestWaitingHelper
 {
     /// This deleter is used to create a shared_ptr that does not delete the object.
     struct Deleter
@@ -112,13 +111,8 @@ class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, pub
 public:
     void SetUp() override;
     void TearDown() override;
-    virtual void onFatalError(int signalNumber, std::string callstack) override;
-    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     detail::TestSourceNameHelper srcName;
-
-private:
-    std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
 }
