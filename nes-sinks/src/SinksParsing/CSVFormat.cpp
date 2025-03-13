@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -21,22 +20,16 @@
 #include <span>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -44,7 +37,7 @@
 namespace NES::Sinks
 {
 
-CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema, bool addTimestamp) : schema(std::move(pSchema)), addTimestamp(addTimestamp)
+CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema) : schema(std::move(pSchema))
 {
     PRECONDITION(schema->getFieldCount() != 0, "Formatter expected a non-empty schema");
     const DefaultPhysicalTypeFactory factory;
@@ -70,36 +63,15 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema, bool addTimestamp) : schem
     formattingContext.schemaSizeInBytes = schema->getSchemaSizeInBytes();
 }
 
-CSVFormat::CSVFormat(std::shared_ptr<Schema> schema) : CSVFormat(std::move(schema), false)
-{
-}
-
 std::string CSVFormat::getFormattedSchema() const
 {
-    if (addTimestamp)
-    {
-        return schema->toString("", ", ", ", timestamp\n");
-    }
     return schema->toString("", ", ", "\n");
 }
 
 
 std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
 {
-    std::string bufferContent;
-    if (addTimestamp)
-    {
-        auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        schema->removeField(AttributeField::create("timestamp", DataTypeProvider::provideDataType(LogicalType::UINT64)));
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
-        bufferContent = Util::replaceAll(bufferContent, "\n", fmt::format(",{}\n", timestamp));
-        schema->addField("timestamp", BasicType::UINT64);
-    }
-    else
-    {
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
-    }
-    return bufferContent;
+    return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
 }
 
 std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext)
@@ -134,7 +106,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
 
 std::ostream& operator<<(std::ostream& out, const CSVFormat& format)
 {
-    return out << fmt::format("CSVFormat(Schema: {}, addTimeStamp: {}", format.schema->toString(), format.addTimestamp);
+    return out << fmt::format("CSVFormat(Schema: {})", format.schema->toString());
 }
 
 }
