@@ -98,6 +98,26 @@ void NLJSlice::combinePagedVectors()
         }
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }
+
+    /// Append all PagedVectorsKeys on the left join side and erase all items except for the first one
+    if (leftPagedVectorsKeys.size() > 1)
+    {
+        for (uint64_t i = 1; i < leftPagedVectorsKeys.size(); ++i)
+        {
+            leftPagedVectorsKeys[0]->appendAllPages(*leftPagedVectorsKeys[i]);
+        }
+        leftPagedVectorsKeys.erase(leftPagedVectorsKeys.begin() + 1, leftPagedVectorsKeys.end());
+    }
+
+    /// Append all PagedVectorsKeys on the right join side and remove all items except for the first one
+    if (rightPagedVectorsKeys.size() > 1)
+    {
+        for (uint64_t i = 1; i < rightPagedVectorsKeys.size(); ++i)
+        {
+            rightPagedVectorsKeys[0]->appendAllPages(*rightPagedVectorsKeys[i]);
+        }
+        rightPagedVectorsKeys.erase(rightPagedVectorsKeys.begin() + 1, rightPagedVectorsKeys.end());
+    }
 }
 
 void NLJSlice::writeToFile(
@@ -117,7 +137,6 @@ void NLJSlice::writeToFile(
 
     for (const auto& page : pagedVector->getPages())
     {
-        // TODO write variable sized data to separate file
         switch (fileLayout)
         {
             case NO_SEPARATION: {
@@ -160,22 +179,23 @@ void NLJSlice::readFromFile(
     PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
 
     const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
-    pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
+    pagedVector->appendPage(bufferProvider, memoryLayout);
     auto lastPage = pagedVector->getLastPage();
-    auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
     const auto tupleSize = memoryLayout->getTupleSize();
 
-    /// Fill last page fully before appending new ones
-    auto pagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
-    while (const auto bytesRead = fileReader.read(pagePtr, tuplesToRead * tupleSize))
+    const auto keyFieldsOnlyMemoryLayout
+        = NES::Util::createMemoryLayout(memoryLayout->createKeyFieldsOnlySchema(), memoryLayout->getBufferSize());
+    const auto payloadFieldsSize = tupleSize - keyFieldsOnlyMemoryLayout->getTupleSize();
+    const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+
+    while (const auto bytesRead = fileReader.read(lastPage.getBuffer(), memoryLayout->getCapacity() * tupleSize))
     {
-        // TODO read variable sized data from separate file
-        lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + bytesRead / tupleSize);
+        lastPage.setNumberOfTuples(bytesRead / tupleSize);
         pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
         lastPage = pagedVector->getLastPage();
-        tuplesToRead = memoryLayout->getCapacity();
-        pagePtr = lastPage.getBuffer();
     }
+
+    // TODO clear pagedVectorKeys
 }
 
 void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const FileLayout fileLayout)
@@ -200,6 +220,11 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const auto numPagesKeys = pagedVectorKeys->getNumberOfPages();
 
     return pageSize * numPages + pageSize * numPagesKeys;
+}
+
+uint64_t NLJSlice::getNumberOfWorkerThreads() const
+{
+    return leftPagedVectors.size();
 }
 
 std::tuple<Interface::PagedVector*, Interface::PagedVector*>

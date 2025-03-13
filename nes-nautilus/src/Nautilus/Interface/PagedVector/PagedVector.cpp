@@ -34,14 +34,24 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
-        {
-            pages.emplace_back(page.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available!");
-        }
+        appendPage(bufferProvider, memoryLayout);
+    }
+}
+
+void PagedVector::appendPage(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+{
+    PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
+    PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
+    PRECONDITION(memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
+    PRECONDITION(memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
+
+    if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+    {
+        pages.emplace_back(page.value());
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
     }
 }
 

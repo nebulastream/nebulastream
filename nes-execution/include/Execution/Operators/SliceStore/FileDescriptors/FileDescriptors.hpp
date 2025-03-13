@@ -27,7 +27,7 @@ class FileWriter
 {
 public:
     explicit FileWriter(const std::string& filePath);
-    ~FileWriter();
+    ~FileWriter() = default;
 
     void write(const void* data, std::size_t size);
     void writeKey(const void* data, std::size_t size);
@@ -45,6 +45,8 @@ public:
 
     std::size_t read(void* dest, std::size_t size);
     std::size_t readKey(void* dest, std::size_t size);
+
+    std::string& getFilePath();
 
 private:
     std::ifstream file;

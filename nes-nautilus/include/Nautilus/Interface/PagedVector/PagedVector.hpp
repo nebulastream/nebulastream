@@ -34,6 +34,9 @@ public:
     /// Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
+    /// Appends a new page to the pages vector.
+    void appendPage(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 

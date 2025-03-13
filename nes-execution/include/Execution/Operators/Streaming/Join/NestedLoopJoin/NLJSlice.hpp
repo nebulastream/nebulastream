@@ -67,6 +67,8 @@ public:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId) const;
 
+    uint64_t getNumberOfWorkerThreads() const;
+
 private:
     std::tuple<Interface::PagedVector*, Interface::PagedVector*>
     getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;

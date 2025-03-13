@@ -43,8 +43,7 @@ void updateSlicesProxy(
     PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore());
-    if (sliceStore)
+    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
         sliceStore->updateSlices(
             bufferProvider, memoryLayout, joinBuildSide, SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));

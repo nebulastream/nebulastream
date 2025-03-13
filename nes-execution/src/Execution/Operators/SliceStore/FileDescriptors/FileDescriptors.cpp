@@ -28,18 +28,6 @@ FileWriter::FileWriter(const std::string& filePath)
     }
 }
 
-FileWriter::~FileWriter()
-{
-    if (file.is_open())
-    {
-        file.close();
-    }
-    if (keyFile.is_open())
-    {
-        keyFile.close();
-    }
-}
-
 void FileWriter::write(const void* data, const std::size_t size)
 {
     if (!file.write(static_cast<const char*>(data), size))
@@ -102,4 +90,9 @@ std::size_t FileReader::readKey(void* dest, const std::size_t size)
         throw std::ios_base::failure("Failed to read from key file");
     }
     return keyFile.gcount();
+}
+
+std::string& FileReader::getFilePath()
+{
+    return filePath;
 }
