@@ -155,4 +155,10 @@ DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(size_t operatorHandlerI
 {
 }
 
+std::unique_ptr<Operator> DefaultEmitPhysicalOperator::clone() const {
+    auto cloned = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, memoryProvider->clone());
+    cloned->maxRecordsPerBuffer = maxRecordsPerBuffer;
+    return cloned;
+}
+
 }

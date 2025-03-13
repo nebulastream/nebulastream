@@ -17,7 +17,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class WindowAggregationFunction

@@ -37,6 +37,7 @@ class TimeFunction
 public:
     virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) = 0;
     virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) = 0;
+    virtual std::unique_ptr<TimeFunction> clone() = 0;
     virtual ~TimeFunction() = default;
 };
 
@@ -47,6 +48,7 @@ public:
     explicit EventTimeFunction(std::unique_ptr<Functions::PhysicalFunction> timestampFunction, Windowing::TimeUnit unit);
     void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
+    [[nodiscard]] std::unique_ptr<TimeFunction> clone() override;
 
 private:
     Windowing::TimeUnit unit;
@@ -59,6 +61,7 @@ class IngestionTimeFunction final : public TimeFunction
 public:
     void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
+    [[nodiscard]] std::unique_ptr<TimeFunction> clone() override;
 };
 
 }

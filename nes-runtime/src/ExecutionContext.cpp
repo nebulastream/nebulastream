@@ -112,10 +112,8 @@ void ExecutionContext::setLocalOperatorState(const PhysicalOperator* op, std::un
 
 OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const uint64_t index)
 {
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    auto size = handlers.size();
-    PRECONDITION(index < size, "operator handler at index {} is not registered", index);
-    return handlers[index].get();
+    PRECONDITION(pipelineCtx->getOperatorHandlers().contains(index), "operator handler at index {} is not registered", index);
+    return pipelineCtx->getOperatorHandlers()[index].get();
 }
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const uint64_t handlerIndex) const

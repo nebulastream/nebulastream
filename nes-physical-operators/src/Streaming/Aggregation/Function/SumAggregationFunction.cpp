@@ -101,4 +101,13 @@ size_t SumAggregationFunction::getSizeOfStateInBytes() const
     return inputType->size();
 }
 
+std::unique_ptr<AggregationFunction> SumAggregationFunction::clone() const {
+    return std::make_unique<SumAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction->clone(),
+        resultFieldIdentifier
+    );
+}
+
 }

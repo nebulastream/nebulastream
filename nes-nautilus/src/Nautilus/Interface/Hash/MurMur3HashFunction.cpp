@@ -132,4 +132,8 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
             })
         .cast<HashValue>();
 }
+
+std::unique_ptr<HashFunction> MurMur3HashFunction::clone() const {
+    return std::make_unique<MurMur3HashFunction>(*this);
+}
 }

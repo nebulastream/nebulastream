@@ -21,7 +21,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 WindowAggregationFunction::WindowAggregationFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<FieldAccessLogicalFunction> onField)

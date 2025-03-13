@@ -126,45 +126,13 @@ std::shared_ptr<Operator> find(const std::vector<std::shared_ptr<Operator>>& nod
     return nullptr;
 }
 
-bool insertBetweenThisAndParentNodes(Operator* op, std::unique_ptr<Operator> newNode)
-{
-    // Sanity check: do not insert if the new node is the same as op.
-    if (newNode.get() == op)
-    {
-        return false;
-    }
-
-    // For each parent, replace op with newNode in the parent's children.
-    // (If op is referenced in multiple parents, you might need to clone newNode for each insertion.)
-    std::vector<Operator*> oldParents = op->parents;
-    for (Operator* parent : oldParents)
-    {
-        for (size_t i = 0; i < parent->children.size(); ++i)
-        {
-            if (parent->children[i].get() == op)
-            {
-                // Transfer ownership: replace the unique_ptr for op with newNode.
-                parent->children[i] = std::move(newNode);
-                // Set parent's pointer as a parent of the new node.
-                parent->children[i]->parents.push_back(parent);
-                break;
-            }
-        }
-    }
-    // Remove all parents from op.
-    op->parents.clear();
-    // Set new node as the parent of op.
-    op->parents.push_back(newNode.get());
-    return true;
-}
-
 QueryPlan LogicalSourceExpansionRule::apply(QueryPlan queryPlan)
 {
     // Suppose getOperatorByType now returns a vector of raw pointers.
     std::vector<SourceNameLogicalOperator*> sourceOperators =
         queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
-    for (Operator* sourceOp : sourceOperators)
+    for (SourceNameLogicalOperator* sourceOp : sourceOperators)
     {
         std::string logicalSourceName = std::string(sourceOp->getName());
         auto sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
@@ -186,7 +154,6 @@ QueryPlan LogicalSourceExpansionRule::apply(QueryPlan queryPlan)
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             std::unique_ptr<Operator> duplicateSourceOp = sourceOp->clone();
-            duplicateSourceOp->setSchema(sourceOp->getSchema());
 
             auto allNodes = getAndFlattenAllAncestors(duplicateSourceOp.get());
             std::unordered_set<OperatorId> visited;
@@ -195,10 +162,9 @@ QueryPlan LogicalSourceExpansionRule::apply(QueryPlan queryPlan)
                 visited.insert(node->id);
             }
 
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(duplicateSourceOp->getSchema());
-            auto logicalDescOp = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor));
-            // Replace duplicateSourceOp with logicalDescOp in the tree.
-            replace(duplicateSourceOp.get(), std::move(logicalDescOp), duplicateSourceOp.get());
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp->getSchema());
+            auto logicalDescOp = std::make_unique<SourceDescriptorLogicalOperator>(*sourceDescriptor);
+            /// TODO replace(duplicateSourceOp.get(), std::move(logicalDescOp), duplicateSourceOp.get());
         }
     }
 

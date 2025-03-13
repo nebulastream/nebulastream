@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <span>
 #include <atomic>
 #include <ostream>
+#include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/Operator.hpp>
 
@@ -66,6 +69,11 @@ std::ostream& operator<<(std::ostream& os, const Operator& op)
 {
     os << op.toString();
     return os;
+}
+
+std::vector<std::unique_ptr<Operator>> Operator::releaseChildren() const {
+    auto& mutableChildren = const_cast<std::vector<std::unique_ptr<Operator>>&>(children);
+    return std::move(mutableChildren);
 }
 
 }

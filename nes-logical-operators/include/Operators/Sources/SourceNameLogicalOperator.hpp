@@ -43,7 +43,7 @@ public:
     [[nodiscard]] Schema getSchema() const;
     void setSchema(const Schema& schema);
 
-    [[nodiscard]]  SerializableOperator serialize() const override;
+    [[nodiscard]] SerializableOperator serialize() const override;
 
     [[nodiscard]] std::string toString() const override;
 

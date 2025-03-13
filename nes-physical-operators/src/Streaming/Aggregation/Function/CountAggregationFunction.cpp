@@ -99,4 +99,13 @@ size_t CountAggregationFunction::getSizeOfStateInBytes() const
     return inputType->size();
 }
 
+std::unique_ptr<AggregationFunction> CountAggregationFunction::clone() const {
+    return std::make_unique<CountAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction->clone(),
+        resultFieldIdentifier
+    );
+}
+
 }

@@ -31,9 +31,9 @@ public:
     /// Creates an executable pipeline for the pipeline of physical operators.
     /// Options for the nautilus compilation backend: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
     virtual std::unique_ptr<ExecutablePipelineStage> create(
-        std::unique_ptr<Pipeline> pipeline,
-        nautilus::engine::Options& options)
-        = 0;
+        std::unique_ptr<OperatorPipeline> pipeline,
+        std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) = 0;
     virtual ~ExecutablePipelineProvider() = default;
 };
 

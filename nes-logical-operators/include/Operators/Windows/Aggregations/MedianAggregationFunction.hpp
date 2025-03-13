@@ -21,14 +21,14 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class MedianAggregationFunction : public WindowAggregationFunction
 {
 public:
     MedianAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
     explicit MedianAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     /// Creates a new MedianAggregationFunction

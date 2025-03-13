@@ -32,6 +32,7 @@ class WindowOperator : public UnaryLogicalOperator, public OriginIdAssignmentOpe
 public:
     WindowOperator(OriginId originId);
     WindowOperator();
+    std::string_view getName() const noexcept override;
 
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
@@ -41,8 +42,8 @@ public:
     [[nodiscard]] uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
-    [[nodiscard]] std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> getWindowAggregation() const;
-    void setWindowAggregation(const std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>>& windowAggregation);
+    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationFunction>> getWindowAggregation() const;
+    void setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationFunction>>& windowAggregation);
 
     [[nodiscard]]std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
@@ -55,7 +56,8 @@ public:
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
 protected:
-    std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggregation;
+    static constexpr std::string_view NAME = "Window";
+    std::vector<std::shared_ptr<WindowAggregationFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
     uint64_t numberOfInputEdges = 0;

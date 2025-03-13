@@ -170,4 +170,14 @@ size_t MedianAggregationFunction::getSizeOfStateInBytes() const
     return sizeof(Nautilus::Interface::PagedVector);
 }
 
+std::unique_ptr<AggregationFunction> MedianAggregationFunction::clone() const {
+    return std::make_unique<MedianAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction->clone(),
+        resultFieldIdentifier,
+        memProviderPagedVector->clone()
+    );
+}
+
 }

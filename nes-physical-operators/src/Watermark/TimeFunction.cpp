@@ -52,4 +52,8 @@ nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Rec
     return ctx.currentTs;
 }
 
+std::unique_ptr<TimeFunction> IngestionTimeFunction::clone() {
+    return std::make_unique<IngestionTimeFunction>();
+}
+
 }

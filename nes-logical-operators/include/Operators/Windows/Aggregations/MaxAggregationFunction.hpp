@@ -21,13 +21,13 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class MaxAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
     static std::unique_ptr<WindowAggregationFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
     MaxAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);

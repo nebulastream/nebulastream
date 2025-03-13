@@ -145,4 +145,14 @@ AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::unique_p
 {
 }
 
+
+std::unique_ptr<Operator> AggregationProbePhysicalOperator::clone() const {
+    return std::make_unique<AggregationProbePhysicalOperator>(
+        windowAggregationOperator->clone(),
+        operatorHandlerIndex,
+        windowStartFieldName,
+        windowEndFieldName
+    );
+}
+
 }

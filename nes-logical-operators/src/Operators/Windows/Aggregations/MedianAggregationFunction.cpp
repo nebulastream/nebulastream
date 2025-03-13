@@ -15,18 +15,17 @@
 #include <memory>
 #include <Operators/Windows/Aggregations/MedianAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/DataTypeProvider.hpp"
-#include "Common/DataTypes/Numeric.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-
-#include "Functions/LogicalFunction.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 MedianAggregationFunction::MedianAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -46,7 +45,7 @@ std::unique_ptr<WindowAggregationFunction> MedianAggregationFunction::create(
     return std::make_unique<MedianAggregationFunction>(Util::unique_ptr_dynamic_cast<LogicalFunction>(std::move(onField)), Util::unique_ptr_dynamic_cast<LogicalFunction>(std::move(asField)));
 }
 
-std::unique_ptr<WindowAggregationFunction> MedianAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationFunction> MedianAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     return std::make_unique<MedianAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }

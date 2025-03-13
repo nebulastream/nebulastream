@@ -123,7 +123,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             switch (descriptor->getType())
             {
-                case Windowing::WindowAggregationFunction::Type::Avg: {
+                case WindowAggregationFunction::Type::Avg: {
                     /// We assume that the count is a u64
                     auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<AvgAggregationFunction>(
@@ -133,29 +133,29 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                         std::move(countType)));
                     break;
                 }
-                case Windowing::WindowAggregationFunction::Type::Sum: {
+                case WindowAggregationFunction::Type::Sum: {
                     aggregationFunctions.emplace_back(std::make_unique<SumAggregationFunction>(
                         std::move(physicalInputType), std::move(physicalFinalType), std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
-                case Windowing::WindowAggregationFunction::Type::Count: {
+                case WindowAggregationFunction::Type::Count: {
                     /// We assume that a count is a u64
                     auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<CountAggregationFunction>(
                         std::move(countType), std::move(physicalFinalType), std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
-                case Windowing::WindowAggregationFunction::Type::Max: {
+                case WindowAggregationFunction::Type::Max: {
                     aggregationFunctions.emplace_back(std::make_unique<MaxAggregationFunction>(
                         std::move(physicalInputType), std::move(physicalFinalType), std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
-                case Windowing::WindowAggregationFunction::Type::Min: {
+                case WindowAggregationFunction::Type::Min: {
                     aggregationFunctions.emplace_back(std::make_unique<MinAggregationFunction>(
                         std::move(physicalInputType), std::move(physicalFinalType), std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
-                case Windowing::WindowAggregationFunction::Type::Median: {
+                case WindowAggregationFunction::Type::Median: {
                     auto layout
                         = std::make_unique<Memory::MemoryLayouts::ColumnLayout>(logicalOperator.getInputSchema(), config.pageSize.getValue());
                     auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(std::move(layout));

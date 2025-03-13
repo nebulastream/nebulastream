@@ -286,7 +286,7 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, st
         return false;
     }
     NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
-    logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schema);
+    logicalSourceNameToSchemaMapping[logicalSourceName] = *schema;
     return true;
 }
 

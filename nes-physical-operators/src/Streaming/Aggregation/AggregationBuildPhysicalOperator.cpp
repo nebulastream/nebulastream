@@ -109,4 +109,29 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
 {
 }
 
+std::unique_ptr<Operator> AggregationBuildPhysicalOperator::clone() const {
+    std::vector<std::unique_ptr<Functions::PhysicalFunction>> clonedKeyFunctions;
+    for (const auto& func : keyFunctions) {
+        clonedKeyFunctions.push_back(func->clone());
+    }
+    std::unique_ptr<TimeFunction> clonedTimeFunction = timeFunction->clone();
+    auto clonedWindowAgg = std::make_unique<WindowAggregation>(
+        copyAggregationFunctions(this->aggregationFunctions),
+        hashFunction->clone(),
+        fieldKeys,
+        fieldValues,
+        entriesPerPage,
+        entrySize
+    );
+    auto result = std::make_unique<AggregationBuildPhysicalOperator>(
+        operatorHandlerIndex,
+        std::move(clonedTimeFunction),
+        std::move(clonedKeyFunctions),
+        std::move(clonedWindowAgg)
+    );
+    AggregationBuildPhysicalOperator* raw = result.release();
+    Operator* op = static_cast<WindowBuildPhysicalOperator*>(raw);
+    return std::unique_ptr<Operator>(op);
+}
+
 }

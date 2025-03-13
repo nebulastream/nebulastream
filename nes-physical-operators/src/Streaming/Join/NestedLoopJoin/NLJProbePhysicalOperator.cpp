@@ -164,4 +164,16 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     }
 }
 
+std::unique_ptr<Operator> NLJProbePhysicalOperator::clone() const {
+    return std::make_unique<NLJProbePhysicalOperator>(
+        operatorHandlerIndex,
+        joinFunction->clone(),
+        windowStartFieldName,
+        windowEndFieldName,
+        joinSchema,
+        leftMemoryProvider->clone(),
+        rightMemoryProvider->clone()
+    );
+}
+
 }

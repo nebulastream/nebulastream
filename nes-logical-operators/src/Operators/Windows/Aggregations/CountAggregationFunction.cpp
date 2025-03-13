@@ -25,7 +25,7 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 CountAggregationFunction::CountAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -45,7 +45,7 @@ CountAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onF
     return std::make_unique<CountAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> CountAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationFunction> CountAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     if (!dynamic_cast<FieldAccessLogicalFunction*>(onField.get()))
     {

@@ -12,27 +12,29 @@
     limitations under the License.
 */
 #pragma once
-#include <cstdint>
+
+#include <iostream>
 #include <memory>
-#include <ostream>
+#include <string>
 #include <vector>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <options.hpp>
+#include <ExecutionContext.hpp>
+#include <Pipeline.hpp>
 
 namespace NES
 {
 class DumpHelper;
-struct Pipeline;
 
 /// A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
 class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
     CompiledExecutablePipelineStage(
-        std::unique_ptr<Pipeline> pipeline,
+        std::unique_ptr<OperatorPipeline> pipeline,
+        std::vector<std::unique_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -42,10 +44,12 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline() const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+    compilePipeline() const;
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compiledPipelineFunction;
-    std::unique_ptr<Pipeline> pipeline;
+    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
+    std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers;
+    std::unique_ptr<OperatorPipeline> pipeline;
 };
 
 }

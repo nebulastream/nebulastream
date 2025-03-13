@@ -27,7 +27,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -48,7 +48,7 @@ AvgAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onFie
     return std::make_unique<AvgAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     return std::make_unique<AvgAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }

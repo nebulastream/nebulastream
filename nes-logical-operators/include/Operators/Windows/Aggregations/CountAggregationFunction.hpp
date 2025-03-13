@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class CountAggregationFunction : public WindowAggregationFunction
@@ -27,8 +28,7 @@ public:
     CountAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
     explicit CountAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
     virtual ~CountAggregationFunction() = default;
-
-    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
     static std::unique_ptr<WindowAggregationFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 

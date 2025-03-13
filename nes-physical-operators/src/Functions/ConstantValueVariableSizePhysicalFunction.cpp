@@ -41,4 +41,9 @@ VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRe
     VariableSizedData result(data.get());
     return result;
 }
+
+std::unique_ptr<PhysicalFunction> ConstantValueVariableSizePhysicalFunction::clone() const {
+    return std::make_unique<ConstantValueVariableSizePhysicalFunction>(data.get(), sizeIncludingLength);
+}
+
 }

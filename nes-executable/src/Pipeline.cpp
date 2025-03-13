@@ -75,6 +75,17 @@ std::string SinkPipeline::toString() const {
     return oss.str();
 }
 
+std::string OperatorPipeline::toString() const {
+    std::ostringstream oss;
+    oss << "OperatorPipeline(id: " << pipelineId
+        << ", providerType: " << getProviderType() << ", ";
+    if (rootOperator)
+        oss << "rootOperator: " << rootOperator->toString();
+    else
+        oss << "rootOperator: null";
+    oss << ")";
+    return oss.str();
+}
 
 Pipeline::Pipeline() : pipelineId(getNextPipelineId()), providerType(ProviderType::Compiler) {};
 

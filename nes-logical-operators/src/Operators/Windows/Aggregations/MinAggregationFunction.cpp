@@ -26,7 +26,7 @@
 #include "Util/Common.hpp"
 #include "Util/Logger/Logger.hpp"
 
-namespace NES::Windowing
+namespace NES
 {
 
 MinAggregationFunction::MinAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -46,7 +46,7 @@ MinAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onFie
     return std::make_unique<MinAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> MinAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationFunction> MinAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     if (auto function = dynamic_cast<const FieldAccessLogicalFunction*>(onField.get()))
     {

@@ -58,7 +58,7 @@ public:
     static Sinks::SinkDescriptor
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
-    static std::unique_ptr<Windowing::WindowAggregationFunction>
+    static std::unique_ptr<WindowAggregationFunction>
     deserializeWindowAggregationFunction(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
 
 };

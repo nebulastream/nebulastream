@@ -28,7 +28,7 @@ class WindowedAggregationLogicalOperator : public WindowOperator
 {
 public:
     WindowedAggregationLogicalOperator(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-                          std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation,
+                          std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation,
                           std::unique_ptr<Windowing::WindowType> windowType);
     virtual ~WindowedAggregationLogicalOperator() = default;
 
@@ -43,11 +43,8 @@ public:
 
     bool isKeyed() const;
 
-    [[nodiscard]] uint64_t getNumberOfInputEdges() const;
-    void setNumberOfInputEdges(uint64_t numberOfInputEdges);
-
-    [[nodiscard]] const std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>>& getWindowAggregation() const;
-    void setWindowAggregation(std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation);
+    [[nodiscard]] const std::vector<std::unique_ptr<WindowAggregationFunction>>& getWindowAggregation() const;
+    void setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation);
 
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
     void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
@@ -59,9 +56,6 @@ public:
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
-    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
-    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
-
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
@@ -70,7 +64,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation;
+    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation;
     std::unique_ptr<Windowing::WindowType> windowType;
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey;
     std::string windowStartFieldName;

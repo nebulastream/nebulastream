@@ -16,8 +16,6 @@
 
 #include <memory>
 #include <API/TimeUnit.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 

@@ -124,7 +124,7 @@ using Queue = folly::MPMCQueue<Task>;
 
 struct DefaultPEC final : PipelineExecutionContext
 {
-    std::vector<std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+    std::vector<std::unique_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
     std::shared_ptr<Memory::AbstractBufferProvider> bm;
     size_t numberOfThreads;
@@ -147,12 +147,12 @@ struct DefaultPEC final : PipelineExecutionContext
     bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineId() const override { return pipelineId; }
-    std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
+    std::vector<std::unique_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
-        PRECONDITION(operatorHandlers, "Operator Handlers were not set");
+        PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
         return *operatorHandlers;
     }
-    void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>& handlers) override
+    void setOperatorHandlers(std::vector<std::unique_ptr<OperatorHandler>>& handlers) override
     {
         operatorHandlers = std::addressof(handlers);
     }

@@ -35,7 +35,7 @@
 namespace NES
 {
 
-std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan)
+std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan)
 {
     std::function<void(const std::weak_ptr<ExecutablePipeline>&, size_t)> printNode
         = [&os, &printNode](const std::weak_ptr<ExecutablePipeline>& weakPipeline, size_t indent)
@@ -48,7 +48,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executable
         }
     };
 
-    for (const auto& [source, successors] : executableQueryPlan.sources)
+    for (const auto& [source, successors] : instantiatedQueryPlan.sources)
     {
         os << *source << '\n';
         for (const auto& successor : successors)
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executable
 
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    Execution::CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
+    CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -94,7 +94,9 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
-    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
+    QueryId queryId,
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+    std::vector<SourceWithSuccessor> instantiatedSources)
     : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
 {
 }

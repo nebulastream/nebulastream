@@ -24,15 +24,15 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-const std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getWhereClauses() const
+std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getWhereClauses()
 {
-    return this->whereClauses;
+    return whereClauses;
 }
-const std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getHavingClauses() const
+std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getHavingClauses()
 {
     return this->havingClauses;
 }
-const std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getProjectionFields() const
+std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getProjectionFields()
 {
     return this->projectionFields;
 }
@@ -42,17 +42,17 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
-void AntlrSQLHelper::addWhereClause(const std::unique_ptr<NES::LogicalFunction> expressionNode)
+void AntlrSQLHelper::addWhereClause(std::unique_ptr<NES::LogicalFunction> expressionNode)
 {
     this->whereClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addHavingClause(const std::unique_ptr<NES::LogicalFunction> expressionNode)
+void AntlrSQLHelper::addHavingClause(std::unique_ptr<NES::LogicalFunction> expressionNode)
 {
-    this->havingClauses.emplace_back(expressionNode);
+    this->havingClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addProjectionField(const std::unique_ptr<NES::LogicalFunction> expressionNode)
+void AntlrSQLHelper::addProjectionField(std::unique_ptr<NES::LogicalFunction> expressionNode)
 {
-    this->projectionFields.push_back(expressionNode);
+    this->projectionFields.push_back(std::move(expressionNode));
 }
 
 const std::unique_ptr<NES::Windowing::WindowType> AntlrSQLHelper::getWindowType() const
@@ -66,12 +66,7 @@ void AntlrSQLHelper::addMapExpression(std::unique_ptr<NES::FieldAssignmentLogica
     this->mapBuilder.insert(pos, std::move(expressionNode));
 }
 
-std::vector<std::unique_ptr<NES::FieldAssignmentLogicalFunction>> AntlrSQLHelper::getMapBuilder()
-{
-    return std::move(this->mapBuilder);
-}
-
-void AntlrSQLHelper::setMapExpressions(const std::vector<std::unique_ptr<NES::FieldAssignmentLogicalFunction>> expressions)
+void AntlrSQLHelper::setMapExpressions(std::vector<std::unique_ptr<NES::FieldAssignmentLogicalFunction>> expressions)
 {
     this->mapBuilder = std::move(expressions);
 }

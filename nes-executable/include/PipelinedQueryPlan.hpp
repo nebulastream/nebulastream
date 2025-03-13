@@ -27,8 +27,8 @@ struct PipelinedQueryPlan final
     PipelinedQueryPlan(QueryId id);
     [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
-    [[nodiscard]] std::vector<std::unique_ptr<Pipeline>> getSourcePipelines() const;
-    [[nodiscard]] std::vector<std::unique_ptr<Pipeline>> getSinkPipelines() const;
+
+    [[nodiscard]] std::vector<std::unique_ptr<Pipeline>> releaseSourcePipelines();
 
     const QueryId queryId;
     std::vector<std::unique_ptr<Pipeline>> pipelines;

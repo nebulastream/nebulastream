@@ -37,7 +37,7 @@ namespace NES
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-    std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggregation,
+    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation,
     std::unique_ptr<Windowing::WindowType> windowType)
     : Operator()
     , WindowOperator()
@@ -190,22 +190,12 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-uint64_t WindowedAggregationLogicalOperator::getNumberOfInputEdges() const
-{
-    return numberOfInputEdges;
-}
-
-void WindowedAggregationLogicalOperator::setNumberOfInputEdges(uint64_t num)
-{
-    numberOfInputEdges = num;
-}
-
-const std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
+const std::vector<std::unique_ptr<WindowAggregationFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
 }
 
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> wa)
+void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationFunction>> wa)
 {
     windowAggregation = std::move(wa);
 }
@@ -238,6 +228,26 @@ OriginId WindowedAggregationLogicalOperator::getOriginId() const
 const std::vector<OriginId>& WindowedAggregationLogicalOperator::getInputOriginIds() const
 {
     return inputOriginIds;
+}
+
+std::unique_ptr<Operator> WindowedAggregationLogicalOperator::clone() const {
+    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> clonedOnKey;
+    for (const auto& key : onKey) {
+        auto baseClone = key->clone();
+        clonedOnKey.push_back(std::unique_ptr<FieldAccessLogicalFunction>(static_cast<FieldAccessLogicalFunction*>(baseClone.release())));
+    }
+    std::vector<std::unique_ptr<WindowAggregationFunction>> clonedWindowAgg;
+    for (const auto& agg : windowAggregation) {
+        clonedWindowAgg.push_back(agg->clone());
+    }
+    std::unique_ptr<Windowing::WindowType> clonedWindowType = windowType->clone();
+    auto cloned = std::make_unique<WindowedAggregationLogicalOperator>(std::move(clonedOnKey), std::move(clonedWindowAgg), std::move(clonedWindowType));
+    cloned->windowStartFieldName = windowStartFieldName;
+    cloned->windowEndFieldName = windowEndFieldName;
+    cloned->numberOfInputEdges = numberOfInputEdges;
+    cloned->inputOriginIds = inputOriginIds;
+    cloned->originId = originId;
+    return cloned;
 }
 
 void WindowedAggregationLogicalOperator::setInputOriginIds(const std::vector<OriginId>& inputIds)

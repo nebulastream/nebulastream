@@ -27,4 +27,8 @@ void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) c
     }
 }
 
+std::unique_ptr<Operator> SelectionPhysicalOperator::clone() const {
+    return std::make_unique<SelectionPhysicalOperator>(function->clone());
+}
+
 }

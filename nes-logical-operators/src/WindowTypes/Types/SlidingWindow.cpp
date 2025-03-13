@@ -35,6 +35,11 @@ std::unique_ptr<WindowType> SlidingWindow::of(TimeCharacteristic timeCharacteris
         std::move(timeCharacteristic), std::move(size), std::move(slide));
 }
 
+std::unique_ptr<WindowType> SlidingWindow::clone() const
+{
+    return std::make_unique<SlidingWindow>(timeCharacteristic, size, slide);
+}
+
 TimeMeasure SlidingWindow::getSize()
 {
     return size;

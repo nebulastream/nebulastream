@@ -100,4 +100,13 @@ size_t MaxAggregationFunction::getSizeOfStateInBytes() const
     return inputType->size();
 }
 
+std::unique_ptr<AggregationFunction> MaxAggregationFunction::clone() const {
+    return std::make_unique<MaxAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction->clone(),
+        resultFieldIdentifier
+    );
+}
+
 }

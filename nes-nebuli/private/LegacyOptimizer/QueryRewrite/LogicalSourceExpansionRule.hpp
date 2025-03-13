@@ -89,7 +89,7 @@ public:
      * @param queryPlan: the original non-expanded query plan
      * @return expanded logical query plan
      */
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan);
+    QueryPlan apply(QueryPlan queryPlan);
 
     virtual ~LogicalSourceExpansionRule() = default;
 

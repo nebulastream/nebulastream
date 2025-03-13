@@ -26,7 +26,7 @@ public:
     SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    std::unique_ptr<Operator> clone() const override;
+    ///std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 private:

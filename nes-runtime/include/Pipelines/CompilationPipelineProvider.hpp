@@ -15,19 +15,18 @@
 #include <memory>
 #include <vector>
 #include <Pipelines/ExecutablePipelineProvider.hpp>
-
 #include <nautilus/options.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
 
-/// @brief Creates an executable pipeline stage that can be executed using compilation.
-class CompilationPipelineProvider : public ExecutablePipelineProvider
+class CompilationPipelineProvider final : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage> create(
-        std::unique_ptr<Pipeline> pipeline,
+        std::unique_ptr<OperatorPipeline> pipeline,
+        std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
         nautilus::engine::Options& options) override;
 };
 }

@@ -67,7 +67,7 @@ public:
     static QueryPlan addWindowAggregation(
         QueryPlan queryPlan,
         std::unique_ptr<Windowing::WindowType> windowType,
-        std::vector<std::unique_ptr<Windowing::WindowAggregationFunction>> windowAggs,
+        std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggs,
         std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
 
     /// @brief UnionOperator to combine two query plans

@@ -102,4 +102,13 @@ size_t MinAggregationFunction::getSizeOfStateInBytes() const
     return inputType->size();
 }
 
+std::unique_ptr<AggregationFunction> MinAggregationFunction::clone() const {
+    return std::make_unique<MinAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction->clone(),
+        resultFieldIdentifier
+    );
+}
+
 }

@@ -34,4 +34,8 @@ void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     PhysicalOperator::execute(ctx, record);
 }
 
+std::unique_ptr<Operator> MapPhysicalOperator::clone() const {
+    return std::make_unique<MapPhysicalOperator>(fieldToWriteTo, mapFunction->clone());
+}
+
 }

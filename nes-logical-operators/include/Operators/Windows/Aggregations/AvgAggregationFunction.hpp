@@ -21,13 +21,13 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class AvgAggregationFunction final : public WindowAggregationFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationFunction> on(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
     static std::unique_ptr<WindowAggregationFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
     AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);

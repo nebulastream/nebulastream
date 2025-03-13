@@ -27,12 +27,13 @@ namespace NES
 {
 
 std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
-    std::unique_ptr<Pipeline> pipeline,
+    std::unique_ptr<OperatorPipeline> pipeline,
+    std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options& options)
 {
     /// As we are creating here a pipeline that is compiled, we need to set the compilation option to true
     options.setOption("engine.Compilation", true);
-    return std::make_unique<CompiledExecutablePipelineStage>(std::move(pipeline), options);
+    return std::make_unique<CompiledExecutablePipelineStage>(std::move(pipeline), std::move(operatorHandlers), options);
 }
 
 ExecutablePipelineProviderRegistryReturnType

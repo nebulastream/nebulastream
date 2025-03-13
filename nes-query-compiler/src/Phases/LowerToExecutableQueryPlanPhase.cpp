@@ -109,8 +109,8 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
     const PipelinedQueryPlan& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
-    auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get());
-    PRECONDITION(opPipeline != nullptr, "Expected an OperatorPipeline {}", pipeline->toString());
+    auto opPipeline = Util::unique_ptr_dynamic_cast<OperatorPipeline>(std::move(pipeline));
+    PRECONDITION(opPipeline != nullptr, "Expected an OperatorPipeline");
     PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
 
     loweringContext.options.setOption("toConsole", true);
@@ -119,7 +119,7 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
     auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
     if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(opPipeline->getProviderType(), providerArguments))
     {
-        auto pipelineStage = provider.value()->create(std::move(pipeline), loweringContext.options);
+        auto pipelineStage = provider.value()->create(std::move(opPipeline), opPipeline->releaseOperatorHandlers(), loweringContext.options);
         auto executablePipeline = ExecutablePipeline::create(
             PipelineId(pipeline->pipelineId),
             std::move(pipelineStage),
@@ -195,12 +195,10 @@ std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
 }
 
 
-std::unique_ptr<CompiledQueryPlan> LowerToExecutableQueryPlanPhase::apply(const std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
+std::unique_ptr<CompiledQueryPlan> apply(const std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
 {
     LoweringContext loweringContext;
-
-    auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
-    for (auto& pipeline : sourcePipelines)
+    for (auto& pipeline : pipelineQueryPlan->releaseSourcePipelines())
     {
         processSource(std::move(pipeline), *pipelineQueryPlan, loweringContext);
     }

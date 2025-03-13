@@ -63,7 +63,17 @@ public:
     {
     }
 
-    std::unique_ptr<Operator> clone() const override;
+    std::unique_ptr<Operator> clone() const override {
+        return std::make_unique<WindowAggregation>(
+            copyAggregationFunctions(aggregationFunctions),
+            hashFunction->clone(),
+            fieldKeys,
+            fieldValues,
+            entriesPerPage,
+            entrySize
+        );
+    }
+
     std::string toString() const override {return typeid(this).name(); }
 
 protected:

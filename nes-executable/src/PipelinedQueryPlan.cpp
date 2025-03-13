@@ -42,33 +42,23 @@ std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t)
     return os << t.toString();
 }
 
-
-// Requires a copy constructor for the Pipeline
-/*
-std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() const
+std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::releaseSourcePipelines()
 {
     std::vector<std::unique_ptr<Pipeline>> sourcePipelines;
-    for (auto &pipeline : pipelines)
+    auto it = pipelines.begin();
+    while (it != pipelines.end())
     {
-        if (dynamic_cast<SourcePipeline*>(pipeline.get()))
+        if (dynamic_cast<SourcePipeline*>(it->get()))
         {
-            sourcePipelines.emplace_back(std::move(pipeline));
+            sourcePipelines.push_back(std::move(*it));
+            it = pipelines.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
     return sourcePipelines;
 }
 
-std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::getSinkPipelines() const
-{
-    std::vector<std::unique_ptr<Pipeline>> sinkPipelines;
-    for (auto &pipeline : pipelines)
-    {
-        if (dynamic_cast<SinkPipeline*>(pipeline.get()))
-        {
-            sinkPipelines.emplace_back(std::move(pipeline));
-        }
-    }
-    return sinkPipelines;
-}
-*/
 }

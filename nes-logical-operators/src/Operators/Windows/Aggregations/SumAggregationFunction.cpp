@@ -25,7 +25,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 SumAggregationFunction::SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -45,7 +45,7 @@ SumAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onFie
     return std::make_unique<SumAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     return std::make_unique<SumAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }

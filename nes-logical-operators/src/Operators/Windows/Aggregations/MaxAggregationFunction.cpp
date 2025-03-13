@@ -25,7 +25,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 MaxAggregationFunction::MaxAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
@@ -40,15 +40,15 @@ MaxAggregationFunction::MaxAggregationFunction(std::unique_ptr<LogicalFunction> 
     this->aggregationType = Type::Max;
 }
 
+std::unique_ptr<WindowAggregationFunction> MaxAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
+{
+    return std::make_unique<MaxAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+}
+
 std::unique_ptr<WindowAggregationFunction>
 MaxAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
     return std::make_unique<MaxAggregationFunction>(std::move(onField), std::move(asField));
-}
-
-std::unique_ptr<WindowAggregationFunction> MaxAggregationFunction::on(std::unique_ptr<LogicalFunction> onField)
-{
-    return std::make_unique<MaxAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }
 
 void MaxAggregationFunction::inferStamp(const Schema& schema)

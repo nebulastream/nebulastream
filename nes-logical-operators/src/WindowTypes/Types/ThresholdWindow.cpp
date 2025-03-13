@@ -41,6 +41,10 @@ std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction>
     return std::make_unique<ThresholdWindow>(std::move(predicate));
 }
 
+std::unique_ptr<WindowType> ThresholdWindow::clone() const {
+    return std::make_unique<ThresholdWindow>(predicate->clone(), minimumCount);
+}
+
 std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction> predicate, uint64_t minimumCount)
 {
     return std::make_unique<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount));

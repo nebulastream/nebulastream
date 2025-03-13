@@ -18,7 +18,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 
-namespace NES
+namespace NES::API
 {
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)
 {
