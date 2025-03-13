@@ -19,7 +19,6 @@
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
-#include <Phases/NautilusCompilationPhase.hpp>
 #include <Phases/AddScanAndEmitPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 
@@ -38,12 +37,10 @@ std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr
     {
         auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
         pipelinedQueryPlan = AddScanAndEmitPhase::apply(std::move(pipelinedQueryPlan));
-        pipelinedQueryPlan = NautilusCompilationPhase::apply(std::move(pipelinedQueryPlan));
         return LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
     }
     catch (...)
     {
-        // TODO: add proper error handling here
         tryLogCurrentException();
         return {};
     }

@@ -26,7 +26,10 @@
 #include <PipelinedQueryPlan.hpp>
 #include <Pipeline.hpp>
 #include <ErrorHandling.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <ExecutablePipelineProviderRegistry.hpp>
+#include <options.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
@@ -77,6 +80,8 @@ public:
         return result;
     }
 
+    nautilus::engine::Options options;
+
 private:
     std::unordered_map<
         std::shared_ptr<Sinks::SinkDescriptor>,
@@ -89,7 +94,7 @@ private:
 std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
     const OriginId& predecessor,
     std::unique_ptr<Pipeline> pipeline,
-    PipelinedQueryPlan pipelineQueryPlan,
+    const PipelinedQueryPlan& pipelineQueryPlan,
     LoweringContext& loweringContext);
 
 
@@ -98,34 +103,39 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
     const PipelinedQueryPlan& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
-    PRECONDITION(pipeline->hasOperators(), "A pipeline should have at least one root operator");
-
-    if (auto execPipelineOpt = loweringContext.getPipeline(pipeline->pipelineId)) {
-        return execPipelineOpt.value();
-    }
-
     auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get());
-    PRECONDITION(opPipeline != nullptr, "expected an OperatorPipeline {}", pipeline->toString());
+    PRECONDITION(opPipeline != nullptr, "Expected an OperatorPipeline {}", pipeline->toString());
+    PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
 
-    PRECONDITION(opPipeline->rootOperator != nullptr, "OperatorPipeline must have a valid rootOperator");
-    auto& physicalOperator = opPipeline->rootOperator;
+    loweringContext.options.setOption("toConsole", true);
+    loweringContext.options.setOption("toFile", true);
 
-    auto executablePipeline = ExecutablePipeline::create(
-        PipelineId(pipeline->pipelineId),
-        physicalOperator->takeStage(),
-        {});
-
-    LoweringContext::PredecessorRef predecessorRef(executablePipeline);
-    for (auto& successor : pipeline->successorPipelines)
+    auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
+    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(opPipeline->getProviderType(), providerArguments))
     {
-        if (auto executableSuccessor = processSuccessor(predecessorRef, std::move(successor), pipelineQueryPlan, loweringContext))
-        {
-            executablePipeline->successors.emplace_back(*executableSuccessor);
-        }
-    }
+        auto pipelineStage = provider.value()->create(std::move(pipeline), loweringContext.options);
+        auto executableOperator = ExecutableOperator::create(std::move(pipelineStage));
+        executableOperator->children.emplace_back(std::move(opPipeline->rootOperator));
+        opPipeline->rootOperator = std::move(executableOperator);
 
-    loweringContext.registerPipeline(pipeline->pipelineId, executablePipeline);
-    return executablePipeline;
+        auto executablePipeline = ExecutablePipeline::create(
+            PipelineId(pipeline->pipelineId),
+            executableOperator->takeStage(),
+            {});
+
+        LoweringContext::PredecessorRef predecessorRef(executablePipeline);
+        for (auto& successor : pipeline->successorPipelines)
+        {
+            if (auto executableSuccessor = processSuccessor(predecessorRef, std::move(successor), pipelineQueryPlan, loweringContext))
+            {
+                executablePipeline->successors.emplace_back(*executableSuccessor);
+            }
+        }
+
+        loweringContext.registerPipeline(pipeline->pipelineId, executablePipeline);
+        return executablePipeline;
+    }
+    throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", pipeline->getProviderType());
 }
 
 Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPlan& pipelineQueryPlan, LoweringContext& loweringContext)
@@ -166,7 +176,7 @@ void processSink(const OriginId& predecessor, std::unique_ptr<Pipeline> pipeline
 std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
     const OriginId& predecessor,
     std::unique_ptr<Pipeline> pipeline,
-    PipelinedQueryPlan pipelineQueryPlan,
+    const PipelinedQueryPlan& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
     PRECONDITION((Util::uniquePtrInstanceOf<Pipeline, SinkPipeline>(pipeline) ||

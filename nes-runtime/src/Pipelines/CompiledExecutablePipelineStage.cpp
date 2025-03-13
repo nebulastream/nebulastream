@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "CompiledExecutablePipelineStage.hpp"
+#include <CompiledExecutablePipelineStage.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -21,7 +21,6 @@
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val_ptr.hpp>
