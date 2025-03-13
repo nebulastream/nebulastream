@@ -21,7 +21,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
-#include <ExecutableOperator.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <Pipeline.hpp>
@@ -114,13 +113,9 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
     if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(opPipeline->getProviderType(), providerArguments))
     {
         auto pipelineStage = provider.value()->create(std::move(pipeline), loweringContext.options);
-        auto executableOperator = ExecutableOperator::create(std::move(pipelineStage));
-        executableOperator->children.emplace_back(std::move(opPipeline->rootOperator));
-        opPipeline->rootOperator = std::move(executableOperator);
-
         auto executablePipeline = ExecutablePipeline::create(
             PipelineId(pipeline->pipelineId),
-            executableOperator->takeStage(),
+            std::move(pipelineStage),
             {});
 
         LoweringContext::PredecessorRef predecessorRef(executablePipeline);
