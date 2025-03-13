@@ -38,11 +38,4 @@ endif ()
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
-# Add Private Dependencies
-if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
-    # this allows to mock read calls
-    target_compile_definitions(nes-runtime PRIVATE WRAP_READ_CALL)
-    target_link_libraries(nes-runtime PRIVATE  "-Wl,--wrap,read")
-endif ()
-
 add_tests_if_enabled(tests)
