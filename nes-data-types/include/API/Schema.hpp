@@ -57,11 +57,6 @@ public:
     /// @return a copy of this schema.
     Schema addField(const AttributeField& attribute);
 
-    /// @brief appends a field with a basic type to the schema and returns a copy of this schema.
-    /// @param field
-    /// @return a copy of this schema.
-    Schema addField(const std::string& name, const BasicType& type);
-
     /// @brief appends a field with a data type to the schema and returns a copy of this schema.
     /// @param field
     /// @return a copy of this schema.
