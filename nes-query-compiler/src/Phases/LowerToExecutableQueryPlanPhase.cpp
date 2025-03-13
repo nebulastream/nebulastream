@@ -41,9 +41,11 @@ public:
         explicit PredecessorRef(const std::weak_ptr<ExecutablePipeline>& ptr) : ref(ptr) {}
     };
 
-    void addSink(const std::shared_ptr<Sinks::SinkDescriptor>& sinkDesc, const PredecessorRef& predecessor) {
-        sinks[sinkDesc].push_back(predecessor);
+    void addSink(std::unique_ptr<Sinks::SinkDescriptor> sinkDesc, const PredecessorRef& predecessor) {
+        auto sinkDescShared = std::shared_ptr<Sinks::SinkDescriptor>(std::move(sinkDesc));
+        sinks[sinkDescShared].push_back(predecessor);
     }
+
 
     void addSource(const Source& source) {
         sources.push_back(source);
@@ -74,7 +76,12 @@ public:
     [[nodiscard]] std::vector<Sink> getSinks() const {
         std::vector<Sink> result;
         for (const auto& [sinkDescriptor, preds] : sinks) {
-            result.emplace_back(sinkDescriptor, preds);
+            std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> convertedPreds;
+            convertedPreds.reserve(preds.size());
+            for (const auto& predRef : preds) {
+                convertedPreds.push_back(predRef.ref);
+            }
+            result.emplace_back(sinkDescriptor, convertedPreds);
         }
         return result;
     }
@@ -118,10 +125,11 @@ std::shared_ptr<ExecutablePipeline> processPipeline(
             std::move(pipelineStage),
             {});
 
-        LoweringContext::PredecessorRef predecessorRef(executablePipeline);
+        const LoweringContext::PredecessorRef predecessorRef(executablePipeline);
         for (auto& successor : pipeline->successorPipelines)
         {
-            if (auto executableSuccessor = processSuccessor(predecessorRef, std::move(successor), pipelineQueryPlan, loweringContext))
+            const OriginId& origin = std::get<OriginId>(predecessorRef.ref);
+            if (auto executableSuccessor = processSuccessor(origin, std::move(successor), pipelineQueryPlan, loweringContext))
             {
                 executablePipeline->successors.emplace_back(*executableSuccessor);
             }
@@ -165,7 +173,7 @@ void processSink(const OriginId& predecessor, std::unique_ptr<Pipeline> pipeline
                  "expected a SinkPipeline {}", pipeline->toString());
     auto sinkPipeline = NES::Util::unique_ptr_dynamic_cast<SinkPipeline>(std::move(pipeline));
     auto& sinkOperatorDescriptor = sinkPipeline->sinkOperator->sinkDescriptor;
-    loweringContext.addSink(sinkOperatorDescriptor, LoweringContext::PredecessorRef(predecessor));
+    loweringContext.addSink(std::move(sinkOperatorDescriptor), LoweringContext::PredecessorRef(predecessor));
 }
 
 std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
