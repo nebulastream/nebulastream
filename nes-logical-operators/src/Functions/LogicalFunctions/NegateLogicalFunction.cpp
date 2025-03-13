@@ -17,15 +17,15 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <UnaryLogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(std::unique_ptr<LogicalFunction> child)
-    : UnaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(child))
+    : UnaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(child))
 {
 }
 

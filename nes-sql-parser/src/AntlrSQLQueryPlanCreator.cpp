@@ -34,6 +34,7 @@
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/MulLogicalFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
@@ -45,8 +46,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include "ParserUtil.hpp"
+#include <ParserUtil.hpp>
 
 namespace NES::Parsers
 {
@@ -264,7 +264,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     switch (opTokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::ASTERISK:
-            function = leftFunction * rightFunction;
+            function = MulLogicalFunction(leftFunction, rightFunction);
             break;
         case AntlrSQLLexer::SLASH:
             function = leftFunction / rightFunction;

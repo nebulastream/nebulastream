@@ -15,9 +15,9 @@
 #include <Functions/LogicalFunctions/GreaterLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <BinaryLogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -27,7 +27,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& oth
 }
 
 GreaterLogicalFunction::GreaterLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(left), std::move(right))
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
 }
 

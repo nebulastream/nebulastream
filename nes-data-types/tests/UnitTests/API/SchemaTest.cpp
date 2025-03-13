@@ -26,7 +26,6 @@
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
@@ -248,8 +247,8 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_EQ(testSchema.getFieldByIndex(0).getName(), "field");
             ASSERT_EQ(testSchema.getFieldByIndex(0).getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
             ASSERT_EQ(
-                testSchema->getSchemaSizeInBytes(),
-                defaultPhysicalTypeFactory.getPhysicalType(DataTypeProvider::provideBasicType(basicTypeVal))->size());
+                testSchema.getSchemaSizeInBytes(),
+                defaultPhysicalTypeFactory.getPhysicalType(*DataTypeProvider::provideBasicType(basicTypeVal))->size());
         }
     }
 

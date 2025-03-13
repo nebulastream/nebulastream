@@ -30,12 +30,12 @@ namespace NES::Windowing
 {
 
 MedianAggregationFunction::MedianAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationFunction(field->getStamp().clone(), DataTypeFactory::createUndefined(), DataTypeFactory::createDouble(), std::move(field))
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field))
 {
     this->aggregationType = Type::Median;
 }
 MedianAggregationFunction::MedianAggregationFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(field->getStamp().clone(), DataTypeFactory::createUndefined(), DataTypeFactory::createDouble(), std::move(field), std::move(asField))
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Median;
 }

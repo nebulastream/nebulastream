@@ -19,7 +19,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <BinaryLogicalFunctionRegistry.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -29,7 +29,7 @@ LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other) : Bin
 }
 
 LessLogicalFunction::LessLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(left), std::move(right))
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
 }
 

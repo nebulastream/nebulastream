@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -70,9 +71,14 @@ Schema Schema::addField(const AttributeField& attribute)
     return *this;
 }
 
-Schema Schema::addField(const std::string& name, std::unique_ptr<DataType> data)
+Schema Schema::addField(const std::string& name, const BasicType& type)
 {
     return addField(name, DataTypeProvider::provideBasicType(type));
+}
+
+Schema Schema::addField(const std::string& name, std::shared_ptr<DataType> type)
+{
+    return addField(AttributeField(name, std::move(type)));
 }
 
 void Schema::removeField(const AttributeField& field)

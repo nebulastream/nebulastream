@@ -26,7 +26,7 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 using namespace NES;
 
@@ -66,7 +66,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     queryPlan = QueryPlanBuilder::addMap(
         std::make_unique<FieldAssignmentLogicalFunction>(
             std::make_unique<FieldAccessLogicalFunction>("b"),
-            std::make_unique<ConstantValueLogicalFunction>(DataTypeFactory::createInt32(), "1")),
+            std::make_unique<ConstantValueLogicalFunction>(DataTypeProvider::provideDataType(LogicalType::INT32), "1")),
         queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<MapLogicalOperator>().size() == 1);
     ///test addUnion

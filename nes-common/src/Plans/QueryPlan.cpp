@@ -13,7 +13,6 @@
 */
 
 #include <deque>
-#include <map>
 #include <memory>
 #include <set>
 #include <stack>
@@ -222,8 +221,6 @@ std::set<Operator*> QueryPlan::findAllOperatorsBetween(
     return result;
 }
 
-
-/// Removinng this implemenztation might have fix a building error
 bool QueryPlan::operator==(const QueryPlan& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
@@ -235,12 +232,12 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
     }
 
     /// add all root-operators to stack
-    std::stack<std::pair<std::shared_ptr<Operator>, std::shared_ptr<Operator>>> stack;
+    std::stack<std::pair<Operator*, Operator*>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
         stack.emplace(
-            std::shared_ptr<Operator>(std::move(leftRootOperators[i])),
-            std::shared_ptr<Operator>(std::move(rightRootOperators[i]))
+            leftRootOperators[i],
+            rightRootOperators[i]
         );
     }
 
@@ -257,8 +254,8 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
         /// discover children and add them to stack
         for (size_t j = 0; j < leftOperator->children.size(); ++j)
         {
-            auto& leftChild = leftOperator->children[j];
-            auto& rightChild = rightOperator->children[j];
+            auto leftChild = leftOperator->children[j].get();
+            auto rightChild = rightOperator->children[j].get();
             if (!leftChild || !rightChild)
                 return false;
             stack.emplace(leftChild, rightChild);

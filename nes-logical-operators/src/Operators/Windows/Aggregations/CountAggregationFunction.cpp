@@ -16,26 +16,25 @@
 #include <utility>
 #include <Operators/Windows/Aggregations/CountAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/DataTypeFactory.hpp"
-#include "API/Schema.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
-#include "Functions/FieldAccessLogicalFunction.hpp"
-
-#include "Functions/LogicalFunction.hpp"
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
-#include "Util/Common.hpp"
+#include <Util/Common.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Windowing
 {
 
 CountAggregationFunction::CountAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationFunction(DataTypeFactory::createUInt64(), DataTypeFactory::createUInt64(), DataTypeFactory::createUInt64(), std::move(field))
+    : WindowAggregationFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field))
 {
     this->aggregationType = Type::Count;
 }
 CountAggregationFunction::CountAggregationFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(DataTypeFactory::createUInt64(), DataTypeFactory::createUInt64(), DataTypeFactory::createUInt64(), std::move(field), std::move(asField))
+    : WindowAggregationFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Count;
 }

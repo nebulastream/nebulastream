@@ -40,5 +40,4 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType
     return std::make_unique<Undefined>();
 }
 
-
 }

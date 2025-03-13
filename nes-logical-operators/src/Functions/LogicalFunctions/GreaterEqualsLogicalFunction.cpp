@@ -17,9 +17,9 @@
 #include <string>
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <BinaryLogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -30,7 +30,7 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLo
 }
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), std::move(left), std::move(right))
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
 }
 

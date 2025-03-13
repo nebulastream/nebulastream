@@ -43,7 +43,7 @@
 #include <RewriteRuleRegistry.hpp>
 #include <magic_enum.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Optimizer
 {
@@ -125,7 +125,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
             {
                 case Windowing::WindowAggregationFunction::Type::Avg: {
                     /// We assume that the count is a u64
-                    auto countType = physicalTypeFactory.getPhysicalType(*DataTypeFactory::createUInt64());
+                    auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<AvgAggregationFunction>(
                         std::move(physicalInputType), std::move(physicalFinalType),
                         std::move(aggregationInputExpression),
@@ -140,7 +140,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                 }
                 case Windowing::WindowAggregationFunction::Type::Count: {
                     /// We assume that a count is a u64
-                    auto countType = physicalTypeFactory.getPhysicalType(*DataTypeFactory::createUInt64());
+                    auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
                     aggregationFunctions.emplace_back(std::make_unique<CountAggregationFunction>(
                         std::move(countType), std::move(physicalFinalType), std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
