@@ -28,13 +28,13 @@ struct SourceValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class SourceValidationRegistry final
+class SourceValidationRegistry
     : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
+#define INCLUDED_FROM_SOURCEVALIDATION_REGISTRY
 #include <SourceValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
+#undef INCLUDED_FROM_SOURCEVALIDATION_REGISTRY
