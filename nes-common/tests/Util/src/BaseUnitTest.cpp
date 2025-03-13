@@ -12,13 +12,11 @@
     limitations under the License.
 */
 #include <memory>
-#include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES
 {
-
 
 namespace Testing
 {
@@ -26,7 +24,6 @@ namespace Testing
 void BaseUnitTest::SetUp()
 {
     testing::Test::SetUp();
-    Exceptions::installGlobalErrorListener(self = std::shared_ptr<Exceptions::ErrorListener>(this, Deleter()));
     startWaitingThread(typeid(*this).name());
 }
 
@@ -35,36 +32,6 @@ void BaseUnitTest::TearDown()
     testing::Test::TearDown();
     completeTest();
     Logger::getInstance()->forceFlush();
-    Exceptions::removeGlobalErrorListener(self);
-    self.reset();
-}
-
-void BaseUnitTest::onFatalError(int signalNumber, std::string callstack)
-{
-    if (callstack.empty())
-    {
-        NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
-    }
-    else
-    {
-        NES_ERROR("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
-    }
-    failTest();
-    FAIL();
-}
-
-void BaseUnitTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack)
-{
-    if (callstack.empty())
-    {
-        NES_ERROR("onFatalException: exception=[{}] (enable NES_DEBUG to view stacktrace)", exception->what());
-    }
-    else
-    {
-        NES_ERROR("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
-    }
-    failTest();
-    FAIL();
 }
 
 namespace detail

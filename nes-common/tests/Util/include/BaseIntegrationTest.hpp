@@ -14,7 +14,6 @@
 #pragma once
 
 #include <filesystem>
-#include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <BaseUnitTest.hpp>
@@ -48,10 +47,6 @@ public:
      * @brief Release internal ports
      */
     void TearDown() override;
-
-    void onFatalError(int signalNumber, std::string callstack) override;
-
-    void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
 protected:
     /**
