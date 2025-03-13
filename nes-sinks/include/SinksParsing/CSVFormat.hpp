@@ -32,7 +32,7 @@ class CSVFormat
 public:
     /// Stores precalculated offsets based on the input schema.
     /// The CSVFormat class constructs the formatting context during its construction and stores it as a member to speed up
-    /// the acutal formatting.
+    /// the actual formatting.
     struct FormattingContext
     {
         size_t schemaSizeInBytes{};
@@ -40,7 +40,6 @@ public:
         std::vector<std::variant<std::shared_ptr<VariableSizedDataPhysicalType>, std::shared_ptr<BasicPhysicalType>>> physicalTypes;
     };
 
-    CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp);
     explicit CSVFormat(std::shared_ptr<Schema> schema);
     virtual ~CSVFormat() noexcept = default;
 
@@ -58,7 +57,6 @@ public:
 private:
     FormattingContext formattingContext;
     std::shared_ptr<Schema> schema;
-    bool addTimestamp;
 };
 
 }
