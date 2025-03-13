@@ -18,11 +18,13 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Phases/NautilusCompilationPhase.hpp>
 #include <Util/Common.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <ExecutableOperator.hpp>
 #include <ExecutablePipelineProviderRegistry.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <Pipeline.hpp>
+#include <options.hpp>
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
@@ -55,7 +57,7 @@ void apply(std::unique_ptr<OperatorPipeline> pipeline)
     throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", "providerName");
 }
 
-PipelinedQueryPlan apply(std::unique_ptr<PipelinedQueryPlan> plan)
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> plan)
 {
     for (auto& pipeline : plan->pipelines)
     {
@@ -64,7 +66,7 @@ PipelinedQueryPlan apply(std::unique_ptr<PipelinedQueryPlan> plan)
             apply(Util::unique_ptr_dynamic_cast<OperatorPipeline>(std::move(pipeline)));
         }
     }
-    return std::move(*plan);
+    return plan;
 }
 
 }

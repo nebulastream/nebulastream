@@ -13,10 +13,11 @@
 */
 #pragma once
 #include <functional>
+#include <memory>
 #include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::NautilusCompilationPhase
 {
 /// Generates code for all pipelines in a pipelined query plan.
-PipelinedQueryPlan apply(std::unique_ptr<PipelinedQueryPlan> queryPlan);
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> queryPlan);
 }

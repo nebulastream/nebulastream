@@ -20,5 +20,5 @@
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
 /// Phase takes a PipelinedQueryPlan and produces an ExecutableQueryPlan
-ExecutableQueryPlan apply(PipelinedQueryPlan pipelineQueryPlan);
+std::unique_ptr<ExecutableQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan);
 }

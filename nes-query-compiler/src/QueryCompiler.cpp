@@ -19,6 +19,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <Phases/NautilusCompilationPhase.hpp>
 #include <Phases/AddScanAndEmitPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 
@@ -31,44 +32,14 @@ QueryCompiler::QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> o
 }
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
-std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest>)
+std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
     try
     {
-        ///auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
-
-        ///pipelinedQueryPlan = AddScanAndEmitPhase::apply(pipelinedQueryPlan);
-
-        /// auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
-
-        // TODO actual compilation
-        // NautilusCompilationPhase
-
-        std::terminate();
-        /// When lowering the scan operators cannot be used as they are not 'Operators'.
-        /// The current way we mode it is, that a pipeline is a 'Operator' which then can be placed in the DQP.
-        /// We have a decomposed query plan with pipelines as 'operators' (clever!)
-        ///
-        /// The problem is that we have now a type missmatch, scan etc cannot fit.
-
-        /// 3) custom transformation rules
-        /// We do not require that the functions are pure or deterministaic, e.i., they can internally use statistics.
-        /// TODO here we can register other transformation rules
-
-        /*
-        // TODO should add scan and emit where this is needed
-        /// 4) Pipelining & Scan and emit
-        auto phase = AddScanAndEmitPhase::create();
-        pipelinedQueryPlan = phase->apply(physicalQueryPlan);
-
-        /// 5) Here we create a executable pipeline state (compilation or interpretation)
-        /// They are included into executable operators
-        /// TODO I think, we can also already start the compilation here
-        // TODO shouldn't the executable operator not be called ExecutablePipeline?
-        pipelinedQueryPlan = LowerLogicalToNautilusOperators::apply(pipelinedQueryPlan);
-        */
-        /// 6) create a executable query plan
-        return std::unique_ptr<ExecutableQueryPlan>();
+        auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
+        pipelinedQueryPlan = AddScanAndEmitPhase::apply(std::move(pipelinedQueryPlan));
+        pipelinedQueryPlan = NautilusCompilationPhase::apply(std::move(pipelinedQueryPlan));
+        return LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
     }
     catch (...)
     {

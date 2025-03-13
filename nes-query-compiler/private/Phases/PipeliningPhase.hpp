@@ -12,28 +12,12 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <iostream>
 #include <memory>
-#include <unordered_map>
-#include <utility>
-#include <variant>
 #include <PipelinedQueryPlan.hpp>
-#include "API/Schema.hpp"
-#include <Abstract/PhysicalOperator.hpp>
-#include "DefaultEmitPhysicalOperator.hpp"
-#include "DefaultScanPhysicalOperator.hpp"
-#include "ErrorHandling.hpp"
-#include "MemoryLayout/RowLayout.hpp"
-#include "Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp"
-#include "Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp"
-#include "Operators/Sinks/SinkLogicalOperator.hpp"
-#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
-#include "Plans/Operator.hpp"
-#include "Plans/QueryPlan.hpp"
+#include <Plans/QueryPlan.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
 /// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-PipelinedQueryPlan apply(const QueryPlan& queryPlan);
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan);
 }

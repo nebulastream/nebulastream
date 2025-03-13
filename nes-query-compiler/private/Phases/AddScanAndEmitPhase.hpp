@@ -21,5 +21,5 @@ namespace NES::QueryCompilation::AddScanAndEmitPhase
 /// Simple phase to add scan and emit operator to pipelines in necessary.
 /// A common case would be that, the pipelining phase placed a filter operator in an own pipeline.
 /// In this case, the AddScanAndEmitPhase adds a scan before and end emit operator respectively after the filter operator.
-PipelinedQueryPlan apply(const PipelinedQueryPlan& pipeline);
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> pipeline);
 }

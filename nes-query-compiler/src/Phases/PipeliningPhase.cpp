@@ -54,7 +54,7 @@ Pipeline::PipelineOperator convertOperator(std::unique_ptr<Operator> op) {
 
 /// The visitor is responsible for recursively building pipelines.
 struct PipeliningVisitor {
-    PipelinedQueryPlan& plan;
+    PipelinedQueryPlan* plan;
     Pipeline* currentPipeline; /// non-owning pointer
 
     void operator()(std::unique_ptr<PhysicalOperator>&) {
@@ -127,20 +127,20 @@ struct PipeliningVisitor {
 
 
 /// Entry point: splits the query plan of physical operators into pipelines
-PipelinedQueryPlan apply(QueryPlan queryPlan) {
-    PipelinedQueryPlan plan(queryPlan.getQueryId());
-    for (auto& sinkOp : queryPlan.releaseRootOperators()) {
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan) {
+    auto plan = std::make_unique<PipelinedQueryPlan>(queryPlan->getQueryId());
+    for (auto& sinkOp : queryPlan->releaseRootOperators()) {
         auto pipeline = std::make_unique<SinkPipeline>();
         pipeline->prependOperator(convertOperator(std::move(sinkOp)));
-        plan.pipelines.push_back(std::move(pipeline));
-        SinkPipeline* sinkPipeline = static_cast<SinkPipeline*>(plan.pipelines.back().get());
-        PipeliningVisitor visitor{plan, sinkPipeline};
+        plan->pipelines.push_back(std::move(pipeline));
+        SinkPipeline* sinkPipeline = static_cast<SinkPipeline*>(plan->pipelines.back().get());
+        PipeliningVisitor visitor{plan.get(), sinkPipeline};
         for (auto& child : sinkPipeline->sinkOperator->releaseChildren()) {
             auto childVariant = convertOperator(std::move(child));
             std::visit(visitor, childVariant);
         }
     }
-    std::cout << "Constructed pipeline plan with " << plan.pipelines.size() << " root pipelines.\n";
+    std::cout << "Constructed pipeline plan with " << plan->pipelines.size() << " root pipelines.\n";
     return plan;
 }
 

@@ -49,9 +49,9 @@ namespace helper
 }
 }
 
-PipelinedQueryPlan AddScanAndEmitPhase::apply(const PipelinedQueryPlan& pipelineQueryPlan)
+std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
 {
-    for (const auto& pipeline : pipelineQueryPlan.pipelines)
+    for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
         // OperatorPipelines only
         if (auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get()))
