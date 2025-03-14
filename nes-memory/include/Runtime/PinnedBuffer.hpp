@@ -214,6 +214,7 @@ public:
 
     bool stealChild(const PinnedBuffer* oldParent, const int8_t* child, uint32_t size) const;
 
+    ///WARNING: This method is inherently not thread-safe and using it without synchronizing access to the underlying BCB will lead to data races
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept;
 
 

@@ -90,6 +90,7 @@ EXCEPTION(CannotSpillEnoughBuffers, 3101, "couldn't spill enough buffers to sati
 EXCEPTION(CannotReadBufferFromDisk, 3103, "cannot read buffer from disk")
 EXCEPTION(CoroutineContinuedWithoutResult, 3104, "buffer management IO coroutine was resumed without result")
 EXCEPTION(BufferManagerAlreadyShutdown, 3105, "buffer manager is already destroyed")
+EXCEPTION(BufferAlreadyRepinning, 3106, "buffer is already getting repinned")
 EXCEPTION(FailedToTransferCleanupOwnership, 3110, "failed to transfer ownership of segment hole punching")
 EXCEPTION(CannotSubmitMemoryRequest, 3150, "cannot submit buffer memory request to bounded intermediate queue")
 EXCEPTION(CannotSubmitBufferIO, 3151, "cannot submit buffer IO task to bounded intermediate queue")
