@@ -20,9 +20,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
@@ -102,7 +103,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
             reply->set_status(QueryStatus(summary->currentStatus));
             for (const auto& [start, running, stop, error] : summary->runs)
             {
-                const auto replyRun = reply->add_runs();
+                auto* const replyRun = reply->add_runs();
                 replyRun->set_startunixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                         start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
@@ -115,9 +116,9 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                         stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
                         .count());
-                if (error)
+                if (error.has_value())
                 {
-                    const auto runError = replyRun->mutable_error();
+                    auto* const runError = replyRun->mutable_error();
                     runError->set_message(error->what());
                     runError->set_stacktrace(error->trace().to_string());
                     runError->set_code(error->code());
