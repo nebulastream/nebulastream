@@ -373,7 +373,7 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
     uint64_t tuplesPerBuffer = 10;
     uint8_t bytesPerTuple = sizeof(uint64_t);
     NES_INFO(" start coordinator");
-    std::string testFile = "/Users/danilaferentz/Desktop/nebulastream/cmake-build-debug/sequence_with_buffering_out.csv";
+    std::string testFile = "/Users/danilaferentz/Desktop/experiments/nebulastream/cmake-build/sequence_with_buffering_out.csv";
     remove(testFile.c_str());
 
     std::atomic<uint64_t> fixedSourceBuffersCount = 0;

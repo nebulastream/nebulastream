@@ -43,12 +43,12 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     auto* workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     //update last seen watermark by this worker
-    opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
-    auto minWatermark = opHandler->getMinWatermarkForWorker();
+//    opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
+//    auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    NES_DEBUG("Watermark: {}, id: {}, min: {}, origin: {}", watermarkTs, workerCtx->getId(), minWatermark, originId);
+    NES_DEBUG("Watermark: {}, id: {}, min: {}, origin: {}", watermarkTs, workerCtx->getId(), watermarkTs, originId);
 
-    BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
+    BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
