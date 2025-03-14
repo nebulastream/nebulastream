@@ -40,9 +40,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: build systest
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_FLAGS="-march=native -mtune=native -O3" \
-            -DCMAKE_C_FLAGS="-march=native -mtune=native -O3"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --target systest -j -- -k 0
       - name: run Benchmarks
         run: |
