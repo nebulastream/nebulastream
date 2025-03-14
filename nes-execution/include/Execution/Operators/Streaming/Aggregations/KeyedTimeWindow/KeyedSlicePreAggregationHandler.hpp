@@ -56,11 +56,22 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
+    void recreate() override;
+
+    bool shouldRecreate() override;
+
+    /**
+     * @brief Recreate state and window info from the file
+     */
+    void recreateOperatorHandlerFromFile();
+
     /**
       * @brief Retrieves state, window info and watermarks information from max(last watermark, migrated tmstmp)
       * @return vector of tuple buffers
       */
-    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration();
+    std::vector<Runtime::TupleBuffer> serializeOperatorHandlerForMigration() override;
+
+    std::vector<Runtime::TupleBuffer> getSerializedPortion(uint64_t id) override;
 
     /**
      * @brief Retrieve the state as a vector of tuple buffers
@@ -91,6 +102,13 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
 
     /**
+    * @brief read numberOfBuffers amount of buffers from file
+    * @param numberOfBuffers number of buffers to read
+    * @return read buffers
+    */
+    std::vector<TupleBuffer> readBuffers(std::ifstream& stream, uint64_t numberOfBuffers);
+
+    /**
      * @brief Retrieve watermarks and sequence numbers as a vector of tuple buffers
      * Format of buffers looks like:
      * buffers contain metadata in format:
@@ -114,9 +132,21 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
 
     void setBufferManager(const BufferManagerPtr& bufManager);
 
+    /**
+     * set file with the state and recreation flag
+     */
+    void setRecreationFileName(std::string filePath);
+    /**
+     * get recreation file name
+     */
+    std::optional<std::string> getRecreationFileName();
+
     ~KeyedSlicePreAggregationHandler() override;
 
- uint64_t getCurrentWatermark() const;
+    uint64_t getCurrentWatermark() const;
+
+    bool migrating = false;
+
     private:
     /**
      * Deserialize slice from span of buffers
@@ -124,6 +154,10 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
      * @return recreated KeyedSlicePtr
      */
     KeyedSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers);
+    std::atomic<bool> shouldBeRecreated{false};
+    std::optional<std::string> recreationFilePath;
+        std::vector<TupleBuffer> stateToTransfer{};
+    std::vector<bool> asked{false, false, false, false};
 
   protected:
     BufferManagerPtr bufferManager;

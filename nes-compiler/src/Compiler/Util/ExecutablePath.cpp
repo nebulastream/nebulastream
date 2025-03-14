@@ -59,8 +59,11 @@ RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
 #if defined(__APPLE__)
     runtimePathConfig.libs.push_back("-lnes");
+    runtimePathConfig.libs.push_back("-lnes-window-types");
+    runtimePathConfig.libs.push_back("-lnes-operators");
     runtimePathConfig.libs.push_back("-lnes-runtime");
     runtimePathConfig.libs.push_back("-lnes-common");
+    runtimePathConfig.libs.push_back("-lnes-client");
     runtimePathConfig.libs.push_back("-lnes-data-types");
     runtimePathConfig.libs.push_back("-lc++");
 #endif
@@ -83,7 +86,9 @@ RuntimePathConfig loadRuntimePathConfig() {
         const std::string clientBinaryDir = PATH_TO_BINARY_DIR "/nes-client/";
         const std::string operatorsBinaryDir = PATH_TO_BINARY_DIR "/nes-operators/";
         const std::string dataTypesBinaryDir = PATH_TO_BINARY_DIR "/nes-data-types/";
+        const std::string windowTypesBinaryDir = PATH_TO_BINARY_DIR "/nes-window-types";
         runtimePathConfig.clangBinaryPath = CLANG_EXECUTABLE;
+        runtimePathConfig.libPaths.push_back(windowTypesBinaryDir);
         runtimePathConfig.libPaths.push_back(clientBinaryDir);
         runtimePathConfig.libPaths.push_back(runtimeBinaryDir);
         runtimePathConfig.libPaths.push_back(commonBinaryDir);

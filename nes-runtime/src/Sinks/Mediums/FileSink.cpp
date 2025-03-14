@@ -128,6 +128,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    if (fBuffer.empty()) {
+
+    }
     NES_DEBUG("Writing tuples to file sink; decomposed query id={} filePath={}, fBuffer={}",
               decomposedQueryId,
               filePath,

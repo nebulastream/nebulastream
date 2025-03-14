@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/StateSerializationUtil.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <fstream>
 #include <tuple>
 
 namespace NES::Runtime::Execution::Operators {
@@ -43,7 +44,71 @@ void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutio
     setBufferManager(ctx.getBufferManager());
 }
 
+void KeyedSlicePreAggregationHandler::recreate() {
+    if (shouldBeRecreated) {
+        recreateOperatorHandlerFromFile();
+    }
+};
+
+bool KeyedSlicePreAggregationHandler::shouldRecreate() {
+    return shouldBeRecreated;
+};
+
+void KeyedSlicePreAggregationHandler::recreateOperatorHandlerFromFile() {
+    NES_INFO("Start of recreation from file");
+    if (!recreationFilePath.has_value()) {
+        NES_ERROR("Error: file path for recreation is not set");
+    }
+
+    auto filePath = recreationFilePath.value();
+    NES_ERROR("waiting for recreation file");
+    while (!std::filesystem::exists(filePath)) {
+        // NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
+    }
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("started recreating at {}", time);
+    NES_DEBUG("File {} exists. Start of recreation from file", filePath);
+    std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
+
+    if (!fileStream.is_open()) {
+        NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
+    }
+
+    // 1. Read number of state buffers and number of window info buffers
+    auto numberOfMetadataBuffers = 1;
+    auto metadataBuffers = readBuffers(fileStream, numberOfMetadataBuffers);
+    auto metadataPtr = metadataBuffers[0].getBuffer<uint64_t>();
+    uint64_t numberOfWatermarkBuffers = metadataPtr[0];
+    NES_DEBUG("Number of read watermark buffers: {}", numberOfWatermarkBuffers);
+    uint64_t numberOfStateBuffers = metadataPtr[1];
+    NES_DEBUG("Number of read state buffers: {}", numberOfStateBuffers);
+
+    // 2. read watermarks buffers
+    auto recreatedWatermarkBuffers = readBuffers(fileStream, numberOfWatermarkBuffers);
+
+    // 3. read state buffers
+    auto recreatedStateBuffers = readBuffers(fileStream, numberOfStateBuffers);
+
+    fileStream.close();
+
+    // 5. recreate state and window info from read buffers
+    restoreWatermarks(recreatedWatermarkBuffers);
+    restoreState(recreatedStateBuffers);
+    // reset recreation flag and delete file
+    shouldBeRecreated = false;
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("State finished recreating at {}", endTime);
+    if (std::remove(recreationFilePath->c_str()) == 0) {
+        NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
+    } else {
+        NES_WARNING("File {} was not deleted after recreation", recreationFilePath->c_str());
+    }
+}
+
 std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::serializeOperatorHandlerForMigration() {
+    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("Started serializing at {}", startTime);
     // get timestamp of not probed slices
     auto migrationTimestamp =
         std::min(watermarkProcessor->getCurrentWatermark(), watermarkProcessor->getCurrentWatermark());
@@ -73,7 +138,33 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::serializeOper
                          std::make_move_iterator(stateBuffers.end()));
 
     NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
+    for (auto& buffer: mergedBuffers) {
+        buffer.setWatermark(mergedBuffers.size());
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    stateToTransfer = mergedBuffers;
+    NES_ERROR("Finished serializing at {}", endTime);
     return mergedBuffers;
+}
+
+std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getSerializedPortion(uint64_t id) {
+    if (asked[id]) {
+        return {};
+    }
+    asked[id] = true;
+    auto numberOfThreads = 4;
+    size_t totalSize = stateToTransfer.size();
+    size_t chunkSize = (totalSize + numberOfThreads - 1) / numberOfThreads;
+
+    size_t startIdx = id * chunkSize;
+    size_t endIdx = std::min(startIdx + chunkSize, totalSize);
+
+    std::vector<Runtime::TupleBuffer> portion;
+    for (size_t i = id; i < totalSize; i += numberOfThreads) {
+        portion.push_back(stateToTransfer[i]);
+    }
+
+    return portion;
 }
 
 std::vector<TupleBuffer> KeyedSlicePreAggregationHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
@@ -275,6 +366,41 @@ void KeyedSlicePreAggregationHandler::restoreWatermarks(std::vector<Runtime::Tup
     auto numberOfBuildBuffers = deserializeNextValue();
     watermarkProcessor->restoreWatermarks(
         std::span<const Runtime::TupleBuffer>(buffers.data() + dataBuffersIdx + 1, numberOfBuildBuffers));
+}
+
+void KeyedSlicePreAggregationHandler::setRecreationFileName(std::string filePath) {
+    shouldBeRecreated = true;
+    recreationFilePath = filePath;
+}
+
+std::optional<std::string> KeyedSlicePreAggregationHandler::getRecreationFileName() { return recreationFilePath; }
+
+std::vector<TupleBuffer> KeyedSlicePreAggregationHandler::readBuffers(std::ifstream& stream, uint64_t numberOfBuffers) {
+    std::vector<TupleBuffer> readBuffers = {};
+
+    for (auto currBuffer = 0ULL; currBuffer < numberOfBuffers; currBuffer++) {
+        uint64_t size = 0, numberOfTuples = 0;
+        // 1. read size of current buffer
+        stream.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+        // 2. read number of tuples in current buffer
+        stream.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+
+        // if size of the read buffer is more than size of pooled buffers in buffer manager
+        if (size > bufferManager->getBufferSize()) {
+            // then it is not implemented as it should be split into several smaller buffers
+            NES_NOT_IMPLEMENTED();
+        }
+        if (size > 0) {
+            //recreate vector of tuple buffers from the file
+            auto newBuffer = bufferManager->getBufferBlocking();
+            // 3. read buffer content
+            stream.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
+            newBuffer.setNumberOfTuples(numberOfTuples);
+            readBuffers.emplace_back(newBuffer);
+        }
+    }
+
+    return readBuffers;
 }
 
 void KeyedSlicePreAggregationHandler::setBufferManager(const NES::Runtime::BufferManagerPtr& bufManager) {

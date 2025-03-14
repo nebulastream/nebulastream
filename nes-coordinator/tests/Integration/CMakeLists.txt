@@ -156,6 +156,8 @@ add_nes_integration_test(explain-request-integration-test "ExplainRequestIntegra
 
 add_nes_integration_test(file-sink-integration-test "FileSinkIntegrationTest.cpp")
 
+add_nes_integration_test(stateful-migration-integration-test "StatefulQueryRedeploymentIntegrationTest.cpp")
+
 ### Location Integration Test ###
 # Enabled with issue #4270
 #add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")

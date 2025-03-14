@@ -63,6 +63,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
@@ -73,6 +74,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -454,6 +456,11 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
             sinkDetails.add_listofsourcelocations(sourceWorkerId);
         }
     }
+    if (sinkOperator.hasProperty(QueryCompilation::MIGRATION_SINK)) {
+        auto migrationSink =
+            std::any_cast<bool>(sinkOperator.getProperty(QueryCompilation::MIGRATION_SINK));
+        sinkDetails.set_migrationsink(migrationSink);
+    }
     auto sinkDescriptor = sinkOperator.getSinkDescriptor();
     serializeSinkDescriptor(*sinkDescriptor, sinkDetails, sinkOperator.getInputOriginIds().size());
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
@@ -467,6 +474,9 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const
         physicalSourceLocation.emplace_back(sourcelocation);
     };
     sinkOperator->addProperty(Optimizer::LIST_OF_SOURCE_WORKER_ID, physicalSourceLocation);
+    if (sinkDetails.migrationsink()) {
+        sinkOperator->addProperty(QueryCompilation::MIGRATION_SINK, sinkDetails.migrationsink());
+    }
     return sinkOperator;
 }
 
@@ -563,6 +573,18 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         }
     }
 
+    if (windowOperator.hasProperty(QueryCompilation::MIGRATION_FLAG)) {
+        auto migrationFlag =
+            std::any_cast<bool>(windowOperator.getProperty(QueryCompilation::MIGRATION_FLAG));
+        windowDetails.set_migrationflag(migrationFlag);
+    }
+
+    if (windowOperator.hasProperty(QueryCompilation::MIGRATION_FILE)) {
+        auto migrationFile =
+            std::any_cast<std::string>(windowOperator.getProperty(QueryCompilation::MIGRATION_FILE));
+        windowDetails.set_migrationfile(migrationFile);
+    }
+
     serializedOperator.mutable_details()->PackFrom(windowDetails);
 }
 
@@ -651,7 +673,15 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression, aggregation, window, allowedLateness);
     windowDef->setOriginId(OriginId(windowDetails.origin()));
-    return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
+
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
+    if (windowDetails.migrationflag()) {
+        windowOperator->addProperty(QueryCompilation::MIGRATION_FLAG, windowDetails.migrationflag());
+    }
+    if (windowDetails.migrationfile() != "") {
+        windowOperator->addProperty(QueryCompilation::MIGRATION_FILE, windowDetails.migrationfile());
+    }
+    return windowOperator;
 }
 
 void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator& joinOperator,
@@ -703,6 +733,18 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     } else if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT) {
         joinDetails.mutable_jointype()->set_jointype(
             SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
+    }
+
+    if (joinOperator.hasProperty(QueryCompilation::MIGRATION_FLAG)) {
+        auto migrationFlag =
+            std::any_cast<bool>(joinOperator.getProperty(QueryCompilation::MIGRATION_FLAG));
+        joinDetails.set_migrationflag(migrationFlag);
+    }
+
+    if (joinOperator.hasProperty(QueryCompilation::MIGRATION_FILE)) {
+        auto migrationFile =
+            std::any_cast<std::string>(joinOperator.getProperty(QueryCompilation::MIGRATION_FILE));
+        joinDetails.set_migrationfile(migrationFile);
     }
 
     serializedOperator.mutable_details()->PackFrom(joinDetails);
@@ -773,6 +815,12 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
     auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<LogicalJoinOperator>();
     joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname());
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
+    if (joinDetails.migrationflag()) {
+        joinOperator->addProperty(QueryCompilation::MIGRATION_FLAG, joinDetails.migrationflag());
+    }
+    if (joinDetails.migrationfile() != "") {
+        joinOperator->addProperty(QueryCompilation::MIGRATION_FILE, joinDetails.migrationfile());
+    }
     return joinOperator;
 
     //TODO: enable distrChar for distributed joins
@@ -1467,6 +1515,8 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
             serializedSinkDescriptor.set_sinkformat("NES_FORMAT");
         } else if (format == "TEXT_FORMAT") {
             serializedSinkDescriptor.set_sinkformat("TEXT_FORMAT");
+        } else if (format == "MIGRATION_FORMAT") {
+            serializedSinkDescriptor.set_sinkformat("MIGRATION_FORMAT");
         } else {
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }

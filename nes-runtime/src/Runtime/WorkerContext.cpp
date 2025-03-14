@@ -187,6 +187,7 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
     std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
     bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+    bufferCopy.setChunkNumber(buffer.getChunkNumber());
     bufferCopy.setOriginId(buffer.getOriginId());
     bufferCopy.setWatermark(buffer.getWatermark());
     bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());

@@ -341,7 +341,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
+    wrkConf->numberOfBuffersInGlobalBufferManager = 60;
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;

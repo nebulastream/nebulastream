@@ -596,8 +596,8 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
 
     wrkLeaf1->removeParent(crd->getNesWorker()->getWorkerId());
     wrkLeaf1->addParent(wrk1->getWorkerId());
-    auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
-    // auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
+    // auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
                                                                                    FaultToleranceType::NONE);

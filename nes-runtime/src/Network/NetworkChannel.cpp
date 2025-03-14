@@ -30,7 +30,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         NesPartition nesPartition,
                                         ExchangeProtocol& protocol,
                                         Runtime::BufferManagerPtr bufferManager,
-                                        int highWaterMark,
+                                        int ,
                                         std::chrono::milliseconds waitTime,
                                         uint8_t retryTimes,
                                         DecomposedQueryPlanVersion version = 0,
@@ -58,9 +58,20 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
         // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
         // until more space is available
-        if (highWaterMark > 0) {
-            zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
-        }
+        //        if (highWaterMark > 0) {
+        zmqSocket.set(zmq::sockopt::sndhwm, 0);
+        zmqSocket.set(zmq::sockopt::rcvhwm, 0);
+        //            auto sndhwm = zmqSocket.get(zmq::sockopt::sndhwm);
+        //            auto rechwm = zmqSocket.get(zmq::sockopt::rcvhwm);
+
+        //            int snd_hwm = 1000;
+        //            int rcv_hwm = 1000;
+        // int rcvbuf_size = 100 * 1024 * 1024;  // 100MB
+        //            zmqSocket.set(zmq::sockopt::sndhwm, snd_hwm);
+        //            zmqSocket.set(zmq::sockopt::rcvhwm, rcv_hwm);
+        //zmqSocket.set(zmq::sockopt::rcvbuf, rcvbuf_size);
+        //zmqSocket.set(zmq::sockopt::sndbuf, rcvbuf_size);
+        //        }
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;

@@ -342,7 +342,8 @@ message SerializableOperator{
 
     google.protobuf.Any sinkDescriptor = 1;
     uint64 numberOfOriginIds = 3;
-    repeated uint32 listOfSourceLocations=4;
+    repeated uint32 listOfSourceLocations = 4;
+    bool migrationSink = 5;
   }
 
   /**
@@ -506,6 +507,8 @@ message SerializableOperator{
     repeated SerializableExpression keys = 4;
     uint64 allowedLateness = 5;
     uint64 origin = 6;
+    bool migrationFlag = 7;
+    string migrationFile = 8;
   }
 
   /**
@@ -530,6 +533,8 @@ message SerializableOperator{
     string windowStartFieldName = 7;
     string windowEndFieldName = 8;
     uint64 origin = 9;
+    bool migrationFlag = 10;
+    string migrationFile = 11;
   }
 
   /**

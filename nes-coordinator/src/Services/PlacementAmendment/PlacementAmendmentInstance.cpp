@@ -296,17 +296,37 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 // terminating the decomposed query.
                 auto deployedDecomposedQueryPlan =
                     globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryId);
+                const auto& decomposedQueryOldVersion = deployedDecomposedQueryPlan->getOldVersion().value();
                 auto numOfSourceOperators = deployedDecomposedQueryPlan->getSourceOperators().size();
-                auto reConfMetaData = std::make_shared<UpdateAndDrainQueryMetadata>(workerId,
-                                                                                    sharedQueryId,
-                                                                                    decomposedQueryId,
-                                                                                    decomposedQueryVersion,
-                                                                                    numOfSourceOperators);
-                auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
+                auto oldPlanReConfMetaData = std::make_shared<UpdateAndDrainQueryMetadata>(workerId,
+                                                                                           sharedQueryId,
+                                                                                           decomposedQueryId,
+                                                                                           decomposedQueryVersion,
+                                                                                           numOfSourceOperators);
+                auto oldPlanMarkerEvent = ReconfigurationMarkerEvent::create(queryState, oldPlanReConfMetaData);
                 reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
-                                                               deployedDecomposedQueryPlan->getOldVersion().value(),
-                                                               markerEvent);
+                                                               decomposedQueryOldVersion,
+                                                               oldPlanMarkerEvent);
+                auto newPlanReConfMetaData = std::make_shared<DrainQueryMetadata>(numOfSourceOperators);
+                auto newPlanMarkerEvent = ReconfigurationMarkerEvent::create(QueryState::RUNNING, newPlanReConfMetaData);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
+                                                               decomposedQueryVersion,
+                                                               newPlanMarkerEvent);
                 break;
+            }
+            case QueryState::MARKED_FOR_DEPLOYMENT: {
+                if (deploymentAdditionContext->isForMigration()) {
+                    const auto& workerId = deploymentAdditionContext->getWorkerId();
+                    const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
+                    const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
+                    const auto& decomposedQueryVersion = deploymentAdditionContext->getDecomposedQueryPlanVersion();
+                    auto reConfMetaData = std::make_shared<DrainQueryMetadata>(1);
+                    auto markerEvent = ReconfigurationMarkerEvent::create(QueryState::RUNNING, reConfMetaData);
+                    reconfigurationMarker->addReconfigurationEvent(decomposedQueryId,
+                                                                   decomposedQueryVersion,
+                                                                   markerEvent);
+                    break;
+                }
             }
 
             default: NES_DEBUG("Skip recording decomposed query plan in state {}", magic_enum::enum_name(queryState));

@@ -125,16 +125,26 @@ class PartitionManager {
          */
         DecomposedQueryPlanVersion getVersion();
 
+        uint64_t getMaxRegisteredSeqNumber();
+        void updateMaxRegisteredSeqNumber(uint64_t newMaxRegisteredSequenceNumber);
+        void resetMaxRegisteredSeqNumber();
+
       private:
         uint64_t partitionCounter{1};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
+
+        uint64_t maxRegisteredSeqNumber{0};
     };
 
   public:
     PartitionManager() = default;
 
     ~PartitionManager();
+
+    uint64_t getMaxRegisteredSequenceNumber(NesPartition partition);
+
+    void resetMaxRegisteredSequenceNumber(NesPartition partition);
 
     /**
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
@@ -155,9 +165,10 @@ class PartitionManager {
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
      * counter is 0 an error is thrown.
      * @param partition the partition of the consumer
+     * @param newMaxRegisteredSeqNumber new max of registered seqNumber
      * @return true if the partition counter got to zero, false otherwise
      */
-    bool unregisterSubpartitionConsumer(NesPartition partition);
+    bool unregisterSubpartitionConsumer(NesPartition partition, uint64_t newMaxRegisteredSeqNumber);
 
     /**
      * @brief Returns the current counter of a given partition. Throws error if not existing.

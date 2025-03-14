@@ -44,7 +44,10 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryVersion,
                  faultToleranceType,
                  numberOfOrigins),
-      filePath(filePath), append(append) {}
+      filePath(filePath), append(append) {
+    lastWritten = 0;
+//    bufferStorage.reserve(1000);
+}
 
 RawBufferSink::~RawBufferSink() {}
 
@@ -71,7 +74,7 @@ void RawBufferSink::setup() {
 
     // Open the file stream
     if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::out);
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
     isOpen = outputFile.is_open() && outputFile.good();
     if (!isOpen) {
@@ -85,40 +88,187 @@ void RawBufferSink::setup() {
 void RawBufferSink::shutdown() {
     NES_DEBUG("Closing file sink, filePath={}", filePath);
     // rename file after dumping completed
-    auto dotPosition = filePath.find_last_of('.');
-    auto completedPath = filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
-    if (std::rename(filePath.c_str(), completedPath.c_str()) != 0) {
-        NES_ERROR("Can't rename file after dumping");
+    if (isClosed) {
+        return;
     }
 
+    auto dotPosition = filePath.find_last_of('.');
+    auto completedPath = filePath.substr(0, dotPosition) + "-completed" + filePath.substr(dotPosition);
+    outputFile.flush();
     outputFile.close();
+
+    if (std::rename(filePath.c_str(), completedPath.c_str()) == 0) {
+        NES_DEBUG("File successfully renamed from {}, to {}", filePath, completedPath)
+        NES_DEBUG("Buffers: {} written", numberOfWrittenBuffers);
+    } else {
+        NES_ERROR("Can't rename file after dumping");
+    }
 }
 
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
+    numberOfReceivedBuffers++;
+
+     // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
     }
-    std::unique_lock lock(writeMutex);
 
     if (!inputBuffer) {
         NES_ERROR("Invalid input buffer");
         return false;
     }
 
-    NES_DEBUG("Writing tuples to file sink; filePath={}", filePath);
-    // 1. write buffer size
-    auto size = inputBuffer.getBufferSize();
-    outputFile.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    // 2. write number of tuples in buffer
-    auto numberOfTuples = inputBuffer.getNumberOfTuples();
-    outputFile.write(reinterpret_cast<char*>((&numberOfTuples)), sizeof(uint64_t));
-    // 3. write buffer content
-    outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), size);
-    outputFile.flush();
+    // get sequence number of received buffer
+    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
+
+    {
+        bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
+    }
+    // save the highest consecutive sequence number in the queue
+    auto currentSeqNumberBeforeAdding = seqQueue.getCurrentValue();
+
+    // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
+    const auto seqData = SequenceData(bufferSeqNumber, 1, true);
+    // insert input buffer sequence number to the queue
+    seqQueue.emplace(seqData, bufferSeqNumber);
+
+    // get the highest consecutive sequence number in the queue after adding new value
+    auto currentSeqNumberAfterAdding = seqQueue.getCurrentValue();
+
+    // TODO: #5033 check this logic
+    // check if top value in the queue has changed after adding new sequence number
+    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
+        if (lastWrittenMtx.try_lock()) {
+            std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+
+            {
+                auto bufferStorageLocked = *bufferStorage.wlock();
+                auto lower = bufferStorageLocked.lower_bound(lastWritten + 1);
+                auto upper = bufferStorageLocked.upper_bound(currentSeqNumberAfterAdding);
+                for (auto it = lower; it != upper; ++it) {
+                    bulkWriteBatch.push_back(it->second);
+                }
+                bufferStorageLocked.erase(lower, upper);
+            }
+
+            // Write all buffers at once
+            writeBulkToFile(bulkWriteBatch);
+
+            // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
+
+            // Update lastWritten to the latest sequence number
+            lastWritten = currentSeqNumberAfterAdding;
+            lastWrittenMtx.unlock();
+        }
+    }
+
+    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
+        lastWrittenMtx.lock();
+        auto bufferStorageLocked = *bufferStorage.rlock();
+        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
+        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
+
+        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
+        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
+             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
+             ++it) {
+            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
+        }
+
+        // Write all buffers at once
+        writeBulkToFile(bulkWriteBatch);
+
+        // Update lastWritten to the latest sequence number
+        lastWritten = inputBuffer.getWatermark();
+        lastWrittenMtx.unlock();
+    }
+
     return true;
 }
+
+bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
+
+    auto numberOfBuffers = inputBuffer.getWatermark();
+
+    uint64_t size = inputBuffer.getBufferSize();
+    uint64_t numberOfTuples = inputBuffer.getNumberOfTuples();
+
+    // Create a temporary buffer to batch writes
+    std::vector<char> buffer(sizeof(uint64_t) * 2 + size);
+
+    // NES_ERROR("Writing tuples {} to file sink; filePath={}", inputBuffer.getSequenceNumber(), filePath);
+    std::memcpy(buffer.data(), &size, sizeof(uint64_t));
+    std::memcpy(buffer.data() + sizeof(uint64_t), &numberOfTuples, sizeof(uint64_t));
+    std::memcpy(buffer.data() + 2 * sizeof(uint64_t), inputBuffer.getBuffer(), size);
+    outputFile.write(buffer.data(), buffer.size());
+
+    numberOfWrittenBuffers++;
+
+    NES_ERROR("number of written: {}", numberOfWrittenBuffers);
+
+    if (numberOfWrittenBuffers == numberOfBuffers) {
+        shutdown();
+        isClosed = true;
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+         NES_ERROR("finished transferring {} at {}", time, numberOfWrittenBuffers);
+    }
+    return true;
+}
+
+bool RawBufferSink::writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers) {
+    // NES_ERROR("buffers size {}", buffers.size());
+    if (buffers.empty()) {
+        return false;
+    }
+
+    // Precompute total size needed for bulk write
+    uint64_t totalSize = 0;
+    for (const auto& buf : buffers) {
+        totalSize += (sizeof(uint64_t) * 2) + buf.getBufferSize();
+    }
+
+    // Allocate a single large buffer
+    std::vector<char> bulkBuffer(totalSize);
+    char* writePtr = bulkBuffer.data();
+
+    // Fill the bulk buffer
+    for (const auto& buf : buffers) {
+        uint64_t size = buf.getBufferSize();
+        uint64_t numberOfTuples = buf.getNumberOfTuples();
+
+        std::memcpy(writePtr, &size, sizeof(uint64_t));
+        writePtr += sizeof(uint64_t);
+
+        std::memcpy(writePtr, &numberOfTuples, sizeof(uint64_t));
+        writePtr += sizeof(uint64_t);
+
+        std::memcpy(writePtr, buf.getBuffer(), size);
+        writePtr += size;
+    }
+
+    // Perform a single large file write
+    outputFile.write(bulkBuffer.data(), bulkBuffer.size());
+
+    numberOfWrittenBuffers += buffers.size();
+
+    // NES_ERROR("number of written: {}", buffers.size());
+
+    // Optional: Flush or shutdown logic
+    if (numberOfWrittenBuffers == buffers.front().getWatermark()) {
+        shutdown();
+        isClosed = true;
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                            ).count();
+        NES_ERROR("Finished transferring {} at {}", time, numberOfWrittenBuffers);
+    }
+
+    return true;
+}
+
 
 }// namespace NES

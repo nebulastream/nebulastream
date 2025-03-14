@@ -500,8 +500,10 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
                 && std::any_cast<bool>(migrationFlagVal)) {
                 // use already created operator handler
-                joinOperatorHandler = std::dynamic_pointer_cast<StreamJoinOperatorHandler>(
+                auto streamJoinOH = std::dynamic_pointer_cast<StreamJoinOperatorHandler>(
                     operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+                joinOperatorHandler = streamJoinOH;
+                streamJoinOH->migrating = true;
                 // mark join to be migrated
                 join_migration_flag = true;
             } else {
@@ -764,8 +766,10 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
         && std::any_cast<bool>(migrationFlagVal)) {
         // use already created operator handler
-        windowOperatorHandler = std::dynamic_pointer_cast<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+        auto windowOH = std::dynamic_pointer_cast<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
             operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+        windowOperatorHandler = windowOH;
+        windowOH->migrating = true;
         // mark window to be migrated
         window_migration_flag = true;
         } else {

@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -85,7 +86,19 @@ class RawBufferSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
+    bool writeToTheFile(Runtime::TupleBuffer& inputBuffer);
+
+    bool writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers);
+
   protected:
+    Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> seqQueue;
+    /// keep unordered tuple buffers with sequence number as key
+    folly::Synchronized<std::map<uint64_t, Runtime::TupleBuffer>> bufferStorage;
+
+    /// sequence number of last written tuple buffer
+    std::atomic<uint64_t> lastWritten{0};
+    std::mutex lastWrittenMtx;
+
     /// The output file path of the file sink.
     std::string filePath;
 
@@ -97,6 +110,10 @@ class RawBufferSink : public SinkMedium {
 
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
+
+    std::atomic<uint64_t> numberOfWrittenBuffers{0};
+    std::atomic<uint64_t> numberOfReceivedBuffers{0};
+    std::atomic<bool> isClosed{false};
 };
 }// namespace NES
 

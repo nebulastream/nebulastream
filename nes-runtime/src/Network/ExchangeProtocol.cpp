@@ -137,12 +137,13 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
                         "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
-        const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
-        NES_DEBUG("Received lastEOS {}", lastEOS);
+        const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition, endOfStreamMessage.getMaxMessageSequenceNumber());
+        NES_DEBUG("Received lastEOS {}, max message seq number {} and max stored seq number {} for parition {}", lastEOS, endOfStreamMessage.getMaxMessageSequenceNumber(),
+            partitionManager->getMaxRegisteredSequenceNumber(eosNesPartition), eosNesPartition.getOperatorId());
         if (lastEOS) {
-            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+            const auto& eosMessageMaxSeqNumber = partitionManager->getMaxRegisteredSequenceNumber(eosNesPartition);
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
-                NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
+                NES_ERROR("Current message sequence number {} is less than expected max {} for partition {}",
                           (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
                           eosMessageMaxSeqNumber,
                           eosNesPartition);
@@ -152,6 +153,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 
             // Cleaning up and resetting for this partition, so that we can reuse the partition later on
             (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
+            partitionManager->resetMaxRegisteredSequenceNumber(eosNesPartition);
         }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())

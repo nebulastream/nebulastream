@@ -53,10 +53,6 @@ ExecutablePipeline::ExecutablePipeline(PipelineId pipelineId,
 ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id={} originId={} stage={}", decomposedQueryId, inputBuffer.getOriginId(), pipelineId);
     auto* task = inputBuffer.getBuffer<ReconfigurationMessage>();
-    if (decomposedQueryId == DecomposedQueryId(3) && decomposedQueryVersion == DecomposedQueryPlanVersion(0)) {
-        if (task->getType() == ReconfigurationType::Initialize) {
-        }
-    }
     switch (this->pipelineStatus.load()) {
         case PipelineStatus::PipelineRunning: {
             auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
@@ -99,6 +95,40 @@ bool ExecutablePipeline::start() {
     }
     return false;
 }
+
+bool ExecutablePipeline::shouldRecreate() {
+    if (pipelineStatus == PipelineStatus::PipelineRunning) {
+        auto newReconf = ReconfigurationMessage(sharedQueryId,
+                                                decomposedQueryId,
+                                                decomposedQueryVersion,
+                                                ReconfigurationType::Initialize,
+                                                inherited0::shared_from_this(),
+                                                std::make_any<uint32_t>(activeProducers.load()));
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+            if (operatorHandler->shouldRecreate()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ExecutablePipeline::recreate() {
+    if (pipelineStatus == PipelineStatus::PipelineRunning) {
+        auto newReconf = ReconfigurationMessage(sharedQueryId,
+                                                decomposedQueryId,
+                                                decomposedQueryVersion,
+                                                ReconfigurationType::Initialize,
+                                                inherited0::shared_from_this(),
+                                                std::make_any<uint32_t>(activeProducers.load()));
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+            operatorHandler->recreate();
+        }
+        return true;
+    }
+    return false;
+}
+
 
 bool ExecutablePipeline::stop(QueryTerminationType) {
     auto expected = PipelineStatus::PipelineRunning;
@@ -222,13 +252,24 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 
             // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started
             if (event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>() && isMigrationPipeline) {
-                // thread took the work and other threads should not do migration again => reset migration flag
-                isMigrationPipeline = false;
-                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    // TODO [#5149]: add start and end timestamps based on watermarks [https://github.com/nebulastream/nebulastream/issues/5149]
-                    auto dataToMigrate = operatorHandler->getStateToMigrate(0, 1000);
-                    for (auto& buffer : dataToMigrate) {
-                        pipelineContext->migrateBuffer(buffer, context);
+                if (!serialized) {
+                    for (auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+                        // NES_ERROR("sync context wait {}", context.getId());
+                        preSerBarrier->wait();
+                        // NES_ERROR("sync contexts synced {}", context.getId());
+                        std::call_once(serializeOnceFlag, [&context, &operatorHandler, this]() {
+                            NES_ERROR("context {} took serialization", context.getId());
+                            operatorHandler->serializeOperatorHandlerForMigration();
+                            serialized = true;
+                            conditionSerialized.notify_all();
+                        });
+                        std::unique_lock<std::mutex> lock(serializeMtx);
+                        conditionSerialized.wait(lock, [this] {
+                            return serialized.load(std::memory_order_acquire);
+                        });
+                        lock.unlock();
+                        // NES_ERROR("context {} continued to send data", context.getId());
+                        sendBuffers(operatorHandler, context);
                     }
                 }
             }
@@ -255,6 +296,17 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             break;
         }
     }
+}
+
+void ExecutablePipeline::sendBuffers(OperatorHandlerPtr operatorHandler, WorkerContext& context) {
+    auto dataToMigrate = operatorHandler->getSerializedPortion(context.getId().getRawValue() % 4);
+    auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("context {} started sending buffers from pipeline at {}", context.getId(), startTime);
+    for (auto& buffer : dataToMigrate) {
+        pipelineContext->migrateBuffer(buffer, context);
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_ERROR("context {} finished sending buffers from pipeline at {}", context.getId(), endTime);
 }
 
 void ExecutablePipeline::propagateReconfiguration(ReconfigurationMessage& task) {

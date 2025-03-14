@@ -91,6 +91,15 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
                 break;
             }
+            case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
+                if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
+                    && sharedQueryState != QueryState::MIGRATING) {
+                    sharedQueryState = QueryState::RUNNING;
+                    }
+                workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext);
+                asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
+                break;
+            }
             case QueryState::MARKED_FOR_REDEPLOYMENT: {
                 if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED) {
                     sharedQueryState = QueryState::MIGRATING;
