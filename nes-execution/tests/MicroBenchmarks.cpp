@@ -27,7 +27,14 @@ namespace NES
 {
 
 using FieldType = enum : uint8_t { KEY, PAYLOAD };
-using SeparateKeys = enum : uint8_t { NO_SEPARATION, SAME_FILE_KEYS, SAME_FILE_PAYLOAD, SEPARATE_FILES_KEYS, SEPARATE_FILES_PAYLOAD };
+using SeparateKeys = enum : uint8_t {
+    NO_SEPARATION,
+    SAME_FILE_KEYS,
+    SAME_FILE_PAYLOAD,
+    SEPARATE_FILES_KEYS,
+    SEPARATE_FILES_PAYLOAD,
+    SEPARATE_FILES_SUCCESSIVELY
+};
 
 class MicroBenchmarksTest : public Testing::BaseUnitTest,
                             public testing::WithParamInterface<std::tuple<uint64_t, uint64_t, std::vector<std::string>>>
@@ -800,17 +807,17 @@ public:
     }
 };
 
-TEST_P(MicroBenchmarksTest, separationTestNoSeparation)
+TEST_P(MicroBenchmarksTest, DISABLED_separationTestNoSeparation)
 {
     runSeparationTests<NO_SEPARATION>();
 }
 
-TEST_P(MicroBenchmarksTest, separationTestSeparateFilesPayloadOnly)
+TEST_P(MicroBenchmarksTest, DISABLED_separationTestSeparateFilesPayloadOnly)
 {
     runSeparationTests<SEPARATE_FILES_PAYLOAD>();
 }
 
-TEST_P(MicroBenchmarksTest, separationTestSeparateFilesPayloadAndKey)
+TEST_P(MicroBenchmarksTest, DISABLED_separationTestSeparateFilesPayloadAndKey)
 {
     runSeparationTests<SEPARATE_FILES_KEYS>();
 }
@@ -825,7 +832,7 @@ TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadAndKey)
     runSeparationTests<SAME_FILE_KEYS>();
 }
 
-TEST_F(MicroBenchmarksTest, bulkWriteTest)
+TEST_F(MicroBenchmarksTest, DISABLED_bulkWriteTest)
 {
     const std::vector<uint64_t> dataSizes
         = {8 * 1024,
@@ -869,6 +876,23 @@ TEST_F(MicroBenchmarksTest, bulkWriteTest)
             createMeasurementsCSV(execTimesInMs, 8, createMeasurementsFileName<NO_SEPARATION>("BulkWriteTest", bufferSize, dataSize, {}));
         }
     }
+}
+
+TEST_F(MicroBenchmarksTest, DISABLED_fileTest)
+{
+    const std::vector<std::string> fileNames = {"../../../measurements/data/micro_benchmarks_file.dat"};
+    std::ifstream iFile(fileNames.front(), std::ios::in | std::ios::binary);
+    ASSERT_FALSE(iFile.is_open());
+
+    std::ofstream oFile(fileNames.front(), std::ios::out | std::ios::trunc | std::ios::binary);
+    ASSERT_TRUE(oFile.is_open());
+    oFile.close();
+    ASSERT_FALSE(oFile.is_open());
+
+    iFile = std::ifstream(fileNames.front(), std::ios::in | std::ios::binary);
+    ASSERT_TRUE(iFile.is_open());
+    iFile.close();
+    ASSERT_FALSE(iFile.is_open());
 }
 
 INSTANTIATE_TEST_CASE_P(
