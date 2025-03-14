@@ -15,8 +15,10 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 #include <ostream>
 #include <unordered_map>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -29,10 +31,10 @@ namespace NES::Runtime
 
 struct QueryRunSummary
 {
-    std::optional<std::chrono::system_clock::time_point> start{};
-    std::optional<std::chrono::system_clock::time_point> running{};
-    std::optional<std::chrono::system_clock::time_point> stop{};
-    std::optional<Exception> error{};
+    std::optional<std::chrono::system_clock::time_point> start;
+    std::optional<std::chrono::system_clock::time_point> running;
+    std::optional<std::chrono::system_clock::time_point> stop;
+    std::optional<Exception> error;
 };
 
 /// Summary structure of the query log for a query

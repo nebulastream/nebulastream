@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <cerrno>
+#include <chrono>
 #include <cstddef>
 #include <cstdlib>
 #include <filesystem>
@@ -30,9 +31,10 @@
 #include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
-
+#include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
@@ -443,7 +445,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         const auto summary = waitForQueryTermination(worker, queryId);
         const auto duration = summary.runs.back().stop.value() - summary.runs.back().start.value();
 
-        if (summary.runs.back().error)
+        if (summary.runs.back().error.has_value())
         {
             fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
             continue;
