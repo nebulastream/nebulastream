@@ -84,6 +84,7 @@ std::string formatLogMessage(const Exception& e)
         auto exceptionLocation = e.where().value();
         if constexpr (logWithStacktrace)
         {
+            constexpr auto ANSI_COLOR_RESET = "\u001B[0m";
             return fmt::format(
                 "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}\n",
                 e.code(),
@@ -92,7 +93,7 @@ std::string formatLogMessage(const Exception& e)
                 exceptionLocation.line,
                 exceptionLocation.column,
                 exceptionLocation.symbol,
-                e.trace().to_string());
+                ANSI_COLOR_RESET + e.trace().to_string(true));
         }
         return fmt::format(
             "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n",
