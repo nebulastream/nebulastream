@@ -137,6 +137,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
     {
         auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
+        INVARIANT(windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
         windowState = WindowInfoState::WINDOW_FILLING;
         windowSlices.emplace_back(newSlice);
     }
@@ -145,7 +146,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark)
+DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
@@ -153,14 +154,14 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
     for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
     {
-        if (windowInfo.windowEnd > globalWatermark)
+        if (windowInfo.windowEnd >= globalWatermark)
         {
             /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
             break;
         }
         if (windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            /// This window can not be triggered yet or has already been triggered
+            /// This window has already been triggered
             continue;
         }
 
@@ -175,7 +176,7 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
@@ -257,14 +258,14 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
 
     NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
-    /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
+    /// 1. We iterate over all windows and erase them if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
     for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
     {
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
-        if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            windowsWriteLocked->erase(windowsLockedIt++);
+            windowsLockedIt = windowsWriteLocked->erase(windowsLockedIt);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
         {
@@ -281,7 +282,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
-        if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
+        if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
         {
             NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
             slicesWriteLocked->erase(slicesLockedIt++);
