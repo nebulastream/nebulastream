@@ -67,6 +67,7 @@ public:
     bool isSetOperation = false;
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
+    bool isSubQuery = false;
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;

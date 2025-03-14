@@ -380,6 +380,16 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helper.windowAggs.pop_back();
             aggFunc = aggFunc->as(Attribute(context->getText()));
             helper.windowAggs.push_back(aggFunc);
+
+            /// Only project if we are not in a subquery. Because we might need the fields the projection might remove for eg selections.
+            /// In the main query, the projection is done last before the source anyway, so no important fields can be removed.
+            if (not helper.isSubQuery)
+            {
+                const std::shared_ptr<NodeFunctionFieldAccess> onField = Util::as<NodeFunctionFieldAccess>(aggFunc->on());
+                auto projectedAttribute = Attribute(context->getText());
+                helper.functionBuilder.push_back(projectedAttribute);
+            }
+
         }
         else
         {
@@ -413,6 +423,10 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
     }
 
     AntlrSQLHelper helper;
+    if (not helpers.empty())
+    {
+        helper.isSubQuery = true;
+    }
 
     /// Get Index of  Parent Rule to check type of parent rule in conditions
     const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
@@ -465,7 +479,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     /// We handle projections AFTER map functions, because:
     /// SELECT (id * 3) as new_id FROM ...
     ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
-    if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
+    if (!helper.getProjectionFields().empty())
     {
         queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
     }
