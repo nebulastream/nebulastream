@@ -25,7 +25,7 @@ export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-18 && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
 ```
 Since we generate some header files in the build process, clang-tidy might complain about missing header files.
 In this case, you have to build `NebulaStream` before running the clang-tidy check to create the missing header files.
@@ -36,7 +36,7 @@ export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-18 && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
     cmake --build build -j -- -k 0 && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
 ```
 
 # Fixing clang-tidy warnings compared to a commit hash
