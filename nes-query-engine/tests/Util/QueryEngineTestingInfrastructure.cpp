@@ -88,20 +88,21 @@ std::ostream& TestPipeline::toString(std::ostream& os) const
 testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers)
 {
     auto buffers = receivedBuffers.lock();
-    if (buffers->size() >= numberOfExpectedBuffers)
+    if (buffers->size() == numberOfExpectedBuffers)
     {
         return testing::AssertionSuccess();
     }
 
     auto check = receivedBufferTrigger.wait_for(
-        buffers.as_lock(), DEFAULT_AWAIT_TIMEOUT, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
+        buffers.as_lock(), DEFAULT_AWAIT_TIMEOUT, [&]() { return buffers->size() == numberOfExpectedBuffers; });
 
     if (check)
     {
         return testing::AssertionSuccess();
     }
 
-    return testing::AssertionFailure() << "The expected number of tuple buffers were not received after 100ms";
+    return testing::AssertionFailure() << "The expected number of tuple buffers were not received after " << DEFAULT_AWAIT_TIMEOUT.count() << "ms. "
+                                       << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
 }
 
 void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
