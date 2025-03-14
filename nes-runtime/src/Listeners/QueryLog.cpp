@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
