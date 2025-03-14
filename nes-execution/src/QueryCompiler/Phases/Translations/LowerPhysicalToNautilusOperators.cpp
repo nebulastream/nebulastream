@@ -257,6 +257,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
         auto memoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             queryCompilerConfig.pageSize.getValue(), buildOperator->getInputSchema());
+        memoryProvider->getMemoryLayout()->setKeyFieldNames(buildOperator->getJoinFieldNames());
 
         auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
 
@@ -283,10 +284,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
         auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             queryCompilerConfig.pageSize.getValue(), probeOperator->getLeftInputSchema());
-        leftMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameLeft()});
+        leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(probeOperator->getJoinFieldNameLeft());
         auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             queryCompilerConfig.pageSize.getValue(), probeOperator->getRightInputSchema());
-        rightMemoryProvider->getMemoryLayout()->setKeyFieldNames({probeOperator->getJoinFieldNameRight()});
+        rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(probeOperator->getJoinFieldNameRight());
 
         std::shared_ptr<Runtime::Execution::Operators::Operator> joinProbeNautilus;
         switch (probeOperator->getJoinStrategy())

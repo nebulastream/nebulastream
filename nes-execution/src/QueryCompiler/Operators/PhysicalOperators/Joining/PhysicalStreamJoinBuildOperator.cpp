@@ -32,6 +32,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::shared_ptr<Schema>& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
+    const std::vector<std::string>& joinFieldNames,
     TimestampField timeStampField,
     const JoinBuildSideType buildSide,
     const OperatorId id)
@@ -39,6 +40,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     , PhysicalUnaryOperator(id, inputSchema, outputSchema)
     , streamJoinOperatorHandler(operatorHandler)
     , joinStrategy(joinStrategy)
+    , joinFieldNames(joinFieldNames)
     , timeStampField(std::move(timeStampField))
     , buildSide(buildSide)
 {
@@ -47,7 +49,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
 std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::copy()
 {
     auto result = std::make_shared<PhysicalStreamJoinBuildOperator>(
-        inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, timeStampField, buildSide, id);
+        inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, joinFieldNames, timeStampField, buildSide, id);
     result->addAllProperties(properties);
     return result;
 }
@@ -61,6 +63,11 @@ PhysicalStreamJoinBuildOperator::getJoinOperatorHandler() const
 Configurations::StreamJoinStrategy PhysicalStreamJoinBuildOperator::getJoinStrategy() const
 {
     return joinStrategy;
+}
+
+std::vector<std::string> PhysicalStreamJoinBuildOperator::getJoinFieldNames() const
+{
+    return joinFieldNames;
 }
 
 const TimestampField& PhysicalStreamJoinBuildOperator::getTimeStampField() const
