@@ -71,17 +71,17 @@ public:
 
 private:
     std::tuple<Interface::PagedVector*, Interface::PagedVector*>
-    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, WorkerThreadId threadIdKeys) const;
 
     static void writePayloadOnlyToFile(
-        const std::vector<Memory::TupleBuffer>& pages,
+        Interface::PagedVector* pagedVector,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
         Interface::PagedVector* pagedVectorKeys,
         FileWriter& fileWriter);
 
     static void writePayloadAndKeysToSeparateFiles(
-        const std::vector<Memory::TupleBuffer>& pages,
+        Interface::PagedVector* pagedVector,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Interface::PagedVector* pagedVectorKeys,
         FileWriter& fileWriter);

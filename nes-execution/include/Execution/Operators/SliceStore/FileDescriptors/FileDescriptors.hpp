@@ -15,6 +15,10 @@
 #pragma once
 
 #include <fstream>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES::Runtime::Execution
+{
 
 enum FileLayout : uint8_t
 {
@@ -46,10 +50,12 @@ public:
     std::size_t read(void* dest, std::size_t size);
     std::size_t readKey(void* dest, std::size_t size);
 
-    std::string& getFilePath();
+    WorkerThreadId getThreadIdFromFilePath() const;
 
 private:
     std::ifstream file;
     std::ifstream keyFile;
     std::string filePath;
 };
+
+}

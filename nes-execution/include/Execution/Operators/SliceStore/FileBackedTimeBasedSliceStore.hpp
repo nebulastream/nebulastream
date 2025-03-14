@@ -44,7 +44,7 @@ struct SliceStoreMetaData
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    static constexpr auto USE_FILE_LAYOUT = NO_SEPARATION;
+    static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
 
     FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
     FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);

@@ -145,6 +145,31 @@ std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const 
 {
     std::lock_guard lock(mutex_);
 
+    /*
+    // Extract threadId and sort fileWriters by threadId
+    std::map<int, std::string> sortedFileWriters;
+    for (const auto& [writerFilePath, fileWriter] : fileWriters)
+    {
+        if (writerFilePath.find(filePath) != std::string::npos)
+        {
+            // Extract threadId from writerFilePath and add filePath to sorted map
+            if (const size_t lastUnderscorePos = writerFilePath.find_last_of('_'); lastUnderscorePos != std::string::npos)
+            {
+                int threadId = std::stoi(writerFilePath.substr(lastUnderscorePos + 1));
+                sortedFileWriters[threadId] = writerFilePath;
+            }
+        }
+    }
+
+    /// Erase matching fileWriter as the file content must not be amended after being read. This also enforces reading file content only once
+    if (!sortedFileWriters.empty())
+    {
+        const std::string& lowestThreadIdFilePath = sortedFileWriters.begin()->second;
+        fileWriters.erase(lowestThreadIdFilePath);
+        return std::make_shared<FileReader>(lowestThreadIdFilePath);
+    }
+    */
+
     /// Erase matching fileWriter as the file content must not be amended after being read. This also enforces reading file content only once
     for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
@@ -155,6 +180,7 @@ std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const 
             return std::make_shared<FileReader>(writerFilePath);
         }
     }
+
     return nullptr;
 }
 

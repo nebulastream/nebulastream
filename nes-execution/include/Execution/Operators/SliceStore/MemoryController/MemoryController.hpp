@@ -52,4 +52,5 @@ private:
     // MemoryProvider (für RAM) und FileComponent (für SSD)
     // MemoryLayout (evtl. Anpassen?)
 };
+
 }

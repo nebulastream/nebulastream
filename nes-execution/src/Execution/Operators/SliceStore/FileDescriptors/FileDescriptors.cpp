@@ -14,6 +14,9 @@
 
 #include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 
+namespace NES::Runtime::Execution
+{
+
 FileWriter::FileWriter(const std::string& filePath)
     : file(filePath + ".dat", std::ios::out | std::ios::trunc | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::out | std::ios::trunc | std::ios::binary)
@@ -61,17 +64,17 @@ FileReader::FileReader(const std::string& filePath)
 
 FileReader::~FileReader()
 {
+    // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
     if (file.is_open())
     {
         file.close();
+        //std::filesystem::remove(filePath + ".dat");
     }
     if (keyFile.is_open())
     {
         keyFile.close();
+        //std::filesystem::remove(filePath + "_key.dat");
     }
-    // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
-    //std::filesystem::remove(filePath + ".dat");
-    //std::filesystem::remove(filePath + "_key.dat");
 }
 
 std::size_t FileReader::read(void* dest, const std::size_t size)
@@ -94,7 +97,15 @@ std::size_t FileReader::readKey(void* dest, const std::size_t size)
     return keyFile.gcount();
 }
 
-std::string& FileReader::getFilePath()
+WorkerThreadId FileReader::getThreadIdFromFilePath() const
 {
-    return filePath;
+    const size_t lastUnderscorePos = filePath.find_last_of('_');
+    if (lastUnderscorePos == std::string::npos)
+    {
+        throw std::runtime_error("Invalid file path format");
+    }
+    const int threadId = std::stoi(filePath.substr(lastUnderscorePos + 1));
+    return WorkerThreadId(threadId);
+}
+
 }
