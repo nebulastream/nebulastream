@@ -14,13 +14,13 @@
 
 #include <memory>
 #include <utility>
-#include <Operators/Windows/Aggregations/SumAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,35 +28,45 @@
 namespace NES
 {
 
-SumAggregationFunction::SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field))
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field))
 {
-    this->aggregationType = Type::Sum;
+    this->aggregationType = Type::Min;
 }
-SumAggregationFunction::SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
-    : WindowAggregationFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
+    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
 {
-    this->aggregationType = Type::Sum;
-}
-
-std::unique_ptr<WindowAggregationFunction>
-SumAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
-{
-    return std::make_unique<SumAggregationFunction>(std::move(onField), std::move(asField));
+    this->aggregationType = Type::Min;
 }
 
-std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction>
+MinAggregationLogicalFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_unique<SumAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+    return std::make_unique<MinAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-void SumAggregationFunction::inferStamp(const Schema& schema)
+std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
+{
+    if (auto function = dynamic_cast<const FieldAccessLogicalFunction*>(onField.get()))
+    {
+        return std::make_unique<MinAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+    }
+    NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
+    return nullptr;
+}
+
+std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
+{
+    return std::make_unique<MinAggregationLogicalFunction>(onField->clone(), asField->clone());
+}
+
+void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!dynamic_cast<Numeric*>(&onField->getStamp()))
+    if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
     {
-        NES_FATAL_ERROR("SumAggregationFunction: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("MinAggregationLogicalFunction: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field
@@ -77,12 +87,7 @@ void SumAggregationFunction::inferStamp(const Schema& schema)
     asField->setStamp(getFinalAggregateStamp().clone());
 }
 
-std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::clone()
-{
-    return std::make_unique<SumAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(onField->clone()), Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(asField->clone()));
-}
-
-NES::SerializableAggregationFunction SumAggregationFunction::serialize() const
+NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);

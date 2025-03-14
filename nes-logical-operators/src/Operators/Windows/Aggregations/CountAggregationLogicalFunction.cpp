@@ -14,38 +14,38 @@
 
 #include <memory>
 #include <utility>
-#include <Operators/Windows/Aggregations/CountAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
-#include <ErrorHandling.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <SerializableFunction.pb.h>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
+#include <SerializableFunction.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
-CountAggregationFunction::CountAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field))
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field))
 {
     this->aggregationType = Type::Count;
 }
-CountAggregationFunction::CountAggregationFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field), std::move(asField))
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
+    : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Count;
 }
 
-std::unique_ptr<WindowAggregationFunction>
-CountAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
+std::unique_ptr<WindowAggregationLogicalFunction>
+CountAggregationLogicalFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_unique<CountAggregationFunction>(std::move(onField), std::move(asField));
+    return std::make_unique<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> CountAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
     if (!dynamic_cast<FieldAccessLogicalFunction*>(onField.get()))
     {
@@ -54,10 +54,10 @@ std::unique_ptr<WindowAggregationFunction> CountAggregationFunction::create(std:
     std::unique_ptr<FieldAccessLogicalFunction> fieldAccess(
         static_cast<FieldAccessLogicalFunction*>(onField.release())
     );
-    return std::make_unique<CountAggregationFunction>(std::move(fieldAccess));
+    return std::make_unique<CountAggregationLogicalFunction>(std::move(fieldAccess));
 }
 
-void CountAggregationFunction::inferStamp(const Schema& schema)
+void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
@@ -78,12 +78,12 @@ void CountAggregationFunction::inferStamp(const Schema& schema)
     asField->setStamp(onField->getStamp().clone());
 }
 
-std::unique_ptr<WindowAggregationFunction> CountAggregationFunction::clone()
+std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
 {
-    return std::make_unique<CountAggregationFunction>(onField->clone(), asField->clone());
+    return std::make_unique<CountAggregationLogicalFunction>(onField->clone(), asField->clone());
 }
 
-NES::SerializableAggregationFunction CountAggregationFunction::serialize() const
+NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);

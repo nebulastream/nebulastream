@@ -14,10 +14,9 @@
 
 #include <Operators/Windows/WindowOperator.hpp>
 
-#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/OriginIdAssignmentOperator.hpp>
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 
 namespace NES

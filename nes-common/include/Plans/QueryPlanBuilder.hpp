@@ -19,10 +19,10 @@
 #include <string>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
 
 namespace NES
 {
@@ -67,7 +67,7 @@ public:
     static QueryPlan addWindowAggregation(
         QueryPlan queryPlan,
         std::unique_ptr<Windowing::WindowType> windowType,
-        std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggs,
+        std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs,
         std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
 
     /// @brief UnionOperator to combine two query plans

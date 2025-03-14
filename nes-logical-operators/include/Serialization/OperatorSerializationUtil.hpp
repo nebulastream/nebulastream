@@ -16,17 +16,17 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Operators/Windows/WindowOperator.hpp>
-#include <SerializableOperator.pb.h>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -58,7 +58,7 @@ public:
     static Sinks::SinkDescriptor
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
-    static std::unique_ptr<WindowAggregationFunction>
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     deserializeWindowAggregationFunction(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
 
 };

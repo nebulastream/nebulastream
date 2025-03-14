@@ -16,28 +16,28 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <API/AttributeField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <SerializableOperator.pb.h>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
 #include <WindowTypes/Types/ThresholdWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include <SerializableOperator.pb.h>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation,
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::unique_ptr<Windowing::WindowType> windowType)
     : Operator()
     , WindowOperator()
@@ -190,12 +190,12 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-const std::vector<std::unique_ptr<WindowAggregationFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
+const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
 }
 
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationFunction>> wa)
+void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> wa)
 {
     windowAggregation = std::move(wa);
 }
@@ -236,7 +236,7 @@ std::unique_ptr<Operator> WindowedAggregationLogicalOperator::clone() const {
         auto baseClone = key->clone();
         clonedOnKey.push_back(std::unique_ptr<FieldAccessLogicalFunction>(static_cast<FieldAccessLogicalFunction*>(baseClone.release())));
     }
-    std::vector<std::unique_ptr<WindowAggregationFunction>> clonedWindowAgg;
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> clonedWindowAgg;
     for (const auto& agg : windowAggregation) {
         clonedWindowAgg.push_back(agg->clone());
     }

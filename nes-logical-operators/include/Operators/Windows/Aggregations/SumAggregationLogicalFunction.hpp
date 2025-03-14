@@ -18,27 +18,28 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES
 {
 
-class AvgAggregationFunction final : public WindowAggregationFunction
+class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationFunction>
+    SumAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    explicit SumAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    virtual ~SumAggregationLogicalFunction() = default;
+
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    explicit AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationFunction> clone() override;
-    virtual ~AvgAggregationFunction() = default;
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    static constexpr std::string_view NAME = "Avg";
+    static constexpr std::string_view NAME = "Sum";
 };
 }

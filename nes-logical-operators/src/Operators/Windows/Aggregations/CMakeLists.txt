@@ -11,12 +11,12 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        WindowAggregationFunction.cpp
+        WindowAggregationLogicalFunction.cpp
 )
 
-add_plugin(Avg WindowAggregationFunction nes-logical-operators AvgAggregationFunction.cpp)
-add_plugin(Count WindowAggregationFunction nes-logical-operators CountAggregationFunction.cpp)
-add_plugin(Max WindowAggregationFunction nes-logical-operators MaxAggregationFunction.cpp)
-add_plugin(Median WindowAggregationFunction nes-logical-operators MedianAggregationFunction.cpp)
-add_plugin(Min WindowAggregationFunction nes-logical-operators MinAggregationFunction.cpp)
-add_plugin(Sum WindowAggregationFunction nes-logical-operators SumAggregationFunction.cpp)
+add_plugin(Avg WindowAggregationLogicalFunction nes-logical-operators AvgAggregationLogicalFunction.cpp)
+add_plugin(Count WindowAggregationLogicalFunction nes-logical-operators CountAggregationLogicalFunction.cpp)
+add_plugin(Max WindowAggregationLogicalFunction nes-logical-operators MaxAggregationLogicalFunction.cpp)
+add_plugin(Median WindowAggregationLogicalFunction nes-logical-operators MedianAggregationLogicalFunction.cpp)
+add_plugin(Min WindowAggregationLogicalFunction nes-logical-operators MinAggregationLogicalFunction.cpp)
+add_plugin(Sum WindowAggregationLogicalFunction nes-logical-operators SumAggregationLogicalFunction.cpp)

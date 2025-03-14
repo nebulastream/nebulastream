@@ -15,33 +15,33 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <magic_enum.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 
 namespace NES
 {
 
-WindowAggregationFunction::WindowAggregationFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<FieldAccessLogicalFunction> onField)
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<FieldAccessLogicalFunction> onField)
     :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField->clone()), asField(std::move(onField))
 {
 }
 
-WindowAggregationFunction::WindowAggregationFunction(
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField)
     : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(std::move(onField)), asField(std::move(asField))
 {
 }
 
-std::unique_ptr<WindowAggregationFunction> WindowAggregationFunction::as(std::unique_ptr<LogicalFunction> asField)
+std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(std::unique_ptr<LogicalFunction> asField)
 {
     this->asField = Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(asField));
-    return std::unique_ptr<WindowAggregationFunction>(this);
+    return std::unique_ptr<WindowAggregationLogicalFunction>(this);
 }
 
-LogicalFunction& WindowAggregationFunction::as() const
+LogicalFunction& WindowAggregationLogicalFunction::as() const
 {
     if (asField == nullptr)
     {
@@ -50,7 +50,7 @@ LogicalFunction& WindowAggregationFunction::as() const
     return *asField;
 }
 
-std::string WindowAggregationFunction::toString() const
+std::string WindowAggregationLogicalFunction::toString() const
 {
     std::stringstream ss;
     ss << "WindowAggregation: ";
@@ -61,40 +61,40 @@ std::string WindowAggregationFunction::toString() const
     return ss.str();
 }
 
-WindowAggregationFunction::Type WindowAggregationFunction::getType() const
+WindowAggregationLogicalFunction::Type WindowAggregationLogicalFunction::getType() const
 {
     return aggregationType;
 }
 
-std::string WindowAggregationFunction::getTypeAsString() const
+std::string WindowAggregationLogicalFunction::getTypeAsString() const
 {
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-LogicalFunction& WindowAggregationFunction::on() const
+LogicalFunction& WindowAggregationLogicalFunction::on() const
 {
     return *onField;
 }
 
-DataType& WindowAggregationFunction::getInputStamp() const
+DataType& WindowAggregationLogicalFunction::getInputStamp() const
 {
     return *inputStamp;
 }
 
-DataType& WindowAggregationFunction::getPartialAggregateStamp() const
+DataType& WindowAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return *partialAggregateStamp;
 }
 
-DataType& WindowAggregationFunction::getFinalAggregateStamp() const
+DataType& WindowAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return *finalAggregateStamp;
 }
 
-bool WindowAggregationFunction::operator==(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const
+bool WindowAggregationLogicalFunction::operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const
 {
-    return this->getType() == otherWindowAggregationFunction->getType() && this->onField == otherWindowAggregationFunction->onField
-        && this->asField == otherWindowAggregationFunction->asField;
+    return this->getType() == otherWindowAggregationLogicalFunction->getType() && this->onField == otherWindowAggregationLogicalFunction->onField
+        && this->asField == otherWindowAggregationLogicalFunction->asField;
 }
 
 }

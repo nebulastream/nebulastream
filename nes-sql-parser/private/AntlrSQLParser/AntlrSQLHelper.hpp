@@ -21,7 +21,7 @@
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -67,7 +67,7 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::unique_ptr<Windowing::WindowType> windowType;
-    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggs;
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs;
     std::vector<std::unique_ptr<LogicalFunction>> projections;
     std::vector<std::unique_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
     std::vector<std::unique_ptr<LogicalFunction>> functionBuilder;
