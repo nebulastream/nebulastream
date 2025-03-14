@@ -18,6 +18,8 @@
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <signal.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory
 {
@@ -131,49 +133,83 @@ public:
     ~RefCountedBCB() noexcept;
 };
 
+template <typename Lock>
+concept SharedBCBLock = requires(Lock lock) {
+    { lock.isOwner() } noexcept -> std::same_as<bool>;
+} && std::is_move_constructible_v<Lock> && std::is_move_assignable_v<Lock>;
+
+template <typename Lock>
+concept UniqueBCBLock = std::is_same_v<typename Lock::isUnique, std::true_type> && SharedBCBLock<Lock>;
+
+
 class RepinBCBLock
 {
-    std::unique_lock<std::shared_mutex> lock;
+    // std::unique_lock<std::shared_mutex> lock;
     BufferControlBlock* controlBlock;
 
 public:
-    explicit RepinBCBLock(std::unique_lock<std::shared_mutex>&& lock, BufferControlBlock* control_block)
-        : lock(std::move(lock)), controlBlock(control_block)
-    {
-    }
+    using isUnique = std::true_type;
+    explicit RepinBCBLock(BufferControlBlock* controlBlock) noexcept;
     RepinBCBLock(const RepinBCBLock& other) = delete;
-    RepinBCBLock(RepinBCBLock&& other) noexcept = default;
+    RepinBCBLock(RepinBCBLock&& other) noexcept;
     RepinBCBLock& operator=(const RepinBCBLock& other) = delete;
-    RepinBCBLock& operator=(RepinBCBLock&& other) noexcept = default;
+    RepinBCBLock& operator=(RepinBCBLock&& other) noexcept;
     ~RepinBCBLock() noexcept;
 
+    bool isOwner() const noexcept;
 
-    operator std::unique_lock<std::shared_mutex>&()
-    {
-        return lock;
-    }
+
+    // operator std::unique_lock<std::shared_mutex>&()
+    // {
+    //     return lock;
+    // }
 };
-class SpillBCBLock
+static_assert(UniqueBCBLock<RepinBCBLock>);
+
+class UniqueMutexBCBLock
 {
     std::unique_lock<std::shared_mutex> lock;
+    const BufferControlBlock* controlBlock;
 
 public:
-    explicit SpillBCBLock(std::unique_lock<std::shared_mutex>&& lock, BufferControlBlock*)
-        : lock(std::move(lock))
+    using isUnique = std::true_type;
+    explicit UniqueMutexBCBLock(std::unique_lock<std::shared_mutex>&& lock, const BufferControlBlock* controlBlock)
+        : lock(std::move(lock)), controlBlock(controlBlock)
     {
     }
-    SpillBCBLock(const SpillBCBLock& other) = delete;
-    SpillBCBLock(SpillBCBLock&& other) noexcept = default;
-    SpillBCBLock& operator=(const SpillBCBLock& other) = delete;
-    SpillBCBLock& operator=(SpillBCBLock&& other) noexcept = default;
-    ~SpillBCBLock() noexcept = default;
+    UniqueMutexBCBLock(const UniqueMutexBCBLock& other) = delete;
+    UniqueMutexBCBLock(UniqueMutexBCBLock&& other) noexcept = default;
+    UniqueMutexBCBLock& operator=(const UniqueMutexBCBLock& other) = delete;
+    UniqueMutexBCBLock& operator=(UniqueMutexBCBLock&& other) noexcept = default;
+    ~UniqueMutexBCBLock() noexcept = default;
 
 
-    operator std::unique_lock<std::shared_mutex>&()
-    {
-        return lock;
-    }
+    [[nodiscard]] bool isOwner() const noexcept;
+    operator std::unique_lock<std::shared_mutex>&() { return lock; }
 };
+
+class SharedMutexBCBLock
+{
+    std::shared_lock<std::shared_mutex> lock;
+    const BufferControlBlock* controlBlock;
+
+public:
+    explicit SharedMutexBCBLock(std::shared_lock<std::shared_mutex>&& lock, const BufferControlBlock* controlBlock)
+        : lock(std::move(lock)), controlBlock(controlBlock)
+    {
+    }
+    SharedMutexBCBLock(const SharedMutexBCBLock& other) = delete;
+    SharedMutexBCBLock(SharedMutexBCBLock&& other) noexcept = default;
+    SharedMutexBCBLock& operator=(const SharedMutexBCBLock& other) = delete;
+    SharedMutexBCBLock& operator=(SharedMutexBCBLock&& other) noexcept = default;
+    ~SharedMutexBCBLock() noexcept = default;
+
+
+    [[nodiscard]] bool isOwner() const noexcept;
+    operator std::shared_lock<std::shared_mutex>&() { return lock; }
+};
+
+static_assert(UniqueBCBLock<UniqueMutexBCBLock>);
 }
 
 constexpr ChildKey::operator detail::ChildOrMainDataKey() const

@@ -111,12 +111,46 @@ RefCountedBCB<isPinned>::~RefCountedBCB() noexcept
     }
 }
 
+RepinBCBLock::RepinBCBLock(BufferControlBlock* controlBlock) noexcept : controlBlock(controlBlock)
+{
+    INVARIANT(controlBlock->isRepinning.test(), "Created repin lock on control block that is not getting repinned");
+}
+
 template class RefCountedBCB<true>;
 template class RefCountedBCB<false>;
+
+RepinBCBLock::RepinBCBLock(RepinBCBLock&& other) noexcept
+{
+    this->controlBlock = other.controlBlock;
+    other.controlBlock = nullptr;
+}
+RepinBCBLock& RepinBCBLock::operator=(RepinBCBLock&& other) noexcept
+{
+    this->controlBlock = other.controlBlock;
+    other.controlBlock = nullptr;
+    return *this;
+}
 RepinBCBLock::~RepinBCBLock() noexcept
 {
-    INVARIANT(lock.owns_lock(), "Unlocking repin lock on another thread");
-    controlBlock->markRepinningDone();
+    // INVARIANT(lock.owns_lock(), "Unlocking repin lock on another thread");
+    if (controlBlock)
+    {
+        controlBlock->markRepinningDone();
+    }
 }
+
+bool RepinBCBLock::isOwner() const noexcept
+{
+    return controlBlock->isRepinning.test();
+}
+bool UniqueMutexBCBLock::isOwner() const noexcept
+{
+    return lock.owns_lock() && controlBlock->segmentMutex.native_handle() == lock.mutex()->native_handle();
+}
+bool SharedMutexBCBLock::isOwner() const noexcept
+{
+    return lock.owns_lock() && controlBlock->segmentMutex.native_handle() == lock.mutex()->native_handle();
+}
+
 }
 }

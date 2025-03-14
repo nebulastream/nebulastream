@@ -18,7 +18,6 @@
 #include <cstring>
 #include <deque>
 #include <memory>
-#include <mutex>
 #include <memory_resource>
 #include <mutex>
 #include <ranges>
@@ -226,7 +225,6 @@ detail::File BufferManager::prepareFile(const std::filesystem::path& dirPath, co
 }
 
 
-
 void BufferManager::destroy()
 {
     bool expected = false;
@@ -403,123 +401,132 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
     {
         //Locking and unlocking the BCB must be done from the same thread.
         //We assume that we are here in the thread that started the coroutine and will enforce later that the lock is given up on the same thread
-        detail::RepinBCBLock lock = floating.controlBlock->startRepinning();
-        //Ensure that isRepinning is set to true, so that
-        std::vector<detail::ChildOrMainDataKey> toRepin{};
-        //toRepin is for most parts enough, but for the deletion we need the old segments as well
-        std::vector<detail::DataSegment<detail::OnDiskLocation>> segmentToUnspill{};
-        uint32_t numChildren = floating.controlBlock->getNumberOfChildrenBuffers(lock);
-        toRepin.reserve(numChildren + 1);
-        segmentToUnspill.reserve(numChildren + 1);
-
-        //Find out which segments need to be unspilled
-        for (unsigned int i = 0; i < floating.controlBlock->children.size(); ++i)
+        if (auto lock = floating.controlBlock->startRepinning())
         {
-            if (auto childSegment = floating.controlBlock->getChild(i, lock); childSegment->isSpilled())
+            //Ensure that isRepinning is set to true, so that
+            std::vector<detail::ChildOrMainDataKey> toRepin{};
+            //toRepin is for most parts enough, but for the deletion we need the old segments as well
+            std::vector<detail::DataSegment<detail::OnDiskLocation>> segmentToUnspill{};
+            uint32_t numChildren = floating.controlBlock->getNumberOfChildrenBuffers();
+            toRepin.reserve(numChildren + 1);
+            segmentToUnspill.reserve(numChildren + 1);
+
+            //Find out which segments need to be unspilled
+            for (unsigned int i = 0; i < floating.controlBlock->children.size(); ++i)
             {
-                toRepin.emplace_back(ChildKey{i});
-                segmentToUnspill.push_back(*childSegment->get<detail::OnDiskLocation>());
-            }
-        }
-        if (auto mainSegment = floating.controlBlock->getData().get<detail::OnDiskLocation>())
-        {
-            toRepin.emplace_back(detail::ChildOrMainDataKey::MAIN());
-            segmentToUnspill.push_back(*mainSegment);
-        }
-
-        //get in memory segments for segments that need to be unspilled
-        auto memorySegmentFuture = getInMemorySegment(toRepin.size());
-        auto awaitMemorySegments
-            = detail::AwaitExternalProgress<Promise, decltype(memorySegmentFuture.waitUntilDone()), GetInMemorySegmentFuture>::create(
-                std::bind(&GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
-                std::bind(&GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
-                memorySegmentFuture);
-        auto memorySegmentsOrError = co_await *awaitMemorySegments;
-        if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
-        {
-            NES_DEBUG("Failed to get memory segments for repinning with error message", ErrorCode::typeFromCode(*error).getErrorMessage());
-            auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
-            auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
-            co_await *aepSwitchBackAwaiter;
-            INVARIANT(static_cast<std::unique_lock<std::shared_mutex>&>(lock).owns_lock(), "Didn't own lock on release");
-            co_return *error;
-        }
-        auto memorySegments = std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError);
-
-        if (memorySegments.size() < toRepin.size())
-        {
-            NES_DEBUG("Didn't get enough buffer to repin buffer fully");
-            for (auto segment : memorySegments)
-            {
-                availableBuffers.write(segment);
-            }
-            auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
-            auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
-            co_await *aepSwitchBackAwaiter;
-            INVARIANT(static_cast<std::unique_lock<std::shared_mutex>&>(lock).owns_lock(), "Didn't own lock on release");
-            co_return static_cast<uint32_t>(ErrorCode::CannotSpillEnoughBuffers);
-        }
-
-        //Read data from on disk segments in to in memory segments.
-        //First initiate all reading, then await reading
-        std::vector<ReadSegmentFuture> readSegmentFutures{};
-        readSegmentFutures.reserve(toRepin.size());
-        for (unsigned long i = 0; i < toRepin.size(); ++i)
-        {
-            auto readFuture
-                = readOnDiskSegment(*floating.controlBlock->getSegment(toRepin[i], lock)->get<detail::OnDiskLocation>(), memorySegments[i]);
-            readSegmentFutures.push_back(readFuture);
-        }
-        for (unsigned long i = 0; i < toRepin.size(); ++i)
-        {
-            auto readFuture = readSegmentFutures[i];
-            auto awaitReadSegment
-                = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, detail::CoroutineError>, ReadSegmentFuture>::create(
-                    std::bind(&ReadSegmentFuture::pollOnce, readFuture), std::bind(&ReadSegmentFuture::waitOnce, readFuture), readFuture);
-
-            const auto readBytesOrError = co_await *awaitReadSegment;
-            if (const auto error = getOptional<detail::CoroutineError>(readBytesOrError))
-            {
-                for (auto segment : memorySegments)
+                if (auto childSegment = floating.controlBlock->getChild(i, *lock); childSegment->isSpilled())
                 {
-                    availableBuffers.write(segment);
+                    toRepin.emplace_back(ChildKey{i});
+                    segmentToUnspill.push_back(*childSegment->get<detail::OnDiskLocation>());
                 }
-                auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
-                auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
-                co_await *aepSwitchBackAwaiter;
+            }
+            if (auto mainSegment = floating.controlBlock->getData().get<detail::OnDiskLocation>())
+            {
+                toRepin.emplace_back(detail::ChildOrMainDataKey::MAIN());
+                segmentToUnspill.push_back(*mainSegment);
+            }
+
+            //get in memory segments for segments that need to be unspilled
+            auto memorySegmentFuture = getInMemorySegment(toRepin.size());
+            auto awaitMemorySegments
+                = detail::AwaitExternalProgress<Promise, decltype(memorySegmentFuture.waitUntilDone()), GetInMemorySegmentFuture>::create(
+                    std::bind(&GetInMemorySegmentFuture::pollOnce, memorySegmentFuture),
+                    std::bind(&GetInMemorySegmentFuture::waitOnce, memorySegmentFuture),
+                    memorySegmentFuture);
+            auto memorySegmentsOrError = co_await *awaitMemorySegments;
+            if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
+            {
+                NES_DEBUG(
+                    "Failed to get memory segments for repinning with error message", ErrorCode::typeFromCode(*error).getErrorMessage());
+                // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
+                // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
+                // co_await *aepSwitchBackAwaiter;
+                // INVARIANT(static_cast<std::unique_lock<std::shared_mutex>&>(lock).owns_lock(), "Didn't own lock on release");
                 co_return *error;
             }
-            if (auto readBytes = std::get<long>(readBytesOrError); readBytes < 0)
+            auto memorySegments = std::get<std::vector<detail::DataSegment<detail::InMemoryLocation>>>(memorySegmentsOrError);
+
+            if (memorySegments.size() < toRepin.size())
             {
+                NES_DEBUG("Didn't get enough buffer to repin buffer fully");
                 for (auto segment : memorySegments)
                 {
                     availableBuffers.write(segment);
                 }
-                NES_ERROR("Failed to read spilled buffer with error {}", std::strerror(-readBytes));
-
-                auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
-                auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
-                co_await *aepSwitchBackAwaiter;
-                co_return static_cast<uint32_t>(ErrorCode::CannotReadBufferFromDisk);
+                // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
+                // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
+                // co_await *aepSwitchBackAwaiter;
+                // INVARIANT(static_cast<std::unique_lock<std::shared_mutex>&>(lock).owns_lock(), "Didn't own lock on release");
+                co_return static_cast<uint32_t>(ErrorCode::CannotSpillEnoughBuffers);
             }
-            const auto swapped = floating.controlBlock->swapSegment(memorySegments[i], toRepin[i], lock);
-            INVARIANT(swapped, "Failed to swap back in unspilled in memory data segment");
 
-            const auto punchHoleFuture = punchHoleSegment(std::move(segmentToUnspill[i]));
-            //Directly awaiting here is fine because we never actually suspend in punchHole until we have yielded a value
-            //Still, would be good to have some mechanism here that doesn't require hard coupling of the implementation of the coroutines
-            auto submittedDeletion = co_await punchHoleFuture.awaitYield();
-            if (!submittedDeletion)
+            //Read data from on disk segments in to in memory segments.
+            //First initiate all reading, then await reading
+            std::vector<ReadSegmentFuture> readSegmentFutures{};
+            readSegmentFutures.reserve(toRepin.size());
+            for (unsigned long i = 0; i < toRepin.size(); ++i)
             {
-                NES_WARNING("Failed to submit segment deletion task, segment will only be removed from disk on system shutdown.");
+                auto readFuture = readOnDiskSegment(
+                    *floating.controlBlock->getSegment(toRepin[i], *lock)->get<detail::OnDiskLocation>(), memorySegments[i]);
+                readSegmentFutures.push_back(readFuture);
             }
-        }
-        pin = floating.controlBlock->getCounter<true>();
+            for (unsigned long i = 0; i < toRepin.size(); ++i)
+            {
+                auto readFuture = readSegmentFutures[i];
+                auto awaitReadSegment
+                    = detail::AwaitExternalProgress<Promise, std::variant<ssize_t, detail::CoroutineError>, ReadSegmentFuture>::create(
+                        std::bind(&ReadSegmentFuture::pollOnce, readFuture),
+                        std::bind(&ReadSegmentFuture::waitOnce, readFuture),
+                        readFuture);
 
-        //switch back to thread that started the coroutine to make sure the lock is released correctly
-        auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
-        auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
-        co_await *aepSwitchBackAwaiter;
+                const auto readBytesOrError = co_await *awaitReadSegment;
+                if (const auto error = getOptional<detail::CoroutineError>(readBytesOrError))
+                {
+                    for (auto segment : memorySegments)
+                    {
+                        availableBuffers.write(segment);
+                    }
+                    // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
+                    // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
+                    // co_await *aepSwitchBackAwaiter;
+                    co_return *error;
+                }
+                if (auto readBytes = std::get<long>(readBytesOrError); readBytes < 0)
+                {
+                    for (auto segment : memorySegments)
+                    {
+                        availableBuffers.write(segment);
+                    }
+                    NES_ERROR("Failed to read spilled buffer with error {}", std::strerror(-readBytes));
+
+                    // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
+                    // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
+                    // co_await *aepSwitchBackAwaiter;
+                    co_return static_cast<uint32_t>(ErrorCode::CannotReadBufferFromDisk);
+                }
+                const auto swapped = floating.controlBlock->swapSegment(memorySegments[i], toRepin[i], *lock);
+                INVARIANT(swapped, "Failed to swap back in unspilled in memory data segment");
+
+                const auto punchHoleFuture = punchHoleSegment(std::move(segmentToUnspill[i]));
+                //Directly awaiting here is fine because we never actually suspend in punchHole until we have yielded a value
+                //Still, would be good to have some mechanism here that doesn't require hard coupling of the implementation of the coroutines
+                auto submittedDeletion = co_await punchHoleFuture.awaitYield();
+                if (!submittedDeletion)
+                {
+                    NES_WARNING("Failed to submit segment deletion task, segment will only be removed from disk on system shutdown.");
+                }
+            }
+            pin = floating.controlBlock->getCounter<true>();
+
+            //switch back to thread that started the coroutine to make sure the lock is released correctly
+            // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
+            // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
+            // co_await *aepSwitchBackAwaiter;
+        }
+        else
+        {
+            co_return static_cast<uint32_t>(ErrorCode::BufferAlreadyRepinning);
+        }
     }
 
     const auto memorySegment = floating.getSegment().get<detail::InMemoryLocation>();
@@ -755,7 +762,7 @@ int64_t BufferManager::secondChancePass() noexcept
             currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
             && currentBCB->clockReference.test_and_set() && !currentBCB->isRepinning.test())
         {
-            auto spillLock = currentBCB->startSpilling();
+            auto spillLock = currentBCB->tryLockUnique();
             if (!spillLock)
                 continue;
             uint32_t childrenToTake = std::min(spillBatchSize - currentBatchSize, static_cast<uint32_t>(currentBCB->children.size()));
@@ -1293,7 +1300,6 @@ PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDi
                     }
                 }
             }
-
         }
     }
 
