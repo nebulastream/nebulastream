@@ -392,7 +392,7 @@ TEST_F(BufferManagerTest, MultiThreadedSpilling)
 {
     constexpr int bufferSize = 1024 * 8;
     constexpr int numThreads = 16;
-    constexpr int allocatePerThread = 1000;
+    constexpr int allocatePerThread = 10000;
     constexpr int inMemorySegmentsPerThread = 10;
     constexpr int inMemoryReserve = 1;
     const std::shared_ptr<BufferManager> manager = BufferManager::create(
