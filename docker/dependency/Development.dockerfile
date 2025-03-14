@@ -7,10 +7,6 @@ ARG ANTLR4_VERSION=4.13.2
 RUN apt update -y \
     && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq -y
 
-# As clang-tidy-diff is not available in the apt repository, we need download it from the github repo and install it
-ADD --checksum=sha256:ec28c743ce3354df22b52db59feeac2d98556b8fc81cb7c1a877f3a862ae5726 --chmod=755 \
- https://raw.githubusercontent.com/duckdb/duckdb/52b43b166091c82b3f04bf8af15f0ace18207a64/scripts/clang-tidy-diff.py /usr/bin/
-
 RUN apt-get update && apt-get install -y \
         default-jre-headless \
         python3              \
