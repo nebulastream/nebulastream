@@ -51,6 +51,7 @@ jobs:
         run: mkdir clang-tidy-result
       - name: Clang-Tidy Precheck
         run: |
+          # Limits the number of CPUs to 64.
           git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -config-file .clang-tidy-pre-check -j $(($(nproc)<64 ? $(nproc) : 64))
       - name: Analyze by running Clang-Tidy
         run: |
