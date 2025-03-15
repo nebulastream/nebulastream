@@ -37,8 +37,17 @@ class PagedVectorRef
 public:
     PagedVectorRef(
         const nautilus::val<PagedVector*>& pagedVectorRef,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+        std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+
+    PagedVectorRef(const PagedVectorRef& other)
+        : pagedVectorRef(other.pagedVectorRef)
+        ,
+        // Perform a deep copy of the unique_ptr via clone()
+        memoryProvider(other.memoryProvider ? other.memoryProvider->clone() : nullptr)
+        , bufferProvider(other.bufferProvider)
+    {
+    }
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -57,9 +66,10 @@ public:
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
 
 private:
+    [[nodiscard]] nautilus::val<Memory::MemoryLayouts::MemoryLayout*> getMemoryLayout() const;
+
     nautilus::val<PagedVector*> pagedVectorRef;
-    std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
+    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
 
