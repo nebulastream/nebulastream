@@ -105,7 +105,7 @@ void DefaultEmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record)
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer)
+    if (emitState->outputIndex >= getMaxRecordsPerBuffer())
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
@@ -152,14 +152,18 @@ void DefaultEmitPhysicalOperator::emitRecordBuffer(
 DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider))
     , operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout().getCapacity())
 {
 }
 
-std::unique_ptr<Operator> DefaultEmitPhysicalOperator::clone() const {
-    auto cloned = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, memoryProvider->clone());
-    cloned->maxRecordsPerBuffer = maxRecordsPerBuffer;
-    return cloned;
+std::unique_ptr<Operator> DefaultEmitPhysicalOperator::clone() const
+{
+    return std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, memoryProvider->clone());
 }
+
+[[nodiscard]] uint64_t DefaultEmitPhysicalOperator::getMaxRecordsPerBuffer() const
+{
+    return memoryProvider->getMemoryLayout().getCapacity();
+}
+
 
 }

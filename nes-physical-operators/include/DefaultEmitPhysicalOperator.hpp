@@ -46,9 +46,10 @@ public:
     std::string toString() const override {return typeid(this).name(); }
 
 private:
+    [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
+
     std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;
     size_t operatorHandlerIndex;
-    uint64_t maxRecordsPerBuffer;
 };
 
 }
