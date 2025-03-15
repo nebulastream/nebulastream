@@ -117,7 +117,6 @@ struct DataType final
     [[nodiscard]] bool isUndefined() const;
 
     Type type{Type::UNDEFINED};
-    uint32_t sizeInBits{0};
 };
 
 }
