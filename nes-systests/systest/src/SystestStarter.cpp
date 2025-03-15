@@ -100,15 +100,15 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     if (program.is_used("-b"))
     {
         config.benchmark = true;
-        if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries"))
-            && (program.get<int>("--numberConcurrentQueries") > 1 || program.get<int>("-n") > 1))
-        {
-            NES_FATAL_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
-            std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
-            exit(-1);
-        }
-        std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
-        config.numberConcurrentQueries = 1;
+        // if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries"))
+        //     && (program.get<int>("--numberConcurrentQueries") > 1 || program.get<int>("-n") > 1))
+        // {
+        //     NES_FATAL_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
+        //     std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
+        //     exit(-1);
+        // }
+        std::cout << "Running systests in benchmarking mode"; //. Only one query is run at a time!\n";
+        // config.numberConcurrentQueries = 1;
     }
 
     if (program.is_used("-d"))
@@ -353,7 +353,7 @@ int main(int argc, const char** argv)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                failedQueries = Systest::runQueriesAndBenchmark(queries, numberConcurrentQueries, singleNodeWorkerConfiguration, benchmarkResults);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);

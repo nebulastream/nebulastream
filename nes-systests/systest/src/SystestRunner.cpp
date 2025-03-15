@@ -75,22 +75,24 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
         {
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
 
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
     parser.registerOnSLTSourceCallback(
@@ -98,23 +100,25 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
         {
             static uint64_t sourceIndex = 0;
 
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
 
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}}});
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}}});
 
 
             {
@@ -408,35 +412,129 @@ Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId 
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<Query>& queries,
+    const uint64_t numConcurrentQueries,
+    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson)
 {
-    SingleNodeWorker worker(configuration);
-    std::vector<RunningQuery> ranQueries;
-    std::size_t queryFinishedCounter = 0;
-    const auto totalQueries = queries.size();
-    for (const auto& queryToRun : queries)
+    if (numConcurrentQueries == 1)
     {
-        const auto queryId = worker.registerQuery(queryToRun.queryPlan);
-        ranQueries.emplace_back(queryToRun, queryId);
-        worker.startQuery(queryId);
-        const auto summary = waitForQueryTermination(worker, queryId);
-        const auto duration = summary.runs.back().stop.value() - summary.runs.back().start.value();
-
-        if (summary.runs.back().error.has_value())
+        SingleNodeWorker worker(configuration);
+        std::vector<RunningQuery> ranQueries;
+        std::size_t queryFinishedCounter = 0;
+        const auto totalQueries = queries.size();
+        for (const auto& queryToRun : queries)
         {
-            fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
-            continue;
+            const auto queryId = worker.registerQuery(queryToRun.queryPlan);
+            ranQueries.emplace_back(queryToRun, queryId);
+            worker.startQuery(queryId);
+            const auto summary = waitForQueryTermination(worker, queryId);
+            const auto duration = summary.runs.back().stop.value() - summary.runs.back().start.value();
+
+            if (summary.runs.back().error.has_value())
+            {
+                fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
+                continue;
+            }
+
+            auto errorMessage = checkResult(ranQueries.back());
+            ranQueries.back().queryExecutionInfo.passed = !errorMessage.has_value();
+            ranQueries.back().queryExecutionInfo.executionTimeInNanos
+                = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+            printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+            worker.unregisterQuery(queryId);
+            queryFinishedCounter += 1;
         }
 
-        auto errorMessage = checkResult(ranQueries.back());
-        ranQueries.back().queryExecutionInfo.passed = !errorMessage.has_value();
-        ranQueries.back().queryExecutionInfo.executionTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-        printQueryResultToStdOut(queryToRun, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
-        worker.unregisterQuery(queryId);
-        queryFinishedCounter += 1;
+        return serializeExecutionResults(ranQueries, resultJson);
     }
+    else
+    {
+        folly::Synchronized<std::vector<RunningQuery>> ranQueries;
+        folly::MPMCQueue<std::shared_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+        SingleNodeWorker worker(configuration);
 
-    return serializeExecutionResults(ranQueries, resultJson);
+        std::atomic<size_t> queriesToResultCheck{0};
+        std::atomic<size_t> queryFinishedCounter{0};
+        const auto totalQueries = queries.size();
+        std::atomic finishedProducing{false};
+
+        std::mutex mtx;
+        std::condition_variable cv;
+
+        std::jthread producer(
+            [&queries, &queriesToResultCheck, &worker, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
+                std::stop_token stopToken)
+            {
+                for (auto& query : queries)
+                {
+                    {
+                        std::unique_lock lock(mtx);
+                        cv.wait(
+                            lock,
+                            [&stopToken, &queriesToResultCheck, &numConcurrentQueries]
+                            { return stopToken.stop_requested() or queriesToResultCheck.load() < numConcurrentQueries; });
+                        if (stopToken.stop_requested())
+                        {
+                            finishedProducing = true;
+                            return;
+                        }
+                        const auto queryId = worker.registerQuery(query.queryPlan);
+                        if (queryId == INVALID_QUERY_ID)
+                        {
+                            throw QueryInvalid("Received an invalid query id from the worker");
+                        }
+                        worker.startQuery(queryId);
+
+                        const RunningQuery runningQuery = {query, queryId, {}};
+                        auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
+                        runningQueries.blockingWrite(std::move(runningQueryPtr));
+                        queriesToResultCheck.fetch_add(1);
+                    }
+                }
+                finishedProducing = true;
+                cv.notify_all();
+            });
+
+        while (not finishedProducing or queriesToResultCheck > 0)
+        {
+            std::shared_ptr<RunningQuery> runningQuery;
+            runningQueries.blockingRead(runningQuery);
+
+            if (runningQuery)
+            {
+                Runtime::QuerySummary summary = *worker.getQuerySummary(QueryId(runningQuery->queryId));
+                while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped
+                       and worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Failed)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    summary = *worker.getQuerySummary(QueryId(runningQuery->queryId));
+                }
+                // {
+                //     std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                // }
+                worker.unregisterQuery(QueryId(runningQuery->queryId));
+                auto errorMessage = checkResult(*runningQuery);
+                printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+
+                const auto duration = summary.runs.back().stop.value() - summary.runs.back().start.value();
+
+                if (summary.runs.back().error.has_value())
+                {
+                    fmt::println(std::cerr, "Query {} has failed with: {}", runningQuery->queryId, summary.runs.back().error->what());
+                    continue;
+                }
+                runningQuery->queryExecutionInfo.executionTimeInNanos
+                    = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+                printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+                ranQueries.wlock()->emplace_back(*runningQuery);
+                queriesToResultCheck.fetch_sub(1, std::memory_order_release);
+                cv.notify_one();
+            }
+        }
+
+        return serializeExecutionResults(ranQueries.copy(), resultJson);
+    }
 }
 
 void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)

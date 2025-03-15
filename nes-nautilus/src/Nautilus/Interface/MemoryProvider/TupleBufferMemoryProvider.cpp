@@ -54,10 +54,11 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(const Memory::PinnedBuffer* outputBuffer, const int8_t* textValue, const uint64_t textSize, Memory::AbstractBufferProvider* bufferProvider)
+uint32_t storeAssociatedTextValueProxy(const Memory::PinnedBuffer* outputBuffer, const int8_t* textValue, const uint32_t textSize, Memory::AbstractBufferProvider* bufferProvider)
 {
-    auto textBuffer = bufferProvider->getBufferBlocking();
-    std::memcpy(textBuffer.getBuffer(), textValue, textSize);
+    auto textBuffer = *bufferProvider->getUnpooledBuffer(textSize + sizeof(uint32_t));
+    *textBuffer.getBuffer<uint32_t>() = textSize;
+    std::memcpy(textBuffer.getBuffer() + sizeof(uint32_t), textValue, textSize);
     auto ret = outputBuffer->storeReturnChildIndex(std::move(textBuffer));
     INVARIANT(ret, "Could not store text value as child buffer");
     return *ret;
