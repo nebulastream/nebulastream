@@ -64,14 +64,18 @@ PagedVectorRef::PagedVectorRef(
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
     : pagedVectorRef(pagedVectorRef)
     , memoryProvider(std::move(memoryProvider))
-    , memoryLayout(memoryProvider->getMemoryLayout().clone().get())
     , bufferProvider(bufferProvider)
 {
 }
 
+nautilus::val<Memory::MemoryLayouts::MemoryLayout*> PagedVectorRef::getMemoryLayout() const
+{
+    return &memoryProvider->getMemoryLayout();
+}
+
 void PagedVectorRef::writeRecord(const Record& record) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
+    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, getMemoryLayout()));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
     memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
@@ -92,6 +96,7 @@ PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldId
 {
     return at(projections, 0);
 }
+
 
 PagedVectorRefIter
 PagedVectorRef::at(const std::vector<Record::RecordFieldIdentifier>& projections, const nautilus::val<uint64_t>& pos) const

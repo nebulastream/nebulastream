@@ -44,7 +44,6 @@ public:
         : pagedVectorRef(other.pagedVectorRef),
         // Perform a deep copy of the unique_ptr via clone()
         memoryProvider(other.memoryProvider ? other.memoryProvider->clone() : nullptr),
-        memoryLayout(other.memoryLayout),
         bufferProvider(other.bufferProvider)
     {
     }
@@ -66,9 +65,10 @@ public:
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
 
 private:
+    [[nodiscard]] nautilus::val<Memory::MemoryLayouts::MemoryLayout*> getMemoryLayout() const;
+
     nautilus::val<PagedVector*> pagedVectorRef;
     std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
     nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
 
