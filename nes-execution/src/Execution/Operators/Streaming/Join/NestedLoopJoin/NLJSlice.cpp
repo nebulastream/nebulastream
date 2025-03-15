@@ -99,7 +99,7 @@ void NLJSlice::combinePagedVectors()
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }
 
-    /*/// Append all PagedVectorsKeys on the left join side and erase all items except for the first one
+    /// Append all PagedVectorsKeys on the left join side and erase all items except for the first one
     if (leftPagedVectorsKeys.size() > 1)
     {
         for (uint64_t i = 1; i < leftPagedVectorsKeys.size(); ++i)
@@ -117,7 +117,7 @@ void NLJSlice::combinePagedVectors()
             rightPagedVectorsKeys[0]->appendAllPages(*rightPagedVectorsKeys[i]);
         }
         rightPagedVectorsKeys.erase(rightPagedVectorsKeys.begin() + 1, rightPagedVectorsKeys.end());
-    }*/
+    }
 }
 
 void NLJSlice::writeToFile(
@@ -140,6 +140,7 @@ void NLJSlice::writeToFile(
     switch (fileLayout)
     {
         /// Write all tuples consecutivley to file
+        case NO_SEPARATION_KEEP_KEYS:
         case NO_SEPARATION: {
             for (const auto& page : pagedVector->getPages())
             {
@@ -180,6 +181,7 @@ void NLJSlice::readFromFile(
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
+        case NO_SEPARATION_KEEP_KEYS:
         case NO_SEPARATION: {
             pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
             auto lastPage = pagedVector->getLastPage();
@@ -199,7 +201,6 @@ void NLJSlice::readFromFile(
         case SEPARATE_PAYLOAD:
         case SEPARATE_KEYS: {
             readSeparatelyFromFiles(pagedVector, memoryLayout, bufferProvider, pagedVectorKeys, fileReader);
-            pagedVectorKeys->getPages().clear();
             break;
         }
     }
@@ -212,15 +213,23 @@ void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide,
     const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
     {
+        /// Append key field data to designated pagedVectorKeys
+        case NO_SEPARATION_KEEP_KEYS: {
+            // TODO
+            break;
+        }
+        /// Do nothing as key field data has just been written to designated pagedVectorKeys
+        case SEPARATE_PAYLOAD: {
+            break;
+        }
+        /// Remove all key field data as a different FileLayout might have been used previously
+        case NO_SEPARATION:
         case SEPARATE_KEYS: {
             pagedVectorKeys->getPages().clear();
-        }
-        case SEPARATE_PAYLOAD:
-        case NO_SEPARATION: {
-            pagedVector->getPages().clear();
             break;
         }
     }
+    pagedVector->getPages().clear();
 }
 
 size_t NLJSlice::getStateSizeInBytesForThreadId(
@@ -234,11 +243,6 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const auto numPagesKeys = pagedVectorKeys->getNumberOfPages();
 
     return pageSize * numPages + pageSize * numPagesKeys;
-}
-
-uint64_t NLJSlice::getNumberOfWorkerThreads() const
-{
-    return leftPagedVectors.size();
 }
 
 std::tuple<Interface::PagedVector*, Interface::PagedVector*>
@@ -277,12 +281,13 @@ void NLJSlice::writePayloadOnlyToFile(
         auto pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
+            // TODO appendPageIfFull only when page is full not for each tuple
             pagedVectorKeys->appendPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
             auto lastKeyPage = pagedVectorKeys->getLastPage();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
             auto lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
-            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -320,7 +325,7 @@ void NLJSlice::writePayloadAndKeysToSeparateFiles(
         auto pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
-            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -347,27 +352,30 @@ void NLJSlice::readSeparatelyFromFiles(
     const auto keyFieldsOnlyMemoryLayout = NES::Util::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
-    auto keyPageIdx = 0UL;
-    const auto keyPages = pagedVectorKeys->getPages();
-    auto keyPagePtr = !keyPages.empty() ? keyPages.at(keyPageIdx).getBuffer() : nullptr;
+    auto& keyPages = pagedVectorKeys->getPages();
+    auto keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
 
     while (true)
     {
+        // TODO appendPageIfFull only when page is full not for each tuple
         pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
         auto lastPage = pagedVector->getLastPage();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
 
+        // TODO get new key page only when all tuples were read and do not check for each tuple
         if (keyPagePtr)
         {
-            if (const auto currKeyPage = keyPages.at(keyPageIdx);
+            if (const auto& currKeyPage = keyPages.front();
                 keyPagePtr >= currKeyPage.getBuffer() + currKeyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize())
             {
-                keyPagePtr = ++keyPageIdx < keyPages.size() ? keyPages.at(keyPageIdx).getBuffer() : nullptr;
+                keyPages.erase(keyPages.begin());
+                keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
+                // TODO if fileReader.peek() != EOF then return
             }
         }
 
-        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
         {
             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
             {
@@ -375,10 +383,6 @@ void NLJSlice::readSeparatelyFromFiles(
                 {
                     std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
                     keyPagePtr += fieldSize;
-                }
-                else
-                {
-                    return;
                 }
             }
             else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)

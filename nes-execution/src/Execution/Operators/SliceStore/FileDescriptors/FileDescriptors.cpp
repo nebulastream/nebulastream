@@ -17,6 +17,9 @@
 namespace NES::Runtime::Execution
 {
 
+// TODO generally open files on first write call
+// TODO implement read and write buffers
+
 FileWriter::FileWriter(const std::string& filePath)
     : file(filePath + ".dat", std::ios::out | std::ios::trunc | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::out | std::ios::trunc | std::ios::binary)
