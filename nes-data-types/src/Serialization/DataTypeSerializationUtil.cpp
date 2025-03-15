@@ -35,7 +35,6 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         magic_enum::enum_name(dataType.physicalType.type), &serializedPhysicalTypeEnum);
     serializedPhysicalDataType->set_type(serializedPhysicalTypeEnum);
     serializedPhysicalDataType->set_sizeinbits(dataType.physicalType.sizeInBits);
-    serializedPhysicalDataType->set_issigned(dataType.physicalType.isSigned);
     serializedDataType->set_allocated_physicaltype(serializedPhysicalDataType);
     NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType, serializedDataType->SerializeAsString());
     return serializedDataType;
@@ -47,8 +46,7 @@ DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataTy
     DataType deserializedDataType;
     deserializedDataType.physicalType = PhysicalType{
         .type = magic_enum::enum_value<PhysicalType::Type>(serializedDataType.physicaltype().type()),
-        .sizeInBits = serializedDataType.physicaltype().sizeinbits(),
-        .isSigned = serializedDataType.physicaltype().issigned()};
+        .sizeInBits = serializedDataType.physicaltype().sizeinbits()};
     return deserializedDataType;
 }
 
