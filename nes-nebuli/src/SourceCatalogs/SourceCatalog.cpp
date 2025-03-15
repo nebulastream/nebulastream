@@ -38,9 +38,8 @@ void SourceCatalog::addDefaultSources()
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("Sourcecatalog addDefaultSources");
-    const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("id", DataType::Type::UINT32)
-                              .addField("value", DataType::Type::UINT64);
+    const Schema schema
+        = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("id", DataType::Type::UINT32).addField("value", DataType::Type::UINT64);
     bool success = addLogicalSource("default_logical", schema);
     INVARIANT(success, "error while add default_logical");
 }

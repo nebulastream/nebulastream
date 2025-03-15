@@ -56,8 +56,7 @@ bool NodeFunctionLogicalBinary::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (childLeft->getStamp().type == DataType::Type::VARSIZED
-        or childRight->getStamp().type == DataType::Type::VARSIZED)
+    if (childLeft->getStamp().type == DataType::Type::VARSIZED or childRight->getStamp().type == DataType::Type::VARSIZED)
     {
         return false;
     }

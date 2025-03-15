@@ -32,19 +32,12 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     auto serializedPhysicalTypeEnum = SerializableDataType_Type();
     SerializableDataType_Type_Parse(magic_enum::enum_name(dataType.type), &serializedPhysicalTypeEnum);
     serializedDataType->set_type(serializedPhysicalTypeEnum);
-    serializedDataType->set_sizeinbits(dataType.sizeInBits);
-    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType, serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
 DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
-    DataType deserializedDataType = DataType{
-        .type = magic_enum::enum_value<DataType::Type>(serializedDataType.type()),
-        .sizeInBits = serializedDataType.sizeinbits()};
-
-    // if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)
+    const DataType deserializedDataType = DataType{.type = magic_enum::enum_value<DataType::Type>(serializedDataType.type())};
     return deserializedDataType;
 }
 

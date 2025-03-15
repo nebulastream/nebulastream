@@ -67,111 +67,68 @@ INSTANTIATE_TEST_CASE_P(
     ThisIsARealTest,
     NumericTypeConversionTest,
     ::testing::Values<TypeConversionTestInput>(
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::UINT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
         TypeConversionTestInput{
             DataType::Type::UINT16, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
         TypeConversionTestInput{
             DataType::Type::UINT16, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
         TypeConversionTestInput{
             DataType::Type::UINT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
         TypeConversionTestInput{
             DataType::Type::UINT32, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         TypeConversionTestInput{
             DataType::Type::UINT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
         TypeConversionTestInput{
             DataType::Type::UINT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::INT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{
-            DataType::Type::INT16, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT16, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::INT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{
-            DataType::Type::INT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT32, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
+        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
-        TypeConversionTestInput{
-            DataType::Type::INT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{
-            DataType::Type::INT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{
-            DataType::Type::INT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
 
         TypeConversionTestInput{
             DataType::Type::FLOAT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},

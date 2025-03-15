@@ -15,10 +15,10 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
-#include <magic_enum/magic_enum.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>

@@ -37,8 +37,8 @@
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 #include <fmt/core.h>
-#include <magic_enum/magic_enum.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>

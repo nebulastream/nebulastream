@@ -130,11 +130,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Range(0, 3),
         ::testing::ValuesIn<std::vector<DataType::Type>>(
             {{DataType::Type::UINT8},
-             {DataType::Type::INT64,
-              DataType::Type::UINT64,
-              DataType::Type::INT8,
-              DataType::Type::INT16,
-              DataType::Type::INT32},
+             {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},
              {DataType::Type::INT64,
               DataType::Type::INT32,
               DataType::Type::INT16,

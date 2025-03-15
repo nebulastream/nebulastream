@@ -76,8 +76,7 @@ bool NodeFunctionEquals::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
-    if (childLeft->getStamp().type == DataType::Type::VARSIZED
-        ^ childRight->getStamp().type == DataType::Type::VARSIZED)
+    if (childLeft->getStamp().type == DataType::Type::VARSIZED ^ childRight->getStamp().type == DataType::Type::VARSIZED)
     {
         return false;
     }

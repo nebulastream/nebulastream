@@ -279,9 +279,8 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 
 TEST_F(SchemaTest, copyTest)
 {
-    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                                .addField("field1", DataType::Type::UINT8)
-                                .addField("field2", DataType::Type::UINT16);
+    const auto testSchema
+        = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
     const auto testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.sizeOfSchemaInBytes, testSchemaCopy.sizeOfSchemaInBytes);

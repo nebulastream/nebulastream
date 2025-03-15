@@ -44,8 +44,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expextedSLTSource = {
-        .name = "e123", .fields = {{DataTypeProvider::provideDataType(DataType::Type::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
+    SystestParser::SLTSource expextedSLTSource
+        = {.name = "e123", .fields = {{DataTypeProvider::provideDataType(DataType::Type::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
     SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
