@@ -131,8 +131,8 @@ std::string DynamicTuple::toString(Schema schema) const
         }
         else if (dataType.isFloat())
         {
-            const auto formattedFloatValue = (dataType.sizeInBits == 64) ? Util::formatFloat(currentField.read<double>())
-                                                                         : Util::formatFloat(currentField.read<float>());
+            const auto formattedFloatValue = (dataType.getSizeInBytes() == 8) ? Util::formatFloat(currentField.read<double>())
+                                                                              : Util::formatFloat(currentField.read<float>());
             ss << formattedFloatValue << fieldEnding;
         }
         else
