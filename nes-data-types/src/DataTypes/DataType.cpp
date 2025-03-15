@@ -91,86 +91,82 @@ std::string PhysicalType::formattedBytesToString(const void* data) const
 std::ostream& operator<<(std::ostream& os, const PhysicalType& physicalType)
 
 {
-    return os << fmt::format(
-               "PhysicalType(type: {}, sizeInBits: {}, isSigned: {})",
-               magic_enum::enum_name(physicalType.type),
-               physicalType.sizeInBits,
-               physicalType.isSigned);
+    return os << fmt::format("PhysicalType(type: {}, sizeInBits: {})", magic_enum::enum_name(physicalType.type), physicalType.sizeInBits);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::CHAR, .sizeInBits = 8, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::CHAR, .sizeInBits = 8}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::BOOLEAN, .sizeInBits = 8, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::BOOLEAN, .sizeInBits = 8}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::FLOAT32, .sizeInBits = 32, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::FLOAT32, .sizeInBits = 32}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::FLOAT64, .sizeInBits = 64, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::FLOAT64, .sizeInBits = 64}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::INT8, .sizeInBits = 8, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::INT8, .sizeInBits = 8}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::INT16, .sizeInBits = 16, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::INT16, .sizeInBits = 16}};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::INT32, .sizeInBits = 32, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::INT32, .sizeInBits = 32}};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::INT64, .sizeInBits = 64, .isSigned = true}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::INT64, .sizeInBits = 64}};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::UINT8, .sizeInBits = 8, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::UINT8, .sizeInBits = 8}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::UINT16, .sizeInBits = 16, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::UINT16, .sizeInBits = 16}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::UINT32, .sizeInBits = 32, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::UINT32, .sizeInBits = 32}};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::UINT64, .sizeInBits = 64, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::UINT64, .sizeInBits = 64}};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::UNDEFINED, .sizeInBits = 0, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::UNDEFINED, .sizeInBits = 0}};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
-    return DataType{PhysicalType{.type = PhysicalType::Type::VARSIZED, .sizeInBits = 32, .isSigned = false}};
+    return DataType{PhysicalType{.type = PhysicalType::Type::VARSIZED, .sizeInBits = 32}};
 }
 
 bool DataType::isInteger() const
@@ -179,6 +175,12 @@ bool DataType::isInteger() const
     return thisType == PhysicalType::Type::UINT8 or thisType == PhysicalType::Type::UINT16 or thisType == PhysicalType::Type::UINT32
         or thisType == PhysicalType::Type::UINT64 or thisType == PhysicalType::Type::INT8 or thisType == PhysicalType::Type::INT16
         or thisType == PhysicalType::Type::INT32 or thisType == PhysicalType::Type::INT64;
+}
+bool DataType::isSignedInteger() const
+{
+    const auto thisType = physicalType.type;
+    return thisType == PhysicalType::Type::INT8 or thisType == PhysicalType::Type::INT16 or thisType == PhysicalType::Type::INT32
+        or thisType == PhysicalType::Type::INT64;
 }
 bool DataType::isFloat() const
 {
@@ -236,8 +238,6 @@ std::optional<DataType> inferNumericDataType(const DataType& left, const DataTyp
     if (right.isInteger() and left.isInteger())
     {
         /// We need to still cast here to an integer, as the lowerBound is a member of Integer and not of Numeric
-        const auto leftSign = left.physicalType.isSigned;
-        const auto rightSign = right.physicalType.isSigned;
         const auto leftBits = left.physicalType.sizeInBits;
         const auto rightBits = right.physicalType.sizeInBits;
 
@@ -249,43 +249,43 @@ std::optional<DataType> inferNumericDataType(const DataType& left, const DataTyp
         if (leftBits == sizeOfIntInBits and rightBits < sizeOfIntInBits)
         {
             return (
-                leftSign ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
-                         : DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
+                left.isSignedInteger() ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
+                                       : DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
         }
 
         if (leftBits < sizeOfIntInBits and rightBits == sizeOfIntInBits)
         {
             return (
-                rightSign ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
-                          : DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
-        }
-
-        if (leftBits == sizeOfIntInBits && rightBits == sizeOfIntInBits)
-        {
-            return (
-                (leftSign && rightSign) ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
+                right.isSignedInteger() ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
                                         : DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
         }
 
-        if (leftBits == sizeOfLongInBits && rightBits < sizeOfLongInBits)
+        if (leftBits == sizeOfIntInBits and rightBits == sizeOfIntInBits)
         {
             return (
-                leftSign ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
-                         : DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
+                (left.isSignedInteger() and right.isSignedInteger()) ? DataTypeProvider::provideDataType(PhysicalType::Type::INT32)
+                                                                     : DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
         }
 
-        if (leftBits < sizeOfLongInBits && rightBits == sizeOfLongInBits)
+        if (leftBits == sizeOfLongInBits and rightBits < sizeOfLongInBits)
         {
             return (
-                rightSign ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
-                          : DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
+                left.isSignedInteger() ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
+                                       : DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
         }
 
-        if (leftBits == sizeOfLongInBits && rightBits == sizeOfLongInBits)
+        if (leftBits < sizeOfLongInBits and rightBits == sizeOfLongInBits)
         {
             return (
-                (leftSign && rightSign) ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
+                right.isSignedInteger() ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
                                         : DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
+        }
+
+        if (leftBits == sizeOfLongInBits and rightBits == sizeOfLongInBits)
+        {
+            return (
+                (left.isSignedInteger() and right.isSignedInteger()) ? DataTypeProvider::provideDataType(PhysicalType::Type::INT64)
+                                                                     : DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
         }
     }
 
