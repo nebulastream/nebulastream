@@ -499,8 +499,9 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 TEST_F(QueryEngineTest, singleQueryWithManySources)
 {
     constexpr size_t numberOfSources = 64;
-    constexpr size_t numberOfBuffersBeforeTermination = 10000;
+    constexpr size_t numberOfBuffersBeforeTermination = 100000;
 
+    // TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources + 20);
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources + 20);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;

@@ -29,7 +29,7 @@ namespace NES::Sources
 class SourceProvider
 {
     /// Todo #237: reevaluate whether we still need num source local buffers, and potentially use new configuration approach.
-    static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64;
+    static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 16;
 
 public:
     SourceProvider() = default;
