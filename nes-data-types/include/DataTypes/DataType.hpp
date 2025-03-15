@@ -52,7 +52,6 @@ struct PhysicalType
 
     Type type{Type::UNDEFINED};
     uint32_t sizeInBits{0};
-    bool isSigned{false};
 
     bool operator==(const PhysicalType&) const = default;
     friend std::ostream& operator<<(std::ostream& os, const PhysicalType& physicalType);
@@ -122,6 +121,7 @@ struct DataType final
     DataType join(const DataType& otherDataType);
 
     [[nodiscard]] bool isInteger() const;
+    [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
     [[nodiscard]] bool isBoolean() const;
