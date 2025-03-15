@@ -21,8 +21,9 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(child->getStamp().clone(), std::move(child))
+ExpLogicalFunction::ExpLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
 {
+    stamp = child->getStamp().clone();
 };
 
 ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -31,8 +32,7 @@ ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : UnaryL
 
 bool ExpLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
     {
         return getChild() == other->getChild();
     }

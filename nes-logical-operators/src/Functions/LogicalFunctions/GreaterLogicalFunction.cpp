@@ -27,8 +27,9 @@ GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& oth
 }
 
 GreaterLogicalFunction::GreaterLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
 }
 
 bool GreaterLogicalFunction::operator==(const LogicalFunction& rhs) const

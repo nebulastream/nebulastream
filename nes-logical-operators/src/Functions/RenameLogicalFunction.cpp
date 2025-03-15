@@ -27,8 +27,9 @@
 namespace NES
 {
 RenameLogicalFunction::RenameLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName)
-    : UnaryLogicalFunction(originalField->getStamp().clone(), std::move(originalField)), newFieldName(std::move(newFieldName))
+    : UnaryLogicalFunction(std::move(originalField)), newFieldName(std::move(newFieldName))
 {
+    stamp = originalField->getStamp().clone();
 };
 
 RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)

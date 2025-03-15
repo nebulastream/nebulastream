@@ -26,10 +26,16 @@
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : LogicalFunction(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)), fieldName(std::move(fieldName)) {};
+    : LogicalFunction(), fieldName(std::move(fieldName))
+{
+    stamp = DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+};
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::unique_ptr<DataType> stamp, std::string fieldName)
-    : LogicalFunction(std::move(stamp)), fieldName(std::move(fieldName)) {};
+    : LogicalFunction(), fieldName(std::move(fieldName))
+{
+    this->stamp = std::move(stamp);
+};
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunction& rhs) const
 {

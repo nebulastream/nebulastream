@@ -25,8 +25,9 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(child->getStamp().clone(), std::move(child))
+RoundLogicalFunction::RoundLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
 {
+    stamp = child->getStamp().clone();
 };
 
 RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : UnaryLogicalFunction(other)

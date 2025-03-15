@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Util/Common.hpp>
@@ -23,8 +24,9 @@ namespace NES
 {
 
 SubLogicalFunction::SubLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(left->getStamp().clone(), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = left->getStamp().clone();
 };
 
 SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : BinaryLogicalFunction(other)
@@ -33,8 +35,7 @@ SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : Binary
 
 bool SubLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    auto other = dynamic_cast<const SubLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const SubLogicalFunction*>(&rhs))
     {
         return getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
     }

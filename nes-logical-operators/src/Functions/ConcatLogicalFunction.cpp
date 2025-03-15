@@ -29,19 +29,15 @@ namespace NES
 {
 
 ConcatLogicalFunction::ConcatLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(left->getStamp().join(right->getStamp()), std::move(left),  std::move(right))
+    : BinaryLogicalFunction(std::move(left),  std::move(right))
 {
+    stamp = left->getStamp().join(right->getStamp());
 }
 
 
 std::unique_ptr<LogicalFunction> ConcatLogicalFunction::clone() const
 {
     return std::make_unique<ConcatLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
-}
-
-void ConcatLogicalFunction::inferStamp(const Schema&)
-{
-    /// no-op
 }
 
 bool ConcatLogicalFunction::operator==(const LogicalFunction& rhs) const

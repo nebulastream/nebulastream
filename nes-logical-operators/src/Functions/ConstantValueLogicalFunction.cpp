@@ -20,7 +20,7 @@
 #include <Abstract/LogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
-#include "SerializableFunction.pb.h"
+#include <SerializableFunction.pb.h>
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -29,13 +29,15 @@
 namespace NES
 {
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::unique_ptr<DataType> stamp, std::string value)
-    : LogicalFunction(std::move(stamp)), constantValue(std::move(value))
+    : LogicalFunction(), constantValue(std::move(value))
 {
+    this->stamp = std::move(stamp);
 }
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : LogicalFunction(other.getStamp().clone()), constantValue(other.constantValue)
+    : LogicalFunction(), constantValue(other.constantValue)
 {
+    this->stamp = std::move(stamp);
 }
 
 bool ConstantValueLogicalFunction::operator==(const LogicalFunction& rhs) const

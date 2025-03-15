@@ -22,8 +22,9 @@ namespace NES
 {
 
 DivLogicalFunction::DivLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(left->getStamp().clone(), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = left->getStamp().clone();
 };
 
 DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : BinaryLogicalFunction(other)

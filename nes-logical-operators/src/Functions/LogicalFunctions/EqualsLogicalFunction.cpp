@@ -27,8 +27,9 @@ namespace NES
 {
 
 EqualsLogicalFunction::EqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
 }
 
 EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other) : BinaryLogicalFunction(other)
@@ -61,8 +62,8 @@ std::unique_ptr<LogicalFunction> EqualsLogicalFunction::clone() const
 
 bool EqualsLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<VariableSizedDataType*>(&getLeftChild().getStamp())
-        && dynamic_cast<VariableSizedDataType*>(&getRightChild().getStamp());
+    return dynamic_cast<const VariableSizedDataType*>(&getLeftChild().getStamp())
+        && dynamic_cast<const VariableSizedDataType*>(&getRightChild().getStamp());
 }
 
 SerializableFunction EqualsLogicalFunction::serialize() const

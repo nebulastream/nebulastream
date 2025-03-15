@@ -16,8 +16,10 @@
 
 #include <memory>
 #include <string>
-#include <Functions/LogicalFunction.hpp>
+#include <string_view>
+#include <Abstract/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <API/Schema.hpp>
 
 namespace NES
 {
@@ -27,18 +29,17 @@ class ConcatLogicalFunction final : public BinaryLogicalFunction
 public:
     static constexpr std::string_view NAME = "Concat";
 
-    explicit ConcatLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+    explicit ConcatLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right);
     ~ConcatLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunction& rhs) const override;
+    [[nodiscard]] std::unique_ptr<LogicalFunction> clone() const override;
 
 private:
     explicit ConcatLogicalFunction(const ConcatLogicalFunction& other);
-    std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
 
     const std::string constantValue;
 };

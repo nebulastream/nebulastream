@@ -12,12 +12,8 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <ostream>
-#include <utility>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <typeinfo>
 #ifdef __GNUG__
@@ -28,23 +24,14 @@
 namespace NES
 {
 
-LogicalFunction::LogicalFunction(std::unique_ptr<DataType> stamp) : stamp(std::move(stamp))
-{
-}
-
-DataType& LogicalFunction::getStamp() const
-{
-    return *stamp;
-}
-
 void LogicalFunction::setStamp(std::unique_ptr<DataType> stamp)
 {
     this->stamp = std::move(stamp);
 }
 
-bool LogicalFunction::isPredicate()
+const DataType& LogicalFunction::getStamp() const
 {
-    return *stamp == Boolean();
+    return *stamp;
 }
 
 void LogicalFunction::inferStamp(const Schema& schema)
@@ -70,7 +57,6 @@ std::string LogicalFunction::getType() const {
 }
 
 LogicalFunction::LogicalFunction(const LogicalFunction& other) : stamp(other.stamp ? other.stamp->clone() : nullptr)
-
 {
 }
 

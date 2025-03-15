@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <Functions/BinaryLogicalFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -23,40 +22,40 @@ namespace NES
 constexpr size_t LEFT_CHILD_INDEX = 0;
 constexpr size_t RIGHT_CHILD_INDEX = 1;
 
-BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::shared_ptr<LogicalFunction> left, std::shared_ptr<LogicalFunction> right)
-    : LogicalFunction(std::move(stamp))
+BinaryLogicalFunction::BinaryLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : LogicalFunction()
 {
-    children[LEFT_CHILD_INDEX] = left;
-    children[RIGHT_CHILD_INDEX] = right;
+    children[LEFT_CHILD_INDEX] = std::move(left);
+    children[RIGHT_CHILD_INDEX] = std::move(right);
 }
 
 BinaryLogicalFunction::BinaryLogicalFunction(const BinaryLogicalFunction& other) : LogicalFunction(other)
 {
-    children[LEFT_CHILD_INDEX] = other.getLeftChild()->clone();
-    children[RIGHT_CHILD_INDEX] = other.getRightChild()->clone();
+    children[LEFT_CHILD_INDEX] = other.getLeftChild().clone();
+    children[RIGHT_CHILD_INDEX] = other.getRightChild().clone();
 }
 
-void BinaryLogicalFunction::setLeftChild(std::shared_ptr<LogicalFunction> left)
+void BinaryLogicalFunction::setLeftChild(std::unique_ptr<LogicalFunction> left)
 {
-    children[LEFT_CHILD_INDEX] = left;
+    children[LEFT_CHILD_INDEX] = std::move(left);
 }
 
-void BinaryLogicalFunction::setRightChild(std::shared_ptr<LogicalFunction> right)
+void BinaryLogicalFunction::setRightChild(std::unique_ptr<LogicalFunction> right)
 {
-    children[RIGHT_CHILD_INDEX] = right;
+    children[RIGHT_CHILD_INDEX] = std::move(right);
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeftChild() const
+LogicalFunction& BinaryLogicalFunction::getLeftChild() const
 {
-    return children[LEFT_CHILD_INDEX];
+    return *children[LEFT_CHILD_INDEX];
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRightChild() const
+LogicalFunction& BinaryLogicalFunction::getRightChild() const
 {
-    return children[RIGHT_CHILD_INDEX];
+    return *children[RIGHT_CHILD_INDEX];
 }
 
-std::span<const std::shared_ptr<LogicalFunction>> BinaryLogicalFunction::getChildren() const
+std::span<const std::unique_ptr<LogicalFunction>> BinaryLogicalFunction::getChildren() const
 {
     return children;
 }

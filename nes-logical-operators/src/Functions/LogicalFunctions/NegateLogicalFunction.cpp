@@ -25,8 +25,9 @@ namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(std::unique_ptr<LogicalFunction> child)
-    : UnaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(child))
+    : UnaryLogicalFunction(std::move(child))
 {
+    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
 }
 
 NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : UnaryLogicalFunction(other)
@@ -35,8 +36,7 @@ NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other)
 
 bool NegateLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
     {
         return this->getChild() == other->getChild();
     }
@@ -55,10 +55,10 @@ void NegateLogicalFunction::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    if (!getChild().isPredicate())
+    if (getChild().getStamp() != Boolean())
     {
         throw CannotInferSchema(
-            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", getChild().getStamp().toString()));
+            "Negate Function Node: the stamp of child must be boolean, but was: {}", getChild().getStamp().toString());
     }
 }
 std::unique_ptr<LogicalFunction> NegateLogicalFunction::clone() const
@@ -68,7 +68,7 @@ std::unique_ptr<LogicalFunction> NegateLogicalFunction::clone() const
 
 bool NegateLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<Boolean*>(&getChild().getStamp());
+    return dynamic_cast<const Boolean*>(&getChild().getStamp());
 }
 
 SerializableFunction NegateLogicalFunction::serialize() const

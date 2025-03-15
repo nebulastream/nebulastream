@@ -27,14 +27,15 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 }
 
 LessEqualsLogicalFunction::LessEqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
 }
+
 
 bool LessEqualsLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    auto other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs))
     {
         return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }

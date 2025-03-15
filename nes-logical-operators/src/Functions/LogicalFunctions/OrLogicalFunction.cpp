@@ -31,8 +31,9 @@ OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : BinaryLog
 }
 
 OrLogicalFunction::OrLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
+    : BinaryLogicalFunction(std::move(left), std::move(right))
 {
+    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
 }
 
 bool OrLogicalFunction::operator==(const LogicalFunction& rhs) const
@@ -59,8 +60,8 @@ void OrLogicalFunction::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    INVARIANT(getLeftChild().isPredicate(), "the stamp of left child must be boolean, but was: " + getLeftChild().getStamp().toString());
-    INVARIANT(getRightChild().isPredicate(), "the stamp of right child must be boolean, but was: " + getRightChild().getStamp().toString());
+    INVARIANT(getLeftChild().getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + getLeftChild().getStamp().toString());
+    INVARIANT(getRightChild().getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + getRightChild().getStamp().toString());
 }
 
 std::unique_ptr<LogicalFunction> OrLogicalFunction::clone() const
@@ -70,8 +71,8 @@ std::unique_ptr<LogicalFunction> OrLogicalFunction::clone() const
 
 bool OrLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<Boolean*>(&getLeftChild().getStamp())
-        && dynamic_cast<Boolean*>(&getRightChild().getStamp());
+    return dynamic_cast<const Boolean*>(&getLeftChild().getStamp())
+        && dynamic_cast<const Boolean*>(&getRightChild().getStamp());
 }
 
 SerializableFunction OrLogicalFunction::serialize() const

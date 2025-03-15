@@ -23,8 +23,8 @@
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const std::shared_ptr<LogicalFunction>& child)
-    : UnaryLogicalFunction(child->getStamp(), child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(std::unique_ptr<LogicalFunction> child)
+    : UnaryLogicalFunction(std::move(child))
 {
 }
 
@@ -32,12 +32,12 @@ AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& 
 {
 }
 
-bool AbsoluteLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool AbsoluteLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<AbsoluteLogicalFunction>(rhs))
+    auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherAbsNode = NES::Util::as<AbsoluteLogicalFunction>(rhs);
-        return getChild() == otherAbsNode->getChild();
+        return getChild() == other->getChild();
     }
     return false;
 }
@@ -45,13 +45,13 @@ bool AbsoluteLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const&
 std::string AbsoluteLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ABS(" << *getChild() << ")";
+    ss << "ABS(" << getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
 {
-    return Util::as<LogicalFunction>(std::make_shared<AbsoluteLogicalFunction>(getChild())->clone());
+    return std::make_unique<AbsoluteLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction AbsoluteLogicalFunction::serialize() const
@@ -60,7 +60,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
     auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild()->serialize());
+    child->CopyFrom(getChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -71,7 +71,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
 std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterAbsoluteUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AbsoluteLogicalFunction>(arguments.child);
+    return std::make_unique<AbsoluteLogicalFunction>(std::move(arguments.child));
 }
 
 }

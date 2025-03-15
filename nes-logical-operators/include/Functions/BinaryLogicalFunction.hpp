@@ -29,18 +29,16 @@ class BinaryLogicalFunction : public LogicalFunction
 public:
     ~BinaryLogicalFunction() noexcept override = default;
 
-    void setRightChild(std::shared_ptr<LogicalFunction> right);
-    void setLeftChild(std::shared_ptr<LogicalFunction> left);
-    [[nodiscard]] std::shared_ptr<LogicalFunction> getLeftChild() const;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> getRightChild() const;
-    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    void setRightChild(std::unique_ptr<LogicalFunction> right);
+    void setLeftChild(std::unique_ptr<LogicalFunction> left);
+    [[nodiscard]] LogicalFunction& getLeftChild() const;
+    [[nodiscard]] LogicalFunction& getRightChild() const;
+    [[nodiscard]] std::span<const std::unique_ptr<LogicalFunction>> getChildren() const override;
 
 protected:
-    BinaryLogicalFunction(std::shared_ptr<DataType> stamp,
-                                                 std::shared_ptr<LogicalFunction> left,
-                                                 std::shared_ptr<LogicalFunction> right);
+    BinaryLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right);
     BinaryLogicalFunction(const BinaryLogicalFunction& other);
-    std::array<std::shared_ptr<LogicalFunction>, 2> children;
+    std::array<std::unique_ptr<LogicalFunction>, 2> children;
 };
 
 }

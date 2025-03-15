@@ -20,8 +20,8 @@
 
 namespace NES
 {
-UnaryLogicalFunction::UnaryLogicalFunction(std::unique_ptr<DataType> stamp, std::unique_ptr<LogicalFunction> child)
-    : LogicalFunction(std::move(stamp))
+UnaryLogicalFunction::UnaryLogicalFunction(std::unique_ptr<LogicalFunction> child)
+    : LogicalFunction()
 {
     children[0] = std::move(child);
 }

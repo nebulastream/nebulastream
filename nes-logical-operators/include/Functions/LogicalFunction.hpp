@@ -14,12 +14,11 @@
 
 #pragma once
 
+#include <stack>
+#include <string>
 #include <span>
 #include <ostream>
 #include <API/Schema.hpp>
-#include <Util/Common.hpp>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableFunction.pb.h>
@@ -34,50 +33,47 @@ class LogicalFunction : public std::enable_shared_from_this<LogicalFunction>
 {
 public:
     virtual ~LogicalFunction() = default;
-
-    /// Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(const Schema& schema);
-    std::shared_ptr<DataType> getStamp() const;
-    void setStamp(std::shared_ptr<DataType> stamp);
-    [[nodiscard]] bool isPredicate();
-
     [[nodiscard]] std::string getType() const;
-
     virtual SerializableFunction serialize() const = 0;
-
-    virtual bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const = 0;
-    virtual std::shared_ptr<LogicalFunction> clone() const = 0;
+    virtual bool operator==(const LogicalFunction& rhs) const = 0;
+    virtual std::unique_ptr<LogicalFunction> clone() const = 0;
     virtual std::string toString() const  = 0;
 
     template <class FunctionType>
-    std::vector<std::shared_ptr<FunctionType>> getFunctionByType() const
+    std::vector<std::reference_wrapper<const FunctionType>> getFunctionByType() const
     {
-        std::vector<std::shared_ptr<FunctionType>> results;
-        std::stack<std::shared_ptr<LogicalFunction>> toVisit;
-        toVisit.push(std::const_pointer_cast<LogicalFunction>(this->shared_from_this()));
+        std::vector<std::reference_wrapper<const FunctionType>> results;
+        std::stack<const LogicalFunction*> toVisit;
+        toVisit.push(this);
 
         while (!toVisit.empty()) {
-            auto node = toVisit.top();
+            const LogicalFunction* node = toVisit.top();
             toVisit.pop();
-            if (auto casted = std::dynamic_pointer_cast<FunctionType>(node))
+            if (auto casted = dynamic_cast<const FunctionType*>(node))
             {
-                results.push_back(casted);
+                results.push_back(*casted);
             }
             for (const auto& child : node->getChildren())
             {
-                toVisit.push(child);
+                toVisit.push(child.get());
             }
         }
         return results;
     }
 
-    virtual std::span<const std::shared_ptr<LogicalFunction>> getChildren() const = 0;
+    /// non-owning view
+    const DataType& getStamp() const;
+    void setStamp(std::unique_ptr<DataType> stamp);
+    /// Infers the stamp if it depends on the schema. Default impl. calls inferStamp on all children
+    virtual void inferStamp(const Schema& schema);
+    /// non-owning view
+    virtual std::span<const std::unique_ptr<LogicalFunction>> getChildren() const = 0;
 
 protected:
-    explicit LogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit LogicalFunction() = default;
     LogicalFunction(const LogicalFunction& other);
 
-    std::shared_ptr<DataType> stamp;
+    std::unique_ptr<DataType> stamp;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& function)

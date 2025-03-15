@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
 #include <utility>
 #include <string>
@@ -25,13 +26,13 @@ namespace NES
 class UnaryLogicalFunction : public LogicalFunction
 {
 public:
-    [[nodiscard]] std::shared_ptr<LogicalFunction> getChild() const;
-    void setChild(const std::shared_ptr<LogicalFunction>& child);
-    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    [[nodiscard]] LogicalFunction& getChild() const;
+    void setChild(std::unique_ptr<LogicalFunction> child);
+    std::span<const std::unique_ptr<LogicalFunction>> getChildren() const override;
 
 protected:
-    explicit UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::shared_ptr<LogicalFunction> child);
+    explicit UnaryLogicalFunction(std::unique_ptr<LogicalFunction> child);
     explicit UnaryLogicalFunction(const UnaryLogicalFunction& other);
-    std::array<std::shared_ptr<LogicalFunction>, 1> children;
+    std::array<std::unique_ptr<LogicalFunction>, 1> children;
 };
 }

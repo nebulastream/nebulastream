@@ -21,20 +21,21 @@
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(child->getStamp(), child)
+CeilLogicalFunction::CeilLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction( std::move(child))
 {
+    stamp = child->getStamp().clone();
 };
 
 CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : UnaryLogicalFunction(other)
 {
 }
 
-bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool CeilLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<CeilLogicalFunction>(rhs))
+    auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherCeilNode = NES::Util::as<CeilLogicalFunction>(rhs);
-        return getChild() == otherCeilNode->getChild();
+        return getChild() == other->getChild();
     }
     return false;
 }
@@ -42,13 +43,13 @@ bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
 std::string CeilLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "CEIL(" << *getChild() << ")";
+    ss << "CEIL(" << getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> CeilLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> CeilLogicalFunction::clone() const
 {
-    return std::make_shared<CeilLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_unique<CeilLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction CeilLogicalFunction::serialize() const
@@ -57,7 +58,7 @@ SerializableFunction CeilLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
     auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild()->serialize());
+    child->CopyFrom(getChild().serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -68,7 +69,7 @@ SerializableFunction CeilLogicalFunction::serialize() const
 std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterCeilUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<CeilLogicalFunction>(arguments.child);
+    return std::make_unique<CeilLogicalFunction>(std::move(arguments.child));
 }
 
 }

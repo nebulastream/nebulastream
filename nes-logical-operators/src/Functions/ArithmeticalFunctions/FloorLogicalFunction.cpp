@@ -21,8 +21,9 @@
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(stamp), std::move(child))
+FloorLogicalFunction::FloorLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
 {
+    stamp = child->getStamp().clone();
 };
 
 FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : UnaryLogicalFunction(other)

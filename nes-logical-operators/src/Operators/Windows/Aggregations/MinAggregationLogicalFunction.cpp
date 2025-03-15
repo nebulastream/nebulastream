@@ -64,10 +64,7 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
-    {
-        NES_FATAL_ERROR("MinAggregationLogicalFunction: aggregations on non numeric fields is not supported.");
-    }
+    INVARIANT(dynamic_cast<const Numeric*>(&onField->getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();

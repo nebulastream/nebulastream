@@ -20,6 +20,7 @@
 #include <API/Schema.hpp>
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
 #include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -78,7 +79,7 @@ bool ThresholdWindow::inferStamp(const Schema& schema)
 {
     NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(schema);
-    INVARIANT(predicate->isPredicate(), "the threshold function is not a valid predicate");
+    INVARIANT(predicate->getStamp() == Boolean(), "the threshold function is not a valid predicate");
     return true;
 }
 

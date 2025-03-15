@@ -29,8 +29,9 @@ ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other)
 }
 
 ModuloLogicalFunction::ModuloLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(left->getStamp().join(right->getStamp()), std::move(left), std::move(right))
+    : BinaryLogicalFunction( std::move(left), std::move(right))
 {
+    stamp = left->getStamp().join(right->getStamp());
 }
 
 bool ModuloLogicalFunction::operator==(const LogicalFunction& rhs) const
