@@ -23,15 +23,15 @@
 namespace NES::Functions
 {
 
-class ExecutableFunctionConcat final : public PhysicalFunction
+class ConcatPhysicalFunction final : public PhysicalFunction
 {
 public:
-    ExecutableFunctionConcat(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
+    ConcatPhysicalFunction(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const std::unique_ptr<PhysicalFunction> leftFunction;
-    const std::unique_ptr<PhysicalFunction> rightFunction;
+    const std::unique_ptr<PhysicalFunction> leftPhysicalFunction;
+    const std::unique_ptr<PhysicalFunction> rightPhysicalFunction;
 };
 
 }

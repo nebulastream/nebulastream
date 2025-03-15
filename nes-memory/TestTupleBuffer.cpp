@@ -243,9 +243,9 @@ TestTupleBuffer::TestTupleBuffer(std::unique_ptr<MemoryLayout> memoryLayout, Mem
     : memoryLayout(std::move(memoryLayout)), buffer(buffer)
 {
     PRECONDITION(
-        memoryLayout->getBufferSize() == buffer.getBufferSize(),
+        this->memoryLayout->getBufferSize() == buffer.getBufferSize(),
         "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
-        memoryLayout->getBufferSize(),
+        this->memoryLayout->getBufferSize(),
         buffer.getBufferSize());
 }
 

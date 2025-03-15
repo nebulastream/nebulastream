@@ -63,7 +63,7 @@ public:
     {
     }
 
-    std::unique_ptr<Operator> clone() const override {
+    [[nodiscard]] std::unique_ptr<Operator> clone() const override {
         return std::make_unique<WindowAggregation>(
             copyAggregationFunctions(aggregationFunctions),
             hashFunction->clone(),

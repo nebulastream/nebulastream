@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <memory>
 #include <API/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>

@@ -13,8 +13,10 @@
 */
 #pragma once
 
+#include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Abstract/PhysicalOperator.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
@@ -23,11 +25,9 @@ namespace NES
 class SelectionPhysicalOperator final : public PhysicalOperator
 {
 public:
-    SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
+    explicit SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
-
-    ///std::unique_ptr<Operator> clone() const override;
-    std::string toString() const override {return typeid(this).name(); }
+    [[nodiscard]] std::string toString() const override {return typeid(this).name(); }
 
 private:
     const std::unique_ptr<Functions::PhysicalFunction> function;

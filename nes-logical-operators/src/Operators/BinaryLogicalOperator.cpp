@@ -152,6 +152,34 @@ std::vector<OriginId> BinaryLogicalOperator::getAllInputOriginIds()
     return vec;
 }
 
+std::vector<LogicalOperator*> BinaryLogicalOperator::getLeftOperators()
+{
+    std::vector<LogicalOperator*> operators;
+    for (const auto& child : children)
+    {
+        auto *logOp = dynamic_cast<LogicalOperator*>(child.get());
+        if (logOp->getOutputSchema() == leftInputSchema)
+        {
+            operators.emplace_back(logOp);
+        }
+    }
+    return operators;
+}
+
+std::vector<LogicalOperator*> BinaryLogicalOperator::getRightOperators()
+{
+    std::vector<LogicalOperator*> operators;
+    for (const auto& child : children)
+    {
+        auto *logOp = dynamic_cast<LogicalOperator*>(child.get());
+        if (logOp->getOutputSchema() == rightInputSchema)
+        {
+            operators.emplace_back(logOp);
+        }
+    }
+    return operators;
+}
+
 void BinaryLogicalOperator::inferInputOrigins()
 {
     leftInputOriginIds.clear();

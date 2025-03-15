@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Functions

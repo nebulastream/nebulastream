@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -26,7 +27,6 @@ class PhysicalFunction
 public:
     PhysicalFunction() = default;
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
-    virual std::unique_ptr<PhysicalFunction> clone() const = 0
     virtual ~PhysicalFunction() = default;
 };
 

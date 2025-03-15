@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/core.h>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES

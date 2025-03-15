@@ -17,6 +17,7 @@
 #include <iostream>
 #include <memory>
 #include <tuple>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/RowLayout.hpp>

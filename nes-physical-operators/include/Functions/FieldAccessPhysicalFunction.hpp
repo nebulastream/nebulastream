@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>

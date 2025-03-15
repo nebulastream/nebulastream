@@ -16,6 +16,7 @@
 
 
 #include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {

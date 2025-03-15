@@ -16,6 +16,7 @@
 #include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <MapPhysicalOperator.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {

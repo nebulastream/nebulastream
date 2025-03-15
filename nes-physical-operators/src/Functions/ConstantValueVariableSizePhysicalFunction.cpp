@@ -19,6 +19,7 @@
 #include <memory>
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>

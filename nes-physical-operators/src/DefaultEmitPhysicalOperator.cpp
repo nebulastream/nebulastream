@@ -29,6 +29,7 @@
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <function.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {

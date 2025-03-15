@@ -34,6 +34,7 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val_ptr.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -111,7 +112,8 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
 
 std::unique_ptr<Operator> AggregationBuildPhysicalOperator::clone() const {
     std::vector<std::unique_ptr<Functions::PhysicalFunction>> clonedKeyFunctions;
-    for (const auto& func : keyFunctions) {
+    clonedKeyFunctions.reserve(keyFunctions.size());
+for (const auto& func : keyFunctions) {
         clonedKeyFunctions.push_back(func->clone());
     }
     std::unique_ptr<TimeFunction> clonedTimeFunction = timeFunction->clone();
