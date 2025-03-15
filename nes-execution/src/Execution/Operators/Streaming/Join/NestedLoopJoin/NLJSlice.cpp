@@ -136,7 +136,7 @@ void NLJSlice::writeToFile(
         !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
 
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId, threadId);
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
     {
         /// Write all tuples consecutivley to file
@@ -176,7 +176,7 @@ void NLJSlice::readFromFile(
         !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
 
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId, fileReader.getThreadIdFromFilePath());
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
@@ -209,7 +209,7 @@ void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide,
 {
     /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef
     // TODO append key field data to designated pagedVectorKeys to be able to write all tuples to file but keep keys in memory, alternatively create mew FileLayout and do this in writeToFile()->writePayloadOnlyToFile()
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId, threadId);
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
     {
         case SEPARATE_KEYS: {
@@ -228,7 +228,7 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId) const
 {
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId, threadId);
+    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
     const auto numPagesKeys = pagedVectorKeys->getNumberOfPages();
@@ -241,19 +241,19 @@ uint64_t NLJSlice::getNumberOfWorkerThreads() const
     return leftPagedVectors.size();
 }
 
-std::tuple<Interface::PagedVector*, Interface::PagedVector*> NLJSlice::getPagedVectors(
-    const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const WorkerThreadId threadIdKeys) const
+std::tuple<Interface::PagedVector*, Interface::PagedVector*>
+NLJSlice::getPagedVectors(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
 {
     switch (joinBuildSide)
     {
         case QueryCompilation::JoinBuildSideType::Left: {
             const auto leftPos = threadId % leftPagedVectors.size();
-            const auto leftPosKeys = threadIdKeys % leftPagedVectorsKeys.size();
+            const auto leftPosKeys = threadId % leftPagedVectorsKeys.size();
             return std::make_tuple(leftPagedVectors[leftPos].get(), leftPagedVectorsKeys[leftPosKeys].get());
         }
         case QueryCompilation::JoinBuildSideType::Right: {
             const auto rightPos = threadId % rightPagedVectors.size();
-            const auto rightPosKeys = threadIdKeys % rightPagedVectorsKeys.size();
+            const auto rightPosKeys = threadId % rightPagedVectorsKeys.size();
             return std::make_tuple(rightPagedVectors[rightPos].get(), rightPagedVectorsKeys[rightPosKeys].get());
         }
         default:
@@ -375,6 +375,10 @@ void NLJSlice::readSeparatelyFromFiles(
                 {
                     std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
                     keyPagePtr += fieldSize;
+                }
+                else
+                {
+                    return;
                 }
             }
             else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)

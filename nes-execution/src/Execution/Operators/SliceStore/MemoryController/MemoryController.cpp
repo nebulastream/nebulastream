@@ -48,9 +48,9 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
 MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
-    /// Files are deleted in FileReader destructor
-    while (getFileReaderAndEraseWriter("memory_controller_"))
+    for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
+        removeFileSystem(it);
     }
 }
 
@@ -87,7 +87,10 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(
-    const SliceEnd sliceEnd, const PipelineId pipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd,
+    const PipelineId pipelineId,
+    const WorkerThreadId threadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     std::stringstream ss;
     ss << "memory_controller_";
@@ -106,23 +109,26 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
 
     if constexpr (USE_PIPELINE_ID)
     {
-        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_";
+        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue();
     }
     else
     {
-        ss << sliceEnd.getRawValue() << "_";
+        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue();
     }
     return getFileReaderAndEraseWriter(ss.str());
 }
 
-void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineId pipelineId)
+void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineId)
 {
-    /// Files are deleted in FileReader destructor
-    while (getFileReader(sliceEnd, pipelineId, QueryCompilation::JoinBuildSideType::Left))
+    for (const auto& prefixBase : {"memory_controller_left_", "memory_controller_right_"})
     {
-    }
-    while (getFileReader(sliceEnd, pipelineId, QueryCompilation::JoinBuildSideType::Right))
-    {
+        const auto prefix = prefixBase + std::to_string(sliceEnd.getRawValue()) + "_";
+        const auto end = fileWriters.upper_bound(prefix + "\xFF");
+        auto it = fileWriters.lower_bound(prefix);
+        while (it != end)
+        {
+            removeFileSystem(it++);
+        }
     }
 }
 
@@ -131,8 +137,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::st
     std::lock_guard lock(mutex_);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
-    const auto it = fileWriters.find(filePath);
-    if (it != fileWriters.end())
+    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         return it->second;
     }
@@ -145,43 +150,21 @@ std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const 
 {
     std::lock_guard lock(mutex_);
 
-    /*
-    // Extract threadId and sort fileWriters by threadId
-    std::map<int, std::string> sortedFileWriters;
-    for (const auto& [writerFilePath, fileWriter] : fileWriters)
+    /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
+    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
-        if (writerFilePath.find(filePath) != std::string::npos)
-        {
-            // Extract threadId from writerFilePath and add filePath to sorted map
-            if (const size_t lastUnderscorePos = writerFilePath.find_last_of('_'); lastUnderscorePos != std::string::npos)
-            {
-                int threadId = std::stoi(writerFilePath.substr(lastUnderscorePos + 1));
-                sortedFileWriters[threadId] = writerFilePath;
-            }
-        }
+        fileWriters.erase(it);
+        return std::make_shared<FileReader>(filePath);
     }
-
-    /// Erase matching fileWriter as the file content must not be amended after being read. This also enforces reading file content only once
-    if (!sortedFileWriters.empty())
-    {
-        const std::string& lowestThreadIdFilePath = sortedFileWriters.begin()->second;
-        fileWriters.erase(lowestThreadIdFilePath);
-        return std::make_shared<FileReader>(lowestThreadIdFilePath);
-    }
-    */
-
-    /// Erase matching fileWriter as the file content must not be amended after being read. This also enforces reading file content only once
-    for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
-    {
-        const std::string writerFilePath = it->first;
-        if (writerFilePath.find(filePath) != std::string::npos)
-        {
-            fileWriters.erase(it);
-            return std::make_shared<FileReader>(writerFilePath);
-        }
-    }
-
     return nullptr;
+}
+
+void MemoryController::removeFileSystem(const std::map<std::string, std::shared_ptr<FileWriter>>::iterator it)
+{
+    /// Files are deleted in FileReader destructor
+    const auto filePath = it->first;
+    fileWriters.erase(it);
+    FileReader fileReader(filePath);
 }
 
 }

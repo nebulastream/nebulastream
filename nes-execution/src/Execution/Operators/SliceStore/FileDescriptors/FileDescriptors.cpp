@@ -97,15 +97,4 @@ std::size_t FileReader::readKey(void* dest, const std::size_t size)
     return keyFile.gcount();
 }
 
-WorkerThreadId FileReader::getThreadIdFromFilePath() const
-{
-    const size_t lastUnderscorePos = filePath.find_last_of('_');
-    if (lastUnderscorePos == std::string::npos)
-    {
-        throw std::runtime_error("Invalid file path format");
-    }
-    const int threadId = std::stoi(filePath.substr(lastUnderscorePos + 1));
-    return WorkerThreadId(threadId);
-}
-
 }

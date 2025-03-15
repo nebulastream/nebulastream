@@ -68,6 +68,7 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
+        uint64_t numberOfWorkerThreads,
         PipelineId pipelineId)
         = 0;
 

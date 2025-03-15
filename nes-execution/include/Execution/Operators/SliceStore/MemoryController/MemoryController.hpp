@@ -35,13 +35,16 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
-    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, PipelineId pipelineId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    std::shared_ptr<FileReader>
+    getFileReader(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd, PipelineId pipelineId);
 
 private:
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
     std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
+
+    void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex mutex_;

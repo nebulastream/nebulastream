@@ -58,7 +58,7 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
     const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(
-        sliceEnd, bufferProvider, memoryLayout, joinBuildSide, pipelineCtx->getPipelineId());
+        sliceEnd, bufferProvider, memoryLayout, joinBuildSide, pipelineCtx->getNumberOfWorkerThreads(), pipelineCtx->getPipelineId());
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
     return dynamic_cast<NLJSlice*>(slice.value().get());

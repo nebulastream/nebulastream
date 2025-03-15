@@ -71,7 +71,7 @@ public:
 
 private:
     std::tuple<Interface::PagedVector*, Interface::PagedVector*>
-    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, WorkerThreadId threadIdKeys) const;
+    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
     static void writePayloadOnlyToFile(
         Interface::PagedVector* pagedVector,

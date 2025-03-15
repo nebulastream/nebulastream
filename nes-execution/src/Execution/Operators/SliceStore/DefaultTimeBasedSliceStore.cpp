@@ -180,6 +180,7 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
     Memory::AbstractBufferProvider*,
     const Memory::MemoryLayouts::MemoryLayout*,
     const QueryCompilation::JoinBuildSideType,
+    const uint64_t,
     const PipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))

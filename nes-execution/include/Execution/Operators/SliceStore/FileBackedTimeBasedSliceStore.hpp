@@ -63,6 +63,7 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
+        uint64_t numberOfWorkerThreads,
         PipelineId pipelineId) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark, PipelineId pipelineId) override;
     void deleteState() override;
@@ -72,6 +73,7 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
+        uint64_t numberOfWorkerThreads,
         const SliceStoreMetaData& metaData);
 
 private:
@@ -80,6 +82,7 @@ private:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
+        uint64_t numberOfWorkerThreads,
         PipelineId pipelineId);
 
     /// Retrieves all window identifiers that correspond to this slice

@@ -46,7 +46,11 @@ void updateSlicesProxy(
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
         sliceStore->updateSlices(
-            bufferProvider, memoryLayout, joinBuildSide, SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));
+            bufferProvider,
+            memoryLayout,
+            joinBuildSide,
+            piplineContext->getNumberOfWorkerThreads(),
+            SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));
     }
 }
 

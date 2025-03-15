@@ -50,8 +50,6 @@ public:
     std::size_t read(void* dest, std::size_t size);
     std::size_t readKey(void* dest, std::size_t size);
 
-    WorkerThreadId getThreadIdFromFilePath() const;
-
 private:
     std::ifstream file;
     std::ifstream keyFile;

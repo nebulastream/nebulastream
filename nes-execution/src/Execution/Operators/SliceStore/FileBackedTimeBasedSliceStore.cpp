@@ -181,12 +181,13 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const uint64_t numberOfWorkerThreads,
     const PipelineId pipelineId)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
         auto slice = slicesReadLocked->find(sliceEnd)->second;
-        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, pipelineId);
+        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, numberOfWorkerThreads, pipelineId);
         return slice;
     }
     return {};
@@ -319,10 +320,11 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const uint64_t numberOfWorkerThreads,
     const SliceStoreMetaData& metaData)
 {
     const auto pipelineId = metaData.pipelineId;
-    const auto threadId = metaData.threadId;
+    const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
 
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
@@ -341,12 +343,16 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const uint64_t numberOfWorkerThreads,
     const PipelineId pipelineId)
 {
-    while (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, joinBuildSide))
+    for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
-        /// Store all tuples from file in pagedVector that belongs to threadId zero as all pagedVectors have already been combined
-        slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(0), USE_FILE_LAYOUT);
+        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, WorkerThreadId(threadId), joinBuildSide))
+        {
+            /// Store all tuples from file in pagedVector that belongs to threadId zero as all pagedVectors have already been combined
+            slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), USE_FILE_LAYOUT);
+        }
     }
 }
 
