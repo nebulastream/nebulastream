@@ -103,7 +103,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer)
+    if (emitState->outputIndex >= getMaxRecordsPerBuffer())
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
@@ -115,7 +115,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
+    getMemoryProvider().writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
@@ -148,10 +148,20 @@ void EmitPhysicalOperator::emitRecordBuffer(
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : operatorHandlerIndex(operatorHandlerIndex)
-    , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
-    , memoryProvider(std::move(memoryProvider))
+    : PhysicalOperator(std::move(memoryProvider))
+    , operatorHandlerIndex(operatorHandlerIndex)
 {
 }
+
+std::unique_ptr<Operator> DefaultEmitPhysicalOperator::clone() const
+{
+    return std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, memoryProvider->clone());
+}
+
+[[nodiscard]] uint64_t DefaultEmitPhysicalOperator::getMaxRecordsPerBuffer() const
+{
+    return memoryProvider->getMemoryLayout().getCapacity();
+}
+
 
 }
