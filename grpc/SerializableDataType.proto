@@ -36,9 +36,7 @@ message SerializableDataType {
     }
 
     Type type = 1;
-    // field for custom type properties
     uint32 sizeInBits = 2;
-    bool isSigned = 3;
   }
   SerializablePhysicalDataType physicalType = 1;
 }
