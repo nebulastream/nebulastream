@@ -40,7 +40,7 @@ public:
     {
         auto getRandomBasicType = [](const unsigned long rndPos)
         {
-            const auto& values = magic_enum::enum_values<PhysicalType::Type>();
+            const auto& values = magic_enum::enum_values<DataType::Type>();
             std::uniform_int_distribution<unsigned long>(0, values.size() - 1);
             return values[rndPos % values.size()];
         };
@@ -88,7 +88,7 @@ TEST_F(SchemaTest, addFieldTest)
 {
     {
         /// Adding one field
-        for (const auto& basicTypeVal : magic_enum::enum_values<PhysicalType::Type>())
+        for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
             Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
@@ -128,7 +128,7 @@ TEST_F(SchemaTest, replaceFieldTest)
 {
     {
         /// Replacing one field with a random one
-        for (const auto& basicTypeVal : magic_enum::enum_values<PhysicalType::Type>())
+        for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
             Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
@@ -191,7 +191,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
 {
     {
         /// Calculating the schema size for each data type
-        for (const auto& basicTypeVal : magic_enum::enum_values<PhysicalType::Type>())
+        for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
             Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
@@ -200,12 +200,12 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal));
-            ASSERT_EQ(testSchema.sizeOfSchemaInBytes, DataTypeProvider::provideDataType(basicTypeVal).physicalType.getSizeInBytes());
+            ASSERT_EQ(testSchema.sizeOfSchemaInBytes, DataTypeProvider::provideDataType(basicTypeVal).getSizeInBytes());
         }
     }
 
     {
-        using enum NES::PhysicalType::Type;
+        using enum NES::DataType::Type;
         /// Calculating the schema size for multiple fields
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                               .addField("field1", UINT8)
@@ -219,7 +219,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
 
 TEST_F(SchemaTest, containsTest)
 {
-    using enum NES::PhysicalType::Type;
+    using enum NES::DataType::Type;
     {
         /// Checking contains for one fieldName
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", UINT8);
@@ -246,7 +246,7 @@ TEST_F(SchemaTest, containsTest)
 
 TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
 {
-    using enum PhysicalType::Type;
+    using enum DataType::Type;
 
     /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
@@ -264,7 +264,7 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
 
 TEST_F(SchemaTest, getSourceNameQualifierTest)
 {
-    using enum NES::PhysicalType::Type;
+    using enum NES::DataType::Type;
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
     auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
@@ -280,8 +280,8 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 TEST_F(SchemaTest, copyTest)
 {
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                                .addField("field1", PhysicalType::Type::UINT8)
-                                .addField("field2", PhysicalType::Type::UINT16);
+                                .addField("field1", DataType::Type::UINT8)
+                                .addField("field2", DataType::Type::UINT16);
     const auto testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.sizeOfSchemaInBytes, testSchemaCopy.sizeOfSchemaInBytes);

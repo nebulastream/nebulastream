@@ -49,13 +49,13 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "1");
-        pred2 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "2");
-        pred3 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "3");
-        pred4 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "4");
-        pred5 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "5");
-        pred6 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "6");
-        pred7 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "7");
+        pred1 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "1");
+        pred2 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "2");
+        pred3 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "3");
+        pred4 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "4");
+        pred5 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "5");
+        pred6 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "6");
+        pred7 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), "7");
 
         sourceOp1 = std::make_shared<SourceNameLogicalOperator>("test_source_1", getNextOperatorId());
         sourceOp2 = std::make_shared<SourceNameLogicalOperator>("test_source_2", getNextOperatorId());

@@ -50,7 +50,7 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class DynamicField
 {
 public:
-    explicit DynamicField(const uint8_t* address, PhysicalType physicalType);
+    explicit DynamicField(const uint8_t* address, DataType physicalType);
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
@@ -59,7 +59,7 @@ public:
     requires IsNesType<Type> && std::is_pointer<Type>::value
     [[nodiscard]] Type read() const
     {
-        if (not physicalType.isSamePhysicalType<Type>())
+        if (not physicalType.isSameDataType<Type>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -74,7 +74,7 @@ public:
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
     [[nodiscard]] Type& read() const
     {
-        if (not physicalType.isSamePhysicalType<Type>())
+        if (not physicalType.isSameDataType<Type>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -90,7 +90,7 @@ public:
     inline Type read() const
     {
         // if (!Util::instanceOf<typename Type::Underlying>(physicalType))
-        if (not physicalType.isSamePhysicalType<typename Type::Underlying>())
+        if (not physicalType.isSameDataType<typename Type::Underlying>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -105,7 +105,7 @@ public:
     requires(IsNesType<Type>)
     void write(Type value)
     {
-        if (not physicalType.isSamePhysicalType<Type>())
+        if (not physicalType.isSameDataType<Type>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -121,7 +121,7 @@ public:
     void write(Type value)
     {
         // if (not Util::instanceOf<typename Type::Underlying>(physicalType))
-        if (not physicalType.isSamePhysicalType<typename Type::Underlying>())
+        if (not physicalType.isSameDataType<typename Type::Underlying>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -138,13 +138,13 @@ public:
 
     bool operator!=(const DynamicField& rhs) const;
 
-    [[nodiscard]] const PhysicalType& getPhysicalType() const;
+    [[nodiscard]] const DataType& getPhysicalType() const;
 
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 
 private:
     const uint8_t* address;
-    PhysicalType physicalType;
+    DataType physicalType;
 };
 
 /// The DynamicRecords allows to read individual fields of a tuple.

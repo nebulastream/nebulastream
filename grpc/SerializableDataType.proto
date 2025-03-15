@@ -16,29 +16,24 @@ syntax = "proto3";
 import "google/protobuf/any.proto";
 package NES;
 message SerializableDataType {
-  message SerializablePhysicalDataType {
-    // Enum do identify the data type
-    enum Type {
-        UINT8 = 0;
-        UINT16 = 1;
-        UINT32 = 2;
-        UINT64 = 3;
-        INT8 = 4;
-        INT16 = 5;
-        INT32 = 6;
-        INT64 = 7;
-        FLOAT32 = 8;
-        FLOAT64 = 9;
-        BOOLEAN = 10;
-        CHAR = 11;
-        UNDEFINED = 12;
-        VARSIZED = 13;
-    }
-
-    Type type = 1;
-    // field for custom type properties
-    uint32 sizeInBits = 2;
-    bool isSigned = 3;
+  // Enum do identify the data type
+  enum Type {
+      UINT8 = 0;
+      UINT16 = 1;
+      UINT32 = 2;
+      UINT64 = 3;
+      INT8 = 4;
+      INT16 = 5;
+      INT32 = 6;
+      INT64 = 7;
+      FLOAT32 = 8;
+      FLOAT64 = 9;
+      BOOLEAN = 10;
+      CHAR = 11;
+      UNDEFINED = 12;
+      VARSIZED = 13;
   }
-  SerializablePhysicalDataType physicalType = 1;
+
+  Type type = 1;
+  uint32 sizeInBits = 2;
 }

@@ -34,58 +34,58 @@ namespace NES
 
 /// TODO #391: Use std::from_chars to check value for data type validity
 FunctionItem::FunctionItem(int8_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT8), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint8_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT8), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT8), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int16_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT16), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT16), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint16_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT16), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int32_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT32), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint32_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT32), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int64_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::INT64), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint64_t value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(float value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::FLOAT32), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(double value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::FLOAT64), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(bool value)
     : FunctionItem(NodeFunctionConstantValue::create(
-          DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN), std::to_string(static_cast<int>(value))))
+          DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), std::to_string(static_cast<int>(value))))
 {
 }
 
@@ -123,7 +123,7 @@ FunctionItem Attribute(std::string fieldName)
     return {NodeFunctionFieldAccess::create(std::move(fieldName))};
 }
 
-FunctionItem Attribute(std::string fieldName, const PhysicalType::Type type)
+FunctionItem Attribute(std::string fieldName, const DataType::Type type)
 {
     return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), std::move(fieldName))};
 }

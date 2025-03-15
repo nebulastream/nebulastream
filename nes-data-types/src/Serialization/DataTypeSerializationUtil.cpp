@@ -29,14 +29,10 @@ namespace NES
 
 SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataType& dataType, SerializableDataType* serializedDataType)
 {
-    auto serializedPhysicalDataType = SerializableDataType_SerializablePhysicalDataType().New();
-    auto serializedPhysicalTypeEnum = SerializableDataType_SerializablePhysicalDataType_Type();
-    SerializableDataType_SerializablePhysicalDataType_Type_Parse(
-        magic_enum::enum_name(dataType.physicalType.type), &serializedPhysicalTypeEnum);
-    serializedPhysicalDataType->set_type(serializedPhysicalTypeEnum);
-    serializedPhysicalDataType->set_sizeinbits(dataType.physicalType.sizeInBits);
-    serializedPhysicalDataType->set_issigned(dataType.physicalType.isSigned);
-    serializedDataType->set_allocated_physicaltype(serializedPhysicalDataType);
+    auto serializedPhysicalTypeEnum = SerializableDataType_Type();
+    SerializableDataType_Type_Parse(magic_enum::enum_name(dataType.type), &serializedPhysicalTypeEnum);
+    serializedDataType->set_type(serializedPhysicalTypeEnum);
+    serializedDataType->set_sizeinbits(dataType.sizeInBits);
     NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType, serializedDataType->SerializeAsString());
     return serializedDataType;
 }
@@ -44,11 +40,9 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
 DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
     NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
-    DataType deserializedDataType;
-    deserializedDataType.physicalType = PhysicalType{
-        .type = magic_enum::enum_value<PhysicalType::Type>(serializedDataType.physicaltype().type()),
-        .sizeInBits = serializedDataType.physicaltype().sizeinbits(),
-        .isSigned = serializedDataType.physicaltype().issigned()};
+    DataType deserializedDataType = DataType{
+        .type = magic_enum::enum_value<DataType::Type>(serializedDataType.type()),
+        .sizeInBits = serializedDataType.sizeinbits()};
 
     // if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)
     return deserializedDataType;

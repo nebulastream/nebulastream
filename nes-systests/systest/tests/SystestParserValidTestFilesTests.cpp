@@ -45,22 +45,22 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
     SystestParser::SLTSource expextedSLTSource = {
-        .name = "e123", .fields = {{DataTypeProvider::provideDataType(PhysicalType::Type::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
+        .name = "e123", .fields = {{DataTypeProvider::provideDataType(DataType::Type::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
     SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
-           = {{DataTypeProvider::provideDataType(PhysicalType::Type::INT8), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::UINT8), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::INT16), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::INT32), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::UINT32), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::INT64), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN), "i"},
-              {DataTypeProvider::provideDataType(PhysicalType::Type::CHAR), "i"}},
+           = {{DataTypeProvider::provideDataType(DataType::Type::INT8), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::UINT8), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::INT16), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::UINT16), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::INT32), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::UINT32), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::INT64), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::FLOAT32), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::UINT64), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::FLOAT64), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "i"},
+              {DataTypeProvider::provideDataType(DataType::Type::CHAR), "i"}},
            .csvFilePath = "xyz.txt"};
 
     SystestParser parser{};
@@ -80,9 +80,9 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "id"},
-           {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "value"},
-           {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "timestamp"}};
+        = {{DataTypeProvider::provideDataType(DataType::Type::UINT64), "id"},
+           {DataTypeProvider::provideDataType(DataType::Type::UINT64), "value"},
+           {DataTypeProvider::provideDataType(DataType::Type::UINT64), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
@@ -142,9 +142,9 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "id"},
-           {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "value"},
-           {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "timestamp"}};
+        = {{DataTypeProvider::provideDataType(DataType::Type::UINT64), "id"},
+           {DataTypeProvider::provideDataType(DataType::Type::UINT64), "value"},
+           {DataTypeProvider::provideDataType(DataType::Type::UINT64), "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",

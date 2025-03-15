@@ -52,9 +52,9 @@ public:
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT8)
-                              .addField("t3", PhysicalType::Type::UINT8);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT8)
+                              .addField("t3", DataType::Type::UINT8);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -67,9 +67,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -91,9 +91,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -118,9 +118,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -155,9 +155,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -195,9 +195,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -247,9 +247,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -272,9 +272,9 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
 TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -314,9 +314,9 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 TEST_F(RowMemoryLayoutTest, getFieldOffset)
 {
     const auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                            .addField("t1", PhysicalType::Type::UINT8)
-                            .addField("t2", PhysicalType::Type::UINT8)
-                            .addField("t3", PhysicalType::Type::UINT8);
+                            .addField("t1", DataType::Type::UINT8)
+                            .addField("t2", DataType::Type::UINT8)
+                            .addField("t3", DataType::Type::UINT8);
     const auto columnLayout = RowLayout::create(schema, bufferManager->getBufferSize());
 
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
@@ -326,9 +326,9 @@ TEST_F(RowMemoryLayoutTest, getFieldOffset)
 TEST_F(RowMemoryLayoutTest, deepCopy)
 {
     const auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                            .addField("t1", PhysicalType::Type::UINT8)
-                            .addField("t2", PhysicalType::Type::UINT8)
-                            .addField("t3", PhysicalType::Type::UINT8);
+                            .addField("t1", DataType::Type::UINT8)
+                            .addField("t2", DataType::Type::UINT8)
+                            .addField("t3", DataType::Type::UINT8);
     auto rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
 
     const auto deepCopy = std::dynamic_pointer_cast<RowLayout>(rowLayout->deepCopy());
@@ -337,7 +337,7 @@ TEST_F(RowMemoryLayoutTest, deepCopy)
     ASSERT_EQ(*deepCopy, *rowLayout);
 
     /// checking if changing the schema does not affect the deep copy
-    const auto schema2 = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("r1", PhysicalType::Type::UINT8);
+    const auto schema2 = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("r1", DataType::Type::UINT8);
     rowLayout = RowLayout::create(schema2, bufferManager->getBufferSize());
 
     ASSERT_NE(deepCopy->getSchema(), rowLayout->getSchema());

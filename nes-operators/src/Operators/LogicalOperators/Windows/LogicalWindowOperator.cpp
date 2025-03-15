@@ -116,8 +116,8 @@ bool LogicalWindowOperator::inferSchema()
         // Todo: can we simply access the value here?
         windowMetaData.windowStartFieldName = newQualifierForSystemField.value() + "$start";
         windowMetaData.windowEndFieldName = newQualifierForSystemField.value() + "$end";
-        outputSchema.addField(windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
-        outputSchema.addField(windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
+        outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
+        outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {

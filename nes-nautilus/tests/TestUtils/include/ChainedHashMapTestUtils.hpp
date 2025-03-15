@@ -76,8 +76,8 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<PhysicalType::Type>& keyTypes,
-        const std::vector<PhysicalType::Type>& valueTypes,
+        const std::vector<DataType::Type>& keyTypes,
+        const std::vector<DataType::Type>& valueTypes,
         Nautilus::Configurations::NautilusBackend backend);
 
     std::string compareExpectedWithActual(

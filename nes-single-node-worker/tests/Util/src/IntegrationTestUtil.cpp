@@ -62,10 +62,10 @@ namespace NES::IntegrationTestUtil
 
     auto getPhysicalTypes = [](Schema schema)
     {
-        std::vector<PhysicalType> retVector;
+        std::vector<DataType> retVector;
         for (const auto& field : schema.getFields())
         {
-            retVector.push_back(field.dataType.physicalType);
+            retVector.push_back(field.dataType);
         }
 
         return retVector;
@@ -135,51 +135,51 @@ void writeFieldValueToTupleBuffer(
 
     INVARIANT(!inputString.empty(), "Input string for parsing is empty");
     /// TODO #371 replace with csv parsing library
-    switch (dataType.physicalType.type)
+    switch (dataType.type)
     {
-        case NES::PhysicalType::Type::INT8: {
+        case NES::DataType::Type::INT8: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::INT16: {
+        case NES::DataType::Type::INT16: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::INT32: {
+        case NES::DataType::Type::INT32: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::INT64: {
+        case NES::DataType::Type::INT64: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::UINT8: {
+        case NES::DataType::Type::UINT8: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::UINT16: {
+        case NES::DataType::Type::UINT16: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::UINT32: {
+        case NES::DataType::Type::UINT32: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::UINT64: {
+        case NES::DataType::Type::UINT64: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::FLOAT32: {
+        case NES::DataType::Type::FLOAT32: {
             auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
             tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
             break;
         }
-        case NES::PhysicalType::Type::FLOAT64: {
+        case NES::DataType::Type::FLOAT64: {
             auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
             tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
             break;
         }
-        case NES::PhysicalType::Type::CHAR: {
+        case NES::DataType::Type::CHAR: {
             ///verify that only a single char was transmitted
             if (inputString.size() > 1)
             {
@@ -191,18 +191,18 @@ void writeFieldValueToTupleBuffer(
             tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
             break;
         }
-        case NES::PhysicalType::Type::BOOLEAN: {
+        case NES::DataType::Type::BOOLEAN: {
             tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
             break;
         }
-        case NES::PhysicalType::Type::VARSIZED: {
+        case NES::DataType::Type::VARSIZED: {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
                 inputString);
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
         }
-        case NES::PhysicalType::Type::UNDEFINED:
+        case NES::DataType::Type::UNDEFINED:
             NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
         default:
             throw NotImplemented();

@@ -65,10 +65,10 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSiz
     for (size_t fieldIndex = 0; fieldIndex < this->schema.getNumberOfFields(); fieldIndex++)
     {
         const auto field = this->schema.getFieldAt(fieldIndex);
-        auto physicalFieldSizeInBytes = field.dataType.physicalType.sizeInBits / 8;
+        auto physicalFieldSizeInBytes = field.dataType.sizeInBits / 8;
         physicalFieldSizes.emplace_back(physicalFieldSizeInBytes);
         // auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.emplace_back(field.dataType.physicalType);
+        physicalTypes.emplace_back(field.dataType);
         recordSize += physicalFieldSizeInBytes;
         nameFieldIndexMap[field.name] = fieldIndex;
     }
@@ -106,7 +106,7 @@ void MemoryLayout::setBufferSize(const uint64_t bufferSize)
     MemoryLayout::bufferSize = bufferSize;
 }
 
-PhysicalType MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
+DataType MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
 {
     return physicalTypes[fieldIndex];
 }

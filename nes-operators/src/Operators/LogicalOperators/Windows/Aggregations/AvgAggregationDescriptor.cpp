@@ -92,11 +92,11 @@ DataType AvgAggregationDescriptor::getInputStamp()
 }
 DataType AvgAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED);
+    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
 }
 DataType AvgAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
+    return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
 }
 
 }

@@ -30,8 +30,8 @@ class SumAggregationFunction : public AggregationFunction
 {
 public:
     SumAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(

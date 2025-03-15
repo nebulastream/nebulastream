@@ -25,6 +25,6 @@ namespace NES::DataTypeProvider
 /// @brief Currently supported are the types BOOLEAN, CHAR, FLOAT32, FLOAT64, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, VARSIZED and UNDEFINED.
 /// Throws a runtime error, if the name does not match any of the mentioned data types.
 DataType provideDataType(const std::string& type);
+DataType provideDataType(DataType::Type type);
 
-DataType provideDataType(PhysicalType::Type type);
 }

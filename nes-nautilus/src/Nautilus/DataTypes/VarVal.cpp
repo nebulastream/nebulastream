@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
-
+#include <magic_enum/magic_enum.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
@@ -88,44 +88,44 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(PhysicalType::Type type) const
+VarVal VarVal::castToType(DataType::Type type) const
 {
     switch (type)
     {
-        case PhysicalType::Type::BOOLEAN: {
+        case DataType::Type::BOOLEAN: {
             return {cast<nautilus::val<bool>>()};
         };
-        case PhysicalType::Type::INT8: {
+        case DataType::Type::INT8: {
             return {cast<nautilus::val<int8_t>>()};
         };
-        case PhysicalType::Type::INT16: {
+        case DataType::Type::INT16: {
             return {cast<nautilus::val<int16_t>>()};
         };
-        case PhysicalType::Type::INT32: {
+        case DataType::Type::INT32: {
             return {cast<nautilus::val<int32_t>>()};
         };
-        case PhysicalType::Type::INT64: {
+        case DataType::Type::INT64: {
             return {cast<nautilus::val<int64_t>>()};
         };
-        case PhysicalType::Type::UINT8: {
+        case DataType::Type::UINT8: {
             return {cast<nautilus::val<uint8_t>>()};
         };
-        case PhysicalType::Type::UINT16: {
+        case DataType::Type::UINT16: {
             return {cast<nautilus::val<uint16_t>>()};
         };
-        case PhysicalType::Type::UINT32: {
+        case DataType::Type::UINT32: {
             return {cast<nautilus::val<uint32_t>>()};
         };
-        case PhysicalType::Type::UINT64: {
+        case DataType::Type::UINT64: {
             return {cast<nautilus::val<uint64_t>>()};
         };
-        case PhysicalType::Type::FLOAT32: {
+        case DataType::Type::FLOAT32: {
             return {cast<nautilus::val<float>>()};
         };
-        case PhysicalType::Type::FLOAT64: {
+        case DataType::Type::FLOAT64: {
             return {cast<nautilus::val<double>>()};
         };
-        case PhysicalType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED: {
             return cast<VariableSizedData>();
         }
         default: {
@@ -134,41 +134,41 @@ VarVal VarVal::castToType(PhysicalType::Type type) const
     }
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, PhysicalType::Type type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType::Type type)
 {
     switch (type)
     {
-        case PhysicalType::Type::BOOLEAN: {
+        case DataType::Type::BOOLEAN: {
             return {Util::readValueFromMemRef<bool>(memRef)};
         };
-        case PhysicalType::Type::INT8: {
+        case DataType::Type::INT8: {
             return {Util::readValueFromMemRef<int8_t>(memRef)};
         };
-        case PhysicalType::Type::INT16: {
+        case DataType::Type::INT16: {
             return {Util::readValueFromMemRef<int16_t>(memRef)};
         };
-        case PhysicalType::Type::INT32: {
+        case DataType::Type::INT32: {
             return {Util::readValueFromMemRef<int32_t>(memRef)};
         };
-        case PhysicalType::Type::INT64: {
+        case DataType::Type::INT64: {
             return {Util::readValueFromMemRef<int64_t>(memRef)};
         };
-        case PhysicalType::Type::UINT8: {
+        case DataType::Type::UINT8: {
             return {Util::readValueFromMemRef<uint8_t>(memRef)};
         };
-        case PhysicalType::Type::UINT16: {
+        case DataType::Type::UINT16: {
             return {Util::readValueFromMemRef<uint16_t>(memRef)};
         };
-        case PhysicalType::Type::UINT32: {
+        case DataType::Type::UINT32: {
             return {Util::readValueFromMemRef<uint32_t>(memRef)};
         };
-        case PhysicalType::Type::UINT64: {
+        case DataType::Type::UINT64: {
             return {Util::readValueFromMemRef<uint64_t>(memRef)};
         };
-        case PhysicalType::Type::FLOAT32: {
+        case DataType::Type::FLOAT32: {
             return {Util::readValueFromMemRef<float>(memRef)};
         };
-        case PhysicalType::Type::FLOAT64: {
+        case DataType::Type::FLOAT64: {
             return {Util::readValueFromMemRef<double>(memRef)};
         };
         default: {

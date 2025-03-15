@@ -75,32 +75,32 @@ void logProxy(const char* message, const LogLevel logLevel);
     } while (0)
 
 
-VarVal createNautilusMinValue(PhysicalType::Type physicalType);
-VarVal createNautilusMaxValue(PhysicalType::Type physicalType);
+VarVal createNautilusMinValue(DataType::Type physicalType);
+VarVal createNautilusMaxValue(DataType::Type physicalType);
 template <typename T>
-static VarVal createNautilusConstValue(T value, PhysicalType::Type physicalType)
+static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
 {
     switch (physicalType)
     {
-        case PhysicalType::Type::INT8:
+        case DataType::Type::INT8:
             return Nautilus::VarVal(nautilus::val<int8_t>(value));
-        case PhysicalType::Type::INT16:
+        case DataType::Type::INT16:
             return Nautilus::VarVal(nautilus::val<int16_t>(value));
-        case PhysicalType::Type::INT32:
+        case DataType::Type::INT32:
             return Nautilus::VarVal(nautilus::val<int32_t>(value));
-        case PhysicalType::Type::INT64:
+        case DataType::Type::INT64:
             return Nautilus::VarVal(nautilus::val<int64_t>(value));
-        case PhysicalType::Type::UINT8:
+        case DataType::Type::UINT8:
             return Nautilus::VarVal(nautilus::val<uint8_t>(value));
-        case PhysicalType::Type::UINT16:
+        case DataType::Type::UINT16:
             return Nautilus::VarVal(nautilus::val<uint16_t>(value));
-        case PhysicalType::Type::UINT32:
+        case DataType::Type::UINT32:
             return Nautilus::VarVal(nautilus::val<uint32_t>(value));
-        case PhysicalType::Type::UINT64:
+        case DataType::Type::UINT64:
             return Nautilus::VarVal(nautilus::val<uint64_t>(value));
-        case PhysicalType::Type::FLOAT32:
+        case DataType::Type::FLOAT32:
             return Nautilus::VarVal(nautilus::val<float>(value));
-        case PhysicalType::Type::FLOAT64:
+        case DataType::Type::FLOAT64:
             return Nautilus::VarVal(nautilus::val<double>(value));
         default: {
             throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
