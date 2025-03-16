@@ -47,18 +47,15 @@ public:
 TEST_P(NumericTypeConversionTest, SimpleTest)
 {
     auto [leftParam, rightParam, resultParam] = GetParam();
-    (void)leftParam;
-    (void)rightParam;
-    std::cout << fmt::format("the pType: {}", resultParam) << std::endl;
-    // auto join = [](const DataType::Type left, const DataType::Type right)
-    // { return DataTypeProvider::provideDataType(left).join(DataTypeProvider::provideDataType(right)); };
-    //
-    // const auto leftRight = join(leftParam, rightParam);
-    // const auto rightLeft = join(rightParam, leftParam);
-    // NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(leftParam), magic_enum::enum_name(rightParam), leftRight);
-    // NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(rightParam), magic_enum::enum_name(leftParam), rightLeft);
-    // EXPECT_TRUE(leftRight == resultParam);
-    // EXPECT_TRUE(rightLeft == resultParam);
+    auto join = [](const DataType::Type left, const DataType::Type right)
+    { return DataTypeProvider::provideDataType(left).join(DataTypeProvider::provideDataType(right)); };
+
+    const auto leftRight = join(leftParam, rightParam);
+    const auto rightLeft = join(rightParam, leftParam);
+    NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(leftParam), magic_enum::enum_name(rightParam), leftRight);
+    NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(rightParam), magic_enum::enum_name(leftParam), rightLeft);
+    EXPECT_TRUE(leftRight == resultParam);
+    EXPECT_TRUE(rightLeft == resultParam);
 }
 
 /// This tests the join operation for all possible combinations of basic types
