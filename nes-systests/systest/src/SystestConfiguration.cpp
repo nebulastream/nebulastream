@@ -17,17 +17,17 @@
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 
-std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfiguration::getOptions()
-{
-    return {
-        &testsDiscoverDir,
-        &directlySpecifiedTestFiles,
-        &testFileExtension,
-        &workingDir,
-        &randomQueryOrder,
-        &numberConcurrentQueries,
-        &testGroups,
-        &testDataDir,
-        &excludeGroups,
-        &grpcAddressUri};
-}
+// std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfiguration::getOptions()
+// {
+//     return {
+//         &testsDiscoverDir,
+//         &directlySpecifiedTestFiles,
+//         &testFileExtension,
+//         &workingDir,
+//         &randomQueryOrder,
+//         &numberConcurrentQueries,
+//         &testGroups,
+//         &testDataDir,
+//         &excludeGroups,
+//         &grpcAddressUri};
+// }

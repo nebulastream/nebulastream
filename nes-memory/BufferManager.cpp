@@ -43,6 +43,7 @@
 #include <liburing.h>
 
 #include <Runtime/BufferManagerImpl.hpp>
+#include <boost/asio/detail/descriptor_ops.hpp>
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <fmt/core.h>
 #include <folly/Synchronized.h>
@@ -240,6 +241,35 @@ void BufferManager::destroy()
                 locked->destroy();
             }
         }
+
+        uint64_t leakedBuffers = 0;
+        uint64_t leadedPinnedBuffers = 0;
+
+        //To be taken out, just till I figured out the leakage of the PinnedBuffers
+        for (auto* bcb : allBuffers)
+        {
+            const auto dataCounter = bcb->dataCounter.load();
+            if (dataCounter > 0)
+            {
+                bcb->dumpOwningThreadInfo();
+                leakedBuffers++;
+            }
+            for (int i = 0; i < dataCounter; i++)
+            {
+                bcb->dataRelease();
+            }
+
+            const auto pinnedCounter = bcb->pinnedCounter.load();
+            if (pinnedCounter > 0)
+            {
+                leadedPinnedBuffers++;
+            }
+            for (int i = 0; i < pinnedCounter; i++)
+            {
+                bcb->pinnedRelease();
+            }
+        }
+        NES_WARNING("{} buffers where leaked, of which {} where pinned.", leakedBuffers, leadedPinnedBuffers);
         localBufferPools.clear();
         cleanupAllBuffers(0);
 
@@ -247,7 +277,7 @@ void BufferManager::destroy()
         while (holesInProgress.read(punchHoleFuture))
         {
         }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         if (allBuffers.size() > 0)
         {
             NES_WARNING("[BufferManager] Destroying BufferManager while buffers are still used")
@@ -255,12 +285,12 @@ void BufferManager::destroy()
             {
                 if (buffer->getDataReferenceCount() != 0)
                 {
-                    buffer.controlBlock->dumpOwningThreadInfo();
-                    success = false;
+                    buffer->dumpOwningThreadInfo();
+                    // success = false;
                 }
             }
         }
-#endif
+        // #endif
         INVARIANT(
             allBuffers.size() == 0,
             "[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers={}",

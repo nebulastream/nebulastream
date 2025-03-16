@@ -27,13 +27,13 @@
 #include <Runtime/DataSegment.hpp>
 #include <Time/Timestamp.hpp>
 
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <deque>
     #include <mutex>
     #include <thread>
     #include <unordered_map>
     #include <cpptrace.hpp>
-#endif
+// #endif
 
 
 namespace NES::Memory
@@ -188,9 +188,9 @@ public:
     template <SharedBCBLock Lock>
     std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, Lock& lock) const noexcept;
 
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
-#endif
+// #endif
 
 private:
     //>= 1 buffer is pinned
@@ -228,7 +228,7 @@ private:
     std::atomic_flag clockReference = false;
     std::atomic_flag isRepinning = false;
 
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 private:
     class ThreadOwnershipInfo
     {
@@ -255,7 +255,7 @@ private:
     };
     std::mutex owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
-#endif
+// #endif
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
 static_assert(alignof(BufferControlBlock) % 64 == 0);

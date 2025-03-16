@@ -75,7 +75,7 @@ protected:
             &workingDir,
             &randomQueryOrder,
             &numberConcurrentQueries,
-            &testGroup,
+            &testGroups,
             &grpcAddressUri,
             &endlessMode};
     }

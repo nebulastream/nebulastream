@@ -22,7 +22,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <ChainedHashMapCustomValueTestUtils.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
@@ -34,7 +34,7 @@ namespace NES::Nautilus::TestUtils
 {
 
 nautilus::engine::
-    CallableFunction<void, Memory::TupleBuffer*, Memory::TupleBuffer*, uint64_t, Memory::AbstractBufferProvider*, Interface::HashMap*>
+    CallableFunction<void, Memory::PinnedBuffer*, Memory::PinnedBuffer*, uint64_t, Memory::AbstractBufferProvider*, Interface::HashMap*>
     ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
         const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
@@ -42,8 +42,8 @@ nautilus::engine::
     /// Resharper disable once CppPassValueParameterByConstReference
     return nautilusEngine->registerFunction(std::function(
         [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> bufferKey,
-            nautilus::val<Memory::TupleBuffer*> bufferValue,
+            nautilus::val<Memory::PinnedBuffer*> bufferKey,
+            nautilus::val<Memory::PinnedBuffer*> bufferValue,
             nautilus::val<uint64_t> keyPositionVal,
             nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
             nautilus::val<Interface::HashMap*> hashMapVal)
@@ -80,7 +80,7 @@ nautilus::engine::
 }
 
 nautilus::engine::
-    CallableFunction<void, Memory::TupleBuffer*, uint64_t, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, Interface::HashMap*>
+    CallableFunction<void, Memory::PinnedBuffer*, uint64_t, Memory::PinnedBuffer*, Memory::AbstractBufferProvider*, Interface::HashMap*>
     ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
         const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
@@ -89,9 +89,9 @@ nautilus::engine::
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> keyBufferRef,
+            nautilus::val<Memory::PinnedBuffer*> keyBufferRef,
             nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<Memory::TupleBuffer*> outputBufferRef,
+            nautilus::val<Memory::PinnedBuffer*> outputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
             nautilus::val<Interface::HashMap*> hashMapVal)
         {
@@ -108,7 +108,7 @@ nautilus::engine::
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record);
+                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }

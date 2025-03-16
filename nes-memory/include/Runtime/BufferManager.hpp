@@ -99,9 +99,9 @@ private:
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
     static constexpr auto DEFAULT_CHECKS_ADDED_PER_NEW_BUFFER = 2;
-    static constexpr auto DEFAULT_BUFFER_CHECKS_THRESHOLD = 128;
+    static constexpr auto DEFAULT_BUFFER_CHECKS_THRESHOLD = 512;
     static constexpr auto DEFAULT_URING_RING_SIZE = 1024*4;
-    static constexpr auto DEFAULT_SPILL_BATCH_SIZE = 128;
+    static constexpr auto DEFAULT_SPILL_BATCH_SIZE = 256;
     static constexpr auto DEFAULT_MAX_ZERO_WRITE_ROUNDS = 32;
     static constexpr auto DEFAULT_MAX_CONCURRENT_MEMORY_REQS = DEFAULT_URING_RING_SIZE;
     static constexpr auto DEFAULT_MAX_CONCURRENT_READ_SUBMISSIONS = DEFAULT_URING_RING_SIZE;

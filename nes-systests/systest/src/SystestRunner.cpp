@@ -273,7 +273,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     }
                     worker.startQuery(queryId);
 
-                    const RunningQuery runningQuery = {query, QueryId(queryId)};
+                    const RunningQuery runningQuery = {query, QueryId(queryId), {}};
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.blockingWrite(std::move(runningQueryPtr));
                     queriesToResultCheck.fetch_add(1);

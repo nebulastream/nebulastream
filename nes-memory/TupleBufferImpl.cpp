@@ -22,8 +22,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
 #include <magic_enum/magic_enum_iostream.hpp>
+#include <ErrorHandling.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <mutex>
@@ -41,17 +41,33 @@ namespace detail
 /// ------------------ Core Mechanism for Buffer recycling ----------------------
 /// -----------------------------------------------------------------------------
 
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+/**
+ * @brief This function collects the thread name and the callstack of the calling thread
+ * @param threadName
+ * @param callstack
+ */
+void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& callstack)
+{
+    std::stringbuf threadNameBuffer;
+    std::ostream os1(&threadNameBuffer);
+    os1 << std::this_thread::get_id();
+
+    threadName = threadNameBuffer.str();
+    callstack = cpptrace::raw_trace::current(1);
+}
+// #endif
 
 BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
     : data(inMemorySegment), owningBufferRecycler(recycler)
 {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer and track which function obtained the buffer
     std::unique_lock lock(owningThreadsMutex);
     ThreadOwnershipInfo info;
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
+// #endif
 }
 
 // BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) : data(that.data.load())
@@ -110,32 +126,16 @@ void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
 }
 
 
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-/**
- * @brief This function collects the thread name and the callstack of the calling thread
- * @param threadName
- * @param callstack
- */
-void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& callstack)
-{
-    std::stringbuf threadNameBuffer;
-    std::ostream os1(&threadNameBuffer);
-    os1 << std::this_thread::get_id();
-
-    threadName = threadNameBuffer.str();
-    callstack = cpptrace::raw_trace::current(1);
-}
-#endif
 
 BufferControlBlock* BufferControlBlock::pinnedRetain()
 {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer (shared) and track which function increased the counter of the buffer
     std::unique_lock lock(owningThreadsMutex);
     ThreadOwnershipInfo info;
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
+// #endif
 
     //Spin over pinnedCounter, only increase it by one if it is 0 or more, because -1 means the data segment is being modified
     //and might become invalid
@@ -195,21 +195,52 @@ void BufferControlBlock::markRepinningDone() noexcept
     isRepinning.clear();
 }
 
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo()
 {
     std::unique_lock lock(owningThreadsMutex);
-    NES_FATAL_ERROR("Buffer {} has {} live references", fmt::ptr(getData()), referenceCounter.load());
+    if (auto inMemorySegment = data.load().get<InMemoryLocation>())
+    {
+        NES_FATAL_ERROR(
+            "Buffer {} has {} live data references and {} pinned references",
+            fmt::ptr(inMemorySegment->getLocation().getPtr()),
+            dataCounter.load(),
+            pinnedCounter.load());
+    }
+    else
+    {
+        NES_FATAL_ERROR(
+            "Buffer on file {} with offset {} has {} live data references and {} pinned references",
+            data.load().get<OnDiskLocation>().value().getLocation().getFileID(),
+            data.load().get<OnDiskLocation>().value().getLocation().getOffset(),
+            dataCounter.load(),
+            pinnedCounter.load());
+    }
     for (auto& item : owningThreads)
     {
         for (auto& v : item.second)
         {
-            NES_FATAL_ERROR(
-                "Thread {} has buffer {} requested on callstack: {}", v.threadName, fmt::ptr(getData()), v.callstack.resolve().to_string());
+            if (const auto inMemorySegment = data.load().get<InMemoryLocation>())
+            {
+                NES_FATAL_ERROR(
+                    "Thread {} has buffer {} requested on callstack: {}",
+                    v.threadName,
+                    fmt::ptr(inMemorySegment->getLocation().getPtr()),
+                    v.callstack.resolve().to_string());
+            }
+            else
+            {
+                NES_FATAL_ERROR(
+                    "Thread {} has buffer in file {} with offset {} requested on callstack: {}",
+                    v.threadName,
+                    data.load().get<OnDiskLocation>().value().getLocation().getFileID(),
+                    data.load().get<OnDiskLocation>().value().getLocation().getOffset(),
+                    v.callstack.resolve().to_string());
+            }
         }
     }
 }
-#endif
+// #endif
 
 int32_t BufferControlBlock::getPinnedReferenceCount() const noexcept
 {
@@ -226,19 +257,19 @@ bool BufferControlBlock::pinnedRelease()
     if (const uint32_t prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
     {
         skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
             owningThreads.clear();
         }
-#endif
+        // #endif
         return true;
     }
     else
     {
         INVARIANT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
     }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     {
         std::unique_lock lock(owningThreadsMutex);
         auto& v = owningThreads[std::this_thread::get_id()];
@@ -246,8 +277,14 @@ bool BufferControlBlock::pinnedRelease()
         {
             v.pop_front();
         }
+        int count = 0;
+        for (auto pair : owningThreads)
+        {
+            count += pair.second.size();
+        }
+        INVARIANT(count >= pinnedCounter.load(), "Lost trace object");
     }
-#endif
+    // #endif
     return false;
 }
 BufferControlBlock* BufferControlBlock::dataRetain()
@@ -270,31 +307,31 @@ bool BufferControlBlock::dataRelease()
         }
         children.clear();
         bufferRecycler->recycleSegment(data.exchange(emptySegment));
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-        {
-            std::unique_lock lock(owningThreadsMutex);
-            owningThreads.clear();
-        }
-#endif
+        // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        // {
+        //     std::unique_lock lock(owningThreadsMutex);
+        //     owningThreads.clear();
+        // }
+        // #endif
         return true;
     }
     else
     {
         INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
     }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    {
-        std::unique_lock lock(owningThreadsMutex);
-        auto& v = owningThreads[std::this_thread::get_id()];
-        if (!v.empty())
-        {
-            v.pop_front();
-        }
-    }
-#endif
+    // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    // {
+        // std::unique_lock lock(owningThreadsMutex);
+        // auto& v = owningThreads[std::this_thread::get_id()];
+        // if (!v.empty())
+        // {
+        //     v.pop_front();
+        // }
+    // }
+    // #endif
     return false;
 }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+// #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, cpptrace::raw_trace&& callstack)
     : threadName(threadName), callstack(callstack)
 {
@@ -305,7 +342,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 {
     /// nop
 }
-#endif
+// #endif
 
 template <bool pinned>
 RefCountedBCB<pinned> BufferControlBlock::getCounter() noexcept

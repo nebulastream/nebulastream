@@ -25,7 +25,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <gtest/gtest.h>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
@@ -42,7 +42,7 @@ void runStoreTest(
     const std::shared_ptr<Schema>& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<Memory::PinnedBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     Memory::AbstractBufferProvider& bufferManager)
 {
@@ -56,7 +56,7 @@ void runStoreTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
+        [=](nautilus::val<Memory::PinnedBuffer*> inputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
@@ -96,7 +96,7 @@ void runRetrieveTest(
     const std::shared_ptr<Schema>& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<Memory::PinnedBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     Memory::AbstractBufferProvider& bufferManager)
 {
@@ -118,7 +118,7 @@ void runRetrieveTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto readFromPagedVectorIntoTupleBuffer = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
+        [=](nautilus::val<Memory::PinnedBuffer*> outputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
@@ -128,7 +128,7 @@ void runRetrieveTest(
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {
                 auto record = *it;
-                memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record);
+                memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
                 numberOfTuples = numberOfTuples + 1;
                 recordBuffer.setNumRecords(numberOfTuples);
             }
@@ -140,13 +140,13 @@ void runRetrieveTest(
 
 
     /// Checking for correctness of the retrieved records
-    const RecordBuffer recordBufferActual(nautilus::val<Memory::TupleBuffer*>(std::addressof(outputBuffer)));
+    const RecordBuffer recordBufferActual(nautilus::val<Memory::PinnedBuffer*>(std::addressof(outputBuffer)));
     nautilus::val<uint64_t> recordBufferIndexActual = 0;
     const auto memoryProviderInputBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
     for (auto inputBuf : allRecords)
     {
-        const RecordBuffer recordBufferInput(nautilus::val<Memory::TupleBuffer*>(std::addressof(inputBuf)));
+        const RecordBuffer recordBufferInput(nautilus::val<Memory::PinnedBuffer*>(std::addressof(inputBuf)));
         for (nautilus::val<uint64_t> i = 0; i < inputBuf.getNumberOfTuples(); ++i)
         {
             auto recordActual = memoryProviderActualBuffer->readRecord(projections, recordBufferActual, recordBufferIndexActual);
@@ -172,8 +172,8 @@ void insertAndAppendAllPagesTest(
     const std::shared_ptr<Schema>& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
-    const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,
-    const std::vector<Memory::TupleBuffer>& expectedRecordsAfterAppendAll,
+    const std::vector<std::vector<Memory::PinnedBuffer>>& allRecordsAndVectors,
+    const std::vector<Memory::PinnedBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     Memory::AbstractBufferProvider& bufferManager)
