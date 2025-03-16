@@ -57,7 +57,6 @@ public:
 
     /// Public, since we need to both get and set it.
     std::shared_ptr<AttributeField> field;
-
 private:
     Type type;
     TimeUnit unit;
