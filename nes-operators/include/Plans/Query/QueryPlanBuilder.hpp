@@ -116,13 +116,6 @@ public:
         const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
-    /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-    static std::shared_ptr<QueryPlan> addBatchJoin(
-        std::shared_ptr<QueryPlan> leftQueryPlan,
-        const std::shared_ptr<QueryPlan>& rightQueryPlan,
-        const std::shared_ptr<NodeFunction>& onProbeKey,
-        const std::shared_ptr<NodeFunction>& onBuildKey);
-
     /// Adds a sink operator to the query plan
     static std::shared_ptr<QueryPlan> addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan);
     static std::shared_ptr<QueryPlan> addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId);
@@ -138,7 +131,7 @@ public:
 
 private:
     /**
-     * @brief This method checks if an NodeFunction is instance Of NodeFunctionFieldAccess for Join and BatchJoin
+     * @brief This method checks if an NodeFunction is instance Of NodeFunctionFieldAccess for Joins
      * @param function the function node to test
      * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
      * @return nodeFunction as NodeFunctionFieldAccess

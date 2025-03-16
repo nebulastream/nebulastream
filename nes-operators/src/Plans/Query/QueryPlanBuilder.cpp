@@ -28,8 +28,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -228,29 +226,6 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     auto op = std::make_shared<LogicalJoinOperator>(joinDefinition, getNextOperatorId());
     NES_INFO("Created join {}", *op, Util::as<LogicalJoinOperator>(op)->getJoinDefinition()->getWindowType()->toString());
-    leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
-    return leftQueryPlan;
-}
-
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addBatchJoin(
-    std::shared_ptr<QueryPlan> leftQueryPlan,
-    const std::shared_ptr<QueryPlan>& rightQueryPlan,
-    const std::shared_ptr<NodeFunction>& onProbeKey,
-    const std::shared_ptr<NodeFunction>& onBuildKey)
-{
-    NES_TRACE("Query: joinWith the subQuery to current query");
-    auto probeKeyFieldAccess = asNodeFunctionFieldAccess(onProbeKey, "onProbeKey");
-    auto buildKeyFieldAccess = asNodeFunctionFieldAccess(onBuildKey, "onBuildKey");
-
-    INVARIANT(rightQueryPlan, "rightQueryPlan is null");
-    INVARIANT(!rightQueryPlan->getRootOperators().empty(), "rightQueryPlan has no root operators");
-    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
-    auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
-    auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();
-
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
-
-    auto op = std::make_shared<Experimental::LogicalBatchJoinOperator>(joinDefinition, getNextOperatorId());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
