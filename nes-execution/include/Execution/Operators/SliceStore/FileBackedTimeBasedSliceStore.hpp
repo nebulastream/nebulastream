@@ -88,6 +88,7 @@ private:
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
+    /// Manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory pool used by them.
     MemoryController memCtrl;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,

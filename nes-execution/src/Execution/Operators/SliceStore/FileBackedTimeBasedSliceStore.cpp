@@ -346,11 +346,11 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const uint64_t numberOfWorkerThreads,
     const PipelineId pipelineId)
 {
+    /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
         if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, WorkerThreadId(threadId), joinBuildSide))
         {
-            /// Store all tuples from file in pagedVector that belongs to threadId zero as all pagedVectors have already been combined
             slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), USE_FILE_LAYOUT);
         }
     }

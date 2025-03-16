@@ -17,11 +17,35 @@
 namespace NES::Runtime::Execution
 {
 
-MemoryController::MemoryController(const MemoryController& other) : fileWriters(other.fileWriters)
+MemoryController::MemoryController() : readBufFlag(true), bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE)
+{
+    readBuffer.resize(bufferSize * NUM_READ_BUFFERS);
+    memoryPool.resize(bufferSize * poolSize);
+    for (size_t i = 0; i < poolSize; ++i)
+    {
+        freeBuffers.push_back(memoryPool.data() + i * bufferSize);
+    }
+}
+
+MemoryController::MemoryController(const MemoryController& other)
+    : readBuffer(other.readBuffer)
+    , readBufFlag(other.readBufFlag.load())
+    , memoryPool(other.memoryPool)
+    , freeBuffers(other.freeBuffers)
+    , bufferSize(other.bufferSize)
+    , poolSize(other.poolSize)
+    , fileWriters(other.fileWriters)
 {
 }
 
-MemoryController::MemoryController(MemoryController&& other) noexcept : fileWriters(std::move(other.fileWriters))
+MemoryController::MemoryController(MemoryController&& other) noexcept
+    : readBuffer(std::move(other.readBuffer))
+    , readBufFlag(std::move(other.readBufFlag.load()))
+    , memoryPool(std::move(other.memoryPool))
+    , freeBuffers(std::move(other.freeBuffers))
+    , bufferSize(std::move(other.bufferSize))
+    , poolSize(std::move(other.poolSize))
+    , fileWriters(std::move(other.fileWriters))
 {
 }
 
@@ -31,6 +55,12 @@ MemoryController& MemoryController::operator=(const MemoryController& other)
     {
         return *this;
     }
+    readBuffer = other.readBuffer;
+    readBufFlag = other.readBufFlag.load();
+    memoryPool = other.memoryPool;
+    freeBuffers = other.freeBuffers;
+    bufferSize = other.bufferSize;
+    poolSize = other.poolSize;
     fileWriters = other.fileWriters;
     return *this;
 }
@@ -41,6 +71,12 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     {
         return *this;
     }
+    readBuffer = std::move(other.readBuffer);
+    readBufFlag = std::move(other.readBufFlag.load());
+    memoryPool = std::move(other.memoryPool);
+    freeBuffers = std::move(other.freeBuffers);
+    bufferSize = std::move(other.bufferSize);
+    poolSize = std::move(other.poolSize);
     fileWriters = std::move(other.fileWriters);
     return *this;
 }
@@ -48,6 +84,8 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
 MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
+    std::lock_guard lock(fileWritersMutex);
+
     for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
         removeFileSystem(it);
@@ -60,30 +98,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const WorkerThreadId threadId,
     const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    std::stringstream ss;
-    ss << "memory_controller_";
-
-    switch (joinBuildSide)
-    {
-        case QueryCompilation::JoinBuildSideType::Left: {
-            ss << "left_";
-            break;
-        }
-        case QueryCompilation::JoinBuildSideType::Right: {
-            ss << "right_";
-            break;
-        }
-    }
-
-    if constexpr (USE_PIPELINE_ID)
-    {
-        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue();
-    }
-    else
-    {
-        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue();
-    }
-    return getFileWriterFromMap(ss.str());
+    return getFileWriterFromMap(constructFilePath(sliceEnd, pipelineId, threadId, joinBuildSide));
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(
@@ -92,37 +107,17 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
     const WorkerThreadId threadId,
     const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    std::stringstream ss;
-    ss << "memory_controller_";
-
-    switch (joinBuildSide)
-    {
-        case QueryCompilation::JoinBuildSideType::Left: {
-            ss << "left_";
-            break;
-        }
-        case QueryCompilation::JoinBuildSideType::Right: {
-            ss << "right_";
-            break;
-        }
-    }
-
-    if constexpr (USE_PIPELINE_ID)
-    {
-        ss << sliceEnd.getRawValue() << "_" << pipelineId.getRawValue() << "_" << threadId.getRawValue();
-    }
-    else
-    {
-        ss << sliceEnd.getRawValue() << "_" << threadId.getRawValue();
-    }
-    return getFileReaderAndEraseWriter(ss.str());
+    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, pipelineId, threadId, joinBuildSide));
 }
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineId)
 {
-    for (const auto& prefixBase : {"memory_controller_left_", "memory_controller_right_"})
+    std::lock_guard lock(fileWritersMutex);
+
+    const auto sliceEndStr = std::to_string(sliceEnd.getRawValue());
+    for (const std::string& sideStr : {"left", "right"})
     {
-        const auto prefix = prefixBase + std::to_string(sliceEnd.getRawValue()) + "_";
+        const auto prefix = "memory_controller_" + sideStr + "_" + sliceEndStr + "_";
         const auto end = fileWriters.upper_bound(prefix + "\xFF");
         auto it = fileWriters.lower_bound(prefix);
         while (it != end)
@@ -132,29 +127,51 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineI
     }
 }
 
+std::string MemoryController::constructFilePath(
+    const SliceEnd sliceEnd,
+    const PipelineId pipelineId,
+    const WorkerThreadId threadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide)
+{
+    const std::string sideStr = (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) ? "left" : "right";
+    const auto sliceEndStr = std::to_string(sliceEnd.getRawValue());
+    const auto pipelineIdStr = std::to_string(pipelineId.getRawValue());
+    const auto threadIdStr = std::to_string(threadId.getRawValue());
+
+    if constexpr (USE_PIPELINE_ID)
+    {
+        return "memory_controller_" + sideStr + "_" + sliceEndStr + "_" + pipelineIdStr + "_" + threadIdStr;
+    }
+    else
+    {
+        return "memory_controller_" + sideStr + "_" + sliceEndStr + "_" + threadIdStr;
+    }
+}
+
 std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(fileWritersMutex);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         return it->second;
     }
-    auto fileWriter = std::make_shared<FileWriter>(filePath);
+    auto fileWriter = std::make_shared<FileWriter>(
+        filePath, [this]() { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
     fileWriters[filePath] = fileWriter;
     return fileWriter;
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::string& filePath)
 {
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(fileWritersMutex);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         fileWriters.erase(it);
-        return std::make_shared<FileReader>(filePath);
+        return std::make_shared<FileReader>(filePath, [this]() { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
     }
     return nullptr;
 }
@@ -164,7 +181,29 @@ void MemoryController::removeFileSystem(const std::map<std::string, std::shared_
     /// Files are deleted in FileReader destructor
     const auto filePath = it->first;
     fileWriters.erase(it);
-    FileReader fileReader(filePath);
+    FileReader fileReader(filePath, []() { return nullptr; }, [](char*) {}, 0);
+}
+
+char* MemoryController::allocateReadBuffer()
+{
+    return readBufFlag.exchange(!readBufFlag) ? readBuffer.data() : readBuffer.data() + bufferSize;
+}
+
+char* MemoryController::allocateBuffer()
+{
+    std::unique_lock lock(memoryPoolMutex);
+    memoryPoolCondition.wait(lock, [this]() { return !freeBuffers.empty(); });
+
+    char* buffer = freeBuffers.back();
+    freeBuffers.pop_back();
+    return buffer;
+}
+
+void MemoryController::deallocateBuffer(char* buffer)
+{
+    std::lock_guard lock(memoryPoolMutex);
+    freeBuffers.push_back(buffer);
+    memoryPoolCondition.notify_one();
 }
 
 }

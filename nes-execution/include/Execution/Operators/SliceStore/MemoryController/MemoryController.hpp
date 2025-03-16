@@ -25,8 +25,10 @@ class MemoryController
 {
 public:
     static constexpr auto USE_PIPELINE_ID = false;
+    static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
+    static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
-    MemoryController() = default;
+    MemoryController();
     MemoryController(const MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(const MemoryController& other);
@@ -41,13 +43,32 @@ public:
     void deleteSliceFiles(SliceEnd sliceEnd, PipelineId pipelineId);
 
 private:
+    static constexpr auto NUM_READ_BUFFERS = 2;
+
+    static std::string
+    constructFilePath(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
     std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
 
     void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
+    char* allocateReadBuffer();
+    char* allocateBuffer();
+    void deallocateBuffer(char* buffer);
+
+    std::vector<char> readBuffer;
+    std::atomic<bool> readBufFlag;
+
+    std::vector<char> memoryPool;
+    std::vector<char*> freeBuffers;
+    std::condition_variable memoryPoolCondition;
+    std::mutex memoryPoolMutex;
+    size_t bufferSize;
+    size_t poolSize;
+
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
-    std::mutex mutex_;
+    std::mutex fileWritersMutex;
 
     // IO-Auslastung
     // StatisticsEngine
