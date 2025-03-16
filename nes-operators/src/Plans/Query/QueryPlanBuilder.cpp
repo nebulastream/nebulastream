@@ -109,7 +109,7 @@ QueryPlan QueryPlanBuilder::addWindowAggregation(
         throw NotImplemented("Only TimeBasedWindowType is supported for now");
     }
 
-    auto inputSchema = dynamic_cast<LogicalOperator*>(queryPlan.getRootOperators()[0])->getOutputSchema();
+    auto inputSchema = dynamic_cast<const LogicalOperator*>(queryPlan.getRootOperators()[0])->getOutputSchema();
     queryPlan.promoteOperatorToRoot(
         std::make_unique<WindowedAggregationLogicalOperator>(std::move(onKeys), std::move(windowAggs), std::move(windowType)));
     return queryPlan;
@@ -162,9 +162,9 @@ QueryPlan QueryPlanBuilder::addJoin(
 
 
     INVARIANT(!rightQueryPlan.getRootOperators().empty(), "RootOperators of rightQueryPlan are empty");
-    auto rootOperatorRhs = rightQueryPlan.getRootOperators()[0];
-    auto leftJoinType = dynamic_cast<LogicalOperator*>(leftQueryPlan.getRootOperators()[0])->getOutputSchema();
-    auto rightQueryPlanJoinType = dynamic_cast<LogicalOperator*>(rootOperatorRhs)->getOutputSchema();
+    auto& rootOperatorRhs = rightQueryPlan.getRootOperators()[0];
+    auto leftJoinType = dynamic_cast<const LogicalOperator*>(leftQueryPlan.getRootOperators()[0])->getOutputSchema();
+    auto rightQueryPlanJoinType = dynamic_cast<const LogicalOperator*>(rootOperatorRhs)->getOutputSchema();
 
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
