@@ -73,9 +73,8 @@ public:
     [[nodiscard]] bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
-    [[nodiscard]] Schema addField(Field attribute);
-    [[nodiscard]] Schema addField(std::string name, const DataType::Type& type);
-    [[nodiscard]] Schema addField(std::string name, DataType dataType);
+    [[nodiscard]] Schema addField(std::string name, const DataType& dataType);
+    [[nodiscard]] Schema addField(std::string name, DataType::Type type);
 
     /// Replaces the type of the field
     void replaceTypeOfField(const std::string& name, DataType type);
@@ -101,7 +100,7 @@ public:
     [[nodiscard]] size_t getNumberOfFields() const;
     [[nodiscard]] std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
-    void addFieldsFromOtherSchema(const Schema& otherSchema);
+    void appendFieldsFromOtherSchema(const Schema& otherSchema);
     void renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;

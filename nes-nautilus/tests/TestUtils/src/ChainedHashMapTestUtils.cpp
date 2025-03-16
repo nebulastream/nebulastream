@@ -84,7 +84,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const auto fieldNamesValue = inputSchemaValue.getFieldNames();
     inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     inputSchema = inputSchemaKey;
-    inputSchema.addFieldsFromOtherSchema(inputSchemaValue);
+    inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
 
     /// Setting the hash map configurations
     keySize = inputSchemaKey.getSizeOfSchemaInBytes();
