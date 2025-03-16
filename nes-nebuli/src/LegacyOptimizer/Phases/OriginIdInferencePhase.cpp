@@ -32,26 +32,13 @@ std::shared_ptr<OriginIdInferencePhase> OriginIdInferencePhase::create()
 
 QueryPlan OriginIdInferencePhase::execute(QueryPlan queryPlan)
 {
-    auto originOperators = queryPlan.getOperatorByType<OriginIdAssignmentOperator>();
-    auto rootOperators = queryPlan.getRootOperators();
-    // TODO
-    std::vector<std::shared_ptr<OriginIdAssignmentOperator>> originOperators_shared;
-    originOperators_shared.reserve(originOperators.size());
-    for (auto op : originOperators) {
-        originOperators_shared.push_back(std::shared_ptr<OriginIdAssignmentOperator>(op));
-    }
-    std::vector<std::shared_ptr<Operator>> rootOperators_shared;
-    rootOperators_shared.reserve(rootOperators.size());
-    for (auto op : rootOperators) {
-        rootOperators_shared.push_back(std::shared_ptr<Operator>(op));
-    }
-    performInference(originOperators_shared, rootOperators_shared);
+    performInference(queryPlan.getOperatorByType<OriginIdAssignmentOperator>(), queryPlan.getRootOperators());
     return queryPlan;
 }
 
 void OriginIdInferencePhase::performInference(
-    const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-    const std::vector<std::shared_ptr<Operator>>& rootOperators)
+    const std::vector<OriginIdAssignmentOperator*>& originIdAssignmentOperator,
+    const std::vector<Operator*>& rootOperators)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
@@ -62,9 +49,9 @@ void OriginIdInferencePhase::performInference(
     }
 
     /// propagate origin ids through the complete query plan
-    for (auto rootOperator : rootOperators)
+    for (auto& rootOperator : rootOperators)
     {
-        if (auto logicalOperator = NES::Util::as_if<LogicalOperator>(rootOperator))
+        if (auto logicalOperator = dynamic_cast<LogicalOperator*>(rootOperator))
         {
             logicalOperator->inferInputOrigins();
         }

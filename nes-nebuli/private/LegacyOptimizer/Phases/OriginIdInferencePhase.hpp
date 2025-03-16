@@ -51,8 +51,9 @@ public:
 private:
     explicit OriginIdInferencePhase();
 
-    void performInference(const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-        const std::vector<std::shared_ptr<Operator>>& rootOperators);
+    void performInference(
+        const std::vector<OriginIdAssignmentOperator*>& originIdAssignmentOperator,
+        const std::vector<Operator*>& rootOperators);
 };
 }
 }
