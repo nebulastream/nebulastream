@@ -25,10 +25,7 @@ namespace NES
 namespace Windowing
 {
 
-// Todo: refactor
-/**
- * @brief The time stamp characteristic represents if an window is in event or processing time.
- */
+/// The time stamp characteristic represents if an window is in event or processing time.
 class TimeCharacteristic final
 {
 public:
