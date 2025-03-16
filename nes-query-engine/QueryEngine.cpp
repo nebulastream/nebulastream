@@ -732,8 +732,12 @@ void ThreadPool::addThread()
                     {
                         if (std::holds_alternative<WorkTask>(toMoveTask))
                         {
-                            std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
-                                std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
+                            WorkTask& workTask = std::get<WorkTask>(toMoveTask);
+                            if (std::holds_alternative<Memory::FloatingBuffer>(workTask.buf))
+                            {
+                                std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
+                                    std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
+                            }
                         }
                         if (!internalTaskQueueHead.tryWriteUntil(
                                 std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50), std::move(toMoveTask)))
