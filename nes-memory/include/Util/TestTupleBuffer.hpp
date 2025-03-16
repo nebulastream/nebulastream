@@ -89,7 +89,6 @@ public:
     requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
     inline Type read() const
     {
-        // if (!Util::instanceOf<typename Type::Underlying>(physicalType))
         if (not physicalType.isSameDataType<typename Type::Underlying>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
@@ -120,7 +119,6 @@ public:
     requires(NESIdentifier<Type>)
     void write(Type value)
     {
-        // if (not Util::instanceOf<typename Type::Underlying>(physicalType))
         if (not physicalType.isSameDataType<typename Type::Underlying>())
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());

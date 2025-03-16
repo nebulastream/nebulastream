@@ -82,7 +82,6 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getNumberOfFields());
     const auto fieldNamesKey = inputSchemaKey.getFieldNames();
     const auto fieldNamesValue = inputSchemaValue.getFieldNames();
-    // inputSchema = Schema::create()->copyFields(inputSchemaKey)->copyFields(inputSchemaValue);
     inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     inputSchema.assignToFields(inputSchemaKey);
     inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);

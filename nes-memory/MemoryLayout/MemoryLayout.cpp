@@ -67,7 +67,6 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSiz
         const auto field = this->schema.getFieldAt(fieldIndex);
         auto physicalFieldSizeInBytes = field.dataType.getSizeInBytes();
         physicalFieldSizes.emplace_back(physicalFieldSizeInBytes);
-        // auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.emplace_back(field.dataType);
         recordSize += physicalFieldSizeInBytes;
         nameFieldIndexMap[field.name] = fieldIndex;

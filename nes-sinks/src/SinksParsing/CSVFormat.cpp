@@ -48,7 +48,6 @@ CSVFormat::CSVFormat(Schema pSchema) : schema(std::move(pSchema))
 
 std::string CSVFormat::getFormattedSchema() const
 {
-    // Todo: move into utility or schema function
     PRECONDITION(schema.hasFields(), "Encountered schema without fields in CSVFormat.");
     std::stringstream ss;
     ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);

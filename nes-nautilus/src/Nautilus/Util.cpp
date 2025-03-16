@@ -56,7 +56,6 @@ VarVal createNautilusMinValue(const DataType::Type physicalType)
 {
     switch (physicalType)
     {
-        // Todo: make 'getLimits' a function of DataType, then a a single function here
         case DataType::Type::INT8:
             return Util::createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
         case DataType::Type::INT16:

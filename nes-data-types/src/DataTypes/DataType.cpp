@@ -239,8 +239,6 @@ std::optional<DataType> inferNumericDataType(const DataType& left, const DataTyp
                                                             : DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     }
 
-
-    // if (Util::instanceOf<const Float>(right) && Util::instanceOf<const Float>(left))
     if (right.isFloat() && left.isFloat())
     {
         return (left.getSizeInBytes() == sizeOfLongInBytes or right.getSizeInBytes() == sizeOfLongInBytes)

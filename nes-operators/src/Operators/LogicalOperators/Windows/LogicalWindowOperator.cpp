@@ -113,7 +113,6 @@ bool LogicalWindowOperator::inferSchema()
         }
         const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
-        // Todo: can we simply access the value here?
         windowMetaData.windowStartFieldName = newQualifierForSystemField.value() + "$start";
         windowMetaData.windowEndFieldName = newQualifierForSystemField.value() + "$end";
         outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
