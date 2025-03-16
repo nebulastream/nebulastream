@@ -369,7 +369,7 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     else
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->field->getName();
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
