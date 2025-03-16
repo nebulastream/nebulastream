@@ -31,8 +31,6 @@ namespace NES
 
 struct Schema
 {
-    // Todo: shouldn't this be part of the information of the individual fields?
-    // rather: this should be part of the 'traits/properties' of a schema, potentially alongside other information that the optimizer can use
     /// Enum to identify the memory layout in which we want to represent the schema physically.
     enum class MemoryLayoutType : uint8_t
     {
@@ -69,26 +67,12 @@ struct Schema
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
-    // Schema(const Schema&) = delete;
-    // Schema& operator=(const Schema&) = delete;
-    // Schema(Schema&&) = delete;
-    // Schema& operator=(Schema&&) = delete;
-
-    /// Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR in every field name of the schema.
-    void updateSourceName(std::string_view srcName);
-
-    Schema addField(Field attribute);
-    Schema addField(std::string name, const DataType::Type& type);
-    Schema addField(std::string name, DataType dataType);
+    Schema addField(std::string name, const DataType& dataType);
+    Schema addField(std::string name, DataType::Type type);
 
     /// Replaces the type of the field
     void replaceTypeOfField(const std::string& name, DataType type);
 
-    // Todo: do we really need to ever call this function without having access to the fully qualified name?
-    /// @brief Returns the attribute field based on a qualified or unqualified field name.
-    /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
-    /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
-    /// Note that this function does not return a field with an ambiguous field name.
     [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
 
     /// @Note: Raises a 'FieldNotFound' if the index is out of bounds.
@@ -100,10 +84,7 @@ struct Schema
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
     [[nodiscard]] std::string toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
 
-    // Todo: does not make sense, if schema can represent multiple sources!
-    // Talk to @keyseven123
     [[nodiscard]] std::string getSourceNameQualifier() const;
-
 
     /// get the qualifier of the source without ATTRIBUTE_NAME_SEPARATOR
     std::optional<std::string> getQualifierNameForSystemGeneratedFields() const;
@@ -111,24 +92,14 @@ struct Schema
     /// method to get the qualifier of the source with ATTRIBUTE_NAME_SEPARATOR
     std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
 
-    [[nodiscard]] const std::vector<Field>& getFields() const;
-
-    [[nodiscard]] size_t getNumberOfFields() const;
-
-    // Todo: remove?
     [[nodiscard]] bool hasFields() const;
-
-    void renameField(const std::string& oldFieldName, const std::string_view newFieldName);
-
+    [[nodiscard]] size_t getNumberOfFields() const;
     std::vector<std::string> getFieldNames() const;
-
+    [[nodiscard]] const std::vector<Field>& getFields() const;
+    void renameField(const std::string& oldFieldName, std::string_view newFieldName);
     void assignToFields(const Schema& otherSchema);
-    void addFieldsFromOtherSchema(const Schema& otherSchema);
-    // Todo: remove below two?
-    // void assignToFields(const std::vector<Field>& fields);
-    // void assignToFields(const std::vector<Field>& fields, size_t sizeOfSchemaInBytes);
+    void appendFieldsFromOtherSchema(const Schema& otherSchema);
 
-    // Todo: create unordered map over fields?
     size_t sizeOfSchemaInBytes{0};
     MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
     std::unordered_map<std::string, size_t> nameToField{};

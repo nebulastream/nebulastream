@@ -85,7 +85,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     // inputSchema = Schema::create()->copyFields(inputSchemaKey)->copyFields(inputSchemaValue);
     inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     inputSchema.assignToFields(inputSchemaKey);
-    inputSchema.addFieldsFromOtherSchema(inputSchemaValue);
+    inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
 
     /// Setting the hash map configurations
     keySize = inputSchemaKey.sizeOfSchemaInBytes;

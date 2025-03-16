@@ -43,26 +43,17 @@ std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
 
 Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) {};
 
-// Todo: rename 'attribute' in header function
-// -> fuse all three addField functions?
-Schema Schema::addField(Field newField)
+Schema Schema::addField(std::string name, const DataType& dataType)
 {
-    sizeOfSchemaInBytes += newField.dataType.getSizeInBytes();
-    fields.emplace_back(std::move(newField));
+    return addField(std::move(name), dataType.type);
+}
+Schema Schema::addField(std::string name, const DataType::Type type)
+{
+    DataType dataType{type};
+    sizeOfSchemaInBytes += dataType.getSizeInBytes();
+    fields.emplace_back(Field{std::move(name), std::move(dataType)});
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
-}
-
-///TODO #473: investigate if we can remove this method
-Schema Schema::addField(std::string name, const DataType::Type& type)
-{
-    const auto dataType = DataTypeProvider::provideDataType(type);
-    return addField(std::move(name), dataType);
-}
-
-Schema Schema::addField(std::string name, DataType dataType)
-{
-    return addField(Field{std::move(name), std::move(dataType)});
 }
 
 /// No need to repopulate nameToField, since the key does not change
@@ -188,7 +179,7 @@ void Schema::assignToFields(const Schema& otherSchema)
     this->nameToField = otherSchema.nameToField;
     this->sizeOfSchemaInBytes = otherSchema.sizeOfSchemaInBytes;
 }
-void Schema::addFieldsFromOtherSchema(const Schema& otherSchema)
+void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
 {
     this->fields.reserve(this->fields.size() + otherSchema.fields.size());
     this->nameToField.reserve(this->fields.size() + otherSchema.fields.size());
@@ -212,18 +203,6 @@ void Schema::renameField(const std::string& oldFieldName, const std::string_view
 bool Schema::hasFields() const
 {
     return not fields.empty();
-}
-
-void Schema::updateSourceName(const std::string_view srcName)
-{
-    for (size_t i = 0; auto& field : fields)
-    {
-        auto currName = Util::splitWithStringDelimiter<std::string>(field.name, ATTRIBUTE_NAME_SEPARATOR);
-        const std::string newName = (currName.size() < 2) ? fmt::format("{}{}{}", srcName, ATTRIBUTE_NAME_SEPARATOR, currName.back())
-                                                          : fmt::format("{}{}", srcName, currName.back());
-        renameField(currName.back(), newName);
-        ++i;
-    }
 }
 
 }
