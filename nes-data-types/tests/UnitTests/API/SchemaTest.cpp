@@ -107,7 +107,7 @@ TEST_F(SchemaTest, addFieldTest)
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         for (const auto& field : rndFields)
         {
-            testSchema.addField(field);
+            testSchema.addField(field.name, field.dataType);
         }
 
         ASSERT_EQ(testSchema.getNumberOfFields(), rndFields.size());
@@ -152,7 +152,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         for (const auto& field : rndFields)
         {
-            testSchema.addField(field);
+            testSchema.addField(field.name, field.dataType);
         }
 
         ASSERT_EQ(testSchema.getNumberOfFields(), rndFields.size());
