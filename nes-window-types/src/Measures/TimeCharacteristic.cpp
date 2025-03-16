@@ -31,7 +31,7 @@ TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1)
 {
 }
 TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
-    : type(type), field(std::move(field)), unit(std::move(unit))
+    : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
 std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
@@ -56,14 +56,16 @@ std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createIngestionTime()
     return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
 }
 
-std::shared_ptr<AttributeField> TimeCharacteristic::getField() const
-{
-    return field;
-}
-
 TimeCharacteristic::Type TimeCharacteristic::getType() const
 {
     return type;
+}
+bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
+{
+    const auto isFieldsEqual = (this->field == nullptr and other.field == nullptr) or (this->field->isEqual(other.field));
+    const auto isTypesEqual = this->type == other.type;
+    const auto isEqual = isFieldsEqual and isTypesEqual and this->unit == other.unit;
+    return isEqual;
 }
 
 TimeUnit TimeCharacteristic::getTimeUnit() const
@@ -74,20 +76,6 @@ TimeUnit TimeCharacteristic::getTimeUnit() const
 void TimeCharacteristic::setTimeUnit(const TimeUnit& newUnit)
 {
     this->unit = newUnit;
-}
-
-std::string TimeCharacteristic::toString() const
-{
-    std::stringstream ss;
-    ss << "TimeCharacteristic: ";
-    ss << " type=" << getTypeAsString();
-    if (field)
-    {
-        ss << " field=" << field->toString();
-    }
-
-    ss << std::endl;
-    return ss.str();
 }
 
 std::string TimeCharacteristic::getTypeAsString() const
@@ -103,29 +91,9 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-void TimeCharacteristic::setField(std::shared_ptr<AttributeField> field)
+std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
 {
-    this->field = std::move(field);
+    std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
+    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);
 }
-
-bool TimeCharacteristic::equals(const TimeCharacteristic& other) const
-{
-    const bool equalField = (this->field == nullptr && other.field == nullptr)
-        || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
-
-    return this->type == other.type && equalField && this->unit.equals(other.unit);
-}
-
-uint64_t TimeCharacteristic::hash() const
-{
-    uint64_t hashValue = 0;
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint8_t>{}((unsigned char)type);
-    if (field)
-    {
-        hashValue = hashValue * 0x9e3779b1 + field->hash();
-    }
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMillisecondsConversionMultiplier());
-    return hashValue;
-}
-
 }
