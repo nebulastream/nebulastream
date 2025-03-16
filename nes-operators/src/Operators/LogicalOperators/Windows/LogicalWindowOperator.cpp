@@ -144,12 +144,12 @@ bool LogicalWindowOperator::inferSchema()
         for (const auto& key : keyList)
         {
             key->inferStamp(inputSchema);
-            outputSchema.addField(Schema::Field{key->getFieldName(), key->getStamp()});
+            outputSchema.addField(key->getFieldName(), key->getStamp());
         }
     }
     for (const auto& agg : windowAggregation)
     {
-        outputSchema.addField(Schema::Field{NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp()});
+        outputSchema.addField(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->as()->getStamp());
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema);
