@@ -62,8 +62,6 @@ public:
 
     bool inferStamp(const Schema& schema) override;
 
-    uint64_t hash() const override;
-
 private:
     explicit ThresholdWindow(std::shared_ptr<NodeFunction> predicate);
     ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount);

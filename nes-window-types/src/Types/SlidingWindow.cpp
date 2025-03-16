@@ -63,15 +63,4 @@ bool SlidingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
     return false;
 }
 
-uint64_t SlidingWindow::hash() const
-{
-    // Todo: do we still use this hash function?
-    PRECONDITION(false, "Do we use the hash function?");
-    uint64_t hashValue = 0;
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
-    // hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
-    return hashValue;
-}
-
 }
