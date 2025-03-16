@@ -55,7 +55,7 @@ std::string AttributeField::toString() const
 
 bool AttributeField::isEqual(const std::shared_ptr<AttributeField>& attr) const
 {
-    if (!attr)
+    if (not attr)
     {
         return false;
     }
