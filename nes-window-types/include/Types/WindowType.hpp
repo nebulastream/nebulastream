@@ -32,18 +32,6 @@ public:
     virtual bool equal(std::shared_ptr<WindowType> otherWindowType) = 0;
 
     virtual bool inferStamp(const Schema& schema) = 0;
-
-    /**
-     * @brief Get the hash of the window type
-     *
-     * This function computes a hash value uniquely identifying the window type including characteristic attributes.
-     * The hash value is different for different WindowTypes and same WindowTypes with different attributes.
-     * Especially a SlidingWindow of same size and slide returns a different hash value,
-     * than a TumblingWindow with the same size.
-     *
-     * @return the hash of the window type
-     */
-    virtual uint64_t hash() const = 0;
 };
 
 }

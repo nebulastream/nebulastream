@@ -90,12 +90,4 @@ std::string ThresholdWindow::toString() const
     ss << '\n';
     return ss.str();
 }
-
-uint64_t ThresholdWindow::hash() const
-{
-    uint64_t hashValue = 0;
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
-    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(fmt::format("{}", *predicate));
-    return hashValue;
-}
 }
