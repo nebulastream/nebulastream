@@ -17,12 +17,20 @@
 namespace NES::Runtime::Execution
 {
 
-// TODO generally open files on first write call
-// TODO implement read and write buffers
-
-FileWriter::FileWriter(const std::string& filePath)
+FileWriter::FileWriter(
+    const std::string& filePath,
+    const std::function<char*()>& allocate,
+    const std::function<void(char*)>& deallocate,
+    const size_t bufferSize)
     : file(filePath + ".dat", std::ios::out | std::ios::trunc | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::out | std::ios::trunc | std::ios::binary)
+    , writeBuffer(allocate())
+    , writeKeyBuffer(nullptr)
+    , writeBufferPos(0)
+    , writeKeyBufferPos(0)
+    , bufferSize(bufferSize)
+    , allocate(allocate)
+    , deallocate(deallocate)
 {
     if (!file.is_open())
     {
@@ -34,26 +42,86 @@ FileWriter::FileWriter(const std::string& filePath)
     }
 }
 
-void FileWriter::write(const void* data, const std::size_t size)
+FileWriter::~FileWriter()
 {
-    if (!file.write(static_cast<const char*>(data), size))
+    flushBuffer();
+    deallocate(writeBuffer);
+    deallocate(writeKeyBuffer);
+}
+
+void FileWriter::write(const void* data, size_t size)
+{
+    write(data, size, writeBuffer, writeBufferPos, file);
+}
+
+void FileWriter::writeKey(const void* data, size_t size)
+{
+    if (!writeKeyBuffer)
     {
-        throw std::ios_base::failure("Failed to write to file");
+        writeKeyBuffer = allocate();
+    }
+
+    write(data, size, writeKeyBuffer, writeKeyBufferPos, keyFile);
+}
+
+void FileWriter::flushBuffer()
+{
+    writeToFile(writeBuffer, writeBufferPos, file);
+    writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+}
+
+void FileWriter::write(const void* data, size_t& dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
+{
+    if (bufferSize == 0)
+    {
+        return writeToFile(static_cast<const char*>(data), dataSize, fileStream);
+    }
+
+    auto dataPtr = static_cast<const char*>(data);
+    while (dataSize > 0)
+    {
+        const auto copySize = std::min(dataSize, bufferSize - bufferPos);
+        std::memcpy(buffer + bufferPos, dataPtr, copySize);
+        bufferPos += copySize;
+        dataPtr += copySize;
+        dataSize -= copySize;
+
+        if (bufferPos == bufferSize)
+        {
+            writeToFile(buffer, bufferPos, fileStream);
+        }
     }
 }
 
-void FileWriter::writeKey(const void* data, const std::size_t size)
+void FileWriter::writeToFile(const char* buffer, size_t& bufferPos, std::ofstream& fileStream)
 {
-    if (!keyFile.write(static_cast<const char*>(data), size))
+    if (bufferPos > 0)
     {
-        throw std::ios_base::failure("Failed to write to key file");
+        if (!fileStream.write(buffer, bufferPos))
+        {
+            throw std::ios_base::failure("Failed to write to file");
+        }
+        bufferPos = 0;
     }
 }
 
-FileReader::FileReader(const std::string& filePath)
+FileReader::FileReader(
+    const std::string& filePath,
+    const std::function<char*()>& allocate,
+    const std::function<void(char*)>& deallocate,
+    const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
     , filePath(filePath)
+    , readBuffer(allocate())
+    , readKeyBuffer(nullptr)
+    , readBufferPos(0)
+    , readKeyBufferPos(0)
+    , readBufferEnd(0)
+    , readKeyBufferEnd(0)
+    , bufferSize(bufferSize)
+    , allocate(allocate)
+    , deallocate(deallocate)
 {
     if (!file.is_open())
     {
@@ -68,36 +136,72 @@ FileReader::FileReader(const std::string& filePath)
 FileReader::~FileReader()
 {
     // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
-    if (file.is_open())
-    {
-        file.close();
-        //std::filesystem::remove(filePath + ".dat");
-    }
-    if (keyFile.is_open())
-    {
-        keyFile.close();
-        //std::filesystem::remove(filePath + "_key.dat");
-    }
+    file.close();
+    //std::filesystem::remove(filePath + ".dat");
+    deallocate(readBuffer);
+
+    keyFile.close();
+    //std::filesystem::remove(filePath + "_key.dat");
+    deallocate(readKeyBuffer);
 }
 
-std::size_t FileReader::read(void* dest, const std::size_t size)
+size_t FileReader::read(void* dest, const size_t size)
 {
-    file.read(static_cast<char*>(dest), size);
-    if (file.fail() && !file.eof())
+    return read(dest, size, readBuffer, readBufferPos, readBufferEnd, file);
+}
+
+size_t FileReader::readKey(void* dest, const size_t size)
+{
+    if (!readKeyBuffer)
+    {
+        readKeyBuffer = allocate();
+    }
+
+    return read(dest, size, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd, keyFile);
+}
+
+size_t
+FileReader::read(void* dest, const size_t& dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const
+{
+    if (bufferSize == 0)
+    {
+        return readFromFile(static_cast<char*>(dest), dataSize, fileStream);
+    }
+
+    auto destPtr = static_cast<char*>(dest);
+    auto totalRead = 0UL;
+
+    while (totalRead < dataSize)
+    {
+        if (bufferPos == bufferEnd)
+        {
+            bufferEnd = readFromFile(buffer, bufferSize, fileStream);
+            bufferPos = 0;
+            if (bufferEnd == 0)
+            {
+                /// End of file
+                break;
+            }
+        }
+
+        const auto copySize = std::min(dataSize - totalRead, bufferEnd - bufferPos);
+        std::memcpy(destPtr, buffer + bufferPos, copySize);
+        bufferPos += copySize;
+        destPtr += copySize;
+        totalRead += copySize;
+    }
+
+    return totalRead;
+}
+
+size_t FileReader::readFromFile(char* buffer, const size_t& dataSize, std::ifstream& fileStream)
+{
+    fileStream.read(buffer, dataSize);
+    if (fileStream.fail() && !fileStream.eof())
     {
         throw std::ios_base::failure("Failed to read from file");
     }
-    return file.gcount();
-}
-
-std::size_t FileReader::readKey(void* dest, const std::size_t size)
-{
-    keyFile.read(static_cast<char*>(dest), size);
-    if (keyFile.fail() && !keyFile.eof())
-    {
-        throw std::ios_base::failure("Failed to read from key file");
-    }
-    return keyFile.gcount();
+    return fileStream.gcount();
 }
 
 }

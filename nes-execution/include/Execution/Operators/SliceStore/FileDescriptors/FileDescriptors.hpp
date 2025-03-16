@@ -15,7 +15,7 @@
 #pragma once
 
 #include <fstream>
-#include <Identifiers/Identifiers.hpp>
+#include <functional>
 
 namespace NES::Runtime::Execution
 {
@@ -31,30 +31,66 @@ enum FileLayout : uint8_t
 class FileWriter
 {
 public:
-    explicit FileWriter(const std::string& filePath);
-    ~FileWriter() = default;
+    FileWriter(
+        const std::string& filePath,
+        const std::function<char*()>& allocate,
+        const std::function<void(char*)>& deallocate,
+        size_t bufferSize);
+    ~FileWriter();
 
-    void write(const void* data, std::size_t size);
-    void writeKey(const void* data, std::size_t size);
+    void write(const void* data, size_t size);
+    void writeKey(const void* data, size_t size);
+
+    void flushBuffer();
 
 private:
+    void write(const void* data, size_t& dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const;
+    static void writeToFile(const char* buffer, size_t& bufferPos, std::ofstream& fileStream);
+
     std::ofstream file;
     std::ofstream keyFile;
+
+    char* writeBuffer;
+    char* writeKeyBuffer;
+    size_t writeBufferPos;
+    size_t writeKeyBufferPos;
+    size_t bufferSize;
+
+    std::function<char*()> allocate;
+    std::function<void(char*)> deallocate;
 };
 
 class FileReader
 {
 public:
-    explicit FileReader(const std::string& filePath);
+    FileReader(
+        const std::string& filePath,
+        const std::function<char*()>& allocate,
+        const std::function<void(char*)>& deallocate,
+        size_t bufferSize);
     ~FileReader();
 
-    std::size_t read(void* dest, std::size_t size);
-    std::size_t readKey(void* dest, std::size_t size);
+    size_t read(void* dest, size_t size);
+    size_t readKey(void* dest, size_t size);
 
 private:
+    size_t read(void* dest, const size_t& dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;
+    static size_t readFromFile(char* buffer, const size_t& dataSize, std::ifstream& fileStream);
+
     std::ifstream file;
     std::ifstream keyFile;
     std::string filePath;
+
+    char* readBuffer;
+    char* readKeyBuffer;
+    size_t readBufferPos;
+    size_t readKeyBufferPos;
+    size_t readBufferEnd;
+    size_t readKeyBufferEnd;
+    size_t bufferSize;
+
+    std::function<char*()> allocate;
+    std::function<void(char*)> deallocate;
 };
 
 }
