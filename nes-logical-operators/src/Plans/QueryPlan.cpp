@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <deque>
 #include <memory>
 #include <set>
@@ -20,169 +19,177 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/Operator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Common.hpp>
+#include <Iterators/BFSIterator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <Plans/Operator.hpp>
 
 
 namespace NES
 {
 
-std::shared_ptr<QueryPlan> QueryPlan::create(std::shared_ptr<Operator> rootOperator)
+QueryPlan::QueryPlan(const QueryPlan& other) : queryId(other.queryId)
 {
-    return std::make_shared<QueryPlan>(std::move(rootOperator));
+    for (const auto& op : other.rootOperators) {
+        if (op) {
+            rootOperators.push_back(op->clone());
+        }
+    }
 }
 
-std::shared_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators)
-{
-    return std::make_shared<QueryPlan>(std::move(queryId), std::move(rootOperators));
+QueryPlan::QueryPlan(QueryPlan&& other)
+    : rootOperators(std::move(other.rootOperators)), queryId(other.queryId)
+{}
+
+QueryPlan& QueryPlan::operator=(QueryPlan&& other) {
+    if (this != &other) {
+        rootOperators = std::move(other.rootOperators);
+        queryId = other.queryId;
+    }
+    return *this;
 }
 
-QueryPlan::QueryPlan(std::shared_ptr<Operator> rootOperator) : queryId(INVALID_QUERY_ID)
+std::unique_ptr<QueryPlan> QueryPlan::clone() const
+{
+    return std::make_unique<QueryPlan>(*this);
+}
+
+std::vector<std::unique_ptr<Operator>> QueryPlan::releaseRootOperators()
+{
+    return std::move(rootOperators);
+}
+
+std::unique_ptr<QueryPlan> QueryPlan::create(std::unique_ptr<Operator> rootOperator)
+{
+    return std::make_unique<QueryPlan>(std::move(rootOperator));
+}
+
+std::unique_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators)
+{
+    return std::make_unique<QueryPlan>(std::move(queryId), std::move(rootOperators));
+}
+
+QueryPlan::QueryPlan(std::unique_ptr<Operator> rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators)
+QueryPlan::QueryPlan(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId)
 {
 }
 
-std::vector<std::shared_ptr<SinkLogicalOperator>> QueryPlan::getSinkOperators() const
+void QueryPlan::addRootOperator(std::unique_ptr<Operator> newRootOperator)
 {
-    NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
-    std::vector<std::shared_ptr<SinkLogicalOperator>> sinkOperators;
-    for (const auto& rootOperator : rootOperators)
+    /// Check if a root with the id already present
+    auto found = std::find_if(
+        rootOperators.begin(),
+        rootOperators.end(),
+        [&](const std::unique_ptr<Operator>& root) { return newRootOperator->id == root->id; });
+    if (found == rootOperators.end())
     {
-        auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
+        rootOperators.push_back(std::move(newRootOperator));
+    }
+    else
+    {
+        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator->id);
+    }
+}
+
+void QueryPlan::promoteOperatorToRoot(std::unique_ptr<Operator> newRoot)
+{
+    for (auto& oldRoot : rootOperators)
+    {
+        oldRoot->parents.emplace_back(newRoot.get());
+        newRoot->children.push_back(std::move(oldRoot));
+    }
+    rootOperators.clear();
+    rootOperators.push_back(std::move(newRoot));
+}
+
+std::vector<SinkLogicalOperator*> QueryPlan::getSinkOperators() const
+{
+    std::vector<SinkLogicalOperator*> sinkOperators;
+    for (auto& rootOperator : rootOperators)
+    {
+        auto sinkOperator = dynamic_cast<SinkLogicalOperator*>(rootOperator.get());
         sinkOperators.emplace_back(sinkOperator);
     }
     NES_DEBUG("QueryPlan: Found {} sink operators.", sinkOperators.size());
     return sinkOperators;
 }
 
-void QueryPlan::appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode)
-{
-    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
-    for (const auto& rootOperator : rootOperators)
-    {
-        const auto result = rootOperator->addParent(operatorNode);
-        PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
-    }
-    NES_DEBUG("QueryPlan: Clearing current root operators.");
-    rootOperators.clear();
-    NES_DEBUG("QueryPlan: Pushing input operator node as new root.");
-    rootOperators.push_back(operatorNode);
-}
-
 std::string QueryPlan::toString() const
 {
     std::stringstream ss;
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
-    for (const auto& rootOperator : rootOperators)
+    for (auto& rootOperator : rootOperators)
     {
-        dumpHandler->dump(rootOperator);
+        dumpHandler->dump(*rootOperator);
     }
     return ss.str();
 }
 
-std::vector<std::shared_ptr<Operator>> QueryPlan::getRootOperators() const
+std::vector<Operator*> QueryPlan::getRootOperators() const
 {
-    return rootOperators;
+    std::vector<Operator*> rawOps;
+    rawOps.reserve(rootOperators.size());
+    for (const auto& op : rootOperators) {
+        rawOps.push_back(op.get());
+    }
+    return rawOps;
 }
 
-std::vector<std::shared_ptr<Operator>> QueryPlan::getLeafOperators() const
+std::vector<Operator*> QueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
-    std::vector<std::shared_ptr<Operator>> leafOperators;
+    std::vector<Operator*> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
+        for (auto itr :  BFSRange<Operator>(rootOperator.get()))
         {
-            auto visitingOp = NES::Util::as<Operator>(*itr);
-            if (visitedOpIds.contains(visitingOp->getId()))
+            if (visitedOpIds.contains(itr->id))
             {
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
-            visitedOpIds.insert(visitingOp->getId());
-            if (visitingOp->getChildren().empty())
+            visitedOpIds.insert(itr->id);
+            if (itr->children.empty())
             {
                 NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
-                leafOperators.push_back(visitingOp);
+                leafOperators.push_back(itr);
             }
         }
     }
     return leafOperators;
 }
 
-std::unordered_set<std::shared_ptr<Operator>> QueryPlan::getAllOperators() const
+std::unordered_set<Operator*> QueryPlan::getAllOperators() const
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<std::shared_ptr<Operator>> visitedOperators;
+    std::unordered_set<Operator*> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
+        for (auto itr :  BFSRange<Operator>(rootOperator.get()))
         {
-            auto visitingOp = NES::Util::as<Operator>(*itr);
-            if (visitedOperators.contains(visitingOp))
+            if (visitedOperators.contains(itr))
             {
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
-            visitedOperators.insert(visitingOp);
+            visitedOperators.insert(itr);
         }
     }
     return visitedOperators;
-}
-
-bool QueryPlan::hasOperatorWithId(OperatorId operatorId) const
-{
-    NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    if (getOperatorWithOperatorId(operatorId))
-    {
-        return true;
-    }
-    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
-    return false;
-}
-
-std::shared_ptr<Operator> QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const
-{
-    NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
-    for (auto rootOperator : rootOperators)
-    {
-        if (rootOperator->getId() == operatorId)
-        {
-            NES_DEBUG("QueryPlan: Found operator {} in the query plan", operatorId);
-            return rootOperator;
-        }
-
-        ///Look up in the child operators
-        auto matchingOperator = rootOperator->getChildWithOperatorId(operatorId);
-        if (matchingOperator)
-        {
-            return NES::Util::as<Operator>(matchingOperator);
-        }
-    }
-    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
-    return nullptr;
 }
 
 QueryId QueryPlan::getQueryId() const
@@ -195,141 +202,10 @@ void QueryPlan::setQueryId(QueryId queryId)
     this->queryId = queryId;
 }
 
-void QueryPlan::addRootOperator(const std::shared_ptr<Operator>& newRootOperator)
-{
-    ///Check if a root with the id already present
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const std::shared_ptr<Operator>& root) { return newRootOperator->getId() == root->getId(); });
-
-    /// If not present then add it
-    if (found == rootOperators.end())
-    {
-        rootOperators.push_back(newRootOperator);
-    }
-    else
-    {
-        NES_WARNING("Root operator with id {} already present int he plan", newRootOperator->getId());
-    }
-}
-
-void QueryPlan::removeAsRootOperator(std::shared_ptr<Operator> root)
-{
-    NES_DEBUG("QueryPlan: removing operator {} as root operator.", *root);
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const std::shared_ptr<Operator>& rootOperator) { return rootOperator->getId() == root->getId(); });
-    if (found != rootOperators.end())
-    {
-        NES_DEBUG(
-            "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan. {}", *root);
-        rootOperators.erase(found);
-    }
-}
-
-std::shared_ptr<QueryPlan> QueryPlan::copy()
-{
-    NES_INFO("QueryPlan: make copy of this query plan");
-    /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
-    std::map<OperatorId, std::shared_ptr<Operator>> operatorIdToOperatorMap;
-    std::deque<std::shared_ptr<Node>> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
-    while (!operatorsToProcess.empty())
-    {
-        auto operatorNode = NES::Util::as<Operator>(operatorsToProcess.front());
-        operatorsToProcess.pop_front();
-        auto operatorId = operatorNode->getId();
-        /// 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
-        /// 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
-        if (operatorIdToOperatorMap[operatorId])
-        {
-            NES_TRACE("QueryPlan: Operator was processed previously");
-            operatorNode = operatorIdToOperatorMap[operatorId];
-        }
-        else
-        {
-            NES_TRACE("QueryPlan: Adding the operator into map");
-            operatorIdToOperatorMap[operatorId] = operatorNode;
-        }
-
-        /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
-        for (const auto& parentNode : operatorNode->getParents())
-        {
-            auto parentOperator = NES::Util::as<Operator>(parentNode);
-            auto parentOperatorId = parentOperator->getId();
-            if (operatorIdToOperatorMap[parentOperatorId])
-            {
-                NES_TRACE("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
-                parentOperator = operatorIdToOperatorMap[parentOperatorId];
-                auto copyOfOperator = operatorIdToOperatorMap[operatorNode->getId()];
-                copyOfOperator->addParent(parentOperator);
-            }
-            else
-            {
-                NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
-                return nullptr;
-            }
-        }
-
-        NES_TRACE("QueryPlan: add the child global query nodes for further processing.");
-        /// 5. We push the children operators to the queue of operators to be processed.
-        for (const auto& childrenOperator : operatorNode->getChildren())
-        {
-            operatorsToProcess.push_back(childrenOperator);
-        }
-    }
-
-    std::vector<std::shared_ptr<Operator>> duplicateRootOperators;
-    for (const auto& rootOperator : rootOperators)
-    {
-        NES_TRACE("QueryPlan: Finding the operator with same id in the map.");
-        duplicateRootOperators.push_back(operatorIdToOperatorMap[rootOperator->getId()]);
-    }
-    operatorIdToOperatorMap.clear();
-    auto newQueryPlan = QueryPlan::create(queryId, duplicateRootOperators);
-    return newQueryPlan;
-}
-
-std::set<std::shared_ptr<Operator>> QueryPlan::findAllOperatorsBetween(
-    const std::set<std::shared_ptr<Operator>>& downstreamOperators, const std::set<std::shared_ptr<Operator>>& upstreamOperators)
-{
-    std::set<std::shared_ptr<Operator>> operatorsBetween;
-
-    ///initialize the operators to visit with upstream operators of all downstream operators
-    for (const auto& downStreamOperator : downstreamOperators)
-    {
-        auto operatorsBetweenChildAndTargetUpstream
-            = findOperatorsBetweenSourceAndTargetOperators(NES::Util::as_if<Operator>(downStreamOperator), upstreamOperators);
-        operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
-    }
-
-    if (!operatorsBetween.empty())
-    {
-        ///Remove upstream operators
-        for (const auto& upstreamOperator : upstreamOperators)
-        {
-            erase_if(
-                operatorsBetween,
-                [upstreamOperator](const auto& operatorToErase) { return operatorToErase->getId() == upstreamOperator->getId(); });
-        }
-
-        ///Remove downstream operators
-        for (const auto& downstreamOperator : downstreamOperators)
-        {
-            erase_if(
-                operatorsBetween,
-                [downstreamOperator](const auto& operatorToErase) { return operatorToErase->getId() == downstreamOperator->getId(); });
-        }
-    }
-
-    return operatorsBetween;
-}
-
-bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
+bool QueryPlan::operator==(const QueryPlan& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
-    auto rightRootOperators = otherPlan->getRootOperators();
+    auto rightRootOperators = otherPlan.getRootOperators();
 
     if (leftRootOperators.size() != rightRootOperators.size())
     {
@@ -337,10 +213,13 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
     }
 
     /// add all root-operators to stack
-    std::stack<std::pair<std::shared_ptr<Operator>, std::shared_ptr<Operator>>> stack;
+    std::stack<std::pair<Operator*, Operator*>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
-        stack.emplace(leftRootOperators[i], rightRootOperators[i]);
+        stack.emplace(
+            leftRootOperators[i],
+            rightRootOperators[i]
+        );
     }
 
     /// iterate over stack
@@ -350,17 +229,14 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
         auto [leftOperator, rightOperator] = stack.top();
         stack.pop();
 
-        auto leftChildren = leftOperator->getChildren();
-        auto rightChildren = rightOperator->getChildren();
-
-        if (leftChildren.size() != rightChildren.size())
+        if (leftOperator->children.size() != rightOperator->children.size())
             return false;
 
         /// discover children and add them to stack
-        for (size_t j = 0; j < leftChildren.size(); ++j)
+        for (size_t j = 0; j < leftOperator->children.size(); ++j)
         {
-            auto leftChild = NES::Util::as<Operator>(leftChildren[j]);
-            auto rightChild = NES::Util::as<Operator>(rightChildren[j]);
+            auto leftChild = leftOperator->children[j].get();
+            auto rightChild = rightOperator->children[j].get();
             if (!leftChild || !rightChild)
                 return false;
             stack.emplace(leftChild, rightChild);
@@ -373,46 +249,6 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
         }
     }
     return true;
-}
-
-std::set<std::shared_ptr<Operator>> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(
-    const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators)
-{
-    ///Find if downstream operator is also in the vector of target operators
-    auto found = std::find_if(
-        targetOperators.begin(),
-        targetOperators.end(),
-        [&](const auto& upstreamOperator) { return upstreamOperator->getId() == sourceOperator->getId(); });
-
-    ///If downstream operator is in the list of target operators then return the operator
-    if (found != targetOperators.end())
-    {
-        return {sourceOperator};
-    }
-
-    bool foundTargetUpstreamOperator = false;
-    std::set<std::shared_ptr<Operator>> operatorsBetween;
-    ///Check further upstream operators if they are in the target operator vector
-    for (const auto& nextUpstreamOperatorToCheck : sourceOperator->getChildren())
-    {
-        ///Fetch the operators between upstream and target operators
-        auto operatorsBetweenUpstreamAndTargetUpstream
-            = findOperatorsBetweenSourceAndTargetOperators(NES::Util::as_if<Operator>(nextUpstreamOperatorToCheck), targetOperators);
-
-        ///If there are operators between upstream and target operators then mark the input down stream operator for return
-        if (!operatorsBetweenUpstreamAndTargetUpstream.empty())
-        {
-            foundTargetUpstreamOperator = true;
-            operatorsBetween.insert(operatorsBetweenUpstreamAndTargetUpstream.begin(), operatorsBetweenUpstreamAndTargetUpstream.end());
-        }
-    }
-
-    ///Add downstream operator
-    if (foundTargetUpstreamOperator)
-    {
-        operatorsBetween.insert(sourceOperator);
-    }
-    return operatorsBetween;
 }
 
 }
