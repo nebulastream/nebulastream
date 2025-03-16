@@ -136,7 +136,7 @@ Query& Seq::window(const std::shared_ptr<Windowing::WindowType>& windowType) con
     NES_DEBUG("Sequence enters window function");
     auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)
                          ->getTimeCharacteristic()
-                         ->getField()
+                         ->field
                          ->getName(); /// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
@@ -192,7 +192,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
 
 Query& Times::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
 {
-    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->field->getName();
     /// if no min and max occurrence is defined, apply count without filter
     if (!bounded)
     {
