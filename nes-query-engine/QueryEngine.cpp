@@ -29,6 +29,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManagerFuture.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/PinnedBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -49,7 +50,6 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
-#include <Runtime/BufferManagerFuture.hpp>
 
 namespace NES::Runtime
 {
@@ -225,23 +225,37 @@ public:
     {
         if (internalTaskQueueHead.size() < static_cast<long long>(internalTaskQueueHead.capacity() / 2))
         {
+            if (std::holds_alternative<WorkTask>(task))
+            {
+                WorkTask& workTask = std::get<WorkTask>(task);
+                if (std::holds_alternative<Memory::FloatingBuffer>(workTask.buf))
+                {
+                    workTask.buf = bufferProvider->repinBuffer(std::move(std::get<Memory::FloatingBuffer>(workTask.buf)));
+                }
+            }
             return internalTaskQueueHead.write(std::move(task));
         }
-        else
-        {
-            return internalTaskQueueTail.write(std::move(task));
-        }
+        return internalTaskQueueTail.write(std::move(task));
     }
+
     bool writeToInternalTaskQueueFor(Task& task, const std::chrono::duration<float> duration)
     {
         if (internalTaskQueueHead.size() < static_cast<long long>(internalTaskQueueHead.capacity() / 2))
         {
-            return internalTaskQueueHead.tryWriteUntil(std::chrono::high_resolution_clock::now() + duration, std::move(task));
+            if (std::holds_alternative<WorkTask>(task))
+            {
+                WorkTask& workTask = std::get<WorkTask>(task);
+                if (std::holds_alternative<Memory::FloatingBuffer>(workTask.buf))
+                {
+                    workTask.buf = bufferProvider->repinBuffer(std::move(std::get<Memory::FloatingBuffer>(workTask.buf)));
+                }
+            }
+            return internalTaskQueueHead.tryWriteUntil(
+                std::chrono::high_resolution_clock::now() + std::chrono::duration_cast<std::chrono::milliseconds>(duration),
+                std::move(task));
         }
-        else
-        {
-            return internalTaskQueueTail.tryWriteUntil(std::chrono::high_resolution_clock::now() + duration, std::move(task));
-        }
+        return internalTaskQueueTail.tryWriteUntil(
+            std::chrono::high_resolution_clock::now() + std::chrono::duration_cast<std::chrono::milliseconds>(duration), std::move(task));
     }
 
     bool emitWork(
@@ -255,15 +269,15 @@ public:
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
 
-        auto task = WorkTask(
-            qid,
-            node->id,
-            node,
-            Memory::RepinBufferFuture::fromPinnedBuffer(buffer),
-            injectReferenceCountReducer(node, std::move(complete)),
-            injectQueryFailure(node, injectReferenceCountReducer(node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
+            auto task = WorkTask(
+                qid,
+                node->id,
+                node,
+                Memory::FloatingBuffer(std::move(buffer)),
+                injectReferenceCountReducer(node, std::move(complete)),
+                injectQueryFailure(node, injectReferenceCountReducer(node, std::move(failure))));
             /// Non-WorkerThread
             admissionQueue.blockingWrite(std::move(task));
             return true;
@@ -272,6 +286,13 @@ public:
         /// WorkerThread
         if (potentiallyProcessTheWorkInPlace)
         {
+            auto task = WorkTask(
+                qid,
+                node->id,
+                node,
+                Memory::RepinBufferFuture::fromPinnedBuffer(buffer),
+                injectReferenceCountReducer(node, std::move(complete)),
+                injectQueryFailure(node, injectReferenceCountReducer(node, std::move(failure))));
             addTaskOrDoItInPlace(std::move(task));
             return true;
         }
@@ -284,16 +305,19 @@ public:
                 Memory::RepinBufferFuture::fromPinnedBuffer(buffer),
                 injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
                 injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure)))));
+            return true;
         }
-        else
+        if (internalTaskQueueTail.tryWriteUntil(
+                std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10),
+                WorkTask(
+                    qid,
+                    node->id,
+                    node,
+                    Memory::FloatingBuffer{std::move(buffer)},
+                    injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
+                    injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure))))))
         {
-            internalTaskQueueTail.blockingWrite(WorkTask(
-                qid,
-                node->id,
-                node,
-                Memory::FloatingBuffer{std::move(buffer)},
-                injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
-                injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure)))));
+            return true;
         }
         node->pendingTasks.fetch_sub(1);
         ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
@@ -311,7 +335,6 @@ public:
         QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
     {
         auto nodePtr = node.get();
-        Task task = StopPipelineTask(qid, std::move(node), complete, injectQueryFailureUnsafe(nodePtr, failure));
         /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
         /// However the StopPipelineTask takes ownership of the Node and thus guarantees that it is alive when the callback is invoked.
         addTaskAndDoNextForAdmission(StopPipelineTask(qid, std::move(node), complete, injectQueryFailureUnsafe(nodePtr, failure)));
@@ -320,24 +343,26 @@ public:
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            StopSourceTask{
+                id,
+                std::move(source),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void emitPendingPipelineStop(
@@ -439,7 +464,7 @@ private:
     void addTaskAndDoNext(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (not writeToInternalTaskQueueFor( task, std::chrono::milliseconds(10)))
+        if (not writeToInternalTaskQueueFor(task, std::chrono::milliseconds(10)))
         {
             /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
             Task nextTask;
@@ -512,8 +537,17 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 }
                 return true;
             });
-        INVARIANT(std::holds_alternative<Memory::RepinBufferFuture>(task.buf), "Dequeued work task contained floating buffer");
-        auto repinResult = std::get<Memory::RepinBufferFuture>(task.buf).waitUntilDone();
+        std::variant<Memory::PinnedBuffer, Memory::detail::CoroutineError> repinResult{};
+        if (std::holds_alternative<Memory::FloatingBuffer>(task.buf))
+        {
+            Memory::FloatingBuffer floating = std::get<Memory::FloatingBuffer>(task.buf);
+            repinResult = pool.bufferProvider->repinBuffer(std::move(floating)).waitUntilDone();
+        }
+        else
+        {
+            repinResult = std::get<Memory::RepinBufferFuture>(task.buf).waitUntilDone();
+        }
+        // INVARIANT(std::holds_alternative<Memory::RepinBufferFuture>(task.buf), "Dequeued work task contained floating buffer");
         if (std::holds_alternative<Memory::detail::CoroutineError>(repinResult))
         {
             ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);
@@ -616,7 +650,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                     stopPipelineTask.queryId,
                     successor,
                     tupleBuffer,
-                    [ref = successor] {},
+                    [ref = successor] { },
                     {},
                     policy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             }
@@ -822,7 +856,6 @@ void QueryEngine::stop(QueryId queryId)
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> instantiatedQueryPlan)
 {
     ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
-    Task task = StartQueryTask{instantiatedQueryPlan->queryId, std::move(instantiatedQueryPlan), queryCatalog, {}, {}};
     threadPool->admissionQueue.blockingWrite(
         StartQueryTask{instantiatedQueryPlan->queryId, std::move(instantiatedQueryPlan), queryCatalog, {}, {}});
 }
