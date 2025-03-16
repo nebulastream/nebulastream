@@ -134,10 +134,8 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
 Query& Seq::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
 {
     NES_DEBUG("Sequence enters window function");
-    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)
-                         ->getTimeCharacteristic()
-                         ->getField()
-                         ->getName(); /// assume time-based windows
+    auto timestamp
+        = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->field->getName(); /// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     /// to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
@@ -192,7 +190,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
 
 Query& Times::window(const std::shared_ptr<Windowing::WindowType>& windowType) const
 {
-    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->field->getName();
     /// if no min and max occurrence is defined, apply count without filter
     if (!bounded)
     {

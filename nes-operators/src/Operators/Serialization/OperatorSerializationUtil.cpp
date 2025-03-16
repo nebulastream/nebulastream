@@ -746,7 +746,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
         {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-            timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
+            timeCharacteristicDetails.set_field(timeCharacteristic->field->getName());
         }
         else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
         {
@@ -854,7 +854,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
     {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
+        timeCharacteristicDetails.set_field(timeCharacteristic->field->getName());
     }
     else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {

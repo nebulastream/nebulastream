@@ -76,7 +76,7 @@ std::unique_ptr<Runtime::Execution::Operators::TimeFunction> PhysicalWindowOpera
     switch (timeWindow->getTimeCharacteristic()->getType())
     {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic()->getField()->getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+            if (timeWindow->getTimeCharacteristic()->field->getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
             {
                 return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
             }
@@ -85,7 +85,7 @@ std::unique_ptr<Runtime::Execution::Operators::TimeFunction> PhysicalWindowOpera
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
+            auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->field->getName();
             auto timeStampField = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionReadField>(timeCharacteristicField);
             return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
                 std::move(timeStampField), timeWindow->getTimeCharacteristic()->getTimeUnit());
