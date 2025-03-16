@@ -30,6 +30,32 @@
 namespace NES
 {
 
+QueryPlan::QueryPlan(const QueryPlan& other) : queryId(other.queryId)
+{
+    for (const auto& op : other.rootOperators) {
+        if (op) {
+            rootOperators.push_back(op->clone());
+        }
+    }
+}
+
+QueryPlan::QueryPlan(QueryPlan&& other)
+    : rootOperators(std::move(other.rootOperators)), queryId(other.queryId)
+{}
+
+QueryPlan& QueryPlan::operator=(QueryPlan&& other) {
+    if (this != &other) {
+        rootOperators = std::move(other.rootOperators);
+        queryId = other.queryId;
+    }
+    return *this;
+}
+
+std::vector<std::unique_ptr<Operator>> QueryPlan::releaseRootOperators()
+{
+    return std::move(rootOperators);
+}
+
 std::unique_ptr<QueryPlan> QueryPlan::create(std::unique_ptr<Operator> rootOperator)
 {
     return std::make_unique<QueryPlan>(std::move(rootOperator));
