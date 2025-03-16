@@ -71,12 +71,8 @@ public:
     bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
-    /// Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR in every field name of the schema.
-    void updateSourceName(std::string_view srcName);
-
-    Schema addField(Field attribute);
-    Schema addField(std::string name, const DataType::Type& type);
-    Schema addField(std::string name, DataType dataType);
+    Schema addField(std::string name, const DataType& dataType);
+    Schema addField(std::string name, DataType::Type type);
 
     /// Replaces the type of the field
     void replaceTypeOfField(const std::string& name, DataType type);
@@ -105,7 +101,7 @@ public:
     std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void assignToFields(const Schema& otherSchema);
-    void addFieldsFromOtherSchema(const Schema& otherSchema);
+    void appendFieldsFromOtherSchema(const Schema& otherSchema);
     void renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     size_t getSizeOfSchemaInBytes() const;
