@@ -21,9 +21,8 @@
 namespace NES
 {
 class QueryPlan;
-class DecomposedQueryPlan;
 class OriginIdAssignmentOperator;
-namespace Optimizer
+namespace LegacyOptimizer
 {
 
 
@@ -49,17 +48,11 @@ public:
     /// @return The updated query plan
     QueryPlan execute(QueryPlan queryPlan);
 
-    /// @brief Apply the rule to the Query plan
-    /// @param decomposedQueryPlan: The original query plan
-    /// @return The updated query plan
-    std::shared_ptr<DecomposedQueryPlan> execute(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan);
-
 private:
     explicit OriginIdInferencePhase();
 
     void performInference(
-        const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-        const std::vector<std::shared_ptr<Operator>>& rootOperators);
+        const std::vector<OriginIdAssignmentOperator*>& originIdAssignmentOperator, const std::vector<Operator*>& rootOperators);
 };
 }
 }
