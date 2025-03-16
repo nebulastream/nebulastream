@@ -15,7 +15,6 @@
 #include <memory>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -243,8 +242,7 @@ bool LogicalSourceExpansionRule::isBlockingOperator(const std::shared_ptr<Node>&
 {
     return (
         NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<LogicalWindowOperator>(operatorNode)
-        || NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode)
-        || NES::Util::instanceOf<Experimental::LogicalBatchJoinOperator>(operatorNode));
+        || NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode));
 }
 
 }

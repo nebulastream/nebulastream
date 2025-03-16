@@ -21,7 +21,6 @@
 #include <API/Windowing.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -87,40 +86,6 @@ private:
     const Query& subQueryRhs;
     Query& originalQuery;
     std::shared_ptr<NodeFunction> joinFunctions;
-};
-
-}
-
-/**
-* @brief BatchJoinOperatorBuilder.
-* @note Initialize as Join between originalQuery and subQueryRhs.
-* @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
-* @note No windowing is required.
-*/
-namespace Experimental::BatchJoinOperatorBuilder
-{
-
-
-class Join
-{
-public:
-    /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param subQueryRhs
-     * @param originalQuery
-     */
-    Join(const Query& subQueryRhs, Query& originalQuery);
-
-    /** @brief is called to append all joinFunctions (key predicates) to the previous defined join, i.e.,
-     * it sets all condition for the join matches
-     * @param joinFunction : a set of binary functions to compare left and right tuples
-     * @return object of type JoinWhere on which equalsTo function is defined and can be called.
-     */
-    [[nodiscard]] Query& where(const std::shared_ptr<NodeFunction>& joinFunction) const;
-
-private:
-    const Query& subQueryRhs;
-    Query& originalQuery;
 };
 
 }
@@ -246,7 +211,6 @@ public:
 
     ///both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
-    friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -260,14 +224,6 @@ public:
      * @return object where where() function is defined and can be called by user
      */
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
-
-    /**
-     * @brief can be called on the original query with the query to be joined with and sets this query in the class BatchJoinOperatorBuilder::Join.
-     * @warning The batch join is an experimental feature.
-     * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
-     */
-    NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
@@ -398,17 +354,6 @@ private:
         const Query& subQueryRhs,
         const std::shared_ptr<NodeFunction>& joinFunction,
         const std::shared_ptr<Windowing::WindowType>& windowType);
-
-    /**
-     * @new change: Now it's private, because we don't want the user to have access to it.
-     * We call it only internal as a last step during the Join operation
-     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-     * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
-     * @return the query
-     */
-    Query& batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
