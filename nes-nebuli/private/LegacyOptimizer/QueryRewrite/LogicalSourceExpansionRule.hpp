@@ -89,7 +89,7 @@ public:
      * @param queryPlan: the original non-expanded query plan
      * @return expanded logical query plan
      */
-    QueryPlan apply(QueryPlan queryPlan);
+    void apply(QueryPlan& queryPlan);
 
     virtual ~LogicalSourceExpansionRule() = default;
 
