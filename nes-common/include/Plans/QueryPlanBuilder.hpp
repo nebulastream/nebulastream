@@ -42,12 +42,6 @@ public:
     static QueryPlan
     addProjection(std::vector<std::unique_ptr<LogicalFunction>> functions, QueryPlan queryPlan);
 
-    /// @brief this call add the rename operator to the queryPlan, this operator renames the source
-    /// @param newSourceName source name
-    /// @param queryPlan the queryPlan to add the rename node
-    /// @return the updated queryPlan
-    static QueryPlan addRename(const std::string& newSourceName, QueryPlan queryPlan);
-
     /// @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
     /// exemplary usage would be: selection(Attribute("f1" < 10))
     /// @param selectionFunction as function node containing the predicate

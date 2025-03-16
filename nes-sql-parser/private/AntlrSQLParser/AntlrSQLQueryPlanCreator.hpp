@@ -25,12 +25,13 @@ namespace NES::Parsers
 
 class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
-    AntlrSQLHelper helper;
+    std::stack<AntlrSQLHelper> helpers;
     std::vector<std::string> sinkNames;
     std::stack<QueryPlan> queryPlans;
 
 public:
     [[nodiscard]] QueryPlan getQueryPlan() const;
+    void poppush(const AntlrSQLHelper& helper);
 
     /// Parsing listener methods (enter/exit pairs)
     void enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
@@ -62,6 +63,7 @@ public:
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;
     void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
+    //void enterNamedExpressionSeq(AntlrSQLParser::NamedExpressionSeqContext* context) override;
     void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;
