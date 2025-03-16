@@ -46,15 +46,15 @@ public:
     static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<NodeFunction>& field);
     Type getType() const;
 
-    // Todo: implement with overloaded operator
-    bool equals(const TimeCharacteristic& other) const;
+    bool operator==(const TimeCharacteristic& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
 
-    std::string toString() const;
     std::string getTypeAsString() const;
     TimeUnit getTimeUnit() const;
 
     void setTimeUnit(const TimeUnit& unit);
 
+    /// Public, since we need to both get and set it.
     Schema::Field field;
 
 private:

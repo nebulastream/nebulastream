@@ -70,17 +70,6 @@ void TimeCharacteristic::setTimeUnit(const TimeUnit& newUnit)
     this->unit = newUnit;
 }
 
-std::string TimeCharacteristic::toString() const
-{
-    std::stringstream ss;
-    ss << "TimeCharacteristic: ";
-    ss << " type=" << getTypeAsString();
-    ss << " field=" << field;
-
-    ss << std::endl;
-    return ss.str();
-}
-
 std::string TimeCharacteristic::getTypeAsString() const
 {
     switch (type)
@@ -94,9 +83,8 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-bool TimeCharacteristic::equals(const TimeCharacteristic& other) const
+std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
 {
-    return this->type == other.type && this->field == other.field && this->unit.equals(other.unit);
+    return os << fmt::format("TimeCharacteristic(type: {}, field: {}\n)", timeCharacteristic.getTypeAsString(), timeCharacteristic.field);
 }
-
 }
