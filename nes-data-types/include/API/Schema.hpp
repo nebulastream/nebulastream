@@ -87,7 +87,7 @@ public:
     /// @param index
     /// @return AttributeField
     /// @throws FieldNotFound if the field does not exist
-    AttributeField getFieldByIndex(size_t index) const;
+    const AttributeField& getFieldByIndex(size_t index) const;
 
     /// @brief Returns the number of fields in the schema.
     /// @return uint64_t

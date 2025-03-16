@@ -34,27 +34,10 @@ template <class T, bool boundaryChecks = true>
 class ColumnLayoutField
 {
 public:
-    /**
-     * Factory to create a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
-     * @param fieldIndex the field which is accessed.
-     * @param layout the memory layout
-     * @tparam buffer the tuple buffer
-     * @tparam T type of field
-     * @return field handler
-     */
     static inline ColumnLayoutField<T, boundaryChecks>
-    create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
-
-    /**
-     * Creates a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
-     * @param fieldIndex
-     * @param layout the memory layout
-     * @tparam buffer the tuple buffer
-     * @tparam T type of field
-     * @return field handler via a fieldName and a layoutBuffer
-     */
+    create(uint64_t fieldIndex, const ColumnLayout& layout, Memory::TupleBuffer& buffer);
     static inline ColumnLayoutField<T, boundaryChecks>
-    create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
+    create(const std::string& fieldName, const ColumnLayout& layout, Memory::TupleBuffer& buffer);
 
     /**
      * Accesses the value of this field for a specific record.
@@ -64,29 +47,24 @@ public:
     inline T& operator[](size_t recordIndex);
 
 private:
-    /**
-     * @brief Constructor for ColumnLayoutField
-     * @param basePointer
-     * @param layout
-     */
-    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)) {};
+    ColumnLayoutField(T* basePointer, const ColumnLayout& layout) : basePointer(basePointer), layout(layout) {};
 
     T* basePointer;
-    std::shared_ptr<ColumnLayout> layout;
+    ColumnLayout layout;
 };
 
 template <class T, bool boundaryChecks>
 inline ColumnLayoutField<T, boundaryChecks>
-ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
+ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, const ColumnLayout& layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema().getFieldCount(),
+        boundaryChecks && fieldIndex < layout.getSchema().getFieldCount(),
         "fieldIndex out of bounds {} >= {}",
-        layout->getSchema().getFieldCount(),
+        layout.getSchema().getFieldCount(),
         fieldIndex);
 
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
-    auto fieldOffset = layout->getFieldOffset(0, fieldIndex);
+    auto fieldOffset = layout.getFieldOffset(0, fieldIndex);
 
     T* basePointer = reinterpret_cast<T*>(bufferBasePointer + fieldOffset);
     return ColumnLayoutField<T, boundaryChecks>(basePointer, layout);
@@ -94,9 +72,9 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
 
 template <class T, bool boundaryChecks>
 ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::create(
-    const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
+    const std::string& fieldName, const ColumnLayout& layout, Memory::TupleBuffer& buffer)
 {
-    auto fieldIndex = layout->getFieldIndexFromName(fieldName);
+    auto fieldIndex = layout.getFieldIndexFromName(fieldName);
     INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);
     return ColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
 }
@@ -105,7 +83,7 @@ template <class T, bool boundaryChecks>
 inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
     INVARIANT(
-        boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds {} >= {}", layout->getCapacity(), recordIndex);
+        boundaryChecks && recordIndex < layout.getCapacity(), "recordIndex out of bounds {} >= {}", layout.getCapacity(), recordIndex);
     return *(basePointer + recordIndex);
 }
 

@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -39,7 +40,7 @@ namespace NES::Nautilus::TestUtils
 
 void runStoreTest(
     Interface::PagedVector& pagedVector,
-    const Schema& testSchema,
+    Schema testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -47,7 +48,7 @@ void runStoreTest(
     Memory::AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
-    auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
     const auto memoryProviderInputBuffer
@@ -56,18 +57,24 @@ void runStoreTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
-        [&](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
-            nautilus::val<Interface::PagedVector*> pagedVectorVal)
+        [memoryProvider = std::move(memoryProvider),
+         memoryProviderInputBuffer, // if needed, capture by copy if it’s copyable
+         projections](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
+                      nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
+                      nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             const RecordBuffer recordBuffer(inputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, std::move(memoryProvider), bufferProviderVal);
+            // Here, std::move(memoryProvider) now works as intended.
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal,
+                                                           Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema),
+                                                           bufferProviderVal);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
                 const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
                 pagedVectorRef.writeRecord(record);
             }
         }));
+
     /// NOLINTEND(performance-unnecessary-value-param)
 
     /// Inserting each tuple by iterating over all tuple buffers
@@ -80,7 +87,7 @@ void runStoreTest(
     /// Calculating the expected number of entries and pages
     const uint64_t expectedNumberOfEntries = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    const uint64_t capacityPerPage = memoryProvider->getMemoryLayout().getCapacity();
+    const uint64_t capacityPerPage = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema)->getMemoryLayout().getCapacity();
     const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
     ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
@@ -93,7 +100,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
-    const Schema& testSchema,
+    Schema testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -109,21 +116,21 @@ void runRetrieveTest(
     auto outputBuffer = outputBufferVal.value();
 
     /// Creating the memory provider for the input buffers
-    auto memoryProviderActualBuffer
+    const auto memoryProviderActualBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(outputBuffer.getBufferSize(), testSchema);
 
     /// Compiling the function that reads the records from the PagedVector, if it is not already compiled
-    auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto readFromPagedVectorIntoTupleBuffer = nautilusEngine.registerFunction(std::function(
-        [&](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
+        [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
             nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             RecordBuffer recordBuffer(outputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, std::move(memoryProvider), bufferProviderVal);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
             nautilus::val<uint64_t> numberOfTuples = 0;
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {
@@ -169,7 +176,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const Schema& schema,
+    Schema schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,

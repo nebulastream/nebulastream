@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -68,9 +67,10 @@ PagedVectorRef::PagedVectorRef(
 {
 }
 
-nautilus::val<Memory::MemoryLayouts::MemoryLayout*> PagedVectorRef::getMemoryLayout() const
+nautilus::val<const Memory::MemoryLayouts::MemoryLayout*> PagedVectorRef::getMemoryLayout() const
 {
-    return &memoryProvider->getMemoryLayout();
+    const auto& layout = memoryProvider->getMemoryLayout();
+    return nautilus::val<const Memory::MemoryLayouts::MemoryLayout*>(&layout);
 }
 
 void PagedVectorRef::writeRecord(const Record& record) const

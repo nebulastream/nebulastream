@@ -97,8 +97,8 @@ public:
 TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
     bufferManager = Memory::BufferManager::create();
-    const auto testSchema = Schema(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                .addField("value1", BasicType::UINT64)
+    auto testSchema =  std::make_shared<Schema>(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("value1", BasicType::UINT64)
                                 .addField("value2", BasicType::UINT64)
                                 .addField("value3", BasicType::UINT64);
     constexpr auto pageSize = PAGE_SIZE;

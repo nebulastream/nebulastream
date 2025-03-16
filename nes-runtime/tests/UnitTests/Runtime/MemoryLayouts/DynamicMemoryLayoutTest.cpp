@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <utility>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -20,6 +21,12 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <magic_enum.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+
 namespace NES::Memory::MemoryLayouts
 {
 
@@ -41,7 +48,7 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
 
-        Schema schema = Schema().addField("t1", BasicType::UINT16).addField("t2", BasicType::BOOLEAN).addField("t3", BasicType::FLOAT64);
+        schema = Schema().addField("t1", BasicType::UINT16).addField("t2", BasicType::BOOLEAN).addField("t3", BasicType::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::unique_ptr<RowLayout> layout;

@@ -130,7 +130,7 @@ std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldNam
     return std::nullopt;
 }
 
-AttributeField Schema::getFieldByIndex(const size_t index) const
+const AttributeField& Schema::getFieldByIndex(const size_t index) const
 {
     if (index < fields.size())
     {

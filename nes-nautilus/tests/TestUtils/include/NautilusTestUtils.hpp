@@ -156,7 +156,7 @@ public:
         Configurations::NautilusBackend backend,
         nautilus::engine::Options& options,
         const Schema& schema,
-        std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer);
+        const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::string

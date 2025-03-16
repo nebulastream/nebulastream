@@ -43,14 +43,16 @@ ChainedEntryMemoryProvider::createFieldOffsets(
     std::vector<MemoryProvider::FieldOffsets> fieldsValue;
     uint64_t offset = sizeof(ChainedHashMapEntry);
     const DefaultPhysicalTypeFactory physicalDataTypeFactory;
+
     for (const auto& fieldName : fieldNameKeys)
     {
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
+        const auto fieldSize = physicalType->size();
         fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
-        offset += physicalType->size();
+        offset += fieldSize;
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -59,8 +61,9 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
+        const auto fieldSize = physicalType->size();
         fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
-        offset += physicalType->size();
+        offset += fieldSize;
     }
     return {fieldsKey, fieldsValue};
 }

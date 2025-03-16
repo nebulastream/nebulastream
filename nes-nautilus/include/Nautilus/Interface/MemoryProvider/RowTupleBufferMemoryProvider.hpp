@@ -30,7 +30,7 @@ public:
     RowTupleBufferMemoryProvider(std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    [[nodiscard]] Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() const override;
+    [[nodiscard]] const Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() const override;
     RowTupleBufferMemoryProvider(const RowTupleBufferMemoryProvider& other)
         : rowMemoryLayout(other.rowMemoryLayout
                               ? std::make_unique<Memory::MemoryLayouts::RowLayout>(*other.rowMemoryLayout)

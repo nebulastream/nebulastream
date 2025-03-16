@@ -42,9 +42,9 @@ NLJOperatorHandler::NLJOperatorHandler(
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(leftMemoryProvider), std::move(rightMemoryProvider))
 {
-    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayout().getCapacity());
+    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(this->leftMemoryProvider->getMemoryLayout().getCapacity());
     averageNumberOfTuplesLeft.wlock()->second = 0;
-    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayout().getCapacity());
+    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(this->rightMemoryProvider->getMemoryLayout().getCapacity());
     averageNumberOfTuplesRight.wlock()->second = 0;
 }
 

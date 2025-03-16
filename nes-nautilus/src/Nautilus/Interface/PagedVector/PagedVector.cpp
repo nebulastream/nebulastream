@@ -59,6 +59,7 @@ void PagedVector::copyFrom(const PagedVector& other)
 const Memory::TupleBuffer& PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     auto bufferPos = entryPos;
+    std::cout << pages.size() << "\n";
     for (const auto& page : pages)
     {
         const auto numTuplesOnPage = page.getNumberOfTuples();

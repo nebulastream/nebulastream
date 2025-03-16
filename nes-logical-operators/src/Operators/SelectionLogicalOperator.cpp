@@ -25,6 +25,7 @@
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 
 namespace NES
 {
@@ -76,7 +77,7 @@ bool SelectionLogicalOperator::inferSchema()
         return false;
     }
     predicate->inferStamp(inputSchema);
-    if (!predicate->isPredicate())
+    if (predicate->getStamp() != Boolean())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }

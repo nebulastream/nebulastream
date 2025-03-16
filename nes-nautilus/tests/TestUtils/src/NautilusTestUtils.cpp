@@ -108,7 +108,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         const auto compilation = backend == Configurations::NautilusBackend::COMPILER;
         options.setOption("engine.Compilation", compilation);
         const nautilus::engine::NautilusEngine engine(options);
-        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, std::move(memoryProviderInputBuffer));
+        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, *memoryProviderInputBuffer);
     }
 
     /// Lambda function that creates a vector from 0 to n-1 and then shuffles it
@@ -174,7 +174,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     Configurations::NautilusBackend backend,
     nautilus::engine::Options& options,
     const Schema& schema,
-    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer)
+    const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -235,7 +235,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record);
+            memoryProviderInputBuffer.writeRecord(currentIndex, recordBuffer, record);
             recordBuffer.setNumRecords(i + 1);
         }
     };

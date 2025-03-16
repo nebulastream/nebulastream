@@ -65,7 +65,7 @@ public:
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
 
 private:
-    [[nodiscard]] nautilus::val<Memory::MemoryLayouts::MemoryLayout*> getMemoryLayout() const;
+    [[nodiscard]] nautilus::val<const Memory::MemoryLayouts::MemoryLayout*> getMemoryLayout() const;
 
     nautilus::val<PagedVector*> pagedVectorRef;
     std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;

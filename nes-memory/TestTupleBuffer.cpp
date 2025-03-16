@@ -280,7 +280,7 @@ std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeade
     {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(field.getDataType());
         physicalSizes.push_back(physicalType->size());
-        types.push_back(std::move(physicalType));
+        types.push_back(physicalType->clone());
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),

@@ -25,8 +25,9 @@
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(child->getStamp().clone(), std::move(child))
+SqrtLogicalFunction::SqrtLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
 {
+    stamp = child->getStamp().clone();
 };
 
 SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : UnaryLogicalFunction(other)

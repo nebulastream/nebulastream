@@ -31,7 +31,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
     : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) {};
 
-Memory::MemoryLayouts::MemoryLayout& ColumnTupleBufferMemoryProvider::getMemoryLayout() const
+const Memory::MemoryLayouts::MemoryLayout& ColumnTupleBufferMemoryProvider::getMemoryLayout() const
 {
     return *columnMemoryLayout;
 }
