@@ -14,8 +14,7 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
@@ -67,18 +66,18 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     ///reset left and right schema
-    leftInputSchema->clear();
-    rightInputSchema->clear();
+    leftInputSchema = Schema{leftInputSchema.memoryLayoutType};
+    rightInputSchema = Schema{rightInputSchema.memoryLayoutType};
 
     ///Find the schema for left join key
     const std::shared_ptr<NodeFunctionFieldAccess> buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
     {
-        if ((*itr)->getFieldByName(buildJoinKeyName))
+        if ((*itr).getFieldByName(buildJoinKeyName))
         {
-            leftInputSchema->copyFields(*itr);
-            buildJoinKey->inferStamp(*leftInputSchema);
+            leftInputSchema.assignToFields(*itr);
+            buildJoinKey->inferStamp(leftInputSchema);
             ///remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -91,57 +90,39 @@ bool LogicalBatchJoinOperator::inferSchema()
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
     {
-        if (schema->getFieldByName(probeJoinKeyName))
+        if (schema.getFieldByName(probeJoinKeyName))
         {
-            rightInputSchema->copyFields(schema);
-            probeJoinKey->inferStamp(*rightInputSchema);
+            rightInputSchema.assignToFields(schema);
+            probeJoinKey->inferStamp(rightInputSchema);
         }
     }
 
-    ///Check if left input schema was identified
-    if (!leftInputSchema)
-    {
-        NES_ERROR(
-            "LogicalBatchJoinOperator: Left input schema is not initialized. Make sure that left join key is present: {}",
-            buildJoinKeyName);
-        throw CannotInferSchema("LogicalBatchJoinOperator: Left input schema is not initialized.");
-    }
-
-    ///Check if right input schema was identified
-    if (!rightInputSchema)
-    {
-        NES_ERROR(
-            "LogicalBatchJoinOperator: Right input schema is not initialized. Make sure that right join key is present: {}",
-            probeJoinKeyName);
-        throw CannotInferSchema("LogicalBatchJoinOperator: Right input schema is not initialized.");
-    }
-
     ///Check that both left and right schema should be different
-    if (*rightInputSchema == *leftInputSchema)
+    if (rightInputSchema == leftInputSchema)
     {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
         throw CannotInferSchema("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
     }
 
-    NES_DEBUG("Binary infer left schema={} right schema={}", leftInputSchema->toString(), rightInputSchema->toString());
-    PRECONDITION(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
-    PRECONDITION(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
+    NES_DEBUG("Binary infer left schema={} right schema={}", leftInputSchema, rightInputSchema);
+    PRECONDITION(leftInputSchema.sizeOfSchemaInBytes != 0, "left schema is emtpy");
+    PRECONDITION(rightInputSchema.sizeOfSchemaInBytes != 0, "right schema is emtpy");
 
     ///Reset output schema and add fields from left and right input schema
-    outputSchema->clear();
+    outputSchema = Schema{outputSchema.memoryLayoutType};
 
     /// create dynamic fields to store all fields from left and right streams
-    for (const auto& field : *leftInputSchema)
+    for (const auto& field : leftInputSchema.getFields())
     {
-        outputSchema->addField(field->getName(), field->getDataType());
+        outputSchema.addField(field.name, field.dataType);
     }
 
-    for (const auto& field : *rightInputSchema)
+    for (const auto& field : rightInputSchema.getFields())
     {
-        outputSchema->addField(field->getName(), field->getDataType());
+        outputSchema.addField(field.name, field.dataType);
     }
 
-    NES_DEBUG("Output schema for join={}", outputSchema->toString());
+    NES_DEBUG("Output schema for join={}", outputSchema);
     batchJoinDefinition->updateOutputDefinition(outputSchema);
     batchJoinDefinition->updateInputSchemas(leftInputSchema, rightInputSchema);
     return true;

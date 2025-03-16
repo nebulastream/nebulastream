@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
@@ -39,15 +39,10 @@ public:
      * @param operatorHandler pointer to the operator handler of the threshold window (of type ThresholdWindowOperatorHandler)
      */
     PhysicalThresholdWindowOperator(
-        OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
-        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition);
+        OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition);
 
-    static std::shared_ptr<PhysicalThresholdWindowOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition);
+    static std::shared_ptr<PhysicalThresholdWindowOperator>
+    create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition);
 
     std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition();
 

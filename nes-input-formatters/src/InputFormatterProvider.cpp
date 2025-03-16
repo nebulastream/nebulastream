@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <ErrorHandling.hpp>

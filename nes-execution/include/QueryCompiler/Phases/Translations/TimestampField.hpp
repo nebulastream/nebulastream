@@ -18,9 +18,9 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <API/TimeUnit.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Measures/TimeUnit.hpp>
 
 namespace NES::QueryCompilation
 {

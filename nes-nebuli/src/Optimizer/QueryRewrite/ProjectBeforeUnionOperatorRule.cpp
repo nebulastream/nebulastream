@@ -13,8 +13,7 @@
 */
 #include <memory>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
@@ -42,7 +41,7 @@ std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr
         auto rightInputSchema = unionOperator->getRightInputSchema();
         auto leftInputSchema = unionOperator->getLeftInputSchema();
         /// Only apply the rule when right side and left side schema are different
-        if (!(*rightInputSchema == *leftInputSchema))
+        if (rightInputSchema != leftInputSchema)
         {
             /// Construct project operator for mapping rightInputSource To leftInputSource
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
@@ -51,7 +50,7 @@ std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr
             {
                 auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
                 /// Find the child that matches the right schema and inset the project operator there
-                if (*rightInputSchema == *childOutputSchema)
+                if (rightInputSchema == childOutputSchema)
                 {
                     child->insertBetweenThisAndParentNodes(projectOperator);
                     break;
@@ -63,24 +62,20 @@ std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr
     return queryPlan;
 }
 
-std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjectOperator(
-    const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema)
+std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjectOperator(Schema sourceSchema, Schema destinationSchema)
 {
-    NES_TRACE(
-        "Computing Projection operator for Source Schema{} and Destination schema {}",
-        sourceSchema->toString(),
-        destinationSchema->toString());
+    NES_TRACE("Computing Projection operator for Source Schema{} and Destination schema {}", sourceSchema, destinationSchema);
     /// Fetch source and destination schema fields
     const auto& sourceFields = sourceSchema;
     const auto& destinationFields = destinationSchema;
     std::vector<std::shared_ptr<NodeFunction>> projectFunctions;
     /// Compute projection functions
-    for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
+    for (uint64_t i = 0; i < sourceSchema.getNumberOfFields(); i++)
     {
-        auto field = sourceFields->getFieldByIndex(i);
-        auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
+        auto field = sourceFields.getFieldAt(i);
+        auto updatedFieldName = destinationFields.getFieldAt(i).name;
         /// Compute field access and field rename function
-        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
+        auto originalField = NodeFunctionFieldAccess::create(field.dataType, field.name);
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
         projectFunctions.push_back(fieldRenameFunction);
     }

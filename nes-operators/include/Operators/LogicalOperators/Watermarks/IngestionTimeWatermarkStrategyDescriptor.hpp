@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing
@@ -35,7 +35,7 @@ public:
      * @param schema : the schema to be used for inferring the types
      * @return true if success else false
      */
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(Schema schema) override;
 
 private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

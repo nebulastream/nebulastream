@@ -51,8 +51,6 @@ public:
 
     bool equal(std::shared_ptr<WindowType> otherWindowType) override;
 
-    uint64_t hash() const override;
-
 private:
     TumblingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;

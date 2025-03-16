@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -34,20 +34,20 @@ public:
      * @param id operator id
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, const std::shared_ptr<Schema>& outputSchema);
+    PhysicalScanOperator(OperatorId id, Schema outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
      * @param id operator id
      * @param outputSchema output schema
      */
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, Schema outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator
      * @param outputSchema output schema
      */
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(Schema outputSchema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

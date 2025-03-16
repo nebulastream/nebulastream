@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
@@ -34,27 +34,27 @@ public:
 
     /**
    * @brief get the input schema of this operator
-   * @return std::shared_ptr<Schema>
+   * @return Schema
    */
-    std::shared_ptr<Schema> getInputSchema() const;
+    Schema getInputSchema() const;
 
     /**
      * @brief set the input schema of this operator
      * @param inputSchema
     */
-    void setInputSchema(std::shared_ptr<Schema> inputSchema);
+    void setInputSchema(Schema inputSchema);
 
     /**
     * @brief get the result schema of this operator
-    * @return std::shared_ptr<Schema>
+    * @return Schema
     */
-    std::shared_ptr<Schema> getOutputSchema() const override;
+    Schema getOutputSchema() const override;
 
     /**
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override;
+    void setOutputSchema(Schema outputSchema) override;
 
     /**
      * @brief Set the input origin ids from the input stream
@@ -77,8 +77,8 @@ public:
 protected:
     std::string toString() const override;
 
-    std::shared_ptr<Schema> inputSchema = Schema::create();
-    std::shared_ptr<Schema> outputSchema = Schema::create();
+    Schema inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema outputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     std::vector<OriginId> inputOriginIds;
 };
 

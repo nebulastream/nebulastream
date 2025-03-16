@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +30,7 @@ bool LogicalUnaryOperator::inferSchema()
     /// We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children)
     {
-        if (!NES::Util::as<LogicalOperator>(child)->inferSchema())
+        if (not NES::Util::as<LogicalOperator>(child)->inferSchema())
         {
             return false;
         }
@@ -44,24 +44,24 @@ bool LogicalUnaryOperator::inferSchema()
     const auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();
     for (const auto& child : children)
     {
-        if (!(*NES::Util::as<Operator>(child)->getOutputSchema() == *childSchema))
+        if (not(NES::Util::as<Operator>(child)->getOutputSchema() == childSchema))
         {
             NES_ERROR(
                 "UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
                 "this op schema= {} child schema={}",
-                NES::Util::as<Operator>(child)->getOutputSchema()->toString(),
-                childSchema->toString());
+                NES::Util::as<Operator>(child)->getOutputSchema(),
+                childSchema);
             return false;
         }
     }
 
     ///Reset and reinitialize the input and output schemas
-    inputSchema->clear();
-    inputSchema = inputSchema->copyFields(childSchema);
-    inputSchema->setLayoutType(childSchema->getLayoutType());
-    outputSchema->clear();
-    outputSchema = outputSchema->copyFields(childSchema);
-    outputSchema->setLayoutType(childSchema->getLayoutType());
+    inputSchema = Schema{inputSchema.memoryLayoutType};
+    inputSchema.assignToFields(childSchema);
+    inputSchema.memoryLayoutType = childSchema.memoryLayoutType;
+    outputSchema = Schema{outputSchema.memoryLayoutType};
+    outputSchema.assignToFields(childSchema);
+    outputSchema.memoryLayoutType = childSchema.memoryLayoutType;
     return true;
 }
 

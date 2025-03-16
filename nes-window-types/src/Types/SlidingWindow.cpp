@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/SlidingWindow.hpp>
@@ -49,7 +48,7 @@ std::string SlidingWindow::toString() const
     std::stringstream ss;
     ss << "SlidingWindow: size=" << size.getTime();
     ss << " slide=" << slide.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << " timeCharacteristic=" << timeCharacteristic;
     ss << std::endl;
     return ss.str();
 }
@@ -59,18 +58,9 @@ bool SlidingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
     if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType))
     {
         return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
-            && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
+            && *this->timeCharacteristic == *otherSlidingWindow->timeCharacteristic;
     }
     return false;
-}
-
-uint64_t SlidingWindow::hash() const
-{
-    uint64_t hashValue = 0;
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
-    return hashValue;
 }
 
 }

@@ -58,7 +58,6 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
-    size_t schemaSizeInBytes;
     std::unique_ptr<CSVFormat> formatter;
 };
 

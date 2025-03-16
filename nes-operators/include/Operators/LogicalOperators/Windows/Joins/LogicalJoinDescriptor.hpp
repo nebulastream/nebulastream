@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Types/WindowType.hpp>
@@ -67,12 +67,12 @@ public:
     /**
    * @brief getter left source type
    */
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSourceType() const;
+    [[nodiscard]] Schema getLeftSourceType() const;
 
     /**
    * @brief getter of right source type
    */
-    [[nodiscard]] std::shared_ptr<Schema> getRightSourceType() const;
+    [[nodiscard]] Schema getRightSourceType() const;
 
     /**
      * @brief getter/setter for window type
@@ -103,19 +103,19 @@ public:
      * @param leftSourceType the type of the left source
      * @param rightSourceType the type of the right source
      */
-    void updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType);
+    void updateSourceTypes(Schema leftSourceType, Schema rightSourceType);
 
     /**
      * @brief Update the output source type upon type inference
      * @param outputSchema the type of the output source
      */
-    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
+    void updateOutputDefinition(Schema outputSchema);
 
     /**
      * @brief Getter of the output source schema
      * @return the output source schema
      */
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
@@ -147,9 +147,9 @@ public:
 
 private:
     std::shared_ptr<NodeFunction> joinFunction;
-    std::shared_ptr<Schema> leftSourceType = Schema::create();
-    std::shared_ptr<Schema> rightSourceType = Schema::create();
-    std::shared_ptr<Schema> outputSchema = Schema::create();
+    Schema leftSourceType = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema rightSourceType = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema outputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     std::shared_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;

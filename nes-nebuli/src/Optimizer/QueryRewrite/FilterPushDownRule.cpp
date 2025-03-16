@@ -15,7 +15,7 @@
 #include <memory>
 #include <queue>
 #include <set>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
@@ -142,8 +142,8 @@ void FilterPushDownRule::pushFilterBelowJoin(
     if (!pushed)
     {
         /// if any inputSchema contains all the fields that are used by the filter we can push the filter to the corresponding site
-        const std::shared_ptr<Schema> leftSchema = curOperatorAsJoin->getLeftInputSchema();
-        const std::shared_ptr<Schema> rightSchema = curOperatorAsJoin->getRightInputSchema();
+        const Schema leftSchema = curOperatorAsJoin->getLeftInputSchema();
+        const Schema rightSchema = curOperatorAsJoin->getRightInputSchema();
         bool leftBranchPossible = true;
         bool rightBranchPossible = true;
 
@@ -151,11 +151,11 @@ void FilterPushDownRule::pushFilterBelowJoin(
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Checking if filter can be pushed below left or right branch of join");
         for (const std::string& fieldUsedByFilter : predicateFields)
         {
-            if (!leftSchema->contains(fieldUsedByFilter))
+            if (not leftSchema.contains(fieldUsedByFilter))
             {
                 leftBranchPossible = false;
             }
-            if (!rightSchema->contains(fieldUsedByFilter))
+            if (not rightSchema.contains(fieldUsedByFilter))
             {
                 rightBranchPossible = false;
             }
@@ -339,9 +339,9 @@ void FilterPushDownRule::insertFilterIntoNewPosition(
         }
 
         /// the input schema of the filter is going to be the same as the output schema of the node below. Its output schema is the same as its input schema.
-        filterOperator->setInputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema()->copy());
+        filterOperator->setInputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema());
         NES::Util::as<Operator>(filterOperator)
-            ->setOutputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema()->copy());
+            ->setOutputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema());
 
         /// conserve order
         if (swapBranches)

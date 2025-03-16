@@ -15,9 +15,9 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
-#include <API/TimeUnit.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing
 {
@@ -40,7 +40,7 @@ public:
 
     std::string toString() override;
 
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(Schema schema) override;
 
 private:
     /// Field where the watermark should be retrieved

@@ -16,10 +16,10 @@
 
 #include <ostream>
 #include <string>
-#include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
@@ -36,14 +36,14 @@ struct SourceDescriptor : public Configurations::Descriptor
 {
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema,
+        Schema schema,
         std::string logicalSourceName,
         std::string sourceType,
         ParserConfig parserConfig,
         Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
-    const std::shared_ptr<Schema> schema;
+    const Schema schema;
     const std::string logicalSourceName;
     const std::string sourceType;
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter

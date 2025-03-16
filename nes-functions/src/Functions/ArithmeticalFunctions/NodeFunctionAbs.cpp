@@ -15,6 +15,7 @@
 #include <cmath>
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -22,12 +23,11 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-NodeFunctionAbs::NodeFunctionAbs(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
+NodeFunctionAbs::NodeFunctionAbs(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
 
 NodeFunctionAbs::NodeFunctionAbs(NodeFunctionAbs* other) : NodeFunctionArithmeticalUnary(other)
 {

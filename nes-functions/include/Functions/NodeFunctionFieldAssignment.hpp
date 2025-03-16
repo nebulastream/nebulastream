@@ -14,12 +14,12 @@
 
 #pragma once
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -27,7 +27,7 @@ namespace NES
 class NodeFunctionFieldAssignment : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionFieldAssignment(DataType stamp);
     static std::shared_ptr<NodeFunctionFieldAssignment>
     create(const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction);
 

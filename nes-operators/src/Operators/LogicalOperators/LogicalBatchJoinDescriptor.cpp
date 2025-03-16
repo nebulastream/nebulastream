@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -59,12 +59,12 @@ std::shared_ptr<NodeFunctionFieldAccess> LogicalBatchJoinDescriptor::getProbeJoi
     return keyTypeProbe;
 }
 
-std::shared_ptr<Schema> LogicalBatchJoinDescriptor::getBuildSchema() const
+Schema LogicalBatchJoinDescriptor::getBuildSchema() const
 {
     return buildSchema;
 }
 
-std::shared_ptr<Schema> LogicalBatchJoinDescriptor::getProbeSchema() const
+Schema LogicalBatchJoinDescriptor::getProbeSchema() const
 {
     return probeSchema;
 }
@@ -79,18 +79,18 @@ uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesProbe() const
     return numberOfInputEdgesProbe;
 }
 
-void LogicalBatchJoinDescriptor::updateInputSchemas(std::shared_ptr<Schema> buildSchema, std::shared_ptr<Schema> probeSchema)
+void LogicalBatchJoinDescriptor::updateInputSchemas(Schema buildSchema, Schema probeSchema)
 {
     this->buildSchema = std::move(buildSchema);
     this->probeSchema = std::move(probeSchema);
 }
 
-void LogicalBatchJoinDescriptor::updateOutputDefinition(std::shared_ptr<Schema> outputSchema)
+void LogicalBatchJoinDescriptor::updateOutputDefinition(Schema outputSchema)
 {
     this->outputSchema = std::move(outputSchema);
 }
 
-std::shared_ptr<Schema> LogicalBatchJoinDescriptor::getOutputSchema() const
+Schema LogicalBatchJoinDescriptor::getOutputSchema() const
 {
     return outputSchema;
 }

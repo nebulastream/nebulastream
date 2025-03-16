@@ -15,11 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
@@ -38,9 +38,9 @@ public:
 
     std::shared_ptr<WindowAggregationDescriptor> copy() override;
 
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
+    DataType getInputStamp() override;
+    DataType getPartialAggregateStamp() override;
+    DataType getFinalAggregateStamp() override;
 
 private:
     explicit SumAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);

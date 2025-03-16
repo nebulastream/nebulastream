@@ -13,7 +13,9 @@
 */
 
 #include <cstdint>
-#include <API/TimeUnit.hpp>
+#include <ostream>
+#include <string>
+#include <Measures/TimeUnit.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
@@ -26,14 +28,9 @@ uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
     return multiplier;
 }
 
-std::string TimeUnit::toString() const
+std::ostream& operator<<(std::ostream& os, const TimeUnit& timeUnit)
 {
-    return fmt::format("TimeUnit: multiplier= {}", std::to_string(multiplier));
-}
-
-bool TimeUnit::equals(const TimeUnit& other) const
-{
-    return this->multiplier == other.multiplier;
+    return os << fmt::format("TimeUnit(multiplier= {})", std::to_string(timeUnit.multiplier));
 }
 
 TimeUnit TimeUnit::Milliseconds()

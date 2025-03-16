@@ -17,7 +17,7 @@
 #include <any>
 #include <memory>
 #include <unordered_map>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 
@@ -65,9 +65,9 @@ public:
 
     bool containAsGrandParent(const std::shared_ptr<Node>& operatorNode) override;
 
-    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
+    virtual Schema getOutputSchema() const = 0;
 
-    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
+    virtual void setOutputSchema(Schema outputSchema) = 0;
 
     void addProperty(const std::string& key, const std::any value);
 

@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
@@ -39,7 +39,7 @@ std::string IngestionTimeWatermarkStrategyDescriptor::toString()
     return "TYPE = INGESTION-TIME";
 }
 
-bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>&)
+bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(Schema)
 {
     return true;
 }

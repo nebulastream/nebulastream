@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -29,17 +29,10 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalSelectionOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalSelectionOperator(
-        OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, std::shared_ptr<NodeFunction> predicate);
-    static std::shared_ptr<PhysicalOperator> create(
-        OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunction>& function);
-    static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunction>& function);
+    PhysicalSelectionOperator(OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<NodeFunction> predicate);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function);
+    static std::shared_ptr<PhysicalOperator> create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function);
     std::shared_ptr<Operator> copy() override;
     std::shared_ptr<NodeFunction> getPredicate();
 

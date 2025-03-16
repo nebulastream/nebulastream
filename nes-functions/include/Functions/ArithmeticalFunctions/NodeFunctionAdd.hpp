@@ -14,10 +14,10 @@
 
 #pragma once
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -26,7 +26,7 @@ namespace NES
 class NodeFunctionAdd final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionAdd(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionAdd(DataType stamp);
     ~NodeFunctionAdd() noexcept override = default;
     /**
      * @brief Create a new ADD function

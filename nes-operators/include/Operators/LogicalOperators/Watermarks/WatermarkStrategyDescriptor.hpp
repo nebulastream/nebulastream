@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 
 
 namespace NES::Windowing
@@ -31,6 +31,6 @@ public:
 
     virtual std::string toString() = 0;
 
-    virtual bool inferStamp(const std::shared_ptr<Schema>& schema) = 0;
+    virtual bool inferStamp(Schema schema) = 0;
 };
 }

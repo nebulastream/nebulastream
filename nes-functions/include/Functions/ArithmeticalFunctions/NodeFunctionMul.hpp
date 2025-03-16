@@ -14,17 +14,17 @@
 
 #pragma once
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
 class NodeFunctionMul final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionMul(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionMul(DataType stamp);
     ~NodeFunctionMul() noexcept override = default;
     static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;

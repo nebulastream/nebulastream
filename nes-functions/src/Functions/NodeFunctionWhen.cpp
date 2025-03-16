@@ -14,7 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
@@ -22,13 +23,11 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 
 namespace NES
 {
-NodeFunctionWhen::NodeFunctionWhen(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
+NodeFunctionWhen::NodeFunctionWhen(DataType stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
 
 NodeFunctionWhen::NodeFunctionWhen(NodeFunctionWhen* other) : NodeFunctionBinary(other)
 {
@@ -50,16 +49,17 @@ void NodeFunctionWhen::inferStamp(const Schema& schema)
     right->inferStamp(schema);
 
     ///left function has to be boolean
-    if (!NES::Util::instanceOf<Boolean>(left->getStamp()))
+    if (not left->getStamp().isBoolean())
     {
-        CannotInferStamp(
-            "Error during stamp inference. Left type needs to be Boolean, but Left was: " + left->getStamp()->toString()
-            + "Right was: " + right->getStamp()->toString());
+        throw CannotInferStamp(
+            "Error during stamp inference. Left type needs to be Boolean, but Left was: {} and right was: {}",
+            left->getStamp(),
+            right->getStamp());
     }
 
     ///set stamp to right stamp, as only the left function will be returned
     stamp = right->getStamp();
-    NES_TRACE("NodeFunctionWhen: we assigned the following stamp: {}", stamp->toString())
+    NES_TRACE("NodeFunctionWhen: we assigned the following stamp: {}", stamp)
 }
 
 bool NodeFunctionWhen::equal(const std::shared_ptr<Node>& rhs) const
@@ -88,7 +88,7 @@ bool NodeFunctionWhen::validateBeforeLowering() const
 {
     /// left function has to be boolean
     const auto functionLeft = this->getLeft();
-    return NES::Util::instanceOf<Boolean>(functionLeft->getStamp());
+    return functionLeft->getStamp().isBoolean();
 }
 
 }

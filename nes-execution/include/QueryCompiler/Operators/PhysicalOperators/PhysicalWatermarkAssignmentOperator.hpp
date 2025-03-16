@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
@@ -29,17 +29,17 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator
 public:
     PhysicalWatermarkAssignmentOperator(
         OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
     static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
     std::shared_ptr<Operator> copy() override;
 

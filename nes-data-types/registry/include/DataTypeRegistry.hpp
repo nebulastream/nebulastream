@@ -15,13 +15,13 @@
 #pragma once
 
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <Util/Registry.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-using DataTypeRegistryReturnType = std::unique_ptr<DataType>;
+using DataTypeRegistryReturnType = DataType;
 struct DataTypeRegistryArguments
 {
 };

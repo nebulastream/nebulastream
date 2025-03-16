@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TumblingWindow.hpp>
@@ -50,7 +49,7 @@ std::string TumblingWindow::toString() const
 {
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << " timeCharacteristic=" << timeCharacteristic;
     ss << std::endl;
     return ss.str();
 }
@@ -59,16 +58,8 @@ bool TumblingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType))
     {
-        return this->size.equals(otherTumblingWindow->size) && this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
+        return this->size.equals(otherTumblingWindow->size) and (*this->timeCharacteristic == *otherTumblingWindow->timeCharacteristic);
     }
     return false;
-}
-
-uint64_t TumblingWindow::hash() const
-{
-    uint64_t hashValue = 0;
-    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
-    return hashValue;
 }
 }

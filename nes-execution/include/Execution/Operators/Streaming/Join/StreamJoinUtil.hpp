@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -24,20 +24,19 @@ namespace NES::Runtime::Execution
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
-    JoinSchema(
-        const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema, const std::shared_ptr<Schema>& joinSchema)
+    JoinSchema(Schema leftSchema, Schema rightSchema, Schema joinSchema)
         : leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema)
     {
     }
 
-    std::shared_ptr<Schema> leftSchema;
-    std::shared_ptr<Schema> rightSchema;
-    std::shared_ptr<Schema> joinSchema;
+    Schema leftSchema;
+    Schema rightSchema;
+    Schema joinSchema;
 };
 
 namespace Util
 {
 /// Creates the join schema from the left and right schema
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema);
+Schema createJoinSchema(Schema leftSchema, Schema rightSchema);
 }
 }

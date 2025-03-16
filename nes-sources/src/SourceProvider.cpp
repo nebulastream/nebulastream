@@ -38,7 +38,7 @@ SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescripto
     /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
     auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
-        *sourceDescriptor.schema,
+        sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 

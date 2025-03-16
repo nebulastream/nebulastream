@@ -13,26 +13,22 @@
 */
 
 syntax = "proto3";
-import "SerializableFunction.proto";
+import "SerializableDataType.proto";
 package NES;
 
-/**
-The serializable wrapper for a schema object
- */
 message SerializableSchema{
-  repeated SerializableField fields = 1;
+
   enum MemoryLayoutType {
     ROW_LAYOUT = 0;
     COL_LAYOUT = 1;
   }
+
+  message SerializableField{
+    string name = 1;
+    SerializableDataType type = 2;
+  }
+
+  repeated SerializableField fields = 1;
   MemoryLayoutType layoutType = 2;
 }
 
-/**
-The serializable wrapper for a schema object and its name
- */
-message SerializableNamedSchema{
-
-  string sourceName = 1;
-  SerializableSchema schema = 2;
-}

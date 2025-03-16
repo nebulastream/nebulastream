@@ -14,8 +14,7 @@
 
 #include <memory>
 #include <string>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
@@ -62,22 +61,22 @@ bool LogicalMapOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction->inferStamp(*getInputSchema());
+    mapFunction->inferStamp(getInputSchema());
 
     const auto assignedField = mapFunction->getField();
-    if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))
+    if (std::string fieldName = assignedField->getFieldName(); outputSchema.getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
         NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-        outputSchema->replaceField(fieldName, assignedField->getStamp());
+        outputSchema.replaceTypeOfField(fieldName, assignedField->getStamp());
     }
     else
     {
         /// The assigned field is not part of the current schema.
         /// Thus we extend the schema by the new attribute.
         NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-        outputSchema->addField(fieldName, assignedField->getStamp());
+        outputSchema.addField(fieldName, assignedField->getStamp());
     }
     return true;
 }

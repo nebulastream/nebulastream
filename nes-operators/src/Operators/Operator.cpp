@@ -16,7 +16,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/Operator.hpp>

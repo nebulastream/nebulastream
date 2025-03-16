@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Common/DataTypes/DataType.hpp>
+#include <DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -34,13 +34,13 @@ public:
      * @param serializedDataType The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedDataType
      */
-    static SerializableDataType* serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType);
+    static SerializableDataType* serializeDataType(const DataType& dataType, SerializableDataType* serializedDataType);
 
     /**
-    * @brief De-serializes the SerializableDataType and all its children to a std::shared_ptr<DataType>
+    * @brief De-serializes the SerializableDataType and all its children to a DataType
     * @param serializedDataType the serialized data type.
-    * @return std::shared_ptr<DataType>
+    * @return DataType
     */
-    static std::shared_ptr<DataType> deserializeDataType(const SerializableDataType& serializedDataType);
+    static DataType deserializeDataType(const SerializableDataType& serializedDataType);
 };
 }
