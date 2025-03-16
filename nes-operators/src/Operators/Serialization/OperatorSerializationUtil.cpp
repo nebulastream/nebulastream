@@ -19,8 +19,6 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -114,11 +112,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         /// serialize streaming join operator
         serializeJoinOperator(*NES::Util::as<LogicalJoinOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<Experimental::LogicalBatchJoinOperator>(operatorNode))
-    {
-        /// serialize batch join operator
-        serializeBatchJoinOperator(*NES::Util::as<Experimental::LogicalBatchJoinOperator>(operatorNode), serializedOperator);
-    }
     else if (NES::Util::instanceOf<LogicalLimitOperator>(operatorNode))
     {
         /// serialize limit operator
@@ -201,22 +194,6 @@ std::shared_ptr<LogicalUnaryOperator> deserializeProjectionOperator(const Serial
 
     return std::make_shared<LogicalProjectionOperator>(exps, getNextOperatorId());
 }
-
-
-std::shared_ptr<Experimental::LogicalBatchJoinOperator>
-deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId)
-{
-    const auto buildKeyAccessFunction
-        = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey()));
-    const auto probeKeyAccessFunction
-        = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey()));
-    const auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(
-        buildKeyAccessFunction, probeKeyAccessFunction, joinDetails.numberofinputedgesprobe(), joinDetails.numberofinputedgesbuild());
-    auto retValue = NES::Util::as<Experimental::LogicalBatchJoinOperator>(
-        std::make_shared<Experimental::LogicalBatchJoinOperator>(joinDefinition, operatorId));
-    return retValue;
-}
-
 
 void OperatorSerializationUtil::deserializeInputSchema(
     const std::shared_ptr<LogicalOperator>& operatorNode, const SerializableOperator& serializedOperator)
@@ -598,14 +575,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedJoinOperator);
         operatorNode = deserializeJoinOperator(serializedJoinOperator, getNextOperatorId());
     }
-    else if (details.Is<SerializableOperator_BatchJoinDetails>())
-    {
-        /// de-serialize batch join operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to BatchJoinLogicalOperator");
-        auto serializedBatchJoinOperator = SerializableOperator_BatchJoinDetails();
-        details.UnpackTo(&serializedBatchJoinOperator);
-        operatorNode = deserializeBatchJoinOperator(serializedBatchJoinOperator, getNextOperatorId());
-    }
     else if (details.Is<SerializableOperator_WatermarkStrategyDetails>())
     {
         /// de-serialize watermark assigner operator
@@ -646,13 +615,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto joinOp = NES::Util::as<LogicalJoinOperator>(operatorNode);
         joinOp->getJoinDefinition()->updateSourceTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
         joinOp->getJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
-    }
-
-    if (details.Is<SerializableOperator_BatchJoinDetails>())
-    {
-        auto joinOp = NES::Util::as<Experimental::LogicalBatchJoinOperator>(operatorNode);
-        joinOp->getBatchJoinDefinition()->updateInputSchemas(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
-        joinOp->getBatchJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
 
     /// de-serialize and append origin id
@@ -937,23 +899,6 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
     }
-
-    serializedOperator.mutable_details()->PackFrom(joinDetails);
-}
-
-void OperatorSerializationUtil::serializeBatchJoinOperator(
-    const Experimental::LogicalBatchJoinOperator& joinOperator, SerializableOperator& serializedOperator)
-{
-    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalBatchJoinOperator");
-
-    auto joinDetails = SerializableOperator_BatchJoinDetails();
-    const auto joinDefinition = joinOperator.getBatchJoinDefinition();
-
-    FunctionSerializationUtil::serializeFunction(joinDefinition->getBuildJoinKey(), joinDetails.mutable_onbuildkey());
-    FunctionSerializationUtil::serializeFunction(joinDefinition->getProbeJoinKey(), joinDetails.mutable_onprobekey());
-
-    joinDetails.set_numberofinputedgesbuild(joinDefinition->getNumberOfInputEdgesBuild());
-    joinDetails.set_numberofinputedgesprobe(joinDefinition->getNumberOfInputEdgesProbe());
 
     serializedOperator.mutable_details()->PackFrom(joinDetails);
 }

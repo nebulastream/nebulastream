@@ -278,18 +278,6 @@ message SerializableOperator {
     uint64 origin = 9;
   }
 
-  /**
-    Batch Join Details contains properties for the batch join operator
-  */
-  message BatchJoinDetails {
-    SerializableFunction onBuildKey = 1;
-    SerializableFunction onProbeKey = 2;
-    SerializableFunction buildSchema = 3;
-    SerializableFunction probeSchema = 4;
-    uint64 numberOfInputEdgesBuild = 5;
-    uint64 numberOfInputEdgesProbe = 6;
-  }
-
   google.protobuf.Any details = 1;
   repeated uint64 childrenIds = 2;
   SerializableSchema inputSchema = 3;

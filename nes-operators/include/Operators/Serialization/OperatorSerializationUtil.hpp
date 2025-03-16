@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -63,9 +62,6 @@ public:
     static void serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator);
 
     static void serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator);
-
-    static void
-    serializeBatchJoinOperator(const Experimental::LogicalBatchJoinOperator& joinOperator, SerializableOperator& serializedOperator);
 
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
