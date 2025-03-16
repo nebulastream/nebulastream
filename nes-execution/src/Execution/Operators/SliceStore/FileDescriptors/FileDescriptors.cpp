@@ -17,6 +17,8 @@
 namespace NES::Runtime::Execution
 {
 
+// TODO disable buffers for bufferSize zero
+
 FileWriter::FileWriter(
     const std::string& filePath,
     const std::function<char*()>& allocate,

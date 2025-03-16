@@ -136,9 +136,9 @@ void NLJSlice::writeToFile(
         !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
-    PRECONDITION(
+    /*PRECONDITION(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
-        "NLJSlice does not currently support any memory layout other than row layout");
+        "NLJSlice does not currently support any memory layout other than row layout");*/
 
     const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
@@ -181,9 +181,9 @@ void NLJSlice::readFromFile(
         !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
-    PRECONDITION(
+    /*PRECONDITION(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
-        "NLJSlice does not currently support any memory layout other than row layout");
+        "NLJSlice does not currently support any memory layout other than row layout");*/
 
     const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
     switch (fileLayout)
