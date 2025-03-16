@@ -31,8 +31,8 @@ namespace NES::Parsers
 
 class AntlrSQLHelper
 {
-    std::vector<std::unique_ptr<LogicalFunction>> projectionFields;
-    std::vector<std::unique_ptr<LogicalFunction>> whereClauses;
+    std::vector<std::unique_ptr<LogicalFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
+    std::vector<std::unique_ptr<LogicalFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<std::unique_ptr<LogicalFunction>> havingClauses;
     std::string source;
 

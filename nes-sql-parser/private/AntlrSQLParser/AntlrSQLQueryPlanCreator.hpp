@@ -11,16 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <memory>
+#include <stack>
 #include <string>
+#include <vector>
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Parsers
 {
@@ -29,13 +27,13 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::string> sinkNames;
-    std::stack<std::shared_ptr<QueryPlan>> queryPlans;
+    std::stack<QueryPlan> queryPlans;
 
 public:
-    [[nodiscard]] std::shared_ptr<QueryPlan> getQueryPlan() const;
+    [[nodiscard]] QueryPlan getQueryPlan() const;
     void poppush(const AntlrSQLHelper& helper);
 
-    /// enter/exit parsing pairs
+    /// Parsing listener methods (enter/exit pairs)
     void enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
     void exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
     void enterSelectClause(AntlrSQLParser::SelectClauseContext* context) override;
@@ -62,11 +60,10 @@ public:
     void enterJoinType(AntlrSQLParser::JoinTypeContext* context) override;
     void exitJoinType(AntlrSQLParser::JoinTypeContext* context) override;
 
-
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;
     void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
-    void enterNamedExpressionSeq(AntlrSQLParser::NamedExpressionSeqContext* context) override;
+    //void enterNamedExpressionSeq(AntlrSQLParser::NamedExpressionSeqContext* context) override;
     void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;
@@ -77,13 +74,12 @@ public:
     void exitSlidingWindow(AntlrSQLParser::SlidingWindowContext* context) override;
     void exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context) override;
     void exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context) override;
-    void exitLogicalNot(AntlrSQLParser::LogicalNotContext*) override;
+    void exitLogicalNot(AntlrSQLParser::LogicalNotContext* context) override;
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
     void enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
 };
-
 
 }
