@@ -17,8 +17,6 @@
 namespace NES::Runtime::Execution
 {
 
-// TODO disable buffers for bufferSize zero
-
 FileWriter::FileWriter(
     const std::string& filePath,
     const std::function<char*()>& allocate,
@@ -58,7 +56,7 @@ void FileWriter::write(const void* data, size_t size)
 
 void FileWriter::writeKey(const void* data, size_t size)
 {
-    if (!writeKeyBuffer)
+    if (writeKeyBuffer == nullptr)
     {
         writeKeyBuffer = allocate();
     }
@@ -79,7 +77,7 @@ void FileWriter::write(const void* data, size_t& dataSize, char* buffer, size_t&
         return writeToFile(static_cast<const char*>(data), dataSize, fileStream);
     }
 
-    auto dataPtr = static_cast<const char*>(data);
+    const auto* dataPtr = static_cast<const char*>(data);
     while (dataSize > 0)
     {
         const auto copySize = std::min(dataSize, bufferSize - bufferPos);
@@ -154,7 +152,7 @@ size_t FileReader::read(void* dest, const size_t size)
 
 size_t FileReader::readKey(void* dest, const size_t size)
 {
-    if (!readKeyBuffer)
+    if (readKeyBuffer == nullptr)
     {
         readKeyBuffer = allocate();
     }
@@ -170,7 +168,7 @@ FileReader::read(void* dest, const size_t& dataSize, char* buffer, size_t& buffe
         return readFromFile(static_cast<char*>(dest), dataSize, fileStream);
     }
 
-    auto destPtr = static_cast<char*>(dest);
+    auto* destPtr = static_cast<char*>(dest);
     auto totalRead = 0UL;
 
     while (totalRead < dataSize)

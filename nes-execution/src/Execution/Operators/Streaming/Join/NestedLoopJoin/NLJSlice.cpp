@@ -286,14 +286,14 @@ void NLJSlice::writePayloadOnlyToFile(
 
     for (const auto& page : pagedVector->getPages())
     {
-        auto pagePtr = page.getBuffer();
+        const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             pagedVectorKeys->appendPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
             auto lastKeyPage = pagedVectorKeys->getLastPage();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
-            auto lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
+            auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
             for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
@@ -330,7 +330,7 @@ void NLJSlice::writePayloadAndKeysToSeparateFiles(
 
     for (const auto& page : pagedVector->getPages())
     {
-        auto pagePtr = page.getBuffer();
+        const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
             for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
@@ -361,7 +361,7 @@ void NLJSlice::readSeparatelyFromFiles(
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
     auto& keyPages = pagedVectorKeys->getPages();
-    auto keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
+    const auto* keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
 
     while (true)
     {
@@ -369,10 +369,10 @@ void NLJSlice::readSeparatelyFromFiles(
         pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
         auto lastPage = pagedVector->getLastPage();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
-        auto lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
+        auto* lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
 
         // TODO get new key page only when all tuples were read and do not check for each tuple
-        if (keyPagePtr)
+        if (keyPagePtr != nullptr)
         {
             if (const auto& currKeyPage = keyPages.front();
                 keyPagePtr >= currKeyPage.getBuffer() + currKeyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize())
@@ -387,7 +387,7 @@ void NLJSlice::readSeparatelyFromFiles(
         {
             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
             {
-                if (!fileReader.readKey(lastPagePtr, fieldSize) && keyPagePtr != nullptr)
+                if (fileReader.readKey(lastPagePtr, fieldSize) == 0 && keyPagePtr != nullptr)
                 {
                     std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
                     keyPagePtr += fieldSize;
@@ -395,7 +395,7 @@ void NLJSlice::readSeparatelyFromFiles(
             }
             else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
             {
-                if (!fileReader.read(lastPagePtr, fieldSize))
+                if (fileReader.read(lastPagePtr, fieldSize) == 0)
                 {
                     return;
                 }
