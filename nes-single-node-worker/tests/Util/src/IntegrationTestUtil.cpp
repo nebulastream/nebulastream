@@ -133,80 +133,29 @@ void writeFieldValueToTupleBuffer(
 {
     const auto dataType = schema.getFieldAt(schemaFieldIndex).dataType;
 
-    INVARIANT(!inputString.empty(), "Input string for parsing is empty");
-    /// TODO #371 replace with csv parsing library
-    switch (dataType.type)
+    PRECONDITION(not inputString.empty(), "Input string for parsing is empty");
+    if (dataType.isNumeric())
     {
-        case NES::DataType::Type::INT8: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::INT16: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::INT32: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::INT64: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::UINT8: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::UINT16: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::UINT32: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::UINT64: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
-            break;
-        }
-        case NES::DataType::Type::FLOAT32: {
-            auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
-            tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
-            break;
-        }
-        case NES::DataType::Type::FLOAT64: {
-            auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
-            tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
-            break;
-        }
-        case NES::DataType::Type::CHAR: {
-            ///verify that only a single char was transmitted
-            if (inputString.size() > 1)
+        DataTypeUtil::dispatchByNumericalOrBoolOrCharType(
+            dataType.type,
+            [&tupleBuffer, tupleCount, schemaFieldIndex, input = std::move(inputString)]<typename T>()
             {
-                NES_FATAL_ERROR(
-                    "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString.c_str());
-                throw std::invalid_argument("Value " + inputString + " is not a char");
-            }
-            char value = inputString.at(0);
-            tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
-            break;
-        }
-        case NES::DataType::Type::BOOLEAN: {
-            tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
-            break;
-        }
-        case NES::DataType::Type::VARSIZED: {
-            NES_TRACE(
-                "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
-                "to tuple buffer",
-                inputString);
-            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
-        }
-        case NES::DataType::Type::UNDEFINED:
-            NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
-        default:
-            throw NotImplemented();
+                const auto parsedValue = Util::from_chars<T>(input);
+                INVARIANT(parsedValue.has_value(), "Failed to parse input string {} to type {}", input, typeid(T).name());
+                tupleBuffer[tupleCount][schemaFieldIndex].write<T>(parsedValue.value());
+            });
+        return;
     }
+    if (dataType.isVarSized())
+    {
+        NES_TRACE(
+            "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+            "to tuple buffer",
+            inputString);
+        tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
+        return;
+    }
+    throw UnknownPhysicalType("Not supporting type: {}", magic_enum::enum_name(dataType.type));
 }
 
 Schema loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
