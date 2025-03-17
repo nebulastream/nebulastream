@@ -27,6 +27,7 @@
 namespace NES::Catalogs::Source
 {
 
+bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
 SourceCatalog::SourceCatalog()
 {
     NES_DEBUG("SourceCatalog: construct source catalog");
@@ -109,8 +110,9 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     else
     {
         NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
-        logicalToPhysicalSourceMapping.insert(std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
-            logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
+        logicalToPhysicalSourceMapping.insert(
+            std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
+                logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(sourceCatalogEntry);
     }
 
@@ -242,18 +244,6 @@ std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::s
     }
 
     return listOfSourceNodes;
-}
-
-bool SourceCatalog::reset()
-{
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: reset Source Catalog");
-    logicalSourceNameToSchemaMapping.clear();
-    logicalToPhysicalSourceMapping.clear();
-
-    addDefaultSources();
-    NES_DEBUG("SourceCatalog: reset Source Catalog completed");
-    return true;
 }
 
 std::string SourceCatalog::getPhysicalSourceAndSchemaAsString()

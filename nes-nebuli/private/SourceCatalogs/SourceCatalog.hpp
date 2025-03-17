@@ -34,6 +34,9 @@ namespace Catalogs::Source
 class SourceCatalog
 {
 public:
+    SourceCatalog() = default;
+    ~SourceCatalog() = default;
+
     /// @brief method to add a logical source
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
@@ -93,10 +96,6 @@ public:
     /// @return list of topology nodes ids
     std::vector<WorkerId> getSourceNodesForLogicalSource(const std::string& logicalSourceName);
 
-    /// @brief reset the catalog and recreate the default_logical source
-    /// @return bool indicating success
-    bool reset();
-
     /// @brief Return a list of logical source names registered at catalog
     /// @return map containing source name as key and schema object as value
     std::map<std::string, Schema> getAllLogicalSource();
@@ -120,8 +119,6 @@ public:
     /// @return bool indicating if update was successful
     bool updateLogicalSource(const std::string& logicalSourceName, Schema schema);
 
-    SourceCatalog();
-
 private:
     /// @brief test if logical source with this name exists
     /// @param logicalSourceName name of the logical source to test
@@ -133,8 +130,6 @@ private:
     std::map<std::string, Schema> logicalSourceNameToSchemaMapping;
     /// map logical source to physical source
     std::map<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
-
-    void addDefaultSources();
 };
 }
 }
