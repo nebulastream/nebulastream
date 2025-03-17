@@ -68,6 +68,8 @@ template <>
 std::optional<std::string_view> from_chars(std::string_view input);
 template <>
 std::optional<bool> from_chars(std::string_view input);
+template <>
+std::optional<char> from_chars(std::string_view input);
 
 /// Formats floating points similiar to flink:
 /// We preserve at least 1 digit and at most 6 digits after the decimal point

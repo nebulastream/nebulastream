@@ -28,33 +28,43 @@
 
 namespace NES::Util
 {
-template <>
-std::optional<float> from_chars<float>(const std::string_view input)
-{
-    const std::string str(trimWhiteSpaces(input));
-    try
-    {
-        return std::stof(str);
-    }
-    catch (...)
-    {
-        return {};
-    }
-}
 
 template <>
 std::optional<bool> from_chars<bool>(const std::string_view input)
 {
     auto trimmed = trimWhiteSpaces(input);
-    if (toLowerCase(trimmed) == "true" || trimmed == "1")
+    if (toLowerCase(trimmed) == "true" or trimmed == "1")
     {
         return true;
     }
-    if (toLowerCase(trimmed) == "false" || trimmed == "0")
+    if (toLowerCase(trimmed) == "false" or trimmed == "0")
     {
         return false;
     }
     return {};
+}
+
+template <>
+std::optional<char> from_chars<char>(const std::string_view input)
+{
+    if (input.size() != 1)
+    {
+        NES_ERROR("A char must not have a size bigger than 1.");
+        return std::nullopt;
+    }
+    return input.front();
+}
+
+template <>
+std::optional<std::string> from_chars<std::string>(const std::string_view input)
+{
+    return std::string(input);
+}
+
+template <>
+std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
+{
+    return input;
 }
 
 std::string formatFloat(std::floating_point auto value)
@@ -79,6 +89,20 @@ template std::string formatFloat(float);
 template std::string formatFloat(double);
 
 template <>
+std::optional<float> from_chars<float>(const std::string_view input)
+{
+    const std::string str(trimWhiteSpaces(input));
+    try
+    {
+        return std::stof(str);
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+
+template <>
 std::optional<double> from_chars<double>(const std::string_view input)
 {
     const std::string str(trimWhiteSpaces(input));
@@ -90,18 +114,6 @@ std::optional<double> from_chars<double>(const std::string_view input)
     {
         return {};
     }
-}
-
-template <>
-std::optional<std::string> from_chars<std::string>(const std::string_view input)
-{
-    return std::string(input);
-}
-
-template <>
-std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
-{
-    return input;
 }
 
 std::string replaceAll(std::string_view origin, const std::string_view search, const std::string_view replace)
