@@ -46,7 +46,7 @@ class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 public:
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
 
-    FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
+    FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins, OriginId originId);
     FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);

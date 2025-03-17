@@ -17,7 +17,7 @@
 namespace NES::Runtime::Execution
 {
 
-MemoryController::MemoryController() : readBufFlag(true), bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE)
+MemoryController::MemoryController(const OriginId originId) : bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE), originId(originId)
 {
     if (bufferSize != 0)
     {
@@ -38,6 +38,7 @@ MemoryController::MemoryController(const MemoryController& other)
     , bufferSize(other.bufferSize)
     , poolSize(other.poolSize)
     , fileWriters(other.fileWriters)
+    , originId(other.originId)
 {
 }
 
@@ -49,6 +50,7 @@ MemoryController::MemoryController(MemoryController&& other) noexcept
     , bufferSize(std::move(other.bufferSize))
     , poolSize(std::move(other.poolSize))
     , fileWriters(std::move(other.fileWriters))
+    , originId(std::move(other.originId))
 {
 }
 
@@ -65,6 +67,7 @@ MemoryController& MemoryController::operator=(const MemoryController& other)
     bufferSize = other.bufferSize;
     poolSize = other.poolSize;
     fileWriters = other.fileWriters;
+    originId = other.originId;
     return *this;
 }
 
@@ -81,6 +84,7 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     bufferSize = std::move(other.bufferSize);
     poolSize = std::move(other.poolSize);
     fileWriters = std::move(other.fileWriters);
+    originId = std::move(other.originId);
     return *this;
 }
 
@@ -117,10 +121,12 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineI
 {
     const std::lock_guard lock(fileWritersMutex);
 
+    const auto originIdStr = std::to_string(originId.getRawValue());
     const auto sliceEndStr = std::to_string(sliceEnd.getRawValue());
+
     for (const std::string& sideStr : {"left", "right"})
     {
-        const auto prefix = "memory_controller_" + sideStr + "_" + sliceEndStr + "_";
+        const auto prefix = "memory_controller_" + sideStr + "_" + originIdStr + "_" + sliceEndStr + "_";
         const auto end = fileWriters.upper_bound(prefix + "\xFF");
         auto it = fileWriters.lower_bound(prefix);
         while (it != end)
@@ -134,20 +140,21 @@ std::string MemoryController::constructFilePath(
     const SliceEnd sliceEnd,
     const PipelineId pipelineId,
     const WorkerThreadId threadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const QueryCompilation::JoinBuildSideType joinBuildSide) const
 {
     const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
+    const auto originIdStr = std::to_string(originId.getRawValue());
     const auto sliceEndStr = std::to_string(sliceEnd.getRawValue());
     const auto pipelineIdStr = std::to_string(pipelineId.getRawValue());
     const auto threadIdStr = std::to_string(threadId.getRawValue());
 
     if constexpr (USE_PIPELINE_ID)
     {
-        return "memory_controller_" + sideStr + "_" + sliceEndStr + "_" + pipelineIdStr + "_" + threadIdStr;
+        return "memory_controller_" + sideStr + "_" + originIdStr + "_" + sliceEndStr + "_" + pipelineIdStr + "_" + threadIdStr;
     }
     else
     {
-        return "memory_controller_" + sideStr + "_" + sliceEndStr + "_" + threadIdStr;
+        return "memory_controller_" + sideStr + "_" + originIdStr + "_" + sliceEndStr + "_" + threadIdStr;
     }
 }
 
@@ -214,7 +221,7 @@ char* MemoryController::allocateBuffer()
 
 void MemoryController::deallocateBuffer(char* buffer)
 {
-    if (bufferSize == 0 || (memoryPool.data() <= buffer && buffer < memoryPool.data() + memoryPool.size()))
+    if (bufferSize == 0 || buffer == nullptr || (memoryPool.data() <= buffer && buffer < memoryPool.data() + memoryPool.size()))
     {
         return;
     }

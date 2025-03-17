@@ -28,7 +28,7 @@ public:
     static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
     static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
-    MemoryController();
+    explicit MemoryController(OriginId originId);
     MemoryController(const MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(const MemoryController& other);
@@ -45,8 +45,8 @@ public:
 private:
     static constexpr auto NUM_READ_BUFFERS = 2;
 
-    static std::string
-    constructFilePath(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    std::string constructFilePath(
+        SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
 
     std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
     std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
@@ -70,6 +70,7 @@ private:
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex fileWritersMutex;
 
+    OriginId originId;
     // IO-Auslastung
     // StatisticsEngine
     // CompressionController (Tuples evtl. komprimieren)

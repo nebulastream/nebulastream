@@ -31,8 +31,11 @@
 namespace NES::Runtime::Execution
 {
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
-    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOriginsTerminated(numberOfInputOrigins)
+    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins, const OriginId originId)
+    : memCtrl(originId)
+    , sliceAssigner(windowSize, windowSlide)
+    , sequenceNumber(SequenceNumber::INITIAL)
+    , numberOfInputOriginsTerminated(numberOfInputOrigins)
 {
 }
 
@@ -326,6 +329,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const auto pipelineId = metaData.pipelineId;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
 
+    // TODO write adaptively to file
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {

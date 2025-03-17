@@ -67,7 +67,10 @@ void FileWriter::writeKey(const void* data, size_t size)
 void FileWriter::flushBuffer()
 {
     writeToFile(writeBuffer, writeBufferPos, file);
-    writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+    if (writeKeyBuffer != nullptr)
+    {
+        writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+    }
 }
 
 void FileWriter::write(const void* data, size_t& dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
