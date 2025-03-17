@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
+        DataTypeUtil.cpp
         Schema.cpp
         DataType.cpp
         DataTypeProvider.cpp

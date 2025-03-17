@@ -33,6 +33,7 @@ namespace NES
 {
 
 /// TODO #391: Use std::from_chars to check value for data type validity
+/// No need to refactor, since (https://github.com/nebulastream/nebulastream-public/pull/589) drops FunctionItem from our codebase.
 FunctionItem::FunctionItem(int8_t value)
     : FunctionItem(NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::INT8), std::to_string(value)))
 {
