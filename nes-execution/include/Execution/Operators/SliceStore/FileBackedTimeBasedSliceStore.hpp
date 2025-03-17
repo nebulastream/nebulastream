@@ -37,7 +37,6 @@ namespace NES::Runtime::Execution
 struct SliceStoreMetaData
 {
     WorkerThreadId threadId;
-    PipelineId pipelineId;
     Timestamp timestamp;
 };
 
@@ -46,7 +45,13 @@ class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 public:
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
 
-    FileBackedTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins, OriginId originId);
+    FileBackedTimeBasedSliceStore(
+        uint64_t windowSize,
+        uint64_t windowSlide,
+        uint8_t numberOfInputOrigins,
+        const std::filesystem::path& workingDir,
+        QueryId queryId,
+        OriginId originId);
     FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);
@@ -63,9 +68,8 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads,
-        PipelineId pipelineId) override;
-    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark, PipelineId pipelineId) override;
+        uint64_t numberOfWorkerThreads) override;
+    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
@@ -82,8 +86,7 @@ private:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads,
-        PipelineId pipelineId);
+        uint64_t numberOfWorkerThreads);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;

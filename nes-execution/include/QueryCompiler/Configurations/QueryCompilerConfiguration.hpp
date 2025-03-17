@@ -41,6 +41,8 @@ public:
     NES::Configurations::EnumOption<DumpMode> dumpMode
         = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
     NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
+    NES::Configurations::StringOption fileBackedWorkingDir
+        = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
     NES::Configurations::EnumOption<Nautilus::Configurations::NautilusBackend> nautilusBackend
         = {"nautilusBackend",
            Nautilus::Configurations::NautilusBackend::COMPILER,
@@ -66,7 +68,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
+        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &fileBackedWorkingDir};
     }
 };
 }

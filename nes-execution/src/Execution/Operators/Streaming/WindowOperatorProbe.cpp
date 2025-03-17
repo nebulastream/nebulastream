@@ -31,7 +31,6 @@ namespace NES::Runtime::Execution::Operators
 
 void garbageCollectSlicesProxy(
     OperatorHandler* ptrOpHandler,
-    const PipelineExecutionContext* piplineContext,
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
     const ChunkNumber chunkNumber,
@@ -39,12 +38,11 @@ void garbageCollectSlicesProxy(
     const OriginId originId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
 
-    opHandler->garbageCollectSlicesAndWindows(bufferMetaData, piplineContext->getPipelineId());
+    opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
 }
 
 void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx)
@@ -76,7 +74,6 @@ void WindowOperatorProbe::close(ExecutionContext& executionCtx, RecordBuffer& re
     invoke(
         garbageCollectSlicesProxy,
         operatorHandlerMemRef,
-        executionCtx.pipelineContext,
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,
         executionCtx.chunkNumber,

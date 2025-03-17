@@ -60,9 +60,8 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads,
-        PipelineId pipelineId) override;
-    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark, PipelineId pipelineId) override;
+        uint64_t numberOfWorkerThreads) override;
+    void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
 

@@ -110,7 +110,7 @@ void DefaultPhysicalOperatorProvider::lower(
     }
     else if (NES::Util::instanceOf<BinaryOperator>(operatorNode))
     {
-        lowerBinaryOperator(operatorNode);
+        lowerBinaryOperator(decomposedQueryPlan, operatorNode);
     }
     else
     {
@@ -167,7 +167,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(
+    const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator>& operatorNode)
 {
     PRECONDITION(
         NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode),
@@ -179,7 +180,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const std::shared_ptr<
     }
     else if (NES::Util::instanceOf<LogicalJoinOperator>(operatorNode))
     {
-        lowerJoinOperator(operatorNode);
+        lowerJoinOperator(decomposedQueryPlan, operatorNode);
     }
 }
 
@@ -236,7 +237,8 @@ std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOper
     return children[0];
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(
+    const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator>& operatorNode)
 {
     using namespace Runtime::Execution::Operators;
 
@@ -295,7 +297,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     switch (joinStrategy)
     {
         case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
-            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, decomposedQueryPlan, streamJoinConfig);
             break;
     }
 
@@ -341,7 +343,9 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 }
 
 std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
+    const StreamJoinOperators& streamJoinOperators,
+    const DecomposedQueryPlan& decomposedQueryPlan,
+    const StreamJoinConfigs& streamJoinConfig) const
 {
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
@@ -362,6 +366,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
         joinOperator->getAllInputOriginIds().size(),
+        queryCompilerConfig.fileBackedWorkingDir.getValue(),
+        decomposedQueryPlan.getQueryId(),
         joinOperator->getOutputOriginIds()[0]);
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),

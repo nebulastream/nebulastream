@@ -17,7 +17,8 @@
 namespace NES::Runtime::Execution
 {
 
-MemoryController::MemoryController(const OriginId originId) : bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE), originId(originId)
+MemoryController::MemoryController(const std::filesystem::path& workingDir, const QueryId queryId, const OriginId originId)
+    : bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE), workingDir(workingDir), queryId(queryId), originId(originId)
 {
     if (bufferSize != 0)
     {
@@ -38,6 +39,8 @@ MemoryController::MemoryController(const MemoryController& other)
     , bufferSize(other.bufferSize)
     , poolSize(other.poolSize)
     , fileWriters(other.fileWriters)
+    , workingDir(other.workingDir)
+    , queryId(other.queryId)
     , originId(other.originId)
 {
 }
@@ -50,6 +53,8 @@ MemoryController::MemoryController(MemoryController&& other) noexcept
     , bufferSize(std::move(other.bufferSize))
     , poolSize(std::move(other.poolSize))
     , fileWriters(std::move(other.fileWriters))
+    , workingDir(std::move(other.workingDir))
+    , queryId(std::move(other.queryId))
     , originId(std::move(other.originId))
 {
 }
@@ -67,6 +72,8 @@ MemoryController& MemoryController::operator=(const MemoryController& other)
     bufferSize = other.bufferSize;
     poolSize = other.poolSize;
     fileWriters = other.fileWriters;
+    workingDir = other.workingDir;
+    queryId = other.queryId;
     originId = other.originId;
     return *this;
 }
@@ -84,6 +91,8 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     bufferSize = std::move(other.bufferSize);
     poolSize = std::move(other.poolSize);
     fileWriters = std::move(other.fileWriters);
+    workingDir = std::move(other.workingDir);
+    queryId = std::move(other.queryId);
     originId = std::move(other.originId);
     return *this;
 }
@@ -100,24 +109,18 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    const SliceEnd sliceEnd,
-    const PipelineId pipelineId,
-    const WorkerThreadId threadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    return getFileWriterFromMap(constructFilePath(sliceEnd, pipelineId, threadId, joinBuildSide));
+    return getFileWriterFromMap(constructFilePath(sliceEnd, threadId, joinBuildSide));
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(
-    const SliceEnd sliceEnd,
-    const PipelineId pipelineId,
-    const WorkerThreadId threadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, pipelineId, threadId, joinBuildSide));
+    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, threadId, joinBuildSide));
 }
 
-void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineId)
+void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
     const std::lock_guard lock(fileWritersMutex);
 
@@ -136,52 +139,45 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd, const PipelineI
     }
 }
 
-std::string MemoryController::constructFilePath(
-    const SliceEnd sliceEnd,
-    const PipelineId pipelineId,
-    const WorkerThreadId threadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide) const
+std::filesystem::path MemoryController::constructFilePath(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
 {
     const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
-    const auto originIdStr = std::to_string(originId.getRawValue());
-    const auto sliceEndStr = std::to_string(sliceEnd.getRawValue());
-    const auto pipelineIdStr = std::to_string(pipelineId.getRawValue());
-    const auto threadIdStr = std::to_string(threadId.getRawValue());
-
-    if constexpr (USE_PIPELINE_ID)
-    {
-        return "memory_controller_" + sideStr + "_" + originIdStr + "_" + sliceEndStr + "_" + pipelineIdStr + "_" + threadIdStr;
-    }
-    else
-    {
-        return "memory_controller_" + sideStr + "_" + originIdStr + "_" + sliceEndStr + "_" + threadIdStr;
-    }
+    return workingDir
+        / std::filesystem::path(
+               fmt::format(
+                   "memory_controller_{}_{}_{}_{}_{}",
+                   queryId.getRawValue(),
+                   originId.getRawValue(),
+                   sideStr,
+                   sliceEnd.getRawValue(),
+                   threadId.getRawValue()));
 }
 
-std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
+std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::filesystem::path& filePath)
 {
     const std::lock_guard lock(fileWritersMutex);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
-    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
+    if (const auto it = fileWriters.find(filePath.string()); it != fileWriters.end())
     {
         return it->second;
     }
     auto fileWriter = std::make_shared<FileWriter>(
-        filePath, [this] { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
-    fileWriters[filePath] = fileWriter;
+        filePath.string(), [this] { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
+    fileWriters[filePath.string()] = fileWriter;
     return fileWriter;
 }
 
-std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::string& filePath)
+std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::filesystem::path& filePath)
 {
     const std::lock_guard lock(fileWritersMutex);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
-    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
+    if (const auto it = fileWriters.find(filePath.string()); it != fileWriters.end())
     {
         fileWriters.erase(it);
-        return std::make_shared<FileReader>(filePath, [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
+        return std::make_shared<FileReader>(filePath.string(), [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
     }
     return nullptr;
 }

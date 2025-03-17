@@ -111,14 +111,14 @@ protected:
     /// Checks if the current operator is a demultiplexer, if it has multiple parents.
     static bool isDemultiplex(const std::shared_ptr<LogicalOperator>& operatorNode);
 
-    void lowerBinaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerBinaryOperator(const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerProjectOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerMapOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerWatermarkAssignmentOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
-    void lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    void lowerJoinOperator(const DecomposedQueryPlan& decomposedQueryPlan, const std::shared_ptr<LogicalOperator>& operatorNode);
 
     /// Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
     /// using a Multiplex operation that connects two sources with one sink. The two sources then form one stream
@@ -134,8 +134,10 @@ protected:
 
 private:
     /// Lowers the stream nested loop join
-    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const;
+    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> lowerStreamingNestedLoopJoin(
+        const StreamJoinOperators& streamJoinOperators,
+        const DecomposedQueryPlan& decomposedQueryPlan,
+        const StreamJoinConfigs& streamJoinConfig) const;
 
     /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
     [[nodiscard]] std::shared_ptr<Node> replaceOperatorTimeBasedWindow(

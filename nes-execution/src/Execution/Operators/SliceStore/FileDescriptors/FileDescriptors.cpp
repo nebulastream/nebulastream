@@ -138,13 +138,12 @@ FileReader::FileReader(
 
 FileReader::~FileReader()
 {
-    // TODO enable once JoinMultipleStreams.test passes with FileBackedTimeBasedSliceStore
     file.close();
-    //std::filesystem::remove(filePath + ".dat");
+    std::filesystem::remove(filePath + ".dat");
     deallocate(readBuffer);
 
     keyFile.close();
-    //std::filesystem::remove(filePath + "_key.dat");
+    std::filesystem::remove(filePath + "_key.dat");
     deallocate(readKeyBuffer);
 }
 

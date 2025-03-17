@@ -31,8 +31,13 @@
 namespace NES::Runtime::Execution
 {
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
-    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins, const OriginId originId)
-    : memCtrl(originId)
+    const uint64_t windowSize,
+    const uint64_t windowSlide,
+    const uint8_t numberOfInputOrigins,
+    const std::filesystem::path& workingDir,
+    const QueryId queryId,
+    const OriginId originId)
+    : memCtrl(workingDir, queryId, originId)
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfInputOriginsTerminated(numberOfInputOrigins)
@@ -184,13 +189,12 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const uint64_t numberOfWorkerThreads,
-    const PipelineId pipelineId)
+    const uint64_t numberOfWorkerThreads)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
         auto slice = slicesReadLocked->find(sliceEnd)->second;
-        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, numberOfWorkerThreads, pipelineId);
+        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide, numberOfWorkerThreads);
         return slice;
     }
     return {};
@@ -257,7 +261,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
     return windowsToSlices;
 }
 
-void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark, const PipelineId pipelineId)
+void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)
@@ -295,7 +299,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
             // TODO delete state from ssd if there is any and if not done above
-            memCtrl.deleteSliceFiles(sliceEnd, pipelineId);
+            memCtrl.deleteSliceFiles(sliceEnd);
             slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
@@ -326,14 +330,13 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const uint64_t numberOfWorkerThreads,
     const SliceStoreMetaData& metaData)
 {
-    const auto pipelineId = metaData.pipelineId;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
 
     // TODO write adaptively to file
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto fileWriter = memCtrl.getFileWriter(sliceEnd, pipelineId, threadId, joinBuildSide);
+        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
         slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId, USE_FILE_LAYOUT);
         slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
         // TODO force flush file stream? use internal FileStorage buffer?
@@ -347,13 +350,12 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const uint64_t numberOfWorkerThreads,
-    const PipelineId pipelineId)
+    const uint64_t numberOfWorkerThreads)
 {
     /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
-        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), pipelineId, WorkerThreadId(threadId), joinBuildSide))
+        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
         {
             slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), USE_FILE_LAYOUT);
         }

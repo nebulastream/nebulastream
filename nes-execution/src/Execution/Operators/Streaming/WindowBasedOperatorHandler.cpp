@@ -60,7 +60,7 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
 }
 
 
-void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData, const PipelineId pipelineId) const
+void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {
     const auto newGlobalWaterMarkProbe
         = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
@@ -71,7 +71,7 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
         bufferMetaData.originId,
         bufferMetaData.seqNumber.toString(),
         bufferMetaData.watermarkTs);
-    sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe, pipelineId);
+    sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
 }
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)

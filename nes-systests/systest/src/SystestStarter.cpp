@@ -256,6 +256,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     if (program.is_used("--workingDir"))
     {
         config.workingDir = program.get<std::string>("--workingDir");
+        config.singleNodeWorkerConfig.value().workerConfiguration.queryCompiler.fileBackedWorkingDir
+            = program.get<std::string>("--workingDir");
     }
 
     if (program.is_used("--list"))

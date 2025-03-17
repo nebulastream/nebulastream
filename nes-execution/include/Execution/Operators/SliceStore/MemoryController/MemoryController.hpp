@@ -28,7 +28,7 @@ public:
     static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
     static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
-    explicit MemoryController(OriginId originId);
+    MemoryController(const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
     MemoryController(const MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(const MemoryController& other);
@@ -36,20 +36,20 @@ public:
     ~MemoryController();
 
     std::shared_ptr<FileWriter>
-    getFileWriter(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader>
-    getFileReader(SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
-    void deleteSliceFiles(SliceEnd sliceEnd, PipelineId pipelineId);
+    void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
     static constexpr auto NUM_READ_BUFFERS = 2;
 
-    std::string constructFilePath(
-        SliceEnd sliceEnd, PipelineId pipelineId, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
+    std::filesystem::path
+    constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
 
-    std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
-    std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
+    std::shared_ptr<FileWriter> getFileWriterFromMap(const std::filesystem::path& filePath);
+    std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::filesystem::path& filePath);
 
     void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
@@ -70,6 +70,8 @@ private:
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex fileWritersMutex;
 
+    std::filesystem::path workingDir;
+    QueryId queryId;
     OriginId originId;
     // IO-Auslastung
     // StatisticsEngine
