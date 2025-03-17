@@ -258,10 +258,10 @@ bool BufferControlBlock::pinnedRelease()
     {
         skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
         // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-        {
+        /*{
             std::unique_lock lock(owningThreadsMutex);
             owningThreads.clear();
-        }
+        }*/
         // #endif
         return true;
     }
@@ -270,7 +270,7 @@ bool BufferControlBlock::pinnedRelease()
         INVARIANT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
     }
     // #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    {
+    /*{
         std::unique_lock lock(owningThreadsMutex);
         auto& v = owningThreads[std::this_thread::get_id()];
         if (!v.empty())
@@ -283,7 +283,7 @@ bool BufferControlBlock::pinnedRelease()
             count += pair.second.size();
         }
         INVARIANT(count >= pinnedCounter.load(), "Lost trace object");
-    }
+    }*/
     // #endif
     return false;
 }

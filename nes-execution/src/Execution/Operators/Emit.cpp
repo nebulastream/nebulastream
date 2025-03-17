@@ -91,10 +91,27 @@ public:
     nautilus::val<int8_t*> bufferMemoryArea;
 };
 
+const Memory::PinnedBuffer* allocateBufferProxy(
+    const WorkerThreadId workerThreadId, EmitOperatorHandler* ptrOperatorHandler, Memory::AbstractBufferProvider* abstractBufferProvider)
+{
+    INVARIANT(ptrOperatorHandler != nullptr, "Operator handler can not be null");
+    INVARIANT(abstractBufferProvider != nullptr, "Abstract buffer provider can not be null");
+    return ptrOperatorHandler->allocateTupleBuffer(workerThreadId, abstractBufferProvider);
+}
+
+void Emit::setup(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(+[](EmitOperatorHandler* ptrOperatorHandler, const PipelineExecutionContext* pipelineExecutionContext)
+    {
+        INVARIANT(ptrOperatorHandler != nullptr, "Operator handler can not be null");
+        ptrOperatorHandler->setNumberOfWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads());
+    }, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
+}
+
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
-    const auto resultBufferRef = ctx.allocateBuffer();
+    const auto resultBufferRef = nautilus::invoke(allocateBufferProxy,ctx.getWorkerThreadId(), ctx.getGlobalOperatorHandler(operatorHandlerIndex), ctx.pipelineMemoryProvider.bufferProvider);
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
     ctx.setLocalOperatorState(this, std::move(emitState));
@@ -107,7 +124,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
     if (emitState->outputIndex >= maxRecordsPerBuffer)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        const auto resultBufferRef = ctx.allocateBuffer();
+        const auto resultBufferRef = nautilus::invoke(allocateBufferProxy, ctx.getWorkerThreadId(), ctx.getGlobalOperatorHandler(operatorHandlerIndex), ctx.pipelineMemoryProvider.bufferProvider);
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = 0_u64;
@@ -141,7 +158,11 @@ void Emit::emitRecordBuffer(
     recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
     recordBuffer.setLastChunk(isLastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
-    ctx.emitBuffer(recordBuffer);
+    nautilus::invoke(+[](PipelineExecutionContext* pipelineExecutionContext, EmitOperatorHandler* ptrOperatorHandler, const WorkerThreadId workerThreadId)
+    {
+        const auto tb = ptrOperatorHandler->getTupleBuffer(workerThreadId);
+        pipelineExecutionContext->emitBuffer(tb);
+    }, ctx.pipelineContext, ctx.getGlobalOperatorHandler(operatorHandlerIndex), ctx.getWorkerThreadId());
 
     if (isLastChunk == true)
     {

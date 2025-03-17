@@ -17,7 +17,9 @@
 #include <map>
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
@@ -69,6 +71,13 @@ public:
 
     folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
     folly::Synchronized<std::map<SequenceNumberForOriginId, ChunkNumber::Underlying>> seqNumberOriginIdToOutputChunkNumber;
+
+    const Memory::PinnedBuffer* allocateTupleBuffer(const WorkerThreadId workerThreadId, Memory::AbstractBufferProvider* abstractBufferProvider);
+    Memory::PinnedBuffer getTupleBuffer(const WorkerThreadId workerThreadId);
+    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
+
+private:
+    std::vector<Memory::PinnedBuffer> allPinnedBuffers;
 };
 }
 

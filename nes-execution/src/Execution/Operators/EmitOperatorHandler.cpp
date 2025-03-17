@@ -39,8 +39,31 @@ void EmitOperatorHandler::removeSequenceState(const SequenceNumberForOriginId se
 void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
 }
+
 void EmitOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExecutionContext&)
 {
+}
+
+const Memory::PinnedBuffer*
+EmitOperatorHandler::allocateTupleBuffer(const WorkerThreadId workerThreadId, Memory::AbstractBufferProvider* abstractBufferProvider)
+{
+    PRECONDITION(abstractBufferProvider != nullptr, "Buffer provider should not be null");
+    auto tb = abstractBufferProvider->getBufferBlocking();
+    const auto pos = workerThreadId % allPinnedBuffers.size();
+    allPinnedBuffers[pos] = tb;
+    return std::addressof(allPinnedBuffers[pos]);
+}
+
+void EmitOperatorHandler::setNumberOfWorkerThreads(const uint64_t numberOfWorkerThreads)
+{
+    allPinnedBuffers.reserve(numberOfWorkerThreads);
+    allPinnedBuffers.resize(numberOfWorkerThreads);
+}
+
+Memory::PinnedBuffer EmitOperatorHandler::getTupleBuffer(const WorkerThreadId workerThreadId)
+{
+    const auto pos = workerThreadId % allPinnedBuffers.size();
+    return allPinnedBuffers[pos];
 }
 
 bool EmitOperatorHandler::processChunkNumber(
