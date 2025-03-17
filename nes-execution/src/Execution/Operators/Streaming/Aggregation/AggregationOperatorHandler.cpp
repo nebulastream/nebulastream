@@ -133,7 +133,7 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// Dispatching the buffer to the probe operator via the task queue.
-        pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
+        pipelineCtx->emitBuffer(tupleBuffer);
         NES_DEBUG(
             "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
             windowInfo.windowInfo.windowStart,

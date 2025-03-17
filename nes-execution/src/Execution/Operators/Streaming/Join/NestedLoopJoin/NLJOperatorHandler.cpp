@@ -91,7 +91,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
 
-    pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
+    pipelineCtx->emitBuffer(tupleBuffer);
     NES_DEBUG(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
