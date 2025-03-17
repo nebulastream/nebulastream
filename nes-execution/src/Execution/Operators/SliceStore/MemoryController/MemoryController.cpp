@@ -111,13 +111,13 @@ MemoryController::~MemoryController()
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    return getFileWriterFromMap(constructFilePath(sliceEnd, threadId, joinBuildSide));
+    return getFileWriterFromMap(constructFilePath(sliceEnd, threadId, joinBuildSide).string());
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, threadId, joinBuildSide));
+    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, threadId, joinBuildSide).string());
 }
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
@@ -134,7 +134,7 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
         auto it = fileWriters.lower_bound(prefix);
         while (it != end)
         {
-            removeFileSystem(it++);
+            //removeFileSystem(it++);
         }
     }
 }
@@ -154,30 +154,30 @@ std::filesystem::path MemoryController::constructFilePath(
                    threadId.getRawValue()));
 }
 
-std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::filesystem::path& filePath)
+std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
 {
     const std::lock_guard lock(fileWritersMutex);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
-    if (const auto it = fileWriters.find(filePath.string()); it != fileWriters.end())
+    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         return it->second;
     }
     auto fileWriter = std::make_shared<FileWriter>(
-        filePath.string(), [this] { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
-    fileWriters[filePath.string()] = fileWriter;
+        filePath, [this] { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
+    fileWriters[filePath] = fileWriter;
     return fileWriter;
 }
 
-std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::filesystem::path& filePath)
+std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::string& filePath)
 {
     const std::lock_guard lock(fileWritersMutex);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
-    if (const auto it = fileWriters.find(filePath.string()); it != fileWriters.end())
+    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         fileWriters.erase(it);
-        return std::make_shared<FileReader>(filePath.string(), [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
+        return std::make_shared<FileReader>(filePath, [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
     }
     return nullptr;
 }

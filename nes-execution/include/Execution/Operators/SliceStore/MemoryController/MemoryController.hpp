@@ -48,8 +48,8 @@ private:
     std::filesystem::path
     constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
 
-    std::shared_ptr<FileWriter> getFileWriterFromMap(const std::filesystem::path& filePath);
-    std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::filesystem::path& filePath);
+    std::shared_ptr<FileWriter> getFileWriterFromMap(const std::string& filePath);
+    std::shared_ptr<FileReader> getFileReaderAndEraseWriter(const std::string& filePath);
 
     void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
