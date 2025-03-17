@@ -13,8 +13,6 @@
 */
 
 #include <cstdint>
-#include <memory>
-#include <utility>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -34,24 +32,14 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        appendPage(bufferProvider, memoryLayout);
-    }
-}
-
-void PagedVector::appendPage(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
-{
-    PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
-
-    if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
-    {
-        pages.emplace_back(page.value());
-    }
-    else
-    {
-        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        {
+            pages.emplace_back(page.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        }
     }
 }
 

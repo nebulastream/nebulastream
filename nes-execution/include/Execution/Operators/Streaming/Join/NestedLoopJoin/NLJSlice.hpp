@@ -71,26 +71,6 @@ private:
     std::tuple<Interface::PagedVector*, Interface::PagedVector*>
     getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
-    static void writePayloadOnlyToFile(
-        Interface::PagedVector* pagedVector,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        Memory::AbstractBufferProvider* bufferProvider,
-        Interface::PagedVector* pagedVectorKeys,
-        FileWriter& fileWriter);
-
-    static void writePayloadAndKeysToSeparateFiles(
-        Interface::PagedVector* pagedVector,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        Interface::PagedVector* pagedVectorKeys,
-        FileWriter& fileWriter);
-
-    static void readSeparatelyFromFiles(
-        Interface::PagedVector* pagedVector,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        Memory::AbstractBufferProvider* bufferProvider,
-        Interface::PagedVector* pagedVectorKeys,
-        FileReader& fileReader);
-
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
