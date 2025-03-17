@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <DataTypes/DataTypeUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -77,36 +78,11 @@ void logProxy(const char* message, const LogLevel logLevel);
 
 VarVal createNautilusMinValue(DataType::Type physicalType);
 VarVal createNautilusMaxValue(DataType::Type physicalType);
-template <typename T>
-static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
+template <typename TValue>
+static VarVal createNautilusConstValue(TValue value, DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return Nautilus::VarVal(nautilus::val<int8_t>(value));
-        case DataType::Type::INT16:
-            return Nautilus::VarVal(nautilus::val<int16_t>(value));
-        case DataType::Type::INT32:
-            return Nautilus::VarVal(nautilus::val<int32_t>(value));
-        case DataType::Type::INT64:
-            return Nautilus::VarVal(nautilus::val<int64_t>(value));
-        case DataType::Type::UINT8:
-            return Nautilus::VarVal(nautilus::val<uint8_t>(value));
-        case DataType::Type::UINT16:
-            return Nautilus::VarVal(nautilus::val<uint16_t>(value));
-        case DataType::Type::UINT32:
-            return Nautilus::VarVal(nautilus::val<uint32_t>(value));
-        case DataType::Type::UINT64:
-            return Nautilus::VarVal(nautilus::val<uint64_t>(value));
-        case DataType::Type::FLOAT32:
-            return Nautilus::VarVal(nautilus::val<float>(value));
-        case DataType::Type::FLOAT64:
-            return Nautilus::VarVal(nautilus::val<double>(value));
-        default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
-        }
-    }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+    return DataTypeUtil::dispatchByNumericalType(
+        physicalType, [value]<typename T>() { return VarVal(nautilus::val<T>(value)); });
 }
 
 }

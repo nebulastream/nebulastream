@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Util.hpp>
 #include <Util/Common.hpp>
@@ -54,63 +56,14 @@ void logProxy(const char* message, const LogLevel logLevel)
 
 VarVal createNautilusMinValue(const DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return Util::createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
-        case DataType::Type::INT16:
-            return Util::createNautilusConstValue(std::numeric_limits<int16_t>::min(), physicalType);
-        case DataType::Type::INT32:
-            return Util::createNautilusConstValue(std::numeric_limits<int32_t>::min(), physicalType);
-        case DataType::Type::INT64:
-            return Util::createNautilusConstValue(std::numeric_limits<int64_t>::min(), physicalType);
-        case DataType::Type::UINT8:
-            return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::min(), physicalType);
-        case DataType::Type::UINT16:
-            return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::min(), physicalType);
-        case DataType::Type::UINT32:
-            return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::min(), physicalType);
-        case DataType::Type::UINT64:
-            return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::min(), physicalType);
-        case DataType::Type::FLOAT32:
-            return Util::createNautilusConstValue(std::numeric_limits<float>::min(), physicalType);
-        case DataType::Type::FLOAT64:
-            return Util::createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
-        default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
-        }
-    }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+    return DataTypeUtil::dispatchByNumericalType(
+        physicalType, [physicalType]<typename T>() { return Util::createNautilusConstValue(std::numeric_limits<T>::min(), physicalType); });
 }
 
 VarVal createNautilusMaxValue(const DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return Util::createNautilusConstValue(std::numeric_limits<int8_t>::max(), physicalType);
-        case DataType::Type::INT16:
-            return Util::createNautilusConstValue(std::numeric_limits<int16_t>::max(), physicalType);
-        case DataType::Type::INT32:
-            return Util::createNautilusConstValue(std::numeric_limits<int32_t>::max(), physicalType);
-        case DataType::Type::INT64:
-            return Util::createNautilusConstValue(std::numeric_limits<int64_t>::max(), physicalType);
-        case DataType::Type::UINT8:
-            return Util::createNautilusConstValue(std::numeric_limits<uint8_t>::max(), physicalType);
-        case DataType::Type::UINT16:
-            return Util::createNautilusConstValue(std::numeric_limits<uint16_t>::max(), physicalType);
-        case DataType::Type::UINT32:
-            return Util::createNautilusConstValue(std::numeric_limits<uint32_t>::max(), physicalType);
-        case DataType::Type::UINT64:
-            return Util::createNautilusConstValue(std::numeric_limits<uint64_t>::max(), physicalType);
-        case DataType::Type::FLOAT32:
-            return Util::createNautilusConstValue(std::numeric_limits<float>::max(), physicalType);
-        case DataType::Type::FLOAT64:
-            return Util::createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
-        default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
-        }
-    }
+    return DataTypeUtil::dispatchByNumericalType(
+        physicalType, [physicalType]<typename T>() { return Util::createNautilusConstValue(std::numeric_limits<T>::max(), physicalType); });
 }
 
 }
