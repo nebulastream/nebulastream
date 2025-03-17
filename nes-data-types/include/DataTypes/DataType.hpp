@@ -42,63 +42,6 @@ struct DataType final
         VARSIZED,
     };
 
-    template <class T>
-    bool isSameDataType() const
-    {
-        if (this->type == Type::VARSIZED && std::is_same_v<std::remove_cvref_t<T>, std::uint32_t>)
-        {
-            return true;
-        }
-        if constexpr (std::is_same_v<std::remove_cvref_t<T>, bool>)
-        {
-            return this->type == Type::BOOLEAN;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, char>)
-        {
-            return this->type == Type::CHAR;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::uint8_t>)
-        {
-            return this->type == Type::UINT8;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::uint16_t>)
-        {
-            return this->type == Type::UINT16;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::uint32_t>)
-        {
-            return this->type == Type::UINT32;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::uint64_t>)
-        {
-            return this->type == Type::UINT64;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::int8_t>)
-        {
-            return this->type == Type::INT8;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::int16_t>)
-        {
-            return this->type == Type::INT16;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::int32_t>)
-        {
-            return this->type == Type::INT32;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::int64_t>)
-        {
-            return this->type == Type::INT64;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, float>)
-        {
-            return this->type == Type::FLOAT32;
-        }
-        else if constexpr (std::is_same_v<std::remove_cvref_t<T>, double>)
-        {
-            return this->type == Type::FLOAT64;
-        }
-        return false;
-    }
     bool operator==(const DataType& other) const = default;
     bool operator!=(const DataType& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);

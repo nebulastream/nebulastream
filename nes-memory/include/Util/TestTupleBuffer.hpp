@@ -21,6 +21,7 @@
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <DataTypes/DataTypeUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -59,7 +60,7 @@ public:
     requires IsNesType<Type> && std::is_pointer<Type>::value
     [[nodiscard]] Type read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        if (not DataTypeUtil::isSameDataType<Type>(physicalType.type))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -74,7 +75,7 @@ public:
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
     [[nodiscard]] Type& read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        if (not DataTypeUtil::isSameDataType<Type>(physicalType.type))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -89,7 +90,7 @@ public:
     requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
     inline Type read() const
     {
-        if (not physicalType.isSameDataType<typename Type::Underlying>())
+        if (not DataTypeUtil::isSameDataType<typename Type::Underlying>(physicalType.type))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -104,7 +105,7 @@ public:
     requires(IsNesType<Type>)
     void write(Type value)
     {
-        if (not physicalType.isSameDataType<Type>())
+        if (not DataTypeUtil::isSameDataType<Type>(physicalType.type))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -119,7 +120,7 @@ public:
     requires(NESIdentifier<Type>)
     void write(Type value)
     {
-        if (not physicalType.isSameDataType<typename Type::Underlying>())
+        if (not DataTypeUtil::isSameDataType<typename Type::Underlying>(physicalType.type))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }

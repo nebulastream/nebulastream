@@ -819,6 +819,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
     AntlrSQLBaseListener::exitLogicalNot(context);
 }
 
+/// TODO #575: get rid of branching. Introduce type constructors in grammar (i.e., INT64(1)) and use string of type constructor as input to registry.
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
