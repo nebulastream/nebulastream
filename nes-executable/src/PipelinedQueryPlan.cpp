@@ -48,7 +48,7 @@ std::vector<std::unique_ptr<Pipeline>> PipelinedQueryPlan::releaseSourcePipeline
     auto it = pipelines.begin();
     while (it != pipelines.end())
     {
-        if (dynamic_cast<SourcePipeline*>(it->get()))
+        if (it->get()->isSourcePipeline())
         {
             sourcePipelines.push_back(std::move(*it));
             it = pipelines.erase(it);

@@ -75,7 +75,7 @@ std::unique_ptr<Operator> SourceDescriptorLogicalOperator::clone() const
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
     auto result = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy));
-    result->setOriginId(getOriginId());
+    result->setOriginId(originId);
     result->inferSchema();
     return result;
 }

@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -30,7 +31,7 @@ namespace NES
 {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    std::unique_ptr<OperatorPipeline> pipeline,
+    std::unique_ptr<Pipeline> pipeline,
     std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : options(std::move(options))
@@ -65,8 +66,8 @@ CompiledExecutablePipelineStage::compilePipeline() const
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
         RecordBuffer recordBuffer(recordBufferRef);
 
-        pipeline->rootOperator->open(ctx, recordBuffer);
-        pipeline->rootOperator->close(ctx, recordBuffer);
+        pipeline->getOperator<PhysicalOperator>().value()->open(ctx, recordBuffer);
+        pipeline->getOperator<PhysicalOperator>().value()->close(ctx, recordBuffer);
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
@@ -83,7 +84,7 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->rootOperator->terminate(ctx);
+    pipeline->getOperator<PhysicalOperator>().value()->terminate(ctx);
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -96,7 +97,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->rootOperator->setup(ctx);
+    pipeline->getOperator<PhysicalOperator>().value()->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
 }
 

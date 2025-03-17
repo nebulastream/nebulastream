@@ -224,26 +224,18 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     }
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
-
     auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
 
     validateAndSetSinkDescriptors(query, config);
-    query = logicalSourceExpansionRule->apply(query);
+    logicalSourceExpansionRule->apply(query);
     query = typeInference->performTypeInferenceQuery(query);
     query = originIdInferencePhase->execute(query);
     query = typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query.toString());
-    auto rawOperators = query.getRootOperators();
-    std::vector<std::unique_ptr<Operator>> uniqueOperators;
-    uniqueOperators.reserve(rawOperators.size());
-    for (auto op : rawOperators) {
-        uniqueOperators.push_back(std::unique_ptr<Operator>(op));
-    }
-
-    return std::make_unique<QueryPlan>(INITIAL<QueryId>, std::move(uniqueOperators));
+    return query.clone();
 }
 
 std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)

@@ -51,6 +51,11 @@ QueryPlan& QueryPlan::operator=(QueryPlan&& other) {
     return *this;
 }
 
+std::unique_ptr<QueryPlan> QueryPlan::clone() const
+{
+    return std::make_unique<QueryPlan>(*this);
+}
+
 std::vector<std::unique_ptr<Operator>> QueryPlan::releaseRootOperators()
 {
     return std::move(rootOperators);
@@ -127,16 +132,15 @@ std::string QueryPlan::toString() const
     return ss.str();
 }
 
-const std::vector<Operator*> QueryPlan::getRootOperators() const
+std::vector<Operator*> QueryPlan::getRootOperators() const
 {
-    std::vector<Operator*> rawPointers;
-    rawPointers.reserve(rootOperators.size());
+    std::vector<Operator*> rawOps;
+    rawOps.reserve(rootOperators.size());
     for (const auto& op : rootOperators) {
-        rawPointers.push_back(op.get());
+        rawOps.push_back(op.get());
     }
-    return rawPointers;
+    return rawOps;
 }
-
 
 std::vector<Operator*> QueryPlan::getLeafOperators() const
 {
@@ -198,55 +202,6 @@ void QueryPlan::setQueryId(QueryId queryId)
     this->queryId = queryId;
 }
 
-std::set<Operator*> QueryPlan::findAllOperatorsBetween(
-    const std::set<Operator*>& downstreamOperators,
-    const std::set<Operator*>& upstreamOperators) const
-{
-    std::set<Operator*> result;
-    std::set<Operator*> visited;
-
-    for (Operator* startOp : downstreamOperators)
-    {
-        // Use a stack for DFS upward.
-        std::vector<Operator*> stack;
-        // Start from the parent of the downstream operator
-        if (startOp->parents[0])
-        {
-            stack.push_back(startOp->parents[0]);
-        }
-
-        while (!stack.empty())
-        {
-            Operator* current = stack.back();
-            stack.pop_back();
-
-            // If we have already visited this operator, skip it.
-            if (visited.find(current) != visited.end())
-            {
-                continue;
-            }
-            visited.insert(current);
-
-            // If current is one of the upstream operators, do not include it,
-            // and do not traverse further upward from here.
-            if (upstreamOperators.find(current) != upstreamOperators.end())
-            {
-                continue;
-            }
-
-            // Otherwise, add the current operator to the result.
-            result.insert(current);
-
-            // Continue traversing upward if the parent exists.
-            if (current->parents[0])
-            {
-                stack.push_back(current->parents[0]);
-            }
-        }
-    }
-    return result;
-}
-
 bool QueryPlan::operator==(const QueryPlan& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
@@ -296,45 +251,4 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
     return true;
 }
 
-/*
-std::set<std::shared_ptr<Operator>> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(
-    const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators)
-{
-    ///Find if downstream operator is also in the vector of target operators
-    auto found = std::find_if(
-        targetOperators.begin(),
-        targetOperators.end(),
-        [&](const auto& upstreamOperator) { return upstreamOperator->id == sourceOperator->id; });
-
-    ///If downstream operator is in the list of target operators then return the operator
-    if (found != targetOperators.end())
-    {
-        return {sourceOperator};
-    }
-
-    bool foundTargetUpstreamOperator = false;
-    std::set<std::shared_ptr<Operator>> operatorsBetween;
-    ///Check further upstream operators if they are in the target operator vector
-    for (const auto& nextUpstreamOperatorToCheck : sourceOperator->children)
-    {
-        ///Fetch the operators between upstream and target operators
-        auto operatorsBetweenUpstreamAndTargetUpstream
-            = findOperatorsBetweenSourceAndTargetOperators(NES::Util::as_if<Operator>(nextUpstreamOperatorToCheck), targetOperators);
-
-        ///If there are operators between upstream and target operators then mark the input down stream operator for return
-        if (!operatorsBetweenUpstreamAndTargetUpstream.empty())
-        {
-            foundTargetUpstreamOperator = true;
-            operatorsBetween.insert(operatorsBetweenUpstreamAndTargetUpstream.begin(), operatorsBetweenUpstreamAndTargetUpstream.end());
-        }
-    }
-
-    ///Add downstream operator
-    if (foundTargetUpstreamOperator)
-    {
-        operatorsBetween.insert(sourceOperator);
-    }
-    return operatorsBetween;
-}
-*/
 }

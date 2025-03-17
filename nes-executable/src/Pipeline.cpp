@@ -45,48 +45,6 @@ std::string Pipeline::getProviderType() const
     return providerTypeToString(this->providerType);
 }
 
-std::string SourcePipeline::toString() const {
-    std::ostringstream oss;
-    oss << "SourcePipeline(id: " << pipelineId
-        << ", providerType: " << providerTypeToString(providerType) << ", ";
-
-    oss << "sourceOperator: ";
-    if (sourceOperator)
-        oss << sourceOperator->toString();
-    else
-        oss << "null";
-
-    oss << ")";
-    return oss.str();
-}
-
-std::string SinkPipeline::toString() const {
-    std::ostringstream oss;
-    oss << "SinkPipeline(id: " << pipelineId
-        << ", providerType: " << providerTypeToString(providerType) << ", ";
-
-    oss << "sinkOperator: ";
-    if (sinkOperator)
-        oss << sinkOperator->toString();
-    else
-        oss << "null";
-
-    oss << ")";
-    return oss.str();
-}
-
-std::string OperatorPipeline::toString() const {
-    std::ostringstream oss;
-    oss << "OperatorPipeline(id: " << pipelineId
-        << ", providerType: " << getProviderType() << ", ";
-    if (rootOperator)
-        oss << "rootOperator: " << rootOperator->toString();
-    else
-        oss << "rootOperator: null";
-    oss << ")";
-    return oss.str();
-}
-
 Pipeline::Pipeline() : pipelineId(getNextPipelineId()), providerType(ProviderType::Compiler) {};
 
 

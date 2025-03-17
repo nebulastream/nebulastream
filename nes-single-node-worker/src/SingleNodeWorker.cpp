@@ -49,14 +49,7 @@ QueryId SingleNodeWorker::registerQuery(QueryPlan plan)
 {
     try
     {
-        std::vector<std::unique_ptr<Operator>> uniqueOperators;
-        for (Operator* op : plan.getRootOperators())
-        {
-            uniqueOperators.push_back(std::unique_ptr<Operator>(op));
-        }
-        auto queryPlan = std::make_unique<QueryPlan>(QueryId(queryIdCounter++), std::move(uniqueOperators));
-
-        queryPlan = optimizer->optimize(std::move(queryPlan));
+        auto queryPlan = optimizer->optimize(plan.clone());
 
         listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan.toString()});
 

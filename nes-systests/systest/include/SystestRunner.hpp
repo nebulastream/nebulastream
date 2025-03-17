@@ -25,6 +25,7 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
+#include <Plans/QueryPlan.hpp>
 
 
 namespace NES::Systest
@@ -35,7 +36,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    std::shared_ptr<QueryPlan> queryPlan;
+    QueryPlan queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
 };

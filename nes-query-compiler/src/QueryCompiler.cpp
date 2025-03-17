@@ -25,8 +25,7 @@
 namespace NES::QueryCompilation
 {
 
-// TODO: The request should include a configuration
-QueryCompiler::QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine) : nodeEngine(nodeEngine)
+QueryCompiler::QueryCompiler(const std::shared_ptr<NodeEngine> nodeEngine) : nodeEngine(nodeEngine)
 {
 }
 

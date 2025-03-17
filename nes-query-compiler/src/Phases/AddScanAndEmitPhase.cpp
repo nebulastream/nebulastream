@@ -54,22 +54,21 @@ std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<P
     for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
         // OperatorPipelines only
-        if (auto* opPipeline = dynamic_cast<OperatorPipeline*>(pipeline.get()))
+        if (pipeline->isOperatorPipeline())
         {
             /// Scan
-            PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
-            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections {};
+            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections {}; // TODO change
             constexpr uint64_t bufferSize = 100; /// TODO change
             constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
-            if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(opPipeline->rootOperator); leafPhys)
+            if (auto leafPhys = pipeline->getOperator<PhysicalOperatorWithSchema>(); leafPhys.has_value())
             {
-                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, opPipeline->rootOperator);
-                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(std::move(opPipeline->rootOperator), emptyProjections);
-                opPipeline->prependOperator(std::move(newScan));
+                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys.value()->inputSchema);
+                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(std::move(memoryProvider), emptyProjections);
+                ///pipeline->prependOperator(std::move(newScan));
             }
 
             /// Emit
-            for (auto* leaf : helper::getAllLeafNodes(*opPipeline->rootOperator))
+            /*for (auto* leaf : helper::getAllLeafNodes(pipeline->pipelineOperator))
             {
                 if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(leaf); leafPhys)
                 {
@@ -77,12 +76,9 @@ std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<P
                     constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
                     auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys->outputSchema);
                     auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, std::move(memoryProvider));
-                    auto physicalOp = Util::unique_ptr_dynamic_cast<PhysicalOperator>(std::move(emitOperator));
-                    leafPhys->physicalOperator->setChild(std::move(emitOperator));
-
-                    /// TODO append.
+                    ///leafPhys->child = std::move(physicalOp);
                 }
-            }
+            }*/
         }
     }
     return pipelineQueryPlan;
