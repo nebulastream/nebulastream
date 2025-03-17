@@ -29,12 +29,15 @@
 #include <utility>
 #include <vector>
 #include <strings.h>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 #include <fmt/format.h>
@@ -259,133 +262,24 @@ private:
 template <typename T>
 auto parseIntegerString()
 {
-    return [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+    return [](std::string_view fieldValueString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, const Memory::TupleBuffer&)
     {
-        const auto sizeOfString = fieldValueString.size();
-        T* value = reinterpret_cast<T*>(fieldPointer);
-        auto [_, ec] = std::from_chars(fieldValueString.data(), fieldValueString.data() + sizeOfString, *value);
-        if (ec == std::errc())
+        if (auto integer = Util::from_chars<T>(fieldValueString))
         {
-            return;
+            *reinterpret_cast<T*>(fieldPointer) = *integer;
         }
-        if (ec == std::errc::invalid_argument)
+        else
         {
             throw CannotFormatMalformedStringValue(
                 "Integer value '{}', is not a valid integer of type: {}.", fieldValueString, typeid(T).name());
         }
-        if (ec == std::errc::result_out_of_range)
-        {
-            throw CannotFormatMalformedStringValue("Integer value '{}', is too large for type: {}.", fieldValueString, typeid(T).name());
-        }
     };
 }
 
-void addBasicTypeParseFunction(
-    const DataType::Type physicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
+void addBasicTypeParseFunction(const DataType& dataType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
 {
-    switch (physicalType)
-    {
-        case NES::DataType::Type::INT8: {
-            fieldParseFunctions.emplace_back(parseIntegerString<int8_t>());
-            break;
-        }
-        case NES::DataType::Type::INT16: {
-            fieldParseFunctions.emplace_back(parseIntegerString<int16_t>());
-            break;
-        }
-        case NES::DataType::Type::INT32: {
-            fieldParseFunctions.emplace_back(parseIntegerString<int32_t>());
-            break;
-        }
-        case NES::DataType::Type::INT64: {
-            fieldParseFunctions.emplace_back(parseIntegerString<int64_t>());
-            break;
-        }
-        case NES::DataType::Type::UINT8: {
-            fieldParseFunctions.emplace_back(parseIntegerString<uint8_t>());
-            break;
-        }
-        case NES::DataType::Type::UINT16: {
-            fieldParseFunctions.emplace_back(parseIntegerString<uint16_t>());
-            break;
-        }
-        case NES::DataType::Type::UINT32: {
-            fieldParseFunctions.emplace_back(parseIntegerString<uint32_t>());
-            break;
-        }
-        case NES::DataType::Type::UINT64: {
-            fieldParseFunctions.emplace_back(parseIntegerString<uint64_t>());
-            break;
-        }
-        case NES::DataType::Type::FLOAT32: {
-            const auto validateAndParseFloat
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
-            {
-                if (fieldValueString.find(',') != std::string_view::npos)
-                {
-                    throw CannotFormatMalformedStringValue(
-                        "Floats must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
-                }
-                *reinterpret_cast<float*>(fieldPointer) = std::stof(fieldValueString);
-            };
-            fieldParseFunctions.emplace_back(std::move(validateAndParseFloat));
-            break;
-        }
-        case NES::DataType::Type::FLOAT64: {
-            const auto validateAndParseDouble
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
-            {
-                if (fieldValueString.find(',') != std::string_view::npos)
-                {
-                    throw CannotFormatMalformedStringValue(
-                        "Doubles must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
-                }
-                *reinterpret_cast<double*>(fieldPointer) = std::stod(fieldValueString);
-            };
-            fieldParseFunctions.emplace_back(std::move(validateAndParseDouble));
-            break;
-        }
-        case NES::DataType::Type::CHAR: {
-            ///verify that only a single char was transmitted
-            fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
-                {
-                    PRECONDITION(inputString.size() == 1, "A char must not have a size bigger than 1.");
-                    const auto value = inputString.front();
-                    *fieldPointer = value;
-                    return sizeof(char);
-                });
-            break;
-        }
-        case NES::DataType::Type::BOOLEAN: {
-            ///verify that a valid bool was transmitted (valid{true,false,0,1})
-            fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
-                {
-                    const bool value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
-                    if (!value)
-                    {
-                        if ((static_cast<int>(strcasecmp(inputString.c_str(), "false") != 0) != 0)
-                            && (strcasecmp(inputString.c_str(), "0") != 0))
-                        {
-                            NES_FATAL_ERROR(
-                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                inputString.c_str());
-                            throw CannotFormatMalformedStringValue("Value: {} is not a boolean", inputString);
-                        }
-                    }
-                    *fieldPointer = static_cast<int8_t>(value);
-                    return sizeof(bool);
-                });
-            break;
-        }
-        case NES::DataType::Type::UNDEFINED: {
-            NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
-            break;
-        }
-        default:
-            NES_FATAL_ERROR("Unknown physical type: {}", magic_enum::enum_name(physicalType));
-    }
+    DataTypeUtil::dispatchByNumericalOrBoolOrCharType(
+        dataType.type, [&fieldParseFunctions]<typename T>() { fieldParseFunctions.emplace_back(parseIntegerString<T>()); });
 }
 
 CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
@@ -410,15 +304,15 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
         /// Store the parsing function in a vector.
         if (physicalType.type != DataType::Type::VARSIZED)
         {
-            addBasicTypeParseFunction(physicalType.type, this->fieldParseFunctions);
+            addBasicTypeParseFunction(physicalType, this->fieldParseFunctions);
         }
         else
         {
             this->fieldParseFunctions.emplace_back(
-                [](const std::string& inputString,
+                [](std::string_view inputString,
                    int8_t* fieldPointer,
                    Memory::AbstractBufferProvider& bufferProvider,
-                   const NES::Memory::TupleBuffer& tupleBufferFormatted)
+                   const Memory::TupleBuffer& tupleBufferFormatted)
                 {
                     NES_TRACE(
                         "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"

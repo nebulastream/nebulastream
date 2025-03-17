@@ -46,10 +46,10 @@ private:
 
 public:
     using CastFunctionSignature = std::function<void(
-        std::string inputString,
+        std::string_view inputString,
         int8_t* fieldPointer,
         Memory::AbstractBufferProvider& bufferProvider,
-        Memory::TupleBuffer& tupleBufferFormatted)>;
+        const Memory::TupleBuffer& tupleBufferFormatted)>;
 
     CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
     ~CSVInputFormatter() override; /// needs implementation in source file to allow for forward declaring 'InputFormatter'
