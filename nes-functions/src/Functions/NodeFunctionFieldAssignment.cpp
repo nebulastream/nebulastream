@@ -99,7 +99,7 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
         }
     }
 
-    if (field->getStamp().physicalType.type == PhysicalType::Type::UNDEFINED)
+    if (field->getStamp().type == DataType::Type::UNDEFINED)
     {
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());

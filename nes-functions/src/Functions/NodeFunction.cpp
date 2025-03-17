@@ -28,7 +28,7 @@ NodeFunction::NodeFunction(DataType stamp, std::string type) : stamp(std::move(s
 
 bool NodeFunction::isPredicate() const
 {
-    return stamp.physicalType.type == PhysicalType::Type::BOOLEAN;
+    return stamp.type == DataType::Type::BOOLEAN;
 }
 
 DataType NodeFunction::getStamp() const

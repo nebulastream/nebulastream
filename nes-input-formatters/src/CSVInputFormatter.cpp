@@ -38,6 +38,7 @@
 #include <boost/tokenizer.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
@@ -171,43 +172,43 @@ auto parseIntegerString()
 }
 
 void addBasicTypeParseFunction(
-    const PhysicalType::Type physicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
+    const DataType::Type physicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
 {
     switch (physicalType)
     {
-        case NES::PhysicalType::Type::INT8: {
+        case NES::DataType::Type::INT8: {
             fieldParseFunctions.emplace_back(parseIntegerString<int8_t>());
             break;
         }
-        case NES::PhysicalType::Type::INT16: {
+        case NES::DataType::Type::INT16: {
             fieldParseFunctions.emplace_back(parseIntegerString<int16_t>());
             break;
         }
-        case NES::PhysicalType::Type::INT32: {
+        case NES::DataType::Type::INT32: {
             fieldParseFunctions.emplace_back(parseIntegerString<int32_t>());
             break;
         }
-        case NES::PhysicalType::Type::INT64: {
+        case NES::DataType::Type::INT64: {
             fieldParseFunctions.emplace_back(parseIntegerString<int64_t>());
             break;
         }
-        case NES::PhysicalType::Type::UINT8: {
+        case NES::DataType::Type::UINT8: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint8_t>());
             break;
         }
-        case NES::PhysicalType::Type::UINT16: {
+        case NES::DataType::Type::UINT16: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint16_t>());
             break;
         }
-        case NES::PhysicalType::Type::UINT32: {
+        case NES::DataType::Type::UINT32: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint32_t>());
             break;
         }
-        case NES::PhysicalType::Type::UINT64: {
+        case NES::DataType::Type::UINT64: {
             fieldParseFunctions.emplace_back(parseIntegerString<uint64_t>());
             break;
         }
-        case NES::PhysicalType::Type::FLOAT32: {
+        case NES::DataType::Type::FLOAT32: {
             const auto validateAndParseFloat
                 = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
             {
@@ -221,7 +222,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(std::move(validateAndParseFloat));
             break;
         }
-        case NES::PhysicalType::Type::FLOAT64: {
+        case NES::DataType::Type::FLOAT64: {
             const auto validateAndParseDouble
                 = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
             {
@@ -235,7 +236,7 @@ void addBasicTypeParseFunction(
             fieldParseFunctions.emplace_back(std::move(validateAndParseDouble));
             break;
         }
-        case NES::PhysicalType::Type::CHAR: {
+        case NES::DataType::Type::CHAR: {
             ///verify that only a single char was transmitted
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
@@ -247,7 +248,7 @@ void addBasicTypeParseFunction(
                 });
             break;
         }
-        case NES::PhysicalType::Type::BOOLEAN: {
+        case NES::DataType::Type::BOOLEAN: {
             ///verify that a valid bool was transmitted (valid{true,false,0,1})
             fieldParseFunctions.emplace_back(
                 [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
@@ -269,7 +270,7 @@ void addBasicTypeParseFunction(
                 });
             break;
         }
-        case NES::PhysicalType::Type::UNDEFINED: {
+        case NES::DataType::Type::UNDEFINED: {
             NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             break;
         }
@@ -285,11 +286,11 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
 {
     this->fieldSizes.reserve(schema.getNumberOfFields());
     this->fieldParseFunctions.reserve(schema.getNumberOfFields());
-    std::vector<PhysicalType> physicalTypes;
+    std::vector<DataType> physicalTypes;
     physicalTypes.reserve(schema.getNumberOfFields());
     for (const auto& field : schema.getFields())
     {
-        physicalTypes.emplace_back(field.dataType.physicalType);
+        physicalTypes.emplace_back(field.dataType);
     }
 
     /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
@@ -300,7 +301,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
         /// Store the size of the field in bytes (for offset calculations).
         this->fieldSizes.emplace_back(physicalType.getSizeInBytes());
         /// Store the parsing function in a vector.
-        if (physicalType.type != PhysicalType::Type::VARSIZED)
+        if (physicalType.type != DataType::Type::VARSIZED)
         {
             addBasicTypeParseFunction(physicalType.type, this->fieldParseFunctions);
         }

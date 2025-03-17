@@ -829,47 +829,47 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         /// Signed Integers
         if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT8);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT16);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT32);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT64);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT64);
         }
 
         /// Unsigned Integers
         else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT8);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT8);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT16);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT16);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT32);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT32);
         }
         else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::INT64);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::INT64);
         }
 
         /// Floating Point
         else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
         }
         else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
         }
         else
         {
@@ -885,7 +885,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
 
-        const auto dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
+        const auto dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
         auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
 
         helper.functionBuilder.push_back(constFunctionItem);

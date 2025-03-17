@@ -175,7 +175,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         {
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += loweredFunctionType.physicalType.getSizeInBytes();
+            keySize += loweredFunctionType.getSizeInBytes();
         }
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto entriesPerPage = queryCompilerConfig.pageSize.getValue() / entrySize;
@@ -219,7 +219,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         {
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += loweredFunctionType.physicalType.getSizeInBytes();
+            keySize += loweredFunctionType.getSizeInBytes();
         }
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();

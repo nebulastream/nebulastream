@@ -30,8 +30,8 @@ class MaxAggregationFunction : public AggregationFunction
 {
 public:
     MaxAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
