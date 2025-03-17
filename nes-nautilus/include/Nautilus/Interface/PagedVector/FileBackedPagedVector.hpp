@@ -16,58 +16,58 @@
 
 #include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Util/Execution.hpp>
 
 namespace NES::Nautilus::Interface
 {
 
-class FileBackedPagedVector : PagedVector
+class FileBackedPagedVector final : public PagedVector
 {
 public:
-    FileBackedPagedVector() = default;
+    /// Appends the pages of the given FileBackedPagedVector with the pages of this FileBackedPagedVector.
+    void appendAllPages(PagedVector& other) override;
+
+    /// Copies all pages from other FileBackedPagedVector to this FileBackedPagedVector.
+    void copyFrom(const PagedVector& other) override;
 
     /// Writes the projected fields of all tuples to fileStorage.
-    static void writeToFile(
-        PagedVector* pagedVector,
-        PagedVector* pagedVectorKeys,
+    void writeToFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Runtime::Execution::FileWriter& fileWriter,
         Runtime::Execution::FileLayout fileLayout);
 
     /// Reads the projected fields of all tuples from fileStorage.
-    static void readFromFile(
-        PagedVector* pagedVector,
-        PagedVector* pagedVectorKeys,
+    void readFromFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Runtime::Execution::FileReader& fileReader,
         Runtime::Execution::FileLayout fileLayout);
 
     /// Deletes the projected fields of all tuples.
-    static void truncate(PagedVector* pagedVector, PagedVector* pagedVectorKeys, Runtime::Execution::FileLayout fileLayout);
+    void truncate(Runtime::Execution::FileLayout fileLayout);
+
+    [[nodiscard]] uint64_t getTotalNumberOfEntries() const override;
+    [[nodiscard]] uint64_t getNumberOfPages() const override;
 
 private:
-    static void writePayloadOnlyToFile(
-        PagedVector* pagedVector,
+    /// Appends a new page to the keyPages vector if the last page is full.
+    void appendKeyPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+
+    void writePayloadAndKeysToSeparateFiles(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter) const;
+
+    void writePayloadOnlyToFile(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        PagedVector* pagedVectorKeys,
         Runtime::Execution::FileWriter& fileWriter);
 
-    static void writePayloadAndKeysToSeparateFiles(
-        PagedVector* pagedVector,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        PagedVector* pagedVectorKeys,
-        Runtime::Execution::FileWriter& fileWriter);
-
-    static void readSeparatelyFromFiles(
-        PagedVector* pagedVector,
+    void readSeparatelyFromFiles(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        PagedVector* pagedVectorKeys,
         Runtime::Execution::FileReader& fileReader);
 
+    /// As we allow tuples to be partially written to disk, i.e. only key field data is kept in memory, the remaining data subsequently has
+    /// a different schema/memory layout and must therefore be stored separately from any new incoming tuples.
     std::vector<Memory::TupleBuffer> keyPages;
 };
 

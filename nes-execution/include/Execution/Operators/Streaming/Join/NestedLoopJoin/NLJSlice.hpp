@@ -19,7 +19,8 @@
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
+
 namespace NES::Runtime::Execution
 {
 
@@ -68,8 +69,7 @@ public:
         WorkerThreadId threadId) const;
 
 private:
-    std::tuple<Interface::PagedVector*, Interface::PagedVector*>
-    getPagedVectors(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+    Interface::FileBackedPagedVector* getPagedVector(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;

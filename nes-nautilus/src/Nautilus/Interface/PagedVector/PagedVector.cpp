@@ -113,9 +113,4 @@ uint64_t PagedVector::getNumberOfPages() const
     return pages.size();
 }
 
-std::vector<Memory::TupleBuffer>& PagedVector::getPages()
-{
-    return pages;
-}
-
 }

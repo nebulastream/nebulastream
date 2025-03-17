@@ -29,14 +29,12 @@ NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const u
 {
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
-        leftPagedVectorsKeys.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::FileBackedPagedVector>());
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
-        rightPagedVectorsKeys.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::FileBackedPagedVector>());
     }
 }
 
@@ -60,14 +58,12 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % leftPagedVectors.size();
-    return leftPagedVectors[pos].get();
+    return getPagedVector(QueryCompilation::JoinBuildSideType::Left, workerThreadId);
 }
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % rightPagedVectors.size();
-    return rightPagedVectors[pos].get();
+    return getPagedVector(QueryCompilation::JoinBuildSideType::Right, workerThreadId);
 }
 
 void NLJSlice::combinePagedVectors()
@@ -97,26 +93,6 @@ void NLJSlice::combinePagedVectors()
         }
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }
-
-    /// Append all PagedVectorsKeys on the left join side and erase all items except for the first one
-    if (leftPagedVectorsKeys.size() > 1)
-    {
-        for (uint64_t i = 1; i < leftPagedVectorsKeys.size(); ++i)
-        {
-            leftPagedVectorsKeys[0]->appendAllPages(*leftPagedVectorsKeys[i]);
-        }
-        leftPagedVectorsKeys.erase(leftPagedVectorsKeys.begin() + 1, leftPagedVectorsKeys.end());
-    }
-
-    /// Append all PagedVectorsKeys on the right join side and remove all items except for the first one
-    if (rightPagedVectorsKeys.size() > 1)
-    {
-        for (uint64_t i = 1; i < rightPagedVectorsKeys.size(); ++i)
-        {
-            rightPagedVectorsKeys[0]->appendAllPages(*rightPagedVectorsKeys[i]);
-        }
-        rightPagedVectorsKeys.erase(rightPagedVectorsKeys.begin() + 1, rightPagedVectorsKeys.end());
-    }
 }
 
 void NLJSlice::writeToFile(
@@ -139,8 +115,8 @@ void NLJSlice::writeToFile(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
-    Interface::FileBackedPagedVector::writeToFile(pagedVector, pagedVectorKeys, bufferProvider, memoryLayout, fileWriter, fileLayout);
+    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
+    pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
 }
 
 void NLJSlice::readFromFile(
@@ -163,15 +139,15 @@ void NLJSlice::readFromFile(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
-    Interface::FileBackedPagedVector::readFromFile(pagedVector, pagedVectorKeys, bufferProvider, memoryLayout, fileReader, fileLayout);
+    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
+    pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
 }
 
 void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const FileLayout fileLayout)
 {
     /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
-    Interface::FileBackedPagedVector::truncate(pagedVector, pagedVectorKeys, fileLayout);
+    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
+    pagedVector->truncate(fileLayout);
 }
 
 size_t NLJSlice::getStateSizeInBytesForThreadId(
@@ -179,28 +155,25 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId) const
 {
-    const auto [pagedVector, pagedVectorKeys] = getPagedVectors(joinBuildSide, threadId);
+    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
-    const auto numPagesKeys = pagedVectorKeys->getNumberOfPages();
 
-    return pageSize * numPages + pageSize * numPagesKeys;
+    return pageSize * numPages;
 }
 
-std::tuple<Interface::PagedVector*, Interface::PagedVector*>
-NLJSlice::getPagedVectors(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
+Interface::FileBackedPagedVector*
+NLJSlice::getPagedVector(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
 {
     switch (joinBuildSide)
     {
         case QueryCompilation::JoinBuildSideType::Left: {
-            const auto leftPos = threadId % leftPagedVectors.size();
-            const auto leftPosKeys = threadId % leftPagedVectorsKeys.size();
-            return std::make_tuple(leftPagedVectors[leftPos].get(), leftPagedVectorsKeys[leftPosKeys].get());
+            const auto pos = threadId % leftPagedVectors.size();
+            return leftPagedVectors[pos].get();
         }
         case QueryCompilation::JoinBuildSideType::Right: {
-            const auto rightPos = threadId % rightPagedVectors.size();
-            const auto rightPosKeys = threadId % rightPagedVectorsKeys.size();
-            return std::make_tuple(rightPagedVectors[rightPos].get(), rightPagedVectorsKeys[rightPosKeys].get());
+            const auto pos = threadId % rightPagedVectors.size();
+            return rightPagedVectors[pos].get();
         }
         default:
             throw UnknownJoinBuildSide();

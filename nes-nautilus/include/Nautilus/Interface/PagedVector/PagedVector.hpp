@@ -30,15 +30,16 @@ class PagedVector
 {
 public:
     PagedVector() = default;
+    virtual ~PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
-    void appendAllPages(PagedVector& other);
+    virtual void appendAllPages(PagedVector& other);
 
     /// Copies all pages from other to this
-    void copyFrom(const PagedVector& other);
+    virtual void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
     [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
@@ -46,13 +47,12 @@ public:
     [[nodiscard]] uint64_t getBufferPosForEntry(uint64_t entryPos) const;
 
     /// Iterates over all pages and sums up the number of tuples.
-    [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
+    [[nodiscard]] virtual uint64_t getTotalNumberOfEntries() const;
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
-    [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] std::vector<Memory::TupleBuffer>& getPages();
+    [[nodiscard]] virtual uint64_t getNumberOfPages() const;
 
-private:
+protected:
     std::vector<Memory::TupleBuffer> pages;
 };
 

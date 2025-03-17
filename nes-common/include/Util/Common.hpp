@@ -125,6 +125,13 @@ bool instanceOf(const In& obj)
     return dynamic_cast<Out*>(&obj);
 }
 
+/// check if the given object is an instance of the specified type.
+template <typename Out, typename In>
+bool instanceOfConst(const In& obj)
+{
+    return dynamic_cast<Out*>(const_cast<std::remove_const_t<In>*>(&obj));
+}
+
 /// cast the given object to the specified type.
 template <typename Out, typename In>
 std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
@@ -141,6 +148,13 @@ template <typename Out, typename In>
 Out as(const In& obj)
 {
     return *dynamic_cast<Out*>(&obj);
+}
+
+/// cast the given object to the specified type.
+template <typename Out, typename In>
+Out asConst(const In& obj)
+{
+    return *dynamic_cast<Out*>(const_cast<std::remove_const_t<In>*>(&obj));
 }
 
 /// cast the given object to the specified type.
