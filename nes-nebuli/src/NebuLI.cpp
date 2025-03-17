@@ -230,7 +230,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     }
 
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
-    auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule(sourceCatalog);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
@@ -240,7 +240,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     validateAndSetSinkDescriptors(*query, config);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
-    logicalSourceExpansionRule->apply(query);
+    logicalSourceExpansionRule.apply(query);
     typeInference->performTypeInferenceQuery(query);
 
     originIdInferencePhase->execute(query);
