@@ -80,10 +80,6 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
         {
             dataType = DataTypeProvider::provideDataType(type.value());
         }
-        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
-        }
         else
         {
             throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
