@@ -28,22 +28,6 @@
 namespace NES::Catalogs::Source
 {
 
-SourceCatalog::SourceCatalog()
-{
-    NES_DEBUG("SourceCatalog: construct source catalog");
-    addDefaultSources();
-    NES_DEBUG("SourceCatalog: construct source catalog successfully");
-}
-
-void SourceCatalog::addDefaultSources()
-{
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("Sourcecatalog addDefaultSources");
-    const std::shared_ptr<Schema> schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    bool success = addLogicalSource("default_logical", schema);
-    INVARIANT(success, "error while add default_logical");
-}
-
 bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
 {
     std::unique_lock lock(catalogMutex);
@@ -109,8 +93,9 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     else
     {
         NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
-        logicalToPhysicalSourceMapping.insert(std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
-            logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
+        logicalToPhysicalSourceMapping.insert(
+            std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
+                logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(sourceCatalogEntry);
     }
 
@@ -242,18 +227,6 @@ std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::s
     }
 
     return listOfSourceNodes;
-}
-
-bool SourceCatalog::reset()
-{
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: reset Source Catalog");
-    logicalSourceNameToSchemaMapping.clear();
-    logicalToPhysicalSourceMapping.clear();
-
-    addDefaultSources();
-    NES_DEBUG("SourceCatalog: reset Source Catalog completed");
-    return true;
 }
 
 std::string SourceCatalog::getPhysicalSourceAndSchemaAsString()
