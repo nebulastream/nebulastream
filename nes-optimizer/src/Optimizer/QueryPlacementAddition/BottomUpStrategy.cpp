@@ -24,30 +24,22 @@
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
 
 namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementAdditionStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                         const TopologyPtr& topology,
                                                                         const TypeInferencePhasePtr& typeInferencePhase,
-                                                                        PlacementAmendmentMode placementAmendmentMode,
-                                                                        FaultToleranceType faultTolerance) {
-    return std::make_unique<BottomUpStrategy>(globalExecutionPlan,
-                                              topology,
-                                              typeInferencePhase,
-                                              placementAmendmentMode,
-                                              faultTolerance);
+                                                                        PlacementAmendmentMode placementAmendmentMode) {
+    return std::make_unique<BottomUpStrategy>(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
 }
 
 BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                   PlacementAmendmentMode placementAmendmentMode,
-                                   FaultToleranceType faultTolerance)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode, faultTolerance) {}
+                                   PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
 PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                     const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
@@ -64,17 +56,15 @@ PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryI
         performPathSelection(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 3. Pin all unpinned operators
-        pinOperators(pinnedUpStreamOperators, pinnedDownStreamOperators);
-        copy =
-    CopiedPinnedOperators::createMinimalCopy(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
+        pinOperators(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 4. Compute query sub plans
         auto computedQuerySubPlans =
             computeDecomposedQueryPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
-        NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
+
         // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
-
+        NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
         // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
@@ -115,34 +105,15 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
                                                TopologyNodePtr candidateTopologyNode,
                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
 
-    if (logicalOperator->getOperatorState() == OperatorState::PLACED || logicalOperator->hasProperty("placed")) {
+    if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
         return;
     }
 
-    if (logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
-        NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        logicalOperator->addProperty(PINNED_WORKER_ID, std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
-        for (const auto& parent : logicalOperator->getParents()) {
-            identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
-        }
-        return;
-    }
-    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>()
-    && logicalOperator->getOriginalId() == logicalOperator->getId() && (faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M)) {
-        if (pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
-            candidateTopologyNode = findCandidateTopologyNode(candidateTopologyNode);
-        }
-    }
-
-    else if (!logicalOperator->instanceOf<SourceLogicalOperator>() && !logicalOperator->instanceOf<SinkLogicalOperator>() && !logicalOperator->instanceOf<LogicalWindowOperator>()
-        && faultTolerance == FaultToleranceType::NONE) {
-            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
-    }
     NES_DEBUG("Place {}", logicalOperator->toString());
-
-
-    if ((logicalOperator->getOriginalId() == logicalOperator->getId() && logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
+    if(logicalOperator->instanceOf<LogicalWindowOperator>())
+        candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+    if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
         || logicalOperator->instanceOf<SinkLogicalOperator>()) {
         NES_TRACE("Received an NAry operator for placement.");
         //Check if all children operators already placed
@@ -210,35 +181,6 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
     candidateTopologyNode->occupySlots(1);
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
-    if ((faultTolerance == FaultToleranceType::AS || faultTolerance == FaultToleranceType::M) && !logicalOperator->instanceOf<SourceLogicalOperator>()
-        && !logicalOperator->instanceOf<SinkLogicalOperator>() && logicalOperator->getOriginalId() == logicalOperator->getId()) {
-        // Get alternative nodes for the candidate topology node
-
-        auto alternativeNodeIds = candidateTopologyNode->getAlternativeNodeCandidateIds();
-        if (!alternativeNodeIds.empty() && pathsFound.size() > pinnedUpStreamTopologyNodeIds.size()) {
-            auto alternativeNodeId = alternativeNodeIds[0];
-            TopologyNodePtr alternativeNode = lockedTopologyNodeMap.at(alternativeNodeId)->operator*();
-
-            LogicalOperatorPtr operatorCopy = logicalOperator->copy()->as<LogicalOperator>();
-            operatorCopy->setId(getNextOperatorId());
-            operatorCopy->setOriginalId(logicalOperator->getId());
-            //TODO: create a shadow structure to track newly created copies
-            for (const auto& parent : logicalOperator->getParents()) {
-                LogicalOperatorPtr parentOperator = parent->as<LogicalOperator>();
-                parentOperator->addChild(operatorCopy);
-            }
-
-            for (const auto& child : logicalOperator->getChildren()) {
-                LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-                childOperator->addParent(operatorCopy);
-            }
-            operatorIdToOriginalOperatorMap[operatorCopy->getId()] = operatorCopy;
-            identifyPinningLocation(operatorCopy, alternativeNode, pinnedDownStreamOperators);
-        }
-        else {
-            NES_WARNING("Fault tolerance placement: No alternative candidates found, please spawn a new worker.");
-        }
-    }
     auto isOperatorAPinnedDownStreamOperator =
         std::find_if(pinnedDownStreamOperators.begin(),
                      pinnedDownStreamOperators.end(),
@@ -247,25 +189,14 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
                      });
 
     if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-        logicalOperator->addProperty("placed", 1);
         NES_DEBUG("Found pinned downstream operator. Skipping placement of further operators.");
         return;
     }
 
     NES_TRACE("Place further upstream operators.");
-    auto parents = logicalOperator->getParents();
-    for (const auto& parent : parents) {
+    for (const auto& parent : logicalOperator->getParents()) {
         identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
-}
-
-TopologyNodePtr BottomUpStrategy::findCandidateTopologyNode(TopologyNodePtr startNode) {
-    TopologyNodePtr candidateNode = startNode;
-    while ((candidateNode->getAvailableResources() == 0 || candidateNode->getAlternativeNodeCandidateIds().empty())
-           && !candidateNode->getParents().empty()) {
-        candidateNode = candidateNode->getParents()[0]->as<TopologyNode>();
-    }
-    return candidateNode;
 }
 
 }// namespace NES::Optimizer

@@ -85,7 +85,6 @@ void MlHeuristicStrategy::performOperatorPlacement(SharedQueryId sharedQueryId,
                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
 
-    for (const auto& path : pathsFound) {
         NES_DEBUG("Get the all source operators for performing the placement.");
         for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
             NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
@@ -100,8 +99,7 @@ void MlHeuristicStrategy::performOperatorPlacement(SharedQueryId sharedQueryId,
                     identifyPinningLocation(sharedQueryId,
                                             downStreamNode->as<LogicalOperator>(),
                                             candidateTopologyNode,
-                                            pinnedDownStreamOperators,
-                                            path);
+                                            pinnedDownStreamOperators);
                 }
             } else {// 2. If pinned operator is not placed then start by placing the operator
                 if (candidateTopologyNode->getAvailableResources() == 0) {
@@ -112,11 +110,9 @@ void MlHeuristicStrategy::performOperatorPlacement(SharedQueryId sharedQueryId,
                 identifyPinningLocation(sharedQueryId,
                                         pinnedUpStreamOperator,
                                         candidateTopologyNode,
-                                        pinnedDownStreamOperators,
-                                        path);
+                                        pinnedDownStreamOperators);
             }
         }
-    }
     NES_DEBUG("Finished placing query operators into the global execution plan");
 }
 
@@ -144,8 +140,7 @@ bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const LogicalOperatorPt
 void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
                                                   const LogicalOperatorPtr& logicalOperator,
                                                   TopologyNodePtr candidateTopologyNode,
-                                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                  PathInfo path) {
+                                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
@@ -263,8 +258,7 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
             identifyPinningLocation(sharedQueryId,
                                     logicalOperator,
                                     candidateTopologyNode->getParents()[0]->as<TopologyNode>(),
-                                    pinnedDownStreamOperators,
-                                    path);
+                                    pinnedDownStreamOperators);
         }
         if (!canBePlacedHere) {
             NES_ERROR("Operator can not be placed on {}", candidateTopologyNode->getId());
@@ -312,8 +306,7 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
         identifyPinningLocation(sharedQueryId,
                                 parent->as<LogicalOperator>(),
                                 candidateTopologyNode,
-                                pinnedDownStreamOperators,
-                                path);
+                                pinnedDownStreamOperators);
     }
 }
 

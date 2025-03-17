@@ -124,12 +124,9 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             auto operatorToProcess = operatorsToProcessInBFSOrder.front();
             operatorsToProcessInBFSOrder.pop();
             auto operatorId = operatorToProcess->getId();
-
             idsOfOperatorsToBeProcessed.emplace_back(operatorId);
             for (const auto& parent : operatorToProcess->getParents()) {
-                if (shouldVisit(parent->as<LogicalOperator>(), upStreamPinnedOperators, downStreamPinnedOperators)) {
-                    operatorsToProcessInBFSOrder.push(parent->as<LogicalOperator>());
-                }
+                operatorsToProcessInBFSOrder.emplace(parent->as<LogicalOperator>());
             }
         }
 
@@ -208,9 +205,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                 if (downStreamInToBePlacedState && downStreamOperator->getOperatorState() != OperatorState::TO_BE_PLACED) {
                     downStreamInToBePlacedState = false;
                 }
-                if (shouldVisit(downStreamOperator, upStreamPinnedOperators, downStreamPinnedOperators)) {
-                    operatorsToProcessInBFSOrder.emplace(downStreamOperator);
-                }
+                operatorsToProcessInBFSOrder.emplace(downStreamOperator);
             }
 
             // 12. If the operator is connected by system generated operators then record the worker ids and query sub plan ids

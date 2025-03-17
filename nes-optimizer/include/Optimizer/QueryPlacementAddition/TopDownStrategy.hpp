@@ -57,16 +57,14 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
      */
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                 PathInfo path);
+                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where parent operator was placed or empty if not all parent operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr& candidateOperator,
-                                                                        PathInfo path);
+    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr& candidateOperator);
 
     /**
      * @brief Get topology node where all children operators of the input operator are to be placed

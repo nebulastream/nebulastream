@@ -307,7 +307,7 @@ class WorkerConfiguration : public BaseConfiguration {
  * Set trimming frequency for upstream backup
  */
  UIntOption loadBalancing = {LOAD_BALANCING,
-                                       "1000",
+                                       "0",
                                        "Load balancing frequency.",
                                        {std::make_shared<NumberValidation>()}};
 

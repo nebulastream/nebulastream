@@ -72,8 +72,7 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     void identifyPinningLocation(SharedQueryId sharedQueryId,
                                  const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                 PathInfo path);
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperator);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities

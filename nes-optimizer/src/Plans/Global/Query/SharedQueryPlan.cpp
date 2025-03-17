@@ -565,11 +565,14 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
     auto operatorsToBeRePlaced = queryPlan->findAllOperatorsBetween(downstreamOperator, upstreamOperator);
 
     for (const auto& operatorToRePlace : operatorsToBeRePlaced) {
-        if (!operatorToRePlace->hasProperty("WORKER_ID_TO_OFFLOAD"))
-            operatorToRePlace->addProperty("placed", std::any_cast<WorkerId>(operatorToRePlace->getProperty(Optimizer::PINNED_WORKER_ID)));
-        else
-            operatorToRePlace->as_if<LogicalOperator>()->setOperatorState(OperatorState::TO_BE_REPLACED);
+        operatorToRePlace->as_if<LogicalOperator>()->setOperatorState(OperatorState::TO_BE_REPLACED);
     }
+    // for (const auto& operatorToRePlace : operatorsToBeRePlaced) {
+    //     if (!operatorToRePlace->hasProperty("WORKER_ID_TO_OFFLOAD"))
+    //         operatorToRePlace->addProperty("placed", std::any_cast<WorkerId>(operatorToRePlace->getProperty(Optimizer::PINNED_WORKER_ID)));
+    //     else
+    //         operatorToRePlace->as_if<LogicalOperator>()->setOperatorState(OperatorState::TO_BE_REPLACED);
+    // }
 
     //add change log entry indicating the addition
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

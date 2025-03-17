@@ -38,21 +38,17 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmendmentMode placementAmendmentMode,
-                                           FaultToleranceType faultTolerance);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                       DecomposedQueryPlanVersion querySubPlanVersion) override;
 
-    TopologyNodePtr findCandidateTopologyNode(TopologyNodePtr startNode);
-
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
                               const TypeInferencePhasePtr& typeInferencePhase,
-                              PlacementAmendmentMode placementAmendmentMode,
-                              FaultToleranceType faultTolerance);
+                              PlacementAmendmentMode placementAmendmentMode);
 
   private:
     /**
@@ -73,7 +69,6 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
-
 };
 }// namespace NES::Optimizer
 

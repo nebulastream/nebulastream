@@ -140,6 +140,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                         }
                     }
                 }
+                topology->print();
                 // P1: Compute placement removal
                 handlePlacementRemoval(sharedQueryId,
                                        changeLogEntry->upstreamOperators,
@@ -604,7 +605,7 @@ void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOpe
 }
 
 BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStrategy placementStrategy,
-                                                                   FaultToleranceType faultTolerance) {
+                                                                   FaultToleranceType) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
 
@@ -618,8 +619,7 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
             return BottomUpStrategy::create(globalExecutionPlan,
                                             topology,
                                             typeInferencePhase,
-                                            coordinatorConfiguration->optimizer.placementAmendmentMode,
-                                            faultTolerance);
+                                            coordinatorConfiguration->optimizer.placementAmendmentMode);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan,
                                            topology,
