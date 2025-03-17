@@ -18,6 +18,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
@@ -28,36 +29,25 @@
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
-std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
+std::unique_ptr<QueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan)
 {
-    Operator *rootOperator = nullptr;
-    Operator *currentOperator;
+    PRECONDITION(queryPlan->getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
 
-    INVARIANT(queryPlan->getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
-    auto& root = queryPlan->getRootOperators()[0];
-
-    for (const auto& operatorNode : BFSRange<Operator>(root))
+    for (const auto& operatorNode : BFSRange<Operator>(queryPlan->getRootOperators()[0]))
     {
-        if (dynamic_cast<SinkLogicalOperator*>(operatorNode))
+        if (dynamic_cast<SinkLogicalOperator*>(operatorNode)
+            or dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode)
+            or dynamic_cast<SourceNameLogicalOperator*>(operatorNode))
         {
-            rootOperator = dynamic_cast<SinkLogicalOperator*>(operatorNode);
-            currentOperator = rootOperator;
+            continue;
         }
-        else if (dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode))
-        {
-            const auto& tmp = currentOperator;
-            currentOperator = dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode);
-            tmp->children.push_back(currentOperator->clone());
-        }
-        else if (dynamic_cast<LogicalOperator*>(operatorNode))
+        else if (dynamic_cast<const LogicalOperator*>(operatorNode))
         {
             auto logicalOperator = dynamic_cast<LogicalOperator*>(operatorNode);
             if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator->getName()), RewriteRuleRegistryArguments{}); rule.has_value())
             {
                 /// TODO here we apply the rule
                 /// The problem is that we would expect that we take the TraitSet as the input
-                rule.value();
-                operatorNode->children.push_back(currentOperator->clone());
             }
             else
             {
@@ -69,8 +59,6 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
             throw UnknownLogicalOperator("Cannot lower {}", operatorNode->toString());
         }
     }
-    std::vector<std::unique_ptr<Operator>> resultVec;
-    resultVec.emplace_back(rootOperator);
-    return std::make_unique<QueryPlan>(queryPlan->getQueryId(), std::move(resultVec));
+    return queryPlan;
 }
 }
