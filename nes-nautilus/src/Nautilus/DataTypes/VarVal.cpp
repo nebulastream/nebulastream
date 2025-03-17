@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+
+#include <DataTypes/DataTypeUtil.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
@@ -88,93 +90,19 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(DataType::Type type) const
+VarVal VarVal::castToType(const DataType::Type type) const
 {
-    switch (type)
+    if (type == DataType::Type::VARSIZED)
     {
-        case DataType::Type::BOOLEAN: {
-            return {cast<nautilus::val<bool>>()};
-        };
-        case DataType::Type::INT8: {
-            return {cast<nautilus::val<int8_t>>()};
-        };
-        case DataType::Type::INT16: {
-            return {cast<nautilus::val<int16_t>>()};
-        };
-        case DataType::Type::INT32: {
-            return {cast<nautilus::val<int32_t>>()};
-        };
-        case DataType::Type::INT64: {
-            return {cast<nautilus::val<int64_t>>()};
-        };
-        case DataType::Type::UINT8: {
-            return {cast<nautilus::val<uint8_t>>()};
-        };
-        case DataType::Type::UINT16: {
-            return {cast<nautilus::val<uint16_t>>()};
-        };
-        case DataType::Type::UINT32: {
-            return {cast<nautilus::val<uint32_t>>()};
-        };
-        case DataType::Type::UINT64: {
-            return {cast<nautilus::val<uint64_t>>()};
-        };
-        case DataType::Type::FLOAT32: {
-            return {cast<nautilus::val<float>>()};
-        };
-        case DataType::Type::FLOAT64: {
-            return {cast<nautilus::val<double>>()};
-        };
-        case DataType::Type::VARSIZED: {
-            return cast<VariableSizedData>();
-        }
-        default: {
-            throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", magic_enum::enum_name(type)));
-        }
+        return cast<VariableSizedData>();
     }
+    return DataTypeUtil::dispatchByNumericalOrBoolType(type, [this]<typename T>() { return VarVal{cast<nautilus::val<T>>()}; });
 }
 
 VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType::Type type)
 {
-    switch (type)
-    {
-        case DataType::Type::BOOLEAN: {
-            return {Util::readValueFromMemRef<bool>(memRef)};
-        };
-        case DataType::Type::INT8: {
-            return {Util::readValueFromMemRef<int8_t>(memRef)};
-        };
-        case DataType::Type::INT16: {
-            return {Util::readValueFromMemRef<int16_t>(memRef)};
-        };
-        case DataType::Type::INT32: {
-            return {Util::readValueFromMemRef<int32_t>(memRef)};
-        };
-        case DataType::Type::INT64: {
-            return {Util::readValueFromMemRef<int64_t>(memRef)};
-        };
-        case DataType::Type::UINT8: {
-            return {Util::readValueFromMemRef<uint8_t>(memRef)};
-        };
-        case DataType::Type::UINT16: {
-            return {Util::readValueFromMemRef<uint16_t>(memRef)};
-        };
-        case DataType::Type::UINT32: {
-            return {Util::readValueFromMemRef<uint32_t>(memRef)};
-        };
-        case DataType::Type::UINT64: {
-            return {Util::readValueFromMemRef<uint64_t>(memRef)};
-        };
-        case DataType::Type::FLOAT32: {
-            return {Util::readValueFromMemRef<float>(memRef)};
-        };
-        case DataType::Type::FLOAT64: {
-            return {Util::readValueFromMemRef<double>(memRef)};
-        };
-        default: {
-            throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", magic_enum::enum_name(type)));
-        };
-    }
+    return DataTypeUtil::dispatchByNumericalOrBoolType(
+        type, [&memRef]<typename T>() { return VarVal{Util::readValueFromMemRef<T>(memRef)}; });
 }
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
