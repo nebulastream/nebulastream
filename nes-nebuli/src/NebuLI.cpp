@@ -173,22 +173,25 @@ Sources::SourceDescriptor createSourceDescriptor(
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
 {
+    auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
-        query.getSinkOperators().size() == 1,
+        sinkOperators.size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-        query.getSinkOperators().size());
+        sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
-    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
+    auto& sinkRef =sinkOperators.at(0)->sinkName;
+    auto i = config.sinks.find(sinkRef);
+    if (const auto& sink = config.sinks.find(sinkRef); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        query.getSinkOperators().at(0)->sinkDescriptor =
+        sinkOperators.at(0)->sinkDescriptor =
             std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
     else
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            query.getSinkOperators().front()->sinkName,
+            sinkOperators.front()->sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }
@@ -224,18 +227,27 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     }
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
+    /// TODO: AntlrSQLQueryParser creates query from source to sink -> no flip required
+    auto queryplan = std::move(query).flip();
     auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
 
-    validateAndSetSinkDescriptors(query, config);
-    logicalSourceExpansionRule->apply(query);
-    query = typeInference->performTypeInferenceQuery(query);
-    query = originIdInferencePhase->execute(query);
-    query = typeInference->performTypeInferenceQuery(query);
+    std::cout << queryplan->toString() << "\n";
 
-    NES_INFO("QEP:\n {}", query.toString());
-    return query.clone();
+    validateAndSetSinkDescriptors(*queryplan, config);
+    std::cout << queryplan->toString() << "\n";
+    logicalSourceExpansionRule->apply(*queryplan);
+    std::cout << queryplan->toString() << "\n";
+    query = typeInference->performTypeInferenceQuery(*queryplan);
+    std::cout << queryplan->toString() << "\n";
+    query = originIdInferencePhase->execute(*queryplan);
+    std::cout << queryplan->toString() << "\n";
+    query = typeInference->performTypeInferenceQuery(*queryplan);
+    std::cout << queryplan->toString() << "\n";
+
+    NES_INFO("QEP:\n {}", queryplan->toString());
+    return queryplan;
 }
 
 std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)

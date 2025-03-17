@@ -39,7 +39,7 @@ std::shared_ptr<TypeInferencePhase> TypeInferencePhase::create(std::shared_ptr<C
 QueryPlan TypeInferencePhase::performTypeInferenceQuery(QueryPlan queryPlan)
 {
     /// Infer schema recursively, starting with sinks for sinks.
-    auto sinkOperators = queryPlan.getSinkOperators();
+    auto sinkOperators = queryPlan.getOperatorByType<SinkLogicalOperator>();
     INVARIANT(not sinkOperators.empty(), "Found no sink operators for query plan: {}", queryPlan.getQueryId());
 
     /// now we have to infer the input and output schemas for the whole query.
