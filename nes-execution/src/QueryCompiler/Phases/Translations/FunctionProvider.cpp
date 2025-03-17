@@ -15,7 +15,9 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 
+#include <DataTypes/DataTypeUtil.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
@@ -23,7 +25,6 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Common.hpp>
@@ -74,62 +75,22 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
 {
     const auto stringValue = constantFunction->getConstantValue();
     const auto physicalType = constantFunction->getStamp();
-    switch (physicalType.type)
+    if (physicalType.type == DataType::Type::CHAR or physicalType.type == DataType::Type::UNDEFINED)
     {
-        case DataType::Type::UINT8: {
-            auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt8ValueFunction>(intValue);
-        };
-        case DataType::Type::UINT16: {
-            auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt16ValueFunction>(intValue);
-        };
-        case DataType::Type::UINT32: {
-            auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt32ValueFunction>(intValue);
-        };
-        case DataType::Type::UINT64: {
-            auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-            return std::make_unique<ConstantUInt64ValueFunction>(intValue);
-        };
-        case DataType::Type::INT8: {
-            auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt8ValueFunction>(intValue);
-        };
-        case DataType::Type::INT16: {
-            auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt16ValueFunction>(intValue);
-        };
-        case DataType::Type::INT32: {
-            auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt32ValueFunction>(intValue);
-        };
-        case DataType::Type::INT64: {
-            auto intValue = static_cast<int64_t>(std::stol(stringValue));
-            return std::make_unique<ConstantInt64ValueFunction>(intValue);
-        };
-        case DataType::Type::FLOAT32: {
-            auto floatValue = std::stof(stringValue);
-            return std::make_unique<ConstantFloatValueFunction>(floatValue);
-        };
-        case DataType::Type::FLOAT64: {
-            auto doubleValue = std::stod(stringValue);
-            return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
-        };
-        case DataType::Type::CHAR:
-            break;
-        case DataType::Type::BOOLEAN: {
-            auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
-            return std::make_unique<ConstantBooleanValueFunction>(boolValue);
-        }
-        case DataType::Type::VARSIZED: {
-            return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
-                reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
-        };
-        case DataType::Type::UNDEFINED: {
-            throw UnknownPhysicalType(fmt::format("the UNKNOWN type is not supported"));
-        };
+        throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", physicalType));
     }
-    throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", physicalType));
+    if (physicalType.type == DataType::Type::VARSIZED)
+    {
+        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
+            reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+    }
+    return DataTypeUtil::dispatchByNumericalOrBoolType(
+        physicalType.type,
+        [&stringValue]<typename T>()
+        {
+            auto value = NES::Util::from_chars<T>(stringValue);
+            std::unique_ptr<Function> function = std::make_unique<ExecutableFunctionConstantValue<T>>(value.value());
+            return std::move(function);
+        });
 }
 }
