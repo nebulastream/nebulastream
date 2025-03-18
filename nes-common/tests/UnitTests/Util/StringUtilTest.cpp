@@ -474,4 +474,51 @@ TEST(ReplaceFirstTest, ReplaceFirstSpecialCharacters)
     EXPECT_EQ(replaceFirst("a*b*c*", "*", "X"), "aXb*c*"); /// Only replaces the first '*'
 }
 
+TEST(EscapeSpecialCharactersTest, EmptyString)
+{
+    EXPECT_EQ("", escapeSpecialCharacters(""));
+}
+
+TEST(EscapeSpecialCharactersTest, NoSpecialCharacters)
+{
+    EXPECT_EQ("Hello World", escapeSpecialCharacters("Hello World"));
+    EXPECT_EQ("abc123!@#", escapeSpecialCharacters("abc123!@#"));
+}
+
+TEST(EscapeSpecialCharactersTest, SingleSpecialCharacters)
+{
+    EXPECT_EQ("\\a", escapeSpecialCharacters("\a")); /// Bell
+    EXPECT_EQ("\\b", escapeSpecialCharacters("\b")); /// Backspace
+    EXPECT_EQ("\\f", escapeSpecialCharacters("\f")); /// Form feed
+    EXPECT_EQ("\\n", escapeSpecialCharacters("\n")); /// Newline
+    EXPECT_EQ("\\r", escapeSpecialCharacters("\r")); /// Carriage return
+    EXPECT_EQ("\\t", escapeSpecialCharacters("\t")); /// Tab
+    EXPECT_EQ("\\v", escapeSpecialCharacters("\v")); /// Vertical tab
+}
+
+TEST(EscapeSpecialCharactersTest, MultipleSpecialCharacters)
+{
+    EXPECT_EQ("Line1\\nLine2", escapeSpecialCharacters("Line1\nLine2"));
+    EXPECT_EQ("Text\\tTabbed", escapeSpecialCharacters("Text\tTabbed"));
+    EXPECT_EQ("\\r\\n", escapeSpecialCharacters("\r\n")); /// Windows line ending
+}
+
+TEST(EscapeSpecialCharactersTest, MixedContent)
+{
+    EXPECT_EQ("Hello\\nWorld\\tTab\\r\\nNewLine", escapeSpecialCharacters("Hello\nWorld\tTab\r\nNewLine"));
+    EXPECT_EQ("\\aAlert!\\bBackspace", escapeSpecialCharacters("\aAlert!\bBackspace"));
+}
+
+TEST(EscapeSpecialCharactersTest, AlreadyEscapedCharacters)
+{
+    /// Backslashes that are already part of the string should be preserved
+    EXPECT_EQ("\\n", escapeSpecialCharacters("\\n"));
+}
+
+TEST(EscapeSpecialCharactersTest, UnicodeAndSpecialMixed)
+{
+    EXPECT_EQ("Unicode: 😀\\nNext line", escapeSpecialCharacters("Unicode: 😀\nNext line"));
+    EXPECT_EQ("\\tÆØÅ\\r\\næøå", escapeSpecialCharacters("\tÆØÅ\r\næøå"));
+}
+
 }
