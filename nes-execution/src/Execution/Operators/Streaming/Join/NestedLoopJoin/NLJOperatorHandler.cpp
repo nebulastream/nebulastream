@@ -62,11 +62,11 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
 }
 
 void NLJOperatorHandler::emitSliceIdsToProbe(
-Slice& sliceLeft,
-Slice& sliceRight,
-const WindowInfo& windowInfo,
-const SequenceData& sequenceData,
-PipelineExecutionContext* pipelineCtx)
+    Slice& sliceLeft,
+    Slice& sliceRight,
+    const WindowInfo& windowInfo,
+    const SequenceData& sequenceData,
+    PipelineExecutionContext* pipelineCtx)
 {
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
     auto& nljSliceRight = dynamic_cast<NLJSlice&>(sliceRight);
