@@ -152,39 +152,17 @@ public:
      */
     bool equalWithAllParents(const std::shared_ptr<Node>& node);
 
-    /**
-     * @brief check two node are equal.
-     * @param rhs the node to compare
-     * @return bool true if they are the same otherwise false
-     */
-    virtual bool equal(const std::shared_ptr<Node>& rhs) const { return this->isIdentical(rhs); };
 
-    /**
-     * @brief check two nodes whether are exactly the same object or not
-     * @param rhs the node to check
-     * @return bool true if they are the same object otherwise false
-     */
-    [[nodiscard]] virtual bool isIdentical(const std::shared_ptr<Node>& rhs) const { return rhs.get() == this; };
-
-    /**
-     * @brief split graph into multiple sub-graphs. The graph starts at current splitNode.
-     * If the given splitNode is not in the graph, throw exception
-     * @params splitNode the given splitNode to split at.
-     * @return vector of multiple sub-graphs.
-     */
-    std::vector<std::shared_ptr<Node>> split(const std::shared_ptr<Node>& splitNode);
-
-    /**
-     * @brief validation of this node
-     * @return true if there is no ring/node inside this node's children, otherwise false
-     */
+    /// returns true if there query graph is acyclic
     bool isValid();
 
-    /**
-     * @brief Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
-     * @tparam NodeType
-     * @return vector of nodes
-     */
+    /// Checks if the pointers are equal
+    [[nodiscard]] virtual bool isIdentical(const std::shared_ptr<Node>& rhs) const { return rhs.get() == this; };
+
+    /// Wrapper around 'isIdentical'
+    virtual bool equal(const std::shared_ptr<Node>& rhs) const { return this->isIdentical(rhs); };
+
+    /// Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
     template <class NodeType>
     std::vector<std::shared_ptr<NodeType>> getNodesByType()
     {
@@ -193,10 +171,6 @@ public:
         return vector;
     }
 
-    /**
-     * @brief checks if the node and its children contain cycles.
-     * @return true if cyclic
-     */
     bool isCyclic();
 
     /**
