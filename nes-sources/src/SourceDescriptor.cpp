@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <ostream>
-#include <sstream>
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
+
 namespace NES::Sources
 {
 
@@ -38,10 +38,10 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
     const auto parserConfigString = fmt::format(
-        "type: {}, tupleDelimiter: {}, stringDelimiter: {}",
+        "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
+        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.tupleDelimiter),
+        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.fieldDelimiter));
     return out << fmt::format(
                "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
                sourceDescriptor.logicalSourceName,
