@@ -376,7 +376,8 @@ private:
         /// To mitigate this, we will check if we have reached a certain stack level and if so, we will fail the task.
         if (constexpr auto MAX_STACK_LEVEL = 5000; stackLevel >= MAX_STACK_LEVEL)
         {
-            failTask(task, TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel));
+            failTask(
+                task, TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel));
             return;
         }
 
@@ -508,7 +509,10 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
-    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0, "Pending Pipeline Stop must have pending tasks, but had {} pending tasks.", pendingPipelineStop.pipeline->pendingTasks);
+    INVARIANT(
+        pendingPipelineStop.pipeline->pendingTasks >= 0,
+        "Pending Pipeline Stop must have pending tasks, but had {} pending tasks.",
+        pendingPipelineStop.pipeline->pendingTasks);
 
     if (!pendingPipelineStop.pipeline->requiresTermination)
     {
@@ -702,7 +706,8 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
+    , threadPool(std::make_unique<ThreadPool>(
+          statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
