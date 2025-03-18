@@ -21,6 +21,8 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -164,6 +166,34 @@ void toLowerCaseInplace(std::string& modified)
         character = static_cast<char>(::tolower(character));
     }
 }
+std::string escapeSpecialCharacters(const std::string_view input)
+{
+    const std::unordered_map<char, std::string> specialCharacters = {
+        {'\a', "\\a"},
+        {'\b', "\\b"},
+        {'\f', "\\f"},
+        {'\n', "\\n"},
+        {'\r', "\\r"},
+        {'\t', "\\t"},
+        {'\v', "\\v"},
+    };
+    std::string escapedString;
+    escapedString.reserve(input.size());
+    for (const auto value : input)
+    {
+        if (auto it = specialCharacters.find(value); it != specialCharacters.end())
+        {
+            escapedString += it->second;
+        }
+        else
+        {
+            escapedString += value;
+        }
+    }
+
+    return escapedString;
+}
+
 
 std::string toUpperCase(std::string_view input)
 {
