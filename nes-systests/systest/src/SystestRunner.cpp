@@ -232,7 +232,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const Configuration::SingleNodeWorkerConfiguration& configuration)
 {
     folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::MPMCQueue<std::shared_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    folly::Synchronized<std::vector<std::shared_ptr<RunningQuery>>> runningQueries;
     SingleNodeWorker worker(configuration);
 
     std::atomic<size_t> queriesToResultCheck{0};
@@ -269,8 +269,14 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 
                     const RunningQuery runningQuery = {query, queryId};
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                    runningQueries.blockingWrite(std::move(runningQueryPtr));
+                    runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
+
+                    /// We are waiting if we have reached the maximum number of concurrent queries
                     queriesToResultCheck.fetch_add(1);
+                    while (queriesToResultCheck.load() == numConcurrentQueries)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    }
                 }
             }
             finishedProducing = true;
@@ -279,25 +285,32 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 
     while (not finishedProducing or queriesToResultCheck > 0)
     {
-        std::shared_ptr<RunningQuery> runningQuery;
-        runningQueries.blockingRead(runningQuery);
-
-        if (runningQuery)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         {
-            while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped
-                   and worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Failed)
+            auto runningQueriesLock = runningQueries.wlock();
+            for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                const auto& runningQuery = *runningQueriesIter;
+                if (runningQuery)
+                {
+                    const auto queryStatus = worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus;
+                    if (queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
+                    {
+                        worker.unregisterQuery(QueryId(runningQuery->queryId));
+                        auto errorMessage = checkResult(*runningQuery);
+                        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+                        if (errorMessage.has_value())
+                        {
+                            failedQueries.wlock()->emplace_back(*runningQuery);
+                        }
+                        runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
+                        queriesToResultCheck.fetch_sub(1);
+                        cv.notify_one();
+                        continue;
+                    }
+                }
+                ++runningQueriesIter;
             }
-            worker.unregisterQuery(QueryId(runningQuery->queryId));
-            auto errorMessage = checkResult(*runningQuery);
-            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
-            if (errorMessage.has_value())
-            {
-                failedQueries.wlock()->emplace_back(*runningQuery);
-            }
-            queriesToResultCheck.fetch_sub(1, std::memory_order_release);
-            cv.notify_one();
         }
     }
 
@@ -308,7 +321,7 @@ std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
     folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::MPMCQueue<std::shared_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    folly::Synchronized<std::vector<std::shared_ptr<RunningQuery>>> runningQueries;
     const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
 
     std::atomic<size_t> runningQueryCount{0};
@@ -339,8 +352,14 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
                     const RunningQuery runningQuery = {query, QueryId(queryId)};
 
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                    runningQueries.blockingWrite(std::move(runningQueryPtr));
+                    runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
+
+                    /// We are waiting if we have reached the maximum number of concurrent queries
                     runningQueryCount.fetch_add(1);
+                    while (runningQueryCount.load() <= numConcurrentQueries)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    }
                 }
             }
             finishedProducing = true;
@@ -349,27 +368,29 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
     while (not finishedProducing or runningQueryCount > 0)
     {
-        std::shared_ptr<RunningQuery> runningQuery;
-        runningQueries.blockingRead(runningQuery);
-
-        if (runningQuery)
+        auto runningQueriesLock = runningQueries.wlock();
+        for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
         {
-            INVARIANT(runningQuery != nullptr, "query is not running");
-            while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped
-                   and client.status(runningQuery->queryId.getRawValue()).status() != Failed)
+            const auto& runningQuery = *runningQueriesIter;
+            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).status() == Stopped or client.status(runningQuery->queryId.getRawValue()).status() == Failed))
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                client.unregister(runningQuery->queryId.getRawValue());
+                auto errorMessage = checkResult(*runningQuery);
+                printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+                if (errorMessage.has_value())
+                {
+                    failedQueries.wlock()->emplace_back(*runningQuery);
+                }
+                runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
+                runningQueryCount.fetch_sub(1);
+                cv.notify_one();
             }
-            client.unregister(runningQuery->queryId.getRawValue());
-            auto errorMessage = checkResult(*runningQuery);
-            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
-            if (errorMessage.has_value())
+            else
             {
-                failedQueries.wlock()->emplace_back(*runningQuery);
+                ++runningQueriesIter;
             }
-            runningQueryCount.fetch_sub(1);
-            cv.notify_one();
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
     return failedQueries.copy();
@@ -382,6 +403,8 @@ void printQueryResultToStdOut(const Query& query, const std::string& errorMessag
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
 
+    /// spd logger cannot handle multiline prints with proper color and pattern.
+    /// And as this is only for test runs we use stdout here.
     std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
@@ -393,8 +416,6 @@ void printQueryResultToStdOut(const Query& query, const std::string& errorMessag
     else
     {
         std::cout << "FAILED" << std::endl;
-        /// spd logger cannot handle multiline prints with proper color and pattern.
-        /// And as this is only for test runs we use stdout here.
         std::cout << "===================================================================" << '\n';
         std::cout << query.queryDefinition << std::endl;
         std::cout << "===================================================================" << '\n';
