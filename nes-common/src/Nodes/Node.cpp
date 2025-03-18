@@ -692,33 +692,12 @@ bool Node::equalWithAllParents(const std::shared_ptr<Node>& node)
     return equalWithAllParentsHelper(shared_from_this(), node);
 }
 
-std::vector<std::shared_ptr<Node>> Node::split(const std::shared_ptr<Node>& splitNode)
-{
-    std::vector<std::shared_ptr<Node>> result{};
-    auto node = findRecursively(shared_from_this(), splitNode);
-    if (!node)
-    {
-        NES_DEBUG("Node: operator is not in graph so dont split.");
-        result.push_back(shared_from_this());
-        return result;
-    }
-
-    while (!node->parents.empty())
-    {
-        auto p = node->parents[0];
-        result.push_back(p);
-        node->removeParent(p);
-    }
-    result.push_back(node);
-    return result;
-}
-
 bool Node::isValid()
 {
     return !isCyclic();
 }
 
-std::vector<std::shared_ptr<Node>> Node::getAndFlattenAllChildren(bool withDuplicateChildren)
+std::vector<std::shared_ptr<Node>> Node::getAndFlattenAllChildren(const bool withDuplicateChildren)
 {
     std::vector<std::shared_ptr<Node>> allChildren{};
     getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), withDuplicateChildren);
