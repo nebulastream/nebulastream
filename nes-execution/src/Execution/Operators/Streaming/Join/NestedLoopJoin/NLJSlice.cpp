@@ -96,11 +96,11 @@ void NLJSlice::combinePagedVectors()
 }
 
 void NLJSlice::writeToFile(
-    FileWriter& fileWriter,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId,
+    FileWriter& fileWriter,
     FileLayout fileLayout)
 {
     // TODO remove once fileLayout is chosen adaptively
@@ -120,11 +120,11 @@ void NLJSlice::writeToFile(
 }
 
 void NLJSlice::readFromFile(
-    FileReader& fileReader,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId,
+    FileReader& fileReader,
     FileLayout fileLayout)
 {
     // TODO remove once fileLayout is chosen adaptively
@@ -145,7 +145,7 @@ void NLJSlice::readFromFile(
 
 void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const FileLayout fileLayout)
 {
-    /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef
+    /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef::writeRecord
     const auto pagedVector = getPagedVector(joinBuildSide, threadId);
     pagedVector->truncate(fileLayout);
 }

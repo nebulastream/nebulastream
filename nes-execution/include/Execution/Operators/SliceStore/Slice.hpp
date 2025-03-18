@@ -62,19 +62,19 @@ public:
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
     virtual void writeToFile(
-        FileWriter& fileWriter,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId,
+        FileWriter& fileWriter,
         FileLayout fileLayout)
         = 0;
     virtual void readFromFile(
-        FileReader& fileReader,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId,
+        FileReader& fileReader,
         FileLayout fileLayout)
         = 0;
     virtual void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, FileLayout fileLayout) = 0;

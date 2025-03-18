@@ -43,20 +43,20 @@ public:
 
     /// Writes the projected fields of all tuples to fileStorage.
     void writeToFile(
-        FileWriter& fileWriter,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId,
+        FileWriter& fileWriter,
         FileLayout fileLayout) override;
 
     /// Reads the projected fields of all tuples from fileStorage.
     void readFromFile(
-        FileReader& fileReader,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId,
+        FileReader& fileReader,
         FileLayout fileLayout) override;
 
     /// Deletes the projected fields of all tuples.

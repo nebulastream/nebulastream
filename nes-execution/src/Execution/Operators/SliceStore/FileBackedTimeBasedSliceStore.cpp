@@ -337,9 +337,9 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
         auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
-        slice->writeToFile(*fileWriter, bufferProvider, memoryLayout, joinBuildSide, threadId, USE_FILE_LAYOUT);
+        slice->writeToFile(bufferProvider, memoryLayout, joinBuildSide, threadId, *fileWriter, USE_FILE_LAYOUT);
         slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
-        // TODO force flush file stream? use internal FileStorage buffer?
+        // TODO force flush FileWriter?
     }
 
     // TODO predictiveRead()
@@ -357,7 +357,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     {
         if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
         {
-            slice->readFromFile(*fileReader, bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), USE_FILE_LAYOUT);
+            slice->readFromFile(bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), *fileReader, USE_FILE_LAYOUT);
         }
     }
 }
