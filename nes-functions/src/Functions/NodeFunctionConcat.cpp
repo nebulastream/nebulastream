@@ -14,12 +14,14 @@
 
 #include <memory>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionConcat.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
@@ -34,7 +36,7 @@ bool NodeFunctionConcat::validateBeforeLowering() const
 
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()
 {
-    return NodeFunctionConcat::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
+    return create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }
 
 bool NodeFunctionConcat::equal(const std::shared_ptr<Node>& rhs) const
@@ -46,6 +48,18 @@ bool NodeFunctionConcat::equal(const std::shared_ptr<Node>& rhs) const
         return match;
     }
     return false;
+}
+void NodeFunctionConcat::inferStamp(const Schema& schema)
+{
+    this->getLeft()->inferStamp(schema);
+    this->getRight()->inferStamp(schema);
+    INVARIANT(
+        Util::instanceOf<VariableSizedDataType>(this->getLeft()->getStamp()),
+        "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(
+        Util::instanceOf<VariableSizedDataType>(this->getRight()->getStamp()),
+        "The Concat function must have children of type VariableSizedData.");
+    this->stamp = getLeft()->getStamp();
 }
 
 NodeFunctionConcat::NodeFunctionConcat(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
@@ -62,7 +76,7 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
 
 std::string NodeFunctionConcat::toString() const
 {
-    return fmt::format("Concat({}, {})", *getLeft(), *getRight());
+    return fmt::format("Concat({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
 }
 
 }

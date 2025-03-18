@@ -15,6 +15,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
@@ -33,6 +34,7 @@ public:
     bool validateBeforeLowering() const override;
     std::shared_ptr<NodeFunction> deepCopy() override;
     bool equal(const std::shared_ptr<Node>& rhs) const override;
+    void inferStamp(const Schema& schema) override;
 
 protected:
     [[nodiscard]] std::string toString() const override;
