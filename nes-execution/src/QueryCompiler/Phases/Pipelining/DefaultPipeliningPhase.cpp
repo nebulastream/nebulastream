@@ -28,6 +28,7 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -80,6 +81,16 @@ void DefaultPipeliningPhase::processMultiplex(
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
+        if (const auto sourceDescriptorOperator = Util::as_if<SourceDescriptorLogicalOperator>(node))
+        {
+            process(pipelinePlan, pipelineOperatorMap, newPipeline, sourceDescriptorOperator);
+            continue;
+        }
+        if (const auto sinkOperator = Util::as_if<SinkLogicalOperator>(node))
+        {
+            process(pipelinePlan, pipelineOperatorMap, newPipeline, sinkOperator);
+            continue;
+        }
         process(pipelinePlan, pipelineOperatorMap, newPipeline, NES::Util::as<PhysicalOperators::PhysicalOperator>(node));
     }
 }
