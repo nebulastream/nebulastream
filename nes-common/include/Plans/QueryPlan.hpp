@@ -73,20 +73,20 @@ public:
         return false;
     }
 
-    void replaceOperator(Operator* target, std::unique_ptr<Operator> replacement)
+    bool replaceOperator(Operator* target, std::unique_ptr<Operator> replacement)
     {
         bool replaced = false;
-        // First check if the target is one of the root operators.
         for (auto& root : rootOperators)
         {
             if (root.get() == target)
             {
+                replacement->parents = std::move(root->parents);
+                replacement->children = std::move(root->children);
                 root = std::move(replacement);
                 replaced = true;
                 break;
             }
         }
-        // If not a root, search recursively.
         if (!replaced)
         {
             for (auto& root : rootOperators)
@@ -98,10 +98,7 @@ public:
                 }
             }
         }
-        if (!replaced)
-        {
-            throw std::runtime_error("Operator not found in the query plan.");
-        }
+        return replaced;
     }
 
     template <class T>

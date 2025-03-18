@@ -236,15 +236,10 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     std::cout << queryplan->toString() << "\n";
 
     validateAndSetSinkDescriptors(*queryplan, config);
-    std::cout << queryplan->toString() << "\n";
     logicalSourceExpansionRule->apply(*queryplan);
-    std::cout << queryplan->toString() << "\n";
     query = typeInference->performTypeInferenceQuery(*queryplan);
-    std::cout << queryplan->toString() << "\n";
     query = originIdInferencePhase->execute(*queryplan);
-    std::cout << queryplan->toString() << "\n";
     query = typeInference->performTypeInferenceQuery(*queryplan);
-    std::cout << queryplan->toString() << "\n";
 
     NES_INFO("QEP:\n {}", queryplan->toString());
     return queryplan;
