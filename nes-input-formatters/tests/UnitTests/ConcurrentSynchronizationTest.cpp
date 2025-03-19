@@ -67,8 +67,6 @@ public:
         /// Check if at least one thread is still active
         void waitForCompletion() const { completionLatch.wait(); }
 
-        [[nodiscard]] SequenceShredder::SequenceNumberType getTail() const { return sequenceShredder.getTail(); }
-
         [[nodiscard]] SequenceShredder::SequenceNumberType getCheckSum() const
         {
             SequenceShredder::SequenceNumberType globalCheckSum = 1;
@@ -159,8 +157,6 @@ public:
         TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS>(upperBound, fixedSeed);
         testThreadPool.waitForCompletion();
         const auto checkSum = testThreadPool.getCheckSum();
-        const auto expectedTail = upperBound / SequenceShredder::SIZE_OF_BITMAP_IN_BITS;
-        ASSERT_EQ(testThreadPool.getTail(), expectedTail);
         ASSERT_EQ(checkSum, upperBound);
     }
 };

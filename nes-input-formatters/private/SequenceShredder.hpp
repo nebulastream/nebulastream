@@ -169,6 +169,7 @@ public:
     explicit SequenceShredder(size_t sizeOfTupleDelimiter);
     explicit SequenceShredder(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
 
+    /// Return
     [[nodiscard]] size_t getTail() const { return this->tail; }
 
     /// Check if the sequence number is in the allowed range of the ring buffer.
