@@ -924,6 +924,27 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;
         default:
+            // Todo: try to construct a datatype
+            const auto tokenString = Util::toUpperCase(context->children[0]->getText());
+            const auto dataType = DataTypeProvider::tryProvideDataType(tokenString);
+            if (dataType.has_value() and Util::instanceOf<NodeFunctionConstantValue>(helper.functionBuilder.back()))
+            {
+                const auto nodeFunctionConstantValue = NodeFunctionConstantValue::create(
+                    dataType.value(), Util::as<NodeFunctionConstantValue>(helper.functionBuilder.back())->getConstantValue());
+                helper.functionBuilder.pop_back();
+                helper.functionBuilder.push_back(nodeFunctionConstantValue);
+                parentHelper.functionBuilder.push_back(nodeFunctionConstantValue);
+                // Todo: need to execute the below two statements, because otherwise the central if condition in 'exitNamedExpression'
+                // evaluates to false
+                // -> determine: what if we have abs(1) or similar? is the map expression then also not evaluated? <-- we don't have 'map'!
+                // -> should work in general, think about: if we 'exitNamedExpression' what are the cases?
+                // -> also, get rid of 'constant' case? <-- use stack with values instead of creating NodeFUnctionConstantValue?
+                parentHelper.isFunctionCall = false;
+                parentHelper.identCountHelper++;
+                break;
+            }
+            std::cout << tokenString << std::endl;
+            // Todo: we should have a function registry where we supply the string
             if (funcName == "concat")
             {
                 INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());

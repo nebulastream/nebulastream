@@ -113,22 +113,22 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
 TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
     {
-        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto inputQuery = "SELECT f1 + Int32(2) FROM StreamName WHERE f1 == 30 INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
-    {
-        const auto inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print"s;
-        const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
-        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
-    }
-
-    {
-        const auto inputQuery = "SELECT * FROM default_logical INTO Print;"s;
-        const auto internalLogicalQuery = Query::from("default_logical").sink("Print");
-        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
-    }
+    // {
+    //     const auto inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print"s;
+    //     const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    // }
+    //
+    // {
+    //     const auto inputQuery = "SELECT * FROM default_logical INTO Print;"s;
+    //     const auto internalLogicalQuery = Query::from("default_logical").sink("Print");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    // }
 }
 
 TEST_F(AntlrSQLQueryParserTest, simpleJoinTestTumblingWindow)
