@@ -279,6 +279,10 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
             // TODO delete state from ssd if there is any and if not done below
+            for (const auto& slice : windowsLockedIt->second.windowSlices)
+            {
+                //memCtrl.deleteSliceFiles(slice->getSliceEnd());
+            }
             windowsWriteLocked->erase(windowsLockedIt++);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
@@ -336,7 +340,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
+        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, metaData.pipelineId, joinBuildSide);
         slice->writeToFile(bufferProvider, memoryLayout, joinBuildSide, threadId, *fileWriter, USE_FILE_LAYOUT);
         slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
         // TODO force flush FileWriter?
@@ -355,7 +359,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
-        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
+        while (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
         {
             slice->readFromFile(bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), *fileReader, USE_FILE_LAYOUT);
         }

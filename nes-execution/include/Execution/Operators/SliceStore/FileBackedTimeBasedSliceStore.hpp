@@ -37,13 +37,14 @@ namespace NES::Runtime::Execution
 struct SliceStoreMetaData
 {
     WorkerThreadId threadId;
+    PipelineId pipelineId;
     Timestamp timestamp;
 };
 
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
+    static constexpr auto USE_FILE_LAYOUT = SEPARATE_KEYS;
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,

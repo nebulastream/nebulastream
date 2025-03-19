@@ -178,7 +178,7 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
         const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
-            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -214,7 +214,7 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
             auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
-            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -262,7 +262,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             }
         }
 
-        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
         {
             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
             {
@@ -270,6 +270,10 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
                 {
                     std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
                     keyPagePtr += fieldSize;
+                }
+                else
+                {
+                    return;
                 }
             }
             else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)

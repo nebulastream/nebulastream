@@ -49,12 +49,12 @@ FileWriter::~FileWriter()
     deallocate(writeKeyBuffer);
 }
 
-void FileWriter::write(const void* data, size_t size)
+void FileWriter::write(const void* data, const size_t size)
 {
     write(data, size, writeBuffer, writeBufferPos, file);
 }
 
-void FileWriter::writeKey(const void* data, size_t size)
+void FileWriter::writeKey(const void* data, const size_t size)
 {
     if (writeKeyBuffer == nullptr)
     {
@@ -73,14 +73,14 @@ void FileWriter::flushBuffer()
     }
 }
 
-void FileWriter::write(const void* data, size_t& dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
+void FileWriter::write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
 {
+    const auto* dataPtr = static_cast<const char*>(data);
     if (bufferSize == 0)
     {
-        return writeToFile(static_cast<const char*>(data), dataSize, fileStream);
+        return writeToFile(dataPtr, dataSize, fileStream);
     }
 
-    const auto* dataPtr = static_cast<const char*>(data);
     while (dataSize > 0)
     {
         const auto copySize = std::min(dataSize, bufferSize - bufferPos);
@@ -139,12 +139,12 @@ FileReader::FileReader(
 FileReader::~FileReader()
 {
     file.close();
-    std::filesystem::remove(filePath + ".dat");
     deallocate(readBuffer);
+    std::filesystem::remove(filePath + ".dat");
 
     keyFile.close();
-    std::filesystem::remove(filePath + "_key.dat");
     deallocate(readKeyBuffer);
+    std::filesystem::remove(filePath + "_key.dat");
 }
 
 size_t FileReader::read(void* dest, const size_t size)
@@ -163,16 +163,15 @@ size_t FileReader::readKey(void* dest, const size_t size)
 }
 
 size_t
-FileReader::read(void* dest, const size_t& dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const
+FileReader::read(void* dest, const size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const
 {
+    auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
     {
-        return readFromFile(static_cast<char*>(dest), dataSize, fileStream);
+        return readFromFile(destPtr, dataSize, fileStream);
     }
 
-    auto* destPtr = static_cast<char*>(dest);
     auto totalRead = 0UL;
-
     while (totalRead < dataSize)
     {
         if (bufferPos == bufferEnd)
@@ -196,7 +195,7 @@ FileReader::read(void* dest, const size_t& dataSize, char* buffer, size_t& buffe
     return totalRead;
 }
 
-size_t FileReader::readFromFile(char* buffer, const size_t& dataSize, std::ifstream& fileStream)
+size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& fileStream)
 {
     fileStream.read(buffer, dataSize);
     if (fileStream.fail() && !fileStream.eof())

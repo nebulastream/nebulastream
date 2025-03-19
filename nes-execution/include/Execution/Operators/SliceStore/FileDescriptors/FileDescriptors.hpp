@@ -44,7 +44,7 @@ public:
     void flushBuffer();
 
 private:
-    void write(const void* data, size_t& dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const;
+    void write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const;
     static void writeToFile(const char* buffer, size_t& bufferPos, std::ofstream& fileStream);
 
     std::ofstream file;
@@ -74,8 +74,8 @@ public:
     size_t readKey(void* dest, size_t size);
 
 private:
-    size_t read(void* dest, const size_t& dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;
-    static size_t readFromFile(char* buffer, const size_t& dataSize, std::ifstream& fileStream);
+    size_t read(void* dest, size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;
+    static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& fileStream);
 
     std::ifstream file;
     std::ifstream keyFile;
