@@ -298,7 +298,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
                         auto errorMessage = checkResult(*runningQuery);
-                        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+                        printQueryResultToStdOut(
+                            runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
                         if (errorMessage.has_value())
                         {
                             failedQueries.wlock()->emplace_back(*runningQuery);
