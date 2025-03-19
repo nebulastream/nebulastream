@@ -391,10 +391,10 @@ TEST_F(BufferManagerTest, AttachUnpooledBufferAsChild)
 TEST_F(BufferManagerTest, MultiThreadedSpilling)
 {
     constexpr int bufferSize = 1024 * 8;
-    constexpr int numThreads = 16;
+    constexpr int numThreads = 32;
     constexpr int allocatePerThread = 10000;
-    constexpr int inMemorySegmentsPerThread = 10;
-    constexpr int inMemoryReserve = 1;
+    constexpr int inMemorySegmentsPerThread = 100;
+    constexpr int inMemoryReserve = 90;
     const std::shared_ptr<BufferManager> manager = BufferManager::create(
         bufferSize, numThreads * inMemorySegmentsPerThread, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 1024, 1024, 1024);
 
@@ -436,6 +436,7 @@ TEST_F(BufferManagerTest, MultiThreadedSpilling)
             }
         };
 
+        auto startTimestamp = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < numThreads; ++i)
         {
             threads[i] = std::thread{threadFunction, i};
@@ -456,9 +457,10 @@ TEST_F(BufferManagerTest, MultiThreadedSpilling)
             done = previousThreadsFinished;
             if (!done)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
+        auto stopTimestamp = std::chrono::high_resolution_clock::now();
         ASSERT_TRUE(stopSource.request_stop());
 
         for (int i = 0; i < numThreads; ++i)
@@ -490,6 +492,373 @@ TEST_F(BufferManagerTest, MultiThreadedSpilling)
                         return check;
                     });
                 ASSERT_TRUE(restoredParentData);
+            }
+        }
+
+        NES_INFO("Took {} seconds for spilling", std::chrono::duration_cast<std::chrono::seconds>(stopTimestamp - startTimestamp))
+    }
+}
+
+// Helper function to generate the file name with timestamp
+std::string getFileName(const std::string& prefix)
+{
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::string timeStr(std::ctime(&now_c));
+    timeStr.erase(std::remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
+    std::replace(timeStr.begin(), timeStr.end(), ' ', '_');
+    return prefix + timeStr + ".csv";
+}
+
+// Write a header row from a vector of column names
+void writeHeader(std::ostream& os, const std::vector<std::string>& headers)
+{
+    bool first = true;
+    for (const auto& header : headers)
+    {
+        if (!first)
+        {
+            os << ",";
+        }
+        first = false;
+        os << header;
+    }
+    os << "\n";
+}
+
+// Helper to print a tuple of longs in CSV format (using fold expression)
+template <typename Tuple, std::size_t... I>
+void printTupleImpl(std::ostream& os, const Tuple& tup, std::index_sequence<I...>)
+{
+    ((os << (I == 0 ? "" : ",") << std::get<I>(tup)), ...);
+}
+
+template <typename... Args>
+void printTuple(std::ostream& os, const std::tuple<Args...>& tup)
+{
+    printTupleImpl(os, tup, std::index_sequence_for<Args...>{});
+    os << "\n";
+}
+
+
+TEST_F(BufferManagerTest, MultiThreadedSpillingBench)
+{
+    constexpr int bufferSize = 1024 * 8;
+    // constexpr auto threadNums = std::array{1U, 2U, 4U, 8U, 16U, 32U};
+    // constexpr auto threadNums = std::array{32U};
+    constexpr auto threadNums = std::array{4U, 8U, 16U, 32U};
+    constexpr auto allocatePerThreads = std::array{100000};
+    constexpr auto inMemorySegmentsPerThreads = std::array{100};
+    // constexpr auto inMemoryReserves = std::array{1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99};
+    constexpr auto inMemoryReserves = std::array{10, 20, 30, 40, 50, 60, 70, 80, 90, 99};
+    // constexpr auto inMemoryReserves = std::array{90, 99};
+    constexpr auto runs = std::array{0, 1, 2, 3, 4};
+
+    std::string filename = getFileName("MultiThreadedSpilling_");
+    std::ofstream ofs(filename);
+    if (!ofs)
+    {
+        std::cerr << "Error opening file: " << filename << "\n";
+        FAIL();
+    }
+
+    // Define the CSV header (customize as needed)
+    std::vector<std::string> headers
+        = {"NumThreads", "AllocatePerThread", "InMemorySegmentsPerThread", "InMemoryReserve", "Run", "DurationMS"};
+    writeHeader(ofs, headers);
+
+
+    for (auto numThreads : threadNums)
+    {
+        for (auto allocatePerThread : allocatePerThreads)
+        {
+            for (auto inMemorySegmentsPerThread : inMemorySegmentsPerThreads)
+            {
+                for (auto inMemoryReserve : inMemoryReserves)
+                {
+                    for (auto run : runs)
+                    {
+                        const std::shared_ptr<BufferManager> manager = BufferManager::create(
+                            bufferSize,
+                            numThreads * inMemorySegmentsPerThread,
+                            std::make_shared<NesDefaultMemoryAllocator>(),
+                            64,
+                            2,
+                            1024,
+                            1024,
+                            1024);
+
+                        {
+                            const std::stop_source stopSource;
+                            std::vector<std::vector<FloatingBuffer>> floatingResults(numThreads, std::vector<FloatingBuffer>{});
+                            std::vector<std::thread> threads{};
+
+                            auto threadFunction = [&, stopToken = stopSource.get_token()](const int threadNum)
+                            {
+                                std::queue<PinnedBuffer> pinnedBuffers{};
+                                std::vector<FloatingBuffer> floatingBuffers{};
+                                floatingBuffers.reserve(allocatePerThread);
+
+                                for (int i = 0; i < allocatePerThread; ++i)
+                                {
+                                    if (i >= (inMemorySegmentsPerThread - inMemoryReserve))
+                                    {
+                                        floatingBuffers.push_back(FloatingBuffer{std::move(pinnedBuffers.front())});
+                                        pinnedBuffers.pop();
+                                    }
+                                    auto pinned = manager->getBufferBlocking();
+
+                                    auto rawData = reinterpret_cast<uint64_t*>(pinned.getBuffer());
+                                    std::fill_n(rawData, bufferSize / sizeof(uint64_t), threadNum * allocatePerThread + i);
+                                    pinnedBuffers.push(pinned);
+                                }
+
+                                while (!pinnedBuffers.empty())
+                                {
+                                    floatingBuffers.push_back(FloatingBuffer{std::move(pinnedBuffers.front())});
+                                    pinnedBuffers.pop();
+                                }
+                                floatingResults[threadNum] = floatingBuffers;
+
+                                while (!stopToken.stop_requested())
+                                {
+                                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                                }
+                            };
+
+                            auto startTimestamp = std::chrono::high_resolution_clock::now();
+                            for (unsigned int i = 0; i < numThreads; ++i)
+                            {
+                                threads.push_back(std::thread{threadFunction, i});
+                            }
+
+                            bool done = false;
+                            while (!done)
+                            {
+                                bool previousThreadsFinished = true;
+                                for (auto threadResult : floatingResults)
+                                {
+                                    if (threadResult.size() != static_cast<unsigned int>(allocatePerThread))
+                                    {
+                                        previousThreadsFinished = false;
+                                        break;
+                                    }
+                                }
+                                done = previousThreadsFinished;
+                                if (!done)
+                                {
+                                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                                }
+                            }
+                            auto stopTimestamp = std::chrono::high_resolution_clock::now();
+                            ASSERT_TRUE(stopSource.request_stop());
+
+                            for (unsigned int i = 0; i < numThreads; ++i)
+                            {
+                                threads[i].join();
+                            }
+                            NES_INFO("Done spilling")
+
+                            NES_INFO("Starting to verify results")
+                            // for (unsigned int threadNum = 0; threadNum < numThreads; ++threadNum)
+                            // {
+                            //     for (unsigned int bufferNum = 0; bufferNum < floatingResults.size(); ++bufferNum)
+                            //     {
+                            //         auto floatingBuffer = floatingResults[threadNum][bufferNum];
+                            //         auto repinningResult = manager->repinBuffer(std::move(floatingBuffer)).waitUntilDone();
+                            //         ASSERT_TRUE(std::holds_alternative<PinnedBuffer>(repinningResult));
+                            //         auto pinnedBuffer = std::get<PinnedBuffer>(repinningResult);
+                            //
+                            //         bool restoredParentData = std::all_of(
+                            //             reinterpret_cast<uint64_t*>(pinnedBuffer.getBuffer()),
+                            //             reinterpret_cast<uint64_t*>(pinnedBuffer.getBuffer()) + (bufferSize / sizeof(uint64_t)),
+                            //             [&](uint64_t i)
+                            //             {
+                            //                 bool check = i == threadNum * allocatePerThread + bufferNum;
+                            //                 if (!check)
+                            //                 {
+                            //                     NES_DEBUG("Expected {}, but value was {}", threadNum * allocatePerThread + bufferNum, i);
+                            //                 }
+                            //                 return check;
+                            //             });
+                            //         ASSERT_TRUE(restoredParentData);
+                            //     }
+                            // }
+                            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stopTimestamp - startTimestamp);
+                            NES_INFO("Took {} ms for spilling", duration);
+                            std::tuple result{
+                                numThreads, allocatePerThread, inMemorySegmentsPerThread, inMemoryReserve, run, duration.count()};
+                            printTuple(ofs, result);
+                            ofs.flush();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ofs.close();
+}
+
+TEST_F(BufferManagerTest, RepinUnpinContentionBench)
+{
+    constexpr int bufferSize = 1024 * 8;
+    constexpr auto numsThreads = std::array{1U, 2U, 4U, 8U, 16U};
+    constexpr auto concurrentBufferAmounts = std::array{100U, 1000U, 10000U};
+    constexpr auto inMemoryBuffersAmounts = std::array{10, 100, 1000};
+    constexpr auto runs = std::array{0, 1, 2, 3, 4};
+    constexpr int maxRepinnings = 50000;
+
+    std::string filename = getFileName("RepinSpillContention_");
+    std::ofstream ofs(filename);
+    if (!ofs)
+    {
+        std::cerr << "Error opening file: " << filename << "\n";
+        FAIL();
+    }
+
+    // Define the CSV header (customize as needed)
+    std::vector<std::string> headers = {"NumThreads", "ConcurrentBufferAmount", "inMemoryBuffers", "Run", "DurationMS", "Failures"};
+    writeHeader(ofs, headers);
+
+    for (auto numThreads : numsThreads)
+    {
+        for (auto concurrentBufferAmount : concurrentBufferAmounts)
+        {
+            for (auto inMemoryBuffers : inMemoryBuffersAmounts)
+            {
+                for (auto run : runs)
+                {
+                    const std::shared_ptr<BufferManager> manager = BufferManager::create(
+                        bufferSize, inMemoryBuffers, std::make_shared<NesDefaultMemoryAllocator>(), 64, 2, 1024, 1024, 1024);
+
+                    {
+                        folly::MPMCQueue<detail::CoroutineError> coroErrors{maxRepinnings * numThreads};
+                        std::vector<std::thread> threads{};
+                        const std::stop_source stopSource;
+                        std::array<std::atomic_flag, 32> threadsDone{};
+                        std::vector<FloatingBuffer> buffers{concurrentBufferAmount, FloatingBuffer{}};
+                        for (unsigned int i = 0; i < concurrentBufferAmount; ++i)
+                        {
+                            auto pinned = manager->getBufferBlocking();
+                            auto rawData = reinterpret_cast<uint64_t*>(pinned.getBuffer());
+                            std::fill_n(rawData, bufferSize / sizeof(uint64_t), i);
+                            buffers[i] = FloatingBuffer{std::move(pinned)};
+                        }
+                        std::vector<detail::DataSegment<detail::DataLocation>> segmentsForValidation{};
+                        for (auto buffer : buffers)
+                        {
+                            segmentsForValidation.push_back(buffer.getSegment());
+                        }
+
+                        // std::array<std::atomic<uint32_t>, concurrentBufferAmount> repinnings{};
+                        // repinnings.fill(maxRepinnings - 1);
+
+
+                        auto threadFunction = [&, stopToken = stopSource.get_token()](const unsigned int threadNum)
+                        {
+                            std::random_device rd;
+                            std::mt19937 gen(rd());
+                            std::uniform_int_distribution<> range(0, concurrentBufferAmount - 1);
+                            for (int i = 0; i < maxRepinnings; ++i)
+                            {
+                                int num = range(gen);
+                                //create copy of the floating buffer so that we don't invalidate the floating buffer inside the array when we move it
+                                auto floating = buffers[num];
+                                auto pinnedResult = manager->repinBuffer(std::move(floating)).waitUntilDone();
+                                if (std::holds_alternative<detail::CoroutineError>(pinnedResult))
+                                {
+                                    coroErrors.write(std::get<detail::CoroutineError>(pinnedResult));
+                                }
+                            }
+
+                            threadsDone[threadNum].test_and_set();
+                            threadsDone[threadNum].notify_one();
+                            while (!stopToken.stop_requested())
+                            {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                            }
+                        };
+
+                        auto start = std::chrono::high_resolution_clock::now();
+                        for (unsigned int i = 0; i < numThreads; ++i)
+                        {
+                            threads.push_back(std::thread{threadFunction, i});
+                        }
+
+                        for (unsigned int i = 0; i < numThreads; ++i)
+                        {
+                            threadsDone[i].wait(false);
+                        }
+
+                        auto stop = std::chrono::high_resolution_clock::now();
+                        ASSERT_TRUE(stopSource.request_stop());
+
+                        for (unsigned int i = 0; i < numThreads; ++i)
+                        {
+                            threads[i].join();
+                        }
+                        NES_INFO("Starting validation")
+
+                        unsigned int inMemory = 0;
+                        for (auto buffer : buffers)
+                        {
+                            if (!buffer.isSpilled())
+                            {
+                                inMemory++;
+                            }
+                        }
+
+                        ASSERT_EQ(inMemory, inMemoryBuffers);
+
+                        for (unsigned int i = 0; i < concurrentBufferAmount; ++i)
+                        {
+                            auto floating = buffers[i];
+                            auto repinningResult = manager->repinBuffer(std::move(floating)).waitUntilDone();
+                            ASSERT_TRUE(std::holds_alternative<PinnedBuffer>(repinningResult));
+                            auto pinned = std::get<PinnedBuffer>(repinningResult);
+                            bool restoredParentData = std::all_of(
+                                reinterpret_cast<uint64_t*>(pinned.getBuffer()),
+                                reinterpret_cast<uint64_t*>(pinned.getBuffer()) + (bufferSize / sizeof(uint64_t)),
+                                [&](const uint64_t val)
+                                {
+                                    bool check = val == i;
+                                    if (!check)
+                                    {
+                                        NES_DEBUG("Expected {}, but value was {}", i, val);
+                                    }
+                                    return check;
+                                });
+                            ASSERT_TRUE(restoredParentData);
+                        }
+                        std::map<detail::CoroutineError, uint64_t> errorCounter{};
+                        detail::CoroutineError error;
+                        while (coroErrors.read(error))
+                        {
+                            auto counterEntry = errorCounter.find(error);
+                            if (counterEntry == errorCounter.end())
+                            {
+                                errorCounter.emplace(error, 1);
+                            }
+                            else
+                            {
+                                counterEntry->second++;
+                            }
+                        }
+                        unsigned int sum = 0;
+                        for (auto [errorCode, counter] : errorCounter)
+                        {
+                            NES_INFO(
+                                "Error \"{}\" was encountered {} times", ErrorCode::typeFromCode(errorCode).getErrorMessage(), counter);
+                            sum += counter;
+                        }
+                        NES_INFO("{} out of {} attempts to repin failed", sum, maxRepinnings * numThreads);
+                        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+                        NES_INFO("Took {} ms for spilling", duration);
+                        std::tuple result{numThreads, concurrentBufferAmount, inMemoryBuffers, run, duration.count(), sum};
+                        printTuple(ofs, result);
+                        ofs.flush();
+                    }
+                }
             }
         }
     }
@@ -624,7 +993,6 @@ TEST_F(BufferManagerTest, RepinUnpinContention)
         NES_INFO("{} out of {} attempts to repin failed", sum, maxRepinnings * numThreads);
     }
 }
-
 
 TEST_F(BufferManagerTest, OnDiskSegmentSpilled)
 {

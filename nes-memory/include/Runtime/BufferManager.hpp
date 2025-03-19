@@ -105,7 +105,7 @@ private:
     static constexpr auto DEFAULT_MAX_ZERO_WRITE_ROUNDS = 32;
     static constexpr auto DEFAULT_MAX_CONCURRENT_MEMORY_REQS = DEFAULT_URING_RING_SIZE;
     static constexpr auto DEFAULT_MAX_CONCURRENT_READ_SUBMISSIONS = DEFAULT_URING_RING_SIZE;
-    static constexpr auto DEFAULT_MAX_CONCURRENT_PUNCH_HOLE_SUBMISSIONS = DEFAULT_URING_RING_SIZE * 10;
+    static constexpr auto DEFAULT_MAX_CONCURRENT_PUNCH_HOLE_SUBMISSIONS = DEFAULT_URING_RING_SIZE * 200;
     //4TB is supported by ext4 and ntfs
     static constexpr unsigned long long DEFAULT_MAX_FILE_SIZE = 1024UL * 1024 * 1024 * 1024 * 4;
     // static constexpr auto DEFAULT_SPILL_DIRECTORY = std::filesystem::absolute("/tmp/nebulastream/spilling");

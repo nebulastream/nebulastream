@@ -29,14 +29,15 @@ class BufferControlBlock;
 class FloatingBuffer
 {
     FRIEND_TEST(BufferManagerTest, RepinUnpinContention);
+    FRIEND_TEST(BufferManagerTest, RepinUnpinContentionBench);
     friend class PinnedBuffer;
     friend class BufferManager;
 
     detail::DataSegment<detail::DataLocation> getSegment() const noexcept;
-public:
 
+public:
     [[nodiscard]] FloatingBuffer() noexcept;
-    [[nodiscard]] FloatingBuffer(FloatingBuffer const& other) noexcept;
+    [[nodiscard]] FloatingBuffer(const FloatingBuffer& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
@@ -44,7 +45,7 @@ public:
 
     [[nodiscard]] explicit FloatingBuffer(PinnedBuffer&& buffer) noexcept;
 
-    FloatingBuffer& operator=(FloatingBuffer const& other) noexcept;
+    FloatingBuffer& operator=(const FloatingBuffer& other) noexcept;
 
     FloatingBuffer& operator=(FloatingBuffer&& other) noexcept;
 

@@ -298,6 +298,9 @@ void BufferManager::destroy()
             {
                 NES_ERROR("Failed to close swap file {} with error \"{}\"", file.first, std::strerror(errno));
             }
+
+            const std::filesystem::path filePath = spillDirectory / std::to_string(file.second.getId());
+            std::remove(filePath.c_str());
         }
     }
     else
@@ -309,7 +312,7 @@ void BufferManager::destroy()
 void BufferManager::flushNewBuffers() noexcept
 {
     auto toFlush = newBuffers.size();
-    NES_DEBUG("Flushing {} new buffers to allBuffers", toFlush);
+    // NES_DEBUG("Flushing {} new buffers to allBuffers", toFlush);
     allBuffers.reserve(allBuffers.size() + toFlush);
     detail::BufferControlBlock* bcb;
     while (toFlush-- > 0 && newBuffers.read(bcb))
@@ -848,15 +851,15 @@ int64_t BufferManager::secondChancePass() noexcept
     }
 
     const int uringSubmitted = io_uring_submit(&uringWriteRing);
-    NES_DEBUG(
-        "Did second chance pass to try spill buffers, send requests for {} buffers, and deleted {} empty BCB. "
-        "Clock was at {}, is now at {}, iterated over {} BCBs, while allBuffers size was {}",
-        uringSubmitted,
-        deleted,
-        clockStart,
-        clockAt,
-        i,
-        allBuffers.size());
+    // NES_DEBUG(
+    //     "Did second chance pass to try spill buffers, send requests for {} buffers, and deleted {} empty BCB. "
+    //     "Clock was at {}, is now at {}, iterated over {} BCBs, while allBuffers size was {}",
+    //     uringSubmitted,
+    //     deleted,
+    //     clockStart,
+    //     clockAt,
+    //     i,
+    //     allBuffers.size());
 
     return uringSubmitted;
 }
@@ -966,7 +969,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
                 awaiter->setResultAndContinue(detail::DataSegment<detail::InMemoryLocation>{});
             }
         }
-        NES_DEBUG("Flushed out {} segment awaiters for which there weren't enough requests in flight anymore", flushed);
+        // NES_DEBUG("Flushed out {} segment awaiters for which there weren't enough requests in flight anymore", flushed);
     }
     return counter;
 }
@@ -1118,7 +1121,7 @@ PinnedBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<deta
 PinnedBuffer BufferManager::getBufferBlocking()
 {
     detail::DataSegment<detail::InMemoryLocation> inMemorySegment = detail::DataSegment<detail::InMemoryLocation>{};
-    constexpr auto maxAttempts = 5;
+    constexpr auto maxAttempts = 20;
     int attempts = 0;
     //Normal retrieval from available buffers
     while (inMemorySegment.getLocation().getPtr() == nullptr && ++attempts < maxAttempts)
@@ -1287,6 +1290,7 @@ PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDi
                     }
                     else
                     {
+                        future.pollOnce();
                         //Write unfinished ones back into queue
                         if (!holesInProgress.write(future))
                         {

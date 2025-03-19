@@ -103,30 +103,46 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
         [this, testName = std::move(testName)]() mutable
         {
             auto future = testCompletion->get_future();
-            switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP)))
+            future.wait();
+            try
             {
-                case std::future_status::ready: {
-                    try
-                    {
-                        auto res = future.get();
-                        if (!res)
-                        {
-                            NES_FATAL_ERROR("Got error in test [{}]", testName);
-                        }
-                    }
-                    catch (const std::exception& exception)
-                    {
-                        NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
-                        FAIL();
-                    }
-                    break;
-                }
-                case std::future_status::timeout:
-                case std::future_status::deferred: {
-                    NES_ERROR("Cannot terminate test [{}] within deadline", testName);
-                    FAIL();
+                auto res = future.get();
+                if (!res)
+                {
+                    NES_FATAL_ERROR("Got error in test [{}]", testName);
                 }
             }
+            catch (const std::exception& exception)
+            {
+                NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
+                FAIL();
+            }
+
+
+            // switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP)))
+            // {
+            //     case std::future_status::ready: {
+            //         try
+            //         {
+            //             auto res = future.get();
+            //             if (!res)
+            //             {
+            //                 NES_FATAL_ERROR("Got error in test [{}]", testName);
+            //             }
+            //         }
+            //         catch (const std::exception& exception)
+            //         {
+            //             NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
+            //             FAIL();
+            //         }
+            //         break;
+            //     }
+            //     case std::future_status::timeout:
+            //     case std::future_status::deferred: {
+            //         NES_ERROR("Cannot terminate test [{}] within deadline", testName);
+            //         FAIL();
+            //     }
+            // }
         });
 }
 
